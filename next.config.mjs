@@ -1,11 +1,8 @@
+cat << 'EOF' > next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  images: {
-    unoptimized: true,
-  },
-}
+  reactStrictMode: true,
+};
 
-export default nextConfig
+export default nextConfig;
+EOF
