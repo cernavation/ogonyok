@@ -1,7 +1,7 @@
 'use client'
 
 import { MoreHorizontal, Plus } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
 import { playClick } from '@/lib/ogonek/sound'
 import type { StreakStatus } from '@/lib/ogonek/streak'
@@ -10,6 +10,8 @@ import { DayCard } from '../day-card'
 import { MobileHeader } from '../mobile-header'
 import { QuickFocus } from '../quick-focus'
 import { Tooltip } from '../tooltip'
+
+const CHUNK_SIZE = 25
 
 type Props = {
   days: Day[]
@@ -20,6 +22,7 @@ type Props = {
   onPinToVault?: (fact: string) => void
   onCompose?: () => void
   onNavigate?: (view: ViewId) => void
+  onEditDay?: (day: Day) => void
   streak?: number
   streakStatus?: StreakStatus
   hoursLeft?: number | null
@@ -36,6 +39,7 @@ export function HomeView({
   onPinToVault,
   onCompose,
   onNavigate,
+  onEditDay,
   streak,
   streakStatus,
   hoursLeft,
@@ -43,6 +47,8 @@ export function HomeView({
   soundEnabled = true,
 }: Props) {
   const [filter, setFilter] = useState<string>('Для тебя')
+  const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
   const todayKey = useMemo(() => {
     return new Date().toISOString().split('T')[0]
@@ -55,9 +61,33 @@ export function HomeView({
     return days.filter((d) => d.tags.includes(filter))
   }, [days, filter])
 
+  const visibleDays = useMemo(() => {
+    return filteredDays.slice(0, visibleCount)
+  }, [filteredDays, visibleCount])
+
+  // Infinite scroll chunk loading sentinel
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    if (visibleCount >= filteredDays.length) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredDays.length))
+        }
+      },
+      { rootMargin: '600px 0px' }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [visibleCount, filteredDays.length])
+
   const handleTabClick = (tab: string) => {
     playClick(soundEnabled)
     setFilter(tab)
+    setVisibleCount(CHUNK_SIZE)
   }
 
   return (
@@ -140,16 +170,39 @@ export function HomeView({
             </div>
           </div>
         ) : filteredDays.length > 0 ? (
-          filteredDays.map((day) => (
-            <DayCard
-              key={day.id}
-              day={day}
-              onLightbox={onLightbox}
-              onNotify={onNotify}
-              onPinToVault={onPinToVault}
-              soundEnabled={soundEnabled}
-            />
-          ))
+          <>
+            {visibleDays.map((day) => (
+              <DayCard
+                key={day.id}
+                day={day}
+                onLightbox={onLightbox}
+                onNotify={onNotify}
+                onPinToVault={onPinToVault}
+                onEdit={onEditDay}
+                soundEnabled={soundEnabled}
+              />
+            ))}
+
+            {visibleCount < filteredDays.length && (
+              <div ref={sentinelRef} className="feed-chunk-loader py-6 text-center">
+                <button
+                  type="button"
+                  className="secondary-btn text-xs px-4 py-2 opacity-85 hover:opacity-100 transition-opacity"
+                  onClick={() =>
+                    setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredDays.length))
+                  }
+                >
+                  Показать ещё {CHUNK_SIZE} дней (показано {visibleDays.length} из {filteredDays.length})
+                </button>
+              </div>
+            )}
+
+            {visibleDays.length >= filteredDays.length && filteredDays.length > CHUNK_SIZE && (
+              <div className="feed-chunk-end py-8 text-center text-xs text-muted">
+                ✦ Начало пути · Летопись полностью загружена ({filteredDays.length} дней)
+              </div>
+            )}
+          </>
         ) : (
           <div className="empty-state" role="status">
             <p className="empty-state__title">Ничего не найдено</p>

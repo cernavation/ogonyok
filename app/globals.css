@@ -650,6 +650,8 @@
 .day-card {
   padding: 20px 24px 12px;
   border-bottom: 1px solid var(--line);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 240px;
 }
 
 .post-header {

@@ -6,7 +6,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import { computeStreak } from '@/lib/ogonek/streak'
 import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import type { ComposerPayload, ViewId } from '@/lib/ogonek/types'
+import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { BottomNav } from './bottom-nav'
 import { Composer } from './composer'
@@ -27,6 +27,7 @@ import { VaultView } from './views/vault-view'
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
   const [composer, setComposer] = useState(false)
+  const [editingDay, setEditingDay] = useState<Day | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
@@ -35,6 +36,7 @@ export function AppShell() {
   const {
     state,
     addEntryToCurrentDay,
+    updateDayWithPayload,
     saveMorningIntentions,
     saveComposerDraft,
     clearComposerDraft,
@@ -83,12 +85,31 @@ export function AppShell() {
     onNavigateExplore: () => navigate('explore'),
     onCloseModals: () => {
       setComposer(false)
+      setEditingDay(null)
       setLightbox(null)
       setHotkeysModal(false)
       setProfileModal(false)
     },
     onToggleHotkeysModal: () => setHotkeysModal((prev) => !prev),
   })
+
+  // Auto-seed real history if store is in initial single-day state
+  useEffect(() => {
+    if (state.days.length <= 1) {
+      fetch('/seeds/ogonek-import.v1.json')
+        .then((res) => {
+          if (!res.ok) throw new Error('Not found')
+          return res.json()
+        })
+        .then((data) => {
+          if (data && Array.isArray(data.days) && data.days.length > 1) {
+            importState(data)
+            notify(`Загружена подлинная летопись (${data.days.length} дней)!`)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [state.days.length, importState, notify])
 
   // Key 'p' to open profile modal
   useEffect(() => {
@@ -115,6 +136,11 @@ export function AppShell() {
       navigate('home')
     }
   }, [view, navigate])
+
+  const handleEditDay = useCallback((day: Day) => {
+    setEditingDay(day)
+    setComposer(true)
+  }, [])
 
   const handleSelectDay = useCallback(
     (dayId: number) => {
@@ -154,12 +180,18 @@ export function AppShell() {
   }, [view])
 
   const handleSaveComposer = useCallback(
-    (payload: ComposerPayload) => {
-      addEntryToCurrentDay(payload)
+    (payload: ComposerPayload, editingDayId?: number) => {
+      if (editingDayId != null) {
+        updateDayWithPayload(editingDayId, payload)
+        notify(`День #${editingDayId} успешно сохранён!`)
+      } else {
+        addEntryToCurrentDay(payload)
+        notify('День сохранён в локальное хранилище. Стрик продолжается!')
+      }
       setComposer(false)
-      notify('День сохранён в локальное хранилище. Стрик продолжается!')
+      setEditingDay(null)
     },
-    [addEntryToCurrentDay, notify]
+    [updateDayWithPayload, addEntryToCurrentDay, notify]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(
@@ -172,11 +204,15 @@ export function AppShell() {
           onLightbox={setLightbox}
           onNotify={notify}
           onPinToVault={handlePinToVault}
+          onEditDay={handleEditDay}
           streak={streakState.streak}
           streakStatus={streakState.status}
           hoursLeft={streakState.hoursLeft}
           onOpenProfile={() => setProfileModal(true)}
-          onCompose={() => setComposer(true)}
+          onCompose={() => {
+            setEditingDay(null)
+            setComposer(true)
+          }}
           onNavigate={navigate}
           soundEnabled={state.soundEnabled}
         />
@@ -188,6 +224,7 @@ export function AppShell() {
           onLightbox={setLightbox}
           onNotify={notify}
           onSelectDay={handleSelectDay}
+          onEditDay={handleEditDay}
         />
       ),
       vault: (
@@ -282,9 +319,13 @@ export function AppShell() {
           {composer && (
             <Composer
               initialDraft={state.composerDraft}
+              editingDay={editingDay}
               onSaveDraft={saveComposerDraft}
               onClearDraft={clearComposerDraft}
-              onClose={() => setComposer(false)}
+              onClose={() => {
+                setComposer(false)
+                setEditingDay(null)
+              }}
               onSaved={handleSaveComposer}
               soundEnabled={state.soundEnabled}
             />

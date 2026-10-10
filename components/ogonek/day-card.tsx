@@ -1,8 +1,7 @@
 'use client'
 
-import { Activity, Flame, Heart, MoreHorizontal, ShieldAlert, Sparkles } from 'lucide-react'
-import { useState } from 'react'
-import { PHOTOS } from '@/lib/ogonek/data'
+import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert, Sparkles } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
@@ -19,6 +18,7 @@ type Props = {
   onLightbox: (url: string) => void
   onNotify?: (msg: string) => void
   onPinToVault?: (fact: string) => void
+  onEdit?: (day: Day) => void
   soundEnabled?: boolean
 }
 
@@ -27,13 +27,14 @@ export function DayCard({
   onLightbox,
   onNotify,
   onPinToVault,
+  onEdit,
   soundEnabled = true,
 }: Props) {
   const [liked, setLiked] = useState(false)
   const [thanked, setThanked] = useState(false)
   const [shareModalOpen, setShareModalOpen] = useState(false)
 
-  const photos = day.photos && day.photos.length >= 3 ? day.photos : PHOTOS
+  const photos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
 
   const handleLike = () => {
     playClick(soundEnabled)
@@ -71,6 +72,15 @@ export function DayCard({
     )
   }
 
+  const scoreDisplay = useMemo(() => {
+    const valid = (day.prides || []).filter(
+      (p) => typeof p.scale === 'number' && !isNaN(p.scale) && p.scale > 0 && p.text !== '—'
+    )
+    if (valid.length === 0) return null
+    const sum = valid.reduce((acc, p) => acc + p.scale, 0)
+    return (sum / valid.length).toFixed(1)
+  }, [day.prides])
+
   return (
     <>
       <article className="day-card" id={`day-card-${day.id}`}>
@@ -84,20 +94,33 @@ export function DayCard({
             </div>
             <div className="post-sub">
               <span className="day-badge">День #{day.id}</span>
-              <span className="score">★ 8.4</span>
+              {scoreDisplay ? <span className="score">★ {scoreDisplay}</span> : null}
             </div>
           </div>
-          <Tooltip content="Опции дня" side="left">
-            <button
-              type="button"
-              className="muted"
-              aria-label="Опции публикации"
-              style={{ padding: 4 }}
-              onClick={() => setShareModalOpen(true)}
-            >
-              <MoreHorizontal size={20} />
-            </button>
-          </Tooltip>
+          <div className="flex items-center gap-1">
+            <Tooltip content="Редактировать день" side="left">
+              <button
+                type="button"
+                className="muted hover:text-orange-400 transition-colors"
+                aria-label="Редактировать день"
+                style={{ padding: 4 }}
+                onClick={() => onEdit?.(day)}
+              >
+                <Pencil size={18} />
+              </button>
+            </Tooltip>
+            <Tooltip content="Опции дня" side="left">
+              <button
+                type="button"
+                className="muted"
+                aria-label="Опции публикации"
+                style={{ padding: 4 }}
+                onClick={() => setShareModalOpen(true)}
+              >
+                <MoreHorizontal size={20} />
+              </button>
+            </Tooltip>
+          </div>
         </header>
 
         <p className="post-copy">{day.title}</p>
@@ -115,7 +138,7 @@ export function DayCard({
             <button
               type="button"
               onClick={() => onLightbox(photos[0])}
-              className="media-main"
+              className={photos.length === 1 ? 'media-single w-full' : 'media-main'}
               aria-label="Открыть главное изображение дня"
             >
               <img
@@ -124,30 +147,34 @@ export function DayCard({
                 loading="lazy"
               />
             </button>
-            <div>
-              <button
-                type="button"
-                onClick={() => onLightbox(photos[1])}
-                aria-label="Открыть второе изображение дня"
-              >
-                <img
-                  src={photos[1]}
-                  alt="Второе фото дня"
-                  loading="lazy"
-                />
-              </button>
-              <button
-                type="button"
-                onClick={() => onLightbox(photos[2])}
-                aria-label="Открыть третье изображение дня"
-              >
-                <img
-                  src={photos[2]}
-                  alt="Третье фото дня"
-                  loading="lazy"
-                />
-              </button>
-            </div>
+            {photos.length > 1 && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => onLightbox(photos[1])}
+                  aria-label="Открыть второе изображение дня"
+                >
+                  <img
+                    src={photos[1]}
+                    alt="Второе фото дня"
+                    loading="lazy"
+                  />
+                </button>
+                {photos[2] && (
+                  <button
+                    type="button"
+                    onClick={() => onLightbox(photos[2])}
+                    aria-label="Открыть третье изображение дня"
+                  >
+                    <img
+                      src={photos[2]}
+                      alt="Третье фото дня"
+                      loading="lazy"
+                    />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -173,6 +200,18 @@ export function DayCard({
             >
               <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
               <span>Спасибо</span>
+            </button>
+          </Tooltip>
+
+          <Tooltip content="Редактировать день" side="top">
+            <button
+              type="button"
+              onClick={() => onEdit?.(day)}
+              aria-label="Редактировать день"
+              className="hover:text-orange-400 transition-colors"
+            >
+              <Pencil size={18} />
+              <span>Править</span>
             </button>
           </Tooltip>
 

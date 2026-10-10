@@ -37,6 +37,7 @@ export type ComposerPayload = {
   prides: string[]
   gratitudes: string[]
   photo: string | null
+  ratings?: Record<number, { scale: number; overcome: OvercomeLevel }>
 }
 
 export type ComposerDraft = {

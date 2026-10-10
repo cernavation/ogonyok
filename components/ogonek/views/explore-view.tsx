@@ -13,6 +13,7 @@ type Props = {
   onLightbox: (url: string) => void
   onNotify: (msg: string) => void
   onSelectDay?: (dayId: number) => void
+  onEditDay?: (day: Day) => void
 }
 
 function highlightText(text: string, query: string): ReactNode {
@@ -50,6 +51,7 @@ export function ExploreView({
   onLightbox,
   onNotify,
   onSelectDay,
+  onEditDay,
 }: Props) {
   const [query, setQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
@@ -282,14 +284,20 @@ export function ExploreView({
               </section>
             )}
 
-            {filteredDays.map((day) => (
+            {filteredDays.slice(0, 30).map((day) => (
               <DayCard
                 key={day.id}
                 day={day}
                 onLightbox={onLightbox}
                 onNotify={onNotify}
+                onEdit={onEditDay}
               />
             ))}
+            {filteredDays.length > 30 && (
+              <div className="py-4 text-center text-xs text-muted">
+                Показано первые 30 результатов из {filteredDays.length}. Уточните поисковый запрос для более точного совпадения.
+              </div>
+            )}
           </div>
         ) : (
           <div className="empty-state" role="status">

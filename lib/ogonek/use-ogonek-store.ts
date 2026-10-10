@@ -2,6 +2,7 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { CURRENT_DAY } from './data'
+import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   DEFAULT_STORE_STATE,
   loadStore,
@@ -152,6 +153,66 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  const updateDay = useCallback(
+    (updatedDay: Day) => {
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => (d.id === updatedDay.id ? updatedDay : d)),
+      }))
+    },
+    [updateStore]
+  )
+
+  const updateDayWithPayload = useCallback(
+    (dayId: number, payload: ComposerPayload) => {
+      updateStore((prev) => {
+        const targetDay = prev.days.find((d) => d.id === dayId)
+        if (!targetDay) return prev
+
+        const updatedPrides: PrideEntry[] = payload.prides.map((text, idx) => {
+          const existingPride = targetDay.prides[idx]
+          const customRating = payload.ratings?.[idx]
+          const heuristic = evaluatePrideItemHeuristic(text)
+
+          const scale =
+            customRating?.scale ??
+            (existingPride && typeof existingPride.scale === 'number' && existingPride.scale > 0
+              ? existingPride.scale
+              : heuristic.scale)
+
+          const overcome =
+            customRating?.overcome ??
+            (existingPride && typeof existingPride.overcome === 'number'
+              ? existingPride.overcome
+              : heuristic.overcome)
+
+          return {
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            scale,
+            overcome,
+          }
+        })
+
+        const updatedDay: Day = {
+          ...targetDay,
+          title: updatedPrides[0]?.text || payload.gratitudes[0] || targetDay.title,
+          prides: updatedPrides,
+          gratitudes: payload.gratitudes,
+          photos: payload.photo
+            ? [payload.photo, ...(targetDay.photos || []).filter((p) => p !== payload.photo)]
+            : targetDay.photos,
+        }
+
+        return {
+          ...prev,
+          days: prev.days.map((d) => (d.id === dayId ? updatedDay : d)),
+        }
+      })
+    },
+    [updateStore]
+  )
+
   const saveMorningIntentions = useCallback(
     (dateKey: string, focus: [string, string, string]) => {
       updateStore((prev) => ({
@@ -255,6 +316,8 @@ export function useOgonekStore() {
     state,
     isHydrated: typeof window !== 'undefined',
     addDay,
+    updateDay,
+    updateDayWithPayload,
     addEntryToCurrentDay,
     saveMorningIntentions,
     saveComposerDraft,

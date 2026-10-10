@@ -9,11 +9,7 @@ export const STATS = {
   entries: '3585+',
 } as const
 
-export const PHOTOS: string[] = [
-  'https://images.unsplash.com/photo-1541625602330-2277a4c46182?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85',
-  'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=85',
-]
+export const PHOTOS: string[] = []
 
 export const INITIAL_PRIDES: PrideEntry[] = [
   {
@@ -24,9 +20,9 @@ export const INITIAL_PRIDES: PrideEntry[] = [
   },
   {
     num: '02',
-    text: 'Проехал 38 км на велосипеде, несмотря на дождь',
+    text: 'Сделал тренировку и сохранил дисциплину',
     scale: 8,
-    overcome: 3,
+    overcome: 2,
   },
   {
     num: '03',
@@ -115,7 +111,7 @@ export const INITIAL_DAYS: Day[] = [
     tags: ['Для тебя', '🔥 Гордости', '❤️ Благодарности', '#Memernity', '#Спорт'],
     prides: INITIAL_PRIDES,
     gratitudes: INITIAL_GRATITUDES,
-    photos: PHOTOS,
+    photos: undefined,
     dateISO: '2026-10-09T09:14:00.000Z',
     status: 'normal',
   },

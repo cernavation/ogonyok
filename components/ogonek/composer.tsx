@@ -6,21 +6,23 @@ import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { ComposerDraft, ComposerPayload, Mode } from '@/lib/ogonek/types'
+import type { ComposerDraft, ComposerPayload, Day, Mode } from '@/lib/ogonek/types'
 import { ModalShell } from './modal-shell'
 import { Tooltip } from './tooltip'
 
 type Props = {
   initialDraft?: ComposerDraft | null
+  editingDay?: Day | null
   onSaveDraft?: (draft: ComposerDraft) => void
   onClearDraft?: () => void
   onClose: () => void
-  onSaved: (payload: ComposerPayload) => void
+  onSaved: (payload: ComposerPayload, editingDayId?: number) => void
   soundEnabled?: boolean
 }
 
 export function Composer({
   initialDraft,
+  editingDay,
   onSaveDraft,
   onClearDraft,
   onClose,
@@ -28,18 +30,52 @@ export function Composer({
   soundEnabled = true,
 }: Props) {
   const [tab, setTab] = useState<Mode>(() => initialDraft?.tab || 'pride')
-  const [extra, setExtra] = useState(() => initialDraft?.extra || false)
+  const [extra, setExtra] = useState(() => {
+    if (editingDay) {
+      return (editingDay.prides?.length || 0) > 5 || (editingDay.gratitudes?.length || 0) > 5
+    }
+    return initialDraft?.extra || false
+  })
   const [recording, setRecording] = useState<number | null>(null)
   const [prides, setPrides] = useState<string[]>(() => {
+    if (editingDay && Array.isArray(editingDay.prides)) {
+      const texts = editingDay.prides.map((p) => (p.text === '—' ? '' : p.text))
+      while (texts.length < 6) texts.push('')
+      return texts
+    }
     return initialDraft?.prides || ['', '', '', '', '', '']
   })
   const [gratitudes, setGratitudes] = useState<string[]>(() => {
+    if (editingDay && Array.isArray(editingDay.gratitudes)) {
+      const texts = editingDay.gratitudes.map((g) => (g === '—' ? '' : g))
+      while (texts.length < 6) texts.push('')
+      return texts
+    }
     return initialDraft?.gratitudes || ['', '', '', '', '', '']
   })
-  const [preview, setPreview] = useState<string | null>(() => initialDraft?.photo || null)
+  const [preview, setPreview] = useState<string | null>(() => {
+    if (editingDay && editingDay.photos && editingDay.photos.length > 0) {
+      return editingDay.photos[0]
+    }
+    return initialDraft?.photo || null
+  })
   const [photoId, setPhotoId] = useState<string | null>(null)
   const [isEvaluating, setIsEvaluating] = useState(false)
-  const [evaluations, setEvaluations] = useState<Record<number, PrideEvaluation>>({})
+  const [evaluations, setEvaluations] = useState<Record<number, PrideEvaluation>>(() => {
+    if (editingDay && Array.isArray(editingDay.prides)) {
+      const evMap: Record<number, PrideEvaluation> = {}
+      editingDay.prides.forEach((p, idx) => {
+        evMap[idx] = {
+          scale: typeof p.scale === 'number' ? p.scale : 7,
+          overcome: typeof p.overcome === 'number' ? p.overcome : 0,
+          tags: [],
+          verdict: 'Оригинальная оценка дня',
+        }
+      })
+      return evMap
+    }
+    return {}
+  })
 
   const previewRef = useRef<string | null>(preview)
 
@@ -51,9 +87,9 @@ export function Composer({
     }
   }, [])
 
-  // Auto-save draft in real time
+  // Auto-save draft in real time (only when creating a new day, not editing an archived day)
   useEffect(() => {
-    if (!onSaveDraft) return
+    if (editingDay || !onSaveDraft) return
     const hasAnyContent =
       prides.some((p) => p.trim().length > 0) ||
       gratitudes.some((g) => g.trim().length > 0) ||
@@ -69,7 +105,7 @@ export function Composer({
         lastSavedISO: new Date().toISOString(),
       })
     }
-  }, [prides, gratitudes, preview, tab, extra, onSaveDraft])
+  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -164,18 +200,41 @@ export function Composer({
   const handleSave = () => {
     if (!canSave) return
     playSuccess(soundEnabled)
-    onSaved({
-      prides: filledPrides,
-      gratitudes: filledGratitudes,
-      photo: photoId || preview,
+
+    const ratings: Record<number, { scale: number; overcome: 0 | 1 | 2 | 3 }> = {}
+    prides.forEach((_, idx) => {
+      const ev = evaluations[idx]
+      if (ev) {
+        ratings[idx] = {
+          scale: ev.scale,
+          overcome: (Math.min(3, Math.max(0, ev.overcome)) as 0 | 1 | 2 | 3) || 0,
+        }
+      }
     })
-    onClearDraft?.()
+
+    onSaved(
+      {
+        prides: filledPrides,
+        gratitudes: filledGratitudes,
+        photo: photoId || preview,
+        ratings,
+      },
+      editingDay?.id
+    )
+    if (!editingDay) {
+      onClearDraft?.()
+    }
   }
 
   return (
-    <ModalShell title="Записать день" onClose={onClose}>
+    <ModalShell
+      title={editingDay ? `Редактировать День #${editingDay.id}` : 'Записать день'}
+      onClose={onClose}
+    >
       <p className="modal-intro">
-        День #{CURRENT_DAY} · добавь факты, которые хочется помнить.
+        {editingDay
+          ? `День #${editingDay.id} · редактируй формулировки и оценки дня.`
+          : `День #${CURRENT_DAY} · добавь факты, которые хочется помнить.`}
       </p>
 
       <div className="composer-tabs" role="tablist" aria-label="Разделы записи">
@@ -239,14 +298,41 @@ export function Composer({
               </div>
 
               {ev && (
-                <div className="composer-eval-badge flex items-center gap-2 text-xs text-muted pl-8 pt-1">
-                  <span className="text-orange-400 font-semibold">Сила: {ev.scale}/10</span>
-                  <span>·</span>
-                  <span className="text-amber-400 font-semibold">Преодоление: {ev.overcome}/3</span>
-                  <span>·</span>
-                  <span className="italic truncate max-w-[280px]" title={ev.verdict}>
-                    «{ev.verdict}»
-                  </span>
+                <div className="composer-eval-badge flex items-center justify-between text-xs text-muted pl-8 pt-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-orange-400 font-semibold">Оценка: {ev.scale}/10</span>
+                    <span>·</span>
+                    <span className="text-amber-400 font-semibold">Преодоление: {ev.overcome}/3</span>
+                    <span>·</span>
+                    <span className="italic truncate max-w-[200px]" title={ev.verdict}>
+                      «{ev.verdict}»
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] text-muted">Балл:</span>
+                    <select
+                      value={ev.scale}
+                      onChange={(e) => {
+                        const newScale = parseInt(e.target.value, 10)
+                        setEvaluations((prev) => ({
+                          ...prev,
+                          [i]: {
+                            scale: newScale,
+                            overcome: prev[i]?.overcome ?? 0,
+                            tags: prev[i]?.tags ?? [],
+                            verdict: 'Изменено пользователем',
+                          },
+                        }))
+                      }}
+                      className="bg-neutral-800 text-xs text-white rounded px-1.5 py-0.5 border border-neutral-700 cursor-pointer"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                        <option key={num} value={num}>
+                          {num}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )}
             </div>
@@ -320,7 +406,7 @@ export function Composer({
           disabled={!canSave}
           style={{ opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}
         >
-          <Check size={17} /> Опубликовать день
+          <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
         </button>
       </footer>
     </ModalShell>

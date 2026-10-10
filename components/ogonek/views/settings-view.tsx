@@ -96,8 +96,31 @@ export function SettingsView({
       }
     }
     reader.readAsText(file)
-
     e.target.value = ''
+  }
+
+  const [isLoadingAuthentic, setIsLoadingAuthentic] = useState(false)
+
+  const handleLoadAuthenticHistory = async () => {
+    playClick(state.soundEnabled)
+    setIsLoadingAuthentic(true)
+    try {
+      const res = await fetch('/seeds/ogonek-import.v1.json')
+      if (!res.ok) throw new Error('Файл сида не найден')
+      const data = await res.json()
+      if (data && Array.isArray(data.days) && data.days.length > 0) {
+        onImportState(data)
+        playSuccess(state.soundEnabled)
+        onNotify(`100% подлинная летопись успешно загружена (${data.days.length} дней)!`)
+      } else {
+        throw new Error('Некорректная структура данных в архиве')
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Ошибка загрузки'
+      onNotify(`Не удалось загрузить архив: ${msg}`)
+    } finally {
+      setIsLoadingAuthentic(false)
+    }
   }
 
   const handleSyncStreak = async () => {
@@ -293,6 +316,18 @@ export function SettingsView({
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+            <button
+              type="button"
+              className="export-button"
+              onClick={handleLoadAuthenticHistory}
+              disabled={isLoadingAuthentic}
+              style={{ color: '#ff8a50', borderColor: 'rgba(255, 107, 53, 0.4)' }}
+              aria-label="Загрузить подлинную историю из архива (719 дней)"
+            >
+              {isLoadingAuthentic ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+              <span>Загрузить подлинную историю (719 дней)</span>
+            </button>
+
             <button
               type="button"
               className="export-button"
