@@ -1,23 +1,31 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
 
 export const metadata: Metadata = {
-  title: 'Огонёк — журнал побед',
-  description: 'Личный журнал достижений, благодарностей и доказательств силы.',
-  generator: 'v0.app',
+  title: 'Огонёк — Дневник силы и благодарности',
+  description: 'Личный дневник достижений, благодарностей и фиксации внутренней опоры.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Огонёк',
+  },
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
+        url: '/icons/icon-192.png',
+        sizes: '192x192',
+        type: 'image/png',
       },
       {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
+        url: '/icons/icon-512.png',
+        sizes: '512x512',
+        type: 'image/png',
       },
       {
-        url: '/icon.svg',
+        url: '/icons/icon-192.svg',
         type: 'image/svg+xml',
       },
     ],
@@ -26,11 +34,11 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: 'white' },
-    { media: '(prefers-color-scheme: dark)', color: 'black' },
-  ],
+  viewportFit: 'cover',
+  themeColor: '#000000',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({
@@ -41,6 +49,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className="antialiased">
+        <ServiceWorkerRegister />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

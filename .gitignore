@@ -9,8 +9,15 @@ __v0_jsx-dev-runtime.ts
 
 # Environment variables
 .env*.local
+.env.local
+
+# Private user data and legacy HTML
+gordza_new.html
+data/
+.data/
 
 # Common ignores
 node_modules
 .next/
 .DS_Store
+*.tsbuildinfo
