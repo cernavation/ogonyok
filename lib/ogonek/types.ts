@@ -11,6 +11,20 @@ export type PrideEntry = {
   overcome: OvercomeLevel // 0..3
 }
 
+export type GratitudeEntry = {
+  num?: string
+  text: string
+  rating?: number // 1..10
+}
+
+export function getGratitudeText(g: string | GratitudeEntry): string {
+  return typeof g === 'string' ? g : g.text
+}
+
+export function getGratitudeRating(g: string | GratitudeEntry): number {
+  return typeof g === 'object' && typeof g.rating === 'number' ? g.rating : 10
+}
+
 export type DayStatus = 'normal' | 'missed'
 
 export type Day = {
@@ -18,7 +32,7 @@ export type Day = {
   title: string
   tags: string[]
   prides: PrideEntry[]
-  gratitudes: string[]
+  gratitudes: (string | GratitudeEntry)[]
   photos?: string[]
   dateISO?: string
   status?: DayStatus

@@ -16,6 +16,7 @@ const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.Hotke
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 import { Sidebar } from './sidebar'
+import { ScrollPill } from './scroll-pill'
 import { Toast } from './toast'
 import { TooltipProvider } from './tooltip'
 import { AnalyticsView } from './views/analytics-view'
@@ -140,6 +141,13 @@ export function AppShell() {
   const handleEditDay = useCallback((day: Day) => {
     setEditingDay(day)
     setComposer(true)
+  }, [])
+
+  const handleScrollBottom = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('ogonek:scroll-bottom'))
+    setTimeout(() => {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+    }, 80)
   }, [])
 
   const handleSelectDay = useCallback(
@@ -308,6 +316,8 @@ export function AppShell() {
           hoursLeft={streakState.hoursLeft}
           isDemo={state.isDemo}
         />
+
+        <ScrollPill onScrollBottom={handleScrollBottom} />
 
         <BottomNav
           view={view}

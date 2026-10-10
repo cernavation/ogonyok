@@ -25,7 +25,8 @@ export function formatDayAsText(day: Day): string {
     lines.push('')
     lines.push('❤️ Благодарности:')
     day.gratitudes.forEach((g, idx) => {
-      lines.push(`${idx + 1}. ${g}`)
+      const text = typeof g === 'string' ? g : g.text
+      lines.push(`${idx + 1}. ${text}`)
     })
   }
 
@@ -52,7 +53,8 @@ export function generateDayCardSvg(day: Day): string {
 
   const gratLines: string[] = []
   day.gratitudes.slice(0, 3).forEach((g, i) => {
-    gratLines.push(`${i + 1}. ${g}`)
+    const text = typeof g === 'string' ? g : g.text
+    gratLines.push(`${i + 1}. ${text}`)
   })
 
   const estimatedHeight = 320 + prideLines.length * 44 + gratLines.length * 38

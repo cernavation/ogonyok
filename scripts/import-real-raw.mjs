@@ -6,18 +6,19 @@
  *
  * Rules:
  * - Parses data/REAL_RAW_DATA.json.
- * - Applies original offsets: prideOffset: 289, gratOffset: 244.
- * - Combines prides and gratitudes into single Day objects by calendar date.
- * - Preserves EVERY single word, comma, original rating (1-10) and real dates. No censorship!
- * - Completely removes any stock fake bicycle images. If images is empty, card is a clean text post without photos.
- * - First 24 days (from notebook) created with placeholder "—".
- * - Saves output to public/seeds/ogonek-import.v1.json and data/migrated/ogonek-import.v1.json.
+ * - Pride numbering: dayId = item.seq + prideOffset (offset 294 aligns Day #670, Day #651, and Day #719).
+ * - Real dates: taken STRICTLY from item.dateISO / item.createdAtISO. No synthetic forward/backward shift!
+ * - Pairs prides and gratitudes by calendar date (dateKey = YYYY-MM-DD).
+ * - Preserves EVERY word, comma, original rating (1-10) without censorship.
+ * - Completely removes any stock fake bicycle photos: if images is empty, card is clean text-only.
+ * - Days 1–24 (from notebook) created with placeholder "—".
+ * - Exactly 719 contiguous days in ledger, Day #719 is newest real pride day (no empty "—" between 713 and 719).
+ * - Saves output to public/seeds/ogonek-import.v1.json, data/migrated/ogonek-import.v1.json, and public/seeds/history-migrated.json.
  */
 
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { evaluatePrideItemHeuristic } from '../lib/ogonek/evaluate-heuristic.ts'
 import { computeStreak } from '../lib/ogonek/streak.ts'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -34,8 +35,17 @@ const inputCandidate1 = path.resolve(rootDir, 'data', 'REAL_RAW_DATA.json')
 const inputCandidate2 = path.resolve(rootDir, 'data', 'migrated', 'REAL_RAW_DATA.json')
 const inputPath = getArgValue('--input') || (fs.existsSync(inputCandidate1) ? inputCandidate1 : inputCandidate2)
 
+const customOffset = getArgValue('--pride-offset')
+// Default offset 294 mathematically satisfies:
+// seq 376 (2026-08-21) + 294 = Day #670
+// seq 357 (2026-08-01) + 294 = Day #651
+// seq 425 (2026-10-07) + 294 = Day #719 (last authentic pride day)
+const prideOffset = customOffset ? parseInt(customOffset, 10) : 294
+const gratOffset = 249
+
 const publicOutPath = path.resolve(rootDir, 'public', 'seeds', 'ogonek-import.v1.json')
 const migratedOutPath = path.resolve(rootDir, 'data', 'migrated', 'ogonek-import.v1.json')
+const historySeedPath = path.resolve(rootDir, 'public', 'seeds', 'history-migrated.json')
 const reportPath = path.resolve(rootDir, 'data', 'migrated', 'report.json')
 
 console.log('🔥 ОГОНЁК: МИГРАЦИЯ 100% ПОДЛИННЫХ ДАННЫХ ИЗ REAL_RAW_DATA.json')
@@ -55,11 +65,8 @@ const rawItems = Array.isArray(parsedData)
   ? parsedData.items
   : []
 
-const prideOffset = parsedData.settings?.prideOffset ?? 289
-const gratOffset = parsedData.settings?.gratOffset ?? 244
-
 console.log(`- Загружено сырых записей: ${rawItems.length}`)
-console.log(`- Смещения: prideOffset = ${prideOffset}, gratOffset = ${gratOffset}`)
+console.log(`- Смещение гордостей: prideOffset = ${prideOffset}`)
 
 const TAG_MAP = {
   work: '#Бизнес',
@@ -70,133 +77,108 @@ const TAG_MAP = {
   creative: 'Творчество',
 }
 
-// Group items by calendar date (YYYY-MM-DD)
-const byDate = new Map()
+const prides = rawItems.filter((d) => d.type === 'pride')
+const grats = rawItems.filter((d) => d.type === 'gratitude')
 
-for (const item of rawItems) {
-  const dateKey = item.dateISO || (item.createdAtISO ? item.createdAtISO.slice(0, 10) : null)
-  if (!dateKey) continue
+console.log(`- Найдено записей гордостей: ${prides.length}`)
+console.log(`- Найдено записей благодарностей: ${grats.length}`)
 
-  if (!byDate.has(dateKey)) {
-    byDate.set(dateKey, { prides: [], grats: [] })
-  }
-  const group = byDate.get(dateKey)
-  if (item.type === 'pride') {
-    group.prides.push(item)
-  } else if (item.type === 'gratitude') {
-    group.grats.push(item)
-  }
+// Map gratitudes by calendar date key (YYYY-MM-DD)
+const gratsByDate = new Map()
+for (const g of grats) {
+  const d = g.dateISO || (g.createdAtISO ? g.createdAtISO.slice(0, 10) : null)
+  if (!d) continue
+  if (!gratsByDate.has(d)) gratsByDate.set(d, [])
+  gratsByDate.get(d).push(g)
 }
-
-// Sort prides and grats inside each group chronologically
-for (const group of byDate.values()) {
-  group.prides.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
-  group.grats.sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
-}
-
-const sortedDateKeys = Array.from(byDate.keys()).sort()
-console.log(`- Уникальных календарных дней с записями: ${sortedDateKeys.length}`)
-console.log(`- Диапазон реальных дат: ${sortedDateKeys[0]} → ${sortedDateKeys[sortedDateKeys.length - 1]}`)
 
 let totalPridesCount = 0
 let totalGratsCount = 0
 let realDaysWithPhotos = 0
 
-// Map real days
-const realDays = []
-let prevRealDayId = prideOffset // Start before 290
+// Map real days by dayId
+const realDaysMap = new Map()
 
-for (const dateKey of sortedDateKeys) {
-  const group = byDate.get(dateKey)
-
-  // Determine day ID using pride seq + prideOffset
-  let targetId
-  if (group.prides.length > 0 && typeof group.prides[0].seq === 'number') {
-    targetId = group.prides[0].seq + prideOffset
-  } else if (group.grats.length > 0 && typeof group.grats[0].seq === 'number') {
-    targetId = prevRealDayId + 1
-  } else {
-    targetId = prevRealDayId + 1
-  }
-
-  // Ensure strictly monotonic ID
-  if (targetId <= prevRealDayId) {
-    targetId = prevRealDayId + 1
-  }
-  prevRealDayId = targetId
+for (const p of prides) {
+  const dayId = p.seq + prideOffset
+  const dateKey = p.dateISO || (p.createdAtISO ? p.createdAtISO.slice(0, 10) : '')
+  const dateISO = p.createdAtISO || (dateKey ? `${dateKey}T12:00:00.000Z` : undefined)
 
   // Extract pride entries preserving 100% authentic text & rating
   const prideEntries = []
-  for (const prideItem of group.prides) {
-    if (Array.isArray(prideItem.entries)) {
-      for (const entry of prideItem.entries) {
-        const text = typeof entry.text === 'string' ? entry.text : ''
-        let scale = 7
-        if (typeof entry.rating === 'number' && !isNaN(entry.rating)) {
-          scale = Math.min(10, Math.max(1, Math.round(entry.rating)))
-        } else if (entry.rating != null && !isNaN(parseFloat(String(entry.rating)))) {
-          scale = Math.min(10, Math.max(1, Math.round(parseFloat(String(entry.rating)))))
-        }
-
-        const heuristic = evaluatePrideItemHeuristic(text)
-        const overcome = heuristic.overcome
-
-        prideEntries.push({
-          num: String(prideEntries.length + 1).padStart(2, '0'),
-          text,
-          scale,
-          overcome,
-        })
-        totalPridesCount++
+  if (Array.isArray(p.entries)) {
+    for (const entry of p.entries) {
+      const text = typeof entry.text === 'string' ? entry.text : ''
+      let scale = 7
+      if (typeof entry.rating === 'number' && !isNaN(entry.rating)) {
+        scale = Math.min(10, Math.max(1, Math.round(entry.rating)))
+      } else if (entry.rating != null && !isNaN(parseFloat(String(entry.rating)))) {
+        scale = Math.min(10, Math.max(1, Math.round(parseFloat(String(entry.rating)))))
       }
+
+      prideEntries.push({
+        num: String(prideEntries.length + 1).padStart(2, '0'),
+        text,
+        scale,
+        overcome: 0,
+      })
+      totalPridesCount++
     }
   }
 
-  // Extract gratitude entries preserving 100% authentic text
-  const gratitudes = []
-  for (const gratItem of group.grats) {
-    if (Array.isArray(gratItem.entries)) {
-      for (const entry of gratItem.entries) {
+  // Find matching gratitudes for this calendar date
+  const matchingGrats = gratsByDate.get(dateKey) || []
+  const gratitudeEntries = []
+  for (const gItem of matchingGrats) {
+    if (Array.isArray(gItem.entries)) {
+      for (const entry of gItem.entries) {
         const text = typeof entry.text === 'string' ? entry.text : ''
         if (text.length > 0) {
-          gratitudes.push(text)
+          let rating = 10
+          if (typeof entry.rating === 'number' && !isNaN(entry.rating)) {
+            rating = Math.min(10, Math.max(1, Math.round(entry.rating)))
+          } else if (entry.rating != null && !isNaN(parseFloat(String(entry.rating)))) {
+            rating = Math.min(10, Math.max(1, Math.round(parseFloat(String(entry.rating)))))
+          }
+
+          gratitudeEntries.push({
+            num: String(gratitudeEntries.length + 1).padStart(2, '0'),
+            text,
+            rating,
+          })
           totalGratsCount++
         }
       }
     }
   }
 
-  // Map tags
-  const rawTags = []
-  for (const p of group.prides) {
-    if (Array.isArray(p.tags)) rawTags.push(...p.tags)
-  }
-  for (const g of group.grats) {
-    if (Array.isArray(g.tags)) rawTags.push(...g.tags)
-  }
-
+  // Tags
   const tagSet = new Set()
   tagSet.add('Для тебя')
   if (prideEntries.length > 0) tagSet.add('🔥 Гордости')
-  if (gratitudes.length > 0) tagSet.add('❤️ Благодарности')
+  if (gratitudeEntries.length > 0) tagSet.add('❤️ Благодарности')
+
+  const rawTags = []
+  if (Array.isArray(p.tags)) rawTags.push(...p.tags)
+  for (const g of matchingGrats) {
+    if (Array.isArray(g.tags)) rawTags.push(...g.tags)
+  }
 
   for (const t of rawTags) {
     if (TAG_MAP[t]) tagSet.add(TAG_MAP[t])
     else if (typeof t === 'string' && t.trim().length > 0) tagSet.add(t)
   }
 
-  // Extract photos ONLY if genuine images exist in source
+  // Photos (ONLY genuine images from source dataURL, NO fake stock unsplash photos)
   const photos = []
-  for (const p of group.prides) {
-    if (Array.isArray(p.images)) {
-      for (const img of p.images) {
-        if (img && typeof img.dataURL === 'string' && img.dataURL.length > 0) {
-          photos.push(img.dataURL)
-        }
+  if (Array.isArray(p.images)) {
+    for (const img of p.images) {
+      if (img && typeof img.dataURL === 'string' && img.dataURL.length > 0) {
+        photos.push(img.dataURL)
       }
     }
   }
-  for (const g of group.grats) {
+  for (const g of matchingGrats) {
     if (Array.isArray(g.images)) {
       for (const img of g.images) {
         if (img && typeof img.dataURL === 'string' && img.dataURL.length > 0) {
@@ -210,54 +192,33 @@ for (const dateKey of sortedDateKeys) {
     realDaysWithPhotos++
   }
 
-  // Title is first pride entry text, or first gratitude, or date
   const title =
     prideEntries[0]?.text ||
-    (gratitudes[0] ? `Благодарность: ${gratitudes[0]}` : `Запись за ${dateKey}`)
+    (gratitudeEntries[0] ? `Благодарность: ${gratitudeEntries[0].text}` : `Запись за ${dateKey}`)
 
-  const dateISO =
-    group.prides[0]?.createdAtISO ||
-    group.grats[0]?.createdAtISO ||
-    `${dateKey}T12:00:00.000Z`
-
-  realDays.push({
-    id: targetId,
+  realDaysMap.set(dayId, {
+    id: dayId,
     title,
     tags: Array.from(tagSet),
     prides: prideEntries,
-    gratitudes,
+    gratitudes: gratitudeEntries,
     photos: photos.length > 0 ? photos : undefined,
     dateISO,
     status: 'normal',
   })
 }
 
-// Build map of real days by ID
-const realDaysById = new Map()
-for (const day of realDays) {
-  realDaysById.set(day.id, day)
-}
-
-// Target total days is 719 (CURRENT_DAY)
+// Build complete ledger from Day 1 to Day 719
 const TARGET_TOTAL_DAYS = 719
-
-// Generate full days array from Day 1 to Day 719
-// Earliest day date can be calculated backward from Day 290 (2025-08-17)
-const day290Date = new Date('2025-08-17T12:00:00.000Z')
 const fullDays = []
 
 for (let id = 1; id <= TARGET_TOTAL_DAYS; id++) {
-  if (realDaysById.has(id)) {
-    fullDays.push(realDaysById.get(id))
+  if (realDaysMap.has(id)) {
+    fullDays.push(realDaysMap.get(id))
   } else {
-    // Days without direct digital records:
     // Days 1..24: Paper notebook ("из тетрадки") with placeholder "—"
-    // Days 25..289: Historical period before gordza with placeholder "—"
-    // Days 714..719: Days up to today with placeholder "—"
-    const offsetFrom290 = id - 290
-    const calcDate = new Date(day290Date.getTime() + offsetFrom290 * 24 * 60 * 60 * 1000)
-    const dateISO = calcDate.toISOString()
-
+    // Days 25..294: Historical period before gordza with placeholder "—"
+    // Missing sequence days: with placeholder "—"
     fullDays.push({
       id,
       title: '—',
@@ -269,25 +230,46 @@ for (let id = 1; id <= TARGET_TOTAL_DAYS; id++) {
         { num: '04', text: '—', scale: 7, overcome: 0 },
         { num: '05', text: '—', scale: 7, overcome: 0 },
       ],
-      gratitudes: ['—', '—', '—', '—', '—'],
+      gratitudes: [
+        { num: '01', text: '—', rating: 7 },
+        { num: '02', text: '—', rating: 7 },
+        { num: '03', text: '—', rating: 7 },
+        { num: '04', text: '—', rating: 7 },
+        { num: '05', text: '—', rating: 7 },
+      ],
       photos: undefined,
-      dateISO,
+      dateISO: undefined,
       status: 'normal',
     })
   }
 }
 
-// Sort descending by ID (newest first: Day #719 down to Day #1)
+// Sort descending by ID: newest first (#719 down to #1)
 fullDays.sort((a, b) => b.id - a.id)
 
-console.log(`✅ Сформирована непрерывная летопись из ${fullDays.length} дней (#1..#${TARGET_TOTAL_DAYS})`)
-console.log(`- Реальных дней с гордостями/благодарностями: ${realDays.length}`)
-console.log(`- Всего подлинных гордостей: ${totalPridesCount}`)
-console.log(`- Всего подлинных благодарностей: ${totalGratsCount}`)
+console.log(`✅ Сформирована летопись из ${fullDays.length} дней (#1..#${TARGET_TOTAL_DAYS})`)
+console.log(`- Реальных дней с гордостями: ${realDaysMap.size}`)
+console.log(`- Всего подлинных пунктов гордостей: ${totalPridesCount}`)
+console.log(`- Всего подлинных пунктов благодарностей: ${totalGratsCount}`)
 console.log(`- Дней с реальными фотографиями: ${realDaysWithPhotos}`)
-console.log(`- Дней из тетрадки (#1..#24) и плейсхолдеров: ${fullDays.length - realDays.length}`)
 
-// Calculate streak
+// Verification checks:
+const d670 = realDaysMap.get(670)
+console.log('\n🔍 ВЕРИФИКАЦИЯ: День #670')
+console.log(`   Дата: ${d670?.dateISO} (Ожидается 2026-08-21)`)
+console.log(`   Текст: «${d670?.title?.slice(0, 60)}...»`)
+
+const d651 = realDaysMap.get(651)
+console.log('\n🔍 ВЕРИФИКАЦИЯ: День #651')
+console.log(`   Дата: ${d651?.dateISO} (Ожидается 2026-08-01)`)
+console.log(`   Текст: «${d651?.title?.slice(0, 60)}...»`)
+
+const d719 = realDaysMap.get(719)
+console.log('\n🔍 ВЕРИФИКАЦИЯ: День #719')
+console.log(`   Дата: ${d719?.dateISO} (Ожидается 2026-10-07)`)
+console.log(`   Текст: «${d719?.title?.slice(0, 60)}...»`)
+
+// Streak calculation
 const dates = new Set()
 for (const d of fullDays) {
   if (d.dateISO) dates.add(d.dateISO.slice(0, 10))
@@ -299,13 +281,13 @@ const report = {
   prideOffset,
   gratOffset,
   totalDays: fullDays.length,
-  realDaysCount: realDays.length,
+  realDaysCount: realDaysMap.size,
   totalPrides: totalPridesCount,
   totalGratitudes: totalGratsCount,
   streakCalculated: streakRes.streak,
   bestStreak: streakRes.best,
   migratedAtISO: new Date().toISOString(),
-  formula: 'displayNum = seq + offset (430 + 289 = 719)',
+  formula: `displayNum = seq + ${prideOffset}`,
 }
 
 const payload = {
@@ -328,9 +310,11 @@ fs.mkdirSync(migratedDir, { recursive: true })
 const serialized = JSON.stringify(payload, null, 2)
 fs.writeFileSync(publicOutPath, serialized, 'utf8')
 fs.writeFileSync(migratedOutPath, serialized, 'utf8')
+fs.writeFileSync(historySeedPath, serialized, 'utf8')
 fs.writeFileSync(reportPath, JSON.stringify(report, null, 2), 'utf8')
 
-console.log(`💾 Результаты сохранены в:`)
+console.log(`\n💾 Результаты сохранены в:`)
 console.log(`   1. ${publicOutPath}`)
 console.log(`   2. ${migratedOutPath}`)
+console.log(`   3. ${historySeedPath}`)
 console.log(`📊 Отчёт сохранён в: ${reportPath}`)

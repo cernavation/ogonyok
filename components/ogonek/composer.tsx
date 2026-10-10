@@ -47,7 +47,10 @@ export function Composer({
   })
   const [gratitudes, setGratitudes] = useState<string[]>(() => {
     if (editingDay && Array.isArray(editingDay.gratitudes)) {
-      const texts = editingDay.gratitudes.map((g) => (g === '—' ? '' : g))
+      const texts = editingDay.gratitudes.map((g) => {
+        const text = typeof g === 'string' ? g : g.text
+        return text === '—' ? '' : text
+      })
       while (texts.length < 6) texts.push('')
       return texts
     }

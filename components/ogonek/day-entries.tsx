@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { BookmarkPlus, Flame, Heart, Zap } from 'lucide-react'
 import { useId, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { Mode, PrideEntry } from '@/lib/ogonek/types'
+import { getGratitudeRating, getGratitudeText, type GratitudeEntry, type Mode, type PrideEntry } from '@/lib/ogonek/types'
 import { Tooltip } from './tooltip'
 import { VaultSpark } from './vault-spark'
 
@@ -15,10 +15,36 @@ const TABS = [
 
 type Props = {
   prides: PrideEntry[]
-  gratitudes: string[]
+  gratitudes: (string | GratitudeEntry)[]
   soundEnabled?: boolean
   onPinToVault?: (fact: string) => void
   onNotify?: (msg: string) => void
+}
+
+function StarsBar({ rating }: { rating: number }) {
+  const clamped = Math.min(10, Math.max(1, Math.round(rating)))
+  return (
+    <div className="entry-stars" title={`Оценка: ${clamped}/10`}>
+      <div className="hidden sm:flex items-center gap-0.5" aria-hidden="true">
+        {Array.from({ length: 10 }, (_, i) => {
+          const lit = i < clamped
+          return (
+            <span
+              key={i}
+              className={`text-[11px] leading-none select-none ${
+                lit ? 'text-amber-400 opacity-100 font-bold' : 'text-neutral-700 opacity-30'
+              }`}
+            >
+              {lit ? '★' : '☆'}
+            </span>
+          )
+        })}
+      </div>
+      <span className="sm:hidden text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded px-1.5 py-0.5 select-none">
+        {clamped}★
+      </span>
+    </div>
+  )
 }
 
 export function DayEntries({
@@ -89,30 +115,31 @@ export function DayEntries({
           data-active={mode === 'pride'}
           className="entries-panel"
         >
-          {prides.map((p) => (
-            <div className="entry relative" key={p.num}>
-              {sparkingNum === p.num && <VaultSpark active={true} />}
-              <span className="entry-num">{p.num}</span>
-              <span className="entry-text">{p.text}</span>
-              <div className="flex items-center gap-2">
-                <span className="rating">
-                  Масштаб: <b>{p.scale}</b> · Преодоление: <b>{p.overcome}</b>
-                </span>
-                {onPinToVault && (
-                  <Tooltip content="В Сейф доказательств" side="top">
-                    <button
-                      type="button"
-                      className="p-1 text-muted hover:text-orange-400 transition-colors"
-                      aria-label={`Сохранить факт #${p.num} в сейф`}
-                      onClick={() => handleSaveToVault(p.num, p.text)}
-                    >
-                      <BookmarkPlus size={14} />
-                    </button>
-                  </Tooltip>
-                )}
+          {prides.map((p) => {
+            const rating = typeof p.scale === 'number' ? p.scale : 7
+            return (
+              <div className="entry relative" key={p.num}>
+                {sparkingNum === p.num && <VaultSpark active={true} />}
+                <span className="entry-num">{p.num}</span>
+                <span className="entry-text">{p.text}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <StarsBar rating={rating} />
+                  {onPinToVault && (
+                    <Tooltip content="В Сейф доказательств" side="top">
+                      <button
+                        type="button"
+                        className="p-1 text-muted hover:text-orange-400 transition-colors cursor-pointer"
+                        aria-label={`Сохранить факт #${p.num} в сейф`}
+                        onClick={() => handleSaveToVault(p.num, p.text)}
+                      >
+                        <BookmarkPlus size={14} />
+                      </button>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
         <div
           role="tabpanel"
@@ -121,13 +148,20 @@ export function DayEntries({
           data-active={mode === 'gratitude'}
           className="entries-panel"
         >
-          {gratitudes.map((g, idx) => (
-            <div className="entry entry--gratitude" key={`${idx}-${g}`}>
-              <Heart size={15} fill="currentColor" />
-              <span className="entry-text">{g}</span>
-              <span className="rating">с благодарностью</span>
-            </div>
-          ))}
+          {gratitudes.map((g, idx) => {
+            const text = getGratitudeText(g)
+            const rating = getGratitudeRating(g)
+            const num = String(idx + 1).padStart(2, '0')
+            return (
+              <div className="entry entry--gratitude relative" key={`${idx}-${text.slice(0, 30)}`}>
+                <span className="entry-num text-pink-400/80">{num}</span>
+                <span className="entry-text">{text}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <StarsBar rating={rating} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     </>

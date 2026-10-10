@@ -92,7 +92,10 @@ export function ExploreView({
       const inTitle = day.title.toLowerCase().includes(activeQuery)
       const inTags = day.tags.some((t) => t.toLowerCase().includes(activeQuery))
       const inPrides = day.prides.some((p) => p.text.toLowerCase().includes(activeQuery))
-      const inGratitudes = day.gratitudes.some((g) => g.toLowerCase().includes(activeQuery))
+      const inGratitudes = day.gratitudes.some((g) => {
+        const text = typeof g === 'string' ? g : g.text
+        return text.toLowerCase().includes(activeQuery)
+      })
 
       return inTitle || inTags || inPrides || inGratitudes
     })

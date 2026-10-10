@@ -712,6 +712,54 @@
   color: #53d3a3;
 }
 
+/* Native Ogonyok score badges */
+.score-badge {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 8px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.score-badge.score-green {
+  background: rgba(62, 207, 142, 0.16);
+  border: 1px solid rgba(62, 207, 142, 0.38);
+  color: #3ecf8e;
+  box-shadow: 0 0 12px rgba(62, 207, 142, 0.12);
+}
+
+.score-badge.score-yellow {
+  background: rgba(245, 200, 66, 0.16);
+  border: 1px solid rgba(245, 200, 66, 0.38);
+  color: #f5c842;
+  box-shadow: 0 0 12px rgba(245, 200, 66, 0.12);
+}
+
+.score-badge.score-red {
+  background: rgba(255, 80, 88, 0.16);
+  border: 1px solid rgba(255, 80, 88, 0.38);
+  color: #ff5058;
+  box-shadow: 0 0 12px rgba(255, 80, 88, 0.12);
+}
+
+.score-badge.score-none {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+}
+
+.entry-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .post-copy {
   font-size: 15px;
   line-height: 1.45;

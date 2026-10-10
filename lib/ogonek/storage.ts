@@ -224,7 +224,20 @@ export function validateAndImportJson(
           : ['Для тебя'],
         prides: Array.isArray(d.prides) ? d.prides : [],
         gratitudes: Array.isArray(d.gratitudes)
-          ? d.gratitudes.filter((g): g is string => typeof g === 'string')
+          ? d.gratitudes.map((g) => {
+              if (typeof g === 'string') return g
+              if (g && typeof g === 'object') {
+                const obj = g as { num?: unknown; text?: unknown; rating?: unknown }
+                if (typeof obj.text === 'string') {
+                  return {
+                    num: typeof obj.num === 'string' ? obj.num : undefined,
+                    text: obj.text,
+                    rating: typeof obj.rating === 'number' ? obj.rating : 10,
+                  }
+                }
+              }
+              return String(g || '')
+            })
           : [],
         photos: Array.isArray(d.photos)
           ? d.photos.filter((p): p is string => typeof p === 'string')

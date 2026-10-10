@@ -72,14 +72,21 @@ export function DayCard({
     )
   }
 
-  const scoreDisplay = useMemo(() => {
+  const averageScore = useMemo(() => {
     const valid = (day.prides || []).filter(
       (p) => typeof p.scale === 'number' && !isNaN(p.scale) && p.scale > 0 && p.text !== '—'
     )
     if (valid.length === 0) return null
     const sum = valid.reduce((acc, p) => acc + p.scale, 0)
-    return (sum / valid.length).toFixed(1)
+    return Math.round((sum / valid.length) * 10) / 10
   }, [day.prides])
+
+  const scoreBadgeClass = useMemo(() => {
+    if (averageScore === null) return 'score-none'
+    if (averageScore >= 9.0) return 'score-green'
+    if (averageScore >= 7.0) return 'score-yellow'
+    return 'score-red'
+  }, [averageScore])
 
   return (
     <>
@@ -94,10 +101,17 @@ export function DayCard({
             </div>
             <div className="post-sub">
               <span className="day-badge">День #{day.id}</span>
-              {scoreDisplay ? <span className="score">★ {scoreDisplay}</span> : null}
             </div>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            {averageScore !== null && (
+              <div
+                className={`score-badge ${scoreBadgeClass}`}
+                title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
+              >
+                {averageScore.toFixed(1)}
+              </div>
+            )}
             <Tooltip content="Редактировать день" side="left">
               <button
                 type="button"

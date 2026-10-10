@@ -84,6 +84,18 @@ export function HomeView({
     return () => observer.disconnect()
   }, [visibleCount, filteredDays.length])
 
+  // Fast scroll to bottom support from ScrollPill
+  useEffect(() => {
+    const onBottom = () => {
+      setVisibleCount(filteredDays.length)
+      setTimeout(() => {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' })
+      }, 60)
+    }
+    window.addEventListener('ogonek:scroll-bottom', onBottom)
+    return () => window.removeEventListener('ogonek:scroll-bottom', onBottom)
+  }, [filteredDays.length])
+
   const handleTabClick = (tab: string) => {
     playClick(soundEnabled)
     setFilter(tab)
