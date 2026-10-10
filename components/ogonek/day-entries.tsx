@@ -21,7 +21,10 @@ type Props = {
   onNotify?: (msg: string) => void
 }
 
-function StarsBar({ rating }: { rating: number }) {
+function StarsBar({ rating }: { rating: number | null | undefined }) {
+  if (rating === null || rating === undefined || rating <= 0 || isNaN(rating)) {
+    return null
+  }
   const clamped = Math.min(10, Math.max(1, Math.round(rating)))
   return (
     <div className="entry-stars" title={`Оценка: ${clamped}/10`}>
@@ -116,7 +119,7 @@ export function DayEntries({
           className="entries-panel"
         >
           {prides.map((p) => {
-            const rating = typeof p.scale === 'number' ? p.scale : 7
+            const rating = typeof p.scale === 'number' && p.scale > 0 && p.text !== '—' ? p.scale : null
             return (
               <div className="entry relative" key={p.num}>
                 {sparkingNum === p.num && <VaultSpark active={true} />}
@@ -150,7 +153,8 @@ export function DayEntries({
         >
           {gratitudes.map((g, idx) => {
             const text = getGratitudeText(g)
-            const rating = getGratitudeRating(g)
+            const rawRating = getGratitudeRating(g)
+            const rating = text === '—' || !rawRating || rawRating <= 0 ? null : rawRating
             const num = String(idx + 1).padStart(2, '0')
             return (
               <div className="entry entry--gratitude relative" key={`${idx}-${text.slice(0, 30)}`}>

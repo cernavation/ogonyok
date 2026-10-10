@@ -47,11 +47,12 @@ function generateHeatmapData(daysList: Day[] = [], currentDayNum = 719): HeatCel
     if (realDay) {
       prides = realDay.prides.length
       gratitudes = realDay.gratitudes.length
+      const validPrides = realDay.prides.filter((p) => typeof p.scale === 'number' && p.scale > 0 && p.text !== '—')
       const avgScale =
-        realDay.prides.length > 0
-          ? realDay.prides.reduce((acc, p) => acc + p.scale, 0) / realDay.prides.length
-          : 8
-      score = Number((avgScale + 0.5).toFixed(1))
+        validPrides.length > 0
+          ? validPrides.reduce((acc, p) => acc + p.scale, 0) / validPrides.length
+          : null
+      score = avgScale !== null ? Number(avgScale.toFixed(1)) : 8.0
     } else {
       const seed = (i * 17 + dayNumber * 7) % 100
       if (seed < 4) {
@@ -126,8 +127,10 @@ export function AnalyticsView({ days = [], onNavigate, onSelectDay }: Props) {
         pridesCount += d.prides.length
         gratsCount += d.gratitudes.length
         for (const p of d.prides) {
-          ratingSum += p.scale
-          ratingItemsCount++
+          if (typeof p.scale === 'number' && p.scale > 0 && p.text !== '—') {
+            ratingSum += p.scale
+            ratingItemsCount++
+          }
         }
       }
     }

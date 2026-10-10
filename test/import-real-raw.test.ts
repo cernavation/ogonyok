@@ -87,4 +87,20 @@ describe('Authentic Real Raw Data Import', () => {
     const content = fs.readFileSync(seedPath, 'utf8')
     assert.ok(!content.includes('unsplash.com/photo-1541625602330-2277a4c46182'))
   })
+
+  it('correctly stitches Day 24/25 and Day 297/298 seams', () => {
+    const raw = JSON.parse(fs.readFileSync(seedPath, 'utf8'))
+    const day24 = raw.days.find((d: { id: number }) => d.id === 24)
+    const day25 = raw.days.find((d: { id: number }) => d.id === 25)
+    assert.equal(day24.title, '—')
+    assert.ok(day25.title.includes('Коржик'))
+    assert.ok(day25.dateISO?.startsWith('2024-11-18'))
+
+    const day297 = raw.days.find((d: { id: number }) => d.id === 297)
+    const day298 = raw.days.find((d: { id: number }) => d.id === 298)
+    assert.ok(day297.title.includes('Валеру'))
+    assert.ok(day297.dateISO?.startsWith('2025-08-16'))
+    assert.ok(day298.title.includes('Аванесу'))
+    assert.ok(day298.dateISO?.startsWith('2025-08-17'))
+  })
 })
