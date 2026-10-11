@@ -22,6 +22,39 @@ function checkRateLimit(ip: string): boolean {
   return true
 }
 
+// ── DEEP CONTEXT SYSTEM PROMPT ──────────────────────────────────────────────
+const SYSTEM_PROMPT = `Ты — строгий, честный ментор и AI-оценщик дневника жизни Алексея Черна (@cernavation).
+
+КОНТЕКСТ АЛЕКСЕЯ (знай это досконально):
+- 16 лет, молодой основатель стартапа Memernity (цифровые мемориалы с QR-кодами на гранитных плитах).
+- Бегун-ультрамарафонец БОСИКОМ: пробежал 42 км и 21 км без обуви по асфальту — это редкая, болезненная, экстремальная дисциплина.
+- Шахматист: участвует в турнирах, играет против взрослых соперников (включая Волошина).
+- Тренируется в зале: жим лёжа 50+ кг — серьёзный результат для 16-летнего.
+- Учится в лицее Гоголя в реальном классе — нагрузка академическая.
+- Ходит в баню Волошина как ритуал восстановления и осознанности.
+- Строит личный бренд предпринимателя и спортсмена.
+- Ведёт дневник гордости и преодоления 719 дней подряд.
+
+КАЛИБРОВАННАЯ ШКАЛА 1–10 (критически важно!):
+- 10★: ИСКЛЮЧИТЕЛЬНО редкие вехи. Только прорывные события уровня: запуск первой оплаты Memernity, финиш 42 км босиком, победа в крупном турнире, установление личного рекорда. НЕ ЧАЩЕ 2% случаев!
+- 8–9★: Серьёзное преодоление. Сильная тренировка против усталости, закрытие трудной задачи по Memernity, победа в шахматах над сильным соперником, пробежка босиком в сложных условиях.
+- 6–7★: Хороший продуктивный день. Обычная рутина стартапа (кодинг, питч, переговоры), уроки в лицее, поддержание режима, стандартная тренировка.
+- 4–5★: Слабый день, минимальные действия, много оправданий.
+- 1–3★: Лень, пустые слова, нулевое преодоление.
+
+СТИЛЬ ВЕРДИКТА — строгий ментор, без воды:
+- ЗАПРЕЩЕНЫ фразы: "Отличная работа!", "Молодец!", "Хорошо получилось!".
+- ОБЯЗАТЕЛЬНО: честный, хлёсткий, конкретный комментарий. Упоминай детали (босиком, Memernity, жим, шахматы) когда они угадываются.
+- Примеры правильных вердиктов:
+  "Пересилил холод и пробежал босиком — характер куётся именно в таких моментах."
+  "Сдвинул Memernity с мёртвой точки — один правильный коммит стоит тысячи планов."
+  "Жим под усталостью — тело учится расти именно тогда, когда хочет сдаться."
+  "Стандартный рабочий день. Достаточно для поддержания стрика, не достаточно для прорыва."
+
+АВТОТЕГИ — выбирай из: ['#Memernity', '#Спорт', '#Школа', '#Шахматы', '#Дисциплина', '#Характер', '#Для тебя'].
+
+ФОРМАТ ОТВЕТА — строго JSON без markdown-обёртки.`
+
 export async function POST(request: Request) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
@@ -57,28 +90,25 @@ export async function POST(request: Request) {
 
     // Call Gemini REST API with strict 8s timeout
     try {
-      const prompt = `Ты — мудрый и точный аналитик дневника гордостей и побед («Огонёк»).
-Оцени каждый из представленных пунктов по следующим критериям:
-1. scale: масштаб/сила факта от 1 до 10 (целое число).
-2. overcome: уровень преодоления сопротивления от 0 до 3 (целое число):
-   - 0: рутина/обычное действие без сопротивления
-   - 1: небольшое преодоление лени/усталости
-   - 2: серьёзный внутренний барьер, страх, сомнения, прокрастинация
-   - 3: экстремальное усилие, прорыв, победа над сильнейшим сопротивлением
-3. tags: массив из 1-2 тегов из списка ['Спорт', 'Бизнес', 'Дисциплина', 'Разум', 'Отношения', 'Для тебя'].
-4. verdict: краткий, сильный, ободряющий вердикт на русском языке (ровно 1 предложение, без воды).
+      const userPrompt = `Оцени каждый из следующих пунктов из дневника Алексея.
 
-Верни СТРОГО валидный JSON в формате:
+Верни СТРОГО валидный JSON (без markdown, без комментариев):
 {
   "evaluations": [
     {
       "scale": 8,
       "overcome": 2,
-      "tags": ["Бизнес"],
-      "verdict": "Сильный шаг вперед вопреки сомнениям."
+      "tags": ["#Дисциплина"],
+      "verdict": "Конкретный честный вердикт без воды в одном предложении."
     }
   ]
 }
+
+Поля:
+- scale: число 1–10 (калибруй строго по шкале из системного промпта, 10★ — крайне редко)
+- overcome: 0–3 (0=рутина, 1=лёгкое усилие, 2=серьёзный барьер, 3=экстремальное усилие)
+- tags: 1–2 тега из ['#Memernity', '#Спорт', '#Школа', '#Шахматы', '#Дисциплина', '#Характер', '#Для тебя']
+- verdict: честный, конкретный, хлёсткий — 1 предложение, без воды и без шаблонных похвал
 
 Пункты для оценки:
 ${JSON.stringify(items, null, 2)}`
@@ -89,13 +119,15 @@ ${JSON.stringify(items, null, 2)}`
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
             generationConfig: {
               responseMimeType: 'application/json',
-              temperature: 0.3,
+              temperature: 0.4,
+              topP: 0.9,
             },
           }),
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(10000),
         }
       )
 
@@ -116,7 +148,13 @@ ${JSON.stringify(items, null, 2)}`
         throw new Error('Empty response from Gemini API')
       }
 
-      const parsed = JSON.parse(textResponse) as {
+      // Strip possible markdown code fences
+      const cleanedText = textResponse
+        .replace(/^```(?:json)?\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim()
+
+      const parsed = JSON.parse(cleanedText) as {
         evaluations?: Array<{
           scale?: number
           overcome?: number
@@ -129,22 +167,30 @@ ${JSON.stringify(items, null, 2)}`
         throw new Error('Mismatched evaluations length')
       }
 
-      const sanitizedEvaluations = parsed.evaluations.map((ev, idx) => {
+      const VALID_TAGS = new Set([
+        '#Memernity', '#Спорт', '#Школа', '#Шахматы', '#Дисциплина', '#Характер', '#Для тебя',
+        'Спорт', 'Бизнес', 'Дисциплина', 'Разум', 'Отношения', 'Для тебя',
+      ])
+
+      const sanitizedEvaluations = parsed.evaluations.map((ev) => {
         const rawScale = typeof ev.scale === 'number' ? ev.scale : 7
         const clampedScale = Math.min(10, Math.max(1, Math.round(rawScale)))
 
         const rawOvercome = typeof ev.overcome === 'number' ? ev.overcome : 1
         const clampedOvercome = (Math.min(3, Math.max(0, Math.round(rawOvercome)))) as OvercomeLevel
 
-        const tags = Array.isArray(ev.tags) && ev.tags.length > 0 ? ev.tags : ['Для тебя']
+        const rawTags = Array.isArray(ev.tags) ? ev.tags : []
+        const tags = rawTags.filter((t): t is string => typeof t === 'string' && VALID_TAGS.has(t))
+        const finalTags = tags.length > 0 ? tags : ['#Дисциплина']
+
         const verdict = typeof ev.verdict === 'string' && ev.verdict.length > 0
           ? ev.verdict
-          : 'Отличный шаг в укреплении внутренней опоры!'
+          : 'Действие сделано — именно так строится характер.'
 
         return {
           scale: clampedScale,
           overcome: clampedOvercome,
-          tags,
+          tags: finalTags,
           verdict,
         }
       })

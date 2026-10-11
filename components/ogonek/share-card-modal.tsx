@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, Download, FileCode, Sparkles, X } from 'lucide-react'
+import { Check, Copy, Download, FileCode, Link, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import {
   downloadBlob,
@@ -18,6 +18,7 @@ interface ShareCardModalProps {
 
 export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) {
   const [copied, setCopied] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [isExportingPng, setIsExportingPng] = useState(false)
 
   const handleCopyText = async () => {
@@ -31,6 +32,22 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
       }
     } catch {
       onNotify('Не удалось скопировать текст')
+    }
+  }
+
+  const handleCopyLink = async () => {
+    try {
+      const url = typeof window !== 'undefined'
+        ? `${window.location.origin}#day-${day.id}`
+        : `https://ogonek.cernavation.com/#day-${day.id}`
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(url)
+        setLinkCopied(true)
+        onNotify(`Ссылка на День #${day.id} скопирована!`)
+        setTimeout(() => setLinkCopied(false), 2000)
+      }
+    } catch {
+      onNotify('Не удалось скопировать ссылку')
     }
   }
 
@@ -95,15 +112,17 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
         </p>
 
         <div className="flex flex-col gap-3 my-4">
+          {/* Copy formatted text */}
           <button
             type="button"
             className="primary-btn w-full justify-center flex items-center gap-2"
             onClick={handleCopyText}
           >
             {copied ? <Check size={18} /> : <Copy size={18} />}
-            <span>{copied ? 'Скопировано!' : 'Скопировать текст для постов'}</span>
+            <span>{copied ? 'Скопировано!' : 'Скопировать текст дня'}</span>
           </button>
 
+          {/* Download PNG */}
           <button
             type="button"
             className="secondary-btn w-full justify-center flex items-center gap-2"
@@ -111,9 +130,10 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
             disabled={isExportingPng}
           >
             <Download size={18} />
-            <span>{isExportingPng ? 'Рендеринг PNG...' : 'Скачать картинку (Retina PNG)'}</span>
+            <span>{isExportingPng ? 'Рендеринг PNG...' : 'Скачать карточку (PNG)'}</span>
           </button>
 
+          {/* Download SVG */}
           <button
             type="button"
             className="secondary-btn w-full justify-center flex items-center gap-2"
@@ -122,10 +142,20 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
             <FileCode size={18} />
             <span>Скачать векторный SVG</span>
           </button>
+
+          {/* Copy link */}
+          <button
+            type="button"
+            className="secondary-btn w-full justify-center flex items-center gap-2"
+            onClick={handleCopyLink}
+          >
+            {linkCopied ? <Check size={18} /> : <Link size={18} />}
+            <span>{linkCopied ? 'Ссылка скопирована!' : 'Скопировать ссылку'}</span>
+          </button>
         </div>
 
         <div className="text-xs text-center text-muted mt-2">
-          Векторная графика высокого разрешения (Dark X Theme)
+          Векторная графика высокого разрешения (Dark X Theme) · @cernavation
         </div>
       </div>
     </div>

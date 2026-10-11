@@ -1,7 +1,8 @@
 'use client'
 
 import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { useMemo, useState, useEffect } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
@@ -12,6 +13,38 @@ const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
   { ssr: false }
 )
+
+// ── Persistent reaction helpers ────────────────────────────────────────────
+function reactionKey(dayId: number, kind: 'like' | 'thank') {
+  return `ogonek.reaction.${kind}.${dayId}`
+}
+
+function loadReaction(dayId: number, kind: 'like' | 'thank'): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(reactionKey(dayId, kind)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function saveReaction(dayId: number, kind: 'like' | 'thank', value: boolean) {
+  try {
+    if (value) {
+      localStorage.setItem(reactionKey(dayId, kind), '1')
+    } else {
+      localStorage.removeItem(reactionKey(dayId, kind))
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// ── Spring animation variants ──────────────────────────────────────────────
+const reactionVariants = {
+  idle: { scale: 1 },
+  pressed: { scale: [1, 0.8, 1.2, 1.0] },
+}
 
 type Props = {
   day: Day
@@ -30,21 +63,40 @@ export function DayCard({
   onEdit,
   soundEnabled = true,
 }: Props) {
+  // Hydrate from localStorage on mount
   const [liked, setLiked] = useState(false)
   const [thanked, setThanked] = useState(false)
+  const [likeAnim, setLikeAnim] = useState<'idle' | 'pressed'>('idle')
+  const [thankAnim, setThankAnim] = useState<'idle' | 'pressed'>('idle')
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const reduce = useReducedMotion()
+
+  // Hydrate persisted reactions after mount (avoids SSR mismatch)
+  useEffect(() => {
+    setLiked(loadReaction(day.id, 'like'))
+    setThanked(loadReaction(day.id, 'thank'))
+  }, [day.id])
 
   const photos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
 
   const handleLike = () => {
     playClick(soundEnabled)
-    setLiked(!liked)
+    const next = !liked
+    setLiked(next)
+    saveReaction(day.id, 'like', next)
+    setLikeAnim('pressed')
+    setTimeout(() => setLikeAnim('idle'), 400)
+    if (next) onNotify?.('🔥 Огонёк зажжён!')
   }
 
   const handleThank = () => {
     playClick(soundEnabled)
-    setThanked(!thanked)
-    onNotify?.(thanked ? 'Благодарность снята' : 'Благодарность отправлена!')
+    const next = !thanked
+    setThanked(next)
+    saveReaction(day.id, 'thank', next)
+    setThankAnim('pressed')
+    setTimeout(() => setThankAnim('idle'), 400)
+    onNotify?.(next ? '❤️ Благодарность отправлена!' : 'Благодарность снята')
   }
 
   // Handle missed days
@@ -235,7 +287,7 @@ export function DayCard({
             <div className="flex items-center justify-between pt-2 -mx-2">
               {/* Огонёк 🔥 */}
               <Tooltip content="Зажечь огонёк" side="top">
-                <button
+                <motion.button
                   type="button"
                   onClick={handleLike}
                   aria-label={liked ? 'Убрать отметку огня' : 'Поставить огонь'}
@@ -244,15 +296,18 @@ export function DayCard({
                       ? 'text-[#ff6b35]'
                       : 'text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10'
                   }`}
+                  animate={reduce ? undefined : likeAnim}
+                  variants={reactionVariants}
+                  transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
                   <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
                   <span>{liked ? '1' : '0'}</span>
-                </button>
+                </motion.button>
               </Tooltip>
 
               {/* Спасибо ❤️ */}
               <Tooltip content="Поблагодарить" side="top">
-                <button
+                <motion.button
                   type="button"
                   onClick={handleThank}
                   aria-label="Поблагодарить"
@@ -261,10 +316,13 @@ export function DayCard({
                       ? 'text-[#f91880]'
                       : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
                   }`}
+                  animate={reduce ? undefined : thankAnim}
+                  variants={reactionVariants}
+                  transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
                   <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
                   <span>Спасибо</span>
-                </button>
+                </motion.button>
               </Tooltip>
 
               {/* Редактировать ✏️ */}

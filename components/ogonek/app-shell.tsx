@@ -169,12 +169,13 @@ export function AppShell() {
       addEvidenceItem({
         title: fact,
         description: 'Сохранено из записи дня в Огоньке',
-        category: 'Победы',
+        category: 'Спорт',
         date: new Date().toLocaleDateString('ru-RU'),
         pinned: true,
       })
+      notify('⚡ Сохранено в Evidence Vault')
     },
-    [addEvidenceItem]
+    [addEvidenceItem, notify]
   )
 
   useEffect(() => {

@@ -1,8 +1,10 @@
 'use client'
 
-import { Award, Calendar, Flame, Heart, Settings, ShieldCheck, Sparkles, X, Zap } from 'lucide-react'
+import { Award, Calendar, Download, Flame, Heart, Settings, ShieldCheck, Sparkles, X, Zap } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import { computeStreak } from '@/lib/ogonek/streak'
+import { exportStoreAsJson } from '@/lib/ogonek/storage'
+import { downloadBlob } from '@/lib/ogonek/card-export'
 import type { OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 
 interface ProfileModalProps {
@@ -10,6 +12,34 @@ interface ProfileModalProps {
   onClose: () => void
   onNavigate: (view: ViewId) => void
 }
+
+// ── Legendary achievements config ─────────────────────────────────────────
+const LEGENDARY_ACHIEVEMENTS = [
+  {
+    emoji: '🏆',
+    title: '42 км босиком',
+    subtitle: 'Легендарный статус',
+    unlocked: true,
+  },
+  {
+    emoji: '🔥',
+    title: '700 дней Огонька',
+    subtitle: 'Железная дисциплина',
+    unlocked: true,
+  },
+  {
+    emoji: '💼',
+    title: 'Основатель Memernity',
+    subtitle: 'Первый бизнес',
+    unlocked: true,
+  },
+  {
+    emoji: '♟️',
+    title: 'Шахматный триумф',
+    subtitle: 'Победа над Волошиным',
+    unlocked: true,
+  },
+] as const
 
 export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalProps) {
   const titleId = useId()
@@ -79,6 +109,17 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
   const isDepthMaster = highOvercomeCount >= 10
   const isVaultKeeper = storeState.evidenceItems.length >= 5
 
+  const handleDownloadBackup = () => {
+    try {
+      const json = exportStoreAsJson(storeState)
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+      const ts = new Date().toISOString().slice(0, 10)
+      downloadBlob(blob, `ogonek-life-backup-${ts}.json`)
+    } catch (err) {
+      console.error('Backup download failed:', err)
+    }
+  }
+
   return (
     <div
       className="modal-backdrop"
@@ -117,12 +158,32 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
           <div className="profile-info">
             <h2 className="profile-name">Alexei Cerna</h2>
             <div className="profile-handle">@cernavation</div>
+            <div
+              className="text-[11px] mt-1 px-2 py-0.5 rounded-full font-semibold inline-block"
+              style={{ background: '#1a1f0f', color: '#a3e635', border: '1px solid #365314' }}
+            >
+              Серийный предприниматель & Барефут-марафонец
+            </div>
           </div>
         </div>
 
         <p className="profile-bio">
           Дневник гордости и благодарности. 719 дней осознанности, преодоления и фиксации внутренней опоры.
         </p>
+
+        {/* Streak counter */}
+        <div
+          className="flex items-center gap-2 mb-4 px-3 py-2 rounded-xl"
+          style={{ background: '#1a0e00', border: '1px solid #3d2000' }}
+        >
+          <Flame size={20} className="text-orange-500 flex-none" fill="currentColor" />
+          <div>
+            <div className="text-[15px] font-bold text-orange-400">
+              {daysCount} дней подряд 🔥
+            </div>
+            <div className="text-[11px] text-[#71767b]">Непрерывный стрик силы — рекорд: {streakInfo.best} дн.</div>
+          </div>
+        </div>
 
         {/* Live Metrics Grid */}
         <div className="profile-stats-grid">
@@ -163,11 +224,45 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
           </div>
         </div>
 
-        {/* Badges / Achievements */}
+        {/* Legendary Achievements */}
         <div className="profile-badges-section">
           <h3 className="profile-badges-title">
             <Award size={16} className="inline mr-1 text-orange-400" />
-            Достижения и ранги
+            Легендарные достижения
+          </h3>
+          <div className="flex flex-col gap-2">
+            {LEGENDARY_ACHIEVEMENTS.map((ach) => (
+              <div
+                key={ach.title}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl"
+                style={{
+                  background: ach.unlocked ? '#0d1a00' : '#111315',
+                  border: `1px solid ${ach.unlocked ? '#365314' : '#2f3336'}`,
+                }}
+              >
+                <span className="text-xl flex-none">{ach.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="text-[13px] font-bold truncate"
+                    style={{ color: ach.unlocked ? '#a3e635' : '#71767b' }}
+                  >
+                    {ach.title}
+                  </div>
+                  <div className="text-[11px] text-[#71767b]">{ach.subtitle}</div>
+                </div>
+                {ach.unlocked && (
+                  <span className="text-[10px] font-bold text-lime-400 flex-none">✓ Разблокировано</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Classic badges */}
+        <div className="profile-badges-section mt-3">
+          <h3 className="profile-badges-title">
+            <Sparkles size={16} className="inline mr-1 text-yellow-400" />
+            Ранги Огонька
           </h3>
           <div className="profile-badges-list">
             <div className={`badge-pill ${isFlameProof ? 'active' : 'locked'}`}>
@@ -190,7 +285,7 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
         </div>
 
         {/* Footer Actions */}
-        <div className="profile-modal-footer">
+        <div className="profile-modal-footer flex flex-col gap-2">
           <button
             type="button"
             className="secondary-btn w-full"
@@ -201,6 +296,15 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
           >
             <Settings size={16} className="mr-2" />
             Настройки & Экспорт
+          </button>
+          <button
+            type="button"
+            className="secondary-btn w-full flex items-center justify-center gap-2"
+            onClick={handleDownloadBackup}
+            title="Скачать полный архив всех дней в JSON"
+          >
+            <Download size={16} />
+            Скачать полный бэкап жизни (.JSON)
           </button>
         </div>
       </div>
