@@ -17,10 +17,10 @@ describe('Authentic Real Raw Data Import', () => {
     assert.ok(fs.existsSync(migratedPath), 'data/migrated/ogonek-import.v1.json exists')
   })
 
-  it('contains exactly 719 total days in ledger', () => {
+  it('contains exactly 720 total days in ledger', () => {
     const raw = JSON.parse(fs.readFileSync(seedPath, 'utf8'))
-    assert.equal(raw.days.length, 719)
-    assert.equal(raw.days[0].id, 719)
+    assert.equal(raw.days.length, 720)
+    assert.equal(raw.days[0].id, 720)
     assert.equal(raw.days[raw.days.length - 1].id, 1)
   })
 

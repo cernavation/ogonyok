@@ -36,7 +36,7 @@ export function AppShell() {
 
   const {
     state,
-    addEntryToCurrentDay,
+    addNewDay,
     updateDayWithPayload,
     saveMorningIntentions,
     saveComposerDraft,
@@ -47,6 +47,8 @@ export function AppShell() {
     setPinEnabled,
     importState,
     resetToDefaults,
+    getNextDayDate,
+    getNextDayId,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -94,16 +96,16 @@ export function AppShell() {
     onToggleHotkeysModal: () => setHotkeysModal((prev) => !prev),
   })
 
-  // Auto-seed real history if store is in initial single-day state
+  // Auto-seed real history if store is in initial single/dual-day demo state
   useEffect(() => {
-    if (state.days.length <= 1) {
+    if (state.days.length <= 2) {
       fetch('/seeds/ogonek-import.v1.json')
         .then((res) => {
           if (!res.ok) throw new Error('Not found')
           return res.json()
         })
         .then((data) => {
-          if (data && Array.isArray(data.days) && data.days.length > 1) {
+          if (data && Array.isArray(data.days) && data.days.length > 2) {
             importState(data)
             notify(`Загружена подлинная летопись (${data.days.length} дней)!`)
           }
@@ -189,18 +191,18 @@ export function AppShell() {
   }, [view])
 
   const handleSaveComposer = useCallback(
-    (payload: ComposerPayload, editingDayId?: number) => {
+    (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => {
       if (editingDayId != null) {
         updateDayWithPayload(editingDayId, payload)
         notify(`День #${editingDayId} успешно сохранён!`)
       } else {
-        addEntryToCurrentDay(payload)
+        addNewDay(payload, dateISO)
         notify('День сохранён в локальное хранилище. Стрик продолжается!')
       }
       setComposer(false)
       setEditingDay(null)
     },
-    [updateDayWithPayload, addEntryToCurrentDay, notify]
+    [updateDayWithPayload, addNewDay, notify]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(
@@ -331,6 +333,8 @@ export function AppShell() {
             <Composer
               initialDraft={state.composerDraft}
               editingDay={editingDay}
+              nextDayId={editingDay ? undefined : getNextDayId()}
+              nextDayDateISO={editingDay ? undefined : getNextDayDate()}
               onSaveDraft={saveComposerDraft}
               onClearDraft={clearComposerDraft}
               onClose={() => {

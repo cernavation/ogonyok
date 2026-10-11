@@ -4,6 +4,7 @@ import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert } from 'luc
 import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo, useState, useEffect } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
+import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import type { Day } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { DayEntries } from './day-entries'
@@ -77,7 +78,22 @@ export function DayCard({
     setThanked(loadReaction(day.id, 'thank'))
   }, [day.id])
 
-  const photos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
+  const rawPhotos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
+
+  // Resolve photo IDs (IndexedDB) → displayable URLs
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
+  useEffect(() => {
+    if (rawPhotos.length === 0) {
+      setPhotoUrls([])
+      return
+    }
+    let cancelled = false
+    Promise.all(rawPhotos.map((p) => resolvePhotoUrl(p))).then((urls) => {
+      if (!cancelled) setPhotoUrls(urls.filter(Boolean))
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day.photos])
 
   const handleLike = () => {
     playClick(soundEnabled)
@@ -249,36 +265,104 @@ export function DayCard({
               onNotify={onNotify}
             />
 
-            {/* Media */}
-            {photos.length > 0 && (
-              <div className="media-grid mt-3">
-                <button
-                  type="button"
-                  onClick={() => onLightbox(photos[0])}
-                  className={photos.length === 1 ? 'media-single w-full' : 'media-main'}
-                  aria-label="Открыть главное изображение дня"
-                >
-                  <img src={photos[0]} alt="Главное фото дня" loading="lazy" />
-                </button>
-                {photos.length > 1 && (
-                  <div>
+            {/* Media — X.com style */}
+            {photoUrls.length > 0 && (
+              <div
+                className={`mt-3 overflow-hidden rounded-2xl border border-[#2f3336] ${
+                  photoUrls.length === 1
+                    ? ''
+                    : photoUrls.length === 2
+                      ? 'grid grid-cols-2 gap-0.5'
+                      : 'grid grid-cols-2 gap-0.5'
+                }`}
+              >
+                {photoUrls.length === 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onLightbox(photoUrls[0])}
+                    className="block w-full focus:outline-none"
+                    aria-label="Открыть фото дня"
+                  >
+                    <img
+                      src={photoUrls[0]}
+                      alt="Фото дня"
+                      loading="lazy"
+                      className="w-full max-h-[500px] object-cover rounded-2xl"
+                    />
+                  </button>
+                )}
+                {photoUrls.length === 2 && (
+                  <>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photos[1])}
-                      aria-label="Открыть второе изображение дня"
+                      onClick={() => onLightbox(photoUrls[0])}
+                      className="block focus:outline-none overflow-hidden rounded-l-2xl"
+                      aria-label="Открыть первое фото дня"
                     >
-                      <img src={photos[1]} alt="Второе фото дня" loading="lazy" />
+                      <img
+                        src={photoUrls[0]}
+                        alt="Фото дня 1"
+                        loading="lazy"
+                        className="w-full h-[240px] object-cover"
+                      />
                     </button>
-                    {photos[2] && (
-                      <button
-                        type="button"
-                        onClick={() => onLightbox(photos[2])}
-                        aria-label="Открыть третье изображение дня"
-                      >
-                        <img src={photos[2]} alt="Третье фото дня" loading="lazy" />
-                      </button>
-                    )}
-                  </div>
+                    <button
+                      type="button"
+                      onClick={() => onLightbox(photoUrls[1])}
+                      className="block focus:outline-none overflow-hidden rounded-r-2xl"
+                      aria-label="Открыть второе фото дня"
+                    >
+                      <img
+                        src={photoUrls[1]}
+                        alt="Фото дня 2"
+                        loading="lazy"
+                        className="w-full h-[240px] object-cover"
+                      />
+                    </button>
+                  </>
+                )}
+                {photoUrls.length >= 3 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onLightbox(photoUrls[0])}
+                      className="block focus:outline-none overflow-hidden rounded-tl-2xl rounded-bl-2xl row-span-2"
+                      aria-label="Открыть первое фото дня"
+                    >
+                      <img
+                        src={photoUrls[0]}
+                        alt="Фото дня 1"
+                        loading="lazy"
+                        className="w-full h-[240px] object-cover"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onLightbox(photoUrls[1])}
+                      className="block focus:outline-none overflow-hidden rounded-tr-2xl"
+                      aria-label="Открыть второе фото дня"
+                    >
+                      <img
+                        src={photoUrls[1]}
+                        alt="Фото дня 2"
+                        loading="lazy"
+                        className="w-full h-[118px] object-cover"
+                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onLightbox(photoUrls[2])}
+                      className="block focus:outline-none overflow-hidden rounded-br-2xl"
+                      aria-label="Открыть третье фото дня"
+                    >
+                      <img
+                        src={photoUrls[2]}
+                        alt="Фото дня 3"
+                        loading="lazy"
+                        className="w-full h-[118px] object-cover"
+                      />
+                    </button>
+                  </>
                 )}
               </div>
             )}

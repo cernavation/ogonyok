@@ -1,12 +1,12 @@
 import type { Day, EvidenceItem, PrideEntry } from './types'
 
-export const CURRENT_DAY = 719
+export const CURRENT_DAY = 720
 
 export const STATS = {
-  streak: 719,
-  prides: 719,
-  gratitudes: 662,
-  entries: '3585+',
+  streak: 720,
+  prides: 720,
+  gratitudes: 663,
+  entries: '3590+',
 } as const
 
 export const PHOTOS: string[] = []
@@ -104,15 +104,65 @@ export const TRENDING_TAGS = [
   '#Осознанность',
 ] as const
 
+// Day #720: 08.10.2026 — Alibaba, Crispol, зал
+const DAY_720_PRIDES: PrideEntry[] = [
+  {
+    num: '01',
+    text: 'Горжусь тем, что вышел на абсолютно новую стадию переговоров с Alibaba — это серьёзный профессиональный прорыв.',
+    scale: 10,
+    overcome: 3,
+  },
+  {
+    num: '02',
+    text: 'Горжусь тем, что написал компании Crispol — сделал первый шаг к партнёрству, которое казалось далёким.',
+    scale: 8,
+    overcome: 2,
+  },
+  {
+    num: '03',
+    text: 'Очень горжусь тем, что в момент, когда Gemini перестал работать, не сдался и нашёл решение — продолжил задачи несмотря на технический сбой.',
+    scale: 9,
+    overcome: 3,
+  },
+  {
+    num: '04',
+    text: 'Очень горжусь тем, что пошёл в зал — несмотря на усталость и загруженный день, сохранил дисциплину тела.',
+    scale: 8,
+    overcome: 2,
+  },
+  {
+    num: '05',
+    text: 'Горжусь тем, что держу ритм и не позволяю внешним помехам сломать цепочку дней.',
+    scale: 7,
+    overcome: 2,
+  },
+]
+
 export const INITIAL_DAYS: Day[] = [
   {
-    id: CURRENT_DAY,
+    id: 720,
+    title: 'Вышел на абсолютно новую стадию переговоров с Alibaba. Каждый день — новая ступень к цели.',
+    tags: ['Для тебя', '🔥 Гордости', '❤️ Благодарности', '#Memernity'],
+    prides: DAY_720_PRIDES,
+    gratitudes: [
+      'Благодарен команде Alibaba за открытость к переговорам',
+      'Благодарен себе за то, что не остановился когда инструменты сломались',
+      'Благодарен телу за отклик на тренировку даже в усталый день',
+      'Благодарен возможности строить партнёрства с мировыми брендами',
+      'Благодарен дисциплине — она работает даже когда мотивации нет',
+    ],
+    photos: undefined,
+    dateISO: '2026-10-08T23:58:00.000Z',
+    status: 'normal',
+  },
+  {
+    id: 719,
     title: 'Сегодня не искал мотивацию — просто начал. Маленькие победы тоже строят большую историю.',
     tags: ['Для тебя', '🔥 Гордости', '❤️ Благодарности', '#Memernity', '#Спорт'],
     prides: INITIAL_PRIDES,
     gratitudes: INITIAL_GRATITUDES,
     photos: undefined,
-    dateISO: '2026-10-09T09:14:00.000Z',
+    dateISO: '2026-10-07T23:58:00.000Z',
     status: 'normal',
   },
 ]

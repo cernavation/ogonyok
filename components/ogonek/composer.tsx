@@ -1,8 +1,7 @@
 'use client'
 
-import { Check, ImagePlus, ListPlus, Loader2, Mic, Sparkles } from 'lucide-react'
+import { BookmarkCheck, CalendarDays, Check, ImagePlus, ListPlus, Loader2, Mic, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -13,16 +12,22 @@ import { Tooltip } from './tooltip'
 type Props = {
   initialDraft?: ComposerDraft | null
   editingDay?: Day | null
+  /** Next new day id (for display in title) */
+  nextDayId?: number
+  /** Next new day date ISO string (auto-populated from last day + 1) */
+  nextDayDateISO?: string
   onSaveDraft?: (draft: ComposerDraft) => void
   onClearDraft?: () => void
   onClose: () => void
-  onSaved: (payload: ComposerPayload, editingDayId?: number) => void
+  onSaved: (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => void
   soundEnabled?: boolean
 }
 
 export function Composer({
   initialDraft,
   editingDay,
+  nextDayId,
+  nextDayDateISO,
   onSaveDraft,
   onClearDraft,
   onClose,
@@ -80,6 +85,20 @@ export function Composer({
     return {}
   })
 
+  // Date picker for new days (editable by user)
+  const [dateISO, setDateISO] = useState<string>(() => {
+    if (editingDay?.dateISO) return editingDay.dateISO
+    if (nextDayDateISO) return nextDayDateISO
+    return new Date().toISOString()
+  })
+
+  // Sync nextDayDateISO if it changes after mount (hydration)
+  useEffect(() => {
+    if (!editingDay && nextDayDateISO && !initialDraft) {
+      setDateISO(nextDayDateISO)
+    }
+  }, [nextDayDateISO, editingDay, initialDraft])
+
   const previewRef = useRef<string | null>(preview)
 
   useEffect(() => {
@@ -123,6 +142,9 @@ export function Composer({
       try {
         const id = await savePhoto(file)
         setPhotoId(id)
+        // Update preview with the saved photo id so it persists
+        setPreview(id)
+        previewRef.current = id
       } catch {
         // Fallback to transient blob url
       }
@@ -143,7 +165,11 @@ export function Composer({
   const filledPrides = prides.filter((p) => p.trim().length > 0)
   const filledGratitudes = gratitudes.filter((g) => g.trim().length > 0)
   const totalFilled = filledPrides.length + filledGratitudes.length
-  const canSave = totalFilled > 0
+
+  // Validation: require at least 5 pride entries to publish
+  const canPublish = filledPrides.length >= 5
+  // Can save as draft with any content
+  const canDraft = totalFilled > 0
 
   const handleEvaluateAi = async () => {
     if (filledPrides.length === 0) return
@@ -200,10 +226,7 @@ export function Composer({
     }
   }
 
-  const handleSave = () => {
-    if (!canSave) return
-    playSuccess(soundEnabled)
-
+  const buildPayload = (): ComposerPayload => {
     const ratings: Record<number, { scale: number; overcome: 0 | 1 | 2 | 3 }> = {}
     prides.forEach((_, idx) => {
       const ev = evaluations[idx]
@@ -215,30 +238,71 @@ export function Composer({
       }
     })
 
-    onSaved(
-      {
-        prides: filledPrides,
-        gratitudes: filledGratitudes,
-        photo: photoId || preview,
-        ratings,
-      },
-      editingDay?.id
-    )
+    return {
+      prides: filledPrides,
+      gratitudes: filledGratitudes,
+      photo: photoId || preview,
+      ratings,
+    }
+  }
+
+  const handleSaveDraft = () => {
+    if (!canDraft) return
+    playClick(soundEnabled)
+    onSaveDraft?.({
+      prides,
+      gratitudes,
+      photo: preview,
+      tab,
+      extra,
+      lastSavedISO: new Date().toISOString(),
+    })
+    onClose()
+  }
+
+  const handlePublish = () => {
+    if (!canPublish) return
+    playSuccess(soundEnabled)
+    onSaved(buildPayload(), editingDay?.id, editingDay ? undefined : dateISO)
     if (!editingDay) {
       onClearDraft?.()
     }
   }
 
+  // Format date for the date input (yyyy-MM-dd)
+  const dateValue = dateISO ? dateISO.slice(0, 10) : new Date().toISOString().slice(0, 10)
+
+  const displayDayId = editingDay?.id ?? nextDayId
+
   return (
     <ModalShell
-      title={editingDay ? `Редактировать День #${editingDay.id}` : 'Записать день'}
+      title={editingDay ? `Редактировать День #${editingDay.id}` : `Записать День #${displayDayId ?? '?'}`}
       onClose={onClose}
     >
       <p className="modal-intro">
         {editingDay
           ? `День #${editingDay.id} · редактируй формулировки и оценки дня.`
-          : `День #${CURRENT_DAY} · добавь факты, которые хочется помнить.`}
+          : `День #${displayDayId ?? '?'} · добавь факты, которые хочется помнить.`}
       </p>
+
+      {/* Date picker — only for new days */}
+      {!editingDay && (
+        <div className="composer-date-row flex items-center gap-2 mb-3">
+          <CalendarDays size={15} className="text-muted flex-none" />
+          <label className="text-xs text-muted flex-none">Дата дня:</label>
+          <input
+            type="date"
+            value={dateValue}
+            onChange={(e) => {
+              if (e.target.value) {
+                setDateISO(new Date(e.target.value).toISOString())
+              }
+            }}
+            className="bg-neutral-800 text-xs text-white rounded px-2 py-1 border border-neutral-700 cursor-pointer"
+            aria-label="Дата записи дня"
+          />
+        </div>
+      )}
 
       <div className="composer-tabs" role="tablist" aria-label="Разделы записи">
         <button
@@ -356,10 +420,17 @@ export function Composer({
         </button>
       )}
 
+      {/* Validation hint */}
+      {!editingDay && filledPrides.length < 5 && filledPrides.length > 0 && (
+        <p className="text-xs text-amber-500 mt-2 pl-1">
+          ⚠ Заполните минимум 5 гордостей для публикации ({filledPrides.length}/5)
+        </p>
+      )}
+
       <label className="upload-box">
         <ImagePlus size={23} />
         <div>
-          <b>{preview ? 'Фото добавлено' : 'Добавить воспоминания'}</b>
+          <b>{preview ? 'Фото добавлено ✓' : 'Добавить воспоминания'}</b>
           <small>Перетащи фото или выбери файл</small>
         </div>
         <input
@@ -371,11 +442,26 @@ export function Composer({
       </label>
 
       {preview && (
-        <img
-          className="upload-preview"
-          src={preview}
-          alt="Предпросмотр загруженной фотографии"
-        />
+        <div className="upload-preview-wrapper relative mt-2">
+          <img
+            className="upload-preview w-full rounded-2xl object-cover"
+            style={{ maxHeight: 240, objectFit: 'cover' }}
+            src={preview.startsWith('photo_') ? undefined : preview}
+            alt="Предпросмотр загруженной фотографии"
+          />
+          <button
+            type="button"
+            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            onClick={() => {
+              setPreview(null)
+              setPhotoId(null)
+              previewRef.current = null
+            }}
+            aria-label="Удалить фото"
+          >
+            <X size={14} />
+          </button>
+        </div>
       )}
 
       <footer>
@@ -402,15 +488,46 @@ export function Composer({
           </span>
         </div>
 
-        <button
-          type="button"
-          className="save-button"
-          onClick={handleSave}
-          disabled={!canSave}
-          style={{ opacity: canSave ? 1 : 0.5, cursor: canSave ? 'pointer' : 'not-allowed' }}
-        >
-          <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Save as draft button */}
+          {!editingDay && canDraft && (
+            <Tooltip content="Сохранить черновик и продолжить позже" side="top">
+              <button
+                type="button"
+                className="secondary-btn flex items-center gap-1.5 py-1.5 px-3 text-xs"
+                onClick={handleSaveDraft}
+              >
+                <BookmarkCheck size={14} className="text-blue-400" />
+                <span>Черновик</span>
+              </button>
+            </Tooltip>
+          )}
+
+          {/* Publish button */}
+          <Tooltip
+            content={
+              !canPublish && !editingDay
+                ? 'Заполните минимум 5 гордостей'
+                : editingDay
+                  ? 'Сохранить изменения'
+                  : 'Опубликовать день'
+            }
+            side="top"
+          >
+            <button
+              type="button"
+              className="save-button"
+              onClick={handlePublish}
+              disabled={editingDay ? totalFilled === 0 : !canPublish}
+              style={{
+                opacity: (editingDay ? totalFilled > 0 : canPublish) ? 1 : 0.5,
+                cursor: (editingDay ? totalFilled > 0 : canPublish) ? 'pointer' : 'not-allowed',
+              }}
+            >
+              <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
+            </button>
+          </Tooltip>
+        </div>
       </footer>
     </ModalShell>
   )

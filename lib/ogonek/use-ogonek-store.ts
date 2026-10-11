@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
-import { CURRENT_DAY } from './data'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   DEFAULT_STORE_STATE,
@@ -27,6 +26,7 @@ function getSnapshot(): OgonekStoreState {
   }
   if (!isInitialized) {
     cachedState = loadStore()
+    cachedState = migrateSplitDays(cachedState)
     isInitialized = true
   }
   return cachedState
@@ -34,6 +34,83 @@ function getSnapshot(): OgonekStoreState {
 
 function getServerSnapshot(): OgonekStoreState {
   return DEFAULT_STORE_STATE
+}
+
+/**
+ * МИГРАЦИЯ СЛИПШИХСЯ ДНЕЙ:
+ * Если в любом дне обнаружено более 5 гордостей подряд — он расщепляется
+ * на оригинальный день (первые 5) и новый день (следующие 5).
+ * Это исправляет баг "дописывания в существующий день".
+ */
+function migrateSplitDays(state: OgonekStoreState): OgonekStoreState {
+  const days = state.days
+  let needsMigration = false
+
+  // Check if any day has more than 5 prides (overflow from the old bug)
+  for (const day of days) {
+    if (day.prides.length > 5) {
+      needsMigration = true
+      break
+    }
+  }
+
+  if (!needsMigration) return state
+
+  const newDays: Day[] = []
+  let maxId = Math.max(...days.map((d) => d.id), 0)
+
+  for (const day of days) {
+    if (day.prides.length <= 5) {
+      newDays.push(day)
+      continue
+    }
+
+    // Split: first 5 prides stay in original day, rest go to a new day
+    const originalPrides = day.prides.slice(0, 5).map((p, i) => ({
+      ...p,
+      num: String(i + 1).padStart(2, '0'),
+    }))
+    const extraPrides = day.prides.slice(5).map((p, i) => ({
+      ...p,
+      num: String(i + 1).padStart(2, '0'),
+    }))
+
+    const originalGratitudes = day.gratitudes.slice(0, 5)
+    const extraGratitudes = day.gratitudes.slice(5)
+
+    // Keep original day intact with first 5
+    newDays.push({
+      ...day,
+      prides: originalPrides,
+      gratitudes: originalGratitudes,
+    })
+
+    // Create a new day for the overflow (next calendar day)
+    maxId = maxId + 1
+    const originalDate = day.dateISO ? new Date(day.dateISO) : new Date()
+    const nextDate = new Date(originalDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+
+    const splitDay: Day = {
+      id: maxId,
+      title: extraPrides[0]?.text || 'Продолжение дня',
+      tags: ['Для тебя', '🔥 Гордости'],
+      prides: extraPrides,
+      gratitudes: extraGratitudes.length > 0 ? extraGratitudes : [],
+      photos: day.photos,
+      dateISO: nextDate.toISOString(),
+      status: 'normal',
+    }
+    newDays.push(splitDay)
+  }
+
+  // Re-sort: newest first
+  newDays.sort((a, b) => b.id - a.id)
+
+  const migratedState = { ...state, days: newDays }
+  saveStore(migratedState)
+  console.info('[Ogonek] Migrated split days: ', newDays.length, 'total days after split')
+  return migratedState
 }
 
 const listeners = new Set<() => void>()
@@ -93,59 +170,55 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  const addEntryToCurrentDay = useCallback(
-    (payload: ComposerPayload) => {
+  /**
+   * КОНВЕЙЕР +1 ДЕНЬ:
+   * Всегда создаёт строго новый день с id = maxId + 1.
+   * Дата вычисляется как последняя дата в базе + 1 день.
+   * КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО дописывать пункты в существующие дни!
+   */
+  const addNewDay = useCallback(
+    (payload: ComposerPayload, dateISO?: string) => {
       updateStore((prev) => {
-        const dayExists = prev.days.some((d) => d.id === CURRENT_DAY)
-        let nextDays: Day[]
+        const maxId = prev.days.reduce((max, d) => Math.max(max, d.id), 0)
+        const newId = maxId + 1
 
-        if (dayExists) {
-          nextDays = prev.days.map((day) => {
-            if (day.id !== CURRENT_DAY) return day
+        // Compute next date: last day's date + 1 calendar day
+        let computedDate = dateISO
+        if (!computedDate) {
+          // Find the day with the highest id that has a dateISO
+          const latestDay = prev.days.reduce<Day | null>((best, d) => {
+            if (!d.dateISO) return best
+            if (!best) return d
+            return d.id > best.id ? d : best
+          }, null)
 
-            const existingCount = day.prides.length
-            const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
-              num: String(existingCount + idx + 1).padStart(2, '0'),
-              text,
-              scale: 8,
-              overcome: 1,
-            }))
+          const baseDate = latestDay?.dateISO ? new Date(latestDay.dateISO) : new Date()
+          const nextDate = new Date(baseDate)
+          nextDate.setDate(nextDate.getDate() + 1)
+          computedDate = nextDate.toISOString()
+        }
 
-            const updatedPhotos = payload.photo
-              ? [payload.photo, ...(day.photos || [])]
-              : day.photos
+        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
+          num: String(idx + 1).padStart(2, '0'),
+          text,
+          scale: 8,
+          overcome: 1,
+        }))
 
-            return {
-              ...day,
-              prides: [...day.prides, ...newPrideEntries],
-              gratitudes: [...day.gratitudes, ...payload.gratitudes],
-              photos: updatedPhotos,
-            }
-          })
-        } else {
-          const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
-            num: String(idx + 1).padStart(2, '0'),
-            text,
-            scale: 8,
-            overcome: 1,
-          }))
-
-          const newDay: Day = {
-            id: CURRENT_DAY,
-            title: 'Запись дня',
-            tags: ['Для тебя'],
-            prides: newPrideEntries,
-            gratitudes: payload.gratitudes,
-            photos: payload.photo ? [payload.photo] : undefined,
-            dateISO: new Date().toISOString(),
-            status: 'normal',
-          }
-          nextDays = [newDay, ...prev.days]
+        const newDay: Day = {
+          id: newId,
+          title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
+          tags: ['Для тебя', '🔥 Гордости'],
+          prides: newPrideEntries,
+          gratitudes: payload.gratitudes,
+          photos: payload.photo ? [payload.photo] : undefined,
+          dateISO: computedDate,
+          status: 'normal',
         }
 
         return {
           ...prev,
-          days: nextDays,
+          days: [newDay, ...prev.days],
           composerDraft: null,
         }
       })
@@ -312,13 +385,35 @@ export function useOgonekStore() {
     updateStore(() => DEFAULT_STORE_STATE)
   }, [updateStore])
 
+  /** Compute the next date for a new day (last date + 1 calendar day) */
+  const getNextDayDate = useCallback((): string => {
+    const days = getSnapshot().days
+    const latestDay = days.reduce<Day | null>((best, d) => {
+      if (!d.dateISO) return best
+      if (!best) return d
+      return d.id > best.id ? d : best
+    }, null)
+
+    const baseDate = latestDay?.dateISO ? new Date(latestDay.dateISO) : new Date()
+    const nextDate = new Date(baseDate)
+    nextDate.setDate(nextDate.getDate() + 1)
+    return nextDate.toISOString()
+  }, [])
+
+  /** Compute the next day id (maxId + 1) */
+  const getNextDayId = useCallback((): number => {
+    const days = getSnapshot().days
+    const maxId = days.reduce((max, d) => Math.max(max, d.id), 0)
+    return maxId + 1
+  }, [])
+
   return {
     state,
     isHydrated: typeof window !== 'undefined',
     addDay,
+    addNewDay,
     updateDay,
     updateDayWithPayload,
-    addEntryToCurrentDay,
     saveMorningIntentions,
     saveComposerDraft,
     clearComposerDraft,
@@ -328,5 +423,7 @@ export function useOgonekStore() {
     setPinEnabled,
     importState,
     resetToDefaults,
+    getNextDayDate,
+    getNextDayId,
   }
 }
