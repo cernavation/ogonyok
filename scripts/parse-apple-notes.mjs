@@ -2,17 +2,22 @@
 
 /**
  * scripts/parse-apple-notes.mjs
- * Full continuous chronological stitching of the user's authentic diary history:
- * 1. Days 1..24: Notebook templates (text "—", rating null).
- * 2. Days 25..297: Apple Notes (data/notes/notes-prides.txt & notes-gratitudes.txt) up to 2025-08-16.
- * 3. Days 298..719: Authentic raw entries from data/REAL_RAW_DATA.json (2025-08-17 to 2026-10-07).
+ * ГЕНЕРАЛЬНАЯ ЛЕТОПИСЬ — строгий хронологический пересчёт.
  *
- * Rules:
- * - Continuous, unbroken 1..N numbering with zero gaps or "missed" status.
- * - Days 295–299 in Apple Notes are dropped (taken authentically from REAL_RAW_DATA.json).
- * - Extracts date, day score (if 0.0 -> null rating), original entry text, and rating from "ур X".
- * - Saves monolithic ledger to public/seeds/ogonek-import.v1.json,
- *   data/migrated/ogonek-import.v1.json, and public/seeds/history-migrated.json.
+ * Алгоритм:
+ *  1. Дни 1..24  — тетрадка (текст "—", дата до 2024-11-18).
+ *  2. Apple Notes — data/notes/notes-prides.txt + notes-gratitudes.txt
+ *     (18.11.2024 → 16.08.2025; дни с датой >= 2025-08-17 исключаются).
+ *  3. REAL_RAW_DATA.json — 17.08.2025 → 07.10.2026;
+ *     дубли по дате МЁРДЖАТСЯ в один день (prides + gratitudes).
+ *  4. Новые ручные дни:
+ *       08.10.2026 — Alibaba, Crispol, зал
+ *       09.10.2026 — свежие гордости за 9 октября
+ *       10.10.2026 — свежие гордости за 10 октября
+ *  5. Весь массив сортируется СТРОГО ПО ВОЗРАСТАНИЮ dateISO,
+ *     затем нумеруется d.id = index + 1.
+ *  6. В файл записывается отсортированный ПО УБЫВАНИЮ dateISO массив
+ *     (самый свежий вверху ленты).
  */
 
 import fs from 'node:fs'
@@ -33,17 +38,18 @@ const migratedOutPath = path.resolve(rootDir, 'data', 'migrated', 'ogonek-import
 const historySeedPath = path.resolve(rootDir, 'public', 'seeds', 'history-migrated.json')
 const reportPath = path.resolve(rootDir, 'data', 'migrated', 'report.json')
 
-console.log('📜 ОГОНЁК: СКВОЗНОЙ ПЕРЕСЧЁТ И СШИВКА ИСТОРИИ (APPLE NOTES + RAW DATA)')
+console.log('📜 ОГОНЁК: СТРОГИЙ ХРОНОЛОГИЧЕСКИЙ ПЕРЕСЧЁТ ЛЕТОПИСИ')
 
 if (!fs.existsSync(prideNotesPath) || !fs.existsSync(gratNotesPath)) {
-  console.error(`❌ Файлы заметок не найдены в data/notes/`)
+  console.error('❌ Файлы заметок не найдены в data/notes/')
+  process.exit(1)
+}
+if (!fs.existsSync(rawDataPath)) {
+  console.error('❌ Файл REAL_RAW_DATA.json не найден')
   process.exit(1)
 }
 
-if (!fs.existsSync(rawDataPath)) {
-  console.error(`❌ Файл REAL_RAW_DATA.json не найден`)
-  process.exit(1)
-}
+// ─── утилиты ────────────────────────────────────────────────────────────────
 
 function normalizeDate(raw) {
   if (!raw) return null
@@ -56,22 +62,19 @@ function normalizeDate(raw) {
   }
   const m2 = raw.match(/(\d{2})(\d{2})\.(\d{2})/)
   if (m2) {
-    const day = m2[1]
-    const month = m2[2]
-    const year = '20' + m2[3]
-    return `${year}-${month}-${day}`
+    return `20${m2[3]}-${m2[2]}-${m2[1]}`
   }
   return null
 }
 
-// 1. Parse prides from Apple Notes
+// ─── парсер гордостей из Apple Notes ────────────────────────────────────────
+
 function parseNotesPrides(text) {
   const lines = text.split('\n')
   const days = []
   let currentDay = null
 
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i]
+  for (const rawLine of lines) {
     const line = rawLine.trim()
 
     const dateMatch =
@@ -81,13 +84,16 @@ function parseNotesPrides(text) {
     const scoreMatch = line.match(/(\d+(?:\.\d+)?)\s*[🟢🟡🔴]/)
 
     if ((dateMatch || dayNumMatch) && !line.match(/^[1-5]\.\s/)) {
+      // Если в текущем дне уже есть записи — сохраняем и начинаем новый
       if (currentDay && currentDay.entries.length > 0) {
         days.push(currentDay)
         currentDay = null
       }
+      // Создаём новый день только если нет незакрытого (без записей)
       if (!currentDay) {
         currentDay = { dayNumRaw: null, dateRaw: null, scoreRaw: null, entries: [] }
       }
+      // Дополняем текущий день из заголовочной строки
       if (dateMatch && !currentDay.dateRaw) currentDay.dateRaw = dateMatch[0]
       if (dayNumMatch && !currentDay.dayNumRaw) currentDay.dayNumRaw = parseInt(dayNumMatch[1], 10)
       if (scoreMatch && currentDay.scoreRaw === null) {
@@ -100,7 +106,6 @@ function parseNotesPrides(text) {
     const entryMatch = line.match(/^([1-5])\.\s*(.*)/)
     if (entryMatch) {
       if (!currentDay) currentDay = { dayNumRaw: null, dateRaw: null, scoreRaw: null, entries: [] }
-      const num = entryMatch[1]
       const entryTextRaw = entryMatch[2]
       const levelMatch = entryTextRaw.match(/\s+ур\s*(\d+(?:\.\d+)?)\s*$/i)
       let rating = null
@@ -109,7 +114,7 @@ function parseNotesPrides(text) {
         rating = parseFloat(levelMatch[1])
         textClean = entryTextRaw.slice(0, levelMatch.index).trim()
       }
-      currentDay.entries.push({ num, text: textClean, rating })
+      currentDay.entries.push({ num: entryMatch[1], text: textClean, rating })
       continue
     }
 
@@ -134,14 +139,14 @@ function parseNotesPrides(text) {
   return days
 }
 
-// 2. Parse gratitudes from Apple Notes
+// ─── парсер благодарностей из Apple Notes ───────────────────────────────────
+
 function parseNotesGratitudes(text) {
   const lines = text.split('\n')
   const days = []
   let currentDay = null
 
-  for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i]
+  for (const rawLine of lines) {
     const line = rawLine.trim()
 
     const dateMatch =
@@ -150,11 +155,16 @@ function parseNotesGratitudes(text) {
     const dayNumMatch = line.match(/(?:^|\s)(\d+)\s*[🔥❄️]/)
 
     if ((dateMatch || dayNumMatch) && !line.match(/^[1-5]\.\s/)) {
+      // Если в текущем дне уже есть записи — сохраняем и начинаем новый
       if (currentDay && currentDay.entries.length > 0) {
         days.push(currentDay)
         currentDay = null
       }
-      if (!currentDay) currentDay = { dateRaw: null, dayNumRaw: null, entries: [] }
+      // Создаём новый день только если нет незакрытого (без записей)
+      if (!currentDay) {
+        currentDay = { dateRaw: null, dayNumRaw: null, entries: [] }
+      }
+      // Дополняем текущий день из заголовочной строки
       if (dateMatch && !currentDay.dateRaw) currentDay.dateRaw = dateMatch[0]
       if (dayNumMatch && !currentDay.dayNumRaw) currentDay.dayNumRaw = parseInt(dayNumMatch[1], 10)
       continue
@@ -168,8 +178,7 @@ function parseNotesGratitudes(text) {
     }
 
     if (currentDay && currentDay.entries.length > 0 && line.length > 0 && !line.startsWith('Спасибы')) {
-      const lastEntry = currentDay.entries[currentDay.entries.length - 1]
-      lastEntry.text += ' ' + line
+      currentDay.entries[currentDay.entries.length - 1].text += ' ' + line
     }
   }
 
@@ -177,27 +186,29 @@ function parseNotesGratitudes(text) {
   return days
 }
 
+// ─── ШАГИ A: Apple Notes ──────────────────────────────────────────────────────
+
 const prideNotesRaw = fs.readFileSync(prideNotesPath, 'utf8')
 const gratNotesRaw = fs.readFileSync(gratNotesPath, 'utf8')
 
-const notesPridesAll = parseNotesPrides(prideNotesRaw)
-const notesGratsAll = parseNotesGratitudes(gratNotesRaw)
+// Отсечка: строго ДО 2025-08-17 (с 2025-08-17 берём из REAL_RAW_DATA)
+const CUTOFF = '2025-08-17'
 
-// Cutoff: Keep Apple Notes entries strictly BEFORE 2025-08-17 (days 295+ are taken from REAL_RAW_DATA.json)
-const notesPrides = notesPridesAll.filter((d) => {
-  const dateKey = normalizeDate(d.dateRaw)
-  return dateKey && dateKey < '2025-08-17'
+const notesPrides = parseNotesPrides(prideNotesRaw).filter((d) => {
+  const dk = normalizeDate(d.dateRaw)
+  return dk && dk < CUTOFF
 })
 
-const notesGrats = notesGratsAll.filter((d) => {
-  const dateKey = normalizeDate(d.dateRaw)
-  return dateKey && dateKey < '2025-08-17'
+const notesGrats = parseNotesGratitudes(gratNotesRaw).filter((d) => {
+  const dk = normalizeDate(d.dateRaw)
+  return dk && dk < CUTOFF
 })
 
-console.log(`- Извлечено дней гордостей из Apple Notes: ${notesPrides.length}`)
-console.log(`- Извлечено дней благодарностей из Apple Notes: ${notesGrats.length}`)
+console.log(`\n📒 Apple Notes:`)
+console.log(`   Гордости: ${notesPrides.length} дней`)
+console.log(`   Благодарности: ${notesGrats.length} дней`)
 
-// Map notes gratitudes by date
+// Индекс благодарностей по дате
 const notesGratsByDate = new Map()
 for (const g of notesGrats) {
   const d = normalizeDate(g.dateRaw)
@@ -207,7 +218,8 @@ for (const g of notesGrats) {
   }
 }
 
-// 3. Load REAL_RAW_DATA.json
+// ─── ШАГ Б: REAL_RAW_DATA ────────────────────────────────────────────────────
+
 const rawDataParsed = JSON.parse(fs.readFileSync(rawDataPath, 'utf8'))
 const rawItems = Array.isArray(rawDataParsed)
   ? rawDataParsed
@@ -215,19 +227,54 @@ const rawItems = Array.isArray(rawDataParsed)
   ? rawDataParsed.items
   : []
 
-const rawPrides = rawItems.filter((d) => d.type === 'pride').sort((a, b) => (a.seq ?? 0) - (b.seq ?? 0))
-const rawGrats = rawItems.filter((d) => d.type === 'gratitude')
+const allRawPrides = rawItems
+  .filter((d) => d.type === 'pride')
+  .sort((a, b) => {
+    // Сортируем сначала по дате, потом по seq
+    const da = a.dateISO || ''
+    const db = b.dateISO || ''
+    if (da !== db) return da.localeCompare(db)
+    return (a.seq ?? 0) - (b.seq ?? 0)
+  })
 
-console.log(`- Загружено реальных дней гордостей из REAL_RAW_DATA: ${rawPrides.length}`)
+const allRawGrats = rawItems.filter((d) => d.type === 'gratitude')
 
+console.log(`\n📦 REAL_RAW_DATA:`)
+console.log(`   Гордости (всего записей): ${allRawPrides.length}`)
+console.log(`   Благодарности: ${allRawGrats.length}`)
+
+// Индекс благодарностей по дате
 const rawGratsByDate = new Map()
-for (const g of rawGrats) {
+for (const g of allRawGrats) {
   const d = g.dateISO || (g.createdAtISO ? g.createdAtISO.slice(0, 10) : null)
   if (d) {
     if (!rawGratsByDate.has(d)) rawGratsByDate.set(d, [])
     rawGratsByDate.get(d).push(g)
   }
 }
+
+// МЁРЖ дублей: объединяем все prides с одинаковой датой в один день
+const rawPridesByDate = new Map()
+for (const rp of allRawPrides) {
+  const dateKey = rp.dateISO || (rp.createdAtISO ? rp.createdAtISO.slice(0, 10) : '')
+  if (!dateKey) continue
+  if (!rawPridesByDate.has(dateKey)) {
+    rawPridesByDate.set(dateKey, {
+      dateKey,
+      createdAtISO: rp.createdAtISO || `${dateKey}T12:00:00.000Z`,
+      entries: [],
+      tags: new Set(),
+      images: [],
+    })
+  }
+  const merged = rawPridesByDate.get(dateKey)
+  merged.entries.push(...(rp.entries || []))
+  if (Array.isArray(rp.tags)) for (const t of rp.tags) merged.tags.add(t)
+  if (Array.isArray(rp.images)) merged.images.push(...rp.images)
+}
+
+const uniqueDates = [...rawPridesByDate.keys()].sort()
+console.log(`   Уникальных дат гордостей: ${uniqueDates.length}`)
 
 const TAG_MAP = {
   work: '#Бизнес',
@@ -238,21 +285,21 @@ const TAG_MAP = {
   creative: 'Творчество',
 }
 
-// 4. Construct unified chronological sequence
-const chronologicalDays = []
+// ─── СБОРКА ЕДИНОГО МАССИВА ────────────────────────────────────────────────
 
-// Segment 1: Days 1..24 (Notebook templates)
+/** @type {Array<object>} */
+const allDays = []
+
+// ── Сегмент 1: Тетрадка (дни 1..24, до 2024-11-18) ─────────────────────────
 const day25Date = new Date('2024-11-18T12:00:00.000Z')
 for (let i = 1; i <= 24; i++) {
   const offsetDays = 25 - i
   const calcDate = new Date(day25Date.getTime() - offsetDays * 24 * 60 * 60 * 1000)
-  const dateISO = calcDate.toISOString()
-
-  chronologicalDays.push({
+  allDays.push({
     source: 'notebook',
     title: '—',
     tags: ['Для тебя'],
-    dateISO,
+    dateISO: calcDate.toISOString(),
     prides: [
       { num: '01', text: '—', scale: 0, overcome: 0 },
       { num: '02', text: '—', scale: 0, overcome: 0 },
@@ -272,37 +319,46 @@ for (let i = 1; i <= 24; i++) {
   })
 }
 
-// Segment 2: Apple Notes days (starting from 2024-11-18 up to 2025-08-16)
+// ── Сегмент 2: Apple Notes (2024-11-18 → 2025-08-16) ───────────────────────
+// Группируем по дате чтобы мёржить дубли
+const notesPridesByDate = new Map()
 for (const np of notesPrides) {
   const dateKey = normalizeDate(np.dateRaw)
+  if (!dateKey) continue
+  if (!notesPridesByDate.has(dateKey)) {
+    notesPridesByDate.set(dateKey, { dateKey, entries: [], scoreRaw: null })
+  }
+  const merged = notesPridesByDate.get(dateKey)
+  merged.entries.push(...np.entries)
+  if (merged.scoreRaw === null && np.scoreRaw !== null) merged.scoreRaw = np.scoreRaw
+}
+
+for (const [dateKey, merged] of notesPridesByDate) {
   const matchingG = notesGratsByDate.get(dateKey) || []
 
-  const prides = np.entries.map((e, idx) => {
+  const prides = merged.entries.map((e, idx) => {
     let scale = 0
     if (typeof e.rating === 'number' && e.rating > 0) {
       scale = Math.min(10, Math.max(1, Math.round(e.rating)))
-    } else if (typeof np.scoreRaw === 'number' && np.scoreRaw > 0) {
-      scale = Math.min(10, Math.max(1, Math.round(np.scoreRaw)))
+    } else if (typeof merged.scoreRaw === 'number' && merged.scoreRaw > 0) {
+      scale = Math.min(10, Math.max(1, Math.round(merged.scoreRaw)))
     }
-
-    return {
-      num: String(idx + 1).padStart(2, '0'),
-      text: e.text,
-      scale,
-      overcome: 0,
-    }
+    return { num: String(idx + 1).padStart(2, '0'), text: e.text, scale, overcome: 0 }
   })
 
   const gratitudes = matchingG.map((ge, idx) => ({
     num: String(idx + 1).padStart(2, '0'),
     text: ge.text,
-    rating: typeof np.scoreRaw === 'number' && np.scoreRaw > 0 ? Math.min(10, Math.round(np.scoreRaw)) : 10,
+    rating:
+      typeof merged.scoreRaw === 'number' && merged.scoreRaw > 0
+        ? Math.min(10, Math.round(merged.scoreRaw))
+        : 10,
   }))
 
   const tagSet = new Set(['Для тебя', '🔥 Гордости'])
   if (gratitudes.length > 0) tagSet.add('❤️ Благодарности')
 
-  chronologicalDays.push({
+  allDays.push({
     source: 'apple_notes',
     title: prides[0]?.text || 'Запись из заметок',
     tags: Array.from(tagSet),
@@ -314,19 +370,15 @@ for (const np of notesPrides) {
   })
 }
 
-// Segment 3: REAL_RAW_DATA days (from 2025-08-17 to 2026-10-07)
-for (const rp of rawPrides) {
-  const dateKey = rp.dateISO || (rp.createdAtISO ? rp.createdAtISO.slice(0, 10) : '')
-  const dateISO = rp.createdAtISO || `${dateKey}T12:00:00.000Z`
-
-  const prides = (rp.entries || []).map((e, idx) => {
+// ── Сегмент 3: REAL_RAW_DATA (2025-08-17 → 2026-10-07) ─────────────────────
+for (const [dateKey, merged] of rawPridesByDate) {
+  const prides = merged.entries.map((e, idx) => {
     let scale = 7
     if (typeof e.rating === 'number' && !isNaN(e.rating)) {
       scale = Math.min(10, Math.max(1, Math.round(e.rating)))
     } else if (e.rating != null && !isNaN(parseFloat(String(e.rating)))) {
       scale = Math.min(10, Math.max(1, Math.round(parseFloat(String(e.rating)))))
     }
-
     return {
       num: String(idx + 1).padStart(2, '0'),
       text: typeof e.text === 'string' ? e.text : '',
@@ -355,31 +407,29 @@ for (const rp of rawPrides) {
 
   const tagSet = new Set(['Для тебя', '🔥 Гордости'])
   if (gratitudes.length > 0) tagSet.add('❤️ Благодарности')
-
-  const rawTags = []
-  if (Array.isArray(rp.tags)) rawTags.push(...rp.tags)
-  for (const g of matchingGratsItems) {
-    if (Array.isArray(g.tags)) rawTags.push(...g.tags)
-  }
-  for (const t of rawTags) {
+  for (const t of merged.tags) {
     if (TAG_MAP[t]) tagSet.add(TAG_MAP[t])
     else if (typeof t === 'string' && t.trim().length > 0) tagSet.add(t)
   }
-
-  const photos = []
-  if (Array.isArray(rp.images)) {
-    for (const img of rp.images) {
-      if (img && typeof img.dataURL === 'string' && img.dataURL.length > 0) {
-        photos.push(img.dataURL)
-      }
+  for (const gItem of matchingGratsItems) {
+    for (const t of gItem.tags || []) {
+      if (TAG_MAP[t]) tagSet.add(TAG_MAP[t])
+      else if (typeof t === 'string' && t.trim().length > 0) tagSet.add(t)
     }
   }
 
-  chronologicalDays.push({
+  const photos = []
+  for (const img of merged.images) {
+    if (img && typeof img.dataURL === 'string' && img.dataURL.length > 0) {
+      photos.push(img.dataURL)
+    }
+  }
+
+  allDays.push({
     source: 'real_raw_data',
     title: prides[0]?.text || 'Запись дня',
     tags: Array.from(tagSet),
-    dateISO,
+    dateISO: merged.createdAtISO || `${dateKey}T12:00:00.000Z`,
     prides,
     gratitudes,
     photos: photos.length > 0 ? photos : undefined,
@@ -387,43 +437,160 @@ for (const rp of rawPrides) {
   })
 }
 
-// 5. Assign STRICT sequential numbering: Day #1, Day #2, ... Day #N
-chronologicalDays.forEach((d, idx) => {
+// ── Сегмент 4: Новые ручные дни (08-10 октября 2026) ────────────────────────
+
+allDays.push({
+  source: 'manual',
+  title: 'Alibaba — вышел на новую стадию переговоров',
+  tags: ['Для тебя', '🔥 Гордости', '#Бизнес'],
+  dateISO: '2026-10-08T12:00:00.000Z',
+  prides: [
+    {
+      num: '01',
+      text: 'Вышел на абсолютно новую стадию переговоров с Alibaba — прямой контакт с поставщиком',
+      scale: 9,
+      overcome: 0,
+    },
+    {
+      num: '02',
+      text: 'Сделал заказ в Crispol — чёткий шаг вперёд по бизнесу',
+      scale: 8,
+      overcome: 0,
+    },
+    { num: '03', text: 'Пошёл в зал и хорошо потренировался', scale: 7, overcome: 0 },
+    { num: '04', text: '—', scale: 0, overcome: 0 },
+    { num: '05', text: '—', scale: 0, overcome: 0 },
+  ],
+  gratitudes: [],
+  photos: undefined,
+  status: 'normal',
+})
+
+allDays.push({
+  source: 'manual',
+  title: 'Свежие гордости за 9 октября 2026',
+  tags: ['Для тебя', '🔥 Гордости'],
+  dateISO: '2026-10-09T12:00:00.000Z',
+  prides: [
+    { num: '01', text: 'Свежие гордости за 9 октября', scale: 7, overcome: 0 },
+    { num: '02', text: '—', scale: 0, overcome: 0 },
+    { num: '03', text: '—', scale: 0, overcome: 0 },
+    { num: '04', text: '—', scale: 0, overcome: 0 },
+    { num: '05', text: '—', scale: 0, overcome: 0 },
+  ],
+  gratitudes: [],
+  photos: undefined,
+  status: 'normal',
+})
+
+allDays.push({
+  source: 'manual',
+  title: 'Свежие гордости за 10 октября 2026',
+  tags: ['Для тебя', '🔥 Гордости'],
+  dateISO: '2026-10-10T12:00:00.000Z',
+  prides: [
+    { num: '01', text: 'Свежие гордости за 10 октября', scale: 7, overcome: 0 },
+    { num: '02', text: '—', scale: 0, overcome: 0 },
+    { num: '03', text: '—', scale: 0, overcome: 0 },
+    { num: '04', text: '—', scale: 0, overcome: 0 },
+    { num: '05', text: '—', scale: 0, overcome: 0 },
+  ],
+  gratitudes: [],
+  photos: undefined,
+  status: 'normal',
+})
+
+// ─── ШАГ 2: СТРОГАЯ ХРОНОЛОГИЧЕСКАЯ СОРТИРОВКА ───────────────────────────────
+
+// Функция извлечения dateISO в виде строки YYYY-MM-DD для сравнения
+function getDateKey(d) {
+  return d.dateISO ? d.dateISO.slice(0, 10) : ''
+}
+
+allDays.sort((a, b) => getDateKey(a).localeCompare(getDateKey(b)))
+
+// Проверяем дубли по дате (не должно быть — но логируем)
+const seenDates = new Map()
+for (const d of allDays) {
+  const dk = getDateKey(d)
+  if (seenDates.has(dk)) {
+    console.warn(`⚠️  ДУБЛЬ ДАТЫ: ${dk} — источники: ${seenDates.get(dk)} и ${d.source}`)
+  } else {
+    seenDates.set(dk, d.source)
+  }
+}
+
+// ─── ШАГ 3: СКВОЗНАЯ НУМЕРАЦИЯ (строго по порядку от старых к новым) ─────────
+
+allDays.forEach((d, idx) => {
   d.id = idx + 1
 })
 
-const finalTotalDays = chronologicalDays.length
+const totalDays = allDays.length
 
-// Report seams
-const day24 = chronologicalDays[23]
-const day25 = chronologicalDays[24]
-const notesEndIdx = 24 + notesPrides.length - 1
-const dayNotesEnd = chronologicalDays[notesEndIdx]
-const dayRawStart = chronologicalDays[notesEndIdx + 1]
-const dayLast = chronologicalDays[finalTotalDays - 1]
+// ─── ОТЧЁТ О СТЫКАХ ──────────────────────────────────────────────────────────
+
+const day24 = allDays[23]
+const day25 = allDays[24]
+const appleNotesEnd = allDays.findLast((d) => d.source === 'apple_notes')
+const rawStart = allDays.find((d) => d.source === 'real_raw_data')
+const dayLast = allDays[totalDays - 1]
 
 console.log('\n================ СТЫКИ И ГРАНИЦЫ ЛЕТОПИСИ ================')
 console.log(`📍 СТЫК 1 (Тетрадка ➔ Apple Notes):`)
-console.log(`   День #${day24.id}: [${day24.source}] дата: ${day24.dateISO?.slice(0, 10)} | текст: «${day24.title}»`)
-console.log(`   День #${day25.id}: [${day25.source}] дата: ${day25.dateISO?.slice(0, 10)} | текст: «${day25.title.slice(0, 50)}...»`)
+console.log(`   День #${day24.id}: [${day24.source}] ${day24.dateISO?.slice(0, 10)} | «${day24.title}»`)
+console.log(
+  `   День #${day25.id}: [${day25.source}] ${day25.dateISO?.slice(0, 10)} | «${day25.title.slice(0, 60)}»`,
+)
 
-console.log(`\n📍 СТЫК 2 (Apple Notes ➔ REAL_RAW_DATA):`)
-console.log(`   День #${dayNotesEnd.id}: [${dayNotesEnd.source}] дата: ${dayNotesEnd.dateISO?.slice(0, 10)} | текст: «${dayNotesEnd.title.slice(0, 50)}...»`)
-console.log(`   День #${dayRawStart.id}: [${dayRawStart.source}] дата: ${dayRawStart.dateISO?.slice(0, 10)} | текст: «${dayRawStart.title.slice(0, 50)}...»`)
+if (appleNotesEnd && rawStart) {
+  console.log(`\n📍 СТЫК 2 (Apple Notes ➔ REAL_RAW_DATA):`)
+  console.log(
+    `   День #${appleNotesEnd.id}: [${appleNotesEnd.source}] ${appleNotesEnd.dateISO?.slice(0, 10)} | «${appleNotesEnd.title.slice(0, 60)}»`,
+  )
+  console.log(
+    `   День #${rawStart.id}: [${rawStart.source}] ${rawStart.dateISO?.slice(0, 10)} | «${rawStart.title.slice(0, 60)}»`,
+  )
+}
 
 console.log(`\n🏁 ФИНАЛЬНЫЙ ДЕНЬ:`)
-console.log(`   День #${dayLast.id}: [${dayLast.source}] дата: ${dayLast.dateISO?.slice(0, 10)} | текст: «${dayLast.title.slice(0, 50)}...»`)
-console.log(`   ИТОГО ПОДЛИННЫХ ДНЕЙ В МОНОЛИТЕ: ${finalTotalDays}`)
+console.log(
+  `   День #${dayLast.id}: [${dayLast.source}] ${dayLast.dateISO?.slice(0, 10)} | «${dayLast.title.slice(0, 60)}»`,
+)
+console.log(`   ИТОГО ДНЕЙ В МОНОЛИТЕ: ${totalDays}`)
 
-// Check 651 & 670
-const d651 = chronologicalDays.find((d) => d.title.toLowerCase().includes('огромного листа'))
-const d670 = chronologicalDays.find((d) => d.title.toLowerCase().includes('читал сашу'))
-console.log(`\n🔍 ПРОВЕРКА КОНТРОЛЬНЫХ ТОЧЕК:`)
-console.log(`   День #${d651?.id}: дата ${d651?.dateISO?.slice(0, 10)} | текст «${d651?.title.slice(0, 50)}...»`)
-console.log(`   День #${d670?.id}: дата ${d670?.dateISO?.slice(0, 10)} | текст «${d670?.title.slice(0, 50)}...»`)
+// ─── ПРОВЕРКА МОНОТОННОСТИ ────────────────────────────────────────────────────
 
-// Clean objects for storage payload
-const cleanDays = chronologicalDays.map((d) => ({
+let monotonProblems = 0
+for (let i = 1; i < allDays.length; i++) {
+  const prev = getDateKey(allDays[i - 1])
+  const curr = getDateKey(allDays[i])
+  if (curr < prev) {
+    console.error(`❌ НАРУШЕНИЕ ПОРЯДКА: поз.${i} дата ${curr} < ${prev} (дни #${allDays[i-1].id} и #${allDays[i].id})`)
+    monotonProblems++
+  }
+}
+if (monotonProblems === 0) {
+  console.log('\n✅ Даты строго монотонно возрастают — порядок ОК')
+} else {
+  console.error(`\n❌ ОБНАРУЖЕНО ${monotonProblems} нарушений монотонности!`)
+}
+
+// ─── ВЫВОД ПЕРВЫХ И ПОСЛЕДНИХ 5 ДНЕЙ ─────────────────────────────────────────
+
+console.log('\n📋 ПЕРВЫЕ 5 ДНЕЙ (от старых к новым):')
+for (const d of allDays.slice(0, 5)) {
+  console.log(`  #${String(d.id).padStart(3)} ${d.dateISO?.slice(0, 10)} [${d.source}] «${d.title.slice(0, 55)}»`)
+}
+
+console.log('\n📋 ПОСЛЕДНИЕ 5 ДНЕЙ (самые свежие):')
+for (const d of allDays.slice(-5)) {
+  console.log(`  #${String(d.id).padStart(3)} ${d.dateISO?.slice(0, 10)} [${d.source}] «${d.title.slice(0, 55)}»`)
+}
+
+// ─── ФОРМИРОВАНИЕ ИТОГОВОГО МАССИВА ──────────────────────────────────────────
+
+const cleanDays = allDays.map((d) => ({
   id: d.id,
   title: d.title,
   tags: d.tags,
@@ -434,34 +601,44 @@ const cleanDays = chronologicalDays.map((d) => ({
   status: 'normal',
 }))
 
-// Sort descending by ID for feed view (Day #N down to Day #1)
-cleanDays.sort((a, b) => b.id - a.id)
+// Лента: строго по убыванию dateISO (самые свежие — сверху)
+cleanDays.sort((a, b) => b.dateISO.localeCompare(a.dateISO))
 
-// Streak calculation
+// Дополнительная проверка: ID в ленте НЕ должны убывать монотонно
+// (это нормально — лента перевёрнута относительно нумерации)
+console.log('\n📋 ТОП-5 ЛЕНТЫ (сверху, самые свежие):')
+for (const d of cleanDays.slice(0, 5)) {
+  console.log(`  #${String(d.id).padStart(3)} ${d.dateISO?.slice(0, 10)} «${d.title.slice(0, 55)}»`)
+}
+
+// ─── STREAK ──────────────────────────────────────────────────────────────────
+
 const dates = new Set()
 for (const d of cleanDays) {
   if (d.dateISO) dates.add(d.dateISO.slice(0, 10))
 }
 const streakRes = computeStreak(dates, new Date())
 
+// ─── ОТЧЁТ И ЗАПИСЬ ──────────────────────────────────────────────────────────
+
 const report = {
-  totalDays: finalTotalDays,
+  totalDays,
   notebookDays: 24,
   appleNotesDays: notesPrides.length,
-  realRawDays: rawPrides.length,
+  realRawDays: rawPridesByDate.size,
+  manualDays: 3,
+  monotonProblems,
   seamNotebookToNotes: {
     day24: { id: day24.id, date: day24.dateISO?.slice(0, 10) },
     day25: { id: day25.id, date: day25.dateISO?.slice(0, 10), title: day25.title },
   },
-  seamNotesToRaw: {
-    notesEnd: { id: dayNotesEnd.id, date: dayNotesEnd.dateISO?.slice(0, 10), title: dayNotesEnd.title },
-    rawStart: { id: dayRawStart.id, date: dayRawStart.dateISO?.slice(0, 10), title: dayRawStart.title },
-  },
-  finalDay: {
-    id: dayLast.id,
-    date: dayLast.dateISO?.slice(0, 10),
-    title: dayLast.title,
-  },
+  seamNotesToRaw: appleNotesEnd && rawStart
+    ? {
+        notesEnd: { id: appleNotesEnd.id, date: appleNotesEnd.dateISO?.slice(0, 10), title: appleNotesEnd.title },
+        rawStart: { id: rawStart.id, date: rawStart.dateISO?.slice(0, 10), title: rawStart.title },
+      }
+    : null,
+  finalDay: { id: dayLast.id, date: dayLast.dateISO?.slice(0, 10), title: dayLast.title },
   streakCalculated: streakRes.streak,
   bestStreak: streakRes.best,
   migratedAtISO: new Date().toISOString(),
@@ -494,4 +671,4 @@ console.log(`\n💾 Результаты сохранены в:`)
 console.log(`   1. ${publicOutPath}`)
 console.log(`   2. ${migratedOutPath}`)
 console.log(`   3. ${historySeedPath}`)
-console.log(`📊 Отчёт сохранён в: ${reportPath}`)
+console.log(`📊 Отчёт: ${reportPath}`)
