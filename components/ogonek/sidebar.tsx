@@ -24,11 +24,13 @@ export function Sidebar({
 }: Props) {
   return (
     <aside className="sidebar" aria-label="Боковая панель">
+      {/* Brand logo */}
       <div className="brand">
         <span className="brand-flame" aria-hidden="true">✦</span>
         <span>Огонёк</span>
       </div>
 
+      {/* Navigation */}
       <nav className="nav-list" aria-label="Разделы приложения">
         <Tooltip content="Главная лента" side="right" hotkey="1">
           <button
@@ -108,6 +110,7 @@ export function Sidebar({
         </Tooltip>
       </nav>
 
+      {/* Compose button */}
       <Tooltip content="Записать день" side="top" hotkey="N">
         <button
           type="button"
@@ -120,9 +123,10 @@ export function Sidebar({
         </button>
       </Tooltip>
 
+      {/* Profile block — click opens profile overlay */}
       <Tooltip content="Профиль исследователя" side="top" hotkey="P">
         <div
-          className="profile-mini cursor-pointer hover:bg-white/5 transition-colors"
+          className="profile-mini cursor-pointer rounded-full hover:bg-white/[0.08] transition-colors duration-150 px-3 py-2.5 -mx-1"
           onClick={onOpenProfile}
           role="button"
           tabIndex={0}
@@ -134,22 +138,35 @@ export function Sidebar({
           }}
           aria-label="Открыть профиль пользователя"
         >
-          <div className="avatar avatar-photo" aria-hidden="true">AC</div>
-          <div>
-            <strong>Alexei Cerna</strong>
-            <small>@cernavation</small>
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-none select-none"
+            style={{
+              background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
+              color: '#fff',
+              textShadow: '0 1px 2px #000',
+            }}
+            aria-hidden="true"
+          >
+            AC
+          </div>
+          <div className="flex-1 min-w-0">
+            <strong className="block text-[14px] font-bold text-[#e7e9ea] tracking-[-0.015em] truncate">
+              Alexei Cerna
+            </strong>
+            <small className="block text-[#71767b] text-[13px] mt-0.5 truncate">@cernavation</small>
           </div>
           <button
             type="button"
-            className="muted"
+            className="text-[#71767b] p-1 rounded-full hover:bg-white/[0.08] transition-colors"
             aria-label="Меню профиля"
-            style={{ padding: 4 }}
+            onClick={(e) => { e.stopPropagation(); onOpenProfile?.() }}
           >
-            <MoreHorizontal size={18} />
+            <MoreHorizontal size={17} />
           </button>
         </div>
       </Tooltip>
 
+      {/* Streak mini indicator */}
       <div className="streak-mini">
         <Flame size={18} fill="currentColor" />
         <span>Стрик: <b>{streak} дней</b></span>

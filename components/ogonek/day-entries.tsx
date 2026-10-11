@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { BookmarkPlus, Flame, Heart, Zap } from 'lucide-react'
+import { BookmarkPlus, Flame, Heart } from 'lucide-react'
 import { useId, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { getGratitudeRating, getGratitudeText, type GratitudeEntry, type Mode, type PrideEntry } from '@/lib/ogonek/types'
@@ -27,25 +27,12 @@ function StarsBar({ rating }: { rating: number | null | undefined }) {
   }
   const clamped = Math.min(10, Math.max(1, Math.round(rating)))
   return (
-    <div className="entry-stars" title={`Оценка: ${clamped}/10`}>
-      <div className="hidden sm:flex items-center gap-0.5" aria-hidden="true">
-        {Array.from({ length: 10 }, (_, i) => {
-          const lit = i < clamped
-          return (
-            <span
-              key={i}
-              className={`text-[11px] leading-none select-none ${
-                lit ? 'text-amber-400 opacity-100 font-bold' : 'text-neutral-700 opacity-30'
-              }`}
-            >
-              {lit ? '★' : '☆'}
-            </span>
-          )
-        })}
-      </div>
-      <span className="sm:hidden text-[11px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded px-1.5 py-0.5 select-none">
-        {clamped}★
+    <div className="inline-flex items-center gap-0.5 flex-none" title={`Оценка: ${clamped}/10`}>
+      {/* Desktop: show star count as compact badge */}
+      <span className="text-[12px] font-bold text-amber-400 tracking-[-0.01em] select-none">
+        {clamped}
       </span>
+      <span className="text-amber-400 text-[13px] leading-none select-none">★</span>
     </div>
   )
 }
@@ -79,7 +66,12 @@ export function DayEntries({
 
   return (
     <>
-      <div className="segmented" role="tablist" aria-label="Тип записей">
+      {/* Sliding tab switcher with Framer Motion layoutId */}
+      <div
+        className="relative flex rounded-xl bg-[#090a0b] border border-[#2f3336] p-1 mb-3"
+        role="tablist"
+        aria-label="Тип записей"
+      >
         {TABS.map(({ id, label, icon: Icon }) => {
           const selected = mode === id
           return (
@@ -90,27 +82,38 @@ export function DayEntries({
               id={`${uid}-tab-${id}`}
               aria-selected={selected}
               aria-controls={`${uid}-panel-${id}`}
-              data-mode={id}
-              data-selected={selected}
-              className="segmented__tab"
+              className="relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-bold transition-colors duration-150 z-10"
+              style={{
+                color: selected
+                  ? id === 'pride' ? '#ffad5a' : '#ff73ab'
+                  : '#71767b',
+              }}
               onClick={() => handleTabClick(id)}
             >
               {selected && (
                 <motion.span
                   layoutId={`${uid}-pill`}
-                  className="segmented__pill"
-                  transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 500, damping: 38 }}
+                  className="absolute inset-0 rounded-lg"
+                  style={{ background: '#202327' }}
+                  transition={
+                    reduce
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 500, damping: 38 }
+                  }
                 />
               )}
-              <span className="segmented__label">
-                <Icon size={16} /> {label}
+              <span className="relative z-10 flex items-center gap-1.5">
+                <Icon size={14} />
+                {label}
               </span>
             </button>
           )
         })}
       </div>
 
-      <div className="entries-stack">
+      {/* Entry panels */}
+      <div className="grid">
+        {/* Prides panel */}
         <div
           role="tabpanel"
           id={`${uid}-panel-pride`}
@@ -121,21 +124,25 @@ export function DayEntries({
           {prides.map((p) => {
             const rating = typeof p.scale === 'number' && p.scale > 0 && p.text !== '—' ? p.scale : null
             return (
-              <div className="entry relative" key={p.num}>
+              <div className="relative flex items-baseline gap-2 text-[13px] py-0.5" key={p.num}>
                 {sparkingNum === p.num && <VaultSpark active={true} />}
-                <span className="entry-num">{p.num}</span>
-                <span className="entry-text">{p.text}</span>
-                <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[11px] font-mono text-[#71767b] flex-none w-6 text-right">
+                  {p.num}
+                </span>
+                <span className="flex-1 leading-[1.38] text-[#e7e9ea] tracking-[-0.01em]">
+                  {p.text}
+                </span>
+                <div className="flex items-center gap-1.5 flex-none">
                   <StarsBar rating={rating} />
                   {onPinToVault && (
                     <Tooltip content="В Сейф доказательств" side="top">
                       <button
                         type="button"
-                        className="p-1 text-muted hover:text-orange-400 transition-colors cursor-pointer"
+                        className="p-1 text-[#71767b] hover:text-[#ff6b35] transition-colors cursor-pointer rounded-full hover:bg-[#ff6b35]/10"
                         aria-label={`Сохранить факт #${p.num} в сейф`}
                         onClick={() => handleSaveToVault(p.num, p.text)}
                       >
-                        <BookmarkPlus size={14} />
+                        <BookmarkPlus size={13} />
                       </button>
                     </Tooltip>
                   )}
@@ -144,6 +151,8 @@ export function DayEntries({
             )
           })}
         </div>
+
+        {/* Gratitudes panel */}
         <div
           role="tabpanel"
           id={`${uid}-panel-gratitude`}
@@ -157,10 +166,17 @@ export function DayEntries({
             const rating = text === '—' || !rawRating || rawRating <= 0 ? null : rawRating
             const num = String(idx + 1).padStart(2, '0')
             return (
-              <div className="entry entry--gratitude relative" key={`${idx}-${text.slice(0, 30)}`}>
-                <span className="entry-num text-pink-400/80">{num}</span>
-                <span className="entry-text">{text}</span>
-                <div className="flex items-center gap-2 shrink-0">
+              <div
+                className="flex items-baseline gap-2 text-[13px] py-0.5"
+                key={`${idx}-${text.slice(0, 30)}`}
+              >
+                <span className="text-[11px] font-mono text-[#ff73ab]/70 flex-none w-6 text-right">
+                  {num}
+                </span>
+                <span className="flex-1 leading-[1.38] text-[#e7e9ea] tracking-[-0.01em]">
+                  {text}
+                </span>
+                <div className="flex items-center gap-1.5 flex-none">
                   <StarsBar rating={rating} />
                 </div>
               </div>

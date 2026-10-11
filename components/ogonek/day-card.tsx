@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert, Sparkles } from 'lucide-react'
+import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day } from '@/lib/ogonek/types'
@@ -47,27 +47,33 @@ export function DayCard({
     onNotify?.(thanked ? 'Благодарность снята' : 'Благодарность отправлена!')
   }
 
-  // Handle missed days without fake text
+  // Handle missed days
   if (day.status === 'missed') {
     return (
-      <article className="day-card day-card--missed" id={`day-card-${day.id}`}>
-        <header className="post-header">
-          <div className="avatar avatar-muted" aria-hidden="true">✦</div>
-          <div className="post-meta">
-            <div>
-              <strong>Льготный мост</strong>
-              <span className="handle">· День #{day.id}</span>
-            </div>
-            <div className="post-sub">
-              <span className="text-xs text-amber-500 font-medium flex items-center gap-1">
-                <ShieldAlert size={12} /> Grace Period
-              </span>
-            </div>
+      <article
+        className="border-b border-[#2f3336] px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150"
+        id={`day-card-${day.id}`}
+      >
+        <div className="flex gap-3">
+          <div
+            className="w-10 h-10 rounded-full flex-none flex items-center justify-center text-[#71767b] bg-[#1c1e22] text-base"
+            aria-hidden="true"
+          >
+            ✦
           </div>
-        </header>
-        <p className="post-copy text-muted italic text-sm my-2">
-          В этот день записей не было, но огонёк непрерывного пути сохранён льготным периодом (3 дня допуска).
-        </p>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 mb-1">
+              <strong className="text-[15px] font-bold text-[#e7e9ea] tracking-[-0.015em]">Льготный мост</strong>
+              <span className="text-[#71767b] text-[14px]">· День #{day.id}</span>
+            </div>
+            <span className="text-xs text-amber-500 font-medium flex items-center gap-1">
+              <ShieldAlert size={12} /> Grace Period
+            </span>
+            <p className="text-[14px] text-[#71767b] italic mt-2 leading-[1.45]">
+              В этот день записей не было, но огонёк непрерывного пути сохранён льготным периодом (3 дня допуска).
+            </p>
+          </div>
+        </div>
       </article>
     )
   }
@@ -88,157 +94,206 @@ export function DayCard({
     return 'score-red'
   }, [averageScore])
 
+  const dateStr = day.dateISO
+    ? new Date(day.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'сегодня'
+
   return (
     <>
-      <article className="day-card" id={`day-card-${day.id}`}>
-        <header className="post-header">
-          <div className="avatar avatar-photo" aria-hidden="true">AC</div>
-          <div className="post-meta">
-            <div>
-              <strong>Alexei Cerna</strong>
-              <span className="verified" title="Верифицирован">✓</span>
-              <span className="handle">@cernavation · {day.dateISO ? new Date(day.dateISO).toLocaleDateString('ru-RU') : 'сегодня'}</span>
-            </div>
-            <div className="post-sub">
-              <span className="day-badge">День #{day.id}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {averageScore !== null && (
-              <div
-                className={`score-badge ${scoreBadgeClass}`}
-                title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
-              >
-                {averageScore.toFixed(1)}
-              </div>
-            )}
-            <Tooltip content="Редактировать день" side="left">
-              <button
-                type="button"
-                className="muted hover:text-orange-400 transition-colors"
-                aria-label="Редактировать день"
-                style={{ padding: 4 }}
-                onClick={() => onEdit?.(day)}
-              >
-                <Pencil size={18} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Опции дня" side="left">
-              <button
-                type="button"
-                className="muted"
-                aria-label="Опции публикации"
-                style={{ padding: 4 }}
-                onClick={() => setShareModalOpen(true)}
-              >
-                <MoreHorizontal size={20} />
-              </button>
-            </Tooltip>
-          </div>
-        </header>
-
-        <p className="post-copy">{day.title}</p>
-
-        <DayEntries
-          prides={day.prides}
-          gratitudes={day.gratitudes}
-          soundEnabled={soundEnabled}
-          onPinToVault={onPinToVault}
-          onNotify={onNotify}
-        />
-
-        {photos.length > 0 && (
-          <div className="media-grid">
-            <button
-              type="button"
-              onClick={() => onLightbox(photos[0])}
-              className={photos.length === 1 ? 'media-single w-full' : 'media-main'}
-              aria-label="Открыть главное изображение дня"
+      <article
+        className="border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150 px-4 py-4"
+        id={`day-card-${day.id}`}
+        style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 280px' }}
+      >
+        <div className="flex gap-3">
+          {/* Avatar */}
+          <div className="flex-none">
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none"
+              style={{
+                background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
+                color: '#fff',
+                textShadow: '0 1px 2px #000',
+              }}
+              aria-hidden="true"
             >
-              <img
-                src={photos[0]}
-                alt="Главное фото дня"
-                loading="lazy"
-              />
-            </button>
-            {photos.length > 1 && (
-              <div>
-                <button
-                  type="button"
-                  onClick={() => onLightbox(photos[1])}
-                  aria-label="Открыть второе изображение дня"
+              AC
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-2 mb-1">
+              <div className="flex items-center gap-1 flex-wrap min-w-0">
+                <span className="font-bold text-[15px] text-[#e7e9ea] tracking-[-0.015em]">
+                  Alexei Cerna
+                </span>
+                {/* Blue verified badge */}
+                <span
+                  className="inline-grid place-items-center rounded-full text-white flex-none"
+                  style={{ background: '#1d9bf0', width: 16, height: 16, fontSize: 9, fontWeight: 900 }}
+                  title="Верифицирован"
+                  aria-label="Верифицирован"
                 >
-                  <img
-                    src={photos[1]}
-                    alt="Второе фото дня"
-                    loading="lazy"
-                  />
-                </button>
-                {photos[2] && (
+                  ✓
+                </span>
+                <span className="text-[#71767b] text-[14px] tracking-[-0.01em]">
+                  @cernavation · {dateStr}
+                </span>
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ background: '#2b1d16', color: '#ffad5a' }}
+                >
+                  День #{day.id}
+                </span>
+              </div>
+
+              {/* Score badge + action buttons */}
+              <div className="flex items-center gap-0.5 flex-none">
+                {averageScore !== null && (
+                  <div
+                    className={`score-badge ${scoreBadgeClass}`}
+                    title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
+                    style={{ minWidth: 42, height: 36, fontSize: 15, borderRadius: 10, padding: '0 8px' }}
+                  >
+                    {averageScore.toFixed(1)}
+                  </div>
+                )}
+                <Tooltip content="Редактировать день" side="left">
                   <button
                     type="button"
-                    onClick={() => onLightbox(photos[2])}
-                    aria-label="Открыть третье изображение дня"
+                    className="p-2 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
+                    aria-label="Редактировать день"
+                    onClick={() => onEdit?.(day)}
                   >
-                    <img
-                      src={photos[2]}
-                      alt="Третье фото дня"
-                      loading="lazy"
-                    />
+                    <Pencil size={15} />
                   </button>
+                </Tooltip>
+                <Tooltip content="Опции дня" side="left">
+                  <button
+                    type="button"
+                    className="p-2 rounded-full text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.08] transition-colors duration-150"
+                    aria-label="Опции публикации"
+                    onClick={() => setShareModalOpen(true)}
+                  >
+                    <MoreHorizontal size={15} />
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+
+            {/* Post body */}
+            <p className="text-[15px] leading-[1.45] text-[#e7e9ea] tracking-[-0.015em] mb-3">
+              {day.title}
+            </p>
+
+            {/* Entries tabs */}
+            <DayEntries
+              prides={day.prides}
+              gratitudes={day.gratitudes}
+              soundEnabled={soundEnabled}
+              onPinToVault={onPinToVault}
+              onNotify={onNotify}
+            />
+
+            {/* Media */}
+            {photos.length > 0 && (
+              <div className="media-grid mt-3">
+                <button
+                  type="button"
+                  onClick={() => onLightbox(photos[0])}
+                  className={photos.length === 1 ? 'media-single w-full' : 'media-main'}
+                  aria-label="Открыть главное изображение дня"
+                >
+                  <img src={photos[0]} alt="Главное фото дня" loading="lazy" />
+                </button>
+                {photos.length > 1 && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => onLightbox(photos[1])}
+                      aria-label="Открыть второе изображение дня"
+                    >
+                      <img src={photos[1]} alt="Второе фото дня" loading="lazy" />
+                    </button>
+                    {photos[2] && (
+                      <button
+                        type="button"
+                        onClick={() => onLightbox(photos[2])}
+                        aria-label="Открыть третье изображение дня"
+                      >
+                        <img src={photos[2]} alt="Третье фото дня" loading="lazy" />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             )}
+
+            {/* X.com canonical 4-action bar */}
+            <div className="flex items-center justify-between pt-2 -mx-2">
+              {/* Огонёк 🔥 */}
+              <Tooltip content="Зажечь огонёк" side="top">
+                <button
+                  type="button"
+                  onClick={handleLike}
+                  aria-label={liked ? 'Убрать отметку огня' : 'Поставить огонь'}
+                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
+                    liked
+                      ? 'text-[#ff6b35]'
+                      : 'text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10'
+                  }`}
+                >
+                  <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
+                  <span>{liked ? '1' : '0'}</span>
+                </button>
+              </Tooltip>
+
+              {/* Спасибо ❤️ */}
+              <Tooltip content="Поблагодарить" side="top">
+                <button
+                  type="button"
+                  onClick={handleThank}
+                  aria-label="Поблагодарить"
+                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
+                    thanked
+                      ? 'text-[#f91880]'
+                      : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
+                  }`}
+                >
+                  <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
+                  <span>Спасибо</span>
+                </button>
+              </Tooltip>
+
+              {/* Редактировать ✏️ */}
+              <Tooltip content="Редактировать день" side="top">
+                <button
+                  type="button"
+                  onClick={() => onEdit?.(day)}
+                  aria-label="Редактировать день"
+                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
+                >
+                  <Pencil size={18} />
+                  <span>Править</span>
+                </button>
+              </Tooltip>
+
+              {/* Поделиться 📤 */}
+              <Tooltip content="Экспорт карточки (SVG / PNG)" side="top" hotkey="E">
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(true)}
+                  aria-label="Поделиться записью"
+                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors duration-150"
+                >
+                  <Activity size={18} />
+                  <span>Поделиться</span>
+                </button>
+              </Tooltip>
+            </div>
           </div>
-        )}
-
-        <div className="post-actions">
-          <Tooltip content="Зажечь огонёк" side="top">
-            <button
-              type="button"
-              className={liked ? 'liked' : ''}
-              onClick={handleLike}
-              aria-label={liked ? 'Убрать отметку огня' : 'Поставить огонь'}
-            >
-              <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
-              <span>{liked ? '1' : '0'}</span>
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Поблагодарить" side="top">
-            <button
-              type="button"
-              className={thanked ? 'liked' : ''}
-              onClick={handleThank}
-              aria-label="Поблагодарить"
-            >
-              <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
-              <span>Спасибо</span>
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Редактировать день" side="top">
-            <button
-              type="button"
-              onClick={() => onEdit?.(day)}
-              aria-label="Редактировать день"
-              className="hover:text-orange-400 transition-colors"
-            >
-              <Pencil size={18} />
-              <span>Править</span>
-            </button>
-          </Tooltip>
-
-          <Tooltip content="Экспорт карточки (SVG / PNG)" side="top" hotkey="E">
-            <button
-              type="button"
-              onClick={() => setShareModalOpen(true)}
-              aria-label="Поделиться записью"
-            >
-              <Activity size={18} />
-              <span>Поделиться</span>
-            </button>
-          </Tooltip>
         </div>
       </article>
 
