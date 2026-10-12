@@ -185,6 +185,24 @@
 }
 .x-secondary-btn:hover { background: rgba(255,255,255,0.06); border-color: #71767b; }
 
+/* secondary-btn alias (used by profile-modal.tsx, settings) */
+.secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: #e7e9ea;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  border: 1px solid #536471;
+  transition: background 0.15s, border-color 0.15s;
+  cursor: pointer;
+}
+.secondary-btn:hover { background: rgba(255,255,255,0.06); border-color: #71767b; }
+
 /* Legacy aliases — keep for composer & settings that still use them */
 .compose-button,
 .save-button {
@@ -462,9 +480,9 @@
 }
 
 .tag-chip.active {
-  background: #251711;
-  border-color: var(--orange);
-  color: var(--orange-light);
+  background: rgba(29, 155, 240, 0.10);
+  border-color: var(--blue);
+  color: var(--blue);
 }
 
 .trending-section {
@@ -511,7 +529,7 @@
 }
 
 .trending-icon {
-  color: var(--orange);
+  color: var(--blue);
   flex: none;
 }
 
@@ -525,7 +543,7 @@
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--orange-light);
+  color: var(--blue);
   margin-bottom: 12px;
 }
 
@@ -650,7 +668,7 @@
 }
 
 .section-kicker {
-  color: var(--orange-light);
+  color: var(--blue);
   font-size: 13px;
   font-weight: 700;
   display: flex;
@@ -687,7 +705,7 @@
 }
 
 .focus-input span {
-  color: var(--orange);
+  color: var(--blue);
   font-weight: 800;
   font-size: 12px;
 }
@@ -1037,7 +1055,7 @@
   align-items: center;
   gap: 9px;
   color: var(--orange);
-  margin: 21px 0 13px;
+  margin: 0 0 12px;
 }
 
 .streak-big strong {
@@ -1797,9 +1815,9 @@ kbd {
 }
 
 .badge-pill.active {
-  background: rgba(255, 107, 53, 0.12);
-  border-color: rgba(255, 107, 53, 0.35);
-  color: #ff975c;
+  background: rgba(29, 155, 240, 0.12);
+  border-color: rgba(29, 155, 240, 0.35);
+  color: #1d9bf0;
 }
 
 .badge-pill.locked {

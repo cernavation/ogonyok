@@ -1,4 +1,4 @@
-export type ViewId = 'home' | 'explore' | 'vault' | 'analytics' | 'settings'
+export type ViewId = 'home' | 'explore' | 'vault' | 'analytics' | 'settings' | 'profile' | 'intentions'
 
 export type Mode = 'pride' | 'gratitude'
 

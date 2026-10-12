@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart3, Home, MoreHorizontal, Plus, Search, Settings, Target, Zap } from 'lucide-react'
+import { BarChart3, Home, MoreHorizontal, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import type { ViewId } from '@/lib/ogonek/types'
 import { Tooltip } from './tooltip'
@@ -15,10 +15,11 @@ type Props = {
 }
 
 const NAV = [
-  { id: 'home' as ViewId,      icon: Home,     label: 'Главная' },
+  { id: 'home' as ViewId,       icon: Home,     label: 'Главная' },
   { id: 'explore' as ViewId,   icon: Search,   label: 'Поиск' },
   { id: 'vault' as ViewId,     icon: Zap,      label: 'Evidence Vault' },
   { id: 'analytics' as ViewId, icon: BarChart3, label: 'Аналитика' },
+  { id: 'profile' as ViewId,   icon: User,     label: 'Профиль' },
   { id: 'settings' as ViewId,  icon: Settings, label: 'Настройки' },
 ]
 

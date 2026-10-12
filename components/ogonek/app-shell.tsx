@@ -11,10 +11,6 @@ import dynamic from 'next/dynamic'
 import { BottomNav } from './bottom-nav'
 import { Composer } from './composer'
 import { RightRail } from './right-rail'
-
-const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
-const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
-const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 import { Sidebar } from './sidebar'
 import { ScrollPill } from './scroll-pill'
 import { Toast } from './toast'
@@ -22,8 +18,14 @@ import { TooltipProvider } from './tooltip'
 import { AnalyticsView } from './views/analytics-view'
 import { ExploreView } from './views/explore-view'
 import { HomeView } from './views/home-view'
+import { IntentionsView } from './views/intentions-view'
+import { ProfileView } from './views/profile-view'
 import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
+
+const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
+const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
+const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -114,7 +116,7 @@ export function AppShell() {
     }
   }, [state.days.length, importState, notify])
 
-  // Key 'p' to open profile modal
+  // Key 'p' to open profile modal (legacy — keep for hotkey compat)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const activeTag = document.activeElement?.tagName?.toLowerCase()
@@ -123,22 +125,18 @@ export function AppShell() {
       if (e.key === 'p' || e.key === 'P' || e.key === 'з' || e.key === 'З') {
         if (!e.metaKey && !e.ctrlKey) {
           e.preventDefault()
-          setProfileModal((prev) => !prev)
+          navigate('profile')
         }
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [])
+  }, [navigate])
 
   const handleFocusIntentions = useCallback(() => {
-    if (view === 'home') {
-      document.getElementById('focus')?.scrollIntoView({ behavior: 'smooth' })
-    } else {
-      pendingScrollRef.current = true
-      navigate('home')
-    }
-  }, [view, navigate])
+    // Navigate to the dedicated Intentions view
+    navigate('intentions')
+  }, [navigate])
 
   const handleEditDay = useCallback((day: Day) => {
     setEditingDay(day)
@@ -219,7 +217,7 @@ export function AppShell() {
           streak={streakState.streak}
           streakStatus={streakState.status}
           hoursLeft={streakState.hoursLeft}
-          onOpenProfile={() => setProfileModal(true)}
+          onOpenProfile={() => navigate('profile')}
           onCompose={() => {
             setEditingDay(null)
             setComposer(true)
@@ -266,6 +264,21 @@ export function AppShell() {
           onResetToDefaults={resetToDefaults}
         />
       ),
+      profile: (
+        <ProfileView
+          storeState={state}
+          onNavigate={navigate}
+        />
+      ),
+      intentions: (
+        <IntentionsView
+          morningIntentions={state.morningIntentions}
+          onNavigate={navigate}
+          onSave={saveMorningIntentions}
+          notify={notify}
+          soundEnabled={state.soundEnabled}
+        />
+      ),
     }),
     [
       state,
@@ -281,6 +294,7 @@ export function AppShell() {
       setPinEnabled,
       importState,
       resetToDefaults,
+      handleEditDay,
     ]
   )
 
@@ -292,7 +306,7 @@ export function AppShell() {
           onNavigate={navigate}
           onFocusIntentions={handleFocusIntentions}
           onCompose={() => setComposer(true)}
-          onOpenProfile={() => setProfileModal(true)}
+          onOpenProfile={() => navigate('profile')}
           streak={streakState.streak}
         />
 

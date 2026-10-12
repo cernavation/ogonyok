@@ -17,7 +17,11 @@ type Props = {
 }
 
 export function BottomNav({ view, onNavigate, onCompose }: Props) {
-  const activeId: ViewId = view === 'vault' ? 'explore' : view
+  // Map view to highlighted nav item (profile/intentions/vault → no highlight or closest)
+  const activeId: string =
+    view === 'vault' || view === 'intentions' ? 'explore'
+    : view === 'profile' ? 'settings'
+    : view
   return (
     <>
       <nav className="bottom-nav" aria-label="Основная навигация">

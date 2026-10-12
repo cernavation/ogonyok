@@ -127,6 +127,12 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         ? parsed.days
         : DEFAULT_STORE_STATE.days
 
+      const sortedDays = [...days].sort((a, b) => {
+        const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
+        const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
+        return tb - ta // newest first
+      })
+
       const morningIntentions =
         parsed.morningIntentions && typeof parsed.morningIntentions === 'object'
           ? parsed.morningIntentions
@@ -153,7 +159,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
 
       return {
         schemaVersion: CURRENT_SCHEMA_VERSION,
-        days,
+        days: sortedDays,
         morningIntentions,
         composerDraft,
         evidenceItems,
@@ -267,9 +273,15 @@ export function validateAndImportJson(
         : {}
     ) as Record<string, [string, string, string]>
 
+    const sortedValidated = (validatedDays.length > 0 ? validatedDays : DEFAULT_STORE_STATE.days).sort((a, b) => {
+      const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
+      const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
+      return tb - ta
+    })
+
     const state: OgonekStoreState = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      days: validatedDays.length > 0 ? validatedDays : DEFAULT_STORE_STATE.days,
+      days: sortedValidated,
       morningIntentions,
       composerDraft: null,
       evidenceItems: validatedEvidence,

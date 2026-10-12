@@ -105,7 +105,11 @@ function migrateSplitDays(state: OgonekStoreState): OgonekStoreState {
   }
 
   // Re-sort: newest first
-  newDays.sort((a, b) => b.id - a.id)
+  newDays.sort((a, b) => {
+    const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
+    const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
+    return tb - ta
+  })
 
   const migratedState = { ...state, days: newDays }
   saveStore(migratedState)
@@ -218,7 +222,11 @@ export function useOgonekStore() {
 
         return {
           ...prev,
-          days: [newDay, ...prev.days],
+          days: [newDay, ...prev.days].sort((a, b) => {
+            const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
+            const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
+            return tb - ta
+          }),
           composerDraft: null,
         }
       })
