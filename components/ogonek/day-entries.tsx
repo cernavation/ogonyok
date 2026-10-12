@@ -28,11 +28,11 @@ function StarsBar({ rating }: { rating: number | null | undefined }) {
   const clamped = Math.min(10, Math.max(1, Math.round(rating)))
   return (
     <div className="inline-flex items-center gap-0.5 flex-none" title={`Оценка: ${clamped}/10`}>
-      {/* Desktop: show star count as compact badge */}
-      <span className="text-[12px] font-bold text-amber-400 tracking-[-0.01em] select-none">
+      {/* Label SM: 12px/16px/amber */}
+      <span className="text-[12px] leading-[16px] font-bold text-amber-400 tracking-[-0.01em] select-none">
         {clamped}
       </span>
-      <span className="text-amber-400 text-[13px] leading-none select-none">★</span>
+      <span className="text-amber-400 text-[12px] leading-[16px] select-none">★</span>
     </div>
   )
 }
@@ -68,7 +68,7 @@ export function DayEntries({
     <>
       {/* Sliding tab switcher with Framer Motion layoutId */}
       <div
-        className="relative flex rounded-xl bg-[#090a0b] border border-[#2f3336] p-1 mb-3"
+        className="relative flex rounded-full bg-[#090a0b] border border-[#2f3336] p-1 mb-3"
         role="tablist"
         aria-label="Тип записей"
       >
@@ -82,7 +82,7 @@ export function DayEntries({
               id={`${uid}-tab-${id}`}
               aria-selected={selected}
               aria-controls={`${uid}-panel-${id}`}
-              className="relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-bold transition-colors duration-150 z-10"
+              className="relative flex-1 flex items-center justify-center gap-1.5 py-2 rounded-full text-[12px] font-bold transition-colors duration-150 z-10"
               style={{
                 color: selected
                   ? id === 'pride' ? '#ffad5a' : '#ff73ab'
@@ -93,7 +93,7 @@ export function DayEntries({
               {selected && (
                 <motion.span
                   layoutId={`${uid}-pill`}
-                  className="absolute inset-0 rounded-lg"
+                  className="absolute inset-0 rounded-full"
                   style={{ background: '#202327' }}
                   transition={
                     reduce
@@ -124,12 +124,12 @@ export function DayEntries({
           {prides.map((p) => {
             const rating = typeof p.scale === 'number' && p.scale > 0 && p.text !== '—' ? p.scale : null
             return (
-              <div className="relative flex items-baseline gap-2 text-[13px] py-0.5" key={p.num}>
+              <div className="relative flex items-baseline gap-2 py-0.5" key={p.num}>
                 {sparkingNum === p.num && <VaultSpark active={true} />}
-                <span className="text-[11px] font-mono text-[#71767b] flex-none w-6 text-right">
+                <span className="text-[12px] leading-[16px] font-mono text-[#71767b] flex-none w-6 text-right">
                   {p.num}
                 </span>
-                <span className="flex-1 leading-[1.38] text-[#e7e9ea] tracking-[-0.01em]">
+                <span className="flex-1 text-[15px] leading-[23px] text-[#e7e9ea] tracking-[-0.015em]">
                   {p.text}
                 </span>
                 <div className="flex items-center gap-1.5 flex-none">
@@ -167,13 +167,13 @@ export function DayEntries({
             const num = String(idx + 1).padStart(2, '0')
             return (
               <div
-                className="flex items-baseline gap-2 text-[13px] py-0.5"
+                className="flex items-baseline gap-2 py-0.5"
                 key={`${idx}-${text.slice(0, 30)}`}
               >
-                <span className="text-[11px] font-mono text-[#ff73ab]/70 flex-none w-6 text-right">
+                <span className="text-[12px] leading-[16px] font-mono text-[#ff73ab]/70 flex-none w-6 text-right">
                   {num}
                 </span>
-                <span className="flex-1 leading-[1.38] text-[#e7e9ea] tracking-[-0.01em]">
+                <span className="flex-1 text-[15px] leading-[23px] text-[#e7e9ea] tracking-[-0.015em]">
                   {text}
                 </span>
                 <div className="flex items-center gap-1.5 flex-none">

@@ -112,7 +112,9 @@ export function HomeView({
         onOpenProfile={onOpenProfile}
       />
 
+      {/* Sticky glassy feed header */}
       <header className="feed-header">
+        {/* Title row */}
         <div className="feed-title">
           <h1>Главная</h1>
           <Tooltip content="Настройки ленты" side="left">
@@ -126,6 +128,8 @@ export function HomeView({
             </button>
           </Tooltip>
         </div>
+
+        {/* Tabs with Twitter Blue underline indicator */}
         <div className="tabs" role="tablist" aria-label="Фильтры ленты">
           {FEED_TABS.map((tab) => {
             const isSelected = filter === tab
@@ -145,6 +149,45 @@ export function HomeView({
         </div>
       </header>
 
+      {/* Inline "What's happening?" compose prompt — X.com style */}
+      {onCompose && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 border-b border-[#2f3336] cursor-pointer hover:bg-white/[0.02] transition-colors duration-150"
+          onClick={onCompose}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') onCompose?.() }}
+          aria-label="Открыть форму записи дня"
+        >
+          {/* Mini avatar */}
+          <div
+            className="w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none"
+            style={{
+              background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
+              color: '#fff',
+              textShadow: '0 1px 2px #000',
+            }}
+            aria-hidden="true"
+          >
+            AC
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[#71767b] text-[19px] font-normal select-none truncate">
+              Что произошло сегодня?
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onCompose?.() }}
+            className="flex-none flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[14px] font-bold transition-colors duration-150"
+            aria-label="Записать день"
+          >
+            <Plus size={15} strokeWidth={2.5} />
+            Записать
+          </button>
+        </div>
+      )}
+
       <div className="feed-content">
         <QuickFocus
           initialFocus={morningIntentions?.[todayKey]}
@@ -155,7 +198,7 @@ export function HomeView({
 
         {days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
-            <span className="text-4xl text-orange-500">✦</span>
+            <span className="text-4xl text-[#1d9bf0]">✦</span>
             <h2 className="empty-state__title text-lg font-bold mt-2">Твой огонёк готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
@@ -164,7 +207,7 @@ export function HomeView({
               {onCompose && (
                 <button
                   type="button"
-                  className="primary-btn flex items-center gap-1.5"
+                  className="x-primary-btn flex items-center gap-1.5"
                   onClick={onCompose}
                 >
                   <Plus size={16} /> Записать первый день
@@ -173,7 +216,7 @@ export function HomeView({
               {onNavigate && (
                 <button
                   type="button"
-                  className="secondary-btn"
+                  className="x-secondary-btn"
                   onClick={() => onNavigate('settings')}
                 >
                   Импортировать архив
@@ -199,7 +242,7 @@ export function HomeView({
               <div ref={sentinelRef} className="feed-chunk-loader py-6 text-center">
                 <button
                   type="button"
-                  className="secondary-btn text-xs px-4 py-2 opacity-85 hover:opacity-100 transition-opacity"
+                  className="x-secondary-btn text-xs px-4 py-2 opacity-85 hover:opacity-100 transition-opacity"
                   onClick={() =>
                     setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredDays.length))
                   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart3, Flame, Home, MoreHorizontal, Plus, Search, Settings, Target, Zap } from 'lucide-react'
+import { BarChart3, Home, MoreHorizontal, Plus, Search, Settings, Target, Zap } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import type { ViewId } from '@/lib/ogonek/types'
 import { Tooltip } from './tooltip'
@@ -14,6 +14,14 @@ type Props = {
   streak?: number
 }
 
+const NAV = [
+  { id: 'home' as ViewId,      icon: Home,     label: 'Главная' },
+  { id: 'explore' as ViewId,   icon: Search,   label: 'Поиск' },
+  { id: 'vault' as ViewId,     icon: Zap,      label: 'Evidence Vault' },
+  { id: 'analytics' as ViewId, icon: BarChart3, label: 'Аналитика' },
+  { id: 'settings' as ViewId,  icon: Settings, label: 'Настройки' },
+]
+
 export function Sidebar({
   view,
   onNavigate,
@@ -24,52 +32,34 @@ export function Sidebar({
 }: Props) {
   return (
     <aside className="sidebar" aria-label="Боковая панель">
-      {/* Brand logo */}
+      {/* X-style logo mark */}
       <div className="brand">
-        <span className="brand-flame" aria-hidden="true">✦</span>
+        <span
+          className="brand-flame"
+          aria-hidden="true"
+          style={{ fontSize: 28, letterSpacing: '-0.04em', fontWeight: 900 }}
+        >
+          ✦
+        </span>
         <span>Огонёк</span>
       </div>
 
       {/* Navigation */}
       <nav className="nav-list" aria-label="Разделы приложения">
-        <Tooltip content="Главная лента" side="right" hotkey="1">
-          <button
-            type="button"
-            className={`nav-item ${view === 'home' ? 'active' : ''}`}
-            onClick={() => onNavigate('home')}
-            aria-label="Главная"
-            aria-current={view === 'home' ? 'page' : undefined}
-          >
-            <Home size={22} />
-            <span>Главная</span>
-          </button>
-        </Tooltip>
-
-        <Tooltip content="Поиск и фильтры по тегам" side="right" hotkey="/">
-          <button
-            type="button"
-            className={`nav-item ${view === 'explore' ? 'active' : ''}`}
-            onClick={() => onNavigate('explore')}
-            aria-label="Поиск & Теги"
-            aria-current={view === 'explore' ? 'page' : undefined}
-          >
-            <Search size={22} />
-            <span>Поиск & Теги</span>
-          </button>
-        </Tooltip>
-
-        <Tooltip content="Сейф доказательств силы" side="right" hotkey="3">
-          <button
-            type="button"
-            className={`nav-item ${view === 'vault' ? 'active' : ''}`}
-            onClick={() => onNavigate('vault')}
-            aria-label="Evidence Vault"
-            aria-current={view === 'vault' ? 'page' : undefined}
-          >
-            <Zap size={22} />
-            <span>Evidence Vault</span>
-          </button>
-        </Tooltip>
+        {NAV.map(({ id, icon: Icon, label }) => (
+          <Tooltip key={id} content={label} side="right">
+            <button
+              type="button"
+              className={`nav-item ${view === id ? 'active' : ''}`}
+              onClick={() => onNavigate(id)}
+              aria-label={label}
+              aria-current={view === id ? 'page' : undefined}
+            >
+              <Icon size={24} strokeWidth={view === id ? 2.5 : 1.75} />
+              <span>{label}</span>
+            </button>
+          </Tooltip>
+        ))}
 
         <Tooltip content="Утренние намерения" side="right">
           <button
@@ -78,55 +68,29 @@ export function Sidebar({
             onClick={onFocusIntentions}
             aria-label="Утренние намерения"
           >
-            <Target size={22} />
-            <span>Утренние намерения</span>
-          </button>
-        </Tooltip>
-
-        <Tooltip content="Аналитика и стрик" side="right" hotkey="4">
-          <button
-            type="button"
-            className={`nav-item ${view === 'analytics' ? 'active' : ''}`}
-            onClick={() => onNavigate('analytics')}
-            aria-label="Аналитика & Стрик"
-            aria-current={view === 'analytics' ? 'page' : undefined}
-          >
-            <BarChart3 size={22} />
-            <span>Аналитика & Стрик</span>
-          </button>
-        </Tooltip>
-
-        <Tooltip content="Настройки и бэкап" side="right" hotkey="S">
-          <button
-            type="button"
-            className={`nav-item ${view === 'settings' ? 'active' : ''}`}
-            onClick={() => onNavigate('settings')}
-            aria-label="Настройки & Экспорт"
-            aria-current={view === 'settings' ? 'page' : undefined}
-          >
-            <Settings size={22} />
-            <span>Настройки & Экспорт</span>
+            <Target size={24} strokeWidth={1.75} />
+            <span>Намерения</span>
           </button>
         </Tooltip>
       </nav>
 
-      {/* Compose button */}
+      {/* Primary CTA — Twitter Blue pill */}
       <Tooltip content="Записать день" side="top" hotkey="N">
         <button
           type="button"
-          className="compose-button"
+          className="x-compose-btn"
           onClick={onCompose}
           aria-label="Записать день"
         >
-          <Plus size={20} />
-          <span>Записать день</span>
+          <Plus size={20} strokeWidth={2.5} className="compose-btn-icon-only" />
+          <span className="compose-btn-label">Записать</span>
         </button>
       </Tooltip>
 
-      {/* Profile block — click opens profile overlay */}
-      <Tooltip content="Профиль исследователя" side="top" hotkey="P">
+      {/* Profile block */}
+      <Tooltip content="Профиль @cernavation" side="top" hotkey="P">
         <div
-          className="profile-mini cursor-pointer rounded-full hover:bg-white/[0.08] transition-colors duration-150 px-3 py-2.5 -mx-1"
+          className="profile-mini cursor-pointer hover:bg-white/[0.08] transition-colors duration-150 rounded-full px-3 py-2.5 -mx-1"
           onClick={onOpenProfile}
           role="button"
           tabIndex={0}
@@ -138,6 +102,7 @@ export function Sidebar({
           }}
           aria-label="Открыть профиль пользователя"
         >
+          {/* Avatar */}
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-none select-none"
             style={{
@@ -150,27 +115,23 @@ export function Sidebar({
             AC
           </div>
           <div className="flex-1 min-w-0">
-            <strong className="block text-[14px] font-bold text-[#e7e9ea] tracking-[-0.015em] truncate">
-              Alexei Cerna
+            <strong className="block text-[15px] font-bold text-[#e7e9ea] tracking-[-0.015em] truncate leading-[20px]">
+              Алексей Черна
             </strong>
-            <small className="block text-[#71767b] text-[13px] mt-0.5 truncate">@cernavation</small>
+            <small className="block text-[#71767b] text-[12px] leading-[16px] mt-0.5 truncate">
+              @cernavation · {streak}д
+            </small>
           </div>
           <button
             type="button"
-            className="text-[#71767b] p-1 rounded-full hover:bg-white/[0.08] transition-colors"
+            className="text-[#71767b] p-1 rounded-full hover:bg-white/[0.08] transition-colors flex-none"
             aria-label="Меню профиля"
             onClick={(e) => { e.stopPropagation(); onOpenProfile?.() }}
           >
-            <MoreHorizontal size={17} />
+            <MoreHorizontal size={18} />
           </button>
         </div>
       </Tooltip>
-
-      {/* Streak mini indicator */}
-      <div className="streak-mini">
-        <Flame size={18} fill="currentColor" />
-        <span>Стрик: <b>{streak} дней</b></span>
-      </div>
     </aside>
   )
 }

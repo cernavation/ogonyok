@@ -206,7 +206,7 @@ export function DayCard({
                 >
                   ✓
                 </span>
-                <span className="text-[#71767b] text-[14px] tracking-[-0.01em]">
+                <span className="text-[12px] leading-[16px] text-[#71767b] tracking-[-0.01em]">
                   @cernavation · {dateStr}
                 </span>
                 <span
@@ -223,7 +223,7 @@ export function DayCard({
                   <div
                     className={`score-badge ${scoreBadgeClass}`}
                     title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
-                    style={{ minWidth: 42, height: 36, fontSize: 15, borderRadius: 10, padding: '0 8px' }}
+                    style={{ minWidth: 42, height: 36, fontSize: 15, borderRadius: 9999, padding: '0 10px' }}
                   >
                     {averageScore.toFixed(1)}
                   </div>
@@ -252,7 +252,7 @@ export function DayCard({
             </div>
 
             {/* Post body */}
-            <p className="text-[15px] leading-[1.45] text-[#e7e9ea] tracking-[-0.015em] mb-3">
+            <p className="text-[15px] leading-[23px] text-[#e7e9ea] tracking-[-0.015em] mb-3">
               {day.title}
             </p>
 

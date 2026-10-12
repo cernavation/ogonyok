@@ -119,27 +119,92 @@
   flex: none;
 }
 
+/* ── X.com Twitter Blue CTA (sidebar compose) ────────────────────────────── */
+.x-compose-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  background: #1d9bf0;
+  color: #fff;
+  font-weight: 800;
+  font-size: 17px;
+  border-radius: 9999px;
+  padding: 0 20px;
+  height: 52px;
+  width: 100%;
+  margin-top: 24px;
+  border: 0;
+  box-shadow: 0 4px 18px rgba(29, 155, 240, 0.28);
+  transition: background 0.15s, box-shadow 0.15s;
+  letter-spacing: -0.01em;
+}
+
+.x-compose-btn:hover {
+  background: #1a8cd8;
+  box-shadow: 0 6px 24px rgba(29, 155, 240, 0.36);
+}
+
+/* Icon-only on narrow sidebar */
+.compose-btn-icon-only { display: none; }
+.compose-btn-label { display: inline; }
+
+/* X primary button (blue pill) */
+.x-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1d9bf0;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 9999px;
+  height: 48px;
+  padding: 0 24px;
+  border: 0;
+  transition: background 0.15s;
+}
+.x-primary-btn:hover { background: #1a8cd8; }
+
+/* X secondary button (outline pill) */
+.x-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  color: #e7e9ea;
+  font-weight: 700;
+  font-size: 15px;
+  border-radius: 9999px;
+  height: 48px;
+  padding: 0 24px;
+  border: 1px solid #536471;
+  transition: background 0.15s, border-color 0.15s;
+}
+.x-secondary-btn:hover { background: rgba(255,255,255,0.06); border-color: #71767b; }
+
+/* Legacy aliases — keep for composer & settings that still use them */
 .compose-button,
 .save-button {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(110deg, var(--orange), #ff975c);
+  background: #1d9bf0;
   color: #fff;
   font-weight: 800;
-  border-radius: 999px;
+  border-radius: 9999px;
   padding: 15px 20px;
   margin-top: 24px;
   border: 0;
-  box-shadow: 0 6px 22px #ff6b3533;
-  transition: transform 0.2s, filter 0.2s;
+  box-shadow: 0 4px 18px rgba(29,155,240,0.28);
+  transition: background 0.15s;
 }
-
 .compose-button:hover,
 .save-button:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: #1a8cd8;
 }
 
 .profile-mini {
@@ -717,8 +782,8 @@
 .score-badge {
   min-width: 44px;
   height: 44px;
-  padding: 0 8px;
-  border-radius: 12px;
+  padding: 0 10px;
+  border-radius: 9999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -774,7 +839,7 @@
   background: #090a0b;
   padding: 4px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 9999px;
   margin-bottom: 13px;
 }
 
@@ -782,7 +847,7 @@
   position: relative;
   flex: 1;
   padding: 9px 8px;
-  border-radius: 8px;
+  border-radius: 9999px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
@@ -794,7 +859,7 @@
 .segmented__pill {
   position: absolute;
   inset: 0;
-  border-radius: 8px;
+  border-radius: 9999px;
   background: var(--surface2);
 }
 
@@ -823,7 +888,7 @@
   grid-area: 1 / 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(6px);
@@ -1328,8 +1393,6 @@ kbd {
   }
   .brand span:last-child,
   .nav-item span,
-  .compose-button:not(:has(svg)),
-  .profile-mini div:not(.avatar),
   .streak-mini span {
     display: none;
   }
@@ -1340,14 +1403,31 @@ kbd {
     justify-content: center;
     padding: 13px;
   }
+  /* x-compose-btn narrow: icon-only square */
+  .x-compose-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    font-size: 0;
+    gap: 0;
+  }
+  .compose-btn-label { display: none; }
+  .compose-btn-icon-only { display: block; }
+  /* legacy compose-button */
   .compose-button {
     width: 48px;
     height: 48px;
     padding: 0;
     margin-top: 24px;
   }
+  /* profile-mini: hide text, show only avatar */
   .profile-mini {
     padding: 0;
+    gap: 0;
+  }
+  .profile-mini .flex-1,
+  .profile-mini button {
+    display: none;
   }
   .streak-mini {
     padding: 15px 0 0;
@@ -1396,8 +1476,8 @@ kbd {
     display: flex;
     gap: 4px;
     align-items: center;
-    color: var(--orange-light);
-    background: #24160f;
+    color: var(--blue);
+    background: rgba(29, 155, 240, 0.12);
     padding: 5px 9px;
     border-radius: 999px;
     font-size: 11px;
@@ -1504,11 +1584,11 @@ kbd {
     bottom: calc(49px + env(safe-area-inset-bottom) + 14px);
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: 9999px;
     color: #fff;
     border: 0;
-    background: linear-gradient(135deg, var(--orange), #ff975c);
-    box-shadow: 0 4px 14px rgb(255 107 53 / 0.25);
+    background: #1d9bf0;
+    box-shadow: 0 4px 14px rgba(29, 155, 240, 0.35);
     transition: transform 0.15s;
   }
   .fab:active {
