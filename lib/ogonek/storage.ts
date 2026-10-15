@@ -1,8 +1,17 @@
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
-import type { ComposerDraft, Day, EvidenceItem, OgonekStoreState } from './types'
+import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
+import type {
+  ComposerDraft,
+  CustomEmoji,
+  Day,
+  EvidenceItem,
+  MyReactions,
+  OgonekStoreState,
+  ReactionCounts,
+} from './types'
 
 export const STORAGE_KEY = 'ogonek.v2'
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 export interface StorageAdapter {
   getItem(key: string): string | null
@@ -51,6 +60,57 @@ class BrowserLocalStorageAdapter implements StorageAdapter {
 
 export const defaultStorageAdapter: StorageAdapter = new BrowserLocalStorageAdapter()
 
+/** Безопасно валидирует массив кастомных смайликов из хранилища */
+export function sanitizeCustomEmojis(value: unknown): CustomEmoji[] {
+  if (!Array.isArray(value)) return DEFAULT_CUSTOM_EMOJIS
+  const seen = new Set<string>()
+  const result: CustomEmoji[] = []
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const obj = raw as Partial<CustomEmoji>
+    if (typeof obj.char !== 'string' || obj.char.trim() === '') continue
+    const id = typeof obj.id === 'string' && obj.id ? obj.id : `emoji-${obj.char.trim()}-${result.length}`
+    if (seen.has(id)) continue
+    seen.add(id)
+    result.push({
+      id,
+      char: obj.char.trim().slice(0, 8),
+      label: typeof obj.label === 'string' && obj.label.trim() ? obj.label.trim().slice(0, 40) : 'Мой смайлик',
+      createdAt: typeof obj.createdAt === 'string' ? obj.createdAt : new Date().toISOString(),
+    })
+  }
+  return result.length > 0 ? result : DEFAULT_CUSTOM_EMOJIS
+}
+
+/** Валидирует карту реакций: target → emojiId → count (>0) */
+export function sanitizeReactions(value: unknown): ReactionCounts {
+  if (!value || typeof value !== 'object') return {}
+  const result: ReactionCounts = {}
+  for (const [target, counts] of Object.entries(value as Record<string, unknown>)) {
+    if (!counts || typeof counts !== 'object') continue
+    const clean: Record<string, number> = {}
+    for (const [emojiId, count] of Object.entries(counts as Record<string, unknown>)) {
+      if (typeof count === 'number' && Number.isFinite(count) && count > 0) {
+        clean[emojiId] = Math.round(count)
+      }
+    }
+    if (Object.keys(clean).length > 0) result[target] = clean
+  }
+  return result
+}
+
+/** Валидирует карту «мои реакции»: target → [emojiId] */
+export function sanitizeMyReactions(value: unknown): MyReactions {
+  if (!value || typeof value !== 'object') return {}
+  const result: MyReactions = {}
+  for (const [target, ids] of Object.entries(value as Record<string, unknown>)) {
+    if (!Array.isArray(ids)) continue
+    const clean = ids.filter((id): id is string => typeof id === 'string' && id.length > 0)
+    if (clean.length > 0) result[target] = Array.from(new Set(clean))
+  }
+  return result
+}
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
@@ -61,6 +121,9 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   soundEnabled: true,
   pinEnabled: false,
   isDemo: true,
+  customEmojis: DEFAULT_CUSTOM_EMOJIS,
+  dayReactions: {},
+  myReactions: {},
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -86,6 +149,9 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               soundEnabled: typeof parsedV3.soundEnabled === 'boolean' ? parsedV3.soundEnabled : true,
               pinEnabled: typeof parsedV3.pinEnabled === 'boolean' ? parsedV3.pinEnabled : false,
               isDemo: false,
+              customEmojis: sanitizeCustomEmojis(parsedV3.customEmojis),
+              dayReactions: sanitizeReactions(parsedV3.dayReactions),
+              myReactions: sanitizeMyReactions(parsedV3.myReactions),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -167,6 +233,9 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         soundEnabled,
         pinEnabled,
         isDemo,
+        customEmojis: sanitizeCustomEmojis(parsed.customEmojis),
+        dayReactions: sanitizeReactions(parsed.dayReactions),
+        myReactions: sanitizeMyReactions(parsed.myReactions),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -291,6 +360,9 @@ export function validateAndImportJson(
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
       pinEnabled: typeof parsed.pinEnabled === 'boolean' ? parsed.pinEnabled : false,
       isDemo: false,
+      customEmojis: sanitizeCustomEmojis(parsed.customEmojis),
+      dayReactions: sanitizeReactions(parsed.dayReactions),
+      myReactions: sanitizeMyReactions(parsed.myReactions),
     }
 
     return { success: true, data: state }

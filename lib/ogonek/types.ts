@@ -38,6 +38,29 @@ export type Day = {
   status?: DayStatus
 }
 
+/** Пользовательский смайлик/эмодзи, созданный в конструкторе реакций */
+export type CustomEmoji = {
+  id: string
+  char: string
+  label: string
+  createdAt: string
+}
+
+/**
+ * Реакции по целям.
+ * Ключ цели (target): "day:12", "day:12:pride:0", "day:12:grat:2"
+ * Значение: { [emojiId]: количество }
+ */
+export type ReactionCounts = Record<string, Record<string, number>>
+
+/**
+ * Какие реакции поставил сам пользователь.
+ * Ключ цели (target) → список emojiId, которые пользователь включил.
+ */
+export type MyReactions = Record<string, string[]>
+
+export type ReactionTargetKind = 'day' | 'pride' | 'gratitude'
+
 export type EvidenceItem = {
   id: string
   date: string
@@ -73,4 +96,10 @@ export type OgonekStoreState = {
   soundEnabled: boolean
   pinEnabled: boolean
   isDemo: boolean
+  /** Кастомные смайлики, созданные пользователем */
+  customEmojis: CustomEmoji[]
+  /** Живые реакции: target → emojiId → количество */
+  dayReactions: ReactionCounts
+  /** Какие реакции поставил сам пользователь: target → [emojiId] */
+  myReactions: MyReactions
 }

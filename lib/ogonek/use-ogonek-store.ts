@@ -11,11 +11,15 @@ import {
 import type {
   ComposerDraft,
   ComposerPayload,
+  CustomEmoji,
   Day,
   EvidenceItem,
+  MyReactions,
   OgonekStoreState,
   PrideEntry,
+  ReactionCounts,
 } from './types'
+import { withGratitudeRating } from './reactions'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
@@ -393,6 +397,191 @@ export function useOgonekStore() {
     updateStore(() => DEFAULT_STORE_STATE)
   }, [updateStore])
 
+  /**
+   * ЖИВЫЕ РЕАКЦИИ:
+   * Переключает реакцию пользователя на цель (день или отдельную запись).
+   * target: "day:12" | "day:12:pride:0" | "day:12:grat:2"
+   * Возвращает true, если реакция теперь активна.
+   */
+  const toggleReaction = useCallback(
+    (target: string, emojiId: string): boolean => {
+      if (!target || !emojiId) return false
+      const current = getSnapshot()
+      const mineBefore = current.myReactions[target] ?? []
+      const willBeActive = !mineBefore.includes(emojiId)
+
+      updateStore((prev) => {
+        const countsForTarget: Record<string, number> = { ...(prev.dayReactions[target] ?? {}) }
+        const mineForTarget = prev.myReactions[target] ?? []
+        const isMine = mineForTarget.includes(emojiId)
+
+        const dayReactions: ReactionCounts = { ...prev.dayReactions }
+        const myReactions: MyReactions = { ...prev.myReactions }
+
+        if (isMine) {
+          const nextCount = (countsForTarget[emojiId] ?? 1) - 1
+          if (nextCount > 0) {
+            countsForTarget[emojiId] = nextCount
+          } else {
+            delete countsForTarget[emojiId]
+          }
+          if (Object.keys(countsForTarget).length > 0) {
+            dayReactions[target] = countsForTarget
+          } else {
+            delete dayReactions[target]
+          }
+
+          const nextMine = mineForTarget.filter((id) => id !== emojiId)
+          if (nextMine.length > 0) {
+            myReactions[target] = nextMine
+          } else {
+            delete myReactions[target]
+          }
+        } else {
+          countsForTarget[emojiId] = (countsForTarget[emojiId] ?? 0) + 1
+          dayReactions[target] = countsForTarget
+          myReactions[target] = [...mineForTarget, emojiId]
+        }
+
+        return { ...prev, dayReactions, myReactions }
+      })
+
+      return willBeActive
+    },
+    [updateStore]
+  )
+
+  /** Реакции для конкретной цели */
+  const getReactionsFor = useCallback((target: string): Record<string, number> => {
+    return getSnapshot().dayReactions[target] ?? {}
+  }, [])
+
+  /** Список emojiId, которые пользователь поставил на цель */
+  const getMyReactionsFor = useCallback((target: string): string[] => {
+    return getSnapshot().myReactions[target] ?? []
+  }, [])
+
+  /**
+   * КОНСТРУКТОР СМАЙЛИКОВ:
+   * Добавляет пользовательский смайлик. Возвращает id (существующий, если дубликат).
+   */
+  const addCustomEmoji = useCallback(
+    (char: string, label: string): string | null => {
+      const trimmedChar = (char ?? '').trim().slice(0, 8)
+      if (!trimmedChar) return null
+
+      const existing = getSnapshot().customEmojis.find((e) => e.char === trimmedChar)
+      if (existing) return existing.id
+
+      const id = `emoji-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+      const emoji: CustomEmoji = {
+        id,
+        char: trimmedChar,
+        label: (label ?? '').trim().slice(0, 40) || 'Мой смайлик',
+        createdAt: new Date().toISOString(),
+      }
+      updateStore((prev) => {
+        if (prev.customEmojis.some((e) => e.char === emoji.char)) return prev
+        return { ...prev, customEmojis: [...prev.customEmojis, emoji] }
+      })
+      return id
+    },
+    [updateStore]
+  )
+
+  /** Удаляет кастомный смайлик и все связанные с ним реакции */
+  const removeCustomEmoji = useCallback(
+    (id: string) => {
+      updateStore((prev) => {
+        const customEmojis = prev.customEmojis.filter((e) => e.id !== id)
+
+        const dayReactions: ReactionCounts = {}
+        for (const [target, counts] of Object.entries(prev.dayReactions)) {
+          const next: Record<string, number> = { ...counts }
+          delete next[id]
+          if (Object.keys(next).length > 0) dayReactions[target] = next
+        }
+
+        const myReactions: MyReactions = {}
+        for (const [target, ids] of Object.entries(prev.myReactions)) {
+          const next = ids.filter((x) => x !== id)
+          if (next.length > 0) myReactions[target] = next
+        }
+
+        return { ...prev, customEmojis, dayReactions, myReactions }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Оценка гордости по шкале 1..10 */
+  const ratePride = useCallback(
+    (dayId: number, index: number, scale: number) => {
+      const clamped = Math.min(10, Math.max(1, Math.round(scale)))
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const prides = d.prides.map((p, i) => (i === index ? { ...p, scale: clamped } : p))
+          return { ...d, prides }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Оценка благодарности по шкале 1..10 (строка превращается в объект с оценкой) */
+  const rateGratitude = useCallback(
+    (dayId: number, index: number, rating: number) => {
+      const clamped = Math.min(10, Math.max(1, Math.round(rating)))
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const gratitudes = d.gratitudes.map((g, i) =>
+            i === index ? withGratitudeRating(g, clamped) : g
+          )
+          return { ...d, gratitudes }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Снимает оценку с гордости (обнуляет) */
+  const clearPrideRating = useCallback(
+    (dayId: number, index: number) => {
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const prides = d.prides.map((p, i) => (i === index ? { ...p, scale: 0 } : p))
+          return { ...d, prides }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Снимает оценку с благодарности */
+  const clearGratitudeRating = useCallback(
+    (dayId: number, index: number) => {
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const gratitudes = d.gratitudes.map((g, i) => {
+            if (i !== index) return g
+            if (typeof g === 'string') return { text: g, rating: 0 }
+            return { ...g, rating: 0 }
+          })
+          return { ...d, gratitudes }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
   /** Compute the next date for a new day (last date + 1 calendar day) */
   const getNextDayDate = useCallback((): string => {
     const days = getSnapshot().days
@@ -433,5 +622,14 @@ export function useOgonekStore() {
     resetToDefaults,
     getNextDayDate,
     getNextDayId,
+    toggleReaction,
+    getReactionsFor,
+    getMyReactionsFor,
+    addCustomEmoji,
+    removeCustomEmoji,
+    ratePride,
+    rateGratitude,
+    clearPrideRating,
+    clearGratitudeRating,
   }
 }

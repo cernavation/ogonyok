@@ -5,41 +5,18 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo, useState, useEffect } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
+import { dayTarget } from '@/lib/ogonek/reactions'
 import type { Day } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { DayEntries } from './day-entries'
+import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
 
 const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
   { ssr: false }
 )
-
-// ── Persistent reaction helpers ────────────────────────────────────────────
-function reactionKey(dayId: number, kind: 'like' | 'thank') {
-  return `ogonek.reaction.${kind}.${dayId}`
-}
-
-function loadReaction(dayId: number, kind: 'like' | 'thank'): boolean {
-  if (typeof window === 'undefined') return false
-  try {
-    return localStorage.getItem(reactionKey(dayId, kind)) === '1'
-  } catch {
-    return false
-  }
-}
-
-function saveReaction(dayId: number, kind: 'like' | 'thank', value: boolean) {
-  try {
-    if (value) {
-      localStorage.setItem(reactionKey(dayId, kind), '1')
-    } else {
-      localStorage.removeItem(reactionKey(dayId, kind))
-    }
-  } catch {
-    // ignore
-  }
-}
 
 // ── Spring animation variants ──────────────────────────────────────────────
 const reactionVariants = {
@@ -64,19 +41,19 @@ export function DayCard({
   onEdit,
   soundEnabled = true,
 }: Props) {
-  // Hydrate from localStorage on mount
-  const [liked, setLiked] = useState(false)
-  const [thanked, setThanked] = useState(false)
+  // Живые реакции хранятся в общем store Огонька
+  const { state, toggleReaction } = useOgonekStore()
+  const target = dayTarget(day.id)
+  const reactionCounts = state.dayReactions[target] ?? {}
+  const myReactionIds = state.myReactions[target] ?? []
+  const liked = myReactionIds.includes('fire')
+  const thanked = myReactionIds.includes('heart')
+  const fireCount = reactionCounts.fire ?? 0
+  const heartCount = reactionCounts.heart ?? 0
   const [likeAnim, setLikeAnim] = useState<'idle' | 'pressed'>('idle')
   const [thankAnim, setThankAnim] = useState<'idle' | 'pressed'>('idle')
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const reduce = useReducedMotion()
-
-  // Hydrate persisted reactions after mount (avoids SSR mismatch)
-  useEffect(() => {
-    setLiked(loadReaction(day.id, 'like'))
-    setThanked(loadReaction(day.id, 'thank'))
-  }, [day.id])
 
   const rawPhotos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
 
@@ -96,23 +73,19 @@ export function DayCard({
   }, [day.photos])
 
   const handleLike = () => {
+    const becameActive = toggleReaction(target, 'fire')
     playClick(soundEnabled)
-    const next = !liked
-    setLiked(next)
-    saveReaction(day.id, 'like', next)
     setLikeAnim('pressed')
     setTimeout(() => setLikeAnim('idle'), 400)
-    if (next) onNotify?.('🔥 Огонёк зажжён!')
+    if (becameActive) onNotify?.('🔥 Огонёк зажжён!')
   }
 
   const handleThank = () => {
+    const becameActive = toggleReaction(target, 'heart')
     playClick(soundEnabled)
-    const next = !thanked
-    setThanked(next)
-    saveReaction(day.id, 'thank', next)
     setThankAnim('pressed')
     setTimeout(() => setThankAnim('idle'), 400)
-    onNotify?.(next ? '❤️ Благодарность отправлена!' : 'Благодарность снята')
+    onNotify?.(becameActive ? '❤️ Благодарность отправлена!' : 'Благодарность снята')
   }
 
   // Handle missed days
@@ -260,6 +233,7 @@ export function DayCard({
             <DayEntries
               prides={day.prides}
               gratitudes={day.gratitudes}
+              dayId={day.id}
               soundEnabled={soundEnabled}
               onPinToVault={onPinToVault}
               onNotify={onNotify}
@@ -385,7 +359,7 @@ export function DayCard({
                   transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
                   <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
-                  <span>{liked ? '1' : '0'}</span>
+                  <span>{fireCount}</span>
                 </motion.button>
               </Tooltip>
 
@@ -405,7 +379,7 @@ export function DayCard({
                   transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
                   <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
-                  <span>Спасибо</span>
+                  <span>Спасибо{heartCount > 0 ? ` · ${heartCount}` : ''}</span>
                 </motion.button>
               </Tooltip>
 
@@ -434,6 +408,16 @@ export function DayCard({
                   <span>Поделиться</span>
                 </button>
               </Tooltip>
+            </div>
+
+            {/* Живые реакции под днём: смайлики, свои эмодзи и счётчики */}
+            <div className="pt-1.5 -mx-2">
+              <ReactionBar
+                target={target}
+                excludeIds={['fire', 'heart']}
+                soundEnabled={soundEnabled}
+                onNotify={onNotify}
+              />
             </div>
           </div>
         </div>
