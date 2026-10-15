@@ -61,6 +61,9 @@ FILE: components/ogonek/share-card-modal.tsx
 FILE: components/ogonek/share-profile-modal.tsx
 FILE: components/ogonek/sidebar.tsx
 FILE: components/ogonek/star-rating.tsx
+FILE: components/ogonek/stories-bar.tsx
+FILE: components/ogonek/story-composer-modal.tsx
+FILE: components/ogonek/story-viewer-modal.tsx
 FILE: components/ogonek/sw-register.tsx
 FILE: components/ogonek/toast.tsx
 FILE: components/ogonek/tooltip.tsx
@@ -98,6 +101,7 @@ FILE: lib/ogonek/reactions.ts
 FILE: lib/ogonek/reminder-logic.ts
 FILE: lib/ogonek/sound.ts
 FILE: lib/ogonek/storage.ts
+FILE: lib/ogonek/stories.ts
 FILE: lib/ogonek/streak.ts
 FILE: lib/ogonek/types.ts
 FILE: lib/ogonek/use-keyboard-navigation.ts
