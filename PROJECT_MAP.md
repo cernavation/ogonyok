@@ -27,6 +27,7 @@ FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/composer.tsx
 FILE: components/ogonek/day-card.tsx
 FILE: components/ogonek/day-entries.tsx
+FILE: components/ogonek/emoji-constructor.tsx
 FILE: components/ogonek/flame-icon.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
 FILE: components/ogonek/lightbox.tsx
@@ -34,10 +35,12 @@ FILE: components/ogonek/mobile-header.tsx
 FILE: components/ogonek/modal-shell.tsx
 FILE: components/ogonek/profile-modal.tsx
 FILE: components/ogonek/quick-focus.tsx
+FILE: components/ogonek/reaction-bar.tsx
 FILE: components/ogonek/right-rail.tsx
 FILE: components/ogonek/scroll-pill.tsx
 FILE: components/ogonek/share-card-modal.tsx
 FILE: components/ogonek/sidebar.tsx
+FILE: components/ogonek/star-rating.tsx
 FILE: components/ogonek/sw-register.tsx
 FILE: components/ogonek/toast.tsx
 FILE: components/ogonek/tooltip.tsx
@@ -64,6 +67,7 @@ FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/haptics.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/photos.ts
+FILE: lib/ogonek/reactions.ts
 FILE: lib/ogonek/reminder-logic.ts
 FILE: lib/ogonek/sound.ts
 FILE: lib/ogonek/storage.ts
