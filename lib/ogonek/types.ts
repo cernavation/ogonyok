@@ -243,6 +243,60 @@ export type AchievementEvidenceFile = {
 /** Жизненный цикл верифицированной ачивки */
 export type AchievementStatus = 'draft' | 'submitted' | 'verified' | 'rejected'
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 6 — Модерация ачивок и отправка доказательств на почту
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Статус заявки в системе модерации достижений */
+export type ModerationStatus =
+  | 'on-moderation' // «На модерации»
+  | 'officially-verified' // «Подтверждено официально»
+  | 'needs-clarification' // «Требует уточнения»
+
+/** Канал доставки пакета заявки модератору */
+export type ModerationChannel = 'email' | 'webhook' | 'outbox'
+
+/** Результат доставки пакета модератору */
+export type ModerationDelivery = 'sent' | 'queued' | 'failed'
+
+/** Событие в истории рассмотрения заявки (аудит) */
+export type ModerationReviewEvent = {
+  id: string
+  atISO: string
+  status: ModerationStatus
+  note: string
+  actor: string
+}
+
+/**
+ * Сформированный и отправленный модератору пакет заявки.
+ * Хранится прямо в ачивке, чтобы профиль умел показывать живой статус,
+ * трек-код и историю рассмотрения без похода на сервер.
+ */
+export type AchievementSubmission = {
+  id: string
+  /** Публичный трек-код заявки (для отслеживания статуса) */
+  trackingCode: string
+  status: ModerationStatus
+  /** Описание заявки, добавленное пользователем */
+  description: string
+  /** Контактная почта для ответа модератора */
+  contactEmail: string
+  submittedAtISO: string
+  /** Когда модератор вынес вердикт */
+  decidedAtISO: string | null
+  /** Комментарий модератора (причина уточнения / подтверждения) */
+  moderatorNote: string | null
+  channel: ModerationChannel
+  delivery: ModerationDelivery
+  /** Адрес модератора, куда ушёл пакет */
+  recipient: string
+  /** Сколько файлов-доказательств вошло в пакет */
+  evidenceCount: number
+  /** История рассмотрения (аудит) */
+  history: ModerationReviewEvent[]
+}
+
 /** Верифицированная ачивка профиля со своим регламентом и доказательствами */
 export type VerifiedAchievement = {
   id: string
@@ -260,6 +314,8 @@ export type VerifiedAchievement = {
   verifiedAtISO: string | null
   /** Комментарий верификатора (подтверждение или причина отказа) */
   reviewerNote: string | null
+  /** Пакет заявки, отправленный модератору на почту/вебхук (ЭТАП 6) */
+  submission: AchievementSubmission | null
   createdAtISO: string
 }
 

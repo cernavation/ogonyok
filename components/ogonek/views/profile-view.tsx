@@ -51,6 +51,7 @@ import { Lightbox } from '../lightbox'
 import { ProfileStoryModal } from '../profile-story-modal'
 import { ShareProfileModal } from '../share-profile-modal'
 import { AchievementsPanel } from '../achievements/achievements-panel'
+import { GoldVerificationBadge } from '../achievements/verification-badge'
 
 interface Props {
   storeState: OgonekStoreState
@@ -228,6 +229,14 @@ export function ProfileView({
     [stats, metrics]
   )
   const unlockedCount = achievements.filter((a) => a.unlocked).length
+
+  const officiallyVerifiedCount = useMemo(
+    () =>
+      (storeState.verifiedAchievements ?? []).filter(
+        (ach) => ach.submission?.status === 'officially-verified'
+      ).length,
+    [storeState.verifiedAchievements]
+  )
 
   const recentDays = useMemo(
     () => storeState.days.filter((d) => d.status !== 'missed').slice(0, 12),
@@ -442,6 +451,12 @@ export function ProfileView({
               >
                 ✓
               </span>
+            )}
+            {officiallyVerifiedCount > 0 && (
+              <GoldVerificationBadge
+                size="sm"
+                title={`Достижений, официально подтверждённых модератором: ${officiallyVerifiedCount}`}
+              />
             )}
           </div>
           <p className="text-[#71767b] text-[15px] leading-[20px] mt-0.5">@{profile.username}</p>

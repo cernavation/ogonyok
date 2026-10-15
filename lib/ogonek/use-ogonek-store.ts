@@ -3,6 +3,17 @@
 import { useCallback, useSyncExternalStore } from 'react'
 import { buildDemoComments, SUPPORT_PERSONAS } from './comments'
 import { computeAchievementProgress } from './achievement-regulation'
+import {
+  MODERATION_STATUS_META,
+  DEFAULT_MODERATION_INBOX,
+  achievementStatusFromModeration,
+  appendReviewEvent,
+  buildModerationSubmissionPayload,
+  createSubmissionRecord,
+  isReadyForModeration,
+  makeTrackingCode,
+} from './achievement-moderation'
+import type { ModerationEmailAttachment } from './achievement-moderation'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   DEFAULT_STORE_STATE,
@@ -22,6 +33,9 @@ import type {
   CustomEmoji,
   Day,
   EvidenceItem,
+  ModerationChannel,
+  ModerationDelivery,
+  ModerationStatus,
   MyReactions,
   OgonekProfile,
   OgonekStoreState,
@@ -431,6 +445,7 @@ export function useOgonekStore() {
         submittedAtISO: status === 'submitted' ? nowISO : null,
         verifiedAtISO: null,
         reviewerNote: null,
+        submission: null,
         createdAtISO: nowISO,
       }
 
@@ -570,6 +585,185 @@ export function useOgonekStore() {
                 submittedAtISO: null,
                 verifiedAtISO: null,
                 reviewerNote: null,
+                submission: null,
+              }
+            : a
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 6 — МОДЕРАЦИЯ АЧИВОК И ОТПРАВКА ДОКАЗАТЕЛЬСТВ НА ПОЧТУ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * Формирует пакет доказательств, отправляет его модератору (email/webhook)
+   * и переводит ачивку в статус «На модерации» с трек-кодом и историей.
+   */
+  const startAchievementSubmission = useCallback(
+    async (
+      id: string,
+      input: {
+        description: string
+        contactEmail: string
+        attachments?: ModerationEmailAttachment[]
+      }
+    ): Promise<{
+      ok: boolean
+      trackingCode?: string
+      channel?: ModerationChannel
+      delivery?: ModerationDelivery
+      recipient?: string
+      error?: string
+    }> => {
+      const current = getSnapshot()
+      const achievement = current.verifiedAchievements.find((a) => a.id === id)
+      if (!achievement) return { ok: false, error: 'Ачивка не найдена' }
+      if (!isReadyForModeration(achievement)) {
+        return { ok: false, error: 'Сначала приложи все обязательные доказательства' }
+      }
+
+      const trackingCode = makeTrackingCode(id)
+      const payload = buildModerationSubmissionPayload({
+        trackingCode,
+        achievement,
+        applicant: {
+          displayName: current.profile.displayName,
+          username: current.profile.username,
+          contactEmail: input.contactEmail,
+        },
+        description: input.description,
+        attachments: input.attachments ?? [],
+      })
+
+      let channel: ModerationChannel = 'outbox'
+      let delivery: ModerationDelivery = 'queued'
+      let recipient = DEFAULT_MODERATION_INBOX
+      let error: string | undefined
+
+      try {
+        const res = await fetch('/api/achievements/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        if (res.ok) {
+          const data = (await res.json()) as {
+            recipient?: string
+            channel?: ModerationChannel
+            delivery?: ModerationDelivery
+          }
+          channel = data.channel ?? channel
+          delivery = data.delivery ?? delivery
+          recipient = data.recipient ?? recipient
+        } else {
+          const data = (await res.json().catch(() => null)) as { error?: string } | null
+          error = data?.error ?? `Сервер вернул ${res.status} — пакет поставлен в очередь outbox`
+          channel = 'outbox'
+          delivery = 'queued'
+        }
+      } catch {
+        error = 'Нет связи с сервером — пакет поставлен в локальную очередь outbox'
+        channel = 'outbox'
+        delivery = 'queued'
+      }
+
+      const submission = createSubmissionRecord({
+        trackingCode,
+        description: input.description,
+        contactEmail: input.contactEmail,
+        channel,
+        delivery,
+        recipient,
+        evidenceCount: achievement.evidence.length,
+      })
+
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: 'submitted',
+                submittedAtISO: submission.submittedAtISO,
+                verifiedAtISO: null,
+                reviewerNote: null,
+                submission,
+              }
+            : a
+        ),
+      }))
+
+      return { ok: true, trackingCode, channel, delivery, recipient, error }
+    },
+    [updateStore]
+  )
+
+  /**
+   * Вердикт модератора по отправленной заявке:
+   * «Подтверждено официально» / «Требует уточнения» / «На модерации».
+   * Ведёт историю рассмотрения и синхронизирует статус ачивки.
+   */
+  const resolveModerationStatus = useCallback(
+    (id: string, status: ModerationStatus, note?: string): boolean => {
+      const achievement = getSnapshot().verifiedAchievements.find((a) => a.id === id)
+      if (!achievement) return false
+
+      const cleanNote = (note ?? '').trim().slice(0, 600)
+
+      if (!achievement.submission) {
+        const decision: 'verified' | 'rejected' =
+          status === 'needs-clarification' ? 'rejected' : 'verified'
+        return resolveAchievementReview(id, decision, cleanNote)
+      }
+
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) => {
+          if (a.id !== id || !a.submission) return a
+          const history = appendReviewEvent(
+            a.submission,
+            status,
+            cleanNote || MODERATION_STATUS_META[status].description,
+            'Модератор Огонька'
+          )
+          const isFinal = status !== 'on-moderation'
+          return {
+            ...a,
+            status: achievementStatusFromModeration(status),
+            verifiedAtISO: status === 'officially-verified' ? new Date().toISOString() : a.verifiedAtISO,
+            reviewerNote: cleanNote || null,
+            submission: {
+              ...a.submission,
+              status,
+              decidedAtISO: isFinal ? new Date().toISOString() : null,
+              moderatorNote: cleanNote || null,
+              history,
+            },
+          }
+        }),
+      }))
+      return true
+    },
+    [updateStore, resolveAchievementReview]
+  )
+
+  /** Отзывает заявку: ачивка возвращается в черновик, заявка удаляется */
+  const withdrawSubmission = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: 'draft',
+                submittedAtISO: null,
+                verifiedAtISO: null,
+                reviewerNote: null,
+                submission: null,
               }
             : a
         ),
@@ -1053,6 +1247,9 @@ export function useOgonekStore() {
     removeAchievementEvidence,
     submitAchievementForVerification,
     resolveAchievementReview,
+    startAchievementSubmission,
+    resolveModerationStatus,
+    withdrawSubmission,
     reopenAchievement,
     removeVerifiedAchievement,
     updateProfile,

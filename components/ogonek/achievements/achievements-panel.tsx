@@ -4,11 +4,17 @@ import { BadgeCheck, Clock, FileText, Plus, Trophy, type LucideIcon } from 'luci
 import { AnimatePresence } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { ACHIEVEMENT_STATUS_META } from '@/lib/ogonek/achievement-regulation'
+import {
+  MODERATION_STATUS_META,
+  formatModerationDate,
+  summarizeModeration,
+} from '@/lib/ogonek/achievement-moderation'
 import { playClick } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { AchievementStatus } from '@/lib/ogonek/types'
 import { AddAchievementModal } from './add-achievement-modal'
 import { AchievementCard } from './achievement-card'
+import { GoldVerificationBadge } from './verification-badge'
 
 type Props = {
   onNotify: (message: string) => void
@@ -53,6 +59,8 @@ export function AchievementsPanel({ onNotify, soundEnabled = true }: Props) {
     [achievements, filter]
   )
 
+  const moderation = useMemo(() => summarizeModeration(achievements), [achievements])
+
   const stats: { icon: LucideIcon; color: string; label: string; value: number }[] = [
     { icon: BadgeCheck, color: '#22c55e', label: 'Подтверждено', value: counts.verified },
     { icon: Clock, color: '#1d9bf0', label: 'На проверке', value: counts.submitted },
@@ -85,6 +93,32 @@ export function AchievementsPanel({ onNotify, soundEnabled = true }: Props) {
         ИИ-ассистент анализирует твоё достижение и выдаёт строгий регламент: какие именно
         файлы-доказательства нужно приложить, чтобы ачивка была подтверждена.
       </p>
+
+      {achievements.length > 0 && (
+        <div className="ach-mod-summary">
+          <span className="ach-mod-summary-gold">
+            <GoldVerificationBadge size="sm" />
+            {moderation.officiallyVerified} официально
+          </span>
+          <span
+            className="ach-mod-summary-item"
+            style={{ color: MODERATION_STATUS_META['on-moderation'].color }}
+          >
+            {moderation.onModeration} на модерации
+          </span>
+          <span
+            className="ach-mod-summary-item"
+            style={{ color: MODERATION_STATUS_META['needs-clarification'].color }}
+          >
+            {moderation.needsClarification} требуют уточнения
+          </span>
+          {moderation.lastSubmittedAtISO && (
+            <span className="ach-mod-summary-last">
+              Последняя заявка: {formatModerationDate(moderation.lastSubmittedAtISO)}
+            </span>
+          )}
+        </div>
+      )}
 
       {achievements.length > 0 && (
         <div className="ach-stat-row">

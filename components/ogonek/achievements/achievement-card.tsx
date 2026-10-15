@@ -24,7 +24,10 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { VerifiedAchievement } from '@/lib/ogonek/types'
 import { AchievementEvidenceUploader } from './achievement-evidence-uploader'
+import { AchievementModerationPanel } from './achievement-moderation-panel'
 import { AchievementRegulationCard } from './achievement-regulation-card'
+import { AchievementSubmitModal } from './achievement-submit-modal'
+import { GoldVerificationBadge } from './verification-badge'
 
 type Props = {
   achievement: VerifiedAchievement
@@ -46,13 +49,13 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
   const {
     attachAchievementEvidence,
     removeAchievementEvidence,
-    submitAchievementForVerification,
     resolveAchievementReview,
     reopenAchievement,
     removeVerifiedAchievement,
   } = useOgonekStore()
 
   const [expanded, setExpanded] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewNote, setReviewNote] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -60,17 +63,6 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
   const category = getAchievementCategory(achievement.categoryId)
   const status = ACHIEVEMENT_STATUS_META[achievement.status]
   const progress = computeAchievementProgress(achievement)
-
-  const handleSubmit = () => {
-    playClick(soundEnabled)
-    const ok = submitAchievementForVerification(achievement.id)
-    if (ok) {
-      playSuccess(soundEnabled)
-      onNotify('Ачивка отправлена на верификацию ✓')
-    } else {
-      onNotify('Сначала приложи все обязательные доказательства')
-    }
-  }
 
   const handleReview = (decision: 'verified' | 'rejected') => {
     playClick(soundEnabled)
@@ -104,11 +96,15 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
         <div className="ach-card-titlebox">
           <div className="ach-card-titlerow">
             <h3 className="ach-card-title">{achievement.title}</h3>
-            {achievement.status === 'verified' && (
+            {achievement.submission?.status === 'officially-verified' ? (
+              <span className="ach-card-verified ach-card-verified--gold">
+                <GoldVerificationBadge size="sm" />
+              </span>
+            ) : achievement.status === 'verified' ? (
               <span className="ach-card-verified" title="Верифицировано" aria-label="Верифицировано">
                 <BadgeCheck size={15} />
               </span>
-            )}
+            ) : null}
           </div>
           <p className="ach-card-sub">
             <span style={{ color: category.color }}>{category.short}</span>
@@ -137,6 +133,14 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
           {progress.requiredCovered}/{progress.requiredTotal} обязательных · {progress.attached} файл(ов)
         </span>
       </div>
+
+      {achievement.submission && (
+        <AchievementModerationPanel
+          achievement={achievement}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
 
       {achievement.status === 'verified' && achievement.reviewerNote && (
         <p className="ach-card-note ach-card-note--ok">
@@ -196,7 +200,7 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
         )}
       </AnimatePresence>
 
-      {achievement.status === 'submitted' && (
+      {achievement.status === 'submitted' && !achievement.submission && (
         <div className="ach-card-review">
           {!reviewOpen ? (
             <button type="button" className="ach-ghost-btn" onClick={() => setReviewOpen(true)}>
@@ -234,11 +238,14 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
           <button
             type="button"
             className="ach-primary-btn ach-primary-btn--sm"
-            onClick={handleSubmit}
+            onClick={() => {
+              playClick(soundEnabled)
+              setSubmitOpen(true)
+            }}
             disabled={!progress.complete}
-            title={progress.complete ? 'Отправить верификатору' : 'Не хватает обязательных доказательств'}
+            title={progress.complete ? 'Отправить заявку модератору на почту' : 'Не хватает обязательных доказательств'}
           >
-            <Send size={14} /> На верификацию
+            <Send size={14} /> Отправить модератору
           </button>
         )}
         {achievement.status === 'submitted' && (
@@ -285,6 +292,17 @@ export function AchievementCard({ achievement, onNotify, soundEnabled = true }: 
           </span>
         )}
       </footer>
+
+      <AnimatePresence>
+        {submitOpen && (
+          <AchievementSubmitModal
+            achievement={achievement}
+            onClose={() => setSubmitOpen(false)}
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+          />
+        )}
+      </AnimatePresence>
     </article>
   )
 }

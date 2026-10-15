@@ -1,4 +1,5 @@
 import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
+import { sanitizeSubmission } from './achievement-moderation'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
@@ -402,6 +403,7 @@ export function sanitizeVerifiedAchievements(value: unknown): VerifiedAchievemen
       submittedAtISO: typeof a.submittedAtISO === 'string' ? a.submittedAtISO : null,
       verifiedAtISO: typeof a.verifiedAtISO === 'string' ? a.verifiedAtISO : null,
       reviewerNote: typeof a.reviewerNote === 'string' ? a.reviewerNote.slice(0, 600) : null,
+      submission: sanitizeSubmission(a.submission),
       createdAtISO: typeof a.createdAtISO === 'string' ? a.createdAtISO : new Date().toISOString(),
     })
   }
@@ -453,6 +455,44 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
       submittedAtISO: daysAgo(138),
       verifiedAtISO: daysAgo(135),
       reviewerNote: 'Протокол и видео совпадают: дистанция полная, обуви нет. Легендарный статус подтверждён.',
+      submission: {
+        id: 'sub-marathon',
+        trackingCode: 'OGN-42KMBD',
+        status: 'officially-verified',
+        description:
+          'Финишировал полный марафон 42,2 км босиком на официальном забеге. Приложены протокол организатора и видео финиша.',
+        contactEmail: 'alexei@memernity.com',
+        submittedAtISO: daysAgo(138),
+        decidedAtISO: daysAgo(135),
+        moderatorNote: 'Протокол и видео совпадают: дистанция полная, обуви нет. Золотой бейдж выдан.',
+        channel: 'email',
+        delivery: 'sent',
+        recipient: 'moderation@ogonyok.app',
+        evidenceCount: 2,
+        history: [
+          {
+            id: 'rev-mar-0',
+            atISO: daysAgo(138),
+            status: 'on-moderation',
+            note: 'Пакет доказательств отправлен модератору (Email (Resend)).',
+            actor: 'Огонёк · автоотправка',
+          },
+          {
+            id: 'rev-mar-1',
+            atISO: daysAgo(136),
+            status: 'on-moderation',
+            note: 'Первичная сверка протокола с базой результатов организатора.',
+            actor: 'Модератор Огонька',
+          },
+          {
+            id: 'rev-mar-2',
+            atISO: daysAgo(135),
+            status: 'officially-verified',
+            note: 'Протокол и видео совпадают: дистанция полная, обуви нет.',
+            actor: 'Модератор Огонька',
+          },
+        ],
+      },
       createdAtISO: daysAgo(140),
     },
     {
@@ -477,6 +517,30 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
       submittedAtISO: daysAgo(1),
       verifiedAtISO: null,
       reviewerNote: null,
+      submission: {
+        id: 'sub-memernity',
+        trackingCode: 'OGN-STRIPE',
+        status: 'on-moderation',
+        description:
+          'Первая реальная оплата подписки Memernity от клиента. Скриншот дашборда Stripe с суммой и датой приложен.',
+        contactEmail: 'alexei@memernity.com',
+        submittedAtISO: daysAgo(1),
+        decidedAtISO: null,
+        moderatorNote: null,
+        channel: 'webhook',
+        delivery: 'sent',
+        recipient: 'moderation@ogonyok.app',
+        evidenceCount: 1,
+        history: [
+          {
+            id: 'rev-mem-0',
+            atISO: daysAgo(1),
+            status: 'on-moderation',
+            note: 'Пакет доказательств отправлен модератору (Webhook).',
+            actor: 'Огонёк · автоотправка',
+          },
+        ],
+      },
       createdAtISO: daysAgo(30),
     },
     {
@@ -491,6 +555,7 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
       submittedAtISO: null,
       verifiedAtISO: null,
       reviewerNote: null,
+      submission: null,
       createdAtISO: now.toISOString(),
     },
   ]
