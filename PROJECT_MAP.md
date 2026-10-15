@@ -24,6 +24,7 @@ DIR: components/
 DIR: components/ogonek/
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/bottom-nav.tsx
+FILE: components/ogonek/comments-thread.tsx
 FILE: components/ogonek/composer.tsx
 FILE: components/ogonek/day-card.tsx
 FILE: components/ogonek/day-entries.tsx
@@ -62,6 +63,7 @@ DIR: docs/
 DIR: lib/
 DIR: lib/ogonek/
 FILE: lib/ogonek/card-export.ts
+FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
 FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/haptics.ts
