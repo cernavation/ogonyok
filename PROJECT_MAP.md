@@ -48,6 +48,16 @@ FILE: components/ogonek/day-entries.tsx
 FILE: components/ogonek/edit-profile-modal.tsx
 FILE: components/ogonek/emoji-constructor.tsx
 FILE: components/ogonek/evening-review.tsx
+DIR: components/ogonek/explore/
+FILE: components/ogonek/explore/community-avatar.tsx
+FILE: components/ogonek/explore/community-photo-grid.tsx
+FILE: components/ogonek/explore/community-user-modal.tsx
+FILE: components/ogonek/explore/explore-category-rail.tsx
+FILE: components/ogonek/explore/explore-post-modal.tsx
+FILE: components/ogonek/explore/explore-search-bar.tsx
+FILE: components/ogonek/explore/index.ts
+FILE: components/ogonek/explore/streak-leaders.tsx
+FILE: components/ogonek/explore/today-highlights.tsx
 FILE: components/ogonek/flame-icon.tsx
 FILE: components/ogonek/focus-flame.tsx
 FILE: components/ogonek/focus-history-modal.tsx
@@ -99,6 +109,7 @@ FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
 FILE: lib/ogonek/evaluate-heuristic.ts
+FILE: lib/ogonek/explore-content.ts
 FILE: lib/ogonek/friends.ts
 FILE: lib/ogonek/haptics.ts
 FILE: lib/ogonek/migrate.ts
