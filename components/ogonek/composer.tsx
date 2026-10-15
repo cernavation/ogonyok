@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, CalendarDays, Check, ImagePlus, ListPlus, Loader2, Mic, Sparkles, X } from 'lucide-react'
+import { BookmarkCheck, CalendarDays, Check, Flame, Heart, ImagePlus, ListPlus, Loader2, Mic, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
@@ -322,7 +322,7 @@ export function Composer({
       title={editingDay ? `Редактировать День #${editingDay.id}` : `Записать День #${displayDayId ?? '?'}`}
       onClose={onClose}
     >
-      <p className="modal-intro">
+      <p className="text-[13px] leading-[18px] text-[#71767b]">
         {editingDay
           ? `День #${editingDay.id} · редактируй формулировки и оценки дня.`
           : `День #${displayDayId ?? '?'} · добавь факты, которые хочется помнить.`}
@@ -330,9 +330,9 @@ export function Composer({
 
       {/* Date picker — only for new days */}
       {!editingDay && (
-        <div className="composer-date-row flex items-center gap-2 mb-3">
-          <CalendarDays size={15} className="text-muted flex-none" />
-          <label className="text-xs text-muted flex-none">Дата дня:</label>
+        <div className="mb-4 mt-3 flex items-center gap-2">
+          <CalendarDays size={15} className="flex-none text-[#71767b]" />
+          <label className="flex-none text-xs text-[#71767b]">Дата дня:</label>
           <input
             type="date"
             value={dateValue}
@@ -341,47 +341,63 @@ export function Composer({
                 setDateISO(new Date(e.target.value).toISOString())
               }
             }}
-            className="bg-neutral-800 text-xs text-white rounded px-2 py-1 border border-neutral-700 cursor-pointer"
+            className="cursor-pointer rounded-md border border-zinc-800/80 bg-black px-2 py-1 text-xs text-[#e7e9ea] [color-scheme:dark]"
             aria-label="Дата записи дня"
           />
         </div>
       )}
 
-      <div className="composer-tabs" role="tablist" aria-label="Разделы записи">
+      {/* Segmented tab switcher */}
+      <div
+        className="mt-4 flex rounded-full border border-zinc-800/80 bg-black p-1"
+        role="tablist"
+        aria-label="Разделы записи"
+      >
         <button
           type="button"
           role="tab"
           aria-selected={tab === 'pride'}
-          className={tab === 'pride' ? 'selected pride' : ''}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-bold transition-colors duration-150 ${
+            tab === 'pride' ? 'bg-[#202327] text-[#ffad5a]' : 'text-[#71767b] hover:text-[#e7e9ea]'
+          }`}
           onClick={() => {
             playClick(soundEnabled)
             setTab('pride')
           }}
         >
-          🔥 Гордости
+          <Flame size={14} /> Гордости
         </button>
         <button
           type="button"
           role="tab"
           aria-selected={tab === 'gratitude'}
-          className={tab === 'gratitude' ? 'selected gratitude' : ''}
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-bold transition-colors duration-150 ${
+            tab === 'gratitude' ? 'bg-[#202327] text-[#ff73ab]' : 'text-[#71767b] hover:text-[#e7e9ea]'
+          }`}
           onClick={() => {
             playClick(soundEnabled)
             setTab('gratitude')
           }}
         >
-          ❤️ Благодарности
+          <Heart size={14} /> Благодарности
         </button>
       </div>
 
-      <div className="composer-fields">
+      {/* Fields — numbered rows with hairline dividers */}
+      <div className="mt-1 flex flex-col">
         {visibleValues.map((val, i) => {
           const ev = tab === 'pride' ? evaluations[i] : null
 
           return (
-            <div className="composer-field-wrapper" key={`${tab}-${i}`}>
-              <div className="composer-field">
-                <span>{i + 1}</span>
+            <div key={`${tab}-${i}`}>
+              <div className="flex items-center gap-3 border-b border-zinc-800/80">
+                <span
+                  className={`w-5 flex-none text-center text-[13px] font-bold ${
+                    tab === 'pride' ? 'text-[#ffad5a]' : 'text-[#ff73ab]'
+                  }`}
+                >
+                  {i + 1}
+                </span>
                 <input
                   value={val}
                   onChange={(e) => handleInputChange(i, e.target.value)}
@@ -393,10 +409,15 @@ export function Composer({
                   aria-label={`Пункт ${i + 1} в разделе ${
                     tab === 'pride' ? 'Гордости' : 'Благодарности'
                   }`}
+                  className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] leading-[23px] text-[#e7e9ea] placeholder:text-[#71767b] focus:outline-none"
                 />
                 <button
                   type="button"
-                  className={recording === i ? 'recording' : ''}
+                  className={`grid h-8 w-8 flex-none place-items-center rounded-full transition-colors duration-150 ${
+                    recording === i
+                      ? 'animate-pulse bg-[#ff6b35]/15 text-[#ff6b35]'
+                      : 'text-[#71767b] hover:bg-white/[0.08] hover:text-[#e7e9ea]'
+                  }`}
                   onClick={() => {
                     playClick(soundEnabled)
                     setRecording(recording === i ? null : i)
@@ -408,18 +429,18 @@ export function Composer({
               </div>
 
               {ev && (
-                <div className="composer-eval-badge flex items-center justify-between text-xs text-muted pl-8 pt-1">
+                <div className="flex items-center justify-between pt-1.5 text-xs text-[#71767b]">
                   <div className="flex items-center gap-2">
-                    <span className="text-orange-400 font-semibold">Оценка: {ev.scale}/10</span>
+                    <span className="font-semibold text-orange-400">Оценка: {ev.scale}/10</span>
                     <span>·</span>
-                    <span className="text-amber-400 font-semibold">Преодоление: {ev.overcome}/3</span>
+                    <span className="font-semibold text-amber-400">Преодоление: {ev.overcome}/3</span>
                     <span>·</span>
-                    <span className="italic truncate max-w-[200px]" title={ev.verdict}>
+                    <span className="max-w-[200px] truncate italic" title={ev.verdict}>
                       «{ev.verdict}»
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-muted">Балл:</span>
+                    <span className="text-[11px] text-[#71767b]">Балл:</span>
                     <select
                       value={ev.scale}
                       onChange={(e) => {
@@ -435,7 +456,7 @@ export function Composer({
                           },
                         }))
                       }}
-                      className="bg-neutral-800 text-xs text-white rounded px-1.5 py-0.5 border border-neutral-700 cursor-pointer"
+                      className="cursor-pointer rounded-md border border-zinc-800/80 bg-black px-1.5 py-0.5 text-xs text-[#e7e9ea]"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                         <option key={num} value={num}>
@@ -454,7 +475,7 @@ export function Composer({
       {!extra && (
         <button
           type="button"
-          className="add-entry"
+          className="mt-3 flex items-center gap-1.5 text-[13px] font-bold text-[#1d9bf0] transition-colors hover:underline"
           onClick={() => {
             playClick(soundEnabled)
             setExtra(true)
@@ -466,36 +487,41 @@ export function Composer({
 
       {/* Validation hint */}
       {!editingDay && filledPrides.length < 5 && filledPrides.length > 0 && (
-        <p className="text-xs text-amber-500 mt-2 pl-1">
+        <p className="mt-2 pl-1 text-xs text-amber-500">
           ⚠ Заполните минимум 5 гордостей для публикации ({filledPrides.length}/5)
         </p>
       )}
 
-      <label className="upload-box">
-        <ImagePlus size={23} />
-        <div>
-          <b>{preview ? 'Фото добавлено ✓' : 'Добавить воспоминания'}</b>
-          <small>Перетащи фото или выбери файл</small>
+      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-zinc-800/80 px-4 py-3 transition-colors duration-150 hover:bg-white/[0.03]">
+        <ImagePlus size={22} className="flex-none text-[#1d9bf0]" />
+        <div className="min-w-0">
+          <b className="block text-[14px] font-bold text-[#e7e9ea]">
+            {preview ? 'Фото добавлено ✓' : 'Добавить воспоминания'}
+          </b>
+          <small className="mt-0.5 block text-[12px] text-[#71767b]">
+            Перетащи фото или выбери файл
+          </small>
         </div>
         <input
           type="file"
           accept="image/*"
           onChange={handleFileChange}
+          className="sr-only"
           aria-label="Загрузить фото воспоминания"
         />
       </label>
 
       {preview && (
-        <div className="upload-preview-wrapper relative mt-2">
+        <div className="relative mt-2">
           <img
-            className="upload-preview w-full rounded-2xl object-cover"
+            className="w-full rounded-2xl object-cover"
             style={{ maxHeight: 240, objectFit: 'cover' }}
             src={preview.startsWith('photo_') ? undefined : preview}
             alt="Предпросмотр загруженной фотографии"
           />
           <button
             type="button"
-            className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/80"
             onClick={() => {
               setPreview(null)
               setPhotoId(null)
@@ -508,13 +534,13 @@ export function Composer({
         </div>
       )}
 
-      <footer>
+      <footer className="mt-5 flex items-center justify-between gap-3 border-t border-zinc-800/80 pt-4">
         <div className="flex items-center gap-2">
           {tab === 'pride' && filledPrides.length > 0 && (
             <Tooltip content="Оценить масштаб и преодоление через AI или эвристику" side="top">
               <button
                 type="button"
-                className="secondary-btn flex items-center gap-1.5 py-1.5 px-3 text-xs"
+                className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-3 py-1.5 text-xs font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06] disabled:opacity-50"
                 onClick={handleEvaluateAi}
                 disabled={isEvaluating || isPublishing}
               >
@@ -527,7 +553,7 @@ export function Composer({
               </button>
             </Tooltip>
           )}
-          <span className="char-count">
+          <span className="text-[12px] text-[#71767b]">
             {totalFilled} {totalFilled === 1 ? 'запись' : totalFilled < 5 ? 'записи' : 'записей'}
           </span>
         </div>
@@ -538,7 +564,7 @@ export function Composer({
             <Tooltip content="Сохранить черновик и продолжить позже" side="top">
               <button
                 type="button"
-                className="secondary-btn flex items-center gap-1.5 py-1.5 px-3 text-xs"
+                className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-3 py-1.5 text-xs font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06]"
                 onClick={handleSaveDraft}
               >
                 <BookmarkCheck size={14} className="text-blue-400" />
@@ -560,17 +586,9 @@ export function Composer({
           >
             <button
               type="button"
-              className="save-button"
+              className="flex items-center gap-1.5 rounded-full bg-[#1d9bf0] px-5 py-2 text-[15px] font-bold text-white transition-colors duration-150 hover:bg-[#1a8cd8] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#1d9bf0]"
               onClick={handlePublish}
               disabled={isPublishing || (editingDay ? totalFilled === 0 : !canPublish)}
-              style={{
-                opacity: isPublishing
-                  ? 1
-                  : (editingDay ? totalFilled > 0 : canPublish) ? 1 : 0.5,
-                cursor: isPublishing
-                  ? 'progress'
-                  : (editingDay ? totalFilled > 0 : canPublish) ? 'pointer' : 'not-allowed',
-              }}
             >
               {isPublishing ? (
                 <>

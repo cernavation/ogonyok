@@ -68,7 +68,7 @@ export function DayEntries({
     <>
       {/* Sliding tab switcher with Framer Motion layoutId */}
       <div
-        className="relative flex rounded-full bg-[#090a0b] border border-[#2f3336] p-1 mb-3"
+        className="relative mb-3 flex rounded-full border border-zinc-800/80 bg-black p-1"
         role="tablist"
         aria-label="Тип записей"
       >

@@ -112,25 +112,26 @@ export function HomeView({
         onOpenProfile={onOpenProfile}
       />
 
-      {/* Sticky glassy feed header */}
-      <header className="feed-header">
-        {/* Title row */}
-        <div className="feed-title">
-          <h1>Главная</h1>
+      {/* Sticky X.com feed header — translucent glass with hairline divider */}
+      <header className="sticky top-[54px] z-30 border-b border-zinc-800/80 bg-black/80 backdrop-blur-md min-[761px]:top-0">
+        {/* Title row (desktop only — mobile shows the app header) */}
+        <div className="hidden items-center justify-between px-4 pb-1 pt-3 min-[761px]:flex">
+          <h1 className="text-[20px] font-extrabold leading-[24px] tracking-[-0.03em] text-[#e7e9ea]">
+            Главная
+          </h1>
           <Tooltip content="Настройки ленты" side="left">
             <button
               type="button"
-              className="muted"
+              className="grid h-9 w-9 place-items-center rounded-full text-[#71767b] transition-colors duration-150 hover:bg-white/[0.08] hover:text-[#e7e9ea]"
               aria-label="Настройки ленты"
-              style={{ padding: 4 }}
             >
               <MoreHorizontal size={20} />
             </button>
           </Tooltip>
         </div>
 
-        {/* Tabs with Twitter Blue underline indicator */}
-        <div className="tabs" role="tablist" aria-label="Фильтры ленты">
+        {/* Tab bar — Twitter Blue underline indicator */}
+        <div className="no-scrollbar flex overflow-x-auto" role="tablist" aria-label="Фильтры ленты">
           {FEED_TABS.map((tab) => {
             const isSelected = filter === tab
             return (
@@ -139,10 +140,20 @@ export function HomeView({
                 type="button"
                 role="tab"
                 aria-selected={isSelected}
-                className={isSelected ? 'selected' : ''}
+                className={`relative flex-none whitespace-nowrap px-4 pb-[13px] pt-3 text-[15px] font-bold tracking-[-0.01em] transition-colors duration-150 ${
+                  isSelected
+                    ? 'text-[#e7e9ea]'
+                    : 'text-[#71767b] hover:bg-white/[0.03] hover:text-[#e7e9ea]'
+                }`}
                 onClick={() => handleTabClick(tab)}
               >
                 {tab}
+                {isSelected && (
+                  <span
+                    className="absolute bottom-0 left-1/2 h-1 w-[calc(100%-32px)] min-w-[56px] -translate-x-1/2 rounded-full bg-[#1d9bf0]"
+                    aria-hidden="true"
+                  />
+                )}
               </button>
             )
           })}
@@ -152,7 +163,7 @@ export function HomeView({
       {/* Inline "What's happening?" compose prompt — X.com style */}
       {onCompose && (
         <div
-          className="flex items-center gap-3 px-4 py-3 border-b border-[#2f3336] cursor-pointer hover:bg-white/[0.02] transition-colors duration-150"
+          className="flex cursor-pointer items-center gap-3 border-b border-zinc-800/80 px-4 py-3 transition-colors duration-150 hover:bg-white/[0.02]"
           onClick={onCompose}
           role="button"
           tabIndex={0}
@@ -161,7 +172,7 @@ export function HomeView({
         >
           {/* Mini avatar */}
           <div
-            className="w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none"
+            className="flex h-10 w-10 flex-none select-none items-center justify-center rounded-full text-sm font-bold"
             style={{
               background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
               color: '#fff',
@@ -171,15 +182,15 @@ export function HomeView({
           >
             AC
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[#71767b] text-[19px] font-normal select-none truncate">
+          <div className="min-w-0 flex-1">
+            <p className="truncate select-none text-[19px] leading-[24px] text-[#71767b]">
               Что произошло сегодня?
             </p>
           </div>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onCompose?.() }}
-            className="flex-none flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[14px] font-bold transition-colors duration-150"
+            className="flex flex-none items-center gap-1.5 rounded-full bg-[#1d9bf0] px-4 py-[7px] text-[14px] font-bold text-white transition-colors duration-150 hover:bg-[#1a8cd8]"
             aria-label="Записать день"
           >
             <Plus size={15} strokeWidth={2.5} />
@@ -199,8 +210,8 @@ export function HomeView({
         {days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
             <span className="text-4xl text-[#1d9bf0]">✦</span>
-            <h2 className="empty-state__title text-lg font-bold mt-2">Твой огонёк готов к первому дню</h2>
-            <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
+            <h2 className="empty-state__title mt-2 text-lg font-bold">Твой огонёк готов к первому дню</h2>
+            <p className="empty-state__desc mx-auto mt-1 mb-6 max-w-sm text-muted text-sm">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
             </p>
             <div className="flex justify-center gap-3">
@@ -242,7 +253,7 @@ export function HomeView({
               <div ref={sentinelRef} className="feed-chunk-loader py-6 text-center">
                 <button
                   type="button"
-                  className="x-secondary-btn text-xs px-4 py-2 opacity-85 hover:opacity-100 transition-opacity"
+                  className="x-secondary-btn px-4 py-2 text-xs opacity-85 transition-opacity hover:opacity-100"
                   onClick={() =>
                     setVisibleCount((prev) => Math.min(prev + CHUNK_SIZE, filteredDays.length))
                   }

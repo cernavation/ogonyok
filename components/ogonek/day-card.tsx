@@ -119,25 +119,25 @@ export function DayCard({
   if (day.status === 'missed') {
     return (
       <article
-        className="border-b border-[#2f3336] px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150"
+        className="border-b border-zinc-800/80 px-4 py-3.5 transition-colors duration-150 hover:bg-white/[0.02]"
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">
           <div
-            className="w-10 h-10 rounded-full flex-none flex items-center justify-center text-[#71767b] bg-[#1c1e22] text-base"
+            className="flex h-10 w-10 flex-none items-center justify-center rounded-full bg-[#1c1e22] text-base text-[#71767b]"
             aria-hidden="true"
           >
             ✦
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <strong className="text-[15px] font-bold text-[#e7e9ea] tracking-[-0.015em]">Льготный мост</strong>
-              <span className="text-[#71767b] text-[14px]">· День #{day.id}</span>
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center gap-1.5">
+              <strong className="text-[15px] font-bold tracking-[-0.015em] text-[#e7e9ea]">Льготный мост</strong>
+              <span className="text-[14px] text-[#71767b]">· День #{day.id}</span>
             </div>
-            <span className="text-xs text-amber-500 font-medium flex items-center gap-1">
+            <span className="flex items-center gap-1 text-xs font-medium text-amber-500">
               <ShieldAlert size={12} /> Grace Period
             </span>
-            <p className="text-[14px] text-[#71767b] italic mt-2 leading-[1.45]">
+            <p className="mt-2 text-[14px] leading-[1.45] text-[#71767b] italic">
               В этот день записей не было, но огонёк непрерывного пути сохранён льготным периодом (3 дня допуска).
             </p>
           </div>
@@ -169,7 +169,7 @@ export function DayCard({
   return (
     <>
       <article
-        className="border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150 px-4 py-4"
+        className="day-card border-b border-zinc-800/80 px-4 py-3 transition-colors duration-150 hover:bg-white/[0.02]"
         id={`day-card-${day.id}`}
         style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 280px' }}
       >
@@ -177,7 +177,7 @@ export function DayCard({
           {/* Avatar */}
           <div className="flex-none">
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none"
+              className="flex h-10 w-10 select-none items-center justify-center rounded-full text-sm font-bold"
               style={{
                 background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
                 color: '#fff',
@@ -190,27 +190,27 @@ export function DayCard({
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             {/* Header row */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="flex items-center gap-1 flex-wrap min-w-0">
-                <span className="font-bold text-[15px] text-[#e7e9ea] tracking-[-0.015em]">
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-1">
+                <span className="text-[15px] font-bold tracking-[-0.015em] text-[#e7e9ea]">
                   Alexei Cerna
                 </span>
                 {/* Blue verified badge */}
                 <span
-                  className="inline-grid place-items-center rounded-full text-white flex-none"
+                  className="inline-grid flex-none place-items-center rounded-full text-white"
                   style={{ background: '#1d9bf0', width: 16, height: 16, fontSize: 9, fontWeight: 900 }}
                   title="Верифицирован"
                   aria-label="Верифицирован"
                 >
                   ✓
                 </span>
-                <span className="text-[12px] leading-[16px] text-[#71767b] tracking-[-0.01em]">
+                <span className="text-[12px] leading-[16px] tracking-[-0.01em] text-[#71767b]">
                   @cernavation · {dateStr}
                 </span>
                 <span
-                  className="text-[11px] px-2 py-0.5 rounded-full font-bold"
+                  className="rounded-full px-2 py-0.5 text-[11px] font-bold"
                   style={{ background: '#2b1d16', color: '#ffad5a' }}
                 >
                   День #{day.id}
@@ -218,7 +218,7 @@ export function DayCard({
               </div>
 
               {/* Score badge + action buttons */}
-              <div className="flex items-center gap-0.5 flex-none">
+              <div className="flex flex-none items-center gap-0.5">
                 {averageScore !== null && (
                   <div
                     className={`score-badge ${scoreBadgeClass}`}
@@ -231,7 +231,7 @@ export function DayCard({
                 <Tooltip content="Редактировать день" side="left">
                   <button
                     type="button"
-                    className="p-2 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
+                    className="grid h-8 w-8 place-items-center rounded-full text-[#71767b] transition-colors duration-150 hover:bg-[#ff6b35]/10 hover:text-[#ff6b35]"
                     aria-label="Редактировать день"
                     onClick={() => onEdit?.(day)}
                   >
@@ -241,7 +241,7 @@ export function DayCard({
                 <Tooltip content="Опции дня" side="left">
                   <button
                     type="button"
-                    className="p-2 rounded-full text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.08] transition-colors duration-150"
+                    className="grid h-8 w-8 place-items-center rounded-full text-[#71767b] transition-colors duration-150 hover:bg-white/[0.08] hover:text-[#e7e9ea]"
                     aria-label="Опции публикации"
                     onClick={() => setShareModalOpen(true)}
                   >
@@ -252,7 +252,7 @@ export function DayCard({
             </div>
 
             {/* Post body */}
-            <p className="text-[15px] leading-[23px] text-[#e7e9ea] tracking-[-0.015em] mb-3">
+            <p className="mb-3 text-[15px] leading-[23px] tracking-[-0.015em] text-[#e7e9ea]">
               {day.title}
             </p>
 
@@ -268,12 +268,8 @@ export function DayCard({
             {/* Media — X.com style */}
             {photoUrls.length > 0 && (
               <div
-                className={`mt-3 overflow-hidden rounded-2xl border border-[#2f3336] ${
-                  photoUrls.length === 1
-                    ? ''
-                    : photoUrls.length === 2
-                      ? 'grid grid-cols-2 gap-0.5'
-                      : 'grid grid-cols-2 gap-0.5'
+                className={`mt-3 overflow-hidden rounded-2xl border border-zinc-800/80 ${
+                  photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-[2px]'
                 }`}
               >
                 {photoUrls.length === 1 && (
@@ -287,7 +283,7 @@ export function DayCard({
                       src={photoUrls[0]}
                       alt="Фото дня"
                       loading="lazy"
-                      className="w-full max-h-[500px] object-cover rounded-2xl"
+                      className="max-h-[500px] w-full rounded-2xl object-cover"
                     />
                   </button>
                 )}
@@ -296,27 +292,27 @@ export function DayCard({
                     <button
                       type="button"
                       onClick={() => onLightbox(photoUrls[0])}
-                      className="block focus:outline-none overflow-hidden rounded-l-2xl"
+                      className="block overflow-hidden rounded-l-2xl focus:outline-none"
                       aria-label="Открыть первое фото дня"
                     >
                       <img
                         src={photoUrls[0]}
                         alt="Фото дня 1"
                         loading="lazy"
-                        className="w-full h-[240px] object-cover"
+                        className="h-[240px] w-full object-cover"
                       />
                     </button>
                     <button
                       type="button"
                       onClick={() => onLightbox(photoUrls[1])}
-                      className="block focus:outline-none overflow-hidden rounded-r-2xl"
+                      className="block overflow-hidden rounded-r-2xl focus:outline-none"
                       aria-label="Открыть второе фото дня"
                     >
                       <img
                         src={photoUrls[1]}
                         alt="Фото дня 2"
                         loading="lazy"
-                        className="w-full h-[240px] object-cover"
+                        className="h-[240px] w-full object-cover"
                       />
                     </button>
                   </>
@@ -326,40 +322,40 @@ export function DayCard({
                     <button
                       type="button"
                       onClick={() => onLightbox(photoUrls[0])}
-                      className="block focus:outline-none overflow-hidden rounded-tl-2xl rounded-bl-2xl row-span-2"
+                      className="row-span-2 block overflow-hidden rounded-bl-2xl rounded-tl-2xl focus:outline-none"
                       aria-label="Открыть первое фото дня"
                     >
                       <img
                         src={photoUrls[0]}
                         alt="Фото дня 1"
                         loading="lazy"
-                        className="w-full h-[240px] object-cover"
+                        className="h-[240px] w-full object-cover"
                       />
                     </button>
                     <button
                       type="button"
                       onClick={() => onLightbox(photoUrls[1])}
-                      className="block focus:outline-none overflow-hidden rounded-tr-2xl"
+                      className="block overflow-hidden rounded-tr-2xl focus:outline-none"
                       aria-label="Открыть второе фото дня"
                     >
                       <img
                         src={photoUrls[1]}
                         alt="Фото дня 2"
                         loading="lazy"
-                        className="w-full h-[118px] object-cover"
+                        className="h-[118px] w-full object-cover"
                       />
                     </button>
                     <button
                       type="button"
                       onClick={() => onLightbox(photoUrls[2])}
-                      className="block focus:outline-none overflow-hidden rounded-br-2xl"
+                      className="block overflow-hidden rounded-br-2xl focus:outline-none"
                       aria-label="Открыть третье фото дня"
                     >
                       <img
                         src={photoUrls[2]}
                         alt="Фото дня 3"
                         loading="lazy"
-                        className="w-full h-[118px] object-cover"
+                        className="h-[118px] w-full object-cover"
                       />
                     </button>
                   </>
@@ -367,25 +363,25 @@ export function DayCard({
               </div>
             )}
 
-            {/* X.com canonical 4-action bar */}
-            <div className="flex items-center justify-between pt-2 -mx-2">
-              {/* Огонёк 🔥 */}
+            {/* X.com canonical action bar — minimalist icon buttons */}
+            <div className="-ml-2 mt-1 flex max-w-[425px] items-center justify-between">
+              {/* Огонёк 🔥 (with counter) */}
               <Tooltip content="Зажечь огонёк" side="top">
                 <motion.button
                   type="button"
                   onClick={handleLike}
                   aria-label={liked ? 'Убрать отметку огня' : 'Поставить огонь'}
-                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
-                    liked
-                      ? 'text-[#ff6b35]'
-                      : 'text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10'
+                  className={`group flex items-center gap-0.5 rounded-full text-[13px] transition-colors duration-150 ${
+                    liked ? 'text-[#ff6b35]' : 'text-[#71767b] hover:text-[#ff6b35]'
                   }`}
                   animate={reduce ? undefined : likeAnim}
                   variants={reactionVariants}
                   transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
-                  <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
-                  <span>{liked ? '1' : '0'}</span>
+                  <span className="grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-150 group-hover:bg-[#ff6b35]/10">
+                    <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
+                  </span>
+                  <span className="pr-1 tabular-nums">{liked ? '1' : '0'}</span>
                 </motion.button>
               </Tooltip>
 
@@ -395,17 +391,16 @@ export function DayCard({
                   type="button"
                   onClick={handleThank}
                   aria-label="Поблагодарить"
-                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
-                    thanked
-                      ? 'text-[#f91880]'
-                      : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
+                  className={`group flex items-center rounded-full text-[13px] transition-colors duration-150 ${
+                    thanked ? 'text-[#f91880]' : 'text-[#71767b] hover:text-[#f91880]'
                   }`}
                   animate={reduce ? undefined : thankAnim}
                   variants={reactionVariants}
                   transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
                 >
-                  <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
-                  <span>Спасибо</span>
+                  <span className="grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-150 group-hover:bg-[#f91880]/10">
+                    <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
+                  </span>
                 </motion.button>
               </Tooltip>
 
@@ -415,10 +410,11 @@ export function DayCard({
                   type="button"
                   onClick={() => onEdit?.(day)}
                   aria-label="Редактировать день"
-                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
+                  className="group flex items-center rounded-full text-[13px] text-[#71767b] transition-colors duration-150 hover:text-[#ff6b35]"
                 >
-                  <Pencil size={18} />
-                  <span>Править</span>
+                  <span className="grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-150 group-hover:bg-[#ff6b35]/10">
+                    <Pencil size={18} />
+                  </span>
                 </button>
               </Tooltip>
 
@@ -428,10 +424,11 @@ export function DayCard({
                   type="button"
                   onClick={() => setShareModalOpen(true)}
                   aria-label="Поделиться записью"
-                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors duration-150"
+                  className="group flex items-center rounded-full text-[13px] text-[#71767b] transition-colors duration-150 hover:text-[#1d9bf0]"
                 >
-                  <Activity size={18} />
-                  <span>Поделиться</span>
+                  <span className="grid h-[34px] w-[34px] place-items-center rounded-full transition-colors duration-150 group-hover:bg-[#1d9bf0]/10">
+                    <Activity size={18} />
+                  </span>
                 </button>
               </Tooltip>
             </div>
