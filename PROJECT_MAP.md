@@ -1,0 +1,89 @@
+# КАРТА ПРОЕКТА
+СТРОГО ЗАПРЕЩЕНО читать папку public/seeds, package-lock.json и node_modules!
+
+DIR: app/
+DIR: app/api/
+DIR: app/api/evaluate/
+  FILE: app/api/evaluate/route.ts
+DIR: app/api/streak/
+DIR: app/api/streak/sync/
+  FILE: app/api/streak/sync/route.ts
+DIR: app/api/telegram/
+DIR: app/api/telegram/remind/
+  FILE: app/api/telegram/remind/route.ts
+DIR: app/api/telegram/status/
+  FILE: app/api/telegram/status/route.ts
+DIR: app/api/telegram/test/
+  FILE: app/api/telegram/test/route.ts
+  FILE: app/globals.css
+  FILE: app/interactive-overrides.css
+  FILE: app/layout.tsx
+  FILE: app/page.tsx
+DIR: components/
+DIR: components/ogonek/
+  FILE: components/ogonek/app-shell.tsx
+  FILE: components/ogonek/bottom-nav.tsx
+  FILE: components/ogonek/composer.tsx
+  FILE: components/ogonek/day-card.tsx
+  FILE: components/ogonek/day-entries.tsx
+  FILE: components/ogonek/flame-icon.tsx
+  FILE: components/ogonek/hotkeys-modal.tsx
+  FILE: components/ogonek/lightbox.tsx
+  FILE: components/ogonek/mobile-header.tsx
+  FILE: components/ogonek/modal-shell.tsx
+  FILE: components/ogonek/profile-modal.tsx
+  FILE: components/ogonek/quick-focus.tsx
+  FILE: components/ogonek/right-rail.tsx
+  FILE: components/ogonek/scroll-pill.tsx
+  FILE: components/ogonek/share-card-modal.tsx
+  FILE: components/ogonek/sidebar.tsx
+  FILE: components/ogonek/sw-register.tsx
+  FILE: components/ogonek/toast.tsx
+  FILE: components/ogonek/tooltip.tsx
+  FILE: components/ogonek/vault-spark.tsx
+DIR: components/ogonek/views/
+  FILE: components/ogonek/views/analytics-view.tsx
+  FILE: components/ogonek/views/explore-view.tsx
+  FILE: components/ogonek/views/home-view.tsx
+  FILE: components/ogonek/views/intentions-view.tsx
+  FILE: components/ogonek/views/profile-view.tsx
+  FILE: components/ogonek/views/settings-view.tsx
+  FILE: components/ogonek/views/vault-view.tsx
+DIR: components/ui/
+  FILE: components/ui/button.tsx
+DIR: data/
+DIR: data/migrated/
+DIR: data/notes/
+DIR: docs/
+DIR: lib/
+DIR: lib/ogonek/
+  FILE: lib/ogonek/card-export.ts
+  FILE: lib/ogonek/data.ts
+  FILE: lib/ogonek/evaluate-heuristic.ts
+  FILE: lib/ogonek/haptics.ts
+  FILE: lib/ogonek/migrate.ts
+  FILE: lib/ogonek/photos.ts
+  FILE: lib/ogonek/reminder-logic.ts
+  FILE: lib/ogonek/sound.ts
+  FILE: lib/ogonek/storage.ts
+  FILE: lib/ogonek/streak.ts
+  FILE: lib/ogonek/types.ts
+  FILE: lib/ogonek/use-keyboard-navigation.ts
+  FILE: lib/ogonek/use-ogonek-store.ts
+  FILE: lib/utils.ts
+  FILE: next-env.d.ts
+  FILE: next.config.mjs
+  FILE: postcss.config.mjs
+DIR: scripts/
+  FILE: scripts/generate-icons.mjs
+  FILE: scripts/import-real-raw.mjs
+  FILE: scripts/migrate-gordza-html.mjs
+  FILE: scripts/migrate-html.mjs
+  FILE: scripts/parse-apple-notes.mjs
+  FILE: scripts/remind.mjs
+DIR: test/
+  FILE: test/evaluate.test.ts
+  FILE: test/import-real-raw.test.ts
+  FILE: test/migrate.test.ts
+  FILE: test/reminder.test.ts
+  FILE: test/streak.test.ts
