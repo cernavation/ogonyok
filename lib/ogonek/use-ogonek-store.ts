@@ -24,7 +24,7 @@ import type {
   ReactionCounts,
 } from './types'
 import { withGratitudeRating } from './reactions'
-import { sanitizeProfile } from './storage'
+import { sanitizeFollowingIds, sanitizeProfile } from './storage'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
@@ -438,6 +438,28 @@ export function useOgonekStore() {
     updateStore((prev) => ({ ...prev, profile: sanitizeProfile(DEFAULT_STORE_STATE.profile) }))
   }, [updateStore])
 
+  /**
+   * ДРУЗЬЯ:
+   * Переключает подписку на друга из социального круга.
+   * Возвращает true, если теперь пользователь подписан.
+   */
+  const toggleFollow = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const current = getSnapshot().followingIds ?? []
+      const willFollow = !current.includes(friendId)
+      updateStore((prev) => {
+        const list = prev.followingIds ?? []
+        const next = willFollow
+          ? Array.from(new Set([...list, friendId]))
+          : list.filter((id) => id !== friendId)
+        return { ...prev, followingIds: next }
+      })
+      return willFollow
+    },
+    [updateStore]
+  )
+
   const importState = useCallback(
     (newState: OgonekStoreState) => {
       updateStore(() => ({
@@ -448,6 +470,7 @@ export function useOgonekStore() {
         dayReactions: newState.dayReactions ?? {},
         myReactions: newState.myReactions ?? {},
         profile: sanitizeProfile(newState.profile),
+        followingIds: sanitizeFollowingIds(newState.followingIds),
       }))
     },
     [updateStore]
@@ -823,6 +846,7 @@ export function useOgonekStore() {
     setPinEnabled,
     updateProfile,
     resetProfile,
+    toggleFollow,
     importState,
     resetToDefaults,
     getNextDayDate,

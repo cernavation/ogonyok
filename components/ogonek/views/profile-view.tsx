@@ -4,47 +4,100 @@ import {
   ArrowLeft,
   Award,
   Calendar,
+  Check,
+  ChevronRight,
   Download,
   ExternalLink,
   Flame,
   Heart,
+  Images,
+  Lock,
   MapPin,
   Pencil,
+  Send,
   Settings,
+  Share2,
+  Sparkles,
+  Star,
   Target,
+  Trophy,
+  UserCheck,
+  UserPlus,
+  Users,
   Zap,
+  type LucideIcon,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
-import { AnimatePresence } from 'framer-motion'
-import { computeStreak } from '@/lib/ogonek/streak'
-import { exportStoreAsJson } from '@/lib/ogonek/storage'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useMemo, useState, type ReactNode } from 'react'
 import { downloadBlob } from '@/lib/ogonek/card-export'
+import { FRIEND_PROFILES } from '@/lib/ogonek/friends'
+import {
+  buildInviteUrl,
+  buildProfileStories,
+  computeProfileStats,
+  type ProfileStats,
+} from '@/lib/ogonek/profile-share'
 import {
   getBannerPreset,
   getSocialPlatformMeta,
   prettySocialUrl,
 } from '@/lib/ogonek/profile-presets'
+import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
-import type { OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
+import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import { EditProfileModal } from '../edit-profile-modal'
+import { Lightbox } from '../lightbox'
+import { ProfileStoryModal } from '../profile-story-modal'
+import { ShareProfileModal } from '../share-profile-modal'
 
 interface Props {
   storeState: OgonekStoreState
   onNavigate: (view: ViewId) => void
   onUpdateProfile: (patch: Partial<OgonekProfile>) => void
   onResetProfile: () => void
+  onToggleFollow?: (friendId: string) => unknown
   onNotify: (message: string) => void
   soundEnabled: boolean
 }
 
-const PROFILE_TABS = ['Посты', 'Ответы', 'Медиа', 'Лайки'] as const
+type ProfileTabId = 'days' | 'achievements' | 'stories' | 'media' | 'friends'
 
-const ACHIEVEMENTS = [
-  { emoji: '🏆', title: '42 км босиком', sub: 'Легендарный статус', color: '#f59e0b' },
-  { emoji: '🔥', title: '700+ дней Огонька', sub: 'Железная дисциплина', color: '#ff6b35' },
-  { emoji: '💼', title: 'Основатель Memernity', sub: 'Серийный предприниматель', color: '#1d9bf0' },
-  { emoji: '♟️', title: 'Шахматный триумф', sub: 'Победа над Волошиным', color: '#a855f7' },
-] as const
+const PROFILE_TABS: { id: ProfileTabId; label: string; icon: LucideIcon }[] = [
+  { id: 'days', label: 'Дни', icon: Calendar },
+  { id: 'achievements', label: 'Ачивки', icon: Trophy },
+  { id: 'stories', label: 'Сторис', icon: Sparkles },
+  { id: 'media', label: 'Медиа-сетка', icon: Images },
+  { id: 'friends', label: 'Друзья', icon: Users },
+]
+
+type ProfileMetrics = {
+  highOvercome: number
+  commentCount: number
+}
+
+type AchievementDef = {
+  id: string
+  emoji: string
+  title: string
+  sub: string
+  color: string
+  always?: boolean
+  check?: (stats: ProfileStats, metrics: ProfileMetrics) => boolean
+}
+
+const ACHIEVEMENT_DEFS: AchievementDef[] = [
+  { id: 'marathon', emoji: '🏆', title: '42 км босиком', sub: 'Легендарный статус', color: '#f59e0b', always: true },
+  { id: 'fire700', emoji: '🔥', title: '700+ дней Огонька', sub: 'Железная дисциплина', color: '#ff6b35', check: (s) => s.totalDays >= 700 },
+  { id: 'founder', emoji: '💼', title: 'Основатель Memernity', sub: 'Серийный предприниматель', color: '#1d9bf0', always: true },
+  { id: 'chess', emoji: '♟️', title: 'Шахматный триумф', sub: 'Победа над Волошиным', color: '#a855f7', always: true },
+  { id: 'fireproof', emoji: '🛡️', title: 'Огнеупорный', sub: 'Рекорд стрика 100+ дней', color: '#f97316', check: (s) => s.best >= 100 },
+  { id: 'chronicler', emoji: '📜', title: 'Летописец', sub: '500+ дней в летописи', color: '#0ea5e9', check: (s) => s.totalDays >= 500 },
+  { id: 'depth', emoji: '🌊', title: 'Мастер глубины', sub: '10+ дней с преодолением', color: '#06b6d4', check: (_s, m) => m.highOvercome >= 10 },
+  { id: 'vault', emoji: '🔐', title: 'Хранитель сейфа', sub: '5+ фактов в Evidence Vault', color: '#a3e635', always: true },
+  { id: 'voice', emoji: '💬', title: 'Голос поддержки', sub: '5+ слов поддержки в дневнике', color: '#f472b6', check: (_s, m) => m.commentCount >= 5 },
+  { id: 'aiStar', emoji: '⭐', title: 'Высокий балл ИИ', sub: 'Средний балл силы 8.0+', color: '#facc15', check: (s) => s.avgAiScore >= 8 },
+]
 
 function initialsFrom(name: string): string {
   const parts = (name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2)
@@ -52,38 +105,149 @@ function initialsFrom(name: string): string {
   return parts.map((p) => p[0]?.toUpperCase() ?? '').join('')
 }
 
+function formatDayDate(dateISO?: string): string {
+  if (!dateISO) return 'Без даты'
+  const date = new Date(dateISO)
+  if (Number.isNaN(date.getTime())) return 'Без даты'
+  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function dayAvgScale(day: Day): number | null {
+  const rated = day.prides.filter((p) => typeof p.scale === 'number' && p.scale > 0)
+  if (rated.length === 0) return null
+  return Math.round((rated.reduce((sum, p) => sum + p.scale, 0) / rated.length) * 10) / 10
+}
+
+function StatTile({
+  icon,
+  color,
+  label,
+  value,
+  sub,
+}: {
+  icon: ReactNode
+  color: string
+  label: string
+  value: string
+  sub: string
+}) {
+  return (
+    <div className="bg-[#16181c] rounded-2xl border border-[#2f3336] p-3">
+      <div className="flex items-center gap-1.5 text-[#71767b] text-[11px] leading-[15px] font-bold mb-1.5">
+        <span style={{ color }} className="flex-none">
+          {icon}
+        </span>
+        {label}
+      </div>
+      <p className="text-[#e7e9ea] text-[24px] font-black leading-none tracking-[-0.03em]">
+        {value}
+      </p>
+      <p className="text-[#71767b] text-[11px] leading-[15px] mt-1">{sub}</p>
+    </div>
+  )
+}
+
+function MediaCell({
+  src,
+  index,
+  onOpen,
+}: {
+  src: string
+  index: number
+  onOpen: (url: string) => void
+}) {
+  const resolved = usePhotoUrl(src)
+  return (
+    <button
+      type="button"
+      className="prof-media-cell aspect-square"
+      onClick={() => resolved && onOpen(resolved)}
+      disabled={!resolved}
+      aria-label={`Открыть медиа ${index + 1}`}
+    >
+      {resolved ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={resolved} alt={`Медиа ${index + 1}`} />
+      ) : (
+        <span className="block w-full h-full bg-[#16181c]" />
+      )}
+      <span className="prof-media-cell-veil" aria-hidden="true" />
+    </button>
+  )
+}
+
 export function ProfileView({
   storeState,
   onNavigate,
   onUpdateProfile,
   onResetProfile,
+  onToggleFollow,
   onNotify,
   soundEnabled,
 }: Props) {
   const [editOpen, setEditOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<ProfileTabId>('days')
+  const [storyIndex, setStoryIndex] = useState<number | null>(null)
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
+  const [expandedFriend, setExpandedFriend] = useState<string | null>(null)
+
   const profile = storeState.profile
+  const followingIds = storeState.followingIds ?? []
 
   const avatarSrc = usePhotoUrl(profile.avatarImage)
   const bannerSrc = usePhotoUrl(profile.bannerImage)
   const bannerPreset = useMemo(() => getBannerPreset(profile.bannerPreset), [profile.bannerPreset])
 
-  // Live stats
-  const entryDates = new Set<string>()
-  let totalPrides = 0
-  let totalGratitudes = 0
+  // ── Живая статистика (стрик, балл ИИ, гордости, благодарности) ──────────
+  const stats = useMemo(() => computeProfileStats(storeState), [storeState])
+  const stories = useMemo(() => buildProfileStories(profile, stats), [profile, stats])
 
-  for (const day of storeState.days) {
-    if (day.dateISO) entryDates.add(day.dateISO.slice(0, 10))
-    if (day.status !== 'missed') {
-      totalPrides += day.prides.length
-      totalGratitudes += day.gratitudes.length
+  const metrics = useMemo<ProfileMetrics>(() => {
+    let highOvercome = 0
+    for (const day of storeState.days) {
+      if (day.status === 'missed') continue
+      for (const pride of day.prides) {
+        if (pride.overcome >= 2) highOvercome++
+      }
     }
-  }
+    const commentCount = Object.values(storeState.comments ?? {}).reduce(
+      (total, list) => total + list.length,
+      0
+    )
+    return { highOvercome, commentCount }
+  }, [storeState])
 
-  const streakInfo = computeStreak(entryDates, new Date())
-  const daysCount = Math.max(storeState.days.filter((d) => d.status !== 'missed').length, 719)
+  const achievements = useMemo(
+    () =>
+      ACHIEVEMENT_DEFS.map((def) => ({
+        ...def,
+        unlocked: def.always ? true : def.check ? def.check(stats, metrics) : false,
+      })),
+    [stats, metrics]
+  )
+  const unlockedCount = achievements.filter((a) => a.unlocked).length
+
+  const recentDays = useMemo(
+    () => storeState.days.filter((d) => d.status !== 'missed').slice(0, 12),
+    [storeState.days]
+  )
+
+  const mediaItems = useMemo(() => {
+    const items: { id: string; src: string }[] = []
+    if (profile.bannerImage) items.push({ id: 'banner', src: profile.bannerImage })
+    if (profile.avatarImage) items.push({ id: 'avatar', src: profile.avatarImage })
+    for (const day of storeState.days) {
+      const photos = day.photos ?? []
+      photos.forEach((photo, i) => {
+        items.push({ id: `day-${day.id}-${i}`, src: photo })
+      })
+    }
+    return items.slice(0, 60)
+  }, [storeState.days, profile.avatarImage, profile.bannerImage])
 
   const handleBackup = () => {
+    playClick(soundEnabled)
     try {
       const json = exportStoreAsJson(storeState)
       const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
@@ -94,9 +258,40 @@ export function ProfileView({
     }
   }
 
+  const handleToggleFollow = (friendId: string, username: string) => {
+    playClick(soundEnabled)
+    const wasFollowing = followingIds.includes(friendId)
+    onToggleFollow?.(friendId)
+    onNotify(
+      wasFollowing ? `Ты отписался от @${username}` : `Ты подписался на @${username} ✓`
+    )
+  }
+
+  const handleInviteFriend = async (username: string) => {
+    playClick(soundEnabled)
+    try {
+      await navigator.clipboard.writeText(buildInviteUrl(username))
+      playSuccess(soundEnabled)
+      onNotify(`Ссылка-приглашение для @${username} скопирована`)
+    } catch {
+      onNotify('Не удалось скопировать приглашение')
+    }
+  }
+
+  const handleOpenDay = (day: Day) => {
+    playClick(soundEnabled)
+    onNavigate('home')
+    onNotify(`Открываю День #${day.id} в ленте`)
+  }
+
+  const handleOpenStory = (index: number) => {
+    playClick(soundEnabled)
+    setStoryIndex(index)
+  }
+
   return (
     <div className="view-profile">
-      {/* Sticky header — back button + name + post count */}
+      {/* ── Sticky header ──────────────────────────────────────────────── */}
       <header
         className="flex items-center gap-5 px-4 py-3 sticky top-0 z-10 border-b border-[#2f3336]"
         style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(14px)' }}
@@ -113,11 +308,11 @@ export function ProfileView({
           <p className="text-[#e7e9ea] text-[20px] font-bold leading-[24px] tracking-[-0.02em] truncate">
             {profile.displayName}
           </p>
-          <p className="text-[#71767b] text-[13px] leading-[16px]">{daysCount} постов</p>
+          <p className="text-[#71767b] text-[13px] leading-[16px]">{stats.totalDays} постов</p>
         </div>
       </header>
 
-      {/* Cover banner */}
+      {/* ── Cover banner ───────────────────────────────────────────────── */}
       <div
         className="w-full h-[200px] relative overflow-hidden"
         style={{ background: bannerSrc ? undefined : bannerPreset.background }}
@@ -167,10 +362,9 @@ export function ProfileView({
         )}
       </div>
 
-      {/* Avatar + Edit button row */}
+      {/* ── Avatar + action buttons ────────────────────────────────────── */}
       <div className="relative px-4 pb-4">
-        <div className="flex items-end justify-between -mt-[50px] mb-3">
-          {/* Large avatar */}
+        <div className="flex items-end justify-between -mt-[50px] mb-3 gap-2">
           <div
             className="w-[100px] h-[100px] rounded-full border-4 border-black flex items-center justify-center font-black text-xl select-none flex-none overflow-hidden"
             style={{ background: avatarSrc ? undefined : profile.avatarColor, color: '#fff' }}
@@ -184,8 +378,7 @@ export function ProfileView({
             )}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 mt-auto pb-1">
+          <div className="flex items-center gap-2 mt-auto pb-1 flex-wrap justify-end">
             <button
               type="button"
               className="w-9 h-9 rounded-full border border-[#536471] flex items-center justify-center text-[#e7e9ea] hover:bg-white/[0.06] transition-colors"
@@ -198,19 +391,37 @@ export function ProfileView({
             <button
               type="button"
               className="w-9 h-9 rounded-full border border-[#536471] flex items-center justify-center text-[#e7e9ea] hover:bg-white/[0.06] transition-colors"
-              onClick={() => onNavigate('settings')}
+              onClick={() => {
+                playClick(soundEnabled)
+                onNavigate('settings')
+              }}
               aria-label="Настройки профиля"
             >
               <Settings size={16} />
             </button>
             <button
               type="button"
-              onClick={() => setEditOpen(true)}
+              onClick={() => {
+                playClick(soundEnabled)
+                setShareOpen(true)
+              }}
+              className="h-9 px-4 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[15px] font-bold transition-colors flex items-center gap-1.5"
+              aria-label="Поделиться профилем"
+            >
+              <Share2 size={15} />
+              Поделиться
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                setEditOpen(true)
+              }}
               className="h-9 px-4 rounded-full border border-[#536471] text-[15px] font-bold text-[#e7e9ea] hover:bg-white/[0.06] transition-colors flex items-center gap-1.5"
               aria-label="Редактировать профиль"
             >
               <Pencil size={14} />
-              Edit profile
+              Edit
             </button>
           </div>
         </div>
@@ -313,7 +524,7 @@ export function ProfileView({
         {/* Following / Followers */}
         <div className="flex items-center gap-4 mb-4">
           <button type="button" className="flex items-center gap-1 hover:underline">
-            <span className="text-[#e7e9ea] text-[15px] font-bold">48</span>
+            <span className="text-[#e7e9ea] text-[15px] font-bold">{48 + followingIds.length}</span>
             <span className="text-[#71767b] text-[15px]">Following</span>
           </button>
           <button type="button" className="flex items-center gap-1 hover:underline">
@@ -322,140 +533,420 @@ export function ProfileView({
           </button>
         </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-[#16181c] rounded-2xl border border-[#2f3336] p-4">
-            <div className="flex items-center gap-2 text-[#71767b] text-[12px] leading-[16px] font-bold mb-2">
-              <Flame size={14} className="text-[#ff6b35]" aria-hidden="true" />
-              Стрик
+        {/* ── SaaS Pro stats ──────────────────────────────────────────── */}
+        <section aria-label="Статистика профиля" className="mb-4">
+          <div
+            className="flex items-center gap-3 rounded-2xl border border-[#3d2000] p-4 mb-2"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(255,107,53,0.16), rgba(255,166,0,0.05))',
+            }}
+          >
+            <Flame size={30} className="text-[#ff6b35] flex-none" fill="currentColor" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p className="text-[#e7e9ea] text-[32px] font-black leading-none tracking-[-0.03em]">
+                {stats.streakDays}+
+                <span className="text-[15px] font-bold text-[#71767b] ml-2">дней стрика</span>
+              </p>
+              <p className="text-[#71767b] text-[12px] leading-[16px] mt-1">
+                Рекорд {stats.best} дн. · всего {stats.totalDays} дней в летописи
+              </p>
             </div>
-            <p className="text-[#e7e9ea] text-[28px] font-black leading-none tracking-[-0.03em]">
-              {streakInfo.streak}
-            </p>
-            <p className="text-[#71767b] text-[12px] leading-[16px] mt-1">
-              дней · рекорд {streakInfo.best} дн.
-            </p>
+            <span
+              className="text-[11px] font-black text-[#ff8a50] border border-[#ff8a5055] rounded-full px-2.5 py-1 flex-none"
+              title="SaaS-профиль Pro"
+            >
+              PRO
+            </span>
           </div>
 
-          <div className="bg-[#16181c] rounded-2xl border border-[#2f3336] p-4">
-            <div className="flex items-center gap-2 text-[#71767b] text-[12px] leading-[16px] font-bold mb-2">
-              <Calendar size={14} className="text-[#1d9bf0]" aria-hidden="true" />
-              Всего дней
-            </div>
-            <p className="text-[#e7e9ea] text-[28px] font-black leading-none tracking-[-0.03em]">
-              {daysCount}
-            </p>
-            <p className="text-[#71767b] text-[12px] leading-[16px] mt-1">в летописи</p>
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile
+              icon={<Star size={13} />}
+              color="#facc15"
+              label="Балл ИИ"
+              value={stats.avgAiScore.toFixed(1)}
+              sub="из 10.0"
+            />
+            <StatTile
+              icon={<Zap size={13} />}
+              color="#fbbf24"
+              label="Гордости"
+              value={stats.totalPrides.toLocaleString('ru-RU')}
+              sub="зафиксировано"
+            />
+            <StatTile
+              icon={<Heart size={13} />}
+              color="#f91880"
+              label="Спасибо"
+              value={stats.totalGratitudes.toLocaleString('ru-RU')}
+              sub="в сердце"
+            />
           </div>
-
-          <div className="bg-[#16181c] rounded-2xl border border-[#2f3336] p-4">
-            <div className="flex items-center gap-2 text-[#71767b] text-[12px] leading-[16px] font-bold mb-2">
-              <Zap size={14} className="text-amber-400" aria-hidden="true" />
-              Гордостей
-            </div>
-            <p className="text-[#e7e9ea] text-[28px] font-black leading-none tracking-[-0.03em]">
-              {(totalPrides || 3595).toLocaleString()}
-            </p>
-            <p className="text-[#71767b] text-[12px] leading-[16px] mt-1">зафиксировано</p>
-          </div>
-
-          <div className="bg-[#16181c] rounded-2xl border border-[#2f3336] p-4">
-            <div className="flex items-center gap-2 text-[#71767b] text-[12px] leading-[16px] font-bold mb-2">
-              <Heart size={14} className="text-[#f91880]" aria-hidden="true" />
-              Благодарностей
-            </div>
-            <p className="text-[#e7e9ea] text-[28px] font-black leading-none tracking-[-0.03em]">
-              {(totalGratitudes || 663).toLocaleString()}
-            </p>
-            <p className="text-[#71767b] text-[12px] leading-[16px] mt-1">в сердце</p>
-          </div>
-        </div>
-
-        {/* Legendary achievements */}
-        <div className="mb-4">
-          <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[20px] font-bold tracking-[-0.02em] mb-3">
-            <Award size={20} className="text-amber-400" />
-            Легендарные достижения
-          </h2>
-          <div className="flex flex-col gap-2">
-            {ACHIEVEMENTS.map((ach) => (
-              <div
-                key={ach.title}
-                className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-[#2f3336]"
-                style={{ background: '#16181c' }}
-              >
-                <span className="text-2xl flex-none" aria-hidden="true">
-                  {ach.emoji}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[15px] font-bold text-[#e7e9ea] leading-[20px] truncate">
-                    {ach.title}
-                  </p>
-                  <p className="text-[#71767b] text-[12px] leading-[16px]">{ach.sub}</p>
-                </div>
-                <div
-                  className="w-2 h-2 rounded-full flex-none"
-                  style={{ background: ach.color }}
-                  aria-hidden="true"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        </section>
       </div>
 
-      {/* Profile tabs — Posts / Replies / Media / Likes */}
+      {/* ── Profile tabs ───────────────────────────────────────────────── */}
       <div
         className="sticky top-[57px] z-10 border-b border-[#2f3336]"
         style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(14px)' }}
       >
-        <div className="flex" role="tablist" aria-label="Вкладки профиля">
-          {PROFILE_TABS.map((tab, i) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={i === 0}
-              className={`flex-1 py-4 text-[15px] font-bold relative transition-colors duration-150 ${
-                i === 0
-                  ? 'text-[#e7e9ea]'
-                  : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.03]'
-              }`}
-            >
-              {tab}
-              {i === 0 && (
-                <span
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-[#1d9bf0]"
-                  style={{ width: 48 }}
-                  aria-hidden="true"
-                />
-              )}
-            </button>
-          ))}
+        <div className="flex overflow-x-auto" role="tablist" aria-label="Вкладки профиля">
+          {PROFILE_TABS.map((tab) => {
+            const active = tab.id === activeTab
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setActiveTab(tab.id)
+                }}
+                className={`relative flex-none sm:flex-1 px-4 py-4 text-[13px] sm:text-[15px] font-bold whitespace-nowrap transition-colors duration-150 flex items-center justify-center gap-1.5 ${
+                  active
+                    ? 'text-[#e7e9ea]'
+                    : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.03]'
+                }`}
+              >
+                <Icon size={15} aria-hidden="true" />
+                {tab.label}
+                {active && (
+                  <span
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 rounded-full bg-[#1d9bf0]"
+                    style={{ width: 44 }}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* Posts tab content — just a prompt to go to main feed */}
-      <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-[#1d9bf0]/10 flex items-center justify-center mb-4">
-          <Flame size={32} className="text-[#ff6b35]" aria-hidden="true" />
-        </div>
-        <h3 className="text-[#e7e9ea] text-[23px] font-bold tracking-[-0.02em] mb-2">
-          {daysCount} дней силы
-        </h3>
-        <p className="text-[#71767b] text-[15px] leading-[23px] max-w-[320px] mb-6">
-          Все посты доступны в главной ленте. Каждый день — это твитт о твоей внутренней силе.
-        </p>
-        <button
-          type="button"
-          onClick={() => onNavigate('home')}
-          className="h-[48px] px-6 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[15px] font-bold transition-colors duration-150"
-        >
-          Открыть ленту →
-        </button>
+      {/* ── Tab content ────────────────────────────────────────────────── */}
+      <div key={activeTab} className="prof-panel-anim">
+        {activeTab === 'days' && (
+          <div className="p-4 flex flex-col gap-2">
+            {recentDays.length === 0 ? (
+              <p className="text-center text-[#71767b] text-[15px] py-10">
+                Пока нет записанных дней. Начни свой первый день силы!
+              </p>
+            ) : (
+              recentDays.map((day) => {
+                const avg = dayAvgScale(day)
+                return (
+                  <button
+                    key={day.id}
+                    type="button"
+                    onClick={() => handleOpenDay(day)}
+                    className="text-left rounded-2xl border border-[#2f3336] bg-[#16181c] px-4 py-3 hover:bg-white/[0.04] transition-colors flex items-center gap-3"
+                  >
+                    <span
+                      className="w-11 h-11 rounded-full flex-none grid place-items-center font-black text-[14px]"
+                      style={{
+                        background: 'linear-gradient(135deg, #ff6b35, #ffa600)',
+                        color: '#180a02',
+                      }}
+                      aria-hidden="true"
+                    >
+                      #{day.id}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[15px] font-bold text-[#e7e9ea] leading-[20px] truncate">
+                        {day.title}
+                      </span>
+                      <span className="block text-[12px] text-[#71767b] leading-[16px] mt-0.5">
+                        {formatDayDate(day.dateISO)} · 🔥 {day.prides.length} · ❤️{' '}
+                        {day.gratitudes.length}
+                        {avg !== null ? ` · ★ ${avg}` : ''}
+                      </span>
+                    </span>
+                    <ChevronRight size={18} className="text-[#71767b] flex-none" aria-hidden="true" />
+                  </button>
+                )
+              })
+            )}
+          </div>
+        )}
+
+        {activeTab === 'achievements' && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
+                <Trophy size={18} className="text-amber-400" />
+                Достижения
+              </h2>
+              <span className="text-[13px] text-[#71767b] font-bold">
+                {unlockedCount} / {achievements.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {achievements.map((ach) => (
+                <div
+                  key={ach.id}
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl border"
+                  style={{
+                    background: ach.unlocked ? '#141a10' : '#141517',
+                    borderColor: ach.unlocked ? '#2c3d16' : '#2f3336',
+                    opacity: ach.unlocked ? 1 : 0.62,
+                  }}
+                >
+                  <span className="text-2xl flex-none" aria-hidden="true">
+                    {ach.emoji}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-bold text-[#e7e9ea] leading-[19px] truncate">
+                      {ach.title}
+                    </p>
+                    <p className="text-[12px] text-[#71767b] leading-[16px] truncate">{ach.sub}</p>
+                  </div>
+                  {ach.unlocked ? (
+                    <span
+                      className="w-6 h-6 rounded-full grid place-items-center flex-none"
+                      style={{ background: `${ach.color}22`, color: ach.color }}
+                      title="Разблокировано"
+                    >
+                      <Check size={14} />
+                    </span>
+                  ) : (
+                    <Lock size={15} className="text-[#71767b] flex-none" aria-label="Заблокировано" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'stories' && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
+                <Sparkles size={18} className="text-[#ff8a50]" />
+                Сторис силы
+              </h2>
+              <span className="text-[12px] text-[#71767b]">1080×1920 · PNG</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {stories.map((story, index) => (
+                <button
+                  key={story.id}
+                  type="button"
+                  onClick={() => handleOpenStory(index)}
+                  className="relative rounded-2xl p-4 text-left overflow-hidden border border-white/10 hover:scale-[1.02] transition-transform"
+                  style={{ background: `linear-gradient(150deg, ${story.from}, ${story.to})` }}
+                  aria-label={`Открыть сторис: ${story.title}`}
+                >
+                  <div className="absolute inset-0 opacity-[0.16] rounded-2xl" style={{ background: `radial-gradient(circle at 80% 0%, ${story.accent}, transparent 60%)` }} aria-hidden="true" />
+                  <div className="relative">
+                    <div className="text-[26px] leading-none">{story.emoji}</div>
+                    <div
+                      className="text-[10px] font-extrabold tracking-[0.18em] mt-3"
+                      style={{ color: story.accent }}
+                    >
+                      {story.kicker}
+                    </div>
+                    <div className="text-white text-[26px] font-black leading-none mt-1">
+                      {story.value}
+                    </div>
+                    <div className="text-white/80 text-[12px] leading-[15px] mt-1.5 line-clamp-2">
+                      {story.title}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'media' && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
+                <Images size={18} className="text-[#1d9bf0]" />
+                Медиа-сетка
+              </h2>
+              <span className="text-[12px] text-[#71767b]">{mediaItems.length} медиа</span>
+            </div>
+            {mediaItems.length === 0 ? (
+              <div className="flex flex-col items-center text-center py-12">
+                <div className="w-16 h-16 rounded-full bg-[#1d9bf0]/10 flex items-center justify-center mb-4">
+                  <Images size={30} className="text-[#1d9bf0]" aria-hidden="true" />
+                </div>
+                <h3 className="text-[#e7e9ea] text-[17px] font-bold mb-1.5">
+                  Пока нет медиа
+                </h3>
+                <p className="text-[#71767b] text-[14px] leading-[20px] max-w-[300px] mb-5">
+                  Добавь фото к своему дню — и здесь появится визуальная летопись твоего пути.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    onNavigate('home')
+                  }}
+                  className="h-11 px-6 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[15px] font-bold transition-colors"
+                >
+                  Снять первый кадр
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-1.5">
+                {mediaItems.map((item, index) => (
+                  <MediaCell
+                    key={item.id}
+                    src={item.src}
+                    index={index}
+                    onOpen={setLightboxSrc}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'friends' && (
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
+                <Users size={18} className="text-[#22c55e]" />
+                Друзья
+              </h2>
+              <button
+                type="button"
+                onClick={() => handleInviteFriend(profile.username)}
+                className="flex items-center gap-1.5 rounded-full border border-[#536471] px-3 py-1.5 text-[13px] font-bold text-[#e7e9ea] hover:bg-white/[0.06] transition-colors"
+              >
+                <UserPlus size={14} />
+                Пригласить
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {FRIEND_PROFILES.map((friend) => {
+                const isFollowing = followingIds.includes(friend.id)
+                const isOpen = expandedFriend === friend.id
+                return (
+                  <div
+                    key={friend.id}
+                    className="rounded-2xl border border-[#2f3336] bg-[#16181c] overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setExpandedFriend(isOpen ? null : friend.id)
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
+                      aria-expanded={isOpen}
+                    >
+                      <span
+                        className="w-11 h-11 rounded-full grid place-items-center font-bold text-[14px] text-white flex-none"
+                        style={{ background: friend.avatarColor, textShadow: '0 1px 2px #000' }}
+                        aria-hidden="true"
+                      >
+                        {friend.initials}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[15px] font-bold text-[#e7e9ea] truncate">
+                            {friend.name}
+                          </span>
+                          {friend.verified && (
+                            <span
+                              className="inline-grid place-items-center rounded-full text-white flex-none"
+                              style={{ background: '#1d9bf0', width: 15, height: 15, fontSize: 9, fontWeight: 900 }}
+                              aria-label="Верифицирован"
+                            >
+                              ✓
+                            </span>
+                          )}
+                        </span>
+                        <span className="block text-[13px] text-[#71767b] truncate">
+                          @{friend.username} · 🔥 {friend.streak}
+                        </span>
+                      </span>
+                      <ChevronRight
+                        size={18}
+                        className={`text-[#71767b] flex-none transition-transform ${isOpen ? 'rotate-90' : ''}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-4 pb-4 pt-1 border-t border-[#2f3336]">
+                            <p className="text-[14px] text-[#d1d5db] leading-[20px] mb-3">
+                              {friend.bio}
+                            </p>
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                              <div className="rounded-xl bg-black/30 px-3 py-2">
+                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.streak}</div>
+                                <div className="text-[11px] text-[#71767b]">стрик</div>
+                              </div>
+                              <div className="rounded-xl bg-black/30 px-3 py-2">
+                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.together}</div>
+                                <div className="text-[11px] text-[#71767b]">дней вместе</div>
+                              </div>
+                              <div className="rounded-xl bg-black/30 px-3 py-2">
+                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.mutual}</div>
+                                <div className="text-[11px] text-[#71767b]">общих</div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFollow(friend.id, friend.username)}
+                                className={`flex-1 h-9 rounded-full text-[14px] font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                                  isFollowing
+                                    ? 'border border-[#536471] text-[#e7e9ea] hover:border-[#f91880] hover:text-[#f91880]'
+                                    : 'bg-[#e7e9ea] text-black hover:bg-white'
+                                }`}
+                              >
+                                {isFollowing ? <UserCheck size={15} /> : <UserPlus size={15} />}
+                                {isFollowing ? 'Вы подписаны' : 'Подписаться'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleInviteFriend(friend.username)}
+                                className="h-9 px-4 rounded-full border border-[#536471] text-[14px] font-bold text-[#e7e9ea] hover:bg-white/[0.06] transition-colors flex items-center gap-1.5"
+                              >
+                                <Send size={14} />
+                                Позвать
+                              </button>
+                            </div>
+                            <p className="text-[11px] text-[#71767b] mt-2">
+                              {friend.city} · активен {friend.lastActive}
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )
+              })}
+            </div>
+
+            {unlockedCount > 0 && (
+              <p className="flex items-center gap-1.5 text-[12px] text-[#71767b] mt-3 justify-center">
+                <Award size={13} className="text-amber-400" />
+                {unlockedCount} достижений разблокировано — поделись ими с друзьями
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Edit profile modal */}
+      {/* ── Modals ─────────────────────────────────────────────────────── */}
       <AnimatePresence>
         {editOpen && (
           <EditProfileModal
@@ -466,6 +957,29 @@ export function ProfileView({
             onNotify={onNotify}
             soundEnabled={soundEnabled}
           />
+        )}
+        {shareOpen && (
+          <ShareProfileModal
+            profile={profile}
+            stats={stats}
+            avatarSrc={avatarSrc}
+            onClose={() => setShareOpen(false)}
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+          />
+        )}
+        {storyIndex !== null && (
+          <ProfileStoryModal
+            stories={stories}
+            startIndex={storyIndex}
+            profile={profile}
+            onClose={() => setStoryIndex(null)}
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+          />
+        )}
+        {lightboxSrc && (
+          <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
         )}
       </AnimatePresence>
     </div>

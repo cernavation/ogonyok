@@ -2445,4 +2445,67 @@ kbd {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   ЭТАП 4 — SaaS-профиль Pro: табы, сторис, медиа-сетка, визитка
+   Все стили ниже только ДОБАВЛЯЮТ новое и не переопределяют
+   существующие классы Огонька.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Появление панели активной вкладки профиля */
+@keyframes profPanelUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.prof-panel-anim {
+  animation: profPanelUp 0.22s ease-out both;
+}
+
+/* Превью карточки-визитки в модальном окне */
+.prof-share-preview {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+/* Ячейка медиа-сетки профиля */
+.prof-media-cell {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #16181c;
+  padding: 0;
+  border: 1px solid var(--line);
+}
+
+.prof-media-cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.prof-media-cell-veil {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.prof-media-cell:hover .prof-media-cell-veil,
+.prof-media-cell:focus-visible .prof-media-cell-veil {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+
 

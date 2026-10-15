@@ -195,4 +195,6 @@ export type OgonekStoreState = {
   comments: CommentsByTarget
   /** Публичный профиль пользователя (имя, обложка, аватар, соцсети, цель) */
   profile: OgonekProfile
+  /** ID друзей, на которых подписан пользователь (вкладка «Друзья» профиля) */
+  followingIds: string[]
 }

@@ -1,4 +1,5 @@
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
+import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import type {
   Comment,
@@ -179,6 +180,14 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
   return result
 }
 
+/** Валидирует список ID друзей, на которых подписан пользователь */
+export function sanitizeFollowingIds(value: unknown): string[] {
+  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
+  if (!Array.isArray(value)) return [...DEFAULT_FOLLOWING_IDS]
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
 /** Допустимые платформы соцсетей профиля */
 const PROFILE_PLATFORMS: ProfileSocialPlatform[] = [
   'website',
@@ -291,6 +300,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   myReactions: {},
   comments: {},
   profile: DEFAULT_PROFILE,
+  followingIds: DEFAULT_FOLLOWING_IDS,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -321,6 +331,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               myReactions: sanitizeMyReactions(parsedV3.myReactions),
               comments: sanitizeComments(parsedV3.comments),
               profile: sanitizeProfile(parsedV3.profile),
+              followingIds: sanitizeFollowingIds(parsedV3.followingIds),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -407,6 +418,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         myReactions: sanitizeMyReactions(parsed.myReactions),
         comments: sanitizeComments(parsed.comments),
         profile: sanitizeProfile(parsed.profile),
+        followingIds: sanitizeFollowingIds(parsed.followingIds),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -536,6 +548,7 @@ export function validateAndImportJson(
       myReactions: sanitizeMyReactions(parsed.myReactions),
       comments: sanitizeComments(parsed.comments),
       profile: sanitizeProfile(parsed.profile),
+      followingIds: sanitizeFollowingIds(parsed.followingIds),
     }
 
     return { success: true, data: state }

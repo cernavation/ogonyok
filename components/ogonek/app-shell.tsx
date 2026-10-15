@@ -49,6 +49,7 @@ export function AppShell() {
     setPinEnabled,
     updateProfile,
     resetProfile,
+    toggleFollow,
     importState,
     resetToDefaults,
     getNextDayDate,
@@ -272,6 +273,7 @@ export function AppShell() {
           onNavigate={navigate}
           onUpdateProfile={updateProfile}
           onResetProfile={resetProfile}
+          onToggleFollow={toggleFollow}
           onNotify={notify}
           soundEnabled={state.soundEnabled}
         />
@@ -300,6 +302,7 @@ export function AppShell() {
       setPinEnabled,
       updateProfile,
       resetProfile,
+      toggleFollow,
       importState,
       resetToDefaults,
       handleEditDay,
