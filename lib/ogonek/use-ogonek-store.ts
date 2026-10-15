@@ -16,6 +16,13 @@ import {
 import type { ModerationEmailAttachment } from './achievement-moderation'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
+  applyStepStatus,
+  createMorningFocusRecord,
+  finalizeEveningReview,
+  migrateIntentionsToHistory,
+  sanitizeMorningFocusHistory,
+} from './morning-focus'
+import {
   DEFAULT_STORE_STATE,
   loadStore,
   saveStore,
@@ -40,6 +47,7 @@ import type {
   ModerationStatus,
   MyReactions,
   MyStory,
+  MorningFocusStepStatus,
   OgonekProfile,
   OgonekStoreState,
   PrideEntry,
@@ -363,13 +371,143 @@ export function useOgonekStore() {
 
   const saveMorningIntentions = useCallback(
     (dateKey: string, focus: [string, string, string]) => {
+      updateStore((prev) => {
+        const existing = prev.morningFocusHistory[dateKey]
+        const record = createMorningFocusRecord(dateKey, focus, existing)
+        return {
+          ...prev,
+          morningIntentions: {
+            ...prev.morningIntentions,
+            [dateKey]: record.focus,
+          },
+          morningFocusHistory: {
+            ...prev.morningFocusHistory,
+            [dateKey]: record,
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 10 — ВЕЧЕРНЯЯ СВЕРКА УТРЕННИХ ОБЕЩАНИЙ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * Ставит статус одному шагу фокуса («Выполнил» / «Не выполнил» / сброс).
+   * Автоматически пересчитывает процент и, когда сверены все обещания,
+   * проставляет время вечерней сверки.
+   */
+  const setMorningFocusStep = useCallback(
+    (dateKey: string, index: 0 | 1 | 2, status: MorningFocusStepStatus) => {
+      updateStore((prev) => {
+        const record = prev.morningFocusHistory[dateKey]
+        if (!record) return prev
+        const next = applyStepStatus(record, index, status)
+        return {
+          ...prev,
+          morningFocusHistory: {
+            ...prev.morningFocusHistory,
+            [dateKey]: next,
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /**
+   * Переключатель галочки: pending → done → missed → pending.
+   * Возвращает новый статус (для звука/уведомления в интерфейсе).
+   */
+  const toggleMorningFocusStep = useCallback(
+    (dateKey: string, index: 0 | 1 | 2): MorningFocusStepStatus => {
+      const record = getSnapshot().morningFocusHistory[dateKey]
+      if (!record) return 'pending'
+      const current = record.steps[index]
+      const next: MorningFocusStepStatus =
+        current === 'pending' ? 'done' : current === 'done' ? 'missed' : 'pending'
+      setMorningFocusStep(dateKey, index, next)
+      return next
+    },
+    [setMorningFocusStep]
+  )
+
+  /** Комплексная отметка «Выполнил» для шага (и снятие, если уже стояла) */
+  const markMorningFocusStepDone = useCallback(
+    (dateKey: string, index: 0 | 1 | 2): boolean => {
+      const record = getSnapshot().morningFocusHistory[dateKey]
+      if (!record) return false
+      const nextDone = record.steps[index] !== 'done'
+      setMorningFocusStep(dateKey, index, nextDone ? 'done' : 'pending')
+      return nextDone
+    },
+    [setMorningFocusStep]
+  )
+
+  /** Отметка «Не выполнил» для шага (снятие, если уже стояла) */
+  const markMorningFocusStepMissed = useCallback(
+    (dateKey: string, index: 0 | 1 | 2): boolean => {
+      const record = getSnapshot().morningFocusHistory[dateKey]
+      if (!record) return false
+      const nextMissed = record.steps[index] !== 'missed'
+      setMorningFocusStep(dateKey, index, nextMissed ? 'missed' : 'pending')
+      return nextMissed
+    },
+    [setMorningFocusStep]
+  )
+
+  /**
+   * Завершает вечернюю сверку: неотмеченные обещания становятся
+   * «Не выполнил», процент финализируется. Возвращает итоговый процент.
+   */
+  const completeEveningReview = useCallback(
+    (dateKey: string): number => {
+      const record = getSnapshot().morningFocusHistory[dateKey]
+      if (!record) return 0
+      const finalized = finalizeEveningReview(record)
       updateStore((prev) => ({
         ...prev,
-        morningIntentions: {
-          ...prev.morningIntentions,
-          [dateKey]: focus,
+        morningFocusHistory: {
+          ...prev.morningFocusHistory,
+          [dateKey]: finalized,
         },
       }))
+      return finalized.completionPercent
+    },
+    [updateStore]
+  )
+
+  /** Возвращает сверку в работу — можно передумать и поменять галочки */
+  const reopenEveningReview = useCallback(
+    (dateKey: string) => {
+      updateStore((prev) => {
+        const record = prev.morningFocusHistory[dateKey]
+        if (!record) return prev
+        return {
+          ...prev,
+          morningFocusHistory: {
+            ...prev.morningFocusHistory,
+            [dateKey]: { ...record, reviewedAtISO: null },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Удаляет запись утреннего фокуса конкретного дня из истории */
+  const removeMorningFocusRecord = useCallback(
+    (dateKey: string) => {
+      updateStore((prev) => {
+        if (!prev.morningFocusHistory[dateKey] && !prev.morningIntentions[dateKey]) return prev
+        const morningFocusHistory = { ...prev.morningFocusHistory }
+        const morningIntentions = { ...prev.morningIntentions }
+        delete morningFocusHistory[dateKey]
+        delete morningIntentions[dateKey]
+        return { ...prev, morningFocusHistory, morningIntentions }
+      })
     },
     [updateStore]
   )
@@ -949,6 +1087,14 @@ export function useOgonekStore() {
         followingIds: sanitizeFollowingIds(newState.followingIds),
         viewedStoryIds: sanitizeViewedStoryIds(newState.viewedStoryIds),
         myStories: sanitizeMyStories(newState.myStories),
+        morningFocusHistory: (() => {
+          const raw = sanitizeMorningFocusHistory(
+            (newState as Partial<OgonekStoreState>).morningFocusHistory
+          )
+          if (Object.keys(raw).length > 0) return raw
+          const migrated = migrateIntentionsToHistory(newState.morningIntentions)
+          return Object.keys(migrated).length > 0 ? migrated : prev.morningFocusHistory
+        })(),
         // Если в архиве нет поля ачивок — не теряем уже собранные данные
         verifiedAchievements: Array.isArray(newState.verifiedAchievements)
           ? sanitizeVerifiedAchievements(newState.verifiedAchievements)
@@ -1371,6 +1517,13 @@ export function useOgonekStore() {
     updateDay,
     updateDayWithPayload,
     saveMorningIntentions,
+    setMorningFocusStep,
+    toggleMorningFocusStep,
+    markMorningFocusStepDone,
+    markMorningFocusStepMissed,
+    completeEveningReview,
+    reopenEveningReview,
+    removeMorningFocusRecord,
     saveComposerDraft,
     clearComposerDraft,
     toggleEvidencePin,

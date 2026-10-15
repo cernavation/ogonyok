@@ -41,6 +41,11 @@ export function AppShell() {
     addNewDay,
     updateDayWithPayload,
     saveMorningIntentions,
+    markMorningFocusStepDone,
+    markMorningFocusStepMissed,
+    completeEveningReview,
+    reopenEveningReview,
+    removeMorningFocusRecord,
     saveComposerDraft,
     clearComposerDraft,
     toggleEvidencePin,
@@ -212,7 +217,13 @@ export function AppShell() {
         <HomeView
           days={state.days}
           morningIntentions={state.morningIntentions}
+          morningFocusHistory={state.morningFocusHistory}
           onSaveMorningIntentions={saveMorningIntentions}
+          onMarkMorningFocusDone={markMorningFocusStepDone}
+          onMarkMorningFocusMissed={markMorningFocusStepMissed}
+          onCompleteEveningReview={completeEveningReview}
+          onReopenEveningReview={reopenEveningReview}
+          onRemoveMorningFocus={removeMorningFocusRecord}
           onLightbox={setLightbox}
           onNotify={notify}
           onPinToVault={handlePinToVault}
@@ -281,6 +292,7 @@ export function AppShell() {
       intentions: (
         <IntentionsView
           morningIntentions={state.morningIntentions}
+          morningFocusHistory={state.morningFocusHistory}
           onNavigate={navigate}
           onSave={saveMorningIntentions}
           notify={notify}
@@ -294,6 +306,11 @@ export function AppShell() {
       navigate,
       notify,
       saveMorningIntentions,
+      markMorningFocusStepDone,
+      markMorningFocusStepMissed,
+      completeEveningReview,
+      reopenEveningReview,
+      removeMorningFocusRecord,
       handleSelectDay,
       handlePinToVault,
       toggleEvidencePin,

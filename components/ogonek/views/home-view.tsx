@@ -1,12 +1,16 @@
 'use client'
 
 import { MoreHorizontal, Plus } from 'lucide-react'
+import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
+import { computeFocusFlame } from '@/lib/ogonek/morning-focus'
 import { playClick } from '@/lib/ogonek/sound'
 import type { StreakStatus } from '@/lib/ogonek/streak'
-import type { Day, ViewId } from '@/lib/ogonek/types'
+import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
+import { EveningReview } from '../evening-review'
+import { FocusHistoryModal } from '../focus-history-modal'
 import { MobileHeader } from '../mobile-header'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
@@ -17,7 +21,14 @@ const CHUNK_SIZE = 25
 type Props = {
   days: Day[]
   morningIntentions?: Record<string, [string, string, string]>
+  /** ЭТАП 10: история утренних фокусов по дням с вечерней сверкой */
+  morningFocusHistory?: Record<string, MorningFocusRecord>
   onSaveMorningIntentions?: (dateKey: string, focus: [string, string, string]) => void
+  onMarkMorningFocusDone?: (dateKey: string, index: 0 | 1 | 2) => boolean
+  onMarkMorningFocusMissed?: (dateKey: string, index: 0 | 1 | 2) => boolean
+  onCompleteEveningReview?: (dateKey: string) => number
+  onReopenEveningReview?: (dateKey: string) => void
+  onRemoveMorningFocus?: (dateKey: string) => void
   onLightbox: (url: string) => void
   onNotify: (msg: string) => void
   onPinToVault?: (fact: string) => void
@@ -34,7 +45,13 @@ type Props = {
 export function HomeView({
   days,
   morningIntentions,
+  morningFocusHistory,
   onSaveMorningIntentions,
+  onMarkMorningFocusDone,
+  onMarkMorningFocusMissed,
+  onCompleteEveningReview,
+  onReopenEveningReview,
+  onRemoveMorningFocus,
   onLightbox,
   onNotify,
   onPinToVault,
@@ -49,11 +66,23 @@ export function HomeView({
 }: Props) {
   const [filter, setFilter] = useState<string>('Для тебя')
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const todayKey = useMemo(() => {
     return new Date().toISOString().split('T')[0]
   }, [])
+
+  const focusHistory = useMemo(() => morningFocusHistory ?? {}, [morningFocusHistory])
+  const todayFocusRecord = focusHistory[todayKey]
+  const focusFlameStats = useMemo(
+    () => computeFocusFlame(focusHistory, todayKey),
+    [focusHistory, todayKey]
+  )
+
+  const handleScrollToReview = () => {
+    document.getElementById('evening-review')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   const filteredDays = useMemo(() => {
     // «Для тебя» — показывает ВСЕ дни без исключений
@@ -210,10 +239,27 @@ export function HomeView({
       <div className="feed-content">
         <QuickFocus
           initialFocus={morningIntentions?.[todayKey]}
+          record={todayFocusRecord}
+          stats={focusFlameStats}
           onSave={(focus) => onSaveMorningIntentions?.(todayKey, focus)}
+          onOpenHistory={() => setHistoryOpen(true)}
+          onFocusReview={handleScrollToReview}
           notify={onNotify}
           soundEnabled={soundEnabled}
         />
+
+        {todayFocusRecord && onMarkMorningFocusDone && onMarkMorningFocusMissed && onCompleteEveningReview && onReopenEveningReview && (
+          <EveningReview
+            dateKey={todayKey}
+            record={todayFocusRecord}
+            notify={onNotify}
+            soundEnabled={soundEnabled}
+            onMarkDone={onMarkMorningFocusDone}
+            onMarkMissed={onMarkMorningFocusMissed}
+            onComplete={onCompleteEveningReview}
+            onReopen={onReopenEveningReview}
+          />
+        )}
 
         {days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
@@ -286,6 +332,19 @@ export function HomeView({
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {historyOpen && (
+          <FocusHistoryModal
+            history={focusHistory}
+            todayKey={todayKey}
+            onClose={() => setHistoryOpen(false)}
+            onRemove={(dateKey) => onRemoveMorningFocus?.(dateKey)}
+            notify={onNotify}
+            soundEnabled={soundEnabled}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

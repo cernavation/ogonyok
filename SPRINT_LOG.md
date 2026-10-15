@@ -279,6 +279,45 @@
   - `npm run build`: Compiled successfully in 3.7s.
 - **Остаточные риски:** Нет. Спринт завершён на 100%.
 
+### Фаза 10 (этап 10/70): Утренний фокус, Огонёк фокуса и вечерняя сверка ✅
+- **Что сделано:**
+  1. Расширена модель данных `lib/ogonek/types.ts`:
+     - `MorningFocusStepStatus = 'pending' | 'done' | 'missed'` — статус выполнения обещания.
+     - `MorningFocusRecord` — запись дня: 3 обещания, вечерняя сверка, `reviewedAtISO` и автоматически посчитанный `completionPercent`.
+     - В `OgonekStoreState` добавлена карта истории `morningFocusHistory: Record<string, MorningFocusRecord>`.
+  2. Создан чистый движок `lib/ogonek/morning-focus.ts`:
+     - Автоматический расчёт процента выполнения только по фактически записанным обещаниям (`computeCompletionPercent`).
+     - `applyStepStatus` — выставление «Выполнил / Не выполнил» с автофиксацией времени сверки, когда сверены все шаги.
+     - `finalizeEveningReview` — перед сном неотмеченные обещания становятся «Не выполнил».
+     - `computeFocusFlame` — метрики «Огонька фокуса»: текущая и лучшая серия дней, всего/средний процент сдержанных обещаний, показатели сегодня. Незавершённая сегодняшняя сверка не обрывает серию.
+     - Валидация истории (`sanitizeMorningFocusHistory`) и миграция старых `morningIntentions` (`migrateIntentionsToHistory`, `buildDemoMorningFocus`).
+  3. Обновлено хранилище `lib/ogonek/storage.ts`: поле `morningFocusHistory` во всех ветках загрузки/импорта, авто-миграция из `morningIntentions`, демо-история фокусов за последние 6 дней для наглядного Огонька фокуса в демо-режиме.
+  4. Расширен стор `lib/ogonek/use-ogonek-store.ts`:
+     - `saveMorningIntentions` теперь ведёт полноценную историю фокуса дня.
+     - Новые методы: `setMorningFocusStep`, `toggleMorningFocusStep`, `markMorningFocusStepDone`, `markMorningFocusStepMissed`, `completeEveningReview`, `reopenEveningReview`, `removeMorningFocusRecord`.
+  5. Новые компоненты:
+     - `components/ogonek/focus-flame.tsx` — «Огонёк фокуса»: счётчик выполнения обещаний с серией дней и уровнем пламени (spark/ember/blaze/inferno).
+     - `components/ogonek/evening-review.tsx` — вечерняя сверка: галочки «Выполнил / Не выполнил» на 3 шага, кольцо и полоса процента, кнопка завершения перед сном и повторное открытие.
+     - `components/ogonek/focus-history-modal.tsx` — модальное окно истории утренних фокусов по дням с фильтрами, статистикой и удалением записи.
+  6. Доработаны `components/ogonek/quick-focus.tsx` (Огонёк фокуса + прогресс + кнопки «Вечерняя сверка» и «История фокусов»), `components/ogonek/views/home-view.tsx` (интеграция сверки и модального окна), `components/ogonek/views/intentions-view.tsx` (проценты и статусы шагов в истории) и `components/ogonek/app-shell.tsx` (проброс методов стора).
+- **Файлы:**
+  - `lib/ogonek/types.ts`
+  - `lib/ogonek/morning-focus.ts`
+  - `lib/ogonek/storage.ts`
+  - `lib/ogonek/use-ogonek-store.ts`
+  - `components/ogonek/focus-flame.tsx`
+  - `components/ogonek/evening-review.tsx`
+  - `components/ogonek/focus-history-modal.tsx`
+  - `components/ogonek/quick-focus.tsx`
+  - `components/ogonek/views/home-view.tsx`
+  - `components/ogonek/views/intentions-view.tsx`
+  - `components/ogonek/app-shell.tsx`
+  - `test/morning-focus.test.ts`
+- **Проверки:**
+  - `npm run lint` (`tsc --noEmit`): 0 ошибок.
+  - `npm run test:unit`: 80/80 pass (10 сьютов), включая 10 новых тестов утреннего фокуса.
+- **Остаточные риски:** Нет.
+
 
 
 

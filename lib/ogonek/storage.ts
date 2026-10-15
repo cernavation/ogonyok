@@ -2,6 +2,7 @@ import { regulateAchievement, isAchievementCategoryId } from './achievement-regu
 import { sanitizeSubmission } from './achievement-moderation'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
+import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { buildDemoMyStories } from './stories'
 import { normalizeVisibility } from './visibility'
@@ -623,11 +624,15 @@ export const DEFAULT_VIEWED_STORY_IDS: string[] = ['fr-timofeev', 'fr-lanskaya']
 /** Демо-кадры личной истории пользователя */
 export const DEFAULT_MY_STORIES: MyStory[] = buildDemoMyStories()
 
+/** ЭТАП 10: демо-история утренних фокусов за последние дни */
+const DEMO_MORNING_FOCUS = buildDemoMorningFocus(new Date().toISOString().split('T')[0])
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
   verifiedAchievements: DEFAULT_VERIFIED_ACHIEVEMENTS,
-  morningIntentions: {},
+  morningIntentions: DEMO_MORNING_FOCUS.intentions,
+  morningFocusHistory: DEMO_MORNING_FOCUS.history,
   composerDraft: null,
   evidenceItems: EVIDENCE_ITEMS,
   evidenceFavorites: ['ev-1', 'ev-2'],
@@ -657,11 +662,16 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         try {
           const parsedV3 = JSON.parse(legacyV3) as Partial<OgonekStoreState>
           if (parsedV3 && Array.isArray(parsedV3.days) && parsedV3.days.length > 0) {
+            const v3History = sanitizeMorningFocusHistory(parsedV3.morningFocusHistory)
             const migratedState: OgonekStoreState = {
               schemaVersion: CURRENT_SCHEMA_VERSION,
               days: parsedV3.days,
               verifiedAchievements: sanitizeVerifiedAchievements(parsedV3.verifiedAchievements),
               morningIntentions: parsedV3.morningIntentions || {},
+              morningFocusHistory:
+                Object.keys(v3History).length > 0
+                  ? v3History
+                  : migrateIntentionsToHistory(parsedV3.morningIntentions),
               composerDraft: parsedV3.composerDraft || null,
               evidenceItems: parsedV3.evidenceItems || DEFAULT_STORE_STATE.evidenceItems,
               evidenceFavorites: parsedV3.evidenceFavorites || DEFAULT_STORE_STATE.evidenceFavorites,
@@ -728,6 +738,12 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
           ? parsed.morningIntentions
           : {}
 
+      const morningFocusHistoryRaw = sanitizeMorningFocusHistory(parsed.morningFocusHistory)
+      const morningFocusHistory =
+        Object.keys(morningFocusHistoryRaw).length > 0
+          ? morningFocusHistoryRaw
+          : migrateIntentionsToHistory(morningIntentions)
+
       const composerDraft =
         parsed.composerDraft && typeof parsed.composerDraft === 'object'
           ? parsed.composerDraft
@@ -754,6 +770,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
           ? sanitizeVerifiedAchievements(parsed.verifiedAchievements)
           : DEFAULT_STORE_STATE.verifiedAchievements,
         morningIntentions,
+        morningFocusHistory,
         composerDraft,
         evidenceItems,
         evidenceFavorites,
@@ -883,6 +900,12 @@ export function validateAndImportJson(
         : {}
     ) as Record<string, [string, string, string]>
 
+    const importedHistoryRaw = sanitizeMorningFocusHistory(parsed.morningFocusHistory)
+    const morningFocusHistory =
+      Object.keys(importedHistoryRaw).length > 0
+        ? importedHistoryRaw
+        : migrateIntentionsToHistory(morningIntentions)
+
     const sortedValidated = (validatedDays.length > 0 ? validatedDays : DEFAULT_STORE_STATE.days).sort((a, b) => {
       const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
       const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
@@ -894,6 +917,7 @@ export function validateAndImportJson(
       days: sortedValidated,
       verifiedAchievements: sanitizeVerifiedAchievements(parsed.verifiedAchievements),
       morningIntentions,
+      morningFocusHistory,
       composerDraft: null,
       evidenceItems: validatedEvidence,
       evidenceFavorites: Array.isArray(parsed.evidenceFavorites)

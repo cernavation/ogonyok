@@ -196,6 +196,37 @@ export type ComposerDraft = {
 }
 
 /* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 10 — УТРЕННИЙ ФОКУС + ОГОНЁК ФОКУСА + ВЕЧЕРНЯЯ СВЕРКА
+   ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Статус выполнения одного утреннего обещания (шага фокуса):
+ *  - 'pending' — ещё не сверял
+ *  - 'done'    — «Выполнил» — обещание сдержано
+ *  - 'missed'  — «Не выполнил» — обещание не сдержано
+ */
+export type MorningFocusStepStatus = 'pending' | 'done' | 'missed'
+
+/**
+ * Полная запись одного дня утреннего фокуса: 3 шага, их вечерняя сверка
+ * и автоматически посчитанный процент выполнения обещаний.
+ */
+export type MorningFocusRecord = {
+  /** Ключ дня в формате YYYY-MM-DD */
+  dateKey: string
+  /** Три обещания, зафиксированные утром */
+  focus: [string, string, string]
+  /** Вечерняя сверка: статус каждого шага */
+  steps: [MorningFocusStepStatus, MorningFocusStepStatus, MorningFocusStepStatus]
+  /** Когда фокус был зафиксирован утром (ISO) */
+  createdAtISO: string
+  /** Когда прошла вечерняя сверка; null — ещё не завершена (ISO) */
+  reviewedAtISO: string | null
+  /** Процент выполнения обещаний 0..100 (считается автоматически) */
+  completionPercent: number
+}
+
+/* ────────────────────────────────────────────────────────────────────────
    ЭТАП 5 — Верифицированные ачивки профиля + ИИ-регламент доказательств
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -400,6 +431,8 @@ export type OgonekStoreState = {
   /** Верифицированные ачивки профиля с регламентами доказательств */
   verifiedAchievements: VerifiedAchievement[]
   morningIntentions: Record<string, [string, string, string]>
+  /** ЭТАП 10: история утренних фокусов по дням + вечерняя сверка и % выполнения */
+  morningFocusHistory: Record<string, MorningFocusRecord>
   composerDraft: ComposerDraft | null
   evidenceItems: EvidenceItem[]
   evidenceFavorites: string[]

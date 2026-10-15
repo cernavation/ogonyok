@@ -1,11 +1,20 @@
 'use client'
 
-import { ArrowLeft, Check, ChevronRight, Target } from 'lucide-react'
-import { useState } from 'react'
-import type { ViewId } from '@/lib/ogonek/types'
+import { ArrowLeft, Check, ChevronRight, Target, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  countActiveFocusSteps,
+  countFulfilledSteps,
+  computeFocusFlame,
+  focusVerdict,
+} from '@/lib/ogonek/morning-focus'
+import { FocusFlame } from '@/components/ogonek/focus-flame'
+import type { MorningFocusRecord, MorningFocusStepStatus, ViewId } from '@/lib/ogonek/types'
 
 type Props = {
   morningIntentions: Record<string, [string, string, string]>
+  /** ЭТАП 10: история фокусов с вечерней сверкой */
+  morningFocusHistory?: Record<string, MorningFocusRecord>
   onNavigate: (view: ViewId) => void
   onSave?: (dateKey: string, focus: [string, string, string]) => void
   notify?: (msg: string) => void
@@ -14,7 +23,7 @@ type Props = {
 
 function formatDateRu(isoKey: string): string {
   try {
-    return new Date(isoKey).toLocaleDateString('ru-RU', {
+    return new Date(`${isoKey}T12:00:00`).toLocaleDateString('ru-RU', {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -29,16 +38,28 @@ function getTodayKey(): string {
   return new Date().toISOString().split('T')[0]
 }
 
+const STEP_STATUS_META: Record<MorningFocusStepStatus, { label: string; color: string; bg: string }> = {
+  done: { label: 'Выполнил', color: '#00ba7c', bg: 'rgba(0,186,124,0.12)' },
+  missed: { label: 'Не выполнил', color: '#f91880', bg: 'rgba(249,24,128,0.12)' },
+  pending: { label: 'Не сверено', color: '#71767b', bg: 'rgba(113,118,123,0.12)' },
+}
+
 export function IntentionsView({
   morningIntentions,
+  morningFocusHistory,
   onNavigate,
   onSave,
   notify,
 }: Props) {
   const todayKey = getTodayKey()
-  const todayFocus: [string, string, string] = morningIntentions[todayKey] || ['', '', '']
+  const history = morningFocusHistory ?? {}
+  const todayRecord = history[todayKey]
+  const todayFocus: [string, string, string] =
+    todayRecord?.focus || morningIntentions[todayKey] || ['', '', '']
   const [draftFocus, setDraftFocus] = useState<[string, string, string]>(todayFocus)
   const [saved, setSaved] = useState(Boolean(todayFocus.some((f) => f.trim().length > 0)))
+
+  const stats = useMemo(() => computeFocusFlame(history, todayKey), [history, todayKey])
 
   // Past intentions sorted newest-first (exclude today)
   const pastEntries = Object.entries(morningIntentions)
@@ -80,6 +101,25 @@ export function IntentionsView({
       </header>
 
       <div className="max-w-[700px] mx-auto">
+        {/* Огонёк фокуса — счётчик выполнения обещаний */}
+        {stats.hasHistory && (
+          <section
+            className="px-4 py-4 border-b border-[#2f3336] flex items-center gap-4"
+            aria-label="Огонёк фокуса"
+          >
+            <FocusFlame stats={stats} />
+            <div className="min-w-0 ml-auto text-right">
+              <p className="text-[#71767b] text-[11px] uppercase tracking-[0.05em]">Средний результат</p>
+              <p className="text-[#00ba7c] text-[22px] font-extrabold tabular-nums leading-tight">
+                {stats.avgPercent}%
+              </p>
+              <p className="text-[#71767b] text-[11px]">
+                {stats.totalFulfilled} из {stats.totalPromises} обещаний
+              </p>
+            </div>
+          </section>
+        )}
+
         {/* Today's intentions card */}
         <section className="px-4 py-5 border-b border-[#2f3336]" aria-labelledby="today-focus-title">
           <div className="flex items-center gap-2 mb-3">
@@ -90,6 +130,17 @@ export function IntentionsView({
             >
               Сегодня
             </h2>
+            {todayRecord && (
+              <span
+                className="text-[12px] font-bold px-2 py-0.5 rounded-full"
+                style={{
+                  color: todayRecord.completionPercent >= 66 ? '#00ba7c' : '#ffad5a',
+                  background: 'rgba(255,255,255,0.05)',
+                }}
+              >
+                {todayRecord.completionPercent}% обещаний
+              </span>
+            )}
             <span className="text-[#71767b] text-[13px] leading-[16px] ml-auto">
               {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
             </span>
@@ -151,31 +202,86 @@ export function IntentionsView({
                 История намерений
               </h3>
             </div>
-            {pastEntries.map(([key, focus]) => (
-              <article
-                key={key}
-                className="px-4 py-4 border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150"
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-[#71767b] text-[12px] leading-[16px] capitalize">
-                    {formatDateRu(key)}
-                  </p>
-                  <ChevronRight size={14} className="text-[#2f3336] flex-none mt-0.5" aria-hidden="true" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  {focus.map((item, idx) => (
-                    item.trim().length > 0 && (
-                      <div key={idx} className="flex items-baseline gap-2">
-                        <span className="text-[#1d9bf0] text-[12px] font-bold flex-none">{idx + 1}</span>
-                        <span className="text-[#e7e9ea] text-[15px] leading-[23px] tracking-[-0.015em]">
-                          {item}
-                        </span>
-                      </div>
-                    )
-                  ))}
-                </div>
-              </article>
-            ))}
+            {pastEntries.map(([key, focus]) => {
+              const record = history[key]
+              const percent = record?.completionPercent ?? 0
+              const activeCount = record ? countActiveFocusSteps(record.focus) : 0
+              const fulfilled = record ? countFulfilledSteps(record.steps) : 0
+              const reviewed = Boolean(record?.reviewedAtISO)
+              const verdict = focusVerdict(percent)
+              const barColor =
+                verdict.tone === 'elite'
+                  ? '#00ba7c'
+                  : verdict.tone === 'good'
+                    ? '#1d9bf0'
+                    : verdict.tone === 'mid'
+                      ? '#ffad5a'
+                      : '#f91880'
+
+              return (
+                <article
+                  key={key}
+                  className="px-4 py-4 border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150"
+                >
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <p className="text-[#71767b] text-[12px] leading-[16px] capitalize">
+                      {formatDateRu(key)}
+                    </p>
+                    {reviewed && (
+                      <span
+                        className="text-[12px] font-extrabold tabular-nums flex-none"
+                        style={{ color: barColor }}
+                      >
+                        {percent}%
+                      </span>
+                    )}
+                    <ChevronRight size={14} className="text-[#2f3336] flex-none" aria-hidden="true" />
+                  </div>
+
+                  {reviewed && (
+                    <div className="h-1 rounded-full overflow-hidden mb-2.5" style={{ background: '#2f3336' }} aria-hidden="true">
+                      <div className="h-full rounded-full" style={{ width: `${percent}%`, background: barColor }} />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1.5">
+                    {focus.map((item, idx) => {
+                      if (item.trim().length === 0) return null
+                      const status = record?.steps[idx as 0 | 1 | 2] ?? 'pending'
+                      const meta = STEP_STATUS_META[status]
+                      return (
+                        <div key={idx} className="flex items-center gap-2">
+                          {status === 'done' ? (
+                            <Check size={13} strokeWidth={3} className="flex-none" style={{ color: meta.color }} aria-hidden="true" />
+                          ) : status === 'missed' ? (
+                            <X size={13} strokeWidth={3} className="flex-none" style={{ color: meta.color }} aria-hidden="true" />
+                          ) : (
+                            <span className="text-[#1d9bf0] text-[12px] font-bold flex-none w-[13px] text-center">
+                              {idx + 1}
+                            </span>
+                          )}
+                          <span
+                            className="text-[15px] leading-[23px] tracking-[-0.015em] truncate"
+                            style={{
+                              color: status === 'missed' ? '#71767b' : '#e7e9ea',
+                              textDecoration: status === 'missed' ? 'line-through' : 'none',
+                            }}
+                          >
+                            {item}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {reviewed && (
+                    <p className="text-[11px] mt-2 text-[#71767b]">
+                      {verdict.label} · {fulfilled} из {activeCount} сдержано
+                    </p>
+                  )}
+                </article>
+              )
+            })}
           </section>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
