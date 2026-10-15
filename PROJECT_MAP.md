@@ -28,6 +28,7 @@ FILE: components/ogonek/comments-thread.tsx
 FILE: components/ogonek/composer.tsx
 FILE: components/ogonek/day-card.tsx
 FILE: components/ogonek/day-entries.tsx
+FILE: components/ogonek/edit-profile-modal.tsx
 FILE: components/ogonek/emoji-constructor.tsx
 FILE: components/ogonek/flame-icon.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
@@ -69,6 +70,7 @@ FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/haptics.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/photos.ts
+FILE: lib/ogonek/profile-presets.ts
 FILE: lib/ogonek/reactions.ts
 FILE: lib/ogonek/reminder-logic.ts
 FILE: lib/ogonek/sound.ts
@@ -77,6 +79,7 @@ FILE: lib/ogonek/streak.ts
 FILE: lib/ogonek/types.ts
 FILE: lib/ogonek/use-keyboard-navigation.ts
 FILE: lib/ogonek/use-ogonek-store.ts
+FILE: lib/ogonek/use-photo-url.ts
 FILE: lib/utils.ts
 FILE: next-env.d.ts
 FILE: next.config.mjs
