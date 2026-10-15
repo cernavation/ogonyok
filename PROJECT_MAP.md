@@ -7,6 +7,8 @@ DIR: app/api/
 DIR: app/api/achievements/
 DIR: app/api/achievements/regulate/
 FILE: app/api/achievements/regulate/route.ts
+DIR: app/api/achievements/verify/
+FILE: app/api/achievements/verify/route.ts
 DIR: app/api/evaluate/
 FILE: app/api/evaluate/route.ts
 DIR: app/api/streak/
@@ -28,11 +30,14 @@ DIR: components/ogonek/
 DIR: components/ogonek/achievements/
 FILE: components/ogonek/achievements/achievement-card.tsx
 FILE: components/ogonek/achievements/achievement-evidence-uploader.tsx
+FILE: components/ogonek/achievements/achievement-moderation-panel.tsx
 FILE: components/ogonek/achievements/achievement-regulation-card.tsx
+FILE: components/ogonek/achievements/achievement-submit-modal.tsx
 FILE: components/ogonek/achievements/achievements-panel.tsx
 FILE: components/ogonek/achievements/add-achievement-modal.tsx
 FILE: components/ogonek/achievements/evidence-file-preview.tsx
 FILE: components/ogonek/achievements/index.ts
+FILE: components/ogonek/achievements/verification-badge.tsx
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
@@ -76,7 +81,9 @@ DIR: data/notes/
 DIR: docs/
 DIR: lib/
 DIR: lib/ogonek/
+FILE: lib/ogonek/achievement-moderation.ts
 FILE: lib/ogonek/achievement-regulation.ts
+FILE: lib/ogonek/achievement-submit-client.ts
 FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
@@ -108,6 +115,7 @@ FILE: scripts/migrate-html.mjs
 FILE: scripts/parse-apple-notes.mjs
 FILE: scripts/remind.mjs
 DIR: test/
+FILE: test/achievement-moderation.test.ts
 FILE: test/achievement-regulation.test.ts
 FILE: test/evaluate.test.ts
 FILE: test/import-real-raw.test.ts
