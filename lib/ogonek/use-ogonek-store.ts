@@ -202,21 +202,17 @@ export function useOgonekStore() {
           computedDate = nextDate.toISOString()
         }
 
-        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => {
-          const customRating = payload.ratings?.[idx]
-          const heuristic = evaluatePrideItemHeuristic(text)
-          return {
-            num: String(idx + 1).padStart(2, '0'),
-            text,
-            scale: customRating?.scale ?? heuristic.scale,
-            overcome: customRating?.overcome ?? heuristic.overcome,
-          }
-        })
+        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
+          num: String(idx + 1).padStart(2, '0'),
+          text,
+          scale: 8,
+          overcome: 1,
+        }))
 
         const newDay: Day = {
           id: newId,
           title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
-          tags: ['Для тебя', '🔥 Гордости'],
+          tags: ['Для тебя', '🔥 Гордости', '❤️ Благодарности'],
           prides: newPrideEntries,
           gratitudes: payload.gratitudes,
           photos: payload.photo ? [payload.photo] : undefined,
@@ -226,11 +222,11 @@ export function useOgonekStore() {
 
         return {
           ...prev,
-          days: [newDay, ...prev.days].sort((a, b) => {
-            const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
-            const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
-            return tb - ta
-          }),
+          // Строго по убыванию даты: свежие дни (в т.ч. 12 октября) всегда сверху
+          days: [newDay, ...prev.days].sort(
+            (a, b) =>
+              new Date(b.dateISO!).getTime() - new Date(a.dateISO!).getTime()
+          ),
           composerDraft: null,
         }
       })
