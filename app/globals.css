@@ -5634,3 +5634,34 @@ kbd {
     max-height: 94%;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ЭТАП 9 — ПУБЛИКАЦИЯ ГОРДОСТИ И ПРИВАТНОСТЬ
+   Фото-фон кадра личной сторис (гордость, опубликованная с фотографией)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.story-viewer__bg-photo {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+}
+
+.story-viewer__bg-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.62;
+}
+
+.story-viewer__bg-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.42) 0%,
+    rgba(0, 0, 0, 0.16) 42%,
+    rgba(0, 0, 0, 0.82) 100%
+  );
+}

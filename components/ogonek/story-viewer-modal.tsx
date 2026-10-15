@@ -83,6 +83,18 @@ function StoryPhotoTile({ photo }: { photo: StoryPhoto }) {
   )
 }
 
+/** ЭТАП 9 — фото-фон кадра: снимок, приложенный при публикации гордости */
+function SlidePhotoBackdrop({ source }: { source: string }) {
+  const src = usePhotoUrl(source)
+  if (!src) return null
+  return (
+    <span className="story-viewer__bg-photo" aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" />
+    </span>
+  )
+}
+
 export function StoryViewerModal({
   stories,
   startIndex,
@@ -399,6 +411,7 @@ export function StoryViewerModal({
           style={{ background: `linear-gradient(150deg, ${slide.from}, ${slide.to})` }}
           aria-hidden="true"
         >
+          {slide.photo && <SlidePhotoBackdrop source={slide.photo} />}
           <span
             className="story-viewer__glow"
             style={{ background: `radial-gradient(circle at 75% 8%, ${slide.accent}, transparent 62%)` }}

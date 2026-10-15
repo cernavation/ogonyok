@@ -45,9 +45,11 @@ import type {
   PrideEntry,
   ReactionCounts,
   VerifiedAchievement,
+  VisibilityLevel,
 } from './types'
 import { withGratitudeRating } from './reactions'
 import { sanitizeFollowingIds, sanitizeProfile } from './storage'
+import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
@@ -259,6 +261,9 @@ export function useOgonekStore() {
           text,
           scale: 8,
           overcome: 1,
+          visibility: normalizeVisibility(
+            payload.prideVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
+          ),
         }))
 
         const newDay: Day = {
@@ -270,6 +275,7 @@ export function useOgonekStore() {
           photos: payload.photo ? [payload.photo] : undefined,
           dateISO: computedDate,
           status: 'normal',
+          visibility: normalizeVisibility(payload.visibility),
         }
 
         return {
@@ -324,6 +330,12 @@ export function useOgonekStore() {
             text,
             scale,
             overcome,
+            visibility: normalizeVisibility(
+              payload.prideVisibilities?.[idx] ??
+                existingPride?.visibility ??
+                payload.visibility ??
+                DEFAULT_VISIBILITY
+            ),
           }
         })
 
@@ -335,6 +347,9 @@ export function useOgonekStore() {
           photos: payload.photo
             ? [payload.photo, ...(targetDay.photos || []).filter((p) => p !== payload.photo)]
             : targetDay.photos,
+          visibility: payload.visibility
+            ? normalizeVisibility(payload.visibility)
+            : targetDay.visibility,
         }
 
         return {
@@ -1275,6 +1290,57 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 9 — ПРИВАТНОСТЬ ДНЯ И ГОРДОСТЕЙ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Меняет приватность всего дня */
+  const setDayVisibility = useCallback(
+    (dayId: number, level: VisibilityLevel) => {
+      const next = normalizeVisibility(level)
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => (d.id === dayId ? { ...d, visibility: next } : d)),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Меняет приватность конкретной гордости дня */
+  const setPrideVisibility = useCallback(
+    (dayId: number, index: number, level: VisibilityLevel) => {
+      const next = normalizeVisibility(level)
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const prides = d.prides.map((p, i) => (i === index ? { ...p, visibility: next } : p))
+          return { ...d, prides }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * Применяет один уровень приватности ко всему дню сразу:
+   * и к самому дню, и ко всем его гордостям.
+   */
+  const setAllPridesVisibility = useCallback(
+    (dayId: number, level: VisibilityLevel) => {
+      const next = normalizeVisibility(level)
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id === dayId
+            ? { ...d, visibility: next, prides: d.prides.map((p) => ({ ...p, visibility: next })) }
+            : d
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
   /** Compute the next date for a new day (last date + 1 calendar day) */
   const getNextDayDate = useCallback((): string => {
     const days = getSnapshot().days
@@ -1344,6 +1410,9 @@ export function useOgonekStore() {
     rateGratitude,
     clearPrideRating,
     clearGratitudeRating,
+    setDayVisibility,
+    setPrideVisibility,
+    setAllPridesVisibility,
     addComment,
     addReply,
     toggleCommentLike,

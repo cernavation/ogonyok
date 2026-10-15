@@ -1,13 +1,19 @@
 'use client'
 
-import { BookmarkCheck, CalendarDays, Check, Flame, Heart, ImagePlus, ListPlus, Loader2, Mic, Sparkles, X } from 'lucide-react'
+import { BookmarkCheck, CalendarDays, Check, Flame, Heart, ImagePlus, ListPlus, Loader2, Mic, Send, Shield, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel } from '@/lib/ogonek/types'
+import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
+import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { ModalShell } from './modal-shell'
+import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { Tooltip } from './tooltip'
+import { VisibilitySwitcher } from './visibility-switcher'
 
 type Props = {
   initialDraft?: ComposerDraft | null
@@ -21,6 +27,8 @@ type Props = {
   onClose: () => void
   onSaved: (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => void
   soundEnabled?: boolean
+  /** Уведомление пользователя (тосты) — для публикации в Сторис */
+  onNotify?: (message: string) => void
 }
 
 export function Composer({
@@ -33,6 +41,7 @@ export function Composer({
   onClose,
   onSaved,
   soundEnabled = true,
+  onNotify,
 }: Props) {
   const [tab, setTab] = useState<Mode>(() => initialDraft?.tab || 'pride')
   const [extra, setExtra] = useState(() => {
@@ -95,6 +104,32 @@ export function Composer({
     return true
   })
 
+  // ── ЭТАП 9: приватность дня и каждой гордости отдельно ──────────────────
+  const { postMyStory, state: storeState } = useOgonekStore()
+  const myAvatarSrc = usePhotoUrl(storeState.profile.avatarImage)
+
+  /** Приватность всего дня */
+  const [dayVisibility, setDayVisibility] = useState<VisibilityLevel>(() => {
+    if (editingDay?.visibility) return normalizeVisibility(editingDay.visibility)
+    if (initialDraft?.visibility) return normalizeVisibility(initialDraft.visibility)
+    return 'public'
+  })
+
+  /** Приватность каждой гордости по её индексу в форме (0..5) */
+  const [prideVis, setPrideVis] = useState<Record<number, VisibilityLevel>>(() => {
+    if (editingDay && Array.isArray(editingDay.prides)) {
+      const map: Record<number, VisibilityLevel> = {}
+      editingDay.prides.forEach((p, idx) => {
+        map[idx] = normalizeVisibility(p.visibility ?? editingDay.visibility)
+      })
+      return map
+    }
+    return initialDraft?.prideVisibilities ?? {}
+  })
+
+  /** Индекс гордости, для которой открыт мастер публикации в Сторис */
+  const [storyModalIndex, setStoryModalIndex] = useState<number | null>(null)
+
   // Date picker for new days (editable by user)
   const [dateISO, setDateISO] = useState<string>(() => {
     if (editingDay?.dateISO) return editingDay.dateISO
@@ -135,9 +170,11 @@ export function Composer({
         tab,
         extra,
         lastSavedISO: new Date().toISOString(),
+        visibility: dayVisibility,
+        prideVisibilities: prideVis,
       })
     }
-  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay])
+  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -260,11 +297,21 @@ export function Composer({
       filledIdx++
     })
 
+    const prideVisibilities: Record<number, VisibilityLevel> = {}
+    let visIdx = 0
+    prides.forEach((p, origIdx) => {
+      if (p.trim().length === 0) return
+      prideVisibilities[visIdx] = normalizeVisibility(prideVis[origIdx] ?? dayVisibility)
+      visIdx++
+    })
+
     return {
       prides: filledPrides,
       gratitudes: filledGratitudes,
       photo: photoId || preview,
       ratings,
+      visibility: dayVisibility,
+      prideVisibilities,
     }
   }
 
@@ -278,6 +325,8 @@ export function Composer({
       tab,
       extra,
       lastSavedISO: new Date().toISOString(),
+      visibility: dayVisibility,
+      prideVisibilities: prideVis,
     })
     onClose()
   }
@@ -317,10 +366,19 @@ export function Composer({
 
   const displayDayId = editingDay?.id ?? nextDayId
 
+  const storyDayLabel = (() => {
+    const iso = editingDay?.dateISO || dateISO
+    if (!iso) return undefined
+    const d = new Date(iso)
+    if (!Number.isFinite(d.getTime())) return undefined
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+  })()
+
   return (
     <ModalShell
       title={editingDay ? `Редактировать День #${editingDay.id}` : `Записать День #${displayDayId ?? '?'}`}
       onClose={onClose}
+      closeOnEscape={storyModalIndex === null}
     >
       <p className="text-[13px] leading-[18px] text-[#71767b]">
         {editingDay
@@ -381,6 +439,43 @@ export function Composer({
         >
           <Heart size={14} /> Благодарности
         </button>
+      </div>
+
+      {/* ЭТАП 9 — Приватность всего дня */}
+      <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-white/[0.02] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <span className="flex items-center gap-1.5 text-[13px] font-bold text-[#e7e9ea]">
+              <Shield size={14} className="text-[#ff8a50]" /> Приватность дня
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-[14px] text-[#71767b]">
+              Кто увидит день и по умолчанию — каждую гордость
+            </span>
+          </div>
+          <VisibilitySwitcher
+            value={dayVisibility}
+            onChange={setDayVisibility}
+            soundEnabled={soundEnabled}
+          />
+        </div>
+        {tab === 'pride' && (
+          <button
+            type="button"
+            className="mt-2.5 flex items-center gap-1.5 text-[12px] font-bold text-[#1d9bf0] transition-colors hover:underline"
+            onClick={() => {
+              playClick(soundEnabled)
+              setPrideVis(() => {
+                const next: Record<number, VisibilityLevel> = {}
+                prides.forEach((_, i) => {
+                  next[i] = dayVisibility
+                })
+                return next
+              })
+            }}
+          >
+            <Check size={13} /> Применить ко всем гордостям дня
+          </button>
+        )}
       </div>
 
       {/* Fields — numbered rows with hairline dividers */}
@@ -464,6 +559,36 @@ export function Composer({
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {tab === 'pride' && (
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 pl-8 pr-1">
+                  <VisibilitySwitcher
+                    size="sm"
+                    value={normalizeVisibility(prideVis[i] ?? dayVisibility)}
+                    onChange={(level) => setPrideVis((prev) => ({ ...prev, [i]: level }))}
+                    soundEnabled={soundEnabled}
+                  />
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[#71767b]">
+                      гордость #{i + 1}
+                    </span>
+                    <Tooltip content="Опубликовать эту гордость в Сторис" side="top">
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
+                        onClick={() => {
+                          playClick(soundEnabled)
+                          setStoryModalIndex(i)
+                        }}
+                        disabled={!val.trim()}
+                      >
+                        <Send size={12} className="text-[#ff6b35]" />
+                        В Сторис
+                      </button>
+                    </Tooltip>
                   </div>
                 </div>
               )}
@@ -603,6 +728,29 @@ export function Composer({
           </Tooltip>
         </div>
       </footer>
+
+      {storyModalIndex !== null &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <PublishPrideStoryModal
+            prideText={prides[storyModalIndex] ?? ''}
+            prideIndex={storyModalIndex}
+            scale={evaluations[storyModalIndex]?.scale}
+            dayId={editingDay?.id ?? null}
+            dayLabel={storyDayLabel}
+            displayName={storeState.profile.displayName}
+            username={storeState.profile.username}
+            avatarColor={storeState.profile.avatarColor}
+            avatarSrc={myAvatarSrc}
+            verified={storeState.profile.verified}
+            defaultVisibility={normalizeVisibility(prideVis[storyModalIndex] ?? dayVisibility)}
+            onPublish={postMyStory}
+            onClose={() => setStoryModalIndex(null)}
+            onNotify={(msg) => onNotify?.(msg)}
+            soundEnabled={soundEnabled}
+          />,
+          document.body
+        )}
     </ModalShell>
   )
 }

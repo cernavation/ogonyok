@@ -370,6 +370,7 @@ export function AppShell() {
               }}
               onSaved={handleSaveComposer}
               soundEnabled={state.soundEnabled}
+              onNotify={notify}
             />
           )}
           {lightbox && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { BookmarkPlus, Flame, Heart } from 'lucide-react'
+import { BookmarkPlus, Flame, Heart, Send } from 'lucide-react'
 import { useId, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
@@ -9,14 +9,17 @@ import {
   type GratitudeEntry,
   type Mode,
   type PrideEntry,
+  type VisibilityLevel,
 } from '@/lib/ogonek/types'
 import { gratitudeTarget, prideTarget } from '@/lib/ogonek/reactions'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
 import { StarRating } from './star-rating'
 import { Tooltip } from './tooltip'
 import { VaultSpark } from './vault-spark'
+import { VisibilitySwitcher } from './visibility-switcher'
 
 const TABS = [
   { id: 'pride', label: '5 Гордостей', icon: Flame },
@@ -31,6 +34,12 @@ type Props = {
   soundEnabled?: boolean
   onPinToVault?: (fact: string) => void
   onNotify?: (msg: string) => void
+  /** ЭТАП 9 — приватность дня (наследуется гордостями без своей настройки) */
+  dayVisibility?: VisibilityLevel
+  /** ЭТАП 9 — смена приватности конкретной гордости */
+  onSetPrideVisibility?: (index: number, level: VisibilityLevel) => void
+  /** ЭТАП 9 — публикация гордости в Сторис */
+  onPublishPrideStory?: (index: number) => void
 }
 
 /** Оценка благодарности: 0 — не оценена */
@@ -63,6 +72,9 @@ export function DayEntries({
   soundEnabled = true,
   onPinToVault,
   onNotify,
+  dayVisibility = 'public',
+  onSetPrideVisibility,
+  onPublishPrideStory,
 }: Props) {
   const [mode, setMode] = useState<Mode>('pride')
   const [sparkingNum, setSparkingNum] = useState<string | null>(null)
@@ -209,6 +221,35 @@ export function DayEntries({
                       soundEnabled={soundEnabled}
                       onNotify={onNotify}
                     />
+                  </div>
+                )}
+
+                {/* ЭТАП 9 — приватность этой гордости и публикация в Сторис */}
+                {(onSetPrideVisibility || onPublishPrideStory) && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-1 pt-1 pl-8">
+                    {onSetPrideVisibility ? (
+                      <VisibilitySwitcher
+                        size="sm"
+                        value={normalizeVisibility(p.visibility ?? dayVisibility)}
+                        onChange={(level) => onSetPrideVisibility(index, level)}
+                        soundEnabled={soundEnabled}
+                      />
+                    ) : (
+                      <span />
+                    )}
+                    {onPublishPrideStory && (
+                      <Tooltip content="Опубликовать эту гордость в Сторис" side="top">
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06]"
+                          onClick={() => onPublishPrideStory(index)}
+                          aria-label={`Опубликовать гордость #${p.num} в Сторис`}
+                        >
+                          <Send size={12} className="text-[#ff6b35]" />
+                          В Сторис
+                        </button>
+                      </Tooltip>
+                    )}
                   </div>
                 )}
               </div>

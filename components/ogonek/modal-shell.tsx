@@ -8,14 +8,16 @@ type Props = {
   title: string
   onClose: () => void
   children: ReactNode
+  /** Закрывать ли по Escape (по умолчанию true) */
+  closeOnEscape?: boolean
 }
 
-export function ModalShell({ title, onClose, children }: Props) {
+export function ModalShell({ title, onClose, children, closeOnEscape = true }: Props) {
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === 'Escape' && closeOnEscape) {
         onClose()
       }
 
@@ -48,7 +50,7 @@ export function ModalShell({ title, onClose, children }: Props) {
       window.removeEventListener('keydown', handleKeyDown)
       clearTimeout(timer)
     }
-  }, [onClose])
+  }, [onClose, closeOnEscape])
 
   return (
     <motion.div

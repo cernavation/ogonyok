@@ -1,18 +1,23 @@
 'use client'
 
-import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert } from 'lucide-react'
+import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert, Shield } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { playClick } from '@/lib/ogonek/sound'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
+import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
+import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
+import { VisibilitySwitcher } from './visibility-switcher'
 
 const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
@@ -43,7 +48,14 @@ export function DayCard({
   soundEnabled = true,
 }: Props) {
   // Живые реакции хранятся в общем store Огонька
-  const { state, toggleReaction } = useOgonekStore()
+  const {
+    state,
+    toggleReaction,
+    setDayVisibility,
+    setPrideVisibility,
+    setAllPridesVisibility,
+    postMyStory,
+  } = useOgonekStore()
   const target = dayTarget(day.id)
   const reactionCounts = state.dayReactions[target] ?? {}
   const myReactionIds = state.myReactions[target] ?? []
@@ -54,7 +66,12 @@ export function DayCard({
   const [likeAnim, setLikeAnim] = useState<'idle' | 'pressed'>('idle')
   const [thankAnim, setThankAnim] = useState<'idle' | 'pressed'>('idle')
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [storyPrideIndex, setStoryPrideIndex] = useState<number | null>(null)
   const reduce = useReducedMotion()
+
+  // ЭТАП 9 — приватность дня и аватар для публикации в Сторис
+  const dayVisibility = normalizeVisibility(day.visibility)
+  const myAvatarSrc = usePhotoUrl(state.profile.avatarImage)
 
   const rawPhotos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
 
@@ -230,6 +247,42 @@ export function DayCard({
               {day.title}
             </p>
 
+            {/* ЭТАП 9 — приватность всего дня */}
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#2f3336] bg-white/[0.02] px-3 py-2">
+              <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#e7e9ea]">
+                <Shield size={13} className="text-[#ff8a50]" /> Приватность дня
+                <span
+                  className="text-[11px] font-semibold"
+                  style={{ color: visibilityMeta(dayVisibility).color }}
+                >
+                  · {visibilityMeta(dayVisibility).shortLabel}
+                </span>
+              </span>
+              <div className="flex items-center gap-2">
+                <VisibilitySwitcher
+                  value={dayVisibility}
+                  onChange={(level) => {
+                    setDayVisibility(day.id, level)
+                    onNotify?.(`Приватность дня: ${visibilityMeta(level).shortLabel}`)
+                  }}
+                  soundEnabled={soundEnabled}
+                />
+                <Tooltip content="Применить приватность дня ко всем гордостям" side="top">
+                  <button
+                    type="button"
+                    className="rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#71767b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#e7e9ea]"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setAllPridesVisibility(day.id, dayVisibility)
+                      onNotify?.('Приватность дня применена ко всем гордостям')
+                    }}
+                  >
+                    Применить ко всем
+                  </button>
+                </Tooltip>
+              </div>
+            </div>
+
             {/* Entries tabs */}
             <DayEntries
               prides={day.prides}
@@ -238,6 +291,12 @@ export function DayCard({
               soundEnabled={soundEnabled}
               onPinToVault={onPinToVault}
               onNotify={onNotify}
+              dayVisibility={dayVisibility}
+              onSetPrideVisibility={(index, level) => {
+                setPrideVisibility(day.id, index, level)
+                onNotify?.(`Гордость #${index + 1}: ${visibilityMeta(level).shortLabel}`)
+              }}
+              onPublishPrideStory={(index) => setStoryPrideIndex(index)}
             />
 
             {/* Media — X.com style */}
@@ -441,6 +500,31 @@ export function DayCard({
           onNotify={(msg) => onNotify?.(msg)}
         />
       )}
+
+      {storyPrideIndex !== null &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <PublishPrideStoryModal
+            prideText={day.prides[storyPrideIndex]?.text ?? ''}
+            prideIndex={storyPrideIndex}
+            scale={day.prides[storyPrideIndex]?.scale}
+            dayId={day.id}
+            dayLabel={dateStr}
+            displayName={state.profile.displayName}
+            username={state.profile.username}
+            avatarColor={state.profile.avatarColor}
+            avatarSrc={myAvatarSrc}
+            verified={state.profile.verified}
+            defaultVisibility={normalizeVisibility(
+              day.prides[storyPrideIndex]?.visibility ?? dayVisibility
+            )}
+            onPublish={postMyStory}
+            onClose={() => setStoryPrideIndex(null)}
+            onNotify={(msg) => onNotify?.(msg)}
+            soundEnabled={soundEnabled}
+          />,
+          document.body
+        )}
     </>
   )
 }

@@ -4,6 +4,7 @@ import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { buildDemoMyStories } from './stories'
+import { normalizeVisibility } from './visibility'
 import type {
   AchievementEvidenceFile,
   AchievementEvidenceRequirement,
@@ -236,6 +237,13 @@ export function sanitizeMyStories(value: unknown): MyStory[] {
         typeof s.sourceDayId === 'number' && Number.isFinite(s.sourceDayId)
           ? s.sourceDayId
           : null,
+      sourcePrideIndex:
+        typeof s.sourcePrideIndex === 'number' && Number.isFinite(s.sourcePrideIndex)
+          ? s.sourcePrideIndex
+          : null,
+      backgroundId: typeof s.backgroundId === 'string' && s.backgroundId ? s.backgroundId.slice(0, 40) : undefined,
+      photo: typeof s.photo === 'string' && s.photo ? s.photo.slice(0, 2000) : null,
+      visibility: normalizeVisibility(s.visibility),
     })
   }
   return result
@@ -821,7 +829,15 @@ export function validateAndImportJson(
         tags: Array.isArray(d.tags)
           ? d.tags.filter((t): t is string => typeof t === 'string')
           : ['Для тебя'],
-        prides: Array.isArray(d.prides) ? d.prides : [],
+        prides: Array.isArray(d.prides)
+          ? d.prides.map((p) => ({
+              num: typeof p.num === 'string' ? p.num : '01',
+              text: typeof p.text === 'string' ? p.text : '',
+              scale: typeof p.scale === 'number' ? p.scale : 0,
+              overcome: (typeof p.overcome === 'number' ? Math.min(3, Math.max(0, Math.round(p.overcome))) : 0) as 0 | 1 | 2 | 3,
+              visibility: normalizeVisibility(p.visibility),
+            }))
+          : [],
         gratitudes: Array.isArray(d.gratitudes)
           ? d.gratitudes.map((g) => {
               if (typeof g === 'string') return g
@@ -843,6 +859,7 @@ export function validateAndImportJson(
           : undefined,
         dateISO: typeof d.dateISO === 'string' ? d.dateISO : undefined,
         status: d.status === 'missed' ? 'missed' : 'normal',
+        visibility: normalizeVisibility(d.visibility),
       }
     })
 

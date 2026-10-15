@@ -13,7 +13,8 @@
 
 import { FRIEND_PROFILES, type FriendProfile } from './friends'
 import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-digest'
-import type { Day, FriendStory, MyStory, StorySlide } from './types'
+import type { Day, FriendStory, MyStory, StorySlide, VisibilityLevel } from './types'
+import { normalizeVisibility } from './visibility'
 
 /** Палитра градиентов кадров — тёплый огонь Огонька + холодные акценты */
 const SLIDE_THEMES: Array<{ from: string; to: string; accent: string }> = [
@@ -29,6 +30,41 @@ const SLIDE_THEMES: Array<{ from: string; to: string; accent: string }> = [
 
 function themeFor(index: number) {
   return SLIDE_THEMES[((index % SLIDE_THEMES.length) + SLIDE_THEMES.length) % SLIDE_THEMES.length]
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 9 — ФОНЫ ДЛЯ ПУБЛИКАЦИИ ГОРДОСТИ В СТОРИС
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Выбираемый фон кадра сторис (градиент + акцент) */
+export type StoryBackground = {
+  id: string
+  label: string
+  from: string
+  to: string
+  accent: string
+}
+
+const BACKGROUND_LABELS = [
+  'Тёплый уголь',
+  'Глубокий космос',
+  'Закатный огонь',
+  'Ночной рассвет',
+  'Лавандовый сон',
+  'Ледяной огонь',
+  'Золото пути',
+  'Лес силы',
+]
+
+export const STORY_BACKGROUNDS: StoryBackground[] = SLIDE_THEMES.map((theme, index) => ({
+  id: `bg-${index}`,
+  label: BACKGROUND_LABELS[index] ?? `Фон ${index + 1}`,
+  ...theme,
+}))
+
+/** Возвращает фон по id (или первый фон, если id неизвестен/пуст) */
+export function getStoryBackground(id?: string): StoryBackground {
+  return STORY_BACKGROUNDS.find((bg) => bg.id === id) ?? STORY_BACKGROUNDS[0]
 }
 
 /**
@@ -201,6 +237,68 @@ export function createMyStory(
     to: template.to,
     accent: template.accent,
     sourceDayId,
+    backgroundId: STORY_BACKGROUNDS.find((bg) => bg.from === template.from && bg.to === template.to)?.id,
+    photo: null,
+    visibility: 'public',
+  }
+}
+
+/**
+ * ЭТАП 9 — Публикация КОНКРЕТНОЙ гордости в сторис.
+ * Собирает личный кадр из текста гордости с выбранным фоном и фото.
+ */
+export type PrideStoryInput = {
+  /** id дня-источника (или null для свободной гордости) */
+  dayId?: number | null
+  /** Человекочитаемая метка дня: «12 октября» */
+  dayLabel?: string
+  /** Индекс гордости в дне */
+  prideIndex: number
+  /** Текст гордости — основа заголовка кадра */
+  prideText: string
+  /** Сила гордости 1..10 — попадает в подпись */
+  scale?: number
+  /** id выбранного фона из STORY_BACKGROUNDS */
+  backgroundId?: string
+  /** Фото-фон (id из IndexedDB / data URL / blob) */
+  photo?: string | null
+  /** Приватность сторис */
+  visibility?: VisibilityLevel
+  /** Переопределённый заголовок кадра */
+  headline?: string
+  /** Переопределённая подпись кадра */
+  detail?: string
+  now?: Date
+}
+
+/** Собирает кадр «Моей истории» из конкретной гордости */
+export function createPrideStory(input: PrideStoryInput): MyStory {
+  const now = input.now ?? new Date()
+  const bg = getStoryBackground(input.backgroundId)
+
+  const fallbackHeadline = input.prideText.trim() || 'Гордость дня'
+  const headline = (input.headline?.trim() || fallbackHeadline).slice(0, 120)
+
+  const scalePart = input.scale ? ` · ${Math.min(10, Math.max(1, Math.round(input.scale)))}/10` : ''
+  const dayPart = input.dayLabel ? ` · ${input.dayLabel}` : ''
+  const fallbackDetail = `Гордость №${input.prideIndex + 1}${scalePart}${dayPart}`
+  const detail = (input.detail?.trim() || fallbackDetail).slice(0, 200)
+
+  return {
+    id: `my-story-${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    createdAtISO: now.toISOString(),
+    emoji: '💪',
+    kicker: 'ГОРДОСТЬ ДНЯ',
+    headline,
+    detail,
+    from: bg.from,
+    to: bg.to,
+    accent: bg.accent,
+    sourceDayId: input.dayId ?? null,
+    sourcePrideIndex: input.prideIndex,
+    backgroundId: bg.id,
+    photo: input.photo ?? null,
+    visibility: normalizeVisibility(input.visibility),
   }
 }
 
@@ -315,6 +413,7 @@ export function myStoriesToViewable(
       from: s.from,
       to: s.to,
       accent: s.accent,
+      photo: s.photo ?? null,
     })),
     digest: buildMyDigest(day, {
       displayName: owner.displayName,

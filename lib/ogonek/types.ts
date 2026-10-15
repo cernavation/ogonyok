@@ -4,11 +4,21 @@ export type Mode = 'pride' | 'gratitude'
 
 export type OvercomeLevel = 0 | 1 | 2 | 3
 
+/**
+ * Уровень видимости записи (день или отдельная гордость).
+ *  - 'public'  — публично в глобальную ленту
+ *  - 'friends' — только друзьям
+ *  - 'private' — лично для меня
+ */
+export type VisibilityLevel = 'public' | 'friends' | 'private'
+
 export type PrideEntry = {
   num: string
   text: string
   scale: number // 1..10
   overcome: OvercomeLevel // 0..3
+  /** Приватность конкретной гордости (ЭТАП 9). Отсутствует → как у дня */
+  visibility?: VisibilityLevel
 }
 
 export type GratitudeEntry = {
@@ -36,6 +46,8 @@ export type Day = {
   photos?: string[]
   dateISO?: string
   status?: DayStatus
+  /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */
+  visibility?: VisibilityLevel
 }
 
 /** Пользовательский смайлик/эмодзи, созданный в конструкторе реакций */
@@ -164,6 +176,10 @@ export type ComposerPayload = {
   gratitudes: string[]
   photo: string | null
   ratings?: Record<number, { scale: number; overcome: OvercomeLevel }>
+  /** Приватность всего дня (ЭТАП 9) */
+  visibility?: VisibilityLevel
+  /** Приватность каждой гордости по индексу (после удаления пустых) */
+  prideVisibilities?: Record<number, VisibilityLevel>
 }
 
 export type ComposerDraft = {
@@ -173,6 +189,10 @@ export type ComposerDraft = {
   tab: Mode
   extra: boolean
   lastSavedISO: string
+  /** Черновик приватности дня (ЭТАП 9) */
+  visibility?: VisibilityLevel
+  /** Черновик приватности гордостей по индексу */
+  prideVisibilities?: Record<number, VisibilityLevel>
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -336,6 +356,8 @@ export type StorySlide = {
   to: string
   /** Акцентный цвет кикера/иконок */
   accent: string
+  /** Фото-фон кадра: id из IndexedDB, data URL или blob (ЭТАП 9) */
+  photo?: string | null
 }
 
 /** Живая сторис друга: набор слайдов + метка времени публикации */
@@ -362,6 +384,14 @@ export type MyStory = {
   accent: string
   /** id дня-источника, если сторис собрана из записи ленты */
   sourceDayId?: number | null
+  /** Индекс гордости-источника, если сторис опубликована из конкретной гордости (ЭТАП 9) */
+  sourcePrideIndex?: number | null
+  /** id выбранного фона из STORY_BACKGROUNDS (ЭТАП 9) */
+  backgroundId?: string
+  /** Фото-фон сторис: id из IndexedDB, data URL или blob (ЭТАП 9) */
+  photo?: string | null
+  /** Приватность сторис (ЭТАП 9) */
+  visibility?: VisibilityLevel
 }
 
 export type OgonekStoreState = {
