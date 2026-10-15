@@ -50,6 +50,7 @@ import { EditProfileModal } from '../edit-profile-modal'
 import { Lightbox } from '../lightbox'
 import { ProfileStoryModal } from '../profile-story-modal'
 import { ShareProfileModal } from '../share-profile-modal'
+import { AchievementsPanel } from '../achievements/achievements-panel'
 
 interface Props {
   storeState: OgonekStoreState
@@ -674,10 +675,14 @@ export function ProfileView({
 
         {activeTab === 'achievements' && (
           <div className="p-4">
+            <AchievementsPanel onNotify={onNotify} soundEnabled={soundEnabled} />
+
+            <div className="prof-ach-divider" aria-hidden="true" />
+
             <div className="flex items-center justify-between mb-3">
               <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
                 <Trophy size={18} className="text-amber-400" />
-                Достижения
+                Значки силы
               </h2>
               <span className="text-[13px] text-[#71767b] font-bold">
                 {unlockedCount} / {achievements.length}

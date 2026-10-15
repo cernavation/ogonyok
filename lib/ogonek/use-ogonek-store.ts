@@ -2,14 +2,19 @@
 
 import { useCallback, useSyncExternalStore } from 'react'
 import { buildDemoComments, SUPPORT_PERSONAS } from './comments'
+import { computeAchievementProgress } from './achievement-regulation'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   DEFAULT_STORE_STATE,
   loadStore,
   saveStore,
   STORAGE_KEY,
+  sanitizeVerifiedAchievements,
 } from './storage'
 import type {
+  AchievementEvidenceFile,
+  AchievementRegulation,
+  AchievementStatus,
   Comment,
   CommentPersona,
   ComposerDraft,
@@ -22,6 +27,7 @@ import type {
   OgonekStoreState,
   PrideEntry,
   ReactionCounts,
+  VerifiedAchievement,
 } from './types'
 import { withGratitudeRating } from './reactions'
 import { sanitizeFollowingIds, sanitizeProfile } from './storage'
@@ -391,6 +397,199 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 5 — ВЕРИФИЦИРОВАННЫЕ АЧИВКИ ПРОФИЛЯ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * Создаёт верифицированную ачивку с уже полученным регламентом доказательств.
+   * Возвращает id новой ачивки.
+   */
+  const addVerifiedAchievement = useCallback(
+    (input: {
+      categoryId: VerifiedAchievement['categoryId']
+      title: string
+      topic: string
+      achievedAtISO?: string
+      regulation: AchievementRegulation | null
+      evidence?: AchievementEvidenceFile[]
+      status?: AchievementStatus
+    }): string => {
+      const id = `va-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+      const nowISO = new Date().toISOString()
+      const status: AchievementStatus = input.status === 'submitted' ? 'submitted' : 'draft'
+
+      const achievement: VerifiedAchievement = {
+        id,
+        categoryId: input.categoryId,
+        title: input.title.trim().slice(0, 120) || 'Ачивка',
+        topic: input.topic.trim().slice(0, 300),
+        achievedAtISO: input.achievedAtISO || nowISO,
+        status,
+        regulation: input.regulation,
+        evidence: input.evidence ?? [],
+        submittedAtISO: status === 'submitted' ? nowISO : null,
+        verifiedAtISO: null,
+        reviewerNote: null,
+        createdAtISO: nowISO,
+      }
+
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: [achievement, ...prev.verifiedAchievements],
+      }))
+
+      return id
+    },
+    [updateStore]
+  )
+
+  /** Частичное обновление ачивки (название, тема, дата, регламент) */
+  const updateVerifiedAchievement = useCallback(
+    (
+      id: string,
+      patch: Partial<Pick<VerifiedAchievement, 'title' | 'topic' | 'achievedAtISO' | 'regulation'>>
+    ) => {
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id ? { ...a, ...patch } : a
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Прикрепляет файл-доказательство к ачивке. Возвращает id файла. */
+  const attachAchievementEvidence = useCallback(
+    (
+      achievementId: string,
+      file: Omit<AchievementEvidenceFile, 'id' | 'addedAtISO'>
+    ): string | null => {
+      if (!achievementId || !file.ref) return null
+      const id = `ev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+      const evidence: AchievementEvidenceFile = {
+        ...file,
+        id,
+        addedAtISO: new Date().toISOString(),
+      }
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === achievementId ? { ...a, evidence: [...a.evidence, evidence] } : a
+        ),
+      }))
+      return id
+    },
+    [updateStore]
+  )
+
+  /** Удаляет прикреплённое доказательство */
+  const removeAchievementEvidence = useCallback(
+    (achievementId: string, evidenceId: string) => {
+      if (!achievementId || !evidenceId) return
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === achievementId
+            ? { ...a, evidence: a.evidence.filter((e) => e.id !== evidenceId) }
+            : a
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * Отправляет ачивку на верификацию.
+   * Возвращает true, если комплект обязательных доказательств полон и заявка ушла.
+   */
+  const submitAchievementForVerification = useCallback(
+    (id: string): boolean => {
+      const achievement = getSnapshot().verifiedAchievements.find((a) => a.id === id)
+      if (!achievement) return false
+      const progress = computeAchievementProgress(achievement)
+      if (!progress.complete) return false
+
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: 'submitted',
+                submittedAtISO: new Date().toISOString(),
+                verifiedAtISO: null,
+                reviewerNote: null,
+              }
+            : a
+        ),
+      }))
+      return true
+    },
+    [updateStore]
+  )
+
+  /**
+   * Вердикт верификатора: подтверждение или отказ с комментарием.
+   * Возвращает true, если вердикт применён.
+   */
+  const resolveAchievementReview = useCallback(
+    (id: string, decision: 'verified' | 'rejected', note?: string): boolean => {
+      const achievement = getSnapshot().verifiedAchievements.find((a) => a.id === id)
+      if (!achievement || achievement.status !== 'submitted') return false
+
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: decision,
+                verifiedAtISO: new Date().toISOString(),
+                reviewerNote: (note ?? '').trim().slice(0, 600) || null,
+              }
+            : a
+        ),
+      }))
+      return true
+    },
+    [updateStore]
+  )
+
+  /** Снимает ачивку с верификации / откатывает в черновик для правок */
+  const reopenAchievement = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.map((a) =>
+          a.id === id
+            ? {
+                ...a,
+                status: 'draft',
+                submittedAtISO: null,
+                verifiedAtISO: null,
+                reviewerNote: null,
+              }
+            : a
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Полностью удаляет верифицированную ачивку */
+  const removeVerifiedAchievement = useCallback(
+    (id: string) => {
+      if (!id) return
+      updateStore((prev) => ({
+        ...prev,
+        verifiedAchievements: prev.verifiedAchievements.filter((a) => a.id !== id),
+      }))
+    },
+    [updateStore]
+  )
+
   const setSoundEnabled = useCallback(
     (enabled: boolean) => {
       updateStore((prev) => ({
@@ -462,7 +661,7 @@ export function useOgonekStore() {
 
   const importState = useCallback(
     (newState: OgonekStoreState) => {
-      updateStore(() => ({
+      updateStore((prev) => ({
         ...newState,
         // Защита от импорта без новых полей (старые архивы / сторонние JSON)
         comments: newState.comments ?? {},
@@ -471,6 +670,10 @@ export function useOgonekStore() {
         myReactions: newState.myReactions ?? {},
         profile: sanitizeProfile(newState.profile),
         followingIds: sanitizeFollowingIds(newState.followingIds),
+        // Если в архиве нет поля ачивок — не теряем уже собранные данные
+        verifiedAchievements: Array.isArray(newState.verifiedAchievements)
+          ? sanitizeVerifiedAchievements(newState.verifiedAchievements)
+          : prev.verifiedAchievements,
       }))
     },
     [updateStore]
@@ -844,6 +1047,14 @@ export function useOgonekStore() {
     addEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
+    addVerifiedAchievement,
+    updateVerifiedAchievement,
+    attachAchievementEvidence,
+    removeAchievementEvidence,
+    submitAchievementForVerification,
+    resolveAchievementReview,
+    reopenAchievement,
+    removeVerifiedAchievement,
     updateProfile,
     resetProfile,
     toggleFollow,

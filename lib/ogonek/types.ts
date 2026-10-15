@@ -175,9 +175,99 @@ export type ComposerDraft = {
   lastSavedISO: string
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 5 — Верифицированные ачивки профиля + ИИ-регламент доказательств
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Категории верифицированных достижений профиля */
+export type AchievementCategoryId =
+  | 'sport-record' // Спортивный рекорд / Марафон
+  | 'business' // Бизнес-достижение
+  | 'education' // Обучение / Наука
+  | 'discipline' // Стрик дисциплины
+
+/**
+ * Одно требование регламента: какой именно файл-доказательство нужно приложить.
+ */
+export type AchievementEvidenceRequirement = {
+  id: string
+  /** Название файла-доказательства */
+  title: string
+  /** Зачем нужен этот файл верификатору */
+  purpose: string
+  /** Допустимые форматы (человекочитаемо) */
+  formats: string[]
+  /** Обязательный или дополнительный */
+  required: boolean
+  /** Пример корректного доказательства */
+  example: string
+}
+
+/** Строгий регламент доказательств, выданный ИИ-ассистентом */
+export type AchievementRegulation = {
+  categoryId: AchievementCategoryId
+  /** Как ИИ понял заявленную тему */
+  interpretedTopic: string
+  /** Строгое резюме: что и почему нужно приложить */
+  summary: string
+  /** Обязательные и дополнительные файлы-доказательства */
+  requirements: AchievementEvidenceRequirement[]
+  /** Кто уполномочен подтвердить достижение */
+  verifier: string
+  /** Срок актуальности доказательств */
+  freshnessRule: string
+  /** Критерии отказа */
+  rejectionCriteria: string[]
+  /** Строгость проверки */
+  strictness: 'basic' | 'strict' | 'forensic'
+  /** Регламент сгенерирован ИИ (true) или локальной эвристикой (false) */
+  aiGenerated: boolean
+}
+
+/** Прикреплённый к ачивке файл-доказательство */
+export type AchievementEvidenceFile = {
+  id: string
+  /** id требования регламента, к которому относится файл */
+  requirementId: string
+  /** Имя загруженного файла */
+  fileName: string
+  /** Ссылка: id фото из IndexedDB, data URL или внешняя ссылка */
+  ref: string
+  /** MIME-тип */
+  mime: string
+  /** Размер в байтах */
+  size: number
+  addedAtISO: string
+}
+
+/** Жизненный цикл верифицированной ачивки */
+export type AchievementStatus = 'draft' | 'submitted' | 'verified' | 'rejected'
+
+/** Верифицированная ачивка профиля со своим регламентом и доказательствами */
+export type VerifiedAchievement = {
+  id: string
+  categoryId: AchievementCategoryId
+  /** Публичное название ачивки */
+  title: string
+  /** Тема, введённая пользователем (по ней строился регламент) */
+  topic: string
+  /** Дата свершения (ISO) */
+  achievedAtISO: string
+  status: AchievementStatus
+  regulation: AchievementRegulation | null
+  evidence: AchievementEvidenceFile[]
+  submittedAtISO: string | null
+  verifiedAtISO: string | null
+  /** Комментарий верификатора (подтверждение или причина отказа) */
+  reviewerNote: string | null
+  createdAtISO: string
+}
+
 export type OgonekStoreState = {
   schemaVersion: number
   days: Day[]
+  /** Верифицированные ачивки профиля с регламентами доказательств */
+  verifiedAchievements: VerifiedAchievement[]
   morningIntentions: Record<string, [string, string, string]>
   composerDraft: ComposerDraft | null
   evidenceItems: EvidenceItem[]

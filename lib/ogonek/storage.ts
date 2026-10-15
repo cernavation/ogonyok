@@ -1,7 +1,12 @@
+import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import type {
+  AchievementEvidenceFile,
+  AchievementEvidenceRequirement,
+  AchievementRegulation,
+  AchievementStatus,
   Comment,
   CommentPersona,
   CommentsByTarget,
@@ -15,6 +20,7 @@ import type {
   ProfileSocialLink,
   ProfileSocialPlatform,
   ReactionCounts,
+  VerifiedAchievement,
 } from './types'
 
 export const STORAGE_KEY = 'ogonek.v2'
@@ -285,9 +291,217 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
   }
 }
 
+const ACHIEVEMENT_STATUSES: AchievementStatus[] = ['draft', 'submitted', 'verified', 'rejected']
+
+function sanitizeEvidenceFiles(value: unknown): AchievementEvidenceFile[] {
+  if (!Array.isArray(value)) return []
+  const result: AchievementEvidenceFile[] = []
+  const seen = new Set<string>()
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const f = raw as Partial<AchievementEvidenceFile>
+    const ref = typeof f.ref === 'string' ? f.ref.trim().slice(0, 2000) : ''
+    if (!ref) continue
+    const id = typeof f.id === 'string' && f.id ? f.id.slice(0, 80) : `ev-${result.length}`
+    if (seen.has(id)) continue
+    seen.add(id)
+    result.push({
+      id,
+      requirementId: typeof f.requirementId === 'string' ? f.requirementId.slice(0, 60) : '',
+      fileName: typeof f.fileName === 'string' && f.fileName.trim() ? f.fileName.trim().slice(0, 160) : 'evidence',
+      ref,
+      mime: typeof f.mime === 'string' ? f.mime.slice(0, 100) : 'application/octet-stream',
+      size: typeof f.size === 'number' && Number.isFinite(f.size) && f.size >= 0 ? Math.round(f.size) : 0,
+      addedAtISO: typeof f.addedAtISO === 'string' ? f.addedAtISO : new Date().toISOString(),
+    })
+  }
+  return result
+}
+
+function sanitizeRequirements(value: unknown): AchievementEvidenceRequirement[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((r): r is AchievementEvidenceRequirement => !!r && typeof r === 'object')
+    .map((r, index) => ({
+      id: typeof r.id === 'string' && r.id ? r.id.slice(0, 60) : `req-${index + 1}`,
+      title: typeof r.title === 'string' && r.title.trim() ? r.title.trim().slice(0, 120) : 'Файл-доказательство',
+      purpose: typeof r.purpose === 'string' ? r.purpose.trim().slice(0, 400) : '',
+      formats: Array.isArray(r.formats)
+        ? r.formats.filter((x): x is string => typeof x === 'string').slice(0, 6)
+        : ['PDF', 'JPG', 'PNG'],
+      required: Boolean(r.required),
+      example: typeof r.example === 'string' ? r.example.trim().slice(0, 300) : '',
+    }))
+}
+
+function sanitizeRegulationValue(
+  value: unknown,
+  categoryId: VerifiedAchievement['categoryId'],
+  topic: string
+): AchievementRegulation | null {
+  if (!value || typeof value !== 'object') return null
+  const v = value as Partial<AchievementRegulation>
+  const requirements = sanitizeRequirements(v.requirements)
+  if (requirements.length === 0) return null
+
+  const strictness: AchievementRegulation['strictness'] =
+    v.strictness === 'forensic' || v.strictness === 'basic' || v.strictness === 'strict'
+      ? v.strictness
+      : 'strict'
+
+  return {
+    categoryId,
+    interpretedTopic:
+      typeof v.interpretedTopic === 'string' && v.interpretedTopic.trim()
+        ? v.interpretedTopic.trim().slice(0, 200)
+        : topic.slice(0, 200),
+    summary: typeof v.summary === 'string' ? v.summary.slice(0, 600) : '',
+    requirements,
+    verifier: typeof v.verifier === 'string' ? v.verifier.slice(0, 200) : 'Команда верификации Огонька',
+    freshnessRule: typeof v.freshnessRule === 'string' ? v.freshnessRule.slice(0, 300) : '',
+    rejectionCriteria: Array.isArray(v.rejectionCriteria)
+      ? v.rejectionCriteria.filter((x): x is string => typeof x === 'string').slice(0, 8)
+      : [],
+    strictness,
+    aiGenerated: Boolean(v.aiGenerated),
+  }
+}
+
+/** Валидирует массив верифицированных ачивок из хранилища */
+export function sanitizeVerifiedAchievements(value: unknown): VerifiedAchievement[] {
+  if (!Array.isArray(value)) return []
+  const result: VerifiedAchievement[] = []
+  const seen = new Set<string>()
+
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const a = raw as Partial<VerifiedAchievement>
+    if (!isAchievementCategoryId(a.categoryId)) continue
+
+    const id = typeof a.id === 'string' && a.id ? a.id.slice(0, 80) : `va-${result.length}`
+    if (seen.has(id)) continue
+    seen.add(id)
+
+    const topic = typeof a.topic === 'string' ? a.topic.slice(0, 300) : ''
+    const title =
+      typeof a.title === 'string' && a.title.trim() ? a.title.trim().slice(0, 120) : 'Ачивка'
+    const status: AchievementStatus =
+      typeof a.status === 'string' && (ACHIEVEMENT_STATUSES as string[]).includes(a.status)
+        ? (a.status as AchievementStatus)
+        : 'draft'
+
+    result.push({
+      id,
+      categoryId: a.categoryId,
+      title,
+      topic,
+      achievedAtISO: typeof a.achievedAtISO === 'string' ? a.achievedAtISO : new Date().toISOString(),
+      status,
+      regulation: sanitizeRegulationValue(a.regulation, a.categoryId, topic),
+      evidence: sanitizeEvidenceFiles(a.evidence),
+      submittedAtISO: typeof a.submittedAtISO === 'string' ? a.submittedAtISO : null,
+      verifiedAtISO: typeof a.verifiedAtISO === 'string' ? a.verifiedAtISO : null,
+      reviewerNote: typeof a.reviewerNote === 'string' ? a.reviewerNote.slice(0, 600) : null,
+      createdAtISO: typeof a.createdAtISO === 'string' ? a.createdAtISO : new Date().toISOString(),
+    })
+  }
+
+  return result
+}
+
+/**
+ * Демонстрационные верифицированные ачивки для ДЕМО-режима.
+ * Повторяют реальные достижения профиля Алексея Черна:
+ * регламенты построены тем же движком, что и в интерфейсе.
+ */
+function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
+  const daysAgo = (n: number) => new Date(now.getTime() - n * 86_400_000).toISOString()
+
+  const marathonTopic = 'Финишировал полный марафон 42,2 км босиком на официальном забеге'
+  const businessTopic = 'Получил первую реальную оплату подписки Memernity'
+  const streakTopic = '719 дней подряд вёл дневник гордости без единого пропуска'
+
+  return [
+    {
+      id: 'va-marathon',
+      categoryId: 'sport-record',
+      title: '42,2 км босиком',
+      topic: marathonTopic,
+      achievedAtISO: daysAgo(140),
+      status: 'verified',
+      regulation: regulateAchievement('sport-record', marathonTopic, true),
+      evidence: [
+        {
+          id: 'va-marathon-ev-1',
+          requirementId: 'sport-protocol',
+          fileName: 'protocol-42km.pdf',
+          ref: 'https://results.example.org/marathon/protocol.pdf',
+          mime: 'application/pdf',
+          size: 284_512,
+          addedAtISO: daysAgo(139),
+        },
+        {
+          id: 'va-marathon-ev-2',
+          requirementId: 'sport-barefoot-video',
+          fileName: 'finish-barefoot.mp4',
+          ref: 'https://videos.example.org/finish-barefoot',
+          mime: 'video/mp4',
+          size: 18_400_000,
+          addedAtISO: daysAgo(139),
+        },
+      ],
+      submittedAtISO: daysAgo(138),
+      verifiedAtISO: daysAgo(135),
+      reviewerNote: 'Протокол и видео совпадают: дистанция полная, обуви нет. Легендарный статус подтверждён.',
+      createdAtISO: daysAgo(140),
+    },
+    {
+      id: 'va-memernity',
+      categoryId: 'business',
+      title: 'Первая выручка Memernity',
+      topic: businessTopic,
+      achievedAtISO: daysAgo(30),
+      status: 'submitted',
+      regulation: regulateAchievement('business', businessTopic, true),
+      evidence: [
+        {
+          id: 'va-memernity-ev-1',
+          requirementId: 'biz-revenue',
+          fileName: 'stripe-first-payment.png',
+          ref: 'https://payments.example.org/stripe/first-payment',
+          mime: 'image/png',
+          size: 512_300,
+          addedAtISO: daysAgo(1),
+        },
+      ],
+      submittedAtISO: daysAgo(1),
+      verifiedAtISO: null,
+      reviewerNote: null,
+      createdAtISO: daysAgo(30),
+    },
+    {
+      id: 'va-streak',
+      categoryId: 'discipline',
+      title: '719 дней дисциплины',
+      topic: streakTopic,
+      achievedAtISO: now.toISOString(),
+      status: 'draft',
+      regulation: regulateAchievement('discipline', streakTopic, true),
+      evidence: [],
+      submittedAtISO: null,
+      verifiedAtISO: null,
+      reviewerNote: null,
+      createdAtISO: now.toISOString(),
+    },
+  ]
+}
+
+export const DEFAULT_VERIFIED_ACHIEVEMENTS: VerifiedAchievement[] = buildDemoAchievements()
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
+  verifiedAchievements: DEFAULT_VERIFIED_ACHIEVEMENTS,
   morningIntentions: {},
   composerDraft: null,
   evidenceItems: EVIDENCE_ITEMS,
@@ -319,6 +533,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
             const migratedState: OgonekStoreState = {
               schemaVersion: CURRENT_SCHEMA_VERSION,
               days: parsedV3.days,
+              verifiedAchievements: sanitizeVerifiedAchievements(parsedV3.verifiedAchievements),
               morningIntentions: parsedV3.morningIntentions || {},
               composerDraft: parsedV3.composerDraft || null,
               evidenceItems: parsedV3.evidenceItems || DEFAULT_STORE_STATE.evidenceItems,
@@ -406,6 +621,9 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
       return {
         schemaVersion: CURRENT_SCHEMA_VERSION,
         days: sortedDays,
+        verifiedAchievements: Array.isArray(parsed.verifiedAchievements)
+          ? sanitizeVerifiedAchievements(parsed.verifiedAchievements)
+          : DEFAULT_STORE_STATE.verifiedAchievements,
         morningIntentions,
         composerDraft,
         evidenceItems,
@@ -534,6 +752,7 @@ export function validateAndImportJson(
     const state: OgonekStoreState = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
       days: sortedValidated,
+      verifiedAchievements: sanitizeVerifiedAchievements(parsed.verifiedAchievements),
       morningIntentions,
       composerDraft: null,
       evidenceItems: validatedEvidence,
