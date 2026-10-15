@@ -38,6 +38,7 @@ FILE: components/ogonek/achievements/add-achievement-modal.tsx
 FILE: components/ogonek/achievements/evidence-file-preview.tsx
 FILE: components/ogonek/achievements/index.ts
 FILE: components/ogonek/achievements/verification-badge.tsx
+FILE: components/ogonek/active-friends-widget.tsx
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
@@ -50,6 +51,8 @@ FILE: components/ogonek/evening-review.tsx
 FILE: components/ogonek/flame-icon.tsx
 FILE: components/ogonek/focus-flame.tsx
 FILE: components/ogonek/focus-history-modal.tsx
+FILE: components/ogonek/friend-detail-modal.tsx
+FILE: components/ogonek/friends-manager.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
 FILE: components/ogonek/lightbox.tsx
 FILE: components/ogonek/mobile-header.tsx
