@@ -8,6 +8,7 @@ import {
   DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
   FRIEND_PROFILES,
 } from './friends'
+import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { buildDemoMyStories } from './stories'
@@ -242,6 +243,43 @@ export function sanitizeDismissedSuggestions(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
+}
+
+/**
+ * ЭТАП 12 — ГЛОБАЛЬНЫЙ ХАБ ИССЛЕДОВАНИЯ.
+ * Валидирует подписки на участников сообщества (`exploreFollowingIds`).
+ */
+export function sanitizeExploreFollowingIds(value: unknown): string[] {
+  const valid = new Set(COMMUNITY_USER_IDS)
+  if (!Array.isArray(value)) return []
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+/** Валидирует id публикаций сообщества (лайки/сохранения) */
+export function sanitizeExplorePostIds(value: unknown): string[] {
+  const valid = new Set(COMMUNITY_POST_IDS)
+  if (!Array.isArray(value)) return []
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+/** Валидирует недавние поисковые запросы хаба (свежие — в начале, максимум 8) */
+export function sanitizeExploreRecentSearches(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  const seen = new Set<string>()
+  const result: string[] = []
+  for (const raw of value) {
+    if (typeof raw !== 'string') continue
+    const query = raw.trim().slice(0, 60)
+    if (!query) continue
+    const key = query.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push(query)
+    if (result.length >= 8) break
+  }
+  return result
 }
 
 export function sanitizeMyStories(value: unknown): MyStory[] {
@@ -685,6 +723,10 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   incomingFriendRequests: DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
   outgoingFriendRequests: DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
   dismissedSuggestions: [],
+  exploreFollowingIds: ['gu-hana', 'gu-adeyemi', 'fr-voloshin'],
+  exploreLikedPosts: [],
+  exploreSavedPosts: ['cp-6', 'cp-11'],
+  exploreRecentSearches: [],
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -734,6 +776,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
                 DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
               ),
               dismissedSuggestions: sanitizeDismissedSuggestions(parsedV3.dismissedSuggestions),
+              exploreFollowingIds: sanitizeExploreFollowingIds(parsedV3.exploreFollowingIds),
+              exploreLikedPosts: sanitizeExplorePostIds(parsedV3.exploreLikedPosts),
+              exploreSavedPosts: sanitizeExplorePostIds(parsedV3.exploreSavedPosts),
+              exploreRecentSearches: sanitizeExploreRecentSearches(parsedV3.exploreRecentSearches),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -843,6 +889,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
           DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
         ),
         dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
+        exploreFollowingIds: sanitizeExploreFollowingIds(parsed.exploreFollowingIds),
+        exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
+        exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
+        exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1002,6 +1052,10 @@ export function validateAndImportJson(
         DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
       ),
       dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
+      exploreFollowingIds: sanitizeExploreFollowingIds(parsed.exploreFollowingIds),
+      exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
+      exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
+      exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
     }
 
     return { success: true, data: state }

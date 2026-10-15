@@ -464,4 +464,13 @@ export type OgonekStoreState = {
   outgoingFriendRequests: string[]
   /** Скрытые/отклонённые рекомендации (id друзей) */
   dismissedSuggestions: string[]
+  /* ── ЭТАП 12 — ГЛОБАЛЬНЫЙ ХАБ ИССЛЕДОВАНИЯ ───────────────────────────── */
+  /** Каких участников сообщества пользователь читает (id из COMMUNITY_USERS) */
+  exploreFollowingIds: string[]
+  /** Публикации сообщества, которым пользователь зажёг огонёк */
+  exploreLikedPosts: string[]
+  /** Публикации, сохранённые пользователем в коллекцию */
+  exploreSavedPosts: string[]
+  /** Недавние поисковые запросы хаба (свежие — в начале) */
+  exploreRecentSearches: string[]
 }

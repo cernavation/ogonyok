@@ -31,6 +31,9 @@ import {
   loadStore,
   saveStore,
   STORAGE_KEY,
+  sanitizeExploreFollowingIds,
+  sanitizeExplorePostIds,
+  sanitizeExploreRecentSearches,
   sanitizeMyStories,
   sanitizeVerifiedAchievements,
   sanitizeViewedStoryIds,
@@ -1020,6 +1023,106 @@ export function useOgonekStore() {
   )
 
   /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 12 — ГЛОБАЛЬНЫЙ ХАБ ИССЛЕДОВАНИЯ (EXPLORE)
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * ПОДПИСКА НА УЧАСТНИКА СООБЩЕСТВА:
+   * Переключает чтение человека из глобального хаба исследования.
+   * Возвращает true, если теперь пользователь читает этого человека.
+   */
+  const toggleExploreFollow = useCallback(
+    (userId: string): boolean => {
+      if (!userId) return false
+      const current = getSnapshot().exploreFollowingIds ?? []
+      const willFollow = !current.includes(userId)
+      updateStore((prev) => {
+        const list = prev.exploreFollowingIds ?? []
+        const next = willFollow
+          ? Array.from(new Set([...list, userId]))
+          : list.filter((id) => id !== userId)
+        return { ...prev, exploreFollowingIds: next }
+      })
+      return willFollow
+    },
+    [updateStore]
+  )
+
+  /**
+   * ОГОНЁК ПОД ПУБЛИКАЦИЕЙ СООБЩЕСТВА:
+   * Переключает лайк на фото-достижении хаба. Возвращает true, если лайк зажжён.
+   */
+  const toggleExplorePostLike = useCallback(
+    (postId: string): boolean => {
+      if (!postId) return false
+      const current = getSnapshot().exploreLikedPosts ?? []
+      const willLike = !current.includes(postId)
+      updateStore((prev) => {
+        const list = prev.exploreLikedPosts ?? []
+        const next = willLike ? [...list, postId] : list.filter((id) => id !== postId)
+        return { ...prev, exploreLikedPosts: Array.from(new Set(next)) }
+      })
+      return willLike
+    },
+    [updateStore]
+  )
+
+  /**
+   * СОХРАНИТЬ ПУБЛИКАЦИЮ:
+   * Кладёт/убирает фото-достижение в личную коллекцию хаба.
+   * Возвращает true, если публикация теперь сохранена.
+   */
+  const toggleExplorePostSave = useCallback(
+    (postId: string): boolean => {
+      if (!postId) return false
+      const current = getSnapshot().exploreSavedPosts ?? []
+      const willSave = !current.includes(postId)
+      updateStore((prev) => {
+        const list = prev.exploreSavedPosts ?? []
+        const next = willSave ? [postId, ...list] : list.filter((id) => id !== postId)
+        return { ...prev, exploreSavedPosts: Array.from(new Set(next)) }
+      })
+      return willSave
+    },
+    [updateStore]
+  )
+
+  /** Добавляет поисковый запрос в недавние (свежие — в начале, максимум 8) */
+  const addExploreSearch = useCallback(
+    (query: string) => {
+      const clean = (query ?? '').trim().slice(0, 60)
+      if (!clean) return
+      updateStore((prev) => {
+        const existing = (prev.exploreRecentSearches ?? []).filter(
+          (q) => q.toLowerCase() !== clean.toLowerCase()
+        )
+        return {
+          ...prev,
+          exploreRecentSearches: [clean, ...existing].slice(0, 8),
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Удаляет один запрос из недавних */
+  const removeExploreSearch = useCallback(
+    (query: string) => {
+      if (!query) return
+      updateStore((prev) => ({
+        ...prev,
+        exploreRecentSearches: (prev.exploreRecentSearches ?? []).filter((q) => q !== query),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Полностью очищает историю поиска хаба */
+  const clearExploreSearches = useCallback(() => {
+    updateStore((prev) => ({ ...prev, exploreRecentSearches: [] }))
+  }, [updateStore])
+
+  /* ══════════════════════════════════════════════════════════════════════
      ЭТАП 11 — СИСТЕМА ДРУЗЕЙ, ПОДПИСОК И ЗАЯВОК
      ══════════════════════════════════════════════════════════════════════ */
 
@@ -1255,6 +1358,10 @@ export function useOgonekStore() {
         verifiedAchievements: Array.isArray(newState.verifiedAchievements)
           ? sanitizeVerifiedAchievements(newState.verifiedAchievements)
           : prev.verifiedAchievements,
+        exploreFollowingIds: sanitizeExploreFollowingIds(newState.exploreFollowingIds),
+        exploreLikedPosts: sanitizeExplorePostIds(newState.exploreLikedPosts),
+        exploreSavedPosts: sanitizeExplorePostIds(newState.exploreSavedPosts),
+        exploreRecentSearches: sanitizeExploreRecentSearches(newState.exploreRecentSearches),
       }))
     },
     [updateStore]
@@ -1700,6 +1807,12 @@ export function useOgonekStore() {
     updateProfile,
     resetProfile,
     toggleFollow,
+    toggleExploreFollow,
+    toggleExplorePostLike,
+    toggleExplorePostSave,
+    addExploreSearch,
+    removeExploreSearch,
+    clearExploreSearches,
     addFriend,
     removeFriend,
     acceptFriendRequest,

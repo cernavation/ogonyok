@@ -248,6 +248,7 @@ export function AppShell() {
           onNotify={notify}
           onSelectDay={handleSelectDay}
           onEditDay={handleEditDay}
+          soundEnabled={state.soundEnabled}
         />
       ),
       vault: (
