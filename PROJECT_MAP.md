@@ -1,6 +1,10 @@
 # КАРТА ПРОЕКТА
 СТРОГО ЗАПРЕЩЕНО читать папку public/seeds, package-lock.json и node_modules!
 
+DIR: Library/
+DIR: Library/Caches/
+DIR: Library/Caches/bun/
+DIR: Library/Caches/bun/@t@/
 DIR: app/
 DIR: app/api/
 DIR: app/api/evaluate/

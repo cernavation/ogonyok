@@ -1,9 +1,0 @@
-835af1b feat: complete X.com stabilization with profile view, intentions screen and timestamp sorting
-d1029d2 feat: complete X.com transformation with twitter blue, inline composer and refined layout
-7ece94b fix: perfect chronological timeline 1..705, zero date dupes
-805de40 fix: split days 719/720, atomic +1 day pipeline, indexeddb photos
-8154008 feat: activate deep AI mentor and full interactive button suite
----REMOTE---
-origin	https://github.com/cernaloid-ux/ogonyok-app.git (fetch)
-origin	https://github.com/cernaloid-ux/ogonyok-app.git (push)
----STATUS---
