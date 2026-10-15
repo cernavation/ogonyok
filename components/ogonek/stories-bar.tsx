@@ -44,6 +44,8 @@ export function StoriesBar({
     removeMyStory,
     toggleReaction,
     getMyReactionsFor,
+    getReactionsFor,
+    addComment,
   } = useOgonekStore()
 
   const [viewerIndex, setViewerIndex] = useState<number | null>(null)
@@ -63,13 +65,19 @@ export function StoriesBar({
 
   const myViewable = useMemo(
     () =>
-      myStoriesToViewable(myStories, {
-        displayName: profile.displayName,
-        username: profile.username,
-        avatarColor: profile.avatarColor,
-        verified: profile.verified,
-      }),
-    [myStories, profile]
+      myStoriesToViewable(
+        myStories,
+        {
+          displayName: profile.displayName,
+          username: profile.username,
+          avatarColor: profile.avatarColor,
+          verified: profile.verified,
+          city: profile.city,
+          streak: state.days.length,
+        },
+        state.days[0] ?? null
+      ),
+    [myStories, profile, state.days]
   )
 
   // Друзья: непросмотренные — вперёд (как в Instagram)
@@ -309,6 +317,10 @@ export function StoriesBar({
             onDeleteStory={removeMyStory}
             onToggleReaction={toggleReaction}
             myReactionsFor={getMyReactionsFor}
+            reactionCountsFor={getReactionsFor}
+            onSendReply={(target, text) => {
+              addComment(target, text)
+            }}
             onNotify={onNotify}
             soundEnabled={soundEnabled}
           />

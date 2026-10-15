@@ -12,7 +12,8 @@
  */
 
 import { FRIEND_PROFILES, type FriendProfile } from './friends'
-import type { FriendStory, MyStory, StorySlide } from './types'
+import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-digest'
+import type { Day, FriendStory, MyStory, StorySlide } from './types'
 
 /** Палитра градиентов кадров — тёплый огонь Огонька + холодные акценты */
 const SLIDE_THEMES: Array<{ from: string; to: string; accent: string }> = [
@@ -251,6 +252,8 @@ export type ViewableStory = {
   slides: StorySlide[]
   /** id личных кадров (aligned со slides) — для удаления из «Моей истории» */
   myStoryIds?: string[]
+  /** Опубликованный день автора: фото-сетка, главная гордость, статистика */
+  digest: StoryDayDigest
 }
 
 export function friendStoryToViewable(friend: FriendProfile, story: FriendStory): ViewableStory {
@@ -265,12 +268,24 @@ export function friendStoryToViewable(friend: FriendProfile, story: FriendStory)
     verified: friend.verified,
     postedLabel: story.postedLabel,
     slides: story.slides,
+    digest: buildFriendDigest(friend),
   }
 }
 
 export function myStoriesToViewable(
   stories: MyStory[],
-  owner: { displayName: string; username: string; avatarColor: string; verified: boolean }
+  owner: {
+    displayName: string
+    username: string
+    avatarColor: string
+    verified: boolean
+    /** Город профиля — для дайджеста дня */
+    city?: string
+    /** Текущая серия дней — для статистики дайджеста */
+    streak?: number
+  },
+  /** Самый свежий день летописи — из него строится дайджест «Моей истории» */
+  day?: Day | null
 ): ViewableStory | null {
   if (!stories || stories.length === 0) return null
   const ordered = [...stories].sort(
@@ -301,5 +316,10 @@ export function myStoriesToViewable(
       to: s.to,
       accent: s.accent,
     })),
+    digest: buildMyDigest(day, {
+      displayName: owner.displayName,
+      city: owner.city,
+      streak: owner.streak,
+    }),
   }
 }
