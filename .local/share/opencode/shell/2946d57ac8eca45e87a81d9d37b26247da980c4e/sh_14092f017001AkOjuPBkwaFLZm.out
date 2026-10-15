@@ -1,0 +1,12 @@
+c2d0c05 Savepoint
+11f23af Savepoint
+81b0da9 Savepoint
+c4f9bc3 Savepoint
+2a37a8b Savepoint
+---REMOTE---
+origin	https://github.com/cernaloid-ux/ogonyok-app.git (fetch)
+origin	https://github.com/cernaloid-ux/ogonyok-app.git (push)
+---STATUS---
+ M .local/share/opencode/log/opencode.log
+ M .local/share/opencode/opencode.db-wal
+?? .local/share/opencode/shell/
