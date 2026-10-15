@@ -46,7 +46,10 @@ FILE: components/ogonek/day-card.tsx
 FILE: components/ogonek/day-entries.tsx
 FILE: components/ogonek/edit-profile-modal.tsx
 FILE: components/ogonek/emoji-constructor.tsx
+FILE: components/ogonek/evening-review.tsx
 FILE: components/ogonek/flame-icon.tsx
+FILE: components/ogonek/focus-flame.tsx
+FILE: components/ogonek/focus-history-modal.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
 FILE: components/ogonek/lightbox.tsx
 FILE: components/ogonek/mobile-header.tsx
@@ -96,6 +99,7 @@ FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/friends.ts
 FILE: lib/ogonek/haptics.ts
 FILE: lib/ogonek/migrate.ts
+FILE: lib/ogonek/morning-focus.ts
 FILE: lib/ogonek/photos.ts
 FILE: lib/ogonek/profile-presets.ts
 FILE: lib/ogonek/profile-share.ts
@@ -129,5 +133,6 @@ FILE: test/achievement-regulation.test.ts
 FILE: test/evaluate.test.ts
 FILE: test/import-real-raw.test.ts
 FILE: test/migrate.test.ts
+FILE: test/morning-focus.test.ts
 FILE: test/reminder.test.ts
 FILE: test/streak.test.ts
