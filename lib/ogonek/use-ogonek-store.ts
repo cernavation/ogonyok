@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
+import { buildDemoComments, SUPPORT_PERSONAS } from './comments'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   DEFAULT_STORE_STATE,
@@ -9,6 +10,8 @@ import {
   STORAGE_KEY,
 } from './storage'
 import type {
+  Comment,
+  CommentPersona,
   ComposerDraft,
   ComposerPayload,
   CustomEmoji,
@@ -31,6 +34,7 @@ function getSnapshot(): OgonekStoreState {
   if (!isInitialized) {
     cachedState = loadStore()
     cachedState = migrateSplitDays(cachedState)
+    cachedState = ensureDemoComments(cachedState)
     isInitialized = true
   }
   return cachedState
@@ -119,6 +123,25 @@ function migrateSplitDays(state: OgonekStoreState): OgonekStoreState {
   saveStore(migratedState)
   console.info('[Ogonek] Migrated split days: ', newDays.length, 'total days after split')
   return migratedState
+}
+
+/**
+ * ПЕРВИЧНАЯ ПОДДЕРЖКА:
+ * В демо-режиме один раз наполняем свежий день тёплыми комментариями,
+ * чтобы блок поддержки был наглядным (дерево ответов, лайки, шаблоны).
+ */
+function ensureDemoComments(state: OgonekStoreState): OgonekStoreState {
+  if (!state.isDemo) return state
+  if (state.comments && Object.keys(state.comments).length > 0) return state
+  const firstDay = state.days[0]
+  if (!firstDay) return state
+
+  const nextState: OgonekStoreState = {
+    ...state,
+    comments: buildDemoComments(firstDay),
+  }
+  saveStore(nextState)
+  return nextState
 }
 
 const listeners = new Set<() => void>()
@@ -388,7 +411,14 @@ export function useOgonekStore() {
 
   const importState = useCallback(
     (newState: OgonekStoreState) => {
-      updateStore(() => newState)
+      updateStore(() => ({
+        ...newState,
+        // Защита от импорта без новых полей (старые архивы / сторонние JSON)
+        comments: newState.comments ?? {},
+        customEmojis: newState.customEmojis ?? [],
+        dayReactions: newState.dayReactions ?? {},
+        myReactions: newState.myReactions ?? {},
+      }))
     },
     [updateStore]
   )
@@ -460,6 +490,149 @@ export function useOgonekStore() {
   const getMyReactionsFor = useCallback((target: string): string[] => {
     return getSnapshot().myReactions[target] ?? []
   }, [])
+
+  /**
+   * КОММЕНТАРИИ ПОДДЕРЖКИ:
+   * Добавляет комментарий (или ответ) к дню/гордости.
+   * target: "day:12" | "day:12:pride:0"
+   */
+  const addComment = useCallback(
+    (
+      target: string,
+      text: string,
+      options?: {
+        parentId?: string | null
+        persona?: CommentPersona
+        template?: string | null
+        author?: string
+      }
+    ): Comment | null => {
+      const trimmed = (text ?? '').trim().slice(0, 600)
+      if (!target || !trimmed) return null
+
+      const persona: CommentPersona = options?.persona === 'support' ? 'support' : 'me'
+      const meta = SUPPORT_PERSONAS[persona]
+
+      const comment: Comment = {
+        id: `cm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+        parentId: options?.parentId ?? null,
+        author: options?.author?.trim() || meta.author,
+        initials: meta.initials,
+        text: trimmed,
+        createdAt: new Date().toISOString(),
+        likes: 0,
+        likedByMe: false,
+        isMine: persona === 'me',
+        template: options?.template ?? null,
+        persona,
+      }
+
+      updateStore((prev) => {
+        const list = prev.comments?.[target] ?? []
+        return {
+          ...prev,
+          comments: { ...prev.comments, [target]: [...list, comment] },
+        }
+      })
+
+      return comment
+    },
+    [updateStore]
+  )
+
+  /** Ответ на конкретный комментарий — строит дерево поддержки */
+  const addReply = useCallback(
+    (
+      target: string,
+      parentId: string,
+      text: string,
+      persona: CommentPersona = 'me',
+      template?: string | null
+    ): Comment | null => {
+      if (!parentId) return null
+      return addComment(target, text, { parentId, persona, template })
+    },
+    [addComment]
+  )
+
+  /** Переключает лайк на комментарии. Возвращает true, если теперь лайк стоит. */
+  const toggleCommentLike = useCallback(
+    (target: string, commentId: string): boolean => {
+      if (!target || !commentId) return false
+      const current = getSnapshot()
+      const found = (current.comments?.[target] ?? []).find((c) => c.id === commentId)
+      const willLike = !(found?.likedByMe ?? false)
+
+      updateStore((prev) => {
+        const list = prev.comments?.[target] ?? []
+        return {
+          ...prev,
+          comments: {
+            ...prev.comments,
+            [target]: list.map((c) =>
+              c.id === commentId
+                ? {
+                    ...c,
+                    likedByMe: !c.likedByMe,
+                    likes: Math.max(0, c.likes + (c.likedByMe ? -1 : 1)),
+                  }
+                : c
+            ),
+          },
+        }
+      })
+
+      return willLike
+    },
+    [updateStore]
+  )
+
+  /** Удаляет комментарий вместе со всеми его ответами */
+  const deleteComment = useCallback(
+    (target: string, commentId: string) => {
+      if (!target || !commentId) return
+      updateStore((prev) => {
+        const list = prev.comments?.[target] ?? []
+        const toRemove = new Set<string>([commentId])
+        let changed = true
+        while (changed) {
+          changed = false
+          for (const c of list) {
+            if (c.parentId && toRemove.has(c.parentId) && !toRemove.has(c.id)) {
+              toRemove.add(c.id)
+              changed = true
+            }
+          }
+        }
+        return {
+          ...prev,
+          comments: {
+            ...prev.comments,
+            [target]: list.filter((c) => !toRemove.has(c.id)),
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Все комментарии цели (плоский список; дерево собирается на клиенте) */
+  const getCommentsFor = useCallback((target: string): Comment[] => {
+    return getSnapshot().comments?.[target] ?? []
+  }, [])
+
+  /** Полностью очищает обсуждение цели */
+  const clearComments = useCallback(
+    (target: string) => {
+      if (!target) return
+      updateStore((prev) => {
+        const comments = { ...prev.comments }
+        delete comments[target]
+        return { ...prev, comments }
+      })
+    },
+    [updateStore]
+  )
 
   /**
    * КОНСТРУКТОР СМАЙЛИКОВ:
@@ -631,5 +804,11 @@ export function useOgonekStore() {
     rateGratitude,
     clearPrideRating,
     clearGratitudeRating,
+    addComment,
+    addReply,
+    toggleCommentLike,
+    deleteComment,
+    getCommentsFor,
+    clearComments,
   }
 }

@@ -12,6 +12,7 @@ import {
 } from '@/lib/ogonek/types'
 import { gratitudeTarget, prideTarget } from '@/lib/ogonek/reactions'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
 import { StarRating } from './star-rating'
 import { Tooltip } from './tooltip'
@@ -191,6 +192,19 @@ export function DayEntries({
                     />
                     <ReactionBar
                       target={prideTarget(dayId as number, index)}
+                      compact
+                      soundEnabled={soundEnabled}
+                      onNotify={onNotify}
+                    />
+                  </div>
+                )}
+
+                {/* Комментарии поддержки под отдельной гордостью */}
+                {canReact && (
+                  <div className="pl-8">
+                    <CommentsThread
+                      target={prideTarget(dayId as number, index)}
+                      variant="pride"
                       compact
                       soundEnabled={soundEnabled}
                       onNotify={onNotify}

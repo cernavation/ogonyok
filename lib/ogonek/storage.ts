@@ -1,6 +1,9 @@
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import type {
+  Comment,
+  CommentPersona,
+  CommentsByTarget,
   ComposerDraft,
   CustomEmoji,
   Day,
@@ -11,7 +14,7 @@ import type {
 } from './types'
 
 export const STORAGE_KEY = 'ogonek.v2'
-export const CURRENT_SCHEMA_VERSION = 3
+export const CURRENT_SCHEMA_VERSION = 4
 
 export interface StorageAdapter {
   getItem(key: string): string | null
@@ -111,6 +114,68 @@ export function sanitizeMyReactions(value: unknown): MyReactions {
   return result
 }
 
+/**
+ * Валидирует дерево комментариев поддержки: target → плоский список.
+ * Повреждённые элементы отбрасываются, тексты обрезаются по длине.
+ */
+export function sanitizeComments(value: unknown): CommentsByTarget {
+  if (!value || typeof value !== 'object') return {}
+  const result: CommentsByTarget = {}
+
+  for (const [target, list] of Object.entries(value as Record<string, unknown>)) {
+    if (!target || !Array.isArray(list)) continue
+    const seen = new Set<string>()
+    const cleaned: Comment[] = []
+
+    for (const raw of list) {
+      if (!raw || typeof raw !== 'object') continue
+      const c = raw as Partial<Comment>
+      const text = typeof c.text === 'string' ? c.text.trim() : ''
+      if (!text) continue
+
+      const id = typeof c.id === 'string' && c.id ? c.id : `cm-${target}-${cleaned.length}`
+      if (seen.has(id)) continue
+      seen.add(id)
+
+      const persona: CommentPersona = c.persona === 'support' ? 'support' : 'me'
+
+      cleaned.push({
+        id,
+        parentId: typeof c.parentId === 'string' && c.parentId ? c.parentId : null,
+        author:
+          typeof c.author === 'string' && c.author.trim()
+            ? c.author.trim().slice(0, 60)
+            : persona === 'support'
+              ? 'Огонёк поддержки'
+              : 'Alexei Cerna',
+        initials:
+          typeof c.initials === 'string' && c.initials.trim()
+            ? c.initials.trim().slice(0, 3)
+            : persona === 'support'
+              ? '✦'
+              : 'AC',
+        text: text.slice(0, 600),
+        createdAt:
+          typeof c.createdAt === 'string' && c.createdAt
+            ? c.createdAt
+            : new Date().toISOString(),
+        likes:
+          typeof c.likes === 'number' && Number.isFinite(c.likes) && c.likes > 0
+            ? Math.round(c.likes)
+            : 0,
+        likedByMe: Boolean(c.likedByMe),
+        isMine: Boolean(c.isMine),
+        template: typeof c.template === 'string' ? c.template : null,
+        persona,
+      })
+    }
+
+    if (cleaned.length > 0) result[target] = cleaned
+  }
+
+  return result
+}
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
@@ -124,6 +189,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   customEmojis: DEFAULT_CUSTOM_EMOJIS,
   dayReactions: {},
   myReactions: {},
+  comments: {},
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -152,6 +218,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               customEmojis: sanitizeCustomEmojis(parsedV3.customEmojis),
               dayReactions: sanitizeReactions(parsedV3.dayReactions),
               myReactions: sanitizeMyReactions(parsedV3.myReactions),
+              comments: sanitizeComments(parsedV3.comments),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -236,6 +303,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         customEmojis: sanitizeCustomEmojis(parsed.customEmojis),
         dayReactions: sanitizeReactions(parsed.dayReactions),
         myReactions: sanitizeMyReactions(parsed.myReactions),
+        comments: sanitizeComments(parsed.comments),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -363,6 +431,7 @@ export function validateAndImportJson(
       customEmojis: sanitizeCustomEmojis(parsed.customEmojis),
       dayReactions: sanitizeReactions(parsed.dayReactions),
       myReactions: sanitizeMyReactions(parsed.myReactions),
+      comments: sanitizeComments(parsed.comments),
     }
 
     return { success: true, data: state }

@@ -1836,3 +1836,47 @@ kbd {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   КОММЕНТАРИИ ПОДДЕРЖКИ (Этап 2)
+   Разворачиваемый блок под днём и отдельной гордостью:
+   дерево ответов, лайки, быстрые шаблоны поддержки.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.comment-thread {
+  display: block;
+  width: 100%;
+}
+
+/* Ветка дерева ответов — вертикальный коннектор слева */
+.cmt-replies {
+  margin-top: 2px;
+  margin-left: 6px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(47, 51, 54, 0.9);
+  transition: border-color 0.15s ease;
+}
+
+.cmt-replies:hover {
+  border-left-color: rgba(255, 107, 53, 0.45);
+}
+
+/* Глубокая вложенность — без лишнего отступа, чтобы не уезжать вправо */
+.cmt-replies-flat {
+  margin-top: 2px;
+}
+
+/* Быстрые шаблоны поддержки */
+.cmt-chip {
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .cmt-chip {
+    font-size: 11.5px;
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+}
+

@@ -10,6 +10,7 @@ import type { Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { DayEntries } from './day-entries'
+import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
 
@@ -415,6 +416,16 @@ export function DayCard({
               <ReactionBar
                 target={target}
                 excludeIds={['fire', 'heart']}
+                soundEnabled={soundEnabled}
+                onNotify={onNotify}
+              />
+            </div>
+
+            {/* Комментарии поддержки под днём: дерево ответов и лайки */}
+            <div className="pt-1 -mx-2">
+              <CommentsThread
+                target={target}
+                variant="day"
                 soundEnabled={soundEnabled}
                 onNotify={onNotify}
               />

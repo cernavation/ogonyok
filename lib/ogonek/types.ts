@@ -59,6 +59,48 @@ export type ReactionCounts = Record<string, Record<string, number>>
  */
 export type MyReactions = Record<string, string[]>
 
+/**
+ * Роль автора комментария поддержки:
+ *  - 'me'      — сам пользователь (Alexei Cerna)
+ *  - 'support' — внутренний поддерживающий голос («Огонёк поддержки»)
+ */
+export type CommentPersona = 'me' | 'support'
+
+/**
+ * Комментарий поддержки под днём или отдельной гордостью.
+ * Хранится плоско (с parentId), а дерево ответов собирается на клиенте.
+ */
+export type Comment = {
+  id: string
+  /** Родительский комментарий для дерева ответов; null — корневой */
+  parentId: string | null
+  /** Имя автора: пользователь или «Огонёк поддержки» */
+  author: string
+  /** Инициалы/глиф для аватара */
+  initials: string
+  /** Текст поддержки */
+  text: string
+  /** ISO-время создания */
+  createdAt: string
+  /** Количество лайков на комментарии */
+  likes: number
+  /** Поставил ли лайк текущий пользователь */
+  likedByMe: boolean
+  /** Комментарий создан пользователем (его можно удалить) */
+  isMine: boolean
+  /** Быстрый шаблон, которым был создан комментарий (если был) */
+  template?: string | null
+  /** Роль автора */
+  persona: CommentPersona
+}
+
+/**
+ * Комментарии по целям.
+ * Ключ цели (target): "day:12" | "day:12:pride:0"
+ * Значение: плоский список комментариев (дерево через parentId).
+ */
+export type CommentsByTarget = Record<string, Comment[]>
+
 export type ReactionTargetKind = 'day' | 'pride' | 'gratitude'
 
 export type EvidenceItem = {
@@ -102,4 +144,6 @@ export type OgonekStoreState = {
   dayReactions: ReactionCounts
   /** Какие реакции поставил сам пользователь: target → [emojiId] */
   myReactions: MyReactions
+  /** Комментарии поддержки: target → плоский список (дерево через parentId) */
+  comments: CommentsByTarget
 }
