@@ -9,7 +9,10 @@ import type {
   Day,
   EvidenceItem,
   MyReactions,
+  OgonekProfile,
   OgonekStoreState,
+  ProfileSocialLink,
+  ProfileSocialPlatform,
   ReactionCounts,
 } from './types'
 
@@ -176,6 +179,103 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
   return result
 }
 
+/** Допустимые платформы соцсетей профиля */
+const PROFILE_PLATFORMS: ProfileSocialPlatform[] = [
+  'website',
+  'telegram',
+  'instagram',
+  'github',
+  'youtube',
+  'x',
+  'linkedin',
+  'custom',
+]
+
+/** Безопасно валидирует ссылки на соцсети профиля */
+export function sanitizeSocialLinks(value: unknown): ProfileSocialLink[] {
+  if (!Array.isArray(value)) return []
+  const result: ProfileSocialLink[] = []
+  const seen = new Set<string>()
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const obj = raw as Partial<ProfileSocialLink>
+    const url = typeof obj.url === 'string' ? obj.url.trim().slice(0, 300) : ''
+    if (!url) continue
+    const platform: ProfileSocialPlatform =
+      typeof obj.platform === 'string' && (PROFILE_PLATFORMS as string[]).includes(obj.platform)
+        ? (obj.platform as ProfileSocialPlatform)
+        : 'custom'
+    const id =
+      typeof obj.id === 'string' && obj.id ? obj.id : `link-${result.length}-${platform}`
+    if (seen.has(id)) continue
+    seen.add(id)
+    result.push({
+      id,
+      platform,
+      label:
+        typeof obj.label === 'string' && obj.label.trim()
+          ? obj.label.trim().slice(0, 40)
+          : platform,
+      url,
+    })
+  }
+  return result
+}
+
+export const DEFAULT_PROFILE: OgonekProfile = {
+  displayName: 'Алексей Черна',
+  username: 'cernavation',
+  bio: 'Серийный предприниматель & Барефут-марафонец. Основатель Memernity. Дневник гордости и благодарности — 719 дней осознанности.',
+  city: 'Moldova',
+  website: 'https://memernity.com',
+  joinedLabel: 'August 2024',
+  avatarImage: null,
+  avatarColor: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
+  bannerImage: null,
+  bannerPreset: 'night-peaks',
+  socialLinks: [
+    { id: 'link-website', platform: 'website', label: 'Memernity', url: 'https://memernity.com' },
+    { id: 'link-telegram', platform: 'telegram', label: 'Telegram', url: 'https://t.me/cernavation' },
+  ],
+  monthlyGoal: 'Закрыть сделку с Alibaba и вывести партнёрство на новый уровень',
+  monthlyGoalUpdatedAtISO: '2026-10-01T09:00:00.000Z',
+  verified: true,
+}
+
+/** Валидирует и восстанавливает профиль пользователя из хранилища */
+export function sanitizeProfile(value: unknown): OgonekProfile {
+  if (!value || typeof value !== 'object') return DEFAULT_PROFILE
+  const p = value as Partial<OgonekProfile>
+
+  const str = (v: unknown, fallback: string, max = 400): string =>
+    typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : fallback
+
+  const image = (v: unknown): string | null =>
+    typeof v === 'string' && v.trim() ? v.trim().slice(0, 2000) : null
+
+  return {
+    displayName: str(p.displayName, DEFAULT_PROFILE.displayName, 80),
+    username: str(p.username, DEFAULT_PROFILE.username, 40).replace(/^@/, ''),
+    bio: typeof p.bio === 'string' ? p.bio.slice(0, 400) : DEFAULT_PROFILE.bio,
+    city: typeof p.city === 'string' ? p.city.slice(0, 80) : DEFAULT_PROFILE.city,
+    website: typeof p.website === 'string' ? p.website.slice(0, 300) : DEFAULT_PROFILE.website,
+    joinedLabel: str(p.joinedLabel, DEFAULT_PROFILE.joinedLabel, 40),
+    avatarImage: image(p.avatarImage),
+    avatarColor: str(p.avatarColor, DEFAULT_PROFILE.avatarColor, 300),
+    bannerImage: image(p.bannerImage),
+    bannerPreset: str(p.bannerPreset, DEFAULT_PROFILE.bannerPreset, 40),
+    socialLinks: sanitizeSocialLinks(p.socialLinks),
+    monthlyGoal:
+      typeof p.monthlyGoal === 'string' ? p.monthlyGoal.slice(0, 200) : DEFAULT_PROFILE.monthlyGoal,
+    monthlyGoalUpdatedAtISO: str(
+      p.monthlyGoalUpdatedAtISO,
+      DEFAULT_PROFILE.monthlyGoalUpdatedAtISO,
+      40
+    ),
+    verified: typeof p.verified === 'boolean' ? p.verified : DEFAULT_PROFILE.verified,
+  }
+}
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
@@ -190,6 +290,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   dayReactions: {},
   myReactions: {},
   comments: {},
+  profile: DEFAULT_PROFILE,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -219,6 +320,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               dayReactions: sanitizeReactions(parsedV3.dayReactions),
               myReactions: sanitizeMyReactions(parsedV3.myReactions),
               comments: sanitizeComments(parsedV3.comments),
+              profile: sanitizeProfile(parsedV3.profile),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -304,6 +406,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         dayReactions: sanitizeReactions(parsed.dayReactions),
         myReactions: sanitizeMyReactions(parsed.myReactions),
         comments: sanitizeComments(parsed.comments),
+        profile: sanitizeProfile(parsed.profile),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -432,6 +535,7 @@ export function validateAndImportJson(
       dayReactions: sanitizeReactions(parsed.dayReactions),
       myReactions: sanitizeMyReactions(parsed.myReactions),
       comments: sanitizeComments(parsed.comments),
+      profile: sanitizeProfile(parsed.profile),
     }
 
     return { success: true, data: state }

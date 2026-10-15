@@ -47,6 +47,8 @@ export function AppShell() {
     addEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
+    updateProfile,
+    resetProfile,
     importState,
     resetToDefaults,
     getNextDayDate,
@@ -268,6 +270,10 @@ export function AppShell() {
         <ProfileView
           storeState={state}
           onNavigate={navigate}
+          onUpdateProfile={updateProfile}
+          onResetProfile={resetProfile}
+          onNotify={notify}
+          soundEnabled={state.soundEnabled}
         />
       ),
       intentions: (
@@ -292,6 +298,8 @@ export function AppShell() {
       addEvidenceItem,
       setSoundEnabled,
       setPinEnabled,
+      updateProfile,
+      resetProfile,
       importState,
       resetToDefaults,
       handleEditDay,

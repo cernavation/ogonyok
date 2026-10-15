@@ -18,11 +18,13 @@ import type {
   Day,
   EvidenceItem,
   MyReactions,
+  OgonekProfile,
   OgonekStoreState,
   PrideEntry,
   ReactionCounts,
 } from './types'
 import { withGratitudeRating } from './reactions'
+import { sanitizeProfile } from './storage'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
@@ -409,6 +411,33 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /**
+   * ПРОФИЛЬ:
+   * Мгновенно сохраняет любые поля профиля (имя, @username, био, город,
+   * обложка, аватар, соцсети, цель месяца). Принимает частичный патч и
+   * прогоняет результат через sanitizeProfile, чтобы данные оставались валидными.
+   */
+  const updateProfile = useCallback(
+    (patch: Partial<OgonekProfile>) => {
+      updateStore((prev) => {
+        const nextProfile = sanitizeProfile({ ...prev.profile, ...patch })
+        if (
+          patch.monthlyGoal !== undefined &&
+          patch.monthlyGoal !== prev.profile.monthlyGoal
+        ) {
+          nextProfile.monthlyGoalUpdatedAtISO = new Date().toISOString()
+        }
+        return { ...prev, profile: nextProfile }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Сбрасывает профиль к исходным значениям */
+  const resetProfile = useCallback(() => {
+    updateStore((prev) => ({ ...prev, profile: sanitizeProfile(DEFAULT_STORE_STATE.profile) }))
+  }, [updateStore])
+
   const importState = useCallback(
     (newState: OgonekStoreState) => {
       updateStore(() => ({
@@ -418,6 +447,7 @@ export function useOgonekStore() {
         customEmojis: newState.customEmojis ?? [],
         dayReactions: newState.dayReactions ?? {},
         myReactions: newState.myReactions ?? {},
+        profile: sanitizeProfile(newState.profile),
       }))
     },
     [updateStore]
@@ -791,6 +821,8 @@ export function useOgonekStore() {
     addEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
+    updateProfile,
+    resetProfile,
     importState,
     resetToDefaults,
     getNextDayDate,

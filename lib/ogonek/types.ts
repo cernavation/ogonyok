@@ -103,6 +103,53 @@ export type CommentsByTarget = Record<string, Comment[]>
 
 export type ReactionTargetKind = 'day' | 'pride' | 'gratitude'
 
+/** Платформы для ссылок на соцсети в профиле */
+export type ProfileSocialPlatform =
+  | 'website'
+  | 'telegram'
+  | 'instagram'
+  | 'github'
+  | 'youtube'
+  | 'x'
+  | 'linkedin'
+  | 'custom'
+
+/** Одна ссылка на соцсеть в шапке профиля */
+export type ProfileSocialLink = {
+  id: string
+  platform: ProfileSocialPlatform
+  label: string
+  url: string
+}
+
+/**
+ * Профиль пользователя Огонька.
+ * Хранит публичную визитку: обложку (banner), аватар, имя, @username,
+ * био, город, соцсети и главную цель месяца.
+ */
+export type OgonekProfile = {
+  displayName: string
+  /** @username без ведущего символа @ */
+  username: string
+  bio: string
+  city: string
+  website: string
+  joinedLabel: string
+  /** Аватар: id фото из IndexedDB, data URL или null (тогда инициалы) */
+  avatarImage: string | null
+  /** Акцентный цвет/градиент аватара-заглушки (CSS) */
+  avatarColor: string
+  /** Пользовательская обложка: id фото, data URL или null */
+  bannerImage: string | null
+  /** id пресета обложки (используется, когда bannerImage пуст) */
+  bannerPreset: string
+  socialLinks: ProfileSocialLink[]
+  /** Главная цель месяца */
+  monthlyGoal: string
+  monthlyGoalUpdatedAtISO: string
+  verified: boolean
+}
+
 export type EvidenceItem = {
   id: string
   date: string
@@ -146,4 +193,6 @@ export type OgonekStoreState = {
   myReactions: MyReactions
   /** Комментарии поддержки: target → плоский список (дерево через parentId) */
   comments: CommentsByTarget
+  /** Публичный профиль пользователя (имя, обложка, аватар, соцсети, цель) */
+  profile: OgonekProfile
 }
