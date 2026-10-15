@@ -53,6 +53,7 @@ FILE: components/ogonek/mobile-header.tsx
 FILE: components/ogonek/modal-shell.tsx
 FILE: components/ogonek/profile-modal.tsx
 FILE: components/ogonek/profile-story-modal.tsx
+FILE: components/ogonek/publish-pride-story-modal.tsx
 FILE: components/ogonek/quick-focus.tsx
 FILE: components/ogonek/reaction-bar.tsx
 FILE: components/ogonek/right-rail.tsx
@@ -76,6 +77,7 @@ FILE: components/ogonek/views/intentions-view.tsx
 FILE: components/ogonek/views/profile-view.tsx
 FILE: components/ogonek/views/settings-view.tsx
 FILE: components/ogonek/views/vault-view.tsx
+FILE: components/ogonek/visibility-switcher.tsx
 DIR: components/ui/
 FILE: components/ui/button.tsx
 DIR: data/
@@ -109,6 +111,7 @@ FILE: lib/ogonek/types.ts
 FILE: lib/ogonek/use-keyboard-navigation.ts
 FILE: lib/ogonek/use-ogonek-store.ts
 FILE: lib/ogonek/use-photo-url.ts
+FILE: lib/ogonek/visibility.ts
 FILE: lib/utils.ts
 FILE: next-env.d.ts
 FILE: next.config.mjs
