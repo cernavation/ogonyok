@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useReducedMotion } from 'framer-motion'
-import { BookmarkPlus, Flame, Heart, Send } from 'lucide-react'
+import { BookmarkPlus, Flame, Forward, Heart, Send } from 'lucide-react'
 import { useId, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
@@ -40,6 +40,8 @@ type Props = {
   onSetPrideVisibility?: (index: number, level: VisibilityLevel) => void
   /** ЭТАП 9 — публикация гордости в Сторис */
   onPublishPrideStory?: (index: number) => void
+  /** ЭТАП 13 — переслать эту гордость другу в чат */
+  onForwardPride?: (index: number) => void
 }
 
 /** Оценка благодарности: 0 — не оценена */
@@ -75,6 +77,7 @@ export function DayEntries({
   dayVisibility = 'public',
   onSetPrideVisibility,
   onPublishPrideStory,
+  onForwardPride,
 }: Props) {
   const [mode, setMode] = useState<Mode>('pride')
   const [sparkingNum, setSparkingNum] = useState<string | null>(null)

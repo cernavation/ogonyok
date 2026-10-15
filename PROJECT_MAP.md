@@ -65,6 +65,18 @@ FILE: components/ogonek/friend-detail-modal.tsx
 FILE: components/ogonek/friends-manager.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
 FILE: components/ogonek/lightbox.tsx
+DIR: components/ogonek/messenger/
+FILE: components/ogonek/messenger/attach-card-picker.tsx
+FILE: components/ogonek/messenger/chat-attachment-card.tsx
+FILE: components/ogonek/messenger/chat-avatar.tsx
+FILE: components/ogonek/messenger/chat-composer.tsx
+FILE: components/ogonek/messenger/chat-message-bubble.tsx
+FILE: components/ogonek/messenger/chat-thread-list.tsx
+FILE: components/ogonek/messenger/chat-window.tsx
+FILE: components/ogonek/messenger/forward-to-chat-modal.tsx
+FILE: components/ogonek/messenger/index.ts
+FILE: components/ogonek/messenger/message-reaction-picker.tsx
+FILE: components/ogonek/messenger/new-chat-modal.tsx
 FILE: components/ogonek/mobile-header.tsx
 FILE: components/ogonek/modal-shell.tsx
 FILE: components/ogonek/profile-modal.tsx
@@ -90,6 +102,7 @@ FILE: components/ogonek/views/analytics-view.tsx
 FILE: components/ogonek/views/explore-view.tsx
 FILE: components/ogonek/views/home-view.tsx
 FILE: components/ogonek/views/intentions-view.tsx
+FILE: components/ogonek/views/messages-view.tsx
 FILE: components/ogonek/views/profile-view.tsx
 FILE: components/ogonek/views/settings-view.tsx
 FILE: components/ogonek/views/vault-view.tsx
@@ -112,6 +125,7 @@ FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/explore-content.ts
 FILE: lib/ogonek/friends.ts
 FILE: lib/ogonek/haptics.ts
+FILE: lib/ogonek/messenger.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/morning-focus.ts
 FILE: lib/ogonek/photos.ts
