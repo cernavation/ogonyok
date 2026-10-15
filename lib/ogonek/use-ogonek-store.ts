@@ -14,6 +14,10 @@ import {
   makeTrackingCode,
 } from './achievement-moderation'
 import type { ModerationEmailAttachment } from './achievement-moderation'
+import {
+  DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
+  DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
+} from './friends'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
   applyStepStatus,
@@ -56,7 +60,13 @@ import type {
   VisibilityLevel,
 } from './types'
 import { withGratitudeRating } from './reactions'
-import { sanitizeFollowingIds, sanitizeProfile } from './storage'
+import {
+  sanitizeDismissedSuggestions,
+  sanitizeFollowingIds,
+  sanitizeFriendIds,
+  sanitizeFriendRequestIds,
+  sanitizeProfile,
+} from './storage'
 import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
@@ -1010,6 +1020,142 @@ export function useOgonekStore() {
   )
 
   /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 11 — СИСТЕМА ДРУЗЕЙ, ПОДПИСОК И ЗАЯВОК
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * ДОБАВЛЕНИЕ В ДРУЗЬЯ:
+   * Принимает входящую заявку или добавляет человека в круг друзей напрямую.
+   * Друг всегда становится и подпиской; заявка убирается из входящих/исходящих.
+   * Возвращает true, если человек теперь в друзьях.
+   */
+  const addFriend = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      updateStore((prev) => {
+        const friendIds = Array.from(new Set([...(prev.friendIds ?? []), friendId]))
+        const followingIds = Array.from(new Set([...(prev.followingIds ?? []), friendId]))
+        return {
+          ...prev,
+          friendIds,
+          followingIds,
+          incomingFriendRequests: (prev.incomingFriendRequests ?? []).filter(
+            (id) => id !== friendId
+          ),
+          outgoingFriendRequests: (prev.outgoingFriendRequests ?? []).filter(
+            (id) => id !== friendId
+          ),
+          dismissedSuggestions: (prev.dismissedSuggestions ?? []).filter((id) => id !== friendId),
+        }
+      })
+      return true
+    },
+    [updateStore]
+  )
+
+  /** УДАЛЕНИЕ ИЗ ДРУЗЕЙ: снимает взаимную связь (подписка при этом сохраняется) */
+  const removeFriend = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const wasFriend = (getSnapshot().friendIds ?? []).includes(friendId)
+      updateStore((prev) => ({
+        ...prev,
+        friendIds: (prev.friendIds ?? []).filter((id) => id !== friendId),
+      }))
+      return wasFriend
+    },
+    [updateStore]
+  )
+
+  /** ПРИНЯТЬ ВХОДЯЩУЮ ЗАЯВКУ: переводит её в друзья и подписку */
+  const acceptFriendRequest = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const pending = (getSnapshot().incomingFriendRequests ?? []).includes(friendId)
+      if (!pending) return false
+      return addFriend(friendId)
+    },
+    [addFriend]
+  )
+
+  /** ОТКЛОНИТЬ ВХОДЯЩУЮ ЗАЯВКУ: убирает её и скрывает человека из рекомендаций */
+  const declineFriendRequest = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      updateStore((prev) => ({
+        ...prev,
+        incomingFriendRequests: (prev.incomingFriendRequests ?? []).filter(
+          (id) => id !== friendId
+        ),
+        dismissedSuggestions: Array.from(
+          new Set([...(prev.dismissedSuggestions ?? []), friendId])
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * ОТПРАВИТЬ ЗАЯВКУ В ДРУЗЬЯ:
+   * Кладёт человека в исходящие заявки и убирает из рекомендаций.
+   * Возвращает true, если заявка отправлена впервые.
+   */
+  const sendFriendRequest = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const already =
+        (getSnapshot().outgoingFriendRequests ?? []).includes(friendId) ||
+        (getSnapshot().friendIds ?? []).includes(friendId)
+      if (already) return false
+      updateStore((prev) => ({
+        ...prev,
+        outgoingFriendRequests: Array.from(
+          new Set([...(prev.outgoingFriendRequests ?? []), friendId])
+        ),
+        dismissedSuggestions: (prev.dismissedSuggestions ?? []).filter((id) => id !== friendId),
+      }))
+      return true
+    },
+    [updateStore]
+  )
+
+  /** ОТМЕНИТЬ ИСХОДЯЩУЮ ЗАЯВКУ */
+  const cancelFriendRequest = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      updateStore((prev) => ({
+        ...prev,
+        outgoingFriendRequests: (prev.outgoingFriendRequests ?? []).filter(
+          (id) => id !== friendId
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** СКРЫТЬ РЕКОМЕНДАЦИЮ («не показывать снова») */
+  const dismissSuggestion = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      updateStore((prev) => ({
+        ...prev,
+        dismissedSuggestions: Array.from(
+          new Set([...(prev.dismissedSuggestions ?? []), friendId])
+        ),
+        outgoingFriendRequests: (prev.outgoingFriendRequests ?? []).filter(
+          (id) => id !== friendId
+        ),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** ВЕРНУТЬ ВСЕ СКРЫТЫЕ РЕКОМЕНДАЦИИ ОБРАТНО */
+  const restoreSuggestions = useCallback(() => {
+    updateStore((prev) => ({ ...prev, dismissedSuggestions: [] }))
+  }, [updateStore])
+
+  /* ══════════════════════════════════════════════════════════════════════
      ЭТАП 7 — СТОРИС ДРУЗЕЙ (Instagram-кружочки)
      ══════════════════════════════════════════════════════════════════════ */
 
@@ -1087,6 +1233,16 @@ export function useOgonekStore() {
         followingIds: sanitizeFollowingIds(newState.followingIds),
         viewedStoryIds: sanitizeViewedStoryIds(newState.viewedStoryIds),
         myStories: sanitizeMyStories(newState.myStories),
+        friendIds: sanitizeFriendIds(newState.friendIds),
+        incomingFriendRequests: sanitizeFriendRequestIds(
+          newState.incomingFriendRequests,
+          DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+        ),
+        outgoingFriendRequests: sanitizeFriendRequestIds(
+          newState.outgoingFriendRequests,
+          DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+        ),
+        dismissedSuggestions: sanitizeDismissedSuggestions(newState.dismissedSuggestions),
         morningFocusHistory: (() => {
           const raw = sanitizeMorningFocusHistory(
             (newState as Partial<OgonekStoreState>).morningFocusHistory
@@ -1544,6 +1700,14 @@ export function useOgonekStore() {
     updateProfile,
     resetProfile,
     toggleFollow,
+    addFriend,
+    removeFriend,
+    acceptFriendRequest,
+    declineFriendRequest,
+    sendFriendRequest,
+    cancelFriendRequest,
+    dismissSuggestion,
+    restoreSuggestions,
     markStoryViewed,
     markStoriesViewed,
     resetStoryViews,

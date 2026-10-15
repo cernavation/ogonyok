@@ -455,4 +455,13 @@ export type OgonekStoreState = {
   viewedStoryIds: string[]
   /** Личные сторис пользователя («Моя история») */
   myStories: MyStory[]
+  /* ── ЭТАП 11 — СИСТЕМА ДРУЗЕЙ ────────────────────────────────────────── */
+  /** ID взаимных друзей (принятые заявки в друзья) */
+  friendIds: string[]
+  /** Входящие заявки в друзья (id друзей, которые позвали пользователя) */
+  incomingFriendRequests: string[]
+  /** Исходящие заявки в друзья (id друзей, которых позвал пользователь) */
+  outgoingFriendRequests: string[]
+  /** Скрытые/отклонённые рекомендации (id друзей) */
+  dismissedSuggestions: string[]
 }

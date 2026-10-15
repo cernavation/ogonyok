@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Award,
   Calendar,
   Check,
   ChevronRight,
@@ -14,25 +13,20 @@ import {
   Lock,
   MapPin,
   Pencil,
-  Send,
   Settings,
   Share2,
   Sparkles,
   Star,
   Target,
   Trophy,
-  UserCheck,
-  UserPlus,
   Users,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { useMemo, useState, type ReactNode } from 'react'
 import { downloadBlob } from '@/lib/ogonek/card-export'
-import { FRIEND_PROFILES } from '@/lib/ogonek/friends'
 import {
-  buildInviteUrl,
   buildProfileStories,
   computeProfileStats,
   type ProfileStats,
@@ -42,11 +36,12 @@ import {
   getSocialPlatformMeta,
   prettySocialUrl,
 } from '@/lib/ogonek/profile-presets'
-import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { playClick } from '@/lib/ogonek/sound'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import { EditProfileModal } from '../edit-profile-modal'
+import { FriendsManager } from '../friends-manager'
 import { Lightbox } from '../lightbox'
 import { ProfileStoryModal } from '../profile-story-modal'
 import { ShareProfileModal } from '../share-profile-modal'
@@ -183,7 +178,6 @@ export function ProfileView({
   onNavigate,
   onUpdateProfile,
   onResetProfile,
-  onToggleFollow,
   onNotify,
   soundEnabled,
 }: Props) {
@@ -192,7 +186,6 @@ export function ProfileView({
   const [activeTab, setActiveTab] = useState<ProfileTabId>('days')
   const [storyIndex, setStoryIndex] = useState<number | null>(null)
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
-  const [expandedFriend, setExpandedFriend] = useState<string | null>(null)
 
   const profile = storeState.profile
   const followingIds = storeState.followingIds ?? []
@@ -265,26 +258,6 @@ export function ProfileView({
       onNotify('Резервная копия профиля скачана')
     } catch {
       onNotify('Не удалось скачать бэкап')
-    }
-  }
-
-  const handleToggleFollow = (friendId: string, username: string) => {
-    playClick(soundEnabled)
-    const wasFollowing = followingIds.includes(friendId)
-    onToggleFollow?.(friendId)
-    onNotify(
-      wasFollowing ? `Ты отписался от @${username}` : `Ты подписался на @${username} ✓`
-    )
-  }
-
-  const handleInviteFriend = async (username: string) => {
-    playClick(soundEnabled)
-    try {
-      await navigator.clipboard.writeText(buildInviteUrl(username))
-      playSuccess(soundEnabled)
-      onNotify(`Ссылка-приглашение для @${username} скопирована`)
-    } catch {
-      onNotify('Не удалось скопировать приглашение')
     }
   }
 
@@ -829,139 +802,7 @@ export function ProfileView({
 
         {activeTab === 'friends' && (
           <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="flex items-center gap-2 text-[#e7e9ea] text-[18px] font-bold">
-                <Users size={18} className="text-[#22c55e]" />
-                Друзья
-              </h2>
-              <button
-                type="button"
-                onClick={() => handleInviteFriend(profile.username)}
-                className="flex items-center gap-1.5 rounded-full border border-[#536471] px-3 py-1.5 text-[13px] font-bold text-[#e7e9ea] hover:bg-white/[0.06] transition-colors"
-              >
-                <UserPlus size={14} />
-                Пригласить
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-2">
-              {FRIEND_PROFILES.map((friend) => {
-                const isFollowing = followingIds.includes(friend.id)
-                const isOpen = expandedFriend === friend.id
-                return (
-                  <div
-                    key={friend.id}
-                    className="rounded-2xl border border-[#2f3336] bg-[#16181c] overflow-hidden"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClick(soundEnabled)
-                        setExpandedFriend(isOpen ? null : friend.id)
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/[0.03] transition-colors"
-                      aria-expanded={isOpen}
-                    >
-                      <span
-                        className="w-11 h-11 rounded-full grid place-items-center font-bold text-[14px] text-white flex-none"
-                        style={{ background: friend.avatarColor, textShadow: '0 1px 2px #000' }}
-                        aria-hidden="true"
-                      >
-                        {friend.initials}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-[15px] font-bold text-[#e7e9ea] truncate">
-                            {friend.name}
-                          </span>
-                          {friend.verified && (
-                            <span
-                              className="inline-grid place-items-center rounded-full text-white flex-none"
-                              style={{ background: '#1d9bf0', width: 15, height: 15, fontSize: 9, fontWeight: 900 }}
-                              aria-label="Верифицирован"
-                            >
-                              ✓
-                            </span>
-                          )}
-                        </span>
-                        <span className="block text-[13px] text-[#71767b] truncate">
-                          @{friend.username} · 🔥 {friend.streak}
-                        </span>
-                      </span>
-                      <ChevronRight
-                        size={18}
-                        className={`text-[#71767b] flex-none transition-transform ${isOpen ? 'rotate-90' : ''}`}
-                        aria-hidden="true"
-                      />
-                    </button>
-
-                    <AnimatePresence initial={false}>
-                      {isOpen && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2, ease: 'easeOut' }}
-                          className="overflow-hidden"
-                        >
-                          <div className="px-4 pb-4 pt-1 border-t border-[#2f3336]">
-                            <p className="text-[14px] text-[#d1d5db] leading-[20px] mb-3">
-                              {friend.bio}
-                            </p>
-                            <div className="grid grid-cols-3 gap-2 mb-3">
-                              <div className="rounded-xl bg-black/30 px-3 py-2">
-                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.streak}</div>
-                                <div className="text-[11px] text-[#71767b]">стрик</div>
-                              </div>
-                              <div className="rounded-xl bg-black/30 px-3 py-2">
-                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.together}</div>
-                                <div className="text-[11px] text-[#71767b]">дней вместе</div>
-                              </div>
-                              <div className="rounded-xl bg-black/30 px-3 py-2">
-                                <div className="text-[16px] font-black text-[#e7e9ea]">{friend.mutual}</div>
-                                <div className="text-[11px] text-[#71767b]">общих</div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleFollow(friend.id, friend.username)}
-                                className={`flex-1 h-9 rounded-full text-[14px] font-bold transition-colors flex items-center justify-center gap-1.5 ${
-                                  isFollowing
-                                    ? 'border border-[#536471] text-[#e7e9ea] hover:border-[#f91880] hover:text-[#f91880]'
-                                    : 'bg-[#e7e9ea] text-black hover:bg-white'
-                                }`}
-                              >
-                                {isFollowing ? <UserCheck size={15} /> : <UserPlus size={15} />}
-                                {isFollowing ? 'Вы подписаны' : 'Подписаться'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleInviteFriend(friend.username)}
-                                className="h-9 px-4 rounded-full border border-[#536471] text-[14px] font-bold text-[#e7e9ea] hover:bg-white/[0.06] transition-colors flex items-center gap-1.5"
-                              >
-                                <Send size={14} />
-                                Позвать
-                              </button>
-                            </div>
-                            <p className="text-[11px] text-[#71767b] mt-2">
-                              {friend.city} · активен {friend.lastActive}
-                            </p>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )
-              })}
-            </div>
-
-            {unlockedCount > 0 && (
-              <p className="flex items-center gap-1.5 text-[12px] text-[#71767b] mt-3 justify-center">
-                <Award size={13} className="text-amber-400" />
-                {unlockedCount} достижений разблокировано — поделись ими с друзьями
-              </p>
-            )}
+            <FriendsManager onNotify={onNotify} soundEnabled={soundEnabled} />
           </div>
         )}
       </div>

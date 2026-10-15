@@ -1,7 +1,13 @@
 import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
 import { sanitizeSubmission } from './achievement-moderation'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
-import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
+import {
+  DEFAULT_FOLLOWING_IDS,
+  DEFAULT_FRIEND_IDS,
+  DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
+  DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
+  FRIEND_PROFILES,
+} from './friends'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { buildDemoMyStories } from './stories'
@@ -206,6 +212,34 @@ export function sanitizeFollowingIds(value: unknown): string[] {
 export function sanitizeViewedStoryIds(value: unknown): string[] {
   const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return [...DEFAULT_VIEWED_STORY_IDS]
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+/**
+ * ЭТАП 11 — СИСТЕМА ДРУЗЕЙ.
+ * Валидирует взаимных друзей, заявки и скрытые рекомендации. Все id
+ * сверяются с социальной картой, чтобы в сторе не появлялись «мёртвые» ссылки.
+ */
+export function sanitizeFriendIds(value: unknown): string[] {
+  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
+  if (!Array.isArray(value)) return [...DEFAULT_FRIEND_IDS]
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+/** Валидирует список id заявок в друзья (входящих/исходящих) */
+export function sanitizeFriendRequestIds(value: unknown, fallback: string[]): string[] {
+  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
+  if (!Array.isArray(value)) return [...fallback]
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+/** Валидирует список скрытых пользователем рекомендаций */
+export function sanitizeDismissedSuggestions(value: unknown): string[] {
+  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
+  if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
 }
@@ -647,6 +681,10 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   followingIds: DEFAULT_FOLLOWING_IDS,
   viewedStoryIds: DEFAULT_VIEWED_STORY_IDS,
   myStories: DEFAULT_MY_STORIES,
+  friendIds: DEFAULT_FRIEND_IDS,
+  incomingFriendRequests: DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
+  outgoingFriendRequests: DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
+  dismissedSuggestions: [],
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -686,6 +724,16 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               followingIds: sanitizeFollowingIds(parsedV3.followingIds),
               viewedStoryIds: sanitizeViewedStoryIds(parsedV3.viewedStoryIds),
               myStories: sanitizeMyStories(parsedV3.myStories),
+              friendIds: sanitizeFriendIds(parsedV3.friendIds),
+              incomingFriendRequests: sanitizeFriendRequestIds(
+                parsedV3.incomingFriendRequests,
+                DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+              ),
+              outgoingFriendRequests: sanitizeFriendRequestIds(
+                parsedV3.outgoingFriendRequests,
+                DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+              ),
+              dismissedSuggestions: sanitizeDismissedSuggestions(parsedV3.dismissedSuggestions),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -785,6 +833,16 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         followingIds: sanitizeFollowingIds(parsed.followingIds),
         viewedStoryIds: sanitizeViewedStoryIds(parsed.viewedStoryIds),
         myStories: sanitizeMyStories(parsed.myStories),
+        friendIds: sanitizeFriendIds(parsed.friendIds),
+        incomingFriendRequests: sanitizeFriendRequestIds(
+          parsed.incomingFriendRequests,
+          DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+        ),
+        outgoingFriendRequests: sanitizeFriendRequestIds(
+          parsed.outgoingFriendRequests,
+          DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+        ),
+        dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -934,6 +992,16 @@ export function validateAndImportJson(
       followingIds: sanitizeFollowingIds(parsed.followingIds),
       viewedStoryIds: sanitizeViewedStoryIds(parsed.viewedStoryIds),
       myStories: sanitizeMyStories(parsed.myStories),
+      friendIds: sanitizeFriendIds(parsed.friendIds),
+      incomingFriendRequests: sanitizeFriendRequestIds(
+        parsed.incomingFriendRequests,
+        DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+      ),
+      outgoingFriendRequests: sanitizeFriendRequestIds(
+        parsed.outgoingFriendRequests,
+        DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+      ),
+      dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
     }
 
     return { success: true, data: state }

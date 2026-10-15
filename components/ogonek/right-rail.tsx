@@ -5,6 +5,7 @@ import { CURRENT_DAY, EVIDENCE_ITEMS } from '@/lib/ogonek/data'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ViewId } from '@/lib/ogonek/types'
 import { FlameIcon } from './flame-icon'
+import { ActiveFriendsWidget } from './active-friends-widget'
 import { StoriesBar } from './stories-bar'
 import { Tooltip } from './tooltip'
 
@@ -58,6 +59,15 @@ export function RightRail({
             onOpenProfile={() => onNavigate('profile')}
           />
         </div>
+      )}
+
+      {/* Активные друзья — онлайн-статусы и свежие сторис */}
+      {onNotify && (
+        <ActiveFriendsWidget
+          onNavigate={onNavigate}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
       )}
 
       {isDemo && (
