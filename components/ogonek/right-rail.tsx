@@ -5,6 +5,7 @@ import { CURRENT_DAY, EVIDENCE_ITEMS } from '@/lib/ogonek/data'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ViewId } from '@/lib/ogonek/types'
 import { FlameIcon } from './flame-icon'
+import { StoriesBar } from './stories-bar'
 import { Tooltip } from './tooltip'
 
 type Props = {
@@ -14,6 +15,8 @@ type Props = {
   streakStatus?: StreakStatus
   hoursLeft?: number | null
   isDemo?: boolean
+  onNotify?: (message: string) => void
+  soundEnabled?: boolean
 }
 
 export function RightRail({
@@ -23,6 +26,8 @@ export function RightRail({
   streakStatus = 'safe',
   hoursLeft,
   isDemo = false,
+  onNotify,
+  soundEnabled = true,
 }: Props) {
   return (
     <aside className="right-rail" aria-label="Дополнительная информация">
@@ -42,6 +47,18 @@ export function RightRail({
           <span className="text-[#71767b] text-[15px] select-none">Поиск по журналу</span>
         </div>
       </div>
+
+      {/* Сторис друзей — живая карточка в правой панели */}
+      {onNotify && (
+        <div className="stories-rail-card">
+          <StoriesBar
+            variant="rail"
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+            onOpenProfile={() => onNavigate('profile')}
+          />
+        </div>
+      )}
 
       {isDemo && (
         <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs text-amber-400 flex items-center justify-between">

@@ -3,6 +3,7 @@ import { sanitizeSubmission } from './achievement-moderation'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import { DEFAULT_FOLLOWING_IDS, FRIEND_PROFILES } from './friends'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
+import { buildDemoMyStories } from './stories'
 import type {
   AchievementEvidenceFile,
   AchievementEvidenceRequirement,
@@ -16,6 +17,7 @@ import type {
   Day,
   EvidenceItem,
   MyReactions,
+  MyStory,
   OgonekProfile,
   OgonekStoreState,
   ProfileSocialLink,
@@ -193,6 +195,50 @@ export function sanitizeFollowingIds(value: unknown): string[] {
   if (!Array.isArray(value)) return [...DEFAULT_FOLLOWING_IDS]
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
+}
+
+/**
+ * ЭТАП 7 — СТОРИС ДРУЗЕЙ.
+ * Валидирует список просмотренных сторис (id друзей) и личные кадры пользователя.
+ */
+export function sanitizeViewedStoryIds(value: unknown): string[] {
+  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
+  if (!Array.isArray(value)) return [...DEFAULT_VIEWED_STORY_IDS]
+  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  return Array.from(new Set(clean))
+}
+
+export function sanitizeMyStories(value: unknown): MyStory[] {
+  if (!Array.isArray(value)) return []
+  const result: MyStory[] = []
+  const seen = new Set<string>()
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const s = raw as Partial<MyStory>
+    const headline = typeof s.headline === 'string' ? s.headline.trim().slice(0, 160) : ''
+    if (!headline) continue
+    const id =
+      typeof s.id === 'string' && s.id ? s.id.slice(0, 80) : `my-story-${result.length}`
+    if (seen.has(id)) continue
+    seen.add(id)
+    result.push({
+      id,
+      createdAtISO: typeof s.createdAtISO === 'string' ? s.createdAtISO : new Date().toISOString(),
+      emoji: typeof s.emoji === 'string' && s.emoji.trim() ? s.emoji.trim().slice(0, 8) : '✨',
+      kicker:
+        typeof s.kicker === 'string' && s.kicker.trim() ? s.kicker.trim().slice(0, 40) : 'СТОРИС',
+      headline,
+      detail: typeof s.detail === 'string' ? s.detail.slice(0, 240) : '',
+      from: typeof s.from === 'string' && s.from ? s.from.slice(0, 40) : '#2a1206',
+      to: typeof s.to === 'string' && s.to ? s.to.slice(0, 40) : '#7a2f0c',
+      accent: typeof s.accent === 'string' && s.accent ? s.accent.slice(0, 40) : '#ffa600',
+      sourceDayId:
+        typeof s.sourceDayId === 'number' && Number.isFinite(s.sourceDayId)
+          ? s.sourceDayId
+          : null,
+    })
+  }
+  return result
 }
 
 /** Допустимые платформы соцсетей профиля */
@@ -563,6 +609,12 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
 
 export const DEFAULT_VERIFIED_ACHIEVEMENTS: VerifiedAchievement[] = buildDemoAchievements()
 
+/** Друзья, чьи сторис уже «просмотрены» в демо — кружочки гаснут в серый */
+export const DEFAULT_VIEWED_STORY_IDS: string[] = ['fr-timofeev', 'fr-lanskaya']
+
+/** Демо-кадры личной истории пользователя */
+export const DEFAULT_MY_STORIES: MyStory[] = buildDemoMyStories()
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
   days: INITIAL_DAYS,
@@ -580,6 +632,8 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   comments: {},
   profile: DEFAULT_PROFILE,
   followingIds: DEFAULT_FOLLOWING_IDS,
+  viewedStoryIds: DEFAULT_VIEWED_STORY_IDS,
+  myStories: DEFAULT_MY_STORIES,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -612,6 +666,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               comments: sanitizeComments(parsedV3.comments),
               profile: sanitizeProfile(parsedV3.profile),
               followingIds: sanitizeFollowingIds(parsedV3.followingIds),
+              viewedStoryIds: sanitizeViewedStoryIds(parsedV3.viewedStoryIds),
+              myStories: sanitizeMyStories(parsedV3.myStories),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -702,6 +758,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         comments: sanitizeComments(parsed.comments),
         profile: sanitizeProfile(parsed.profile),
         followingIds: sanitizeFollowingIds(parsed.followingIds),
+        viewedStoryIds: sanitizeViewedStoryIds(parsed.viewedStoryIds),
+        myStories: sanitizeMyStories(parsed.myStories),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -833,6 +891,8 @@ export function validateAndImportJson(
       comments: sanitizeComments(parsed.comments),
       profile: sanitizeProfile(parsed.profile),
       followingIds: sanitizeFollowingIds(parsed.followingIds),
+      viewedStoryIds: sanitizeViewedStoryIds(parsed.viewedStoryIds),
+      myStories: sanitizeMyStories(parsed.myStories),
     }
 
     return { success: true, data: state }

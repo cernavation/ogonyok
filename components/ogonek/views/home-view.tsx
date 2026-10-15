@@ -9,6 +9,7 @@ import type { Day, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
 import { MobileHeader } from '../mobile-header'
 import { QuickFocus } from '../quick-focus'
+import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 
 const CHUNK_SIZE = 25
@@ -158,6 +159,14 @@ export function HomeView({
           })}
         </div>
       </header>
+
+      {/* Сторис друзей — Instagram-кружочки вверху ленты */}
+      <StoriesBar
+        variant="feed"
+        onNotify={onNotify}
+        soundEnabled={soundEnabled}
+        onOpenProfile={onOpenProfile}
+      />
 
       {/* Inline "What's happening?" compose prompt — X.com style */}
       {onCompose && (

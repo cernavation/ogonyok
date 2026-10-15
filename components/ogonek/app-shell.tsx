@@ -343,6 +343,8 @@ export function AppShell() {
           streakStatus={streakState.status}
           hoursLeft={streakState.hoursLeft}
           isDemo={state.isDemo}
+          onNotify={notify}
+          soundEnabled={state.soundEnabled}
         />
 
         <ScrollPill onScrollBottom={handleScrollBottom} />

@@ -20,7 +20,9 @@ import {
   loadStore,
   saveStore,
   STORAGE_KEY,
+  sanitizeMyStories,
   sanitizeVerifiedAchievements,
+  sanitizeViewedStoryIds,
 } from './storage'
 import type {
   AchievementEvidenceFile,
@@ -37,6 +39,7 @@ import type {
   ModerationDelivery,
   ModerationStatus,
   MyReactions,
+  MyStory,
   OgonekProfile,
   OgonekStoreState,
   PrideEntry,
@@ -853,6 +856,71 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 7 — СТОРИС ДРУЗЕЙ (Instagram-кружочки)
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Помечает сторис друга просмотренной — кружок гаснет в серый */
+  const markStoryViewed = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      updateStore((prev) => {
+        const viewed = prev.viewedStoryIds ?? []
+        if (viewed.includes(friendId)) return prev
+        return { ...prev, viewedStoryIds: [...viewed, friendId] }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Помечает пачку сторис просмотренными («Посмотреть всё») */
+  const markStoriesViewed = useCallback(
+    (friendIds: string[]) => {
+      if (!friendIds || friendIds.length === 0) return
+      updateStore((prev) => {
+        const viewed = prev.viewedStoryIds ?? []
+        const next = Array.from(new Set([...viewed, ...friendIds]))
+        if (next.length === viewed.length) return prev
+        return { ...prev, viewedStoryIds: next }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Сбрасывает отметки просмотра — все кружочки снова яркие */
+  const resetStoryViews = useCallback(() => {
+    updateStore((prev) => ({ ...prev, viewedStoryIds: [] }))
+  }, [updateStore])
+
+  /** Публикует личный кадр «Моей истории» */
+  const postMyStory = useCallback(
+    (story: MyStory) => {
+      if (!story) return
+      updateStore((prev) => ({
+        ...prev,
+        myStories: [story, ...(prev.myStories ?? [])].slice(0, 30),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Удаляет личный кадр истории */
+  const removeMyStory = useCallback(
+    (id: string) => {
+      if (!id) return
+      updateStore((prev) => ({
+        ...prev,
+        myStories: (prev.myStories ?? []).filter((s) => s.id !== id),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Полностью очищает «Мою историю» */
+  const clearMyStories = useCallback(() => {
+    updateStore((prev) => ({ ...prev, myStories: [] }))
+  }, [updateStore])
+
   const importState = useCallback(
     (newState: OgonekStoreState) => {
       updateStore((prev) => ({
@@ -864,6 +932,8 @@ export function useOgonekStore() {
         myReactions: newState.myReactions ?? {},
         profile: sanitizeProfile(newState.profile),
         followingIds: sanitizeFollowingIds(newState.followingIds),
+        viewedStoryIds: sanitizeViewedStoryIds(newState.viewedStoryIds),
+        myStories: sanitizeMyStories(newState.myStories),
         // Если в архиве нет поля ачивок — не теряем уже собранные данные
         verifiedAchievements: Array.isArray(newState.verifiedAchievements)
           ? sanitizeVerifiedAchievements(newState.verifiedAchievements)
@@ -1255,6 +1325,12 @@ export function useOgonekStore() {
     updateProfile,
     resetProfile,
     toggleFollow,
+    markStoryViewed,
+    markStoriesViewed,
+    resetStoryViews,
+    postMyStory,
+    removeMyStory,
+    clearMyStories,
     importState,
     resetToDefaults,
     getNextDayDate,

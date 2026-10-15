@@ -4301,3 +4301,816 @@ kbd {
 
 
 
+
+/* ════════════════════════════════════════════════════════════════════════
+   ЭТАП 7 — СТОРИС ДРУЗЕЙ (Instagram-стиль, кружочки)
+   Добавлено поверх существующих стилей. Классы ниже не конфликтуют
+   с уже описанными — только новые селекторы.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Лента кружочков вверху главной ─────────────────────────────────────── */
+.stories-feed {
+  border-bottom: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 0 10px;
+}
+
+.stories-scroller {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 2px 16px 4px;
+  scrollbar-width: none;
+}
+.stories-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.stories-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  width: 76px;
+}
+
+.stories-item__sub {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0;
+  line-height: 12px;
+  transition: color 0.15s ease;
+}
+.stories-item__sub:hover {
+  color: var(--blue);
+}
+
+.stories-item__streak {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 12px;
+}
+
+/* ── Кружок истории ─────────────────────────────────────────────────────── */
+.story-ring {
+  position: relative;
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  width: 100%;
+}
+
+.story-ring__ring {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, #ff6b35, #ffa600, #f91880);
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s ease;
+}
+.story-ring:hover .story-ring__ring {
+  transform: scale(1.05);
+}
+
+.story-ring__inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #000;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+}
+
+.story-ring__avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+.story-ring__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.story-ring__name {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 74px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* Непросмотренный — яркий пульсирующий градиент */
+.story-ring.is-unviewed .story-ring__ring {
+  animation: story-ring-pulse 2.6s ease-in-out infinite;
+}
+.story-ring.is-unviewed .story-ring__name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* Просмотренный — серый */
+.story-ring.is-viewed .story-ring__name {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Моя история: активный огонь / пустой пунктир */
+.story-ring.is-mine-active .story-ring__ring {
+  background: conic-gradient(from 210deg, #ff6b35, #ffa600, #f91880, #ff6b35);
+}
+.story-ring.is-empty .story-ring__ring {
+  border: 2px dashed var(--line);
+  padding: 2px;
+}
+
+.story-ring.is-all .story-ring__ring {
+  border: 1px solid var(--line);
+  padding: 2px;
+}
+
+/* Значки поверх кружка */
+.story-ring__plus {
+  position: absolute;
+  top: 46px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  border: 2px solid #000;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+.story-ring__verified {
+  position: absolute;
+  top: 44px;
+  left: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  border: 2px solid #000;
+  font-size: 10px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+.story-ring__dot {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--pink);
+  border: 2px solid #000;
+  z-index: 2;
+}
+
+@keyframes story-ring-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 139, 61, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 14px 3px rgba(255, 139, 61, 0.45);
+  }
+}
+
+/* ── Карточка в правой панели ───────────────────────────────────────────── */
+.stories-rail-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 12px 12px;
+  margin-bottom: 16px;
+}
+.stories-rail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+.stories-rail__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+.stories-rail__badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  background: rgba(29, 155, 240, 0.12);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.stories-rail .stories-scroller {
+  padding-left: 4px;
+  padding-right: 4px;
+  gap: 12px;
+}
+.stories-rail .stories-item {
+  width: 70px;
+}
+.stories-rail .story-ring__ring {
+  width: 62px;
+  height: 62px;
+}
+.stories-rail .story-ring__plus {
+  top: 42px;
+}
+.stories-rail .story-ring__verified {
+  top: 40px;
+}
+.stories-rail__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.stories-rail__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.stories-rail__action:hover {
+  background: rgba(29, 155, 240, 0.1);
+  border-color: rgba(29, 155, 240, 0.4);
+}
+
+/* ── Просмотрщик историй ────────────────────────────────────────────────── */
+.story-viewer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.94);
+  backdrop-filter: blur(10px);
+}
+
+.story-viewer {
+  position: relative;
+  width: min(420px, 94vw);
+  height: min(82vh, 760px);
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+  user-select: none;
+}
+.story-viewer__bg {
+  position: absolute;
+  inset: 0;
+}
+.story-viewer__glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  display: block;
+}
+
+.story-viewer__bars {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  gap: 5px;
+  z-index: 20;
+}
+.story-viewer__bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+.story-viewer__bar-fill {
+  display: block;
+  height: 100%;
+  background: #fff;
+  border-radius: 999px;
+  transition: width 0.06s linear;
+}
+
+.story-viewer__head {
+  position: absolute;
+  top: 24px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 20;
+}
+.story-viewer__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  flex: none;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+}
+.story-viewer__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.story-viewer__ident {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.story-viewer__name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.story-viewer__verified {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.story-viewer__meta {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  line-height: 14px;
+}
+.story-viewer__pause,
+.story-viewer__close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background 0.15s ease;
+}
+.story-viewer__pause:hover,
+.story-viewer__close:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.story-viewer__body {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 28px 96px;
+  pointer-events: none;
+}
+.story-viewer__kicker {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  margin-bottom: 12px;
+}
+.story-viewer__emoji {
+  font-size: 60px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.story-viewer__headline {
+  color: #fff;
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 900;
+  word-break: break-word;
+}
+.story-viewer__detail {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 21px;
+  margin-top: 12px;
+  max-width: 320px;
+}
+
+.story-viewer__tap {
+  position: absolute;
+  top: 0;
+  bottom: 64px;
+  width: 34%;
+  border: none;
+  background: transparent;
+  z-index: 10;
+}
+.story-viewer__tap--prev {
+  left: 0;
+}
+.story-viewer__tap--next {
+  right: 0;
+}
+
+.story-viewer__foot {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.story-viewer__reply {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.story-viewer__reply::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+.story-viewer__reply:focus {
+  outline: none;
+  border-color: #fff;
+}
+.story-viewer__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.story-viewer__icon:hover {
+  background: rgba(0, 0, 0, 0.65);
+}
+.story-viewer__icon.is-active {
+  color: var(--pink);
+}
+.story-viewer__icon.is-danger:hover {
+  color: #ff5c5c;
+}
+
+.story-viewer-nav {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background 0.15s ease;
+}
+.story-viewer-nav:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* ── Композер «Моя история» ─────────────────────────────────────────────── */
+.story-composer {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+}
+.story-composer__card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+.story-composer__glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.42;
+  display: block;
+}
+.story-composer__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.story-composer__ring {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, #ff6b35, #ffa600);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.story-composer__ava {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+}
+.story-composer__ava img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.story-composer__head-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.story-composer__head-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.story-composer__verified {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 8px;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.story-composer__head-meta {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+}
+.story-composer__card-body {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.story-composer__kicker {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  margin-bottom: 8px;
+}
+.story-composer__emoji {
+  font-size: 38px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.story-composer__headline {
+  color: #fff;
+  font-size: 26px;
+  line-height: 1.02;
+  font-weight: 900;
+  word-break: break-word;
+}
+.story-composer__detail {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 8px;
+}
+
+.story-composer__editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.story-composer__label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--muted);
+  margin: 0;
+}
+.story-composer__templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.story-composer__template {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.story-composer__template:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.story-composer__template.is-active {
+  background: rgba(29, 155, 240, 0.12);
+}
+.story-composer__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.story-composer__field > span {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.story-composer__field input,
+.story-composer__field textarea {
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+  resize: vertical;
+}
+.story-composer__field input:focus,
+.story-composer__field textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+.story-composer__publish {
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.story-composer__existing {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.story-composer__chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+.story-composer__chip {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.story-composer__chip-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.story-composer__chip-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.story-composer__chip-age {
+  font-size: 11px;
+  color: var(--muted);
+}
+.story-composer__chip-del {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 8px;
+  flex: none;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.story-composer__chip-del:hover {
+  color: #ff5c5c;
+  background: rgba(255, 92, 92, 0.12);
+}
+
+@media (max-width: 900px) {
+  .stories-rail-card {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .story-composer {
+    grid-template-columns: 1fr;
+  }
+  .story-composer__preview {
+    max-width: 190px;
+    margin: 0 auto;
+  }
+  .story-viewer-nav {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-ring.is-unviewed .story-ring__ring {
+    animation: none;
+  }
+  .story-ring:hover .story-ring__ring {
+    transform: none;
+  }
+}

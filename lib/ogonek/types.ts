@@ -319,6 +319,51 @@ export type VerifiedAchievement = {
   createdAtISO: string
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 7 — СТОРИС ДРУЗЕЙ (Instagram-стиль, кружочки)
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Один кадр (слайд) сторис — вертикальная карточка 9:16 */
+export type StorySlide = {
+  id: string
+  emoji: string
+  kicker: string
+  headline: string
+  detail: string
+  /** CSS-цвет начала градиента фона */
+  from: string
+  /** CSS-цвет конца градиента фона */
+  to: string
+  /** Акцентный цвет кикера/иконок */
+  accent: string
+}
+
+/** Живая сторис друга: набор слайдов + метка времени публикации */
+export type FriendStory = {
+  friendId: string
+  slides: StorySlide[]
+  /** Человекочитаемая метка «опубликовано» */
+  postedLabel: string
+}
+
+/**
+ * Личная сторис пользователя («Моя история»).
+ * Хранится в сторе, чтобы кнопка «+» реально публиковала и удаляла кадры.
+ */
+export type MyStory = {
+  id: string
+  createdAtISO: string
+  emoji: string
+  kicker: string
+  headline: string
+  detail: string
+  from: string
+  to: string
+  accent: string
+  /** id дня-источника, если сторис собрана из записи ленты */
+  sourceDayId?: number | null
+}
+
 export type OgonekStoreState = {
   schemaVersion: number
   days: Day[]
@@ -343,4 +388,8 @@ export type OgonekStoreState = {
   profile: OgonekProfile
   /** ID друзей, на которых подписан пользователь (вкладка «Друзья» профиля) */
   followingIds: string[]
+  /** ID друзей, чьи сторис уже просмотрены (кружок гаснет → серый) */
+  viewedStoryIds: string[]
+  /** Личные сторис пользователя («Моя история») */
+  myStories: MyStory[]
 }
