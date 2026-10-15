@@ -36,11 +36,13 @@ FILE: components/ogonek/lightbox.tsx
 FILE: components/ogonek/mobile-header.tsx
 FILE: components/ogonek/modal-shell.tsx
 FILE: components/ogonek/profile-modal.tsx
+FILE: components/ogonek/profile-story-modal.tsx
 FILE: components/ogonek/quick-focus.tsx
 FILE: components/ogonek/reaction-bar.tsx
 FILE: components/ogonek/right-rail.tsx
 FILE: components/ogonek/scroll-pill.tsx
 FILE: components/ogonek/share-card-modal.tsx
+FILE: components/ogonek/share-profile-modal.tsx
 FILE: components/ogonek/sidebar.tsx
 FILE: components/ogonek/star-rating.tsx
 FILE: components/ogonek/sw-register.tsx
@@ -67,10 +69,12 @@ FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
 FILE: lib/ogonek/evaluate-heuristic.ts
+FILE: lib/ogonek/friends.ts
 FILE: lib/ogonek/haptics.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/photos.ts
 FILE: lib/ogonek/profile-presets.ts
+FILE: lib/ogonek/profile-share.ts
 FILE: lib/ogonek/reactions.ts
 FILE: lib/ogonek/reminder-logic.ts
 FILE: lib/ogonek/sound.ts
