@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { ComposerDraft, ComposerPayload, Day, Mode } from '@/lib/ogonek/types'
+import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel } from '@/lib/ogonek/types'
 import { ModalShell } from './modal-shell'
 import { Tooltip } from './tooltip'
 
@@ -83,6 +83,16 @@ export function Composer({
       return evMap
     }
     return {}
+  })
+  const [isPublishing, setIsPublishing] = useState(false)
+  // Whether pride ratings are still default/missing → need auto AI evaluation on publish
+  const [ratingsAreDefault, setRatingsAreDefault] = useState<boolean>(() => {
+    if (editingDay && Array.isArray(editingDay.prides)) {
+      const filled = editingDay.prides.filter((p) => p.text && p.text !== '—')
+      if (filled.length === 0) return true
+      return filled.every((p) => p.scale === 8 && p.overcome === 1)
+    }
+    return true
   })
 
   // Date picker for new days (editable by user)
@@ -171,19 +181,19 @@ export function Composer({
   // Can save as draft with any content
   const canDraft = totalFilled > 0
 
-  const handleEvaluateAi = async () => {
-    if (filledPrides.length === 0) return
+  /**
+   * Requests evaluations from /api/evaluate (Gemini).
+   * Never throws: on offline / missing key / any error it silently falls back
+   * to the local heuristic, so the caller can always save the day.
+   */
+  const computeEvaluations = async (): Promise<Record<number, PrideEvaluation>> => {
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
 
-    playClick(soundEnabled)
-    setIsEvaluating(true)
-
-    try {
-      const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
-
-      let evList: PrideEvaluation[]
-      if (!isOnline) {
-        evList = evaluatePridesHeuristic(filledPrides)
-      } else {
+    let evList: PrideEvaluation[]
+    if (!isOnline) {
+      evList = evaluatePridesHeuristic(filledPrides)
+    } else {
+      try {
         const res = await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -191,51 +201,63 @@ export function Composer({
         })
         if (res.ok) {
           const data = (await res.json()) as { evaluations?: PrideEvaluation[] }
-          evList = data.evaluations || evaluatePridesHeuristic(filledPrides)
+          evList =
+            data.evaluations && data.evaluations.length > 0
+              ? data.evaluations
+              : evaluatePridesHeuristic(filledPrides)
         } else {
           evList = evaluatePridesHeuristic(filledPrides)
         }
+      } catch {
+        // Offline, timeout or server error → local heuristic, no error surfaced
+        evList = evaluatePridesHeuristic(filledPrides)
       }
+    }
 
-      // Map evaluations back to original indices
-      const nextEvalMap: Record<number, PrideEvaluation> = {}
-      let filledIdx = 0
-      prides.forEach((p, origIdx) => {
-        if (p.trim().length > 0 && evList[filledIdx]) {
-          nextEvalMap[origIdx] = evList[filledIdx]
-          filledIdx++
-        }
-      })
+    // Map evaluations back to original pride indices (for display)
+    const nextEvalMap: Record<number, PrideEvaluation> = {}
+    let filledIdx = 0
+    prides.forEach((p, origIdx) => {
+      if (p.trim().length > 0 && evList[filledIdx]) {
+        nextEvalMap[origIdx] = evList[filledIdx]
+        filledIdx++
+      }
+    })
+    return nextEvalMap
+  }
 
+  const handleEvaluateAi = async () => {
+    if (filledPrides.length === 0 || isEvaluating) return
+
+    playClick(soundEnabled)
+    setIsEvaluating(true)
+
+    try {
+      const nextEvalMap = await computeEvaluations()
       setEvaluations(nextEvalMap)
+      setRatingsAreDefault(false)
       playSuccess(soundEnabled)
-    } catch {
-      // Fallback locally
-      const evList = evaluatePridesHeuristic(filledPrides)
-      const nextEvalMap: Record<number, PrideEvaluation> = {}
-      let filledIdx = 0
-      prides.forEach((p, origIdx) => {
-        if (p.trim().length > 0 && evList[filledIdx]) {
-          nextEvalMap[origIdx] = evList[filledIdx]
-          filledIdx++
-        }
-      })
-      setEvaluations(nextEvalMap)
     } finally {
       setIsEvaluating(false)
     }
   }
 
-  const buildPayload = (): ComposerPayload => {
-    const ratings: Record<number, { scale: number; overcome: 0 | 1 | 2 | 3 }> = {}
-    prides.forEach((_, idx) => {
-      const ev = evaluations[idx]
+  const buildPayload = (
+    evalMap: Record<number, PrideEvaluation> = evaluations
+  ): ComposerPayload => {
+    // Ratings must be keyed by the compacted index (payload.prides has blanks removed)
+    const ratings: Record<number, { scale: number; overcome: OvercomeLevel }> = {}
+    let filledIdx = 0
+    prides.forEach((p, origIdx) => {
+      if (p.trim().length === 0) return
+      const ev = evalMap[origIdx]
       if (ev) {
-        ratings[idx] = {
+        ratings[filledIdx] = {
           scale: ev.scale,
-          overcome: (Math.min(3, Math.max(0, ev.overcome)) as 0 | 1 | 2 | 3) || 0,
+          overcome: (Math.min(3, Math.max(0, ev.overcome)) as OvercomeLevel) || 0,
         }
       }
+      filledIdx++
     })
 
     return {
@@ -260,8 +282,29 @@ export function Composer({
     onClose()
   }
 
-  const handlePublish = () => {
-    if (!canPublish) return
+  const handlePublish = async () => {
+    const publishEnabled = editingDay ? totalFilled > 0 : canPublish
+    if (!publishEnabled || isPublishing || isEvaluating) return
+
+    // Auto AI evaluation: if prides are unrated or still hold default scores,
+    // evaluate silently in the background, then save the day with real scores.
+    if (filledPrides.length > 0 && ratingsAreDefault) {
+      setIsPublishing(true)
+      try {
+        const evMap = await computeEvaluations()
+        setEvaluations(evMap)
+        setRatingsAreDefault(false)
+        playSuccess(soundEnabled)
+        onSaved(buildPayload(evMap), editingDay?.id, editingDay ? undefined : dateISO)
+        if (!editingDay) {
+          onClearDraft?.()
+        }
+      } finally {
+        setIsPublishing(false)
+      }
+      return
+    }
+
     playSuccess(soundEnabled)
     onSaved(buildPayload(), editingDay?.id, editingDay ? undefined : dateISO)
     if (!editingDay) {
@@ -381,6 +424,7 @@ export function Composer({
                       value={ev.scale}
                       onChange={(e) => {
                         const newScale = parseInt(e.target.value, 10)
+                        setRatingsAreDefault(false)
                         setEvaluations((prev) => ({
                           ...prev,
                           [i]: {
@@ -472,7 +516,7 @@ export function Composer({
                 type="button"
                 className="secondary-btn flex items-center gap-1.5 py-1.5 px-3 text-xs"
                 onClick={handleEvaluateAi}
-                disabled={isEvaluating}
+                disabled={isEvaluating || isPublishing}
               >
                 {isEvaluating ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -518,13 +562,25 @@ export function Composer({
               type="button"
               className="save-button"
               onClick={handlePublish}
-              disabled={editingDay ? totalFilled === 0 : !canPublish}
+              disabled={isPublishing || (editingDay ? totalFilled === 0 : !canPublish)}
               style={{
-                opacity: (editingDay ? totalFilled > 0 : canPublish) ? 1 : 0.5,
-                cursor: (editingDay ? totalFilled > 0 : canPublish) ? 'pointer' : 'not-allowed',
+                opacity: isPublishing
+                  ? 1
+                  : (editingDay ? totalFilled > 0 : canPublish) ? 1 : 0.5,
+                cursor: isPublishing
+                  ? 'progress'
+                  : (editingDay ? totalFilled > 0 : canPublish) ? 'pointer' : 'not-allowed',
               }}
             >
-              <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
+              {isPublishing ? (
+                <>
+                  <Loader2 size={17} className="animate-spin" /> Оцениваю...
+                </>
+              ) : (
+                <>
+                  <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
+                </>
+              )}
             </button>
           </Tooltip>
         </div>

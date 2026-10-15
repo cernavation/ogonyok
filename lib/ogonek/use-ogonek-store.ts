@@ -202,12 +202,16 @@ export function useOgonekStore() {
           computedDate = nextDate.toISOString()
         }
 
-        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
-          num: String(idx + 1).padStart(2, '0'),
-          text,
-          scale: 8,
-          overcome: 1,
-        }))
+        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => {
+          const customRating = payload.ratings?.[idx]
+          const heuristic = evaluatePrideItemHeuristic(text)
+          return {
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            scale: customRating?.scale ?? heuristic.scale,
+            overcome: customRating?.overcome ?? heuristic.overcome,
+          }
+        })
 
         const newDay: Day = {
           id: newId,
