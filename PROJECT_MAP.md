@@ -4,6 +4,9 @@
 
 DIR: app/
 DIR: app/api/
+DIR: app/api/achievements/
+DIR: app/api/achievements/regulate/
+FILE: app/api/achievements/regulate/route.ts
 DIR: app/api/evaluate/
 FILE: app/api/evaluate/route.ts
 DIR: app/api/streak/
@@ -22,6 +25,14 @@ FILE: app/layout.tsx
 FILE: app/page.tsx
 DIR: components/
 DIR: components/ogonek/
+DIR: components/ogonek/achievements/
+FILE: components/ogonek/achievements/achievement-card.tsx
+FILE: components/ogonek/achievements/achievement-evidence-uploader.tsx
+FILE: components/ogonek/achievements/achievement-regulation-card.tsx
+FILE: components/ogonek/achievements/achievements-panel.tsx
+FILE: components/ogonek/achievements/add-achievement-modal.tsx
+FILE: components/ogonek/achievements/evidence-file-preview.tsx
+FILE: components/ogonek/achievements/index.ts
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
@@ -65,6 +76,7 @@ DIR: data/notes/
 DIR: docs/
 DIR: lib/
 DIR: lib/ogonek/
+FILE: lib/ogonek/achievement-regulation.ts
 FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
@@ -96,6 +108,7 @@ FILE: scripts/migrate-html.mjs
 FILE: scripts/parse-apple-notes.mjs
 FILE: scripts/remind.mjs
 DIR: test/
+FILE: test/achievement-regulation.test.ts
 FILE: test/evaluate.test.ts
 FILE: test/import-real-raw.test.ts
 FILE: test/migrate.test.ts
