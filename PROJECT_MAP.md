@@ -2,6 +2,7 @@
 СТРОГО ЗАПРЕЩЕНО читать папку public/seeds, package-lock.json и node_modules!
 Ты имеешь полное право создавать новые файлы .tsx/.ts в папке components/ogonek/ и lib/ogonek/!
 
+FILE: SUPABASE_FULL_SCHEMA.sql
 DIR: app/
 DIR: app/api/
 DIR: app/api/achievements/
@@ -115,6 +116,7 @@ FILE: components/ogonek/settings/backup-sync-panel.tsx
 FILE: components/ogonek/settings/index.ts
 FILE: components/ogonek/settings/privacy-panel.tsx
 FILE: components/ogonek/settings/streak-deadline-panel.tsx
+FILE: components/ogonek/settings/supabase-sync-panel.tsx
 FILE: components/ogonek/share-card-modal.tsx
 FILE: components/ogonek/share-profile-modal.tsx
 FILE: components/ogonek/sidebar.tsx
@@ -122,6 +124,7 @@ FILE: components/ogonek/star-rating.tsx
 FILE: components/ogonek/stories-bar.tsx
 FILE: components/ogonek/story-composer-modal.tsx
 FILE: components/ogonek/story-viewer-modal.tsx
+FILE: components/ogonek/supabase-sync-bootstrap.tsx
 FILE: components/ogonek/sw-register.tsx
 FILE: components/ogonek/toast.tsx
 FILE: components/ogonek/tooltip.tsx
@@ -175,11 +178,13 @@ FILE: lib/ogonek/stories.ts
 FILE: lib/ogonek/story-digest.ts
 FILE: lib/ogonek/story-share.ts
 FILE: lib/ogonek/streak.ts
+FILE: lib/ogonek/supabase-sync.ts
 FILE: lib/ogonek/sync-code.ts
 FILE: lib/ogonek/types.ts
 FILE: lib/ogonek/use-keyboard-navigation.ts
 FILE: lib/ogonek/use-ogonek-store.ts
 FILE: lib/ogonek/use-photo-url.ts
+FILE: lib/ogonek/use-supabase-sync.ts
 FILE: lib/ogonek/visibility.ts
 FILE: lib/utils.ts
 FILE: next-env.d.ts
@@ -204,3 +209,4 @@ FILE: test/privacy-backup.test.ts
 FILE: test/reminder.test.ts
 FILE: test/security.test.ts
 FILE: test/streak.test.ts
+FILE: test/supabase-sync.test.ts
