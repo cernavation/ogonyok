@@ -60,6 +60,7 @@ FILE: components/ogonek/auth/index.ts
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
 FILE: components/ogonek/composer.tsx
+FILE: components/ogonek/connections-modal.tsx
 FILE: components/ogonek/day-card.tsx
 FILE: components/ogonek/day-entries.tsx
 FILE: components/ogonek/edit-profile-modal.tsx
@@ -75,6 +76,7 @@ FILE: components/ogonek/explore/explore-search-bar.tsx
 FILE: components/ogonek/explore/index.ts
 FILE: components/ogonek/explore/streak-leaders.tsx
 FILE: components/ogonek/explore/today-highlights.tsx
+FILE: components/ogonek/feed-settings-menu.tsx
 FILE: components/ogonek/flame-icon.tsx
 FILE: components/ogonek/focus-flame.tsx
 FILE: components/ogonek/focus-history-modal.tsx
@@ -95,6 +97,7 @@ FILE: components/ogonek/messenger/index.ts
 FILE: components/ogonek/messenger/message-reaction-picker.tsx
 FILE: components/ogonek/messenger/new-chat-modal.tsx
 FILE: components/ogonek/mobile-header.tsx
+FILE: components/ogonek/mobile-nav-sheet.tsx
 FILE: components/ogonek/modal-shell.tsx
 FILE: components/ogonek/profile-modal.tsx
 FILE: components/ogonek/profile-story-modal.tsx
