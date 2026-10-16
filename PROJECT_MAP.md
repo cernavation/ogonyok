@@ -38,6 +38,7 @@ FILE: components/ogonek/achievements/add-achievement-modal.tsx
 FILE: components/ogonek/achievements/evidence-file-preview.tsx
 FILE: components/ogonek/achievements/index.ts
 FILE: components/ogonek/achievements/verification-badge.tsx
+FILE: components/ogonek/active-friends-widget.tsx
 DIR: components/ogonek/analytics/
 FILE: components/ogonek/analytics/add-kpi-modal.tsx
 FILE: components/ogonek/analytics/ai-insight-panel.tsx
@@ -45,7 +46,6 @@ FILE: components/ogonek/analytics/dynamics-chart.tsx
 FILE: components/ogonek/analytics/index.ts
 FILE: components/ogonek/analytics/monthly-kpi-panel.tsx
 FILE: components/ogonek/analytics/period-switcher.tsx
-FILE: components/ogonek/active-friends-widget.tsx
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/appearance-provider.tsx
 FILE: components/ogonek/bottom-nav.tsx
