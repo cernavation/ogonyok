@@ -10381,3 +10381,1149 @@ html[data-density='comfortable'] .feed .px-4 { padding-left: 1.35rem !important;
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ЭТАП 15 — БЕЗОПАСНОСТЬ И ВХОД: PIN-КОД, ПАРОЛЬ, FACE ID / TOUCH ID
+   Экран блокировки, цифровая клавиатура, модалки установки и раздел
+   «Безопасность и Вход» в настройках.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Заглушка до гидратации: скрывает журнал, пока не смонтируется экран входа ── */
+html[data-app-locked='1'],
+html[data-app-locked='1'] body {
+  overflow: hidden;
+}
+html[data-app-locked='1'] .app-shell::before {
+  content: '';
+  position: fixed;
+  inset: -12vmax;
+  background: var(--bg);
+  z-index: 940;
+}
+
+/* ── Экран блокировки приложения ─────────────────────────────────────────── */
+.app-lock-screen {
+  position: fixed;
+  inset: -12vmax;
+  padding: 12vmax;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--accent-soft, rgba(255, 107, 53, 0.14)), transparent 60%),
+    var(--bg);
+  overflow: hidden;
+}
+
+.app-lock-card {
+  width: min(100%, 380px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.app-lock-card.is-shaking {
+  animation: app-lock-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes app-lock-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-10px); }
+  30% { transform: translateX(9px); }
+  45% { transform: translateX(-7px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
+}
+
+.app-lock-flame {
+  font-size: 30px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 107, 53, 0.55));
+}
+
+.app-lock-brand {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.app-lock-avatar {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  margin-top: 10px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--bg), 0 0 0 4px var(--accent), 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.app-lock-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-lock-name {
+  margin: 12px 0 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.app-lock-reason {
+  margin: 2px 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.app-lock-methods {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  margin-bottom: 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.app-lock-method {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.app-lock-method.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.app-lock-password {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.app-lock-password__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.app-lock-password__field input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.app-lock-password__field button {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+
+.app-lock-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.app-lock-submit:disabled {
+  opacity: 0.5;
+}
+
+.app-lock-biometric {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.app-lock-biometric:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.app-lock-error {
+  margin: 4px 0 0;
+  color: #f4212e;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.app-lock-warning {
+  margin: 6px 0 0;
+  color: #f5b942;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.app-lock-link {
+  margin-top: 8px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.app-lock-link:hover {
+  color: var(--accent);
+}
+
+.app-lock-lockout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(244, 33, 46, 0.1);
+  border: 1px solid rgba(244, 33, 46, 0.4);
+  color: #ff6b74;
+}
+
+.app-lock-lockout b {
+  display: block;
+  font-size: 13px;
+}
+
+.app-lock-lockout span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.app-lock-footnote {
+  margin: 16px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Цифровая клавиатура PIN ─────────────────────────────────────────────── */
+.pinpad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.pinpad__dots {
+  display: flex;
+  gap: 14px;
+  padding: 4px;
+}
+
+.pinpad__dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--bg);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.pinpad--lg .pinpad__dot {
+  width: 17px;
+  height: 17px;
+}
+
+.pinpad__dot.is-filled {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+
+.pinpad.is-error .pinpad__dot {
+  border-color: #f4212e;
+}
+
+.pinpad__message {
+  margin: -4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  min-height: 16px;
+}
+
+.pinpad__message--error {
+  color: #f4212e;
+  font-weight: 600;
+}
+
+.pinpad__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: min(100%, 268px);
+}
+
+.pinpad__key {
+  aspect-ratio: 1 / 0.82;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  font-weight: 700;
+  transition: background 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+}
+
+.pinpad--lg .pinpad__key {
+  font-size: 25px;
+}
+
+.pinpad__key:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pinpad__key:active:not(:disabled) {
+  transform: scale(0.95);
+  background: var(--accent-soft);
+}
+
+.pinpad__key--ghost {
+  color: var(--muted);
+  background: none;
+  border-color: transparent;
+}
+
+.pinpad__key:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ── Модалка установки PIN ───────────────────────────────────────────────── */
+.pin-setup-steps {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
+  flex-wrap: wrap;
+}
+
+.pin-setup-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pin-setup-step em {
+  font-style: normal;
+}
+
+.pin-setup-step.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pin-setup-step.is-done {
+  border-color: rgba(0, 186, 124, 0.5);
+  color: #53d3a3;
+}
+
+.pin-setup-caption {
+  margin: 0 0 16px;
+  color: var(--text);
+  font-size: 13px;
+  text-align: center;
+}
+
+.pin-setup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pin-setup-secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Модалка пароля аккаунта ─────────────────────────────────────────────── */
+.pw-field {
+  display: block;
+  margin-top: 14px;
+}
+
+.pw-field > span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.pw-field__input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: border-color 0.15s ease;
+}
+
+.pw-field__input:focus-within {
+  border-color: var(--accent);
+}
+
+.pw-field__input.is-invalid {
+  border-color: #f4212e;
+}
+
+.pw-field__input input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.pw-field__input button {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+}
+
+.pw-field__check {
+  color: #53d3a3;
+}
+
+.pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.pw-strength__bars {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+
+.pw-strength__bars i {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.2s ease;
+}
+
+.pw-strength--1 .pw-strength__bars i.is-on { background: #f4212e; }
+.pw-strength--2 .pw-strength__bars i.is-on { background: #f5b942; }
+.pw-strength--3 .pw-strength__bars i.is-on { background: #1d9bf0; }
+.pw-strength--4 .pw-strength__bars i.is-on { background: #53d3a3; }
+
+.pw-strength__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pw-hints {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pw-hints li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.pw-hints li svg {
+  color: #f5b942;
+  flex: none;
+}
+
+.pw-error {
+  margin: 12px 0 0;
+  color: #f4212e;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pw-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.pw-actions .save-button {
+  margin-top: 0;
+}
+
+/* ── Биометрия WebAuthn ──────────────────────────────────────────────────── */
+.bio-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  margin: 18px auto 8px;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+
+.bio-visual__pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0.5;
+  animation: bio-pulse 2.4s ease-out infinite;
+}
+
+@keyframes bio-pulse {
+  0% { transform: scale(0.9); opacity: 0.55; }
+  70% { transform: scale(1.25); opacity: 0; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+
+.bio-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12.5px;
+  margin: 12px 0;
+}
+
+.bio-note {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  border-radius: 13px;
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.bio-note b {
+  display: block;
+  font-size: 13px;
+}
+
+.bio-note span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 3px;
+}
+
+.bio-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.bio-note--warn {
+  border-color: rgba(245, 185, 66, 0.45);
+}
+
+.bio-note--warn svg {
+  color: #f5b942;
+}
+
+.bio-note--ok {
+  border-color: rgba(0, 186, 124, 0.4);
+}
+
+.bio-note--ok svg {
+  color: #53d3a3;
+}
+
+.bio-enabled {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 13px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.bio-enabled__row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.bio-enabled__row svg {
+  color: #53d3a3;
+}
+
+.bio-enabled small {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+  margin-top: 5px;
+}
+
+.bio-verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #53d3a3;
+}
+
+.bio-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.bio-actions .save-button {
+  margin-top: 0;
+}
+
+.bio-footnote {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* ── Раздел «Безопасность и Вход» ────────────────────────────────────────── */
+.security-panel {
+  background: linear-gradient(165deg, var(--accent-soft), var(--surface) 55%);
+}
+
+.security-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.security-state-badge--none {
+  color: #f5b942;
+  border-color: rgba(245, 185, 66, 0.5);
+  background: rgba(245, 185, 66, 0.1);
+}
+
+.security-state-badge--basic {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.security-state-badge--strong {
+  color: #53d3a3;
+  border-color: rgba(0, 186, 124, 0.5);
+  background: rgba(0, 186, 124, 0.12);
+}
+
+.security-hero {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.security-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex: none;
+}
+
+.security-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.security-ring__track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 8;
+}
+
+.security-ring__value {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.4s ease;
+}
+
+.security-ring__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.security-ring__label b {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+
+.security-ring__label small {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.security-hero__info {
+  min-width: 0;
+}
+
+.security-hero__title {
+  font-size: 15px;
+}
+
+.security-hero__text {
+  margin: 4px 0 10px;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.security-hero__toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.security-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+
+.security-chip.is-on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.security-lock-now {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.security-lock-now:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.security-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.security-method {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 15px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: border-color 0.15s ease;
+}
+
+.security-method.is-on {
+  border-color: rgba(0, 186, 124, 0.4);
+}
+
+.security-method__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--surface2);
+  color: var(--muted);
+  flex: none;
+}
+
+.security-method.is-on .security-method__icon {
+  background: rgba(0, 186, 124, 0.14);
+  color: #53d3a3;
+}
+
+.security-method__body {
+  min-width: 0;
+}
+
+.security-method__body b {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+}
+
+.security-method__body small {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+  margin-top: 3px;
+}
+
+.security-method__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #53d3a3;
+  background: rgba(0, 186, 124, 0.14);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.security-method__actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.sec-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.sec-mini-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sec-mini-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sec-mini-btn--accent {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sec-mini-btn--danger {
+  padding: 7px 10px;
+  color: #f4212e;
+  border-color: rgba(244, 33, 46, 0.4);
+  background: none;
+}
+
+.sec-mini-btn--danger:hover:not(:disabled) {
+  border-color: #f4212e;
+  color: #f4212e;
+  background: rgba(244, 33, 46, 0.08);
+}
+
+.security-switches {
+  margin-top: 6px;
+}
+
+.security-switches .setting-row:last-child {
+  border-bottom: 0;
+}
+
+.security-autolock {
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.security-autolock b {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.security-autolock__row {
+  width: 100%;
+}
+
+.security-audit {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.security-audit__empty {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.security-audit__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.security-audit__list li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--line);
+}
+
+.security-audit__list li:last-child {
+  border-bottom: 0;
+}
+
+.security-audit__icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface2);
+  flex: none;
+}
+
+.security-audit__note {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-audit__time {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.security-danger {
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.security-danger__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 33, 46, 0.4);
+  background: none;
+  color: #f4212e;
+  font-size: 12px;
+  font-weight: 700;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.security-danger__btn:hover {
+  background: rgba(244, 33, 46, 0.08);
+  border-color: #f4212e;
+}
+
+/* ── Светлая тема: корректируем «зашитые» тёмные подложки ─────────────────── */
+html[data-theme='apple-light'] .app-lock-screen {
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--accent-soft), transparent 60%),
+    #ffffff;
+}
+
+html[data-theme='apple-light'] .app-lock-avatar,
+html[data-theme='dim'] .app-lock-avatar {
+  color: #fff;
+}
+
+html[data-theme='apple-light'] .pinpad__dot {
+  color: #ffffff;
+}
+
+html[data-theme='dim'] .pinpad__dot {
+  color: #15202b;
+}
+
+html[data-theme='apple-light'] .security-hero,
+html[data-theme='dim'] .security-hero,
+html[data-theme='apple-light'] .security-method,
+html[data-theme='dim'] .security-method,
+html[data-theme='apple-light'] .bio-note,
+html[data-theme='dim'] .bio-note,
+html[data-theme='apple-light'] .bio-enabled,
+html[data-theme='dim'] .bio-enabled,
+html[data-theme='apple-light'] .app-lock-password__field,
+html[data-theme='dim'] .app-lock-password__field,
+html[data-theme='apple-light'] .app-lock-biometric,
+html[data-theme='dim'] .app-lock-biometric {
+  background: var(--surface);
+}
+
+/* ── Мобильная адаптация раздела безопасности ────────────────────────────── */
+@media (max-width: 640px) {
+  .security-hero {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .security-hero__toggles {
+    justify-content: center;
+  }
+
+  .security-method {
+    grid-template-columns: auto 1fr;
+  }
+
+  .security-method__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  .pinpad__grid {
+    width: 100%;
+    max-width: 320px;
+  }
+}

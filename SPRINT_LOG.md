@@ -318,9 +318,46 @@
   - `npm run test:unit`: 80/80 pass (10 сьютов), включая 10 новых тестов утреннего фокуса.
 - **Остаточные риски:** Нет.
 
-
-
-
+### Фаза 15 (этап 15/70): Безопасность и вход — пароль, PIN-код и биометрия ✅
+- **Что сделано:**
+  1. Расширена модель данных `lib/ogonek/types.ts`: `SecurityMethod = 'pin' | 'biometric' | 'password'`, `SecurityAuditKind`, `SecurityAuditEvent` (журнал безопасности) и `AppSecurityState`; в `OgonekStoreState` добавлено поле `security`.
+  2. Создан чистый движок `lib/ogonek/security.ts`:
+     - Секреты хранятся **только** как соль + SHA-256 хэш (`generateSalt`, `hashSecret` через Web Crypto с детерминированным fallback для SSR/тестов, `verifySecret` со сравнением в постоянном времени). Пароли/PIN в открытом виде не сохраняются никогда.
+     - Валидация `isValidPin` (ровно 4 цифры), `isValidPassword` (6–64 символа) и живая оценка надёжности `evaluatePasswordStrength` (0–4 + подсказки).
+     - Защита от перебора: `nextFailedAttemptState` (5 неудачных попыток → блокировка на 60 секунд), `computeLockout`, `attemptsLeft`.
+     - Журнал безопасности (`makeSecurityEvent`, `appendSecurityEvent`, лимит 40 событий) и безопасная валидация состояния из хранилища (`sanitizeSecurityState` — PIN без соли и биометрия без ключа отбрасываются).
+     - Помощники состояния и оценка защиты (`hasSecurityPin/hasAccountPassword/hasBiometric/hasUnlockMethod`, `activeUnlockMethods`, `evaluateSecurityLevel` → `none/basic/strong`, `SECURITY_METHOD_META`).
+     - Интеграция WebAuthn (Touch ID / Face ID): `isWebAuthnSupported`, `isPlatformAuthenticatorAvailable`, `registerBiometricCredential`, `authenticateWithBiometric`, `detectBiometricLabel`, конвертеры base64url.
+     - Лёгкая подсказка для мгновенной блокировки до гидратации: `buildSecurityHint/persistSecurityHint/readSecurityHint` и inline `SECURITY_BOOTSTRAP_SCRIPT`.
+  3. Обновлено хранилище `lib/ogonek/storage.ts`: `CURRENT_SCHEMA_VERSION` поднят до 5, `security` во всех ветках загрузки/импорта с `sanitizeSecurityState`, дефолт `DEFAULT_SECURITY_STATE`.
+  4. Расширен стор `lib/ogonek/use-ogonek-store.ts`: `updateSecurity`, `recordSecurityEvent`, `setAccountPassword`, `clearAccountPassword`, `setSecurityPin`, `clearSecurityPin`, `setBiometricEnabled`, `setLockOnOpen`, `setPinQuickUnlock`, `setAutoLockMinutes`, `registerFailedUnlock`, `verifyPin`, `verifyPassword`, `unlockWithBiometric`, `lockAppNow`, `resetSecurity`; флаг `pinEnabled` синхронизирован с блокировкой при открытии.
+  5. Новые компоненты под `components/ogonek/security/`:
+     - `pin-pad.tsx` — числовая клавиатура с точками, вибрацией и вводом.
+     - `app-lock-screen.tsx` — полноэкранный экран блокировки с переключением способов (PIN / пароль / биометрия), таймером блокировки и аватаром.
+     - `pin-setup-modal.tsx`, `password-setup-modal.tsx` (с индикатором надёжности), `biometric-setup-modal.tsx` (WebAuthn-регистрация).
+     - `security-panel.tsx` — секция «Безопасность и вход»: статус-карточка защиты, способы входа, автоблокировка и журнал событий.
+  6. Интеграция: `components/ogonek/views/settings-view.tsx` (секция `SecurityPanel`), `components/ogonek/app-shell.tsx` (состояние блокировки, автоблокировка по бездействию, событие `ogonek:lock-now`, `data-locked`, экран блокировки через `AnimatePresence`), `app/layout.tsx` (`SECURITY_BOOTSTRAP_SCRIPT`), `app/globals.css` (новые стили — только добавление, существующие классы не тронуты).
+- **Файлы:**
+  - `lib/ogonek/types.ts`
+  - `lib/ogonek/security.ts`
+  - `lib/ogonek/storage.ts`
+  - `lib/ogonek/use-ogonek-store.ts`
+  - `components/ogonek/security/pin-pad.tsx`
+  - `components/ogonek/security/app-lock-screen.tsx`
+  - `components/ogonek/security/pin-setup-modal.tsx`
+  - `components/ogonek/security/password-setup-modal.tsx`
+  - `components/ogonek/security/biometric-setup-modal.tsx`
+  - `components/ogonek/security/security-panel.tsx`
+  - `components/ogonek/security/index.ts`
+  - `components/ogonek/views/settings-view.tsx`
+  - `components/ogonek/app-shell.tsx`
+  - `app/layout.tsx`
+  - `app/globals.css`
+  - `test/security.test.ts`
+- **Проверки:**
+  - `npm run lint` (`tsc --noEmit`): 0 ошибок.
+  - `npm run test:unit`: 112/112 pass (15 сьютов), включая 15 новых тестов безопасности.
+- **Остаточные риски:** Биометрия WebAuthn требует HTTPS (или localhost) и наличия платформенного аутентификатора — в остальных случаях честно показывается ошибка и работают PIN/пароль.
 
 
 

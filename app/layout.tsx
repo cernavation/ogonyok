@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { APPEARANCE_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/appearance'
+import { SECURITY_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/security'
 import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
 
 export const metadata: Metadata = {
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className="antialiased">
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SECURITY_BOOTSTRAP_SCRIPT }} />
         <ServiceWorkerRegister />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

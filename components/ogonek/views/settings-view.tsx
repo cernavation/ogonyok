@@ -44,13 +44,13 @@ import type {
   ViewId,
 } from '@/lib/ogonek/types'
 import { MobileHeader } from '../mobile-header'
+import { SecurityPanel } from '../security'
 
 type Props = {
   state: OgonekStoreState
   onNavigate: (view: ViewId) => void
   onNotify: (msg: string) => void
   onSetSoundEnabled: (enabled: boolean) => void
-  onSetPinEnabled: (enabled: boolean) => void
   onSetTheme: (theme: ThemeMode) => void
   onSetAccent: (accent: AccentId) => void
   onSetFontScale: (scale: FontScaleId) => void
@@ -71,7 +71,6 @@ export function SettingsView({
   onNavigate,
   onNotify,
   onSetSoundEnabled,
-  onSetPinEnabled,
   onSetTheme,
   onSetAccent,
   onSetFontScale,
@@ -571,8 +570,8 @@ export function SettingsView({
           </button>
         </div>
 
-        {/* ═══ ИНТЕРФЕЙС И БЕЗОПАСНОСТЬ ═══ */}
-        <section className="settings-section" aria-label="Параметры интерфейса и безопасности">
+        {/* ═══ ИНТЕРФЕЙС ═══ */}
+        <section className="settings-section" aria-label="Параметры интерфейса">
           <div className="setting-row">
             <div>
               <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -595,28 +594,10 @@ export function SettingsView({
               <i />
             </button>
           </div>
-
-          <div className="setting-row">
-            <div>
-              <b>PIN-код</b>
-              <small>Защитить личный журнал при открытии на устройстве</small>
-            </div>
-            <button
-              type="button"
-              className={`switch ${state.pinEnabled ? 'on' : ''}`}
-              onClick={() => {
-                const next = !state.pinEnabled
-                onSetPinEnabled(next)
-                playClick(state.soundEnabled)
-                onNotify(next ? 'PIN-код активирован' : 'PIN-код выключен')
-              }}
-              aria-label={state.pinEnabled ? 'Отключить PIN-код' : 'Включить PIN-код'}
-              aria-pressed={state.pinEnabled}
-            >
-              <i />
-            </button>
-          </div>
         </section>
+
+        {/* ═══ БЕЗОПАСНОСТЬ И ВХОД (ЭТАП 15) ═══ */}
+        <SecurityPanel onNotify={onNotify} />
 
         {/* Telegram & Server Streak Synchronization Section */}
         <section className="settings-section" aria-labelledby="sync-title">

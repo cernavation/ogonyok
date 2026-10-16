@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import { computeStreak } from '@/lib/ogonek/streak'
+import { hasUnlockMethod, persistSecurityHint } from '@/lib/ogonek/security'
 import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
@@ -12,6 +13,7 @@ import { AppearanceProvider } from './appearance-provider'
 import { BottomNav } from './bottom-nav'
 import { Composer } from './composer'
 import { RightRail } from './right-rail'
+import { AppLockScreen } from './security'
 import { Sidebar } from './sidebar'
 import { ScrollPill } from './scroll-pill'
 import { Toast } from './toast'
@@ -37,6 +39,8 @@ export function AppShell() {
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
   const [toast, setToast] = useState('')
+  const [locked, setLocked] = useState(false)
+  const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
 
   const {
     state,
@@ -53,7 +57,6 @@ export function AppShell() {
     toggleEvidencePin,
     addEvidenceItem,
     setSoundEnabled,
-    setPinEnabled,
     setTheme,
     setAccent,
     setFontScale,
@@ -66,6 +69,7 @@ export function AppShell() {
     resetToDefaults,
     getNextDayDate,
     getNextDayId,
+    lockAppNow,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -81,6 +85,76 @@ export function AppShell() {
       setToast('')
     }, 2400)
   }, [])
+
+  const canLock = hasUnlockMethod(state.security)
+
+  /* ── ЭТАП 15: экран блокировки, автоблокировка и ручная блокировка ─────── */
+
+  // До гидратации CSS держал контент под чёрной заглушкой — снимаем флаг
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.removeAttribute('data-app-locked')
+    }
+  }, [])
+
+  // Держим лёгкую подсказку в актуальном состоянии для bootstrap-скрипта
+  useEffect(() => {
+    persistSecurityHint(state.security)
+  }, [state.security])
+
+  // Блокировка при открытии приложения
+  useEffect(() => {
+    if (hasUnlockMethod(state.security) && state.security.lockOnOpen) {
+      setLockReason('open')
+      setLocked(true)
+    }
+    // Проверяем только при первом монтировании
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Ручная блокировка из «Настроек» и «Безопасности»
+  useEffect(() => {
+    const handleLockNow = () => {
+      if (!canLock) return
+      lockAppNow()
+      setLockReason('manual')
+      setLocked(true)
+    }
+    window.addEventListener('ogonek:lock-now', handleLockNow)
+    return () => window.removeEventListener('ogonek:lock-now', handleLockNow)
+  }, [canLock, lockAppNow])
+
+  // Автоблокировка при бездействии
+  useEffect(() => {
+    if (locked || !canLock || !state.security.lockOnOpen || state.security.autoLockMinutes <= 0) return
+    let timer: number | undefined
+    const arm = () => {
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        lockAppNow()
+        setLockReason('idle')
+        setLocked(true)
+      }, state.security.autoLockMinutes * 60_000)
+    }
+    const events: (keyof WindowEventMap)[] = [
+      'pointerdown',
+      'keydown',
+      'wheel',
+      'touchstart',
+      'scroll',
+    ]
+    arm()
+    events.forEach((event) => window.addEventListener(event, arm, { passive: true }))
+    return () => {
+      if (timer) window.clearTimeout(timer)
+      events.forEach((event) => window.removeEventListener(event, arm))
+    }
+  }, [locked, canLock, state.security.lockOnOpen, state.security.autoLockMinutes, lockAppNow])
+
+  const handleUnlocked = useCallback(() => {
+    setLocked(false)
+    notify('Журнал разблокирован')
+  }, [notify])
 
   const navigate = useCallback((next: ViewId) => {
     playClick(state.soundEnabled)
@@ -101,16 +175,26 @@ export function AppShell() {
 
   // Keyboard navigation shortcuts
   useKeyboardNavigation({
-    onOpenComposer: () => setComposer(true),
-    onNavigateExplore: () => navigate('explore'),
+    onOpenComposer: () => {
+      if (locked) return
+      setComposer(true)
+    },
+    onNavigateExplore: () => {
+      if (locked) return
+      navigate('explore')
+    },
     onCloseModals: () => {
+      if (locked) return
       setComposer(false)
       setEditingDay(null)
       setLightbox(null)
       setHotkeysModal(false)
       setProfileModal(false)
     },
-    onToggleHotkeysModal: () => setHotkeysModal((prev) => !prev),
+    onToggleHotkeysModal: () => {
+      if (locked) return
+      setHotkeysModal((prev) => !prev)
+    },
   })
 
   // Auto-seed real history if store is in initial single/dual-day demo state
@@ -134,6 +218,7 @@ export function AppShell() {
   // Key 'p' to open profile modal (legacy — keep for hotkey compat)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      if (locked) return
       const activeTag = document.activeElement?.tagName?.toLowerCase()
       if (activeTag === 'input' || activeTag === 'textarea') return
 
@@ -146,7 +231,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [navigate])
+  }, [navigate, locked])
 
   const handleFocusIntentions = useCallback(() => {
     // Navigate to the dedicated Intentions view
@@ -288,7 +373,6 @@ export function AppShell() {
           onNavigate={navigate}
           onNotify={notify}
           onSetSoundEnabled={setSoundEnabled}
-          onSetPinEnabled={setPinEnabled}
           onSetTheme={setTheme}
           onSetAccent={setAccent}
           onSetFontScale={setFontScale}
@@ -336,7 +420,6 @@ export function AppShell() {
       toggleEvidencePin,
       addEvidenceItem,
       setSoundEnabled,
-      setPinEnabled,
       setTheme,
       setAccent,
       setFontScale,
@@ -359,7 +442,7 @@ export function AppShell() {
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
       />
-      <main className="app-shell">
+      <main className="app-shell" data-locked={locked ? 'true' : undefined}>
         <Sidebar
           view={view}
           onNavigate={navigate}
@@ -439,6 +522,10 @@ export function AppShell() {
               onNavigate={navigate}
             />
           )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {locked && <AppLockScreen onUnlocked={handleUnlocked} reason={lockReason} />}
         </AnimatePresence>
 
         <Toast message={toast} />

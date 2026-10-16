@@ -59,6 +59,7 @@ import type {
   AchievementRegulation,
   AchievementStatus,
   AccentId,
+  AppSecurityState,
   ChatAttachment,
   ChatMessage,
   ChatThreads,
@@ -81,11 +82,31 @@ import type {
   OgonekStoreState,
   PrideEntry,
   ReactionCounts,
+  SecurityAuditKind,
   ThemeMode,
   VerifiedAchievement,
   VisibilityLevel,
 } from './types'
 import { withGratitudeRating } from './reactions'
+import {
+  DEFAULT_SECURITY_STATE,
+  MAX_PASSWORD_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  PIN_LENGTH,
+  appendSecurityEvent,
+  attemptsLeft,
+  computeLockout,
+  generateSalt,
+  hasAccountPassword,
+  hasSecurityPin,
+  hashSecret,
+  isValidPassword,
+  isValidPin,
+  makeSecurityEvent,
+  nextFailedAttemptState,
+  sanitizeSecurityState,
+  verifySecret,
+} from './security'
 import {
   sanitizeDismissedSuggestions,
   sanitizeFollowingIds,
@@ -991,6 +1012,7 @@ export function useOgonekStore() {
       updateStore((prev) => ({
         ...prev,
         pinEnabled: enabled,
+        security: sanitizeSecurityState({ ...prev.security, lockOnOpen: enabled }),
       }))
     },
     [updateStore]
@@ -1048,6 +1070,387 @@ export function useOgonekStore() {
       accent: DEFAULT_STORE_STATE.accent,
       fontScale: DEFAULT_STORE_STATE.fontScale,
       feedDensity: DEFAULT_STORE_STATE.feedDensity,
+    }))
+  }, [updateStore])
+
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 15 — БЕЗОПАСНОСТЬ И ВХОД: ПАРОЛЬ, PIN-КОД, FACE ID / TOUCH ID
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Точечно обновляет снимок защиты с валидацией (соль/хэши сохраняются как есть) */
+  const updateSecurity = useCallback(
+    (patch: Partial<AppSecurityState>) => {
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({ ...prev.security, ...patch }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Добавляет событие в журнал безопасности */
+  const recordSecurityEvent = useCallback(
+    (kind: SecurityAuditKind, note: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          auditLog: appendSecurityEvent(prev.security.auditLog, makeSecurityEvent(kind, note)),
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * УСТАНОВКА / СМЕНА ПАРОЛЯ АККАУНТА.
+   * Секрет хэшируется SHA-256 с новой солью; открытый текст нигде не хранится.
+   */
+  const setAccountPassword = useCallback(
+    async (password: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!isValidPassword(password)) {
+        return {
+          ok: false,
+          error: `Пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`,
+        }
+      }
+      const hadPassword = hasAccountPassword(getSnapshot().security)
+      const salt = generateSalt()
+      const hash = await hashSecret(password, salt)
+      const nowISO = new Date().toISOString()
+      const event = makeSecurityEvent(
+        hadPassword ? 'password-changed' : 'password-set',
+        hadPassword ? 'Пароль аккаунта изменён' : 'Пароль аккаунта установлен'
+      )
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          passwordHash: hash,
+          passwordSalt: salt,
+          passwordUpdatedAtISO: nowISO,
+          failedAttempts: 0,
+          lockedUntilISO: null,
+          auditLog: appendSecurityEvent(prev.security.auditLog, event),
+        }),
+      }))
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /** Удаляет пароль аккаунта (требуется подтверждение текущим паролем) */
+  const clearAccountPassword = useCallback(
+    async (currentPassword?: string): Promise<{ ok: boolean; error?: string }> => {
+      const security = getSnapshot().security
+      if (!hasAccountPassword(security)) return { ok: true }
+      if (!currentPassword) {
+        return { ok: false, error: 'Введите текущий пароль для отключения' }
+      }
+      const valid = await verifySecret(currentPassword, security.passwordSalt, security.passwordHash)
+      if (!valid) return { ok: false, error: 'Неверный текущий пароль' }
+
+      const event = makeSecurityEvent('password-removed', 'Пароль аккаунта удалён')
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          passwordHash: null,
+          passwordSalt: null,
+          passwordUpdatedAtISO: null,
+          auditLog: appendSecurityEvent(prev.security.auditLog, event),
+        }),
+      }))
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /**
+   * УСТАНОВКА 4-ЗНАЧНОГО PIN-КОДА.
+   * Первый способ входа автоматически включает блокировку при открытии.
+   */
+  const setSecurityPin = useCallback(
+    async (
+      pin: string,
+      options?: { quickUnlock?: boolean }
+    ): Promise<{ ok: boolean; error?: string }> => {
+      if (!isValidPin(pin)) {
+        return { ok: false, error: `PIN-код должен состоять из ${PIN_LENGTH} цифр` }
+      }
+      const security = getSnapshot().security
+      const hadPin = hasSecurityPin(security)
+      const salt = generateSalt()
+      const hash = await hashSecret(pin, salt)
+      const quickUnlock = options?.quickUnlock ?? security.pinQuickUnlockEnabled ?? true
+      const enableLock = security.lockOnOpen || !hadPin
+      const event = makeSecurityEvent(
+        hadPin ? 'pin-changed' : 'pin-set',
+        hadPin ? 'PIN-код изменён' : 'PIN-код установлен'
+      )
+      updateStore((prev) => ({
+        ...prev,
+        pinEnabled: enableLock,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          pinHash: hash,
+          pinSalt: salt,
+          pinLength: PIN_LENGTH,
+          pinQuickUnlockEnabled: quickUnlock,
+          lockOnOpen: enableLock,
+          failedAttempts: 0,
+          lockedUntilISO: null,
+          auditLog: appendSecurityEvent(prev.security.auditLog, event),
+        }),
+      }))
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /** Удаляет PIN-код (при наличии — с подтверждением текущего) */
+  const clearSecurityPin = useCallback(
+    async (currentPin?: string): Promise<{ ok: boolean; error?: string }> => {
+      const security = getSnapshot().security
+      if (!hasSecurityPin(security)) return { ok: true }
+      if (currentPin !== undefined) {
+        const valid = await verifySecret(currentPin, security.pinSalt, security.pinHash)
+        if (!valid) return { ok: false, error: 'Неверный PIN-код' }
+      }
+      const event = makeSecurityEvent('pin-removed', 'PIN-код удалён')
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          pinHash: null,
+          pinSalt: null,
+          pinQuickUnlockEnabled: false,
+          auditLog: appendSecurityEvent(prev.security.auditLog, event),
+        }),
+      }))
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /** Включает/выключает биометрический ключ WebAuthn (Touch ID / Face ID) */
+  const setBiometricEnabled = useCallback(
+    (enabled: boolean, credential?: { id: string; label: string }): boolean => {
+      const security = getSnapshot().security
+      if (enabled && !credential?.id) return false
+      const event = makeSecurityEvent(
+        enabled ? 'biometric-enabled' : 'biometric-disabled',
+        enabled ? 'Биометрия включена' : 'Биометрия отключена'
+      )
+      updateStore((prev) => ({
+        ...prev,
+        pinEnabled: enabled ? true : prev.pinEnabled,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          biometricEnabled: enabled,
+          biometricCredentialId: enabled ? credential?.id ?? null : null,
+          biometricLabel: enabled ? credential?.label ?? null : null,
+          biometricRegisteredAtISO: enabled ? new Date().toISOString() : null,
+          lockOnOpen: enabled ? true : prev.security.lockOnOpen,
+          failedAttempts: enabled ? 0 : prev.security.failedAttempts,
+          lockedUntilISO: enabled ? null : prev.security.lockedUntilISO,
+          auditLog: appendSecurityEvent(prev.security.auditLog, event),
+        }),
+      }))
+      return true
+    },
+    [updateStore]
+  )
+
+  /** Главный тумблер «Блокировать при открытии». Без способа входа не включается. */
+  const setLockOnOpen = useCallback(
+    (enabled: boolean): boolean => {
+      const security = getSnapshot().security
+      const canLock = hasSecurityPin(security) || hasAccountPassword(security) || Boolean(security.biometricCredentialId)
+      if (enabled && !canLock) return false
+      const next = enabled
+      const event = makeSecurityEvent(
+        next ? 'lock-enabled' : 'lock-disabled',
+        next ? 'Блокировка при открытии включена' : 'Блокировка при открытии выключена'
+      )
+      updateStore((prev) =>
+        prev.security.lockOnOpen === next && prev.pinEnabled === next
+          ? prev
+          : {
+              ...prev,
+              pinEnabled: next,
+              security: sanitizeSecurityState({
+                ...prev.security,
+                lockOnOpen: next,
+                auditLog: appendSecurityEvent(prev.security.auditLog, event),
+              }),
+            }
+      )
+      return next
+    },
+    [updateStore]
+  )
+
+  /** Быстрый вход по PIN при открытии приложения (только если PIN задан) */
+  const setPinQuickUnlock = useCallback(
+    (enabled: boolean): boolean => {
+      const security = getSnapshot().security
+      if (enabled && !hasSecurityPin(security)) return false
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({ ...prev.security, pinQuickUnlockEnabled: enabled }),
+      }))
+      return enabled
+    },
+    [updateStore]
+  )
+
+  /** Автоблокировка при бездействии, минуты (0 — выключена) */
+  const setAutoLockMinutes = useCallback(
+    (minutes: number) => {
+      const clean = Math.max(0, Math.min(240, Math.round(minutes || 0)))
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({ ...prev.security, autoLockMinutes: clean }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * Фиксирует неудачную попытку входа. После 5 промахов подряд вход
+   * временно блокируется на 60 секунд (защита от перебора).
+   */
+  const registerFailedUnlock = useCallback(
+    (method?: string): { locked: boolean; attemptsLeft: number } => {
+      const security = getSnapshot().security
+      const next = nextFailedAttemptState(security.failedAttempts)
+      const locked = Boolean(next.lockedUntilISO)
+      let log = appendSecurityEvent(
+        security.auditLog,
+        makeSecurityEvent(
+          'failed-attempt',
+          `Неудачная попытка входа${method ? ` (${method})` : ''}`
+        )
+      )
+      if (locked) {
+        log = appendSecurityEvent(
+          log,
+          makeSecurityEvent('lockout', 'Вход временно заблокирован на 60 секунд')
+        )
+      }
+      updateStore((prev) => ({
+        ...prev,
+        security: sanitizeSecurityState({
+          ...prev.security,
+          failedAttempts: next.failedAttempts,
+          lockedUntilISO: next.lockedUntilISO ?? prev.security.lockedUntilISO,
+          auditLog: log,
+        }),
+      }))
+      return { locked, attemptsLeft: attemptsLeft(next.failedAttempts) }
+    },
+    [updateStore]
+  )
+
+  /** Проверяет PIN-код: при успехе фиксирует вход и сбрасывает счётчик промахов */
+  const verifyPin = useCallback(
+    async (pin: string): Promise<boolean> => {
+      const security = getSnapshot().security
+      if (computeLockout(security.lockedUntilISO).isLocked) return false
+      const valid = await verifySecret(pin, security.pinSalt, security.pinHash)
+      if (valid) {
+        updateStore((prev) => ({
+          ...prev,
+          security: sanitizeSecurityState({
+            ...prev.security,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastUnlockedAtISO: new Date().toISOString(),
+            auditLog: appendSecurityEvent(
+              prev.security.auditLog,
+              makeSecurityEvent('unlocked', 'Вход по PIN-коду')
+            ),
+          }),
+        }))
+        return true
+      }
+      registerFailedUnlock('PIN')
+      return false
+    },
+    [updateStore, registerFailedUnlock]
+  )
+
+  /** Проверяет пароль аккаунта (аварийный вход, если PIN забыт) */
+  const verifyPassword = useCallback(
+    async (password: string): Promise<boolean> => {
+      const security = getSnapshot().security
+      if (computeLockout(security.lockedUntilISO).isLocked) return false
+      const valid = await verifySecret(password, security.passwordSalt, security.passwordHash)
+      if (valid) {
+        updateStore((prev) => ({
+          ...prev,
+          security: sanitizeSecurityState({
+            ...prev.security,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastUnlockedAtISO: new Date().toISOString(),
+            auditLog: appendSecurityEvent(
+              prev.security.auditLog,
+              makeSecurityEvent('unlocked', 'Вход по паролю аккаунта')
+            ),
+          }),
+        }))
+        return true
+      }
+      registerFailedUnlock('пароль')
+      return false
+    },
+    [updateStore, registerFailedUnlock]
+  )
+
+  /** Фиксирует успешный вход по биометрии WebAuthn (сбрасывает промахи и пишет аудит) */
+  const unlockWithBiometric = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      security: sanitizeSecurityState({
+        ...prev.security,
+        failedAttempts: 0,
+        lockedUntilISO: null,
+        lastUnlockedAtISO: new Date().toISOString(),
+        auditLog: appendSecurityEvent(
+          prev.security.auditLog,
+          makeSecurityEvent('unlocked', 'Вход по биометрии (WebAuthn)')
+        ),
+      }),
+    }))
+  }, [updateStore])
+
+  /** Записывает факт ручной блокировки и сбрасывает таймер бездействия */
+  const lockAppNow = useCallback(() => {    updateStore((prev) => ({
+      ...prev,
+      security: sanitizeSecurityState({
+        ...prev.security,
+        auditLog: appendSecurityEvent(
+          prev.security.auditLog,
+          makeSecurityEvent('lock-now', 'Приложение заблокировано вручную')
+        ),
+      }),
+    }))
+  }, [updateStore])
+
+  /** Полностью снимает защиту (пароль, PIN, биометрия) и выключает блокировку */
+  const resetSecurity = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      pinEnabled: false,
+      security: sanitizeSecurityState({
+        ...DEFAULT_SECURITY_STATE,
+        auditLog: appendSecurityEvent(
+          prev.security.auditLog,
+          makeSecurityEvent('lock-disabled', 'Защита сброшена к заводским настройкам')
+        ),
+      }),
     }))
   }, [updateStore])
 
@@ -1450,6 +1853,7 @@ export function useOgonekStore() {
         accent: sanitizeAccent(newState.accent),
         fontScale: sanitizeFontScale(newState.fontScale),
         feedDensity: sanitizeFeedDensity(newState.feedDensity),
+        security: sanitizeSecurityState(newState.security),
       }))
     },
     [updateStore]
@@ -2198,6 +2602,22 @@ export function useOgonekStore() {
     setFontScale,
     setFeedDensity,
     resetAppearance,
+    updateSecurity,
+    recordSecurityEvent,
+    setAccountPassword,
+    clearAccountPassword,
+    setSecurityPin,
+    clearSecurityPin,
+    setBiometricEnabled,
+    setLockOnOpen,
+    setPinQuickUnlock,
+    setAutoLockMinutes,
+    registerFailedUnlock,
+    verifyPin,
+    verifyPassword,
+    unlockWithBiometric,
+    lockAppNow,
+    resetSecurity,
     addVerifiedAchievement,
     updateVerifiedAchievement,
     attachAchievementEvidence,

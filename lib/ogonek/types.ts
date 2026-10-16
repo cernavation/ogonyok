@@ -458,6 +458,75 @@ export type MyStory = {
 }
 
 /* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 15 — БЕЗОПАСНОСТЬ И ВХОД: ПАРОЛЬ, PIN-КОД, FACE ID / TOUCH ID
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Способ, которым пользователь может разблокировать Огонёк */
+export type SecurityMethod = 'pin' | 'biometric' | 'password'
+
+/** Событие журнала безопасности (аудит входов и настроек защиты) */
+export type SecurityAuditKind =
+  | 'password-set'
+  | 'password-changed'
+  | 'password-removed'
+  | 'pin-set'
+  | 'pin-changed'
+  | 'pin-removed'
+  | 'biometric-enabled'
+  | 'biometric-disabled'
+  | 'lock-enabled'
+  | 'lock-disabled'
+  | 'unlocked'
+  | 'failed-attempt'
+  | 'lockout'
+  | 'lock-now'
+
+export type SecurityAuditEvent = {
+  id: string
+  atISO: string
+  kind: SecurityAuditKind
+  note: string
+}
+
+/**
+ * Полный снимок защиты приложения.
+ * Все секреты хранятся только в виде соли + SHA-256 хэша (Web Crypto),
+ * сам пароль/PIN никогда не сохраняется в открытом виде.
+ */
+export type AppSecurityState = {
+  /** Пароль аккаунта: соль + хэш (Web Crypto SHA-256) */
+  passwordHash: string | null
+  passwordSalt: string | null
+  passwordUpdatedAtISO: string | null
+  /** 4-значный PIN-код быстрого входа: соль + хэш */
+  pinHash: string | null
+  pinSalt: string | null
+  /** Длина PIN-кода (по умолчанию 4 цифры) */
+  pinLength: number
+  /** Быстрый вход по PIN-коду при открытии приложения */
+  pinQuickUnlockEnabled: boolean
+  /** Биометрический ключ WebAuthn (Touch ID / Face ID) включён */
+  biometricEnabled: boolean
+  /** base64url id зарегистрированного WebAuthn-ключа */
+  biometricCredentialId: string | null
+  /** Человекочитаемое имя ключа: «Face ID / Touch ID», «Touch ID на Mac» */
+  biometricLabel: string | null
+  biometricRegisteredAtISO: string | null
+  /** Требовать разблокировку при каждом запуске приложения */
+  lockOnOpen: boolean
+  /** Автоблокировка при бездействии, минуты (0 — выключена) */
+  autoLockMinutes: number
+  /** Неудачных попыток ввода подряд */
+  failedAttempts: number
+  /** До какого времени вход заблокирован (ISO) — защита от перебора */
+  lockedUntilISO: string | null
+  /** Журнал событий безопасности (свежие сверху) */
+  auditLog: SecurityAuditEvent[]
+  /** Когда последний раз успешно разблокировали приложение */
+  lastUnlockedAtISO: string | null
+}
+
+/* ────────────────────────────────────────────────────────────────────────
    ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР И БЫСТРЫЕ ЧАТЫ С ДРУЗЬЯМИ
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -593,4 +662,7 @@ export type OgonekStoreState = {
   fontScale: FontScaleId
   /** Плотность ленты (просторность карточек дней) */
   feedDensity: FeedDensityId
+  /* ── ЭТАП 15 — БЕЗОПАСНОСТЬ И ВХОД ───────────────────────────────────── */
+  /** Защита приложения: пароль, PIN-код, биометрия WebAuthn и автоблокировка */
+  security: AppSecurityState
 }

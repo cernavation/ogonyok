@@ -22,6 +22,7 @@ import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { buildDemoThreads, sanitizeChatThreads } from './messenger'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
+import { DEFAULT_SECURITY_STATE, sanitizeSecurityState } from './security'
 import { buildDemoMyStories } from './stories'
 import { normalizeVisibility } from './visibility'
 import type {
@@ -52,7 +53,7 @@ import type {
 } from './types'
 
 export const STORAGE_KEY = 'ogonek.v2'
-export const CURRENT_SCHEMA_VERSION = 4
+export const CURRENT_SCHEMA_VERSION = 5
 
 export interface StorageAdapter {
   getItem(key: string): string | null
@@ -781,6 +782,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   accent: DEFAULT_ACCENT,
   fontScale: DEFAULT_FONT_SCALE,
   feedDensity: DEFAULT_FEED_DENSITY,
+  security: DEFAULT_SECURITY_STATE,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -840,6 +842,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               accent: sanitizeAccent(parsedV3.accent),
               fontScale: sanitizeFontScale(parsedV3.fontScale),
               feedDensity: sanitizeFeedDensity(parsedV3.feedDensity),
+              security: sanitizeSecurityState(parsedV3.security),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -959,6 +962,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         accent: sanitizeAccent(parsed.accent),
         fontScale: sanitizeFontScale(parsed.fontScale),
         feedDensity: sanitizeFeedDensity(parsed.feedDensity),
+        security: sanitizeSecurityState(parsed.security),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1128,6 +1132,7 @@ export function validateAndImportJson(
       accent: sanitizeAccent(parsed.accent),
       fontScale: sanitizeFontScale(parsed.fontScale),
       feedDensity: sanitizeFeedDensity(parsed.feedDensity),
+      security: sanitizeSecurityState(parsed.security),
     }
 
     return { success: true, data: state }
