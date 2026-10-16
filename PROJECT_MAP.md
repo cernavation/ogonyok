@@ -95,6 +95,11 @@ FILE: components/ogonek/security/password-setup-modal.tsx
 FILE: components/ogonek/security/pin-pad.tsx
 FILE: components/ogonek/security/pin-setup-modal.tsx
 FILE: components/ogonek/security/security-panel.tsx
+DIR: components/ogonek/settings/
+FILE: components/ogonek/settings/backup-sync-panel.tsx
+FILE: components/ogonek/settings/index.ts
+FILE: components/ogonek/settings/privacy-panel.tsx
+FILE: components/ogonek/settings/streak-deadline-panel.tsx
 FILE: components/ogonek/share-card-modal.tsx
 FILE: components/ogonek/share-profile-modal.tsx
 FILE: components/ogonek/sidebar.tsx
@@ -128,6 +133,7 @@ FILE: lib/ogonek/achievement-moderation.ts
 FILE: lib/ogonek/achievement-regulation.ts
 FILE: lib/ogonek/achievement-submit-client.ts
 FILE: lib/ogonek/appearance.ts
+FILE: lib/ogonek/backup.ts
 FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts
@@ -139,6 +145,7 @@ FILE: lib/ogonek/messenger.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/morning-focus.ts
 FILE: lib/ogonek/photos.ts
+FILE: lib/ogonek/privacy.ts
 FILE: lib/ogonek/profile-presets.ts
 FILE: lib/ogonek/profile-share.ts
 FILE: lib/ogonek/reactions.ts
@@ -150,6 +157,7 @@ FILE: lib/ogonek/stories.ts
 FILE: lib/ogonek/story-digest.ts
 FILE: lib/ogonek/story-share.ts
 FILE: lib/ogonek/streak.ts
+FILE: lib/ogonek/sync-code.ts
 FILE: lib/ogonek/types.ts
 FILE: lib/ogonek/use-keyboard-navigation.ts
 FILE: lib/ogonek/use-ogonek-store.ts
@@ -174,6 +182,7 @@ FILE: test/import-real-raw.test.ts
 FILE: test/messenger.test.ts
 FILE: test/migrate.test.ts
 FILE: test/morning-focus.test.ts
+FILE: test/privacy-backup.test.ts
 FILE: test/reminder.test.ts
 FILE: test/security.test.ts
 FILE: test/streak.test.ts

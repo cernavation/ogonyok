@@ -22,7 +22,9 @@ import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { buildDemoThreads, sanitizeChatThreads } from './messenger'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
+import { DEFAULT_PRIVACY, sanitizePrivacySettings } from './privacy'
 import { DEFAULT_SECURITY_STATE, sanitizeSecurityState } from './security'
+import { DEFAULT_STREAK_SETTINGS, sanitizeStreakSettings } from './streak'
 import { buildDemoMyStories } from './stories'
 import { normalizeVisibility } from './visibility'
 import type {
@@ -783,6 +785,8 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   fontScale: DEFAULT_FONT_SCALE,
   feedDensity: DEFAULT_FEED_DENSITY,
   security: DEFAULT_SECURITY_STATE,
+  privacy: DEFAULT_PRIVACY,
+  streak: DEFAULT_STREAK_SETTINGS,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -843,6 +847,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               fontScale: sanitizeFontScale(parsedV3.fontScale),
               feedDensity: sanitizeFeedDensity(parsedV3.feedDensity),
               security: sanitizeSecurityState(parsedV3.security),
+              privacy: sanitizePrivacySettings(parsedV3.privacy),
+              streak: sanitizeStreakSettings(parsedV3.streak),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -963,6 +969,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         fontScale: sanitizeFontScale(parsed.fontScale),
         feedDensity: sanitizeFeedDensity(parsed.feedDensity),
         security: sanitizeSecurityState(parsed.security),
+        privacy: sanitizePrivacySettings(parsed.privacy),
+        streak: sanitizeStreakSettings(parsed.streak),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1133,6 +1141,8 @@ export function validateAndImportJson(
       fontScale: sanitizeFontScale(parsed.fontScale),
       feedDensity: sanitizeFeedDensity(parsed.feedDensity),
       security: sanitizeSecurityState(parsed.security),
+      privacy: sanitizePrivacySettings(parsed.privacy),
+      streak: sanitizeStreakSettings(parsed.streak),
     }
 
     return { success: true, data: state }

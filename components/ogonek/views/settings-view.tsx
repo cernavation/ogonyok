@@ -45,6 +45,7 @@ import type {
 } from '@/lib/ogonek/types'
 import { MobileHeader } from '../mobile-header'
 import { SecurityPanel } from '../security'
+import { BackupSyncPanel, PrivacyPanel, StreakDeadlinePanel } from '../settings'
 
 type Props = {
   state: OgonekStoreState
@@ -599,6 +600,12 @@ export function SettingsView({
         {/* ═══ БЕЗОПАСНОСТЬ И ВХОД (ЭТАП 15) ═══ */}
         <SecurityPanel onNotify={onNotify} />
 
+        {/* ═══ ПРИВАТНОСТЬ ПРОФИЛЯ (ЭТАП 16) ═══ */}
+        <PrivacyPanel onNotify={onNotify} />
+
+        {/* ═══ НОЧНОЙ ДЕДЛАЙН СТРИКА (ЭТАП 16) ═══ */}
+        <StreakDeadlinePanel onNotify={onNotify} />
+
         {/* Telegram & Server Streak Synchronization Section */}
         <section className="settings-section" aria-labelledby="sync-title">
           <div className="setting-row" style={{ alignItems: 'flex-start' }}>
@@ -724,6 +731,9 @@ export function SettingsView({
             </button>
           </div>
         </section>
+
+        {/* ═══ ПОЛНЫЙ ЭКСПОРТ / ИМПОРТ И СИНХРОНИЗАЦИЯ (ЭТАП 16) ═══ */}
+        <BackupSyncPanel onNotify={onNotify} />
       </div>
     </div>
   )

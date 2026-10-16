@@ -72,6 +72,7 @@ import type {
   EvidenceItem,
   FeedDensityId,
   FontScaleId,
+  InteractionAudience,
   ModerationChannel,
   ModerationDelivery,
   ModerationStatus,
@@ -81,8 +82,11 @@ import type {
   OgonekProfile,
   OgonekStoreState,
   PrideEntry,
+  PrivacySettings,
+  ProfileVisibility,
   ReactionCounts,
   SecurityAuditKind,
+  StreakSettings,
   ThemeMode,
   VerifiedAchievement,
   VisibilityLevel,
@@ -114,6 +118,14 @@ import {
   sanitizeFriendRequestIds,
   sanitizeProfile,
 } from './storage'
+import {
+  DEFAULT_PRIVACY,
+  sanitizePrivacySettings,
+} from './privacy'
+import {
+  DEFAULT_STREAK_SETTINGS,
+  sanitizeStreakSettings,
+} from './streak'
 import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
@@ -1454,6 +1466,126 @@ export function useOgonekStore() {
     }))
   }, [updateStore])
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 16 — СУПЕР-НАСТРОЙКИ ЧАСТЬ 3:
+     ПРИВАТНОСТЬ ПРОФИЛЯ, ДЕДЛАЙН СТРИКА И БЭКАП ПАМЯТИ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Точечно обновляет приватность профиля с валидацией и меткой времени */
+  const updatePrivacy = useCallback(
+    (patch: Partial<PrivacySettings>) => {
+      updateStore((prev) => ({
+        ...prev,
+        privacy: sanitizePrivacySettings({
+          ...prev.privacy,
+          ...patch,
+          updatedAtISO: new Date().toISOString(),
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Переключает тип аккаунта: открытый / закрытый */
+  const setProfileVisibility = useCallback(
+    (profileVisibility: ProfileVisibility) => {
+      updatePrivacy({ profileVisibility })
+    },
+    [updatePrivacy]
+  )
+
+  /** Меняет политику комментариев: все / друзья / никто */
+  const setCommentPolicy = useCallback(
+    (commentPolicy: InteractionAudience) => {
+      updatePrivacy({ commentPolicy })
+    },
+    [updatePrivacy]
+  )
+
+  /** Меняет политику личных сообщений: все / друзья / никто */
+  const setChatPolicy = useCallback(
+    (chatPolicy: InteractionAudience) => {
+      updatePrivacy({ chatPolicy })
+    },
+    [updatePrivacy]
+  )
+
+  /** Сбрасывает приватность к значениям по умолчанию */
+  const resetPrivacy = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      privacy: sanitizePrivacySettings({
+        ...DEFAULT_PRIVACY,
+        updatedAtISO: new Date().toISOString(),
+      }),
+    }))
+  }, [updateStore])
+
+  /** Точечно обновляет настройки ночного дедлайна стрика */
+  const updateStreakSettings = useCallback(
+    (patch: Partial<StreakSettings>) => {
+      updateStore((prev) => ({
+        ...prev,
+        streak: sanitizeStreakSettings({
+          ...prev.streak,
+          ...patch,
+          updatedAtISO: new Date().toISOString(),
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Быстро меняет время дедлайна в минутах от полуночи */
+  const setStreakDeadlineMinutes = useCallback(
+    (deadlineMinutes: number) => {
+      updateStreakSettings({ deadlineMinutes })
+    },
+    [updateStreakSettings]
+  )
+
+  /** Меняет часовой пояс расчёта дедлайна */
+  const setStreakTimeZone = useCallback(
+    (timeZone: string) => {
+      updateStreakSettings({ timeZone })
+    },
+    [updateStreakSettings]
+  )
+
+  /** Включает/выключает дополнительный день прощения за выходные */
+  const setStreakWeekendBonus = useCallback(
+    (weekendBonus: boolean) => {
+      updateStreakSettings({ weekendBonus })
+    },
+    [updateStreakSettings]
+  )
+
+  /** Сбрасывает настройки дедлайна стрика к заводским */
+  const resetStreakSettings = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      streak: sanitizeStreakSettings({
+        ...DEFAULT_STREAK_SETTINGS,
+        updatedAtISO: new Date().toISOString(),
+      }),
+    }))
+  }, [updateStore])
+
+  /**
+   * Принудительное сохранение текущего состояния в localStorage.
+   * Запись в localStorage порождает событие `storage` в других вкладках,
+   * поэтому соседние вкладки мгновенно подхватывают свежую базу (синхронизация).
+   * Возвращает ISO-метку времени синхронизации.
+   */
+  const syncNow = useCallback((): string => {
+    const current = getSnapshot()
+    const nowISO = new Date().toISOString()
+    cachedState = current
+    saveStore(current)
+    emitChange()
+    return nowISO
+  }, [])
+
   /**
    * ПРОФИЛЬ:
    * Мгновенно сохраняет любые поля профиля (имя, @username, био, город,
@@ -1854,6 +1986,8 @@ export function useOgonekStore() {
         fontScale: sanitizeFontScale(newState.fontScale),
         feedDensity: sanitizeFeedDensity(newState.feedDensity),
         security: sanitizeSecurityState(newState.security),
+        privacy: sanitizePrivacySettings(newState.privacy),
+        streak: sanitizeStreakSettings(newState.streak),
       }))
     },
     [updateStore]
@@ -2618,6 +2752,17 @@ export function useOgonekStore() {
     unlockWithBiometric,
     lockAppNow,
     resetSecurity,
+    updatePrivacy,
+    setProfileVisibility,
+    setCommentPolicy,
+    setChatPolicy,
+    resetPrivacy,
+    updateStreakSettings,
+    setStreakDeadlineMinutes,
+    setStreakTimeZone,
+    setStreakWeekendBonus,
+    resetStreakSettings,
+    syncNow,
     addVerifiedAchievement,
     updateVerifiedAchievement,
     attachAchievementEvidence,

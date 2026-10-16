@@ -170,8 +170,12 @@ export function AppShell() {
         dates.add(d.dateISO.slice(0, 10))
       }
     }
-    return computeStreak(dates, new Date())
-  }, [state.days])
+    return computeStreak(dates, new Date(), {
+      tz: state.streak?.timeZone,
+      deadlineMinutes: state.streak?.deadlineMinutes,
+      weekendBonus: state.streak?.weekendBonus,
+    })
+  }, [state.days, state.streak])
 
   // Keyboard navigation shortcuts
   useKeyboardNavigation({
