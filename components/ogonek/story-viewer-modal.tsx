@@ -315,6 +315,22 @@ export function StoryViewerModal({
     onNotify('Кадр истории удалён')
   }
 
+  /** ЭТАП 13 — собрать карточку текущего кадра и открыть окно пересылки в чат */
+  const handleForwardStory = () => {
+    playClick(soundEnabled)
+    setForwardAttachment(
+      buildStoryAttachment({
+        storyId: `story-${story.id}`,
+        authorName: story.name,
+        username: story.username,
+        slide,
+        slideIndex,
+        totalSlides: story.slides.length,
+        photo: slide.photo ?? null,
+      })
+    )
+  }
+
   const handleDownloadCard = async () => {
     playClick(soundEnabled)
     setSharing(true)
@@ -598,6 +614,15 @@ export function StoryViewerModal({
           <button
             type="button"
             className="story-viewer__icon"
+            onClick={handleForwardStory}
+            aria-label="Переслать кадр сторис другу в чат"
+            title="Переслать в чат"
+          >
+            <MessageCircle size={17} />
+          </button>
+          <button
+            type="button"
+            className="story-viewer__icon"
             onClick={() => {
               playClick(soundEnabled)
               setPanel('share')
@@ -837,20 +862,7 @@ export function StoryViewerModal({
                   <button
                     type="button"
                     className="story-viewer__share-btn"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      setForwardAttachment(
-                        buildStoryAttachment({
-                          storyId: `story-${story.id}`,
-                          authorName: story.name,
-                          username: story.username,
-                          slide,
-                          slideIndex,
-                          totalSlides: story.slides.length,
-                          photo: slide.photo ?? null,
-                        })
-                      )
-                    }}
+                    onClick={handleForwardStory}
                   >
                     <MessageCircle size={18} />
                     <span>Переслать другу в чат</span>
