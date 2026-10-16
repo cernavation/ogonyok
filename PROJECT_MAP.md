@@ -87,6 +87,14 @@ FILE: components/ogonek/quick-focus.tsx
 FILE: components/ogonek/reaction-bar.tsx
 FILE: components/ogonek/right-rail.tsx
 FILE: components/ogonek/scroll-pill.tsx
+DIR: components/ogonek/security/
+FILE: components/ogonek/security/app-lock-screen.tsx
+FILE: components/ogonek/security/biometric-setup-modal.tsx
+FILE: components/ogonek/security/index.ts
+FILE: components/ogonek/security/password-setup-modal.tsx
+FILE: components/ogonek/security/pin-pad.tsx
+FILE: components/ogonek/security/pin-setup-modal.tsx
+FILE: components/ogonek/security/security-panel.tsx
 FILE: components/ogonek/share-card-modal.tsx
 FILE: components/ogonek/share-profile-modal.tsx
 FILE: components/ogonek/sidebar.tsx
@@ -135,6 +143,7 @@ FILE: lib/ogonek/profile-presets.ts
 FILE: lib/ogonek/profile-share.ts
 FILE: lib/ogonek/reactions.ts
 FILE: lib/ogonek/reminder-logic.ts
+FILE: lib/ogonek/security.ts
 FILE: lib/ogonek/sound.ts
 FILE: lib/ogonek/storage.ts
 FILE: lib/ogonek/stories.ts
@@ -166,4 +175,5 @@ FILE: test/messenger.test.ts
 FILE: test/migrate.test.ts
 FILE: test/morning-focus.test.ts
 FILE: test/reminder.test.ts
+FILE: test/security.test.ts
 FILE: test/streak.test.ts
