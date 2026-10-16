@@ -20,6 +20,7 @@ import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
+import { MediaLightbox } from './media-lightbox'
 
 const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
@@ -71,6 +72,7 @@ export function DayCard({
   const [storyPrideIndex, setStoryPrideIndex] = useState<number | null>(null)
   // ЭТАП 13 — выбранная гордость, которую пересылаем другу в чат
   const [forwardPride, setForwardPride] = useState<ChatAttachment | null>(null)
+  const [mediaIndex, setMediaIndex] = useState<number | null>(null)
   const reduce = useReducedMotion()
 
   // ЭТАП 9 — приватность дня и аватар для публикации в Сторис
@@ -93,6 +95,10 @@ export function DayCard({
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day.photos])
+
+  useEffect(() => {
+    if (mediaIndex !== null && photoUrls.length === 0) setMediaIndex(null)
+  }, [mediaIndex, photoUrls.length])
 
   const handleLike = () => {
     const becameActive = toggleReaction(target, 'fire')
@@ -318,7 +324,7 @@ export function DayCard({
                 {photoUrls.length === 1 && (
                   <button
                     type="button"
-                    onClick={() => onLightbox(photoUrls[0])}
+                    onClick={() => setMediaIndex(0)}
                     className="block w-full focus:outline-none"
                     aria-label="Открыть фото дня"
                   >
@@ -334,7 +340,7 @@ export function DayCard({
                   <>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photoUrls[0])}
+                      onClick={() => setMediaIndex(0)}
                       className="block focus:outline-none overflow-hidden rounded-l-2xl"
                       aria-label="Открыть первое фото дня"
                     >
@@ -347,7 +353,7 @@ export function DayCard({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photoUrls[1])}
+                      onClick={() => setMediaIndex(1)}
                       className="block focus:outline-none overflow-hidden rounded-r-2xl"
                       aria-label="Открыть второе фото дня"
                     >
@@ -364,7 +370,7 @@ export function DayCard({
                   <>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photoUrls[0])}
+                      onClick={() => setMediaIndex(0)}
                       className="block focus:outline-none overflow-hidden rounded-tl-2xl rounded-bl-2xl row-span-2"
                       aria-label="Открыть первое фото дня"
                     >
@@ -377,7 +383,7 @@ export function DayCard({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photoUrls[1])}
+                      onClick={() => setMediaIndex(1)}
                       className="block focus:outline-none overflow-hidden rounded-tr-2xl"
                       aria-label="Открыть второе фото дня"
                     >
@@ -390,7 +396,7 @@ export function DayCard({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onLightbox(photoUrls[2])}
+                      onClick={() => setMediaIndex(2)}
                       className="block focus:outline-none overflow-hidden rounded-br-2xl"
                       aria-label="Открыть третье фото дня"
                     >
@@ -540,6 +546,16 @@ export function DayCard({
           />,
           document.body
         )}
+
+      {mediaIndex !== null && (
+        <MediaLightbox
+          photos={photoUrls}
+          prides={day.prides}
+          initialIndex={mediaIndex}
+          onClose={() => setMediaIndex(null)}
+          title={`День #${day.id} · ${dateStr}`}
+        />
+      )}
     </>
   )
 }
