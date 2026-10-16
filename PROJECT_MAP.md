@@ -84,6 +84,7 @@ FILE: components/ogonek/friend-detail-modal.tsx
 FILE: components/ogonek/friends-manager.tsx
 FILE: components/ogonek/hotkeys-modal.tsx
 FILE: components/ogonek/lightbox.tsx
+FILE: components/ogonek/media-lightbox.tsx
 DIR: components/ogonek/messenger/
 FILE: components/ogonek/messenger/attach-card-picker.tsx
 FILE: components/ogonek/messenger/chat-attachment-card.tsx
