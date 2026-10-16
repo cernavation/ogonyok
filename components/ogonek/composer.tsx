@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, CalendarDays, Check, Flame, Heart, ImagePlus, ListPlus, Loader2, Mic, Send, Shield, Sparkles, X } from 'lucide-react'
+import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Mic, Send, Shield, Sparkles, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -14,6 +14,71 @@ import { ModalShell } from './modal-shell'
 import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
+
+type PromptSphere = {
+  id: string
+  label: string
+  Icon: any
+  questions: string[]
+}
+
+const COMPOSER_PROMPT_SPHERES: PromptSphere[] = [
+  {
+    id: 'sport',
+    label: 'Спорт',
+    Icon: Dumbbell,
+    questions: [
+      'Какую тренировку, прогулку или зарядку сделал сегодня?',
+      'Какой спортивный прогресс или привычку заметил сегодня?',
+      'Что преодолел, чтобы заняться спортом или здоровьем?',
+      'За что благодарен своему телу и здоровью сегодня?',
+    ],
+  },
+  {
+    id: 'business',
+    label: 'Бизнес',
+    Icon: Briefcase,
+    questions: [
+      'Что продвинул в работе, проекте или бизнесе сегодня?',
+      'Какую сложную задачу, сделку или разговор завершил?',
+      'Какое решение или шаг приблизил к цели?',
+      'За какой опыт/поддержку в работе благодарен сегодня?',
+    ],
+  },
+  {
+    id: 'study',
+    label: 'Учеба',
+    Icon: GraduationCap,
+    questions: [
+      'Что нового узнал, повторил или разобрал сегодня?',
+      'Какая учебная задача или глава закрыта?',
+      'Как применил знания на практике?',
+      'За какую возможность учиться благодарен сегодня?',
+    ],
+  },
+  {
+    id: 'relations',
+    label: 'Отношения',
+    Icon: Users,
+    questions: [
+      'Кому помог или с кем тепло общался сегодня?',
+      'Какой важный разговор состоялся?',
+      'Как проявил заботу или внимание к близким?',
+      'За какую поддержку или общение благодарен сегодня?',
+    ],
+  },
+  {
+    id: 'overcome',
+    label: 'Преодоление себя',
+    Icon: Flame,
+    questions: [
+      'Что сделал вопреки лени, страху или усталости?',
+      'Какой внутренний барьер или привычку преодолел?',
+      'Какой урок вынес из трудной ситуации?',
+      'За какой опыт преодоления благодарен сегодня?',
+    ],
+  },
+]
 
 type Props = {
   initialDraft?: ComposerDraft | null
@@ -130,6 +195,10 @@ export function Composer({
   /** Индекс гордости, для которой открыт мастер публикации в Сторис */
   const [storyModalIndex, setStoryModalIndex] = useState<number | null>(null)
 
+  // ЭТАП 22 — панель быстрых умных подсказок
+  const [promptSphereId, setPromptSphereId] = useState<string>('sport')
+  const [activePrompt, setActivePrompt] = useState<string | null>(null)
+
   // Date picker for new days (editable by user)
   const [dateISO, setDateISO] = useState<string>(() => {
     if (editingDay?.dateISO) return editingDay.dateISO
@@ -204,6 +273,19 @@ export function Composer({
     } else {
       setGratitudes((prev) => prev.map((item, i) => (i === index ? val : item)))
     }
+  }
+
+  const applyPrompt = (question: string) => {
+    playClick(soundEnabled)
+    setActivePrompt(question)
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        void navigator.clipboard.writeText(question)
+      }
+    } catch {
+      // ignore clipboard errors
+    }
+    onNotify?.('Подсказка скопирована — опиши свой ответ в поле')
   }
 
   const currentValues = tab === 'pride' ? prides : gratitudes
@@ -476,6 +558,71 @@ export function Composer({
             <Check size={13} /> Применить ко всем гордостям дня
           </button>
         )}
+      </div>
+
+      {/* ЭТАП 22 — быстрые умные подсказки "О чем написать сегодня?" */}
+      <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-white/[0.02] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[13px] font-bold text-[#e7e9ea]">
+            О чем написать сегодня?
+          </span>
+          <span className="text-[11px] text-[#71767b]">
+            Вопросы-триггеры по сферам помогут вспомнить гордости и благодарности
+          </span>
+        </div>
+
+        <div
+          className="mt-2 flex flex-wrap gap-2"
+          role="tablist"
+          aria-label="Сферы подсказок"
+        >
+          {COMPOSER_PROMPT_SPHERES.map((sphere) => {
+            const Icon = sphere.Icon
+            const isActive = sphere.id === promptSphereId
+            return (
+              <button
+                key={sphere.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setPromptSphereId(sphere.id)
+                }}
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold transition-colors duration-150 ${
+                  isActive
+                    ? 'border-[#ffad5a] bg-[#ffad5a]/10 text-[#ffad5a]'
+                    : 'border-zinc-800/80 text-[#71767b] hover:text-[#e7e9ea]'
+                }`}
+              >
+                <Icon size={13} /> {sphere.label}
+              </button>
+            )
+          })}
+        </div>
+
+        <ul className="mt-3 flex flex-col gap-1.5" aria-label="Вопросы-триггеры">
+          {(COMPOSER_PROMPT_SPHERES.find((s) => s.id === promptSphereId)?.questions ?? []).map(
+            (question) => {
+              const isApplied = activePrompt === question
+              return (
+                <li key={question}>
+                  <button
+                    type="button"
+                    onClick={() => applyPrompt(question)}
+                    className={`w-full rounded-xl border px-3 py-2 text-left text-[13px] leading-[18px] transition-colors duration-150 ${
+                      isApplied
+                        ? 'border-[#1d9bf0] bg-[#1d9bf0]/10 text-[#1d9bf0]'
+                        : 'border-zinc-800/80 text-[#e7e9ea] hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    {question}
+                  </button>
+                </li>
+              )
+            }
+          )}
+        </ul>
       </div>
 
       {/* Fields — numbered rows with hairline dividers */}
