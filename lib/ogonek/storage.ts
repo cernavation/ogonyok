@@ -1,5 +1,15 @@
 import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
 import { sanitizeSubmission } from './achievement-moderation'
+import {
+  DEFAULT_ACCENT,
+  DEFAULT_FEED_DENSITY,
+  DEFAULT_FONT_SCALE,
+  DEFAULT_THEME,
+  isAccentId,
+  isFeedDensityId,
+  isFontScaleId,
+  isThemeId,
+} from './appearance'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import {
   DEFAULT_FOLLOWING_IDS,
@@ -19,6 +29,7 @@ import type {
   AchievementEvidenceRequirement,
   AchievementRegulation,
   AchievementStatus,
+  AccentId,
   ChatThreads,
   Comment,
   CommentPersona,
@@ -27,6 +38,8 @@ import type {
   CustomEmoji,
   Day,
   EvidenceItem,
+  FeedDensityId,
+  FontScaleId,
   MyReactions,
   MyStory,
   OgonekProfile,
@@ -34,6 +47,7 @@ import type {
   ProfileSocialLink,
   ProfileSocialPlatform,
   ReactionCounts,
+  ThemeMode,
   VerifiedAchievement,
 } from './types'
 
@@ -254,6 +268,26 @@ export function sanitizeDismissedSuggestions(value: unknown): string[] {
 export function sanitizeChatActiveFriendId(value: unknown): string | null {
   if (typeof value !== 'string' || !value) return null
   return FRIEND_PROFILES.some((friend) => friend.id === value) ? value : null
+}
+
+/**
+ * ЭТАП 14 — СУПЕР-НАСТРОЙКИ.
+ * Валидирует оформление приложения: тема, акцент, размер шрифта, плотность.
+ */
+export function sanitizeTheme(value: unknown): ThemeMode {
+  return isThemeId(value) ? value : DEFAULT_THEME
+}
+
+export function sanitizeAccent(value: unknown): AccentId {
+  return isAccentId(value) ? value : DEFAULT_ACCENT
+}
+
+export function sanitizeFontScale(value: unknown): FontScaleId {
+  return isFontScaleId(value) ? value : DEFAULT_FONT_SCALE
+}
+
+export function sanitizeFeedDensity(value: unknown): FeedDensityId {
+  return isFeedDensityId(value) ? value : DEFAULT_FEED_DENSITY
 }
 
 /**
@@ -743,6 +777,10 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   exploreRecentSearches: [],
   chatThreads: DEFAULT_CHAT_THREADS,
   chatActiveFriendId: null,
+  theme: DEFAULT_THEME,
+  accent: DEFAULT_ACCENT,
+  fontScale: DEFAULT_FONT_SCALE,
+  feedDensity: DEFAULT_FEED_DENSITY,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -798,6 +836,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               exploreRecentSearches: sanitizeExploreRecentSearches(parsedV3.exploreRecentSearches),
               chatThreads: sanitizeChatThreads(parsedV3.chatThreads, DEFAULT_CHAT_THREADS),
               chatActiveFriendId: sanitizeChatActiveFriendId(parsedV3.chatActiveFriendId),
+              theme: sanitizeTheme(parsedV3.theme),
+              accent: sanitizeAccent(parsedV3.accent),
+              fontScale: sanitizeFontScale(parsedV3.fontScale),
+              feedDensity: sanitizeFeedDensity(parsedV3.feedDensity),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -913,6 +955,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
         chatThreads: sanitizeChatThreads(parsed.chatThreads, DEFAULT_CHAT_THREADS),
         chatActiveFriendId: sanitizeChatActiveFriendId(parsed.chatActiveFriendId),
+        theme: sanitizeTheme(parsed.theme),
+        accent: sanitizeAccent(parsed.accent),
+        fontScale: sanitizeFontScale(parsed.fontScale),
+        feedDensity: sanitizeFeedDensity(parsed.feedDensity),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1078,6 +1124,10 @@ export function validateAndImportJson(
       exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
       chatThreads: sanitizeChatThreads(parsed.chatThreads, {}),
       chatActiveFriendId: null,
+      theme: sanitizeTheme(parsed.theme),
+      accent: sanitizeAccent(parsed.accent),
+      fontScale: sanitizeFontScale(parsed.fontScale),
+      feedDensity: sanitizeFeedDensity(parsed.feedDensity),
     }
 
     return { success: true, data: state }

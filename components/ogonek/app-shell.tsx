@@ -8,6 +8,7 @@ import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
+import { AppearanceProvider } from './appearance-provider'
 import { BottomNav } from './bottom-nav'
 import { Composer } from './composer'
 import { RightRail } from './right-rail'
@@ -53,6 +54,11 @@ export function AppShell() {
     addEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
+    setTheme,
+    setAccent,
+    setFontScale,
+    setFeedDensity,
+    resetAppearance,
     updateProfile,
     resetProfile,
     toggleFollow,
@@ -283,6 +289,11 @@ export function AppShell() {
           onNotify={notify}
           onSetSoundEnabled={setSoundEnabled}
           onSetPinEnabled={setPinEnabled}
+          onSetTheme={setTheme}
+          onSetAccent={setAccent}
+          onSetFontScale={setFontScale}
+          onSetFeedDensity={setFeedDensity}
+          onResetAppearance={resetAppearance}
           onImportState={importState}
           onResetToDefaults={resetToDefaults}
         />
@@ -326,6 +337,11 @@ export function AppShell() {
       addEvidenceItem,
       setSoundEnabled,
       setPinEnabled,
+      setTheme,
+      setAccent,
+      setFontScale,
+      setFeedDensity,
+      resetAppearance,
       updateProfile,
       resetProfile,
       toggleFollow,
@@ -337,6 +353,12 @@ export function AppShell() {
 
   return (
     <TooltipProvider>
+      <AppearanceProvider
+        theme={state.theme}
+        accent={state.accent}
+        fontScale={state.fontScale}
+        feedDensity={state.feedDensity}
+      />
       <main className="app-shell">
         <Sidebar
           view={view}

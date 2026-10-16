@@ -42,11 +42,15 @@ import {
   loadStore,
   saveStore,
   STORAGE_KEY,
+  sanitizeAccent,
   sanitizeChatActiveFriendId,
   sanitizeExploreFollowingIds,
   sanitizeExplorePostIds,
   sanitizeExploreRecentSearches,
+  sanitizeFeedDensity,
+  sanitizeFontScale,
   sanitizeMyStories,
+  sanitizeTheme,
   sanitizeVerifiedAchievements,
   sanitizeViewedStoryIds,
 } from './storage'
@@ -54,6 +58,7 @@ import type {
   AchievementEvidenceFile,
   AchievementRegulation,
   AchievementStatus,
+  AccentId,
   ChatAttachment,
   ChatMessage,
   ChatThreads,
@@ -64,6 +69,8 @@ import type {
   CustomEmoji,
   Day,
   EvidenceItem,
+  FeedDensityId,
+  FontScaleId,
   ModerationChannel,
   ModerationDelivery,
   ModerationStatus,
@@ -74,6 +81,7 @@ import type {
   OgonekStoreState,
   PrideEntry,
   ReactionCounts,
+  ThemeMode,
   VerifiedAchievement,
   VisibilityLevel,
 } from './types'
@@ -988,6 +996,61 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ТЕМА, АКЦЕНТ, ШРИФТ, ПЛОТНОСТЬ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Переключает режим оформления: X Black / Apple Light / Dim */
+  const setTheme = useCallback(
+    (theme: ThemeMode) => {
+      const next = sanitizeTheme(theme)
+      updateStore((prev) => (prev.theme === next ? prev : { ...prev, theme: next }))
+    },
+    [updateStore]
+  )
+
+  /** Меняет акцентный цвет приложения */
+  const setAccent = useCallback(
+    (accent: AccentId) => {
+      const next = sanitizeAccent(accent)
+      updateStore((prev) => (prev.accent === next ? prev : { ...prev, accent: next }))
+    },
+    [updateStore]
+  )
+
+  /** Меняет размер шрифта/масштаб интерфейса */
+  const setFontScale = useCallback(
+    (fontScale: FontScaleId) => {
+      const next = sanitizeFontScale(fontScale)
+      updateStore((prev) =>
+        prev.fontScale === next ? prev : { ...prev, fontScale: next }
+      )
+    },
+    [updateStore]
+  )
+
+  /** Меняет плотность ленты (просторность карточек дней) */
+  const setFeedDensity = useCallback(
+    (feedDensity: FeedDensityId) => {
+      const next = sanitizeFeedDensity(feedDensity)
+      updateStore((prev) =>
+        prev.feedDensity === next ? prev : { ...prev, feedDensity: next }
+      )
+    },
+    [updateStore]
+  )
+
+  /** Сбрасывает всё оформление к заводским значениям Огонька */
+  const resetAppearance = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      theme: DEFAULT_STORE_STATE.theme,
+      accent: DEFAULT_STORE_STATE.accent,
+      fontScale: DEFAULT_STORE_STATE.fontScale,
+      feedDensity: DEFAULT_STORE_STATE.feedDensity,
+    }))
+  }, [updateStore])
+
   /**
    * ПРОФИЛЬ:
    * Мгновенно сохраняет любые поля профиля (имя, @username, био, город,
@@ -1383,6 +1446,10 @@ export function useOgonekStore() {
             ? sanitizeChatThreads(newState.chatThreads, {})
             : prev.chatThreads,
         chatActiveFriendId: sanitizeChatActiveFriendId(newState.chatActiveFriendId),
+        theme: sanitizeTheme(newState.theme),
+        accent: sanitizeAccent(newState.accent),
+        fontScale: sanitizeFontScale(newState.fontScale),
+        feedDensity: sanitizeFeedDensity(newState.feedDensity),
       }))
     },
     [updateStore]
@@ -2126,6 +2193,11 @@ export function useOgonekStore() {
     addEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
+    setTheme,
+    setAccent,
+    setFontScale,
+    setFeedDensity,
+    resetAppearance,
     addVerifiedAchievement,
     updateVerifiedAchievement,
     attachAchievementEvidence,

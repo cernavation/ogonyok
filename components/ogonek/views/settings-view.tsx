@@ -4,19 +4,45 @@ import {
   ArrowLeft,
   Check,
   Download,
+  Eye,
   Loader2,
+  Moon,
+  Palette,
   RefreshCw,
+  RotateCcw,
+  Rows3,
   Send,
   ShieldCheck,
   Sparkles,
+  Sun,
+  SunDim,
+  Type,
   Upload,
   Volume2,
+  Zap,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import {
+  ACCENT_PRESETS,
+  FEED_DENSITY_PRESETS,
+  FONT_SCALE_PRESETS,
+  THEME_PRESETS,
+  getAccentPreset,
+  getFeedDensityPreset,
+  getFontScalePreset,
+  getThemePreset,
+} from '@/lib/ogonek/appearance'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { exportStoreAsJson, validateAndImportJson } from '@/lib/ogonek/storage'
-import type { OgonekStoreState, ViewId } from '@/lib/ogonek/types'
+import type {
+  AccentId,
+  FeedDensityId,
+  FontScaleId,
+  OgonekStoreState,
+  ThemeMode,
+  ViewId,
+} from '@/lib/ogonek/types'
 import { MobileHeader } from '../mobile-header'
 
 type Props = {
@@ -25,8 +51,19 @@ type Props = {
   onNotify: (msg: string) => void
   onSetSoundEnabled: (enabled: boolean) => void
   onSetPinEnabled: (enabled: boolean) => void
+  onSetTheme: (theme: ThemeMode) => void
+  onSetAccent: (accent: AccentId) => void
+  onSetFontScale: (scale: FontScaleId) => void
+  onSetFeedDensity: (density: FeedDensityId) => void
+  onResetAppearance: () => void
   onImportState: (newState: OgonekStoreState) => void
   onResetToDefaults: () => void
+}
+
+const THEME_ICONS: Record<ThemeMode, typeof Moon> = {
+  'x-black': Moon,
+  'apple-light': Sun,
+  dim: SunDim,
 }
 
 export function SettingsView({
@@ -35,6 +72,11 @@ export function SettingsView({
   onNotify,
   onSetSoundEnabled,
   onSetPinEnabled,
+  onSetTheme,
+  onSetAccent,
+  onSetFontScale,
+  onSetFeedDensity,
+  onResetAppearance,
   onImportState,
   onResetToDefaults,
 }: Props) {
@@ -47,6 +89,12 @@ export function SettingsView({
   const [isSyncingStreak, setIsSyncingStreak] = useState(false)
   const [isSendingTestMsg, setIsSendingTestMsg] = useState(false)
 
+  // Актуальные настройки оформления из стора
+  const activeTheme = getThemePreset(state.theme)
+  const activeAccent = getAccentPreset(state.accent)
+  const activeFont = getFontScalePreset(state.fontScale)
+  const activeDensity = getFeedDensityPreset(state.feedDensity)
+
   // Fetch Telegram status on mount
   useEffect(() => {
     fetch('/api/telegram/status')
@@ -54,6 +102,45 @@ export function SettingsView({
       .then((data) => setTgStatus(data))
       .catch(() => setTgStatus({ configured: false }))
   }, [])
+
+  /* ── Оформление: обработчики ─────────────────────────────────────────── */
+
+  const handleSelectTheme = (theme: ThemeMode) => {
+    if (theme === state.theme) return
+    onSetTheme(theme)
+    playClick(state.soundEnabled)
+    const preset = getThemePreset(theme)
+    onNotify(`Тема «${preset.label} · ${preset.code}» применена`)
+  }
+
+  const handleSelectAccent = (accent: AccentId) => {
+    if (accent === state.accent) return
+    onSetAccent(accent)
+    playClick(state.soundEnabled)
+    onNotify(`Акцент «${getAccentPreset(accent).label}» активирован`)
+  }
+
+  const handleSelectFontScale = (scale: FontScaleId) => {
+    if (scale === state.fontScale) return
+    onSetFontScale(scale)
+    playClick(state.soundEnabled)
+    onNotify(`Размер интерфейса: ${getFontScalePreset(scale).label}`)
+  }
+
+  const handleSelectDensity = (density: FeedDensityId) => {
+    if (density === state.feedDensity) return
+    onSetFeedDensity(density)
+    playClick(state.soundEnabled)
+    onNotify(`Плотность ленты: ${getFeedDensityPreset(density).label}`)
+  }
+
+  const handleResetAppearance = () => {
+    onResetAppearance()
+    playSuccess(state.soundEnabled)
+    onNotify('Оформление сброшено к заводским значениям Огонька')
+  }
+
+  /* ── Экспорт / импорт ────────────────────────────────────────────────── */
 
   const handleExportBackup = () => {
     const jsonStr = exportStoreAsJson(state)
@@ -180,6 +267,12 @@ export function SettingsView({
     }
   }
 
+  const isDefaultAppearance =
+    state.theme === 'x-black' &&
+    state.accent === 'flame' &&
+    state.fontScale === 'regular' &&
+    state.feedDensity === 'cozy'
+
   return (
     <div className="view-settings">
       <MobileHeader title="Настройки & Экспорт" />
@@ -194,12 +287,291 @@ export function SettingsView({
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1>Настройки & Экспорт</h1>
-          <p className="view-subtitle">Локальное хранилище, звук, безопасность и серверная синхронизация</p>
+          <h1>Настройки &amp; Экспорт</h1>
+          <p className="view-subtitle">
+            Оформление, локальное хранилище, звук, безопасность и серверная синхронизация
+          </p>
         </div>
       </header>
 
       <div className="settings-content">
+        {/* ═══ ТЕМА ОФОРМЛЕНИЯ ═══ */}
+        <section className="settings-section appearance-hero" aria-labelledby="theme-title">
+          <div className="appearance-section-head">
+            <div>
+              <b id="theme-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Palette size={16} className="text-[#ff6b35]" /> Тема оформления
+              </b>
+              <small>
+                Активно: <strong style={{ color: 'var(--accent)' }}>{activeTheme.label} · {activeTheme.code}</strong>
+              </small>
+            </div>
+            <span
+              className="appearance-live-badge"
+              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
+            >
+              <Eye size={12} /> Применяется мгновенно
+            </span>
+          </div>
+
+          <div className="theme-grid" role="radiogroup" aria-label="Выбор темы оформления">
+            {THEME_PRESETS.map((preset) => {
+              const Icon = THEME_ICONS[preset.id]
+              const active = preset.id === state.theme
+              return (
+                <button
+                  key={preset.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className={`theme-card ${active ? 'is-active' : ''}`}
+                  onClick={() => handleSelectTheme(preset.id)}
+                >
+                  <span
+                    className="theme-card__preview"
+                    style={{
+                      background: preset.preview.bg,
+                      borderColor: active ? 'var(--accent)' : preset.preview.line,
+                    }}
+                    aria-hidden="true"
+                  >
+                    <span className="theme-card__bar" style={{ background: preset.preview.surface }}>
+                      <span
+                        className="theme-card__dot"
+                        style={{ background: 'var(--accent)' }}
+                      />
+                      <span
+                        className="theme-card__line"
+                        style={{ background: preset.preview.text, opacity: 0.75 }}
+                      />
+                    </span>
+                    <span
+                      className="theme-card__line"
+                      style={{ background: preset.preview.muted, width: '82%' }}
+                    />
+                    <span
+                      className="theme-card__line"
+                      style={{ background: preset.preview.muted, width: '64%' }}
+                    />
+                    <span className="theme-card__chip" style={{ background: 'var(--accent)' }} />
+                  </span>
+
+                  <span className="theme-card__meta">
+                    <span className="theme-card__name">
+                      <Icon size={14} />
+                      <b>{preset.label}</b>
+                    </span>
+                    <small>{preset.code}</small>
+                  </span>
+
+                  {active && (
+                    <span className="theme-card__check" aria-hidden="true">
+                      <Check size={13} />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <p className="appearance-hint">{activeTheme.hint}</p>
+        </section>
+
+        {/* ═══ АКЦЕНТНЫЙ ЦВЕТ ═══ */}
+        <section className="settings-section" aria-labelledby="accent-title">
+          <div className="appearance-section-head">
+            <div>
+              <b id="accent-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Zap size={16} style={{ color: 'var(--accent)' }} /> Акцентный цвет
+              </b>
+              <small>
+                Акцент: <strong style={{ color: activeAccent.color }}>{activeAccent.label}</strong>
+              </small>
+            </div>
+          </div>
+
+          <div className="accent-swatches" role="radiogroup" aria-label="Акцентный цвет приложения">
+            {ACCENT_PRESETS.map((accent) => {
+              const active = accent.id === state.accent
+              return (
+                <button
+                  key={accent.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  aria-label={accent.label}
+                  title={accent.label}
+                  className={`accent-swatch ${active ? 'is-active' : ''}`}
+                  style={{ background: accent.color }}
+                  onClick={() => handleSelectAccent(accent.id)}
+                >
+                  {active && <Check size={16} />}
+                </button>
+              )
+            })}
+          </div>
+          <p className="appearance-hint">
+            Акцент меняет активные вкладки, ссылки, прогресс и кнопки действия по всему приложению.
+          </p>
+        </section>
+
+        {/* ═══ РАЗМЕР ШРИФТА ═══ */}
+        <section className="settings-section" aria-labelledby="font-title">
+          <div className="appearance-section-head">
+            <div>
+              <b id="font-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Type size={16} className="text-[#1d9bf0]" /> Размер шрифта
+              </b>
+              <small>
+                Активно: <strong style={{ color: 'var(--accent)' }}>{activeFont.label}</strong> (масштаб{' '}
+                {Math.round(activeFont.scale * 100)}%)
+              </small>
+            </div>
+          </div>
+
+          <div className="font-scale-row" role="radiogroup" aria-label="Размер шрифта">
+            {FONT_SCALE_PRESETS.map((font) => {
+              const active = font.id === state.fontScale
+              return (
+                <button
+                  key={font.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className={`font-scale-btn ${active ? 'is-active' : ''}`}
+                  onClick={() => handleSelectFontScale(font.id)}
+                >
+                  <span className="font-scale-btn__sample" style={{ fontSize: `${Math.round(16 * font.scale)}px` }}>
+                    {font.sample}
+                  </span>
+                  <span className="font-scale-btn__label">{font.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="type-preview" aria-hidden="true">
+            <strong>День #{CURRENT_DAY} — я держу слово</strong>
+            <span>
+              Сегодня закрыл важную задачу и провёл вечернюю сверку обещаний. Так выглядит текст при
+              выбранном размере.
+            </span>
+          </div>
+        </section>
+
+        {/* ═══ ПЛОТНОСТЬ ЛЕНТЫ ═══ */}
+        <section className="settings-section" aria-labelledby="density-title">
+          <div className="appearance-section-head">
+            <div>
+              <b id="density-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Rows3 size={16} className="text-[#f5b942]" /> Плотность ленты
+              </b>
+              <small>
+                Активно: <strong style={{ color: 'var(--accent)' }}>{activeDensity.label}</strong>
+              </small>
+            </div>
+          </div>
+
+          <div className="density-grid" role="radiogroup" aria-label="Плотность ленты">
+            {FEED_DENSITY_PRESETS.map((density) => {
+              const active = density.id === state.feedDensity
+              const rows = density.id === 'compact' ? 4 : density.id === 'comfortable' ? 2 : 3
+              return (
+                <button
+                  key={density.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  className={`density-card density-card--${density.id} ${active ? 'is-active' : ''}`}
+                  onClick={() => handleSelectDensity(density.id)}
+                >
+                  <span className="density-visual" aria-hidden="true">
+                    {Array.from({ length: rows }).map((_, i) => (
+                      <span key={i} className="density-visual__row" />
+                    ))}
+                  </span>
+                  <span className="density-card__meta">
+                    <b>{density.label}</b>
+                    <small>{density.hint}</small>
+                  </span>
+                  {active && (
+                    <span className="theme-card__check" aria-hidden="true">
+                      <Check size={13} />
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ═══ ЖИВОЙ ПРЕДПРОСМОТР ═══ */}
+        <section className="settings-section" aria-labelledby="preview-title" style={{ paddingBottom: 12 }}>
+          <div className="appearance-section-head">
+            <div>
+              <b id="preview-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={16} style={{ color: 'var(--accent)' }} /> Предпросмотр оформления
+              </b>
+              <small>Так будет выглядеть карточка дня с текущими настройками</small>
+            </div>
+          </div>
+
+          <article
+            className="appearance-preview-card"
+            style={{
+              background: activeTheme.preview.bg,
+              borderColor: activeTheme.preview.line,
+              color: activeTheme.preview.text,
+            }}
+          >
+            <div className="appearance-preview-card__head">
+              <span className="appearance-preview-card__avatar" style={{ background: activeAccent.soft, color: activeAccent.color }}>
+                AC
+              </span>
+              <span className="appearance-preview-card__who">
+                <strong>Alexei Cerna</strong>
+                <small style={{ color: activeTheme.preview.muted }}>
+                  День #{CURRENT_DAY} · только что
+                </small>
+              </span>
+              <span className="appearance-preview-card__tag" style={{ background: activeAccent.soft, color: activeAccent.color }}>
+                🔥 Гордость
+              </span>
+            </div>
+            <p style={{ color: activeTheme.preview.text }}>
+              Закрыл спринт и провёл вечернюю сверку обещаний — держу слово четвёртый день подряд.
+            </p>
+            <div className="appearance-preview-card__bar" style={{ background: activeTheme.preview.surface }}>
+              <span style={{ background: activeAccent.color, width: '72%' }} />
+            </div>
+            <div className="appearance-preview-card__actions" style={{ color: activeTheme.preview.muted }}>
+              <span style={{ color: activeAccent.color }}>
+                <Zap size={13} /> Огонёк
+              </span>
+              <span>
+                <Rows3 size={13} /> {activeDensity.label}
+              </span>
+              <span>
+                <Type size={13} /> {activeFont.label}
+              </span>
+            </div>
+          </article>
+        </section>
+
+        <div className="appearance-reset-row">
+          <button
+            type="button"
+            className="appearance-reset-btn"
+            onClick={handleResetAppearance}
+            disabled={isDefaultAppearance}
+            aria-label="Сбросить оформление к заводским значениям"
+          >
+            <RotateCcw size={14} />
+            <span>{isDefaultAppearance ? 'Оформление по умолчанию' : 'Сбросить оформление'}</span>
+          </button>
+        </div>
+
+        {/* ═══ ИНТЕРФЕЙС И БЕЗОПАСНОСТЬ ═══ */}
         <section className="settings-section" aria-label="Параметры интерфейса и безопасности">
           <div className="setting-row">
             <div>
@@ -251,7 +623,7 @@ export function SettingsView({
           <div className="setting-row" style={{ alignItems: 'flex-start' }}>
             <div>
               <b id="sync-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Send size={16} className="text-blue-400" /> Telegram & Серверный стрик
+                <Send size={16} className="text-blue-400" /> Telegram &amp; Серверный стрик
               </b>
               <small className={tgStatus?.configured ? 'text-green-400' : 'text-muted'}>
                 {tgStatus?.configured

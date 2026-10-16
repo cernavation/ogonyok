@@ -10,6 +10,30 @@ export type ViewId =
 
 export type Mode = 'pride' | 'gratitude'
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ТЕМА ОФОРМЛЕНИЯ, АКЦЕНТ, ШРИФТ, ПЛОТНОСТЬ
+   ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Режим оформления приложения.
+ *  - 'x-black'     — классическая чёрная тема (X Black), как в Твиттере/X
+ *  - 'apple-light' — светлая «яблочная» тема (Apple Light)
+ *  - 'dim'         — мягкая сумеречная тема (Dim), тёмно-синий комфорт для глаз
+ */
+export type ThemeMode = 'x-black' | 'apple-light' | 'dim'
+
+/**
+ * Акцентный цвет интерфейса — меняет ссылки, активные элементы,
+ * прогресс и декоративные акценты по всему приложению.
+ */
+export type AccentId = 'flame' | 'blue' | 'violet' | 'emerald' | 'rose' | 'gold'
+
+/** Размер шрифта/масштаб интерфейса */
+export type FontScaleId = 'compact' | 'regular' | 'large' | 'xlarge'
+
+/** Плотность ленты — насколько просторно выглядят карточки дней */
+export type FeedDensityId = 'cozy' | 'comfortable' | 'compact'
+
 export type OvercomeLevel = 0 | 1 | 2 | 3
 
 /**
@@ -560,4 +584,13 @@ export type OgonekStoreState = {
   chatThreads: ChatThreads
   /** Открытый диалог (id друга) или null — раздел «Чаты» */
   chatActiveFriendId: string | null
+  /* ── ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ВНЕШНИЙ ВИД ──────────────────────────── */
+  /** Режим оформления: X Black / Apple Light / Dim */
+  theme: ThemeMode
+  /** Акцентный цвет интерфейса */
+  accent: AccentId
+  /** Размер шрифта/масштаб интерфейса */
+  fontScale: FontScaleId
+  /** Плотность ленты (просторность карточек дней) */
+  feedDensity: FeedDensityId
 }

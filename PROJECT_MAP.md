@@ -40,6 +40,7 @@ FILE: components/ogonek/achievements/index.ts
 FILE: components/ogonek/achievements/verification-badge.tsx
 FILE: components/ogonek/active-friends-widget.tsx
 FILE: components/ogonek/app-shell.tsx
+FILE: components/ogonek/appearance-provider.tsx
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
 FILE: components/ogonek/composer.tsx
@@ -118,6 +119,7 @@ DIR: lib/ogonek/
 FILE: lib/ogonek/achievement-moderation.ts
 FILE: lib/ogonek/achievement-regulation.ts
 FILE: lib/ogonek/achievement-submit-client.ts
+FILE: lib/ogonek/appearance.ts
 FILE: lib/ogonek/card-export.ts
 FILE: lib/ogonek/comments.ts
 FILE: lib/ogonek/data.ts

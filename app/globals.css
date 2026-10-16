@@ -9752,3 +9752,632 @@ kbd {
     display: none;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ТЕМЫ, АКЦЕНТ, ШРИФТ, ПЛОТНОСТЬ
+   Всё ниже только ДОБАВЛЯЕТ стили и не удаляет существующие классы.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Акцентный цвет: базовые переменные + палитры ────────────────────────── */
+:root {
+  --accent: #ff6b35;
+  --accent-strong: #e8562a;
+  --accent-soft: rgba(255, 107, 53, 0.14);
+  /* Основной интерактивный цвет приложения теперь следует акценту */
+  --blue: var(--accent);
+}
+
+html[data-accent='flame'] {
+  --accent: #ff6b35;
+  --accent-strong: #e8562a;
+  --accent-soft: rgba(255, 107, 53, 0.14);
+}
+html[data-accent='blue'] {
+  --accent: #1d9bf0;
+  --accent-strong: #1a8cd8;
+  --accent-soft: rgba(29, 155, 240, 0.14);
+}
+html[data-accent='violet'] {
+  --accent: #8b5cf6;
+  --accent-strong: #7c3aed;
+  --accent-soft: rgba(139, 92, 246, 0.16);
+}
+html[data-accent='emerald'] {
+  --accent: #12b886;
+  --accent-strong: #0ca678;
+  --accent-soft: rgba(18, 184, 134, 0.16);
+}
+html[data-accent='rose'] {
+  --accent: #f91880;
+  --accent-strong: #db0e6f;
+  --accent-soft: rgba(249, 24, 128, 0.16);
+}
+html[data-accent='gold'] {
+  --accent: #f5b942;
+  --accent-strong: #e0a52f;
+  --accent-soft: rgba(245, 185, 66, 0.16);
+}
+
+/* Акцент перекрашивает «голубые» Tailwind-токены по всему приложению */
+html[data-accent] .text-\[\#1d9bf0\] { color: var(--accent) !important; }
+html[data-accent] .bg-\[\#1d9bf0\] { background-color: var(--accent) !important; }
+html[data-accent] .border-\[\#1d9bf0\] { border-color: var(--accent) !important; }
+html[data-accent] .bg-\[\#1a8cd8\] { background-color: var(--accent-strong) !important; }
+html[data-accent] .text-\[\#5cb8f5\] { color: var(--accent) !important; }
+html[data-accent] .hover\:bg-\[\#1d9bf0\]:hover { background-color: var(--accent-strong) !important; }
+
+/* Плавный переход при смене оформления */
+html,
+body,
+.app-shell,
+.sidebar,
+.feed,
+.right-rail,
+.settings-section,
+.export-section {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* ── Тема X Black (по умолчанию) — фиксируем фон явно ─────────────────────── */
+html[data-theme='x-black'] {
+  background: #000;
+}
+html[data-theme='x-black'] .app-shell {
+  background: #000;
+}
+
+/* ── Тема Apple Light ────────────────────────────────────────────────────── */
+html[data-theme='apple-light'] {
+  background: #ffffff;
+  --bg: #ffffff;
+  --surface: #f7f9f9;
+  --surface2: #eff3f4;
+  --line: #e1e8ed;
+  --text: #0f1419;
+  --muted: #536471;
+}
+html[data-theme='apple-light'] body {
+  background: #ffffff;
+  color: #0f1419;
+}
+html[data-theme='apple-light'] .app-shell {
+  background: #ffffff;
+}
+
+/* Светлые подложки вместо чёрных карточек */
+html[data-theme='apple-light'] .feed-header,
+html[data-theme='apple-light'] .view-header {
+  background: rgba(255, 255, 255, 0.85);
+}
+html[data-theme='apple-light'] .mobile-header,
+html[data-theme='apple-light'] .bottom-nav {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: #e1e8ed;
+}
+html[data-theme='apple-light'] .bottom-nav {
+  background: #ffffff;
+}
+
+html:is([data-theme='apple-light'], [data-theme='dim']) .search-bar,
+html:is([data-theme='apple-light'], [data-theme='dim']) .trending-card,
+html:is([data-theme='apple-light'], [data-theme='dim']) .evidence-card,
+html:is([data-theme='apple-light'], [data-theme='dim']) .stat-tile,
+html:is([data-theme='apple-light'], [data-theme='dim']) .heatmap-section,
+html:is([data-theme='apple-light'], [data-theme='dim']) .distribution-section,
+html:is([data-theme='apple-light'], [data-theme='dim']) .settings-section,
+html:is([data-theme='apple-light'], [data-theme='dim']) .export-section,
+html:is([data-theme='apple-light'], [data-theme='dim']) .modal,
+html:is([data-theme='apple-light'], [data-theme='dim']) .epm-select,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-stat,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-card,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-cat-card,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-ev-req,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-ev-file,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-mod,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-sub-brief,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-search__panel,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-trend__chip,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-today__card,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-leader,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-tile,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-person-row,
+html:is([data-theme='apple-light'], [data-theme='dim']) .msgr__search,
+html:is([data-theme='apple-light'], [data-theme='dim']) .msgr__suggest,
+html:is([data-theme='apple-light'], [data-theme='dim']) .msgr__suggest-chip,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw-quick__chip,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw-attach-preview,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw-compose-input,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw-emoji-pop,
+html:is([data-theme='apple-light'], [data-theme='dim']) .forward-note-preview,
+html:is([data-theme='apple-light'], [data-theme='dim']) .forward-search,
+html:is([data-theme='apple-light'], [data-theme='dim']) .forward-note {
+  background: var(--surface);
+}
+
+html:is([data-theme='apple-light'], [data-theme='dim']) .focus-input,
+html:is([data-theme='apple-light'], [data-theme='dim']) .segmented,
+html:is([data-theme='apple-light'], [data-theme='dim']) .ach-textarea,
+html:is([data-theme='apple-light'], [data-theme='dim']) .xh-search__field,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw__day span,
+html:is([data-theme='apple-light'], [data-theme='dim']) .mcw-compose-input {
+  background: var(--surface2);
+}
+
+html[data-theme='apple-light'] .settings-section,
+html[data-theme='apple-light'] .export-section {
+  border-color: #e1e8ed;
+}
+
+/* Светлые перекраски «зашитых» Tailwind-токенов */
+html[data-theme='apple-light'] .text-\[\#e7e9ea\] { color: #0f1419 !important; }
+html[data-theme='apple-light'] .text-\[\#71767b\] { color: #536471 !important; }
+html[data-theme='apple-light'] .text-\[\#2f3336\] { color: #8899a6 !important; }
+html[data-theme='apple-light'] .border-\[\#2f3336\] { border-color: #e1e8ed !important; }
+html[data-theme='apple-light'] .bg-\[\#16181c\] { background-color: #eff3f4 !important; }
+html[data-theme='apple-light'] .bg-\[\#1c1e22\] { background-color: #e8eef0 !important; }
+html[data-theme='apple-light'] .bg-\[\#202327\] { background-color: #e8eef0 !important; }
+html[data-theme='apple-light'] .bg-\[\#0b0c0d\] { background-color: #f7f9f9 !important; }
+html[data-theme='apple-light'] .bg-\[\#2f3336\] { background-color: #cfd9de !important; }
+html[data-theme='apple-light'] .bg-white\/\[0\.02\] { background-color: rgba(0, 0, 0, 0.025) !important; }
+html[data-theme='apple-light'] .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0, 0, 0, 0.035) !important; }
+html[data-theme='apple-light'] .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(0, 0, 0, 0.05) !important; }
+html[data-theme='apple-light'] .hover\:bg-white\/\[0\.08\]:hover { background-color: rgba(0, 0, 0, 0.06) !important; }
+html[data-theme='apple-light'] .back-button:hover { background: #e8eef0; }
+html[data-theme='apple-light'] .nav-item:hover,
+html[data-theme='apple-light'] .nav-item.active { background: #e8eef0; }
+html[data-theme='apple-light'] .secondary-btn:hover { background: rgba(0, 0, 0, 0.05); border-color: #8899a6; }
+html[data-theme='apple-light'] .export-button:hover { background: #eef6fc; }
+
+/* ── Тема Dim (мягкая сумеречная) ────────────────────────────────────────── */
+html[data-theme='dim'] {
+  background: #15202b;
+  --bg: #15202b;
+  --surface: #1e2732;
+  --surface2: #22303c;
+  --line: #38444d;
+  --text: #f7f9f9;
+  --muted: #8b98a5;
+}
+html[data-theme='dim'] body {
+  background: #15202b;
+  color: #f7f9f9;
+}
+html[data-theme='dim'] .app-shell {
+  background: #15202b;
+}
+html[data-theme='dim'] .feed-header,
+html[data-theme='dim'] .view-header {
+  background: rgba(21, 32, 43, 0.85);
+}
+html[data-theme='dim'] .bg-\[\#16181c\] { background-color: #22303c !important; }
+html[data-theme='dim'] .bg-\[\#0b0c0d\] { background-color: #1e2732 !important; }
+html[data-theme='dim'] .border-\[\#2f3336\] { border-color: #38444d !important; }
+
+/* ── Размер шрифта / масштаб интерфейса ──────────────────────────────────── */
+html[data-font-scale='compact'] { zoom: 0.94; }
+html[data-font-scale='regular'] { zoom: 1; }
+html[data-font-scale='large'] { zoom: 1.07; }
+html[data-font-scale='xlarge'] { zoom: 1.13; }
+
+/* ── Плотность ленты ─────────────────────────────────────────────────────── */
+html[data-density='compact'] .feed .py-4 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+html[data-density='compact'] .feed .px-4 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+html[data-density='comfortable'] .feed .py-4 { padding-top: 1.6rem !important; padding-bottom: 1.6rem !important; }
+html[data-density='comfortable'] .feed .px-4 { padding-left: 1.35rem !important; padding-right: 1.35rem !important; }
+
+/* ── Центр оформления в «Настройках» ────────────────────────────────────── */
+.appearance-hero {
+  background: linear-gradient(160deg, var(--accent-soft), var(--surface) 62%);
+}
+
+.appearance-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.appearance-section-head small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.appearance-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+  background: var(--accent-soft);
+}
+
+.appearance-hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 14px 0 0;
+}
+
+/* Выбор темы */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+}
+
+.theme-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 8px 24px var(--accent-soft);
+}
+
+.theme-card__preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid;
+  min-height: 96px;
+}
+
+.theme-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 7px;
+  margin-bottom: 2px;
+}
+
+.theme-card__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.theme-card__line {
+  display: block;
+  height: 6px;
+  border-radius: 4px;
+}
+
+.theme-card__chip {
+  display: block;
+  height: 13px;
+  width: 54px;
+  border-radius: 999px;
+  margin-top: auto;
+}
+
+.theme-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-card__name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.theme-card__meta small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.theme-card__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+
+/* Акцентные свотчи */
+.accent-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.accent-swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.accent-swatch:hover {
+  transform: scale(1.09);
+}
+
+.accent-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--muted), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* Размер шрифта */
+.font-scale-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.font-scale-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.font-scale-btn.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.font-scale-btn__sample {
+  font-weight: 800;
+  line-height: 1;
+}
+
+.font-scale-btn__label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.type-preview {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--line);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.type-preview strong {
+  font-size: 15px;
+}
+
+.type-preview span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Плотность ленты */
+.density-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.density-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.density-card:hover {
+  transform: translateY(-2px);
+}
+
+.density-card.is-active {
+  border-color: var(--accent);
+}
+
+.density-visual {
+  display: flex;
+  flex-direction: column;
+  border-radius: 9px;
+  padding: 9px;
+  background: var(--surface2);
+  border: 1px solid var(--line);
+}
+
+.density-visual__row {
+  display: block;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--muted), transparent);
+  opacity: 0.55;
+}
+
+.density-card--cozy .density-visual { gap: 7px; }
+.density-card--comfortable .density-visual { gap: 13px; }
+.density-card--compact .density-visual { gap: 4px; }
+
+.density-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.density-card__meta b { font-size: 13px; }
+
+.density-card__meta small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+/* Живой предпросмотр */
+.appearance-preview-card {
+  margin-top: 16px;
+  border: 1px solid;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appearance-preview-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appearance-preview-card__avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex: none;
+}
+
+.appearance-preview-card__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.appearance-preview-card__who strong { font-size: 14px; }
+.appearance-preview-card__who small { font-size: 11px; }
+
+.appearance-preview-card__tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.appearance-preview-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.appearance-preview-card__bar {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.appearance-preview-card__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.appearance-preview-card__actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.appearance-preview-card__actions span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Сброс оформления */
+.appearance-reset-row {
+  display: flex;
+  justify-content: center;
+  margin: -4px 0 20px;
+}
+
+.appearance-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.appearance-reset-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.appearance-reset-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 640px) {
+  .theme-grid,
+  .density-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .font-scale-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
