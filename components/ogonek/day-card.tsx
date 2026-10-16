@@ -7,13 +7,15 @@ import { createPortal } from 'react-dom'
 import { playClick } from '@/lib/ogonek/sound'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
+import { buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
-import type { Day } from '@/lib/ogonek/types'
+import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
+import { ForwardToChatModal } from './messenger'
 import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
@@ -67,6 +69,8 @@ export function DayCard({
   const [thankAnim, setThankAnim] = useState<'idle' | 'pressed'>('idle')
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [storyPrideIndex, setStoryPrideIndex] = useState<number | null>(null)
+  // ЭТАП 13 — выбранная гордость, которую пересылаем другу в чат
+  const [forwardPride, setForwardPride] = useState<ChatAttachment | null>(null)
   const reduce = useReducedMotion()
 
   // ЭТАП 9 — приватность дня и аватар для публикации в Сторис
@@ -297,6 +301,7 @@ export function DayCard({
                 onNotify?.(`Гордость #${index + 1}: ${visibilityMeta(level).shortLabel}`)
               }}
               onPublishPrideStory={(index) => setStoryPrideIndex(index)}
+              onForwardPride={(index) => setForwardPride(buildPrideAttachment(day, index))}
             />
 
             {/* Media — X.com style */}
@@ -498,6 +503,16 @@ export function DayCard({
           day={day}
           onClose={() => setShareModalOpen(false)}
           onNotify={(msg) => onNotify?.(msg)}
+        />
+      )}
+
+      {forwardPride && (
+        <ForwardToChatModal
+          attachment={forwardPride}
+          initialNote={`Гордость дня #${day.id} 🔥`}
+          onClose={() => setForwardPride(null)}
+          onNotify={(msg) => onNotify?.(msg)}
+          soundEnabled={soundEnabled}
         />
       )}
 

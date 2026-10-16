@@ -19,6 +19,7 @@ import { AnalyticsView } from './views/analytics-view'
 import { ExploreView } from './views/explore-view'
 import { HomeView } from './views/home-view'
 import { IntentionsView } from './views/intentions-view'
+import { MessagesView } from './views/messages-view'
 import { ProfileView } from './views/profile-view'
 import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
@@ -248,6 +249,13 @@ export function AppShell() {
           onNotify={notify}
           onSelectDay={handleSelectDay}
           onEditDay={handleEditDay}
+          soundEnabled={state.soundEnabled}
+        />
+      ),
+      messages: (
+        <MessagesView
+          onNavigate={navigate}
+          onNotify={notify}
           soundEnabled={state.soundEnabled}
         />
       ),

@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Link2,
   MapPin,
+  MessageCircle,
   Pause,
   Play,
   Send,
@@ -21,16 +22,19 @@ import {
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { buildStoryAttachment } from '@/lib/ogonek/messenger'
 import { BUILTIN_EMOJIS } from '@/lib/ogonek/reactions'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ViewableStory } from '@/lib/ogonek/stories'
 import type { StoryPhoto } from '@/lib/ogonek/story-digest'
+import type { ChatAttachment } from '@/lib/ogonek/types'
 import {
   buildStoryShareText,
   buildTelegramShareUrl,
   downloadStoryCard,
 } from '@/lib/ogonek/story-share'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { ForwardToChatModal } from './messenger'
 
 type Props = {
   stories: ViewableStory[]
@@ -124,6 +128,7 @@ export function StoryViewerModal({
   const [sharing, setSharing] = useState(false)
   const [copiedText, setCopiedText] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [forwardAttachment, setForwardAttachment] = useState<ChatAttachment | null>(null)
   const replyRef = useRef<HTMLInputElement>(null)
   const reduce = useReducedMotion()
 
@@ -832,6 +837,27 @@ export function StoryViewerModal({
                   <button
                     type="button"
                     className="story-viewer__share-btn"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setForwardAttachment(
+                        buildStoryAttachment({
+                          storyId: `story-${story.id}`,
+                          authorName: story.name,
+                          username: story.username,
+                          slide,
+                          slideIndex,
+                          totalSlides: story.slides.length,
+                          photo: slide.photo ?? null,
+                        })
+                      )
+                    }}
+                  >
+                    <MessageCircle size={18} />
+                    <span>Переслать другу в чат</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="story-viewer__share-btn"
                     onClick={handleTelegram}
                   >
                     <Send size={18} />
@@ -936,6 +962,16 @@ export function StoryViewerModal({
       >
         <ChevronRight size={26} />
       </button>
+
+      {forwardAttachment && (
+        <ForwardToChatModal
+          attachment={forwardAttachment}
+          initialNote={`Сторис: ${story.name} — @${story.username}`}
+          onClose={() => setForwardAttachment(null)}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
     </motion.div>
   )
 }

@@ -17,8 +17,19 @@ import type { ModerationEmailAttachment } from './achievement-moderation'
 import {
   DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
   DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
+  getFriend,
 } from './friends'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
+import {
+  CHAT_MESSAGE_LIMIT,
+  MY_CHAT_ID,
+  emptyThread,
+  makeChatMessage,
+  pickAutoReply,
+  sanitizeChatThreads,
+  threadOf,
+  unreadCount,
+} from './messenger'
 import {
   applyStepStatus,
   createMorningFocusRecord,
@@ -31,6 +42,7 @@ import {
   loadStore,
   saveStore,
   STORAGE_KEY,
+  sanitizeChatActiveFriendId,
   sanitizeExploreFollowingIds,
   sanitizeExplorePostIds,
   sanitizeExploreRecentSearches,
@@ -42,6 +54,9 @@ import type {
   AchievementEvidenceFile,
   AchievementRegulation,
   AchievementStatus,
+  ChatAttachment,
+  ChatMessage,
+  ChatThreads,
   Comment,
   CommentPersona,
   ComposerDraft,
@@ -1362,6 +1377,12 @@ export function useOgonekStore() {
         exploreLikedPosts: sanitizeExplorePostIds(newState.exploreLikedPosts),
         exploreSavedPosts: sanitizeExplorePostIds(newState.exploreSavedPosts),
         exploreRecentSearches: sanitizeExploreRecentSearches(newState.exploreRecentSearches),
+        // Переписки из архива — если их нет, не теряем уже начатые диалоги
+        chatThreads:
+          newState.chatThreads && typeof newState.chatThreads === 'object'
+            ? sanitizeChatThreads(newState.chatThreads, {})
+            : prev.chatThreads,
+        chatActiveFriendId: sanitizeChatActiveFriendId(newState.chatActiveFriendId),
       }))
     },
     [updateStore]
@@ -1772,6 +1793,318 @@ export function useOgonekStore() {
     return maxId + 1
   }, [])
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР И БЫСТРЫЕ ЧАТЫ С ДРУЗЬЯМИ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /** Открыть/закрыть диалог в разделе «Чаты» (только реальный друг) */
+  const setActiveChatFriend = useCallback(
+    (friendId: string | null): string | null => {
+      const next = friendId && getFriend(friendId) ? friendId : null
+      updateStore((prev) =>
+        prev.chatActiveFriendId === next ? prev : { ...prev, chatActiveFriendId: next }
+      )
+      return next
+    },
+    [updateStore]
+  )
+
+  /**
+   * Начать (или открыть) диалог с другом: гарантирует тред в сторе и
+   * делает его активным. Возвращает true, если собеседник существует.
+   */
+  const startChatWithFriend = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId || !getFriend(friendId)) return false
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const nextThreads = threads[friendId]
+          ? threads
+          : { ...threads, [friendId]: emptyThread() }
+        return { ...prev, chatThreads: nextThreads, chatActiveFriendId: friendId }
+      })
+      return true
+    },
+    [updateStore]
+  )
+
+  /**
+   * Живой собеседник: через небольшую паузу друг отвечает и ставит реакцию
+   * на последнее отправленное сообщение. Делает чат по-настоящему живым.
+   */
+  const scheduleChatAutoReply = useCallback(
+    (friendId: string, userText: string, hasAttachment: boolean) => {
+      if (typeof window === 'undefined') return
+      const friend = getFriend(friendId)
+      if (!friend) return
+
+      const auto = pickAutoReply(friend, userText, hasAttachment)
+      const delay = 1200 + Math.floor(Math.random() * 1100)
+
+      window.setTimeout(() => {
+        updateStore((prev) => {
+          const threads = prev.chatThreads ?? {}
+          if (!threads[friendId]) return prev
+          const thread = threadOf(threads, friendId)
+
+          // Мои сообщения «прочитаны» собеседником (галочки ✓✓)
+          let messages: ChatMessage[] = thread.messages.map((m) =>
+            m.authorId === MY_CHAT_ID ? { ...m, read: true } : m
+          )
+
+          // Друг реагирует на последнее моё сообщение
+          if (auto.reactionId) {
+            let idx = -1
+            for (let i = messages.length - 1; i >= 0; i -= 1) {
+              if (messages[i].authorId === MY_CHAT_ID) {
+                idx = i
+                break
+              }
+            }
+            if (idx >= 0) {
+              const target = messages[idx]
+              const already = target.reactions.some(
+                (r) => r.by === friendId && r.emojiId === auto.reactionId
+              )
+              if (!already) {
+                const reactionId = auto.reactionId
+                messages = messages.map((m, k) =>
+                  k === idx
+                    ? { ...m, reactions: [...m.reactions, { emojiId: reactionId, by: friendId }] }
+                    : m
+                )
+              }
+            }
+          }
+
+          const reply = makeChatMessage({ authorId: friendId, text: auto.text })
+          return {
+            ...prev,
+            chatThreads: {
+              ...threads,
+              [friendId]: { ...thread, messages: [...messages, reply] },
+            },
+          }
+        })
+      }, delay)
+    },
+    [updateStore]
+  )
+
+  /**
+   * Отправить сообщение другу (с вложением-карточкой или без).
+   * Возвращает созданное сообщение или null, если отправлять нечего.
+   */
+  const sendChatMessage = useCallback(
+    (friendId: string, text: string, attachment?: ChatAttachment | null): ChatMessage | null => {
+      if (!friendId || !getFriend(friendId)) return null
+      const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
+      if (!clean && !attachment) return null
+
+      const message = makeChatMessage({
+        authorId: MY_CHAT_ID,
+        text: clean,
+        attachment: attachment ?? null,
+      })
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages: [...thread.messages, message], draft: '' },
+          },
+        }
+      })
+
+      scheduleChatAutoReply(friendId, clean, Boolean(attachment))
+      return message
+    },
+    [updateStore, scheduleChatAutoReply]
+  )
+
+  /** Переслать карточку сразу нескольким друзьям. Возвращает число получателей. */
+  const forwardToChat = useCallback(
+    (friendIds: string[], attachment: ChatAttachment, note?: string): number => {
+      if (!Array.isArray(friendIds) || friendIds.length === 0 || !attachment) return 0
+      const clean = (note ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
+      let count = 0
+      for (const id of friendIds) {
+        if (sendChatMessage(id, clean, attachment)) count += 1
+      }
+      return count
+    },
+    [sendChatMessage]
+  )
+
+  /**
+   * Переключает реакцию пользователя на сообщение чата.
+   * Возвращает true, если реакция теперь активна.
+   */
+  const toggleChatReaction = useCallback(
+    (friendId: string, messageId: string, emojiId: string): boolean => {
+      if (!friendId || !messageId || !emojiId) return false
+      const thread = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+      const target = thread.messages.find((m) => m.id === messageId)
+      const willBeActive = !target?.reactions.some(
+        (r) => r.by === MY_CHAT_ID && r.emojiId === emojiId
+      )
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const t = threadOf(threads, friendId)
+        const messages = t.messages.map((m) => {
+          if (m.id !== messageId) return m
+          const mine = m.reactions.some((r) => r.by === MY_CHAT_ID && r.emojiId === emojiId)
+          return {
+            ...m,
+            reactions: mine
+              ? m.reactions.filter((r) => !(r.by === MY_CHAT_ID && r.emojiId === emojiId))
+              : [...m.reactions, { emojiId, by: MY_CHAT_ID }],
+          }
+        })
+        return { ...prev, chatThreads: { ...threads, [friendId]: { ...t, messages } } }
+      })
+
+      return willBeActive
+    },
+    [updateStore]
+  )
+
+  /** Сохраняет черновик сообщения для конкретной переписки */
+  const setChatDraft = useCallback(
+    (friendId: string, value: string) => {
+      if (!friendId) return
+      const draft = (value ?? '').slice(0, CHAT_MESSAGE_LIMIT)
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threads[friendId]
+        if (!thread) {
+          return { ...prev, chatThreads: { ...threads, [friendId]: { ...emptyThread(), draft } } }
+        }
+        if (thread.draft === draft) return prev
+        return { ...prev, chatThreads: { ...threads, [friendId]: { ...thread, draft } } }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Помечает переписку прочитанной (сбрасывает счётчик непрочитанных) */
+  const markThreadRead = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      const nowISO = new Date().toISOString()
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threads[friendId]
+        if (!thread || unreadCount(thread) === 0) return prev
+        return {
+          ...prev,
+          chatThreads: { ...threads, [friendId]: { ...thread, readAtISO: nowISO } },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Помечает прочитанными сразу все переписки */
+  const markAllThreadsRead = useCallback(() => {
+    const nowISO = new Date().toISOString()
+    updateStore((prev) => {
+      const threads = prev.chatThreads ?? {}
+      let changed = false
+      const next: ChatThreads = {}
+      for (const [id, thread] of Object.entries(threads)) {
+        if (unreadCount(thread) > 0) {
+          next[id] = { ...thread, readAtISO: nowISO }
+          changed = true
+        } else {
+          next[id] = thread
+        }
+      }
+      return changed ? { ...prev, chatThreads: next } : prev
+    })
+  }, [updateStore])
+
+  /** Очищает историю переписки, оставляя сам диалог */
+  const clearThreadMessages = useCallback(
+    (friendId: string) => {
+      if (!friendId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages: [], readAtISO: new Date().toISOString() },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Удаляет одно сообщение из переписки */
+  const deleteChatMessage = useCallback(
+    (friendId: string, messageId: string) => {
+      if (!friendId || !messageId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              messages: thread.messages.filter((m) => m.id !== messageId),
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Выключает/включает уведомления переписки. Возвращает новое значение mute */
+  const toggleThreadMute = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const current = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: { ...threads, [friendId]: { ...thread, muted: !thread.muted } },
+        }
+      })
+      return !current.muted
+    },
+    [updateStore]
+  )
+
+  /** Закрепляет/открепляет диалог сверху. Возвращает новое значение pin */
+  const toggleThreadPin = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      const current = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: { ...threads, [friendId]: { ...thread, pinned: !thread.pinned } },
+        }
+      })
+      return !current.pinned
+    },
+    [updateStore]
+  )
+
   return {
     state,
     isHydrated: typeof window !== 'undefined',
@@ -1831,6 +2164,18 @@ export function useOgonekStore() {
     resetToDefaults,
     getNextDayDate,
     getNextDayId,
+    setActiveChatFriend,
+    startChatWithFriend,
+    sendChatMessage,
+    forwardToChat,
+    toggleChatReaction,
+    setChatDraft,
+    markThreadRead,
+    markAllThreadsRead,
+    clearThreadMessages,
+    deleteChatMessage,
+    toggleThreadMute,
+    toggleThreadPin,
     toggleReaction,
     getReactionsFor,
     getMyReactionsFor,

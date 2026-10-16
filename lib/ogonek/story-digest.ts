@@ -11,7 +11,7 @@
  */
 
 import type { FriendProfile } from './friends'
-import { getGratitudeText, type Day } from './types'
+import { getGratitudeText, type Day } from './types.ts'
 
 /** Плитка фото-сетки: настоящая фотография дня или процедурный «кадр» дня */
 export type StoryPhoto = {

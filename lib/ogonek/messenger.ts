@@ -11,11 +11,11 @@
  * чтобы раздел «Чаты» был настоящим мессенджером, а не заглушкой.
  */
 
-import { FRIEND_PROFILES, getFriend, type FriendProfile } from './friends'
-import { BUILTIN_EMOJIS } from './reactions'
-import { getStoryBackground } from './stories'
-import { getGratitudeText, type ChatAttachment, type ChatMessage, type ChatThreadState, type ChatThreads, type Day, type StorySlide, type VisibilityLevel } from './types'
-import { normalizeVisibility } from './visibility'
+import { FRIEND_PROFILES, getFriend, type FriendProfile } from './friends.ts'
+import { BUILTIN_EMOJIS } from './reactions.ts'
+import { getStoryBackground } from './stories.ts'
+import { getGratitudeText, type ChatAttachment, type ChatAttachmentKind, type ChatMessage, type ChatThreadState, type ChatThreads, type Day, type StorySlide, type VisibilityLevel } from './types.ts'
+import { normalizeVisibility } from './visibility.ts'
 
 /** Идентификатор автора-пользователя в переписке */
 export const MY_CHAT_ID = 'me'
@@ -589,4 +589,114 @@ export function buildDemoThreads(now: Date = new Date()): ChatThreads {
   }
 
   return threads
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Валидация переписок из хранилища
+   ──────────────────────────────────────────────────────────────────────── */
+
+const CHAT_ATTACHMENT_KINDS: ChatAttachmentKind[] = ['pride', 'day', 'story', 'achievement']
+
+function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
+  if (!value || typeof value !== 'object') return null
+  const a = value as Partial<ChatAttachment>
+  const kind =
+    typeof a.kind === 'string' && (CHAT_ATTACHMENT_KINDS as string[]).includes(a.kind)
+      ? (a.kind as ChatAttachmentKind)
+      : null
+  if (!kind) return null
+
+  return {
+    kind,
+    title: typeof a.title === 'string' && a.title.trim() ? a.title.trim().slice(0, 200) : 'Карточка',
+    subtitle: typeof a.subtitle === 'string' ? a.subtitle.slice(0, 240) : '',
+    emoji: typeof a.emoji === 'string' && a.emoji.trim() ? a.emoji.trim().slice(0, 8) : '✨',
+    from: typeof a.from === 'string' && a.from ? a.from.slice(0, 40) : '#1a0f0a',
+    to: typeof a.to === 'string' && a.to ? a.to.slice(0, 40) : '#5a2410',
+    accent: typeof a.accent === 'string' && a.accent ? a.accent.slice(0, 40) : '#ff8a3d',
+    dayId: typeof a.dayId === 'number' && Number.isFinite(a.dayId) ? a.dayId : null,
+    prideIndex:
+      typeof a.prideIndex === 'number' && Number.isFinite(a.prideIndex) ? a.prideIndex : null,
+    storyId: typeof a.storyId === 'string' && a.storyId ? a.storyId.slice(0, 80) : null,
+    author: typeof a.author === 'string' && a.author ? a.author.slice(0, 80) : null,
+    photo: typeof a.photo === 'string' && a.photo ? a.photo.slice(0, 2000) : null,
+    visibility: normalizeVisibility(a.visibility),
+  }
+}
+
+function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): ChatMessage[] {
+  if (!Array.isArray(value)) return []
+  const result: ChatMessage[] = []
+  const seen = new Set<string>()
+
+  for (const raw of value) {
+    if (!raw || typeof raw !== 'object') continue
+    const m = raw as Partial<ChatMessage>
+    const text = typeof m.text === 'string' ? m.text.trim().slice(0, CHAT_MESSAGE_LIMIT) : ''
+    const attachment = sanitizeChatAttachment(m.attachment)
+    if (!text && !attachment) continue
+
+    const id = typeof m.id === 'string' && m.id ? m.id.slice(0, 80) : `msg-${result.length}`
+    if (seen.has(id)) continue
+    seen.add(id)
+
+    const rawAuthor = typeof m.authorId === 'string' ? m.authorId : ''
+    const authorId =
+      rawAuthor === MY_CHAT_ID || validFriendIds.has(rawAuthor) ? rawAuthor : MY_CHAT_ID
+
+    const reactions = Array.isArray(m.reactions)
+      ? m.reactions
+          .filter((r): r is NonNullable<typeof r> => !!r && typeof r === 'object')
+          .map((r) => {
+            const by =
+              typeof r.by === 'string' && (r.by === MY_CHAT_ID || validFriendIds.has(r.by))
+                ? r.by
+                : MY_CHAT_ID
+            return { emojiId: typeof r.emojiId === 'string' ? r.emojiId.slice(0, 40) : '', by }
+          })
+          .filter((r) => r.emojiId)
+      : []
+
+    result.push({
+      id,
+      authorId,
+      text,
+      createdAtISO:
+        typeof m.createdAtISO === 'string' && m.createdAtISO ? m.createdAtISO : new Date().toISOString(),
+      attachment,
+      reactions,
+      read: Boolean(m.read),
+      system: Boolean(m.system),
+    })
+  }
+
+  return result
+}
+
+/**
+ * Валидирует переписки из локального хранилища. Отбрасывает «мёртвых»
+ * собеседников (нет в социальной карте), пустые сообщения и битые вложения.
+ * Позволяет намеренно начатый (ещё пустой) диалог — тред сохраняется.
+ */
+export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}): ChatThreads {
+  if (!value || typeof value !== 'object') return fallback
+
+  const validFriendIds = new Set(FRIEND_PROFILES.map((f) => f.id))
+  const result: ChatThreads = {}
+
+  for (const [friendId, rawThread] of Object.entries(value as Record<string, unknown>)) {
+    if (!validFriendIds.has(friendId)) continue
+    if (!rawThread || typeof rawThread !== 'object') continue
+    const t = rawThread as Partial<ChatThreadState>
+
+    result[friendId] = {
+      messages: sanitizeChatMessages(t.messages, validFriendIds),
+      readAtISO: typeof t.readAtISO === 'string' && t.readAtISO ? t.readAtISO : null,
+      muted: Boolean(t.muted),
+      pinned: Boolean(t.pinned),
+      draft: typeof t.draft === 'string' ? t.draft.slice(0, CHAT_MESSAGE_LIMIT) : '',
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : fallback
 }

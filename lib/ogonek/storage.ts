@@ -10,6 +10,7 @@ import {
 } from './friends'
 import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
+import { buildDemoThreads, sanitizeChatThreads } from './messenger'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { buildDemoMyStories } from './stories'
 import { normalizeVisibility } from './visibility'
@@ -18,6 +19,7 @@ import type {
   AchievementEvidenceRequirement,
   AchievementRegulation,
   AchievementStatus,
+  ChatThreads,
   Comment,
   CommentPersona,
   CommentsByTarget,
@@ -243,6 +245,15 @@ export function sanitizeDismissedSuggestions(value: unknown): string[] {
   if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
+}
+
+/**
+ * ЭТАП 13 — МЕССЕНДЖЕР.
+ * Валидирует id открытого диалога: принимает только реального друга.
+ */
+export function sanitizeChatActiveFriendId(value: unknown): string | null {
+  if (typeof value !== 'string' || !value) return null
+  return FRIEND_PROFILES.some((friend) => friend.id === value) ? value : null
 }
 
 /**
@@ -696,6 +707,9 @@ export const DEFAULT_VIEWED_STORY_IDS: string[] = ['fr-timofeev', 'fr-lanskaya']
 /** Демо-кадры личной истории пользователя */
 export const DEFAULT_MY_STORIES: MyStory[] = buildDemoMyStories()
 
+/** ЭТАП 13: демо-переписки, чтобы раздел «Чаты» был живым с первого запуска */
+export const DEFAULT_CHAT_THREADS: ChatThreads = buildDemoThreads()
+
 /** ЭТАП 10: демо-история утренних фокусов за последние дни */
 const DEMO_MORNING_FOCUS = buildDemoMorningFocus(new Date().toISOString().split('T')[0])
 
@@ -727,6 +741,8 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   exploreLikedPosts: [],
   exploreSavedPosts: ['cp-6', 'cp-11'],
   exploreRecentSearches: [],
+  chatThreads: DEFAULT_CHAT_THREADS,
+  chatActiveFriendId: null,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -780,6 +796,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               exploreLikedPosts: sanitizeExplorePostIds(parsedV3.exploreLikedPosts),
               exploreSavedPosts: sanitizeExplorePostIds(parsedV3.exploreSavedPosts),
               exploreRecentSearches: sanitizeExploreRecentSearches(parsedV3.exploreRecentSearches),
+              chatThreads: sanitizeChatThreads(parsedV3.chatThreads, DEFAULT_CHAT_THREADS),
+              chatActiveFriendId: sanitizeChatActiveFriendId(parsedV3.chatActiveFriendId),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -893,6 +911,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
         exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
         exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
+        chatThreads: sanitizeChatThreads(parsed.chatThreads, DEFAULT_CHAT_THREADS),
+        chatActiveFriendId: sanitizeChatActiveFriendId(parsed.chatActiveFriendId),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1056,6 +1076,8 @@ export function validateAndImportJson(
       exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
       exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
       exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
+      chatThreads: sanitizeChatThreads(parsed.chatThreads, {}),
+      chatActiveFriendId: null,
     }
 
     return { success: true, data: state }

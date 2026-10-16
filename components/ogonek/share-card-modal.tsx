@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, Download, FileCode, Link, Sparkles, X } from 'lucide-react'
+import { Check, Copy, Download, FileCode, Link, MessageCircle, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
 import {
   downloadBlob,
@@ -8,7 +8,9 @@ import {
   formatDayAsText,
   generateDayCardSvg,
 } from '@/lib/ogonek/card-export'
+import { buildDayAttachment } from '@/lib/ogonek/messenger'
 import type { Day } from '@/lib/ogonek/types'
+import { ForwardToChatModal } from './messenger'
 
 interface ShareCardModalProps {
   day: Day
@@ -20,6 +22,7 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [isExportingPng, setIsExportingPng] = useState(false)
+  const [forwardOpen, setForwardOpen] = useState(false)
 
   const handleCopyText = async () => {
     try {
@@ -152,12 +155,34 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
             {linkCopied ? <Check size={18} /> : <Link size={18} />}
             <span>{linkCopied ? 'Ссылка скопирована!' : 'Скопировать ссылку'}</span>
           </button>
+
+          {/* Переслать карточку дня другу в чат */}
+          <button
+            type="button"
+            className="primary-btn w-full justify-center flex items-center gap-2"
+            onClick={() => {
+              onNotify('Выбери, кому переслать карточку дня 💬')
+              setForwardOpen(true)
+            }}
+          >
+            <MessageCircle size={18} />
+            <span>Переслать другу в чат</span>
+          </button>
         </div>
 
         <div className="text-xs text-center text-muted mt-2">
           Векторная графика высокого разрешения (Dark X Theme) · @cernavation
         </div>
       </div>
+
+      {forwardOpen && (
+        <ForwardToChatModal
+          attachment={buildDayAttachment(day)}
+          initialNote={`День #${day.id} — делюсь гордостью 🔥`}
+          onClose={() => setForwardOpen(false)}
+          onNotify={onNotify}
+        />
+      )}
     </div>
   )
 }

@@ -11,10 +11,10 @@
  * были не заглушкой, а настоящими листающимися историями.
  */
 
-import { FRIEND_PROFILES, type FriendProfile } from './friends'
-import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-digest'
+import { FRIEND_PROFILES, type FriendProfile } from './friends.ts'
+import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-digest.ts'
 import type { Day, FriendStory, MyStory, StorySlide, VisibilityLevel } from './types'
-import { normalizeVisibility } from './visibility'
+import { normalizeVisibility } from './visibility.ts'
 
 /** Палитра градиентов кадров — тёплый огонь Огонька + холодные акценты */
 const SLIDE_THEMES: Array<{ from: string; to: string; accent: string }> = [

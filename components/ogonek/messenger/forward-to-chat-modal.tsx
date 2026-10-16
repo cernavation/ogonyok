@@ -39,7 +39,12 @@ export function ForwardToChatModal({
   initialNote = '',
 }: Props) {
   const { state, forwardToChat, sendChatMessage } = useOgonekStore()
-  const [selected, setSelected] = useState<string[]>(initialFriendIds)
+  // Если карточку пересылают из уже открытого чата — этот друг выбран заранее,
+  // так что пересылка срабатывает буквально в один клик.
+  const activeFriendId = state.chatActiveFriendId
+  const [selected, setSelected] = useState<string[]>(() =>
+    initialFriendIds.length > 0 ? [...initialFriendIds] : activeFriendId ? [activeFriendId] : []
+  )
   const [note, setNote] = useState(initialNote)
   const [query, setQuery] = useState('')
 

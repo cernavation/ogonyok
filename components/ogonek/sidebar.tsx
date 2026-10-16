@@ -1,8 +1,10 @@
 'use client'
 
-import { BarChart3, Home, MoreHorizontal, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
+import { BarChart3, Home, MessageCircle, MoreHorizontal, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
+import { totalUnread } from '@/lib/ogonek/messenger'
 import type { ViewId } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from './tooltip'
 
 type Props = {
@@ -17,6 +19,7 @@ type Props = {
 const NAV = [
   { id: 'home' as ViewId,       icon: Home,     label: 'Главная' },
   { id: 'explore' as ViewId,   icon: Search,   label: 'Поиск' },
+  { id: 'messages' as ViewId,  icon: MessageCircle, label: 'Чаты' },
   { id: 'vault' as ViewId,     icon: Zap,      label: 'Evidence Vault' },
   { id: 'analytics' as ViewId, icon: BarChart3, label: 'Аналитика' },
   { id: 'profile' as ViewId,   icon: User,     label: 'Профиль' },
@@ -31,6 +34,8 @@ export function Sidebar({
   onOpenProfile,
   streak = CURRENT_DAY,
 }: Props) {
+  const { state } = useOgonekStore()
+  const unread = totalUnread(state.chatThreads ?? {})
   return (
     <aside className="sidebar" aria-label="Боковая панель">
       {/* X-style logo mark */}
@@ -58,6 +63,11 @@ export function Sidebar({
             >
               <Icon size={24} strokeWidth={view === id ? 2.5 : 1.75} />
               <span>{label}</span>
+              {id === 'messages' && unread > 0 && (
+                <span className="nav-item__badge" aria-label={`${unread} непрочитанных`}>
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
             </button>
           </Tooltip>
         ))}

@@ -1,4 +1,12 @@
-export type ViewId = 'home' | 'explore' | 'vault' | 'analytics' | 'settings' | 'profile' | 'intentions'
+export type ViewId =
+  | 'home'
+  | 'explore'
+  | 'messages'
+  | 'vault'
+  | 'analytics'
+  | 'settings'
+  | 'profile'
+  | 'intentions'
 
 export type Mode = 'pride' | 'gratitude'
 
@@ -425,6 +433,80 @@ export type MyStory = {
   visibility?: VisibilityLevel
 }
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР И БЫСТРЫЕ ЧАТЫ С ДРУЗЬЯМИ
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Тип карточки, которую можно переслать в чат одним кликом */
+export type ChatAttachmentKind = 'pride' | 'day' | 'story' | 'achievement'
+
+/**
+ * Компактная карточка-вложение в переписке: гордость дня, целый день
+ * летописи, кадр сторис или верифицированная ачивка. Хранит уже готовые
+ * цвета/эмодзи, чтобы чат рисовал карточку без обращения к источнику.
+ */
+export type ChatAttachment = {
+  kind: ChatAttachmentKind
+  title: string
+  subtitle: string
+  emoji: string
+  /** CSS-цвет начала градиента */
+  from: string
+  /** CSS-цвет конца градиента */
+  to: string
+  /** Акцентный цвет подписи */
+  accent: string
+  /** id дня-источника (для гордости/дня) */
+  dayId: number | null
+  /** индекс гордости в дне */
+  prideIndex: number | null
+  /** id сторис/ачивки-источника */
+  storyId?: string | null
+  /** Имя автора (для пересланной чужой сторис) */
+  author: string | null
+  /** Фото-фон: id из IndexedDB, data URL или blob */
+  photo: string | null
+  visibility: VisibilityLevel
+}
+
+/** Реакция на конкретное сообщение чата */
+export type ChatReaction = {
+  emojiId: string
+  /** Кто поставил: 'me' или id друга */
+  by: string
+}
+
+/** Одно сообщение переписки */
+export type ChatMessage = {
+  id: string
+  /** 'me' — пользователь, иначе id друга-собеседника */
+  authorId: string
+  text: string
+  createdAtISO: string
+  attachment: ChatAttachment | null
+  reactions: ChatReaction[]
+  /** Сообщение прочитано собеседником (галочки ✓✓) */
+  read: boolean
+  /** Системное сообщение (без пузыря пользователя) */
+  system: boolean
+}
+
+/** Состояние одной переписки с другом */
+export type ChatThreadState = {
+  messages: ChatMessage[]
+  /** Когда я последний раз открывал переписку (ISO) — база непрочитанных */
+  readAtISO: string | null
+  /** Уведомления отключены */
+  muted: boolean
+  /** Диалог закреплён сверху */
+  pinned: boolean
+  /** Черновик неотправленного сообщения */
+  draft: string
+}
+
+/** Все переписки: ключ — id друга */
+export type ChatThreads = Record<string, ChatThreadState>
+
 export type OgonekStoreState = {
   schemaVersion: number
   days: Day[]
@@ -473,4 +555,9 @@ export type OgonekStoreState = {
   exploreSavedPosts: string[]
   /** Недавние поисковые запросы хаба (свежие — в начале) */
   exploreRecentSearches: string[]
+  /* ── ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР ─────────────────────────────────── */
+  /** Переписки с друзьями: id друга → тред (сообщения, реакции, черновик) */
+  chatThreads: ChatThreads
+  /** Открытый диалог (id друга) или null — раздел «Чаты» */
+  chatActiveFriendId: string | null
 }

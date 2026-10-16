@@ -228,7 +228,8 @@ export function DayEntries({
                 )}
 
                 {/* ЭТАП 9 — приватность этой гордости и публикация в Сторис */}
-                {(onSetPrideVisibility || onPublishPrideStory) && (
+                {/* ЭТАП 13 — переслать эту гордость другу в чат в один клик */}
+                {(onSetPrideVisibility || onPublishPrideStory || onForwardPride) && (
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-1 pt-1 pl-8">
                     {onSetPrideVisibility ? (
                       <VisibilitySwitcher
@@ -240,19 +241,34 @@ export function DayEntries({
                     ) : (
                       <span />
                     )}
-                    {onPublishPrideStory && (
-                      <Tooltip content="Опубликовать эту гордость в Сторис" side="top">
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06]"
-                          onClick={() => onPublishPrideStory(index)}
-                          aria-label={`Опубликовать гордость #${p.num} в Сторис`}
-                        >
-                          <Send size={12} className="text-[#ff6b35]" />
-                          В Сторис
-                        </button>
-                      </Tooltip>
-                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {onForwardPride && (
+                        <Tooltip content="Переслать эту гордость другу в чат" side="top">
+                          <button
+                            type="button"
+                            className="flex items-center gap-1.5 rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:border-[#1d9bf0]/40 hover:bg-[#1d9bf0]/10"
+                            onClick={() => onForwardPride(index)}
+                            aria-label={`Переслать гордость #${p.num} в чат`}
+                          >
+                            <Forward size={12} className="text-[#1d9bf0]" />
+                            В чат
+                          </button>
+                        </Tooltip>
+                      )}
+                      {onPublishPrideStory && (
+                        <Tooltip content="Опубликовать эту гордость в Сторис" side="top">
+                          <button
+                            type="button"
+                            className="flex items-center gap-1.5 rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06]"
+                            onClick={() => onPublishPrideStory(index)}
+                            aria-label={`Опубликовать гордость #${p.num} в Сторис`}
+                          >
+                            <Send size={12} className="text-[#ff6b35]" />
+                            В Сторис
+                          </button>
+                        </Tooltip>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
