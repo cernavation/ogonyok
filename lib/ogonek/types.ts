@@ -600,6 +600,63 @@ export type ChatThreadState = {
 /** Все переписки: ключ — id друга */
 export type ChatThreads = Record<string, ChatThreadState>
 
+/* ────────────────────────────────────────────────────────────────────────
+   ЭТАП 18 — СИСТЕМА АВТОРИЗАЦИИ, РЕГИСТРАЦИИ И ПЕРЕКЛЮЧЕНИЯ АККАУНТОВ
+   ──────────────────────────────────────────────────────────────────────── */
+
+/** Способ входа в аккаунт: почта+пароль, Google OAuth (локальная симуляция) или гость */
+export type AuthProvider = 'email' | 'google' | 'guest'
+
+/**
+ * Компактный слепок профиля, привязанный к аккаунту.
+ * Полный профиль (соцсети, цель месяца и т.д.) живёт в `state.profile`,
+ * а при переключении аккаунтов меняется именно этот слепок.
+ */
+export type AccountProfileSnapshot = {
+  displayName: string
+  username: string
+  bio: string
+  city: string
+  avatarColor: string
+  avatarImage: string | null
+  bannerImage: string | null
+  bannerPreset: string
+  verified: boolean
+}
+
+/**
+ * Локальный аккаунт Огонька. Пароль никогда не хранится в открытом виде —
+ * только соль и SHA-256 хэш (Web Crypto, см. security.ts).
+ */
+export type AuthAccount = {
+  id: string
+  provider: AuthProvider
+  email: string | null
+  passwordHash: string | null
+  passwordSalt: string | null
+  snapshot: AccountProfileSnapshot
+  createdAtISO: string
+  lastActiveISO: string | null
+  signInCount: number
+  isGuest: boolean
+  /** Демо-личность, входящая через предустановленный пароль */
+  demoSeed: boolean
+}
+
+/** Полное состояние системы аккаунтов: список, активный, счётчики и защита от перебора */
+export type AuthState = {
+  accounts: AuthAccount[]
+  activeAccountId: string | null
+  signedIn: boolean
+  hasOnboarded: boolean
+  switchCount: number
+  signInCount: number
+  failedAttempts: number
+  lockedUntilISO: string | null
+  lastAuthAtISO: string | null
+  updatedAtISO: string
+}
+
 export type OgonekStoreState = {
   schemaVersion: number
   days: Day[]
@@ -673,6 +730,9 @@ export type OgonekStoreState = {
   /* ── ЭТАП 17 — МЕСЯЧНЫЕ KPI-ЦЕЛИ И ГЛУБОКАЯ ИИ-АНАЛИТИКА ─────────────── */
   /** Месячные KPI-цели, с которыми аналитика сверяет записанные гордости */
   monthlyKpis: MonthlyKpi[]
+  /* ── ЭТАП 18 — АВТОРИЗАЦИЯ И ПЕРЕКЛЮЧЕНИЕ АККАУНТОВ ──────────────────── */
+  /** Локальные аккаунты, активная личность, счётчики входов и защита от перебора */
+  auth: AuthState
 }
 
 /* ────────────────────────────────────────────────────────────────────────

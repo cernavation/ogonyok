@@ -10,6 +10,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { AppearanceProvider } from './appearance-provider'
+import { AuthModal, AuthScreen } from './auth'
 import { BottomNav } from './bottom-nav'
 import { Composer } from './composer'
 import { RightRail } from './right-rail'
@@ -41,6 +42,7 @@ export function AppShell() {
   const [toast, setToast] = useState('')
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
+  const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
 
   const {
     state,
@@ -70,6 +72,7 @@ export function AppShell() {
     getNextDayDate,
     getNextDayId,
     lockAppNow,
+    provisionDemoAccountSecrets,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -87,6 +90,17 @@ export function AppShell() {
   }, [])
 
   const canLock = hasUnlockMethod(state.security)
+
+  /* ── ЭТАП 18: разово готовим демо-пароли сид-аккаунтов ─────────────────── */
+  useEffect(() => {
+    void provisionDemoAccountSecrets()
+  }, [provisionDemoAccountSecrets])
+
+  const openAuth = useCallback((mode: 'signin' | 'register') => {
+    setAuthModal(mode)
+  }, [])
+
+  const closeAuth = useCallback(() => setAuthModal(null), [])
 
   /* ── ЭТАП 15: экран блокировки, автоблокировка и ручная блокировка ─────── */
 
@@ -194,6 +208,7 @@ export function AppShell() {
       setLightbox(null)
       setHotkeysModal(false)
       setProfileModal(false)
+      setAuthModal(null)
     },
     onToggleHotkeysModal: () => {
       if (locked) return
@@ -455,6 +470,8 @@ export function AppShell() {
           onFocusIntentions={handleFocusIntentions}
           onCompose={() => setComposer(true)}
           onOpenProfile={() => navigate('profile')}
+          onOpenAuth={openAuth}
+          onNotify={notify}
           streak={streakState.streak}
         />
 
@@ -534,8 +551,33 @@ export function AppShell() {
           {locked && <AppLockScreen onUnlocked={handleUnlocked} reason={lockReason} />}
         </AnimatePresence>
 
+        <AnimatePresence>
+          {authModal && (
+            <AuthModal
+              initialMode={authModal}
+              onClose={closeAuth}
+              onNotify={notify}
+              onAuthenticated={() => {
+                navigate('home')
+              }}
+            />
+          )}
+        </AnimatePresence>
+
         <Toast message={toast} />
       </main>
+
+      {/* ЭТАП 18: полноэкранный шлюз авторизации, когда пользователь вышел */}
+      <AnimatePresence>
+        {!state.auth.signedIn && !locked && (
+          <AuthScreen
+            onAuthenticated={() => {
+              navigate('home')
+            }}
+            onNotify={notify}
+          />
+        )}
+      </AnimatePresence>
     </TooltipProvider>
   )
 }

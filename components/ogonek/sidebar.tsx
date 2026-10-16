@@ -1,10 +1,11 @@
 'use client'
 
-import { BarChart3, Home, MessageCircle, MoreHorizontal, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
+import { BarChart3, Home, MessageCircle, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { totalUnread } from '@/lib/ogonek/messenger'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { AccountSwitcher } from './auth'
 import { Tooltip } from './tooltip'
 
 type Props = {
@@ -13,6 +14,10 @@ type Props = {
   onFocusIntentions: () => void
   onCompose: () => void
   onOpenProfile?: () => void
+  /** Открыть модальное окно входа/регистрации (реализуется в AppShell) */
+  onOpenAuth: (mode: 'signin' | 'register') => void
+  /** Всплывающее уведомление (тост) для обратной связи действий аккаунта */
+  onNotify: (message: string) => void
   streak?: number
 }
 
@@ -32,6 +37,8 @@ export function Sidebar({
   onFocusIntentions,
   onCompose,
   onOpenProfile,
+  onOpenAuth,
+  onNotify,
   streak = CURRENT_DAY,
 }: Props) {
   const { state } = useOgonekStore()
@@ -98,51 +105,14 @@ export function Sidebar({
         </button>
       </Tooltip>
 
-      {/* Profile block */}
-      <Tooltip content="Профиль @cernavation" side="top" hotkey="P">
-        <div
-          className="profile-mini cursor-pointer hover:bg-white/[0.08] transition-colors duration-150 rounded-full px-3 py-2.5 -mx-1"
-          onClick={onOpenProfile}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              onOpenProfile?.()
-            }
-          }}
-          aria-label="Открыть профиль пользователя"
-        >
-          {/* Avatar */}
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-none select-none"
-            style={{
-              background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
-              color: '#fff',
-              textShadow: '0 1px 2px #000',
-            }}
-            aria-hidden="true"
-          >
-            AC
-          </div>
-          <div className="flex-1 min-w-0">
-            <strong className="block text-[15px] font-bold text-[#e7e9ea] tracking-[-0.015em] truncate leading-[20px]">
-              Алексей Черна
-            </strong>
-            <small className="block text-[#71767b] text-[12px] leading-[16px] mt-0.5 truncate">
-              @cernavation · {streak}д
-            </small>
-          </div>
-          <button
-            type="button"
-            className="text-[#71767b] p-1 rounded-full hover:bg-white/[0.08] transition-colors flex-none"
-            aria-label="Меню профиля"
-            onClick={(e) => { e.stopPropagation(); onOpenProfile?.() }}
-          >
-            <MoreHorizontal size={18} />
-          </button>
-        </div>
-      </Tooltip>
+      {/* Profile block — переключатель аккаунтов (ЭТАП 18) */}
+      <AccountSwitcher
+        streak={streak}
+        onOpenProfile={onOpenProfile}
+        onNavigate={onNavigate}
+        onNotify={onNotify}
+        onOpenAuth={onOpenAuth}
+      />
     </aside>
   )
 }

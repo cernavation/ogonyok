@@ -1,6 +1,17 @@
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
+import {
+  DEMO_ACCOUNT_PASSWORD,
+  accountSnapshotFromProfile,
+  createAccount,
+  findAccountByEmail,
+  isValidEmail,
+  normalizeEmail,
+  profilePatchFromAccount,
+  sanitizeAuthState,
+  takenUsernamesOf,
+} from './accounts'
 import { buildDemoComments, SUPPORT_PERSONAS } from './comments'
 import { computeAchievementProgress } from './achievement-regulation'
 import {
@@ -292,6 +303,13 @@ function subscribe(callback: () => void): () => void {
 
 function emitChange() {
   listeners.forEach((listener) => listener())
+}
+
+/** Результат операции входа/регистрации/переключения аккаунта */
+export type AuthResult = {
+  ok: boolean
+  accountId?: string
+  error?: string
 }
 
 export function useOgonekStore() {
@@ -1708,7 +1726,22 @@ export function useOgonekStore() {
         ) {
           nextProfile.monthlyGoalUpdatedAtISO = new Date().toISOString()
         }
-        return { ...prev, profile: nextProfile }
+        // ЭТАП 18: правки профиля пишем и в слепок активного аккаунта,
+        // чтобы личность сохранялась при переключении между аккаунтами.
+        const activeId = prev.auth.activeAccountId
+        const accounts = activeId
+          ? prev.auth.accounts.map((a) =>
+              a.id === activeId ? { ...a, snapshot: accountSnapshotFromProfile(nextProfile) } : a
+            )
+          : prev.auth.accounts
+        return {
+          ...prev,
+          profile: nextProfile,
+          auth:
+            accounts === prev.auth.accounts
+              ? prev.auth
+              : { ...prev.auth, accounts, updatedAtISO: new Date().toISOString() },
+        }
       })
     },
     [updateStore]
@@ -2098,6 +2131,11 @@ export function useOgonekStore() {
         monthlyKpis: Array.isArray(newState.monthlyKpis)
           ? sanitizeMonthlyKpis(newState.monthlyKpis)
           : prev.monthlyKpis,
+        // ЭТАП 18: аккаунты сохраняем, если импортируемый архив их не содержит
+        auth:
+          newState.auth && Array.isArray(newState.auth.accounts)
+            ? sanitizeAuthState(newState.auth)
+            : prev.auth,
       }))
     },
     [updateStore]
@@ -2821,6 +2859,371 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /* ── ЭТАП 18 — АВТОРИЗАЦИЯ, РЕГИСТРАЦИЯ И ПЕРЕКЛЮЧЕНИЕ АККАУНТОВ ──────── */
+
+  /**
+   * Делает аккаунт активным: переносит его слепок в основной профиль,
+   * поднимает счётчики входов/переключений и сбрасывает защиту от перебора.
+   * Возвращает false, если аккаунт с таким id не найден.
+   */
+  const activateAccount = useCallback(
+    (accountId: string, isSwitch = false): boolean => {
+      let activated = false
+      updateStore((prev) => {
+        const account = prev.auth.accounts.find((a) => a.id === accountId)
+        if (!account) return prev
+        activated = true
+        const nowISO = new Date().toISOString()
+        const accounts = prev.auth.accounts.map((a) =>
+          a.id === accountId
+            ? { ...a, lastActiveISO: nowISO, signInCount: a.signInCount + 1 }
+            : a
+        )
+        const activeAccount = accounts.find((a) => a.id === accountId) ?? account
+        return {
+          ...prev,
+          profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(activeAccount) }),
+          auth: {
+            ...prev.auth,
+            accounts,
+            activeAccountId: accountId,
+            signedIn: true,
+            switchCount: prev.auth.switchCount + (isSwitch ? 1 : 0),
+            signInCount: prev.auth.signInCount + 1,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastAuthAtISO: nowISO,
+            updatedAtISO: nowISO,
+          },
+        }
+      })
+      return activated
+    },
+    [updateStore]
+  )
+
+  /** Регистрация нового аккаунта по почте и паролю (пароль хранится только хэшем) */
+  const registerWithEmail = useCallback(
+    async (input: { displayName: string; email: string; password: string }): Promise<AuthResult> => {
+      const email = normalizeEmail(input.email)
+      const displayName = (input.displayName ?? '').trim()
+      if (!displayName) return { ok: false, error: 'Укажите имя или ник' }
+      if (!isValidEmail(email)) return { ok: false, error: 'Введите корректный адрес почты' }
+      if (!isValidPassword(input.password)) {
+        return {
+          ok: false,
+          error: `Пароль должен быть от ${MIN_PASSWORD_LENGTH} до ${MAX_PASSWORD_LENGTH} символов`,
+        }
+      }
+
+      const current = getSnapshot()
+      if (findAccountByEmail(current.auth.accounts, email)) {
+        return { ok: false, error: 'Аккаунт с такой почтой уже существует на устройстве' }
+      }
+
+      const salt = generateSalt()
+      const hash = await hashSecret(input.password, salt)
+      let createdId: string | null = null
+
+      updateStore((prev) => {
+        const nowISO = new Date().toISOString()
+        const account = createAccount({
+          provider: 'email',
+          displayName,
+          email,
+          passwordHash: hash,
+          passwordSalt: salt,
+          existingIds: prev.auth.accounts.map((a) => a.id),
+          takenUsernames: takenUsernamesOf(prev.auth.accounts),
+          verified: true,
+          now: new Date(nowISO),
+        })
+        account.signInCount = 1
+        account.lastActiveISO = nowISO
+        createdId = account.id
+        return {
+          ...prev,
+          profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(account) }),
+          auth: {
+            ...prev.auth,
+            accounts: [...prev.auth.accounts, account],
+            activeAccountId: account.id,
+            signedIn: true,
+            signInCount: prev.auth.signInCount + 1,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastAuthAtISO: nowISO,
+            updatedAtISO: nowISO,
+          },
+        }
+      })
+
+      return createdId
+        ? { ok: true, accountId: createdId }
+        : { ok: false, error: 'Не удалось создать аккаунт' }
+    },
+    [updateStore]
+  )
+
+  /** Вход по почте и паролю: проверка хэша, защита от перебора, активация аккаунта */
+  const signInWithEmail = useCallback(
+    async (emailInput: string, password: string): Promise<AuthResult> => {
+      const email = normalizeEmail(emailInput)
+      if (!isValidEmail(email)) return { ok: false, error: 'Введите корректный адрес почты' }
+
+      const current = getSnapshot()
+      const lockout = computeLockout(current.auth.lockedUntilISO)
+      if (lockout.isLocked) {
+        const seconds = Math.ceil(lockout.remainingMs / 1000)
+        return { ok: false, error: `Вход временно заблокирован. Подождите ${seconds} с` }
+      }
+
+      const account = findAccountByEmail(current.auth.accounts, email)
+      if (!account) {
+        return { ok: false, error: 'Аккаунт с такой почтой не найден — зарегистрируйтесь' }
+      }
+      if (account.provider === 'guest') {
+        return { ok: false, error: 'Это гостевой профиль — используйте гостевой вход' }
+      }
+
+      let valid: boolean
+      if (account.passwordHash && account.passwordSalt) {
+        valid = await verifySecret(password, account.passwordSalt, account.passwordHash)
+      } else {
+        // Демо-сид: пароль подставляется автоматически при первом входе
+        valid = password === DEMO_ACCOUNT_PASSWORD
+      }
+
+      if (!valid) {
+        const nextFail = nextFailedAttemptState(current.auth.failedAttempts)
+        const nowISO = new Date().toISOString()
+        updateStore((prev) => ({
+          ...prev,
+          auth: {
+            ...prev.auth,
+            failedAttempts: nextFail.failedAttempts,
+            lockedUntilISO: nextFail.lockedUntilISO,
+            updatedAtISO: nowISO,
+          },
+        }))
+        if (nextFail.lockedUntilISO) {
+          return { ok: false, error: 'Слишком много неверных попыток. Вход заблокирован на минуту.' }
+        }
+        return {
+          ok: false,
+          error: `Неверный пароль. Осталось попыток: ${attemptsLeft(nextFail.failedAttempts)}`,
+        }
+      }
+
+      // Первый вход в демо-личность — закрепляем пароль как соль + хэш
+      if (!account.passwordHash || !account.passwordSalt) {
+        const salt = generateSalt()
+        const hash = await hashSecret(password, salt)
+        updateStore((prev) => ({
+          ...prev,
+          auth: {
+            ...prev.auth,
+            accounts: prev.auth.accounts.map((a) =>
+              a.id === account.id ? { ...a, passwordHash: hash, passwordSalt: salt } : a
+            ),
+          },
+        }))
+      }
+
+      const ok = activateAccount(account.id, true)
+      return ok ? { ok: true, accountId: account.id } : { ok: false, error: 'Не удалось войти' }
+    },
+    [activateAccount, updateStore]
+  )
+
+  /** Вход через Google OAuth (локальная симуляция): находит или создаёт аккаунт */
+  const signInWithGoogle = useCallback(
+    (identity: { email: string; displayName: string }): AuthResult => {
+      const email = normalizeEmail(identity.email)
+      if (!isValidEmail(email)) {
+        return { ok: false, error: 'Google не вернул корректный адрес почты' }
+      }
+
+      const current = getSnapshot()
+      const existing = findAccountByEmail(current.auth.accounts, email)
+      if (existing) {
+        const ok = activateAccount(existing.id, true)
+        return ok ? { ok: true, accountId: existing.id } : { ok: false, error: 'Не удалось войти' }
+      }
+
+      let createdId: string | null = null
+      updateStore((prev) => {
+        const nowISO = new Date().toISOString()
+        const account = createAccount({
+          provider: 'google',
+          displayName: identity.displayName || email.split('@')[0],
+          email,
+          existingIds: prev.auth.accounts.map((a) => a.id),
+          takenUsernames: takenUsernamesOf(prev.auth.accounts),
+          verified: true,
+          now: new Date(nowISO),
+        })
+        account.signInCount = 1
+        account.lastActiveISO = nowISO
+        createdId = account.id
+        return {
+          ...prev,
+          profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(account) }),
+          auth: {
+            ...prev.auth,
+            accounts: [...prev.auth.accounts, account],
+            activeAccountId: account.id,
+            signedIn: true,
+            signInCount: prev.auth.signInCount + 1,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastAuthAtISO: nowISO,
+            updatedAtISO: nowISO,
+          },
+        }
+      })
+
+      return createdId
+        ? { ok: true, accountId: createdId }
+        : { ok: false, error: 'Не удалось войти через Google' }
+    },
+    [activateAccount, updateStore]
+  )
+
+  /** Гостевой демо-режим: включает существующего гостя или создаёт нового */
+  const continueAsGuest = useCallback((): AuthResult => {
+    const current = getSnapshot()
+    const existing = current.auth.accounts.find((a) => a.provider === 'guest')
+    if (existing) {
+      const ok = activateAccount(existing.id, true)
+      return ok
+        ? { ok: true, accountId: existing.id }
+        : { ok: false, error: 'Не удалось войти как гость' }
+    }
+
+    let createdId: string | null = null
+    updateStore((prev) => {
+      const nowISO = new Date().toISOString()
+      const account = createAccount({
+        provider: 'guest',
+        displayName: 'Гость Огонька',
+        isGuest: true,
+        existingIds: prev.auth.accounts.map((a) => a.id),
+        takenUsernames: takenUsernamesOf(prev.auth.accounts),
+        verified: false,
+        now: new Date(nowISO),
+      })
+      account.signInCount = 1
+      account.lastActiveISO = nowISO
+      createdId = account.id
+      return {
+        ...prev,
+        profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(account) }),
+        auth: {
+          ...prev.auth,
+          accounts: [...prev.auth.accounts, account],
+          activeAccountId: account.id,
+          signedIn: true,
+          signInCount: prev.auth.signInCount + 1,
+          failedAttempts: 0,
+          lockedUntilISO: null,
+          lastAuthAtISO: nowISO,
+          updatedAtISO: nowISO,
+        },
+      }
+    })
+
+    return createdId
+      ? { ok: true, accountId: createdId }
+      : { ok: false, error: 'Не удалось войти как гость' }
+  }, [activateAccount, updateStore])
+
+  /** Быстрое переключение на другой аккаунт (без пароля — устройство доверенное) */
+  const switchAccount = useCallback(
+    (accountId: string): boolean => activateAccount(accountId, true),
+    [activateAccount]
+  )
+
+  /** Выход из аккаунта: список аккаунтов и активный id сохраняются */
+  const signOut = useCallback(() => {
+    const nowISO = new Date().toISOString()
+    updateStore((prev) => ({
+      ...prev,
+      auth: { ...prev.auth, signedIn: false, updatedAtISO: nowISO },
+    }))
+  }, [updateStore])
+
+  /**
+   * Удаляет аккаунт с устройства. Если удаляется активный — переключает на
+   * первый оставшийся. Возвращает false, если это последний аккаунт.
+   */
+  const removeAccount = useCallback(
+    (accountId: string): boolean => {
+      const current = getSnapshot()
+      if (current.auth.accounts.length <= 1) return false
+      const target = current.auth.accounts.find((a) => a.id === accountId)
+      if (!target) return false
+
+      const wasActive = current.auth.activeAccountId === accountId
+      const remaining = current.auth.accounts.filter((a) => a.id !== accountId)
+      const nextActive = wasActive ? remaining[0] ?? null : null
+
+      updateStore((prev) => {
+        const accounts = prev.auth.accounts.filter((a) => a.id !== accountId)
+        if (accounts.length === 0) return prev
+        const nowISO = new Date().toISOString()
+        if (!wasActive || !nextActive) {
+          return {
+            ...prev,
+            auth: { ...prev.auth, accounts, updatedAtISO: nowISO },
+          }
+        }
+        return {
+          ...prev,
+          profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(nextActive) }),
+          auth: {
+            ...prev.auth,
+            accounts,
+            activeAccountId: nextActive.id,
+            signedIn: true,
+            switchCount: prev.auth.switchCount + 1,
+            updatedAtISO: nowISO,
+            lastAuthAtISO: nowISO,
+          },
+        }
+      })
+      return true
+    },
+    [updateStore]
+  )
+
+  /**
+   * Разово готовит демо-пароли сид-аккаунтов: если у почтовых/Google-личностей
+   * ещё нет соли и хэша, закрепляет пароль `DEMO_ACCOUNT_PASSWORD` как SHA-256.
+   * Гостевые профили пропускаются. Вызывается один раз при старте приложения.
+   */
+  const provisionDemoAccountSecrets = useCallback(async () => {
+    const current = getSnapshot()
+    const needs = current.auth.accounts.some(
+      (a) => a.provider !== 'guest' && (!a.passwordHash || !a.passwordSalt)
+    )
+    if (!needs) return
+    const salt = generateSalt()
+    const hash = await hashSecret(DEMO_ACCOUNT_PASSWORD, salt)
+    updateStore((prev) => ({
+      ...prev,
+      auth: {
+        ...prev.auth,
+        accounts: prev.auth.accounts.map((a) =>
+          a.provider !== 'guest' && (!a.passwordHash || !a.passwordSalt)
+            ? { ...a, passwordHash: hash, passwordSalt: salt }
+            : a
+        ),
+        updatedAtISO: new Date().toISOString(),
+      },
+    }))
+  }, [updateStore])
+
   return {
     state,
     isHydrated: typeof window !== 'undefined',
@@ -2947,5 +3350,13 @@ export function useOgonekStore() {
     deleteComment,
     getCommentsFor,
     clearComments,
+    registerWithEmail,
+    signInWithEmail,
+    signInWithGoogle,
+    continueAsGuest,
+    switchAccount,
+    signOut,
+    removeAccount,
+    provisionDemoAccountSecrets,
   }
 }

@@ -1,5 +1,6 @@
 import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
 import { sanitizeSubmission } from './achievement-moderation'
+import { DEFAULT_AUTH_STATE, sanitizeAuthState } from './accounts'
 import {
   DEFAULT_ACCENT,
   DEFAULT_FEED_DENSITY,
@@ -789,6 +790,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   privacy: DEFAULT_PRIVACY,
   streak: DEFAULT_STREAK_SETTINGS,
   monthlyKpis: DEFAULT_MONTHLY_KPIS,
+  auth: DEFAULT_AUTH_STATE,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -852,6 +854,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               privacy: sanitizePrivacySettings(parsedV3.privacy),
               streak: sanitizeStreakSettings(parsedV3.streak),
               monthlyKpis: sanitizeMonthlyKpis(parsedV3.monthlyKpis),
+              auth: sanitizeAuthState(parsedV3.auth),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -975,6 +978,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         privacy: sanitizePrivacySettings(parsed.privacy),
         streak: sanitizeStreakSettings(parsed.streak),
         monthlyKpis: sanitizeMonthlyKpis(parsed.monthlyKpis),
+        auth: sanitizeAuthState(parsed.auth),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1148,6 +1152,7 @@ export function validateAndImportJson(
       privacy: sanitizePrivacySettings(parsed.privacy),
       streak: sanitizeStreakSettings(parsed.streak),
       monthlyKpis: sanitizeMonthlyKpis(parsed.monthlyKpis),
+      auth: sanitizeAuthState(parsed.auth),
     }
 
     return { success: true, data: state }
