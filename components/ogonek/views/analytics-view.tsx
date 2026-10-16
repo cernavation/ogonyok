@@ -2,8 +2,13 @@
 
 import { ArrowLeft, Calendar, Flame, Heart, Sparkles, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { buildDynamics } from '@/lib/ogonek/analytics'
 import { computeStreak } from '@/lib/ogonek/streak'
-import type { Day, ViewId } from '@/lib/ogonek/types'
+import type { AnalyticsPeriod, Day, ViewId } from '@/lib/ogonek/types'
+import { AiInsightPanel } from '../analytics/ai-insight-panel'
+import { AnalyticsPeriodSwitcher } from '../analytics/period-switcher'
+import { DynamicsChart } from '../analytics/dynamics-chart'
+import { MonthlyKpiPanel } from '../analytics/monthly-kpi-panel'
 import { FlameIcon } from '../flame-icon'
 import { MobileHeader } from '../mobile-header'
 
@@ -11,6 +16,9 @@ type Props = {
   days?: Day[]
   onNavigate: (view: ViewId) => void
   onSelectDay?: (dayId: number) => void
+  /** Уведомления-тосты (реальные действия аналитики) */
+  onNotify?: (message: string) => void
+  soundEnabled?: boolean
 }
 
 type HeatCell = {
@@ -94,8 +102,18 @@ const DISTRIBUTION = [
   { name: 'Красные (преодоление кризиса)', percent: '1%' },
 ] as const
 
-export function AnalyticsView({ days = [], onNavigate, onSelectDay }: Props) {
+export function AnalyticsView({
+  days = [],
+  onNavigate,
+  onSelectDay,
+  onNotify = () => {},
+  soundEnabled = true,
+}: Props) {
   const [hoveredCell, setHoveredCell] = useState<HeatCell | null>(null)
+  const [period, setPeriod] = useState<AnalyticsPeriod>('month')
+
+  /** Динамика оценок гордостей/благодарностей за выбранный период */
+  const dynamics = useMemo(() => buildDynamics(days, period), [days, period])
 
   // Compute live streak state
   const streakInfo = useMemo(() => {
@@ -218,6 +236,11 @@ export function AnalyticsView({ days = [], onNavigate, onSelectDay }: Props) {
           </div>
         </section>
 
+        <section className="dynamics-section" aria-label="Динамика оценок и записей">
+          <AnalyticsPeriodSwitcher value={period} onChange={setPeriod} />
+          <DynamicsChart series={dynamics} period={period} />
+        </section>
+
         <section className="heatmap-section" aria-labelledby="heatmap-title">
           <div className="heatmap-header">
             <div>
@@ -288,6 +311,16 @@ export function AnalyticsView({ days = [], onNavigate, onSelectDay }: Props) {
             ))}
           </div>
         </section>
+
+        <MonthlyKpiPanel days={days} onNotify={onNotify} soundEnabled={soundEnabled} />
+
+        <AiInsightPanel
+          days={days}
+          period={period}
+          onNavigate={onNavigate}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
       </div>
     </div>
   )

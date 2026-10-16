@@ -369,6 +369,8 @@ export function AppShell() {
           days={state.days}
           onNavigate={navigate}
           onSelectDay={handleSelectDay}
+          onNotify={notify}
+          soundEnabled={state.soundEnabled}
         />
       ),
       settings: (

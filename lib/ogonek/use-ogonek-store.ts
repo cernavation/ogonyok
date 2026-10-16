@@ -21,6 +21,14 @@ import {
 } from './friends'
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic'
 import {
+  DEFAULT_MONTHLY_KPIS,
+  clampKpiTarget,
+  createMonthlyKpi,
+  getKpiKind,
+  isKpiKind,
+  sanitizeMonthlyKpis,
+} from './kpi'
+import {
   CHAT_MESSAGE_LIMIT,
   MY_CHAT_ID,
   emptyThread,
@@ -76,6 +84,8 @@ import type {
   ModerationChannel,
   ModerationDelivery,
   ModerationStatus,
+  MonthlyKpi,
+  KpiKind,
   MyReactions,
   MyStory,
   MorningFocusStepStatus,
@@ -1571,6 +1581,102 @@ export function useOgonekStore() {
     }))
   }, [updateStore])
 
+  /* ══════════════════════════════════════════════════════════════════════
+     ЭТАП 17 — МЕСЯЧНЫЕ KPI-ЦЕЛИ ДЛЯ ГЛУБОКОЙ АНАЛИТИКИ
+     ══════════════════════════════════════════════════════════════════════ */
+
+  /**
+   * Добавляет месячную KPI-цель. Возвращает id новой цели.
+   * Название и ориентир нормализуются по типу цели, дубликаты по названию
+   * не создаются (возвращается id уже существующей цели).
+   */
+  const addMonthlyKpi = useCallback(
+    (input: { title: string; kind: KpiKind; target: number }): string => {
+      const kind: KpiKind = isKpiKind(input.kind) ? input.kind : 'prides'
+      const title = (input.title ?? '').trim().slice(0, 120) || getKpiKind(kind).label
+
+      const existing = getSnapshot().monthlyKpis.find(
+        (k) => k.title.toLowerCase() === title.toLowerCase() && k.kind === kind
+      )
+      if (existing) return existing.id
+
+      const kpi = createMonthlyKpi({
+        title,
+        kind,
+        target: clampKpiTarget(kind, input.target),
+      })
+      updateStore((prev) => ({ ...prev, monthlyKpis: [kpi, ...prev.monthlyKpis] }))
+      return kpi.id
+    },
+    [updateStore]
+  )
+
+  /** Частично обновляет цель: название, тип и/или ориентир */
+  const updateMonthlyKpi = useCallback(
+    (id: string, patch: Partial<Pick<MonthlyKpi, 'title' | 'kind' | 'target'>>) => {
+      if (!id) return
+      updateStore((prev) => ({
+        ...prev,
+        monthlyKpis: prev.monthlyKpis.map((k) => {
+          if (k.id !== id) return k
+          const kind: KpiKind = patch.kind && isKpiKind(patch.kind) ? patch.kind : k.kind
+          const rawTarget =
+            typeof patch.target === 'number' && Number.isFinite(patch.target) ? patch.target : k.target
+          return {
+            ...k,
+            kind,
+            title:
+              patch.title !== undefined
+                ? patch.title.trim().slice(0, 120) || k.title
+                : k.title,
+            target: clampKpiTarget(kind, rawTarget),
+          }
+        }),
+      }))
+    },
+    [updateStore]
+  )
+
+  /** Удаляет месячную цель */
+  const removeMonthlyKpi = useCallback(
+    (id: string) => {
+      if (!id) return
+      updateStore((prev) => ({
+        ...prev,
+        monthlyKpis: prev.monthlyKpis.filter((k) => k.id !== id),
+      }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * Переключает ручную отметку «выполнено» у цели.
+   * Возвращает true, если цель теперь отмечена выполненной.
+   */
+  const toggleMonthlyKpiManual = useCallback(
+    (id: string): boolean => {
+      const current = getSnapshot().monthlyKpis.find((k) => k.id === id)
+      const next = !current?.manualDone
+      if (!id) return next
+      updateStore((prev) => ({
+        ...prev,
+        monthlyKpis: prev.monthlyKpis.map((k) =>
+          k.id === id ? { ...k, manualDone: !k.manualDone } : k
+        ),
+      }))
+      return next
+    },
+    [updateStore]
+  )
+
+  /** Восстанавливает заводской набор месячных целей */
+  const resetMonthlyKpis = useCallback(() => {
+    updateStore((prev) => ({
+      ...prev,
+      monthlyKpis: DEFAULT_MONTHLY_KPIS.map((k) => ({ ...k })),
+    }))
+  }, [updateStore])
+
   /**
    * Принудительное сохранение текущего состояния в localStorage.
    * Запись в localStorage порождает событие `storage` в других вкладках,
@@ -1988,11 +2094,16 @@ export function useOgonekStore() {
         security: sanitizeSecurityState(newState.security),
         privacy: sanitizePrivacySettings(newState.privacy),
         streak: sanitizeStreakSettings(newState.streak),
+        // Если в архиве нет месячных целей — не теряем уже настроенные KPI
+        monthlyKpis: Array.isArray(newState.monthlyKpis)
+          ? sanitizeMonthlyKpis(newState.monthlyKpis)
+          : prev.monthlyKpis,
       }))
     },
     [updateStore]
   )
 
+  /** Полностью сбрасывает хранилище к заводским значениям Огонька */
   const resetToDefaults = useCallback(() => {
     updateStore(() => DEFAULT_STORE_STATE)
   }, [updateStore])
@@ -2762,6 +2873,11 @@ export function useOgonekStore() {
     setStreakTimeZone,
     setStreakWeekendBonus,
     resetStreakSettings,
+    addMonthlyKpi,
+    updateMonthlyKpi,
+    removeMonthlyKpi,
+    toggleMonthlyKpiManual,
+    resetMonthlyKpis,
     syncNow,
     addVerifiedAchievement,
     updateVerifiedAchievement,

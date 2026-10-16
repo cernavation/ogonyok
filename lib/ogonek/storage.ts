@@ -20,6 +20,7 @@ import {
 } from './friends'
 import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
+import { DEFAULT_MONTHLY_KPIS, sanitizeMonthlyKpis } from './kpi'
 import { buildDemoThreads, sanitizeChatThreads } from './messenger'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { DEFAULT_PRIVACY, sanitizePrivacySettings } from './privacy'
@@ -787,6 +788,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   security: DEFAULT_SECURITY_STATE,
   privacy: DEFAULT_PRIVACY,
   streak: DEFAULT_STREAK_SETTINGS,
+  monthlyKpis: DEFAULT_MONTHLY_KPIS,
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
@@ -849,6 +851,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               security: sanitizeSecurityState(parsedV3.security),
               privacy: sanitizePrivacySettings(parsedV3.privacy),
               streak: sanitizeStreakSettings(parsedV3.streak),
+              monthlyKpis: sanitizeMonthlyKpis(parsedV3.monthlyKpis),
             }
             saveStore(migratedState, adapter)
             return migratedState
@@ -971,6 +974,7 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         security: sanitizeSecurityState(parsed.security),
         privacy: sanitizePrivacySettings(parsed.privacy),
         streak: sanitizeStreakSettings(parsed.streak),
+        monthlyKpis: sanitizeMonthlyKpis(parsed.monthlyKpis),
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
@@ -1143,6 +1147,7 @@ export function validateAndImportJson(
       security: sanitizeSecurityState(parsed.security),
       privacy: sanitizePrivacySettings(parsed.privacy),
       streak: sanitizeStreakSettings(parsed.streak),
+      monthlyKpis: sanitizeMonthlyKpis(parsed.monthlyKpis),
     }
 
     return { success: true, data: state }

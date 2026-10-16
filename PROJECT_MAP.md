@@ -38,6 +38,13 @@ FILE: components/ogonek/achievements/add-achievement-modal.tsx
 FILE: components/ogonek/achievements/evidence-file-preview.tsx
 FILE: components/ogonek/achievements/index.ts
 FILE: components/ogonek/achievements/verification-badge.tsx
+DIR: components/ogonek/analytics/
+FILE: components/ogonek/analytics/add-kpi-modal.tsx
+FILE: components/ogonek/analytics/ai-insight-panel.tsx
+FILE: components/ogonek/analytics/dynamics-chart.tsx
+FILE: components/ogonek/analytics/index.ts
+FILE: components/ogonek/analytics/monthly-kpi-panel.tsx
+FILE: components/ogonek/analytics/period-switcher.tsx
 FILE: components/ogonek/active-friends-widget.tsx
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/appearance-provider.tsx
@@ -132,6 +139,7 @@ DIR: lib/ogonek/
 FILE: lib/ogonek/achievement-moderation.ts
 FILE: lib/ogonek/achievement-regulation.ts
 FILE: lib/ogonek/achievement-submit-client.ts
+FILE: lib/ogonek/analytics.ts
 FILE: lib/ogonek/appearance.ts
 FILE: lib/ogonek/backup.ts
 FILE: lib/ogonek/card-export.ts
@@ -141,6 +149,7 @@ FILE: lib/ogonek/evaluate-heuristic.ts
 FILE: lib/ogonek/explore-content.ts
 FILE: lib/ogonek/friends.ts
 FILE: lib/ogonek/haptics.ts
+FILE: lib/ogonek/kpi.ts
 FILE: lib/ogonek/messenger.ts
 FILE: lib/ogonek/migrate.ts
 FILE: lib/ogonek/morning-focus.ts
