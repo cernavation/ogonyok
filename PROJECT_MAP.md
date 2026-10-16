@@ -48,6 +48,14 @@ FILE: components/ogonek/analytics/monthly-kpi-panel.tsx
 FILE: components/ogonek/analytics/period-switcher.tsx
 FILE: components/ogonek/app-shell.tsx
 FILE: components/ogonek/appearance-provider.tsx
+DIR: components/ogonek/auth/
+FILE: components/ogonek/auth/account-avatar.tsx
+FILE: components/ogonek/auth/account-switcher.tsx
+FILE: components/ogonek/auth/auth-form.tsx
+FILE: components/ogonek/auth/auth-modal.tsx
+FILE: components/ogonek/auth/auth-screen.tsx
+FILE: components/ogonek/auth/google-icon.tsx
+FILE: components/ogonek/auth/index.ts
 FILE: components/ogonek/bottom-nav.tsx
 FILE: components/ogonek/comments-thread.tsx
 FILE: components/ogonek/composer.tsx
@@ -136,6 +144,7 @@ DIR: data/notes/
 DIR: docs/
 DIR: lib/
 DIR: lib/ogonek/
+FILE: lib/ogonek/accounts.ts
 FILE: lib/ogonek/achievement-moderation.ts
 FILE: lib/ogonek/achievement-regulation.ts
 FILE: lib/ogonek/achievement-submit-client.ts
