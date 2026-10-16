@@ -1,6 +1,6 @@
 # КАРТА ПРОЕКТА
 СТРОГО ЗАПРЕЩЕНО читать папку public/seeds, package-lock.json и node_modules!
-Ты имеешь полное право создавать новые файлы .tsx/.ts в папке components/ogonek/ и lib/ogonek/!
+Открывай только 2-4 нужных файла для текущей задачи, чтобы экономить лимит запросов!
 
 FILE: SUPABASE_FULL_SCHEMA.sql
 DIR: app/
