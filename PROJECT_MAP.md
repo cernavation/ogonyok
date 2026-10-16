@@ -160,6 +160,7 @@ FILE: test/achievement-moderation.test.ts
 FILE: test/achievement-regulation.test.ts
 FILE: test/evaluate.test.ts
 FILE: test/import-real-raw.test.ts
+FILE: test/messenger.test.ts
 FILE: test/migrate.test.ts
 FILE: test/morning-focus.test.ts
 FILE: test/reminder.test.ts
