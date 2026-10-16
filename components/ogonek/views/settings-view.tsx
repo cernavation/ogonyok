@@ -45,7 +45,7 @@ import type {
 } from '@/lib/ogonek/types'
 import { MobileHeader } from '../mobile-header'
 import { SecurityPanel } from '../security'
-import { BackupSyncPanel, PrivacyPanel, StreakDeadlinePanel } from '../settings'
+import { BackupSyncPanel, PrivacyPanel, StreakDeadlinePanel, SupabaseSyncPanel } from '../settings'
 
 type Props = {
   state: OgonekStoreState
@@ -734,6 +734,9 @@ export function SettingsView({
 
         {/* ═══ ПОЛНЫЙ ЭКСПОРТ / ИМПОРТ И СИНХРОНИЗАЦИЯ (ЭТАП 16) ═══ */}
         <BackupSyncPanel onNotify={onNotify} />
+
+        {/* ═══ ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ SUPABASE (ЭТАП 19) ═══ */}
+        <SupabaseSyncPanel onNotify={onNotify} />
       </div>
     </div>
   )

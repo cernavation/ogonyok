@@ -57,6 +57,10 @@ import type {
 
 export const SUPABASE_URL_ENV = 'NEXT_PUBLIC_SUPABASE_URL'
 export const SUPABASE_ANON_KEY_ENV = 'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+/** Флаг включения фоновой автосинхронизации (`false` выключает планировщик) */
+export const SUPABASE_AUTO_SYNC_ENV = 'NEXT_PUBLIC_SUPABASE_AUTO_SYNC'
+/** Переопределение периода фоновой автосинхронизации в миллисекундах */
+export const SUPABASE_AUTO_SYNC_MS_ENV = 'NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS'
 
 /** Ключ localStorage с runtime-настройками подключения (если задаются из UI) */
 export const SUPABASE_CONFIG_STORAGE_KEY = 'ogonek.supabase.config'
@@ -209,6 +213,7 @@ export type AchievementRow = RowWithClientId & {
   reviewer_note: string | null
   moderator_status: string | null
   tracking_code: string | null
+  created_at?: string | null
 }
 
 export type StoryRow = RowWithClientId & {
@@ -226,6 +231,7 @@ export type StoryRow = RowWithClientId & {
   source_day_id: number | null
   source_pride_index: number | null
   visibility: string
+  created_at?: string | null
 }
 
 export type FriendshipRow = RowWithClientId & {
@@ -336,6 +342,31 @@ export function readEnvConfig(): SupabaseConfig | null {
   if (!url || !anonKey) return null
   const config: SupabaseConfig = { url: normalizeUrl(url), anonKey: anonKey.trim() }
   return isValidConfig(config) ? config : null
+}
+
+/**
+ * Период фоновой автосинхронизации из .env.local (`NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS`).
+ * Возвращает null, если переменная не задана или содержит мусор — тогда берётся
+ * значение по умолчанию DEFAULT_AUTO_SYNC_INTERVAL_MS.
+ */
+export function readEnvAutoSyncIntervalMs(): number | null {
+  const raw = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS : undefined
+  if (raw === undefined || raw === null || String(raw).trim() === '') return null
+  const parsed = Number(raw)
+  return Number.isFinite(parsed) && parsed >= 5_000 ? Math.floor(parsed) : null
+}
+
+/**
+ * Выключена ли автосинхронизация переменной `NEXT_PUBLIC_SUPABASE_AUTO_SYNC`.
+ * Полезно, когда нужно принудительно убрать фоновый таймер (например, в тестах
+ * или при управлении синхронизацией только вручную).
+ */
+export function isAutoSyncDisabledByEnv(): boolean {
+  const raw = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC : undefined
+  if (raw === undefined || raw === null) return false
+  const value = String(raw).trim().toLowerCase()
+  if (!value) return false
+  return ['false', '0', 'off', 'no', 'disable', 'disabled'].includes(value)
 }
 
 /** Настройки подключения, сохранённые из интерфейса (перекрывают .env) */
@@ -838,6 +869,7 @@ function achievementRowFrom(achievement: VerifiedAchievement): AchievementRow {
     reviewer_note: achievement.reviewerNote,
     moderator_status: achievement.submission?.status ?? null,
     tracking_code: achievement.submission?.trackingCode ?? null,
+    created_at: achievement.createdAtISO,
   }
 }
 
@@ -858,6 +890,7 @@ function storyRowFrom(story: MyStory): StoryRow {
     source_day_id: story.sourceDayId ?? null,
     source_pride_index: story.sourcePrideIndex ?? null,
     visibility: asVisibility(story.visibility),
+    created_at: story.createdAtISO,
   }
 }
 
@@ -1242,14 +1275,14 @@ function assembleAchievement(row: AchievementRow): VerifiedAchievement {
     verifiedAtISO: row.verified_at ?? null,
     reviewerNote: row.reviewer_note ?? null,
     submission: (row.submission as AchievementSubmission | null) ?? null,
-    createdAtISO: row.submitted_at ?? new Date().toISOString(),
+    createdAtISO: row.created_at ?? row.submitted_at ?? new Date().toISOString(),
   }
 }
 
 function assembleStory(row: StoryRow): MyStory {
   return {
     id: row.client_id,
-    createdAtISO: row.client_updated_at ?? new Date().toISOString(),
+    createdAtISO: row.created_at ?? row.client_updated_at ?? new Date().toISOString(),
     emoji: row.emoji || '✨',
     kicker: row.kicker || 'СТОРИС',
     headline: row.headline ?? '',
@@ -2014,7 +2047,14 @@ export type AutoSyncHandle = {
  * при появлении сети и при возврате на вкладку. Без ключей/сети — no-op.
  */
 export function startAutoSync(options: AutoSyncOptions): AutoSyncHandle {
-  const intervalMs = options.intervalMs ?? DEFAULT_AUTO_SYNC_INTERVAL_MS
+  // `NEXT_PUBLIC_SUPABASE_AUTO_SYNC=false` полностью отключает планировщик.
+  if (isAutoSyncDisabledByEnv()) {
+    refreshOnlineStatus()
+    return { trigger: () => {}, isRunning: () => false, stop: () => {} }
+  }
+
+  const intervalMs =
+    options.intervalMs ?? readEnvAutoSyncIntervalMs() ?? DEFAULT_AUTO_SYNC_INTERVAL_MS
   let stopped = false
   let running = false
   let timer: ReturnType<typeof setInterval> | null = null

@@ -19,6 +19,7 @@ import { Sidebar } from './sidebar'
 import { ScrollPill } from './scroll-pill'
 import { Toast } from './toast'
 import { TooltipProvider } from './tooltip'
+import { SupabaseSyncBootstrap } from './supabase-sync-bootstrap'
 import { AnalyticsView } from './views/analytics-view'
 import { ExploreView } from './views/explore-view'
 import { HomeView } from './views/home-view'
@@ -457,6 +458,9 @@ export function AppShell() {
 
   return (
     <TooltipProvider>
+      {/* ЭТАП 19: фоновый offline-first планировщик синхронизации с Supabase.
+          Без ключей в .env.local делает ровно ничего. */}
+      <SupabaseSyncBootstrap />
       <AppearanceProvider
         theme={state.theme}
         accent={state.accent}

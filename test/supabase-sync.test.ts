@@ -7,8 +7,10 @@ import {
   buildPushPlan,
   buildRemoteDataset,
   countPendingChanges,
+  isAutoSyncDisabledByEnv,
   mergeRemoteDataset,
   parseReactionTarget,
+  readEnvAutoSyncIntervalMs,
   type RemoteDataset,
   type SyncMeta,
 } from '../lib/ogonek/supabase-sync.ts'
@@ -271,6 +273,40 @@ describe('Supabase: слияние серверных данных (ЭТАП 19)
     // А незатронутый день всё равно принял серверную версию
     const day2 = merged.state.days.find((d) => d.id === 2)
     assert.equal(day2?.title, 'День 2')
+  })
+})
+
+describe('Supabase: настройки автосинхронизации из окружения (ЭТАП 19)', () => {
+  it('читает интервал и флаг отключения из .env', () => {
+    const prevMs = process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS
+    const prevFlag = process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC
+    try {
+      delete process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS
+      assert.equal(readEnvAutoSyncIntervalMs(), null)
+
+      process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS = '30000'
+      assert.equal(readEnvAutoSyncIntervalMs(), 30000)
+
+      process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS = 'abc'
+      assert.equal(readEnvAutoSyncIntervalMs(), null)
+
+      process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS = '1000'
+      assert.equal(readEnvAutoSyncIntervalMs(), null, 'слишком частый интервал отбрасывается')
+
+      delete process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC
+      assert.equal(isAutoSyncDisabledByEnv(), false)
+
+      process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC = 'false'
+      assert.equal(isAutoSyncDisabledByEnv(), true)
+
+      process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC = 'on'
+      assert.equal(isAutoSyncDisabledByEnv(), false)
+    } finally {
+      if (prevMs === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS
+      else process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC_MS = prevMs
+      if (prevFlag === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC
+      else process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC = prevFlag
+    }
   })
 })
 
