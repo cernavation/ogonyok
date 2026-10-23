@@ -6,6 +6,7 @@ import {
   persistAppearance,
   type AppearanceSettings,
 } from '@/lib/ogonek/appearance'
+import type { ThemeMode } from '@/lib/ogonek/types'
 
 /**
  * ЭТАП 14 — ПРОВАЙДЕР ОФОРМЛЕНИЯ.
@@ -21,7 +22,9 @@ type Props = AppearanceSettings & {
 
 export function AppearanceProvider({ theme, accent, fontScale, feedDensity, onApplied }: Props) {
   useEffect(() => {
-    const settings: AppearanceSettings = { theme, accent, fontScale, feedDensity }
+    const docTheme = typeof document !== 'undefined' ? (document.documentElement.getAttribute('data-theme') as ThemeMode | null) : null
+    const effectiveTheme = (docTheme && ['x-black', 'apple-light', 'dim'].includes(docTheme)) ? docTheme : theme
+    const settings: AppearanceSettings = { theme: effectiveTheme, accent, fontScale, feedDensity }
     applyAppearanceToDocument(settings)
     persistAppearance(settings)
     onApplied?.(settings)

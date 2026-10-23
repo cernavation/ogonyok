@@ -608,25 +608,43 @@ export function AppShell() {
           {onboardingOpen && (
             <OnboardingModal
               isOpen={onboardingOpen}
+              initialUsername={state.profile.username}
               onClose={() => setOnboardingOpen(false)}
+              onSave={(newUsername, level, text) => {
+                updateProfile({
+                  username: newUsername,
+                  level,
+                  levelChangedAtISO: new Date().toISOString(),
+                })
+                addNewDay({
+                  prides: [
+                    text,
+                    'Зафиксировал цель вести летопись 700 дней',
+                  ],
+                  gratitudes: [
+                    'Благодарен себе за решимость начать новый путь',
+                    'Благодарен этому дню за возможности',
+                  ],
+                  photo: null,
+                  ratings: {
+                    0: { scale: 9.0, overcome: 1 },
+                  },
+                })
+              }}
               onSaveFirstPride={(text, level) => {
                 updateProfile({ level, levelChangedAtISO: new Date().toISOString() })
                 addNewDay({
                   prides: [
                     text,
                     'Зафиксировал цель вести летопись 700 дней',
-                    'Выбрал оптимальный ритм сложности (3 гордости)',
                   ],
                   gratitudes: [
                     'Благодарен себе за решимость начать новый путь',
-                    'Благодарен близким за поддержку',
                     'Благодарен этому дню за возможности',
                   ],
                   photo: null,
                   ratings: {
-                    0: { scale: 9.0, overcome: 2 },
-                    1: { scale: 8.5, overcome: 1 },
-                    2: { scale: 8.0, overcome: 1 },
+                    0: { scale: 9.0, overcome: 1 },
                   },
                 })
               }}

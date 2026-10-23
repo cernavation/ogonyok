@@ -1,33 +1,58 @@
 'use client'
 
-import { Activity, Flame, Heart, MoreHorizontal, Pencil, ShieldAlert, Shield } from 'lucide-react'
+import {
+  BookmarkPlus,
+  Check,
+  Flame,
+  Heart,
+  Lock,
+  MessageCircle,
+  MoreHorizontal,
+  Pencil,
+  Repeat,
+  Share2,
+  Shield,
+  ShieldAlert,
+  Sparkles,
+  Star,
+  Zap,
+} from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { useMemo, useState, useEffect } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { playClick } from '@/lib/ogonek/sound'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
-import { buildPrideAttachment } from '@/lib/ogonek/messenger'
+import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
+import { IconButton } from './ui'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
-import { ForwardToChatModal } from './messenger'
-import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
-import { MediaLightbox } from './media-lightbox'
 
+const ForwardToChatModal = dynamic(
+  () => import('./messenger').then((m) => m.ForwardToChatModal),
+  { ssr: false }
+)
+const PublishPrideStoryModal = dynamic(
+  () => import('./publish-pride-story-modal').then((m) => m.PublishPrideStoryModal),
+  { ssr: false }
+)
+const MediaLightbox = dynamic(
+  () => import('./media-lightbox').then((m) => m.MediaLightbox),
+  { ssr: false }
+)
 const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
   { ssr: false }
 )
 
-// ── Spring animation variants ──────────────────────────────────────────────
 const reactionVariants = {
   idle: { scale: 1 },
   pressed: { scale: [1, 0.8, 1.2, 1.0] },
@@ -42,7 +67,7 @@ type Props = {
   soundEnabled?: boolean
 }
 
-export function DayCard({
+function DayCardComponent({
   day,
   onLightbox,
   onNotify,
@@ -50,39 +75,82 @@ export function DayCard({
   onEdit,
   soundEnabled = true,
 }: Props) {
-  // Живые реакции хранятся в общем store Огонька
   const {
     state,
+    ratePride,
     toggleReaction,
     setDayVisibility,
     setPrideVisibility,
     setAllPridesVisibility,
     postMyStory,
   } = useOgonekStore()
+
   const target = dayTarget(day.id)
   const reactionCounts = state.dayReactions[target] ?? {}
   const myReactionIds = state.myReactions[target] ?? []
   const liked = myReactionIds.includes('fire')
-  const thanked = myReactionIds.includes('heart')
   const fireCount = reactionCounts.fire ?? 0
-  const heartCount = reactionCounts.heart ?? 0
   const [likeAnim, setLikeAnim] = useState<'idle' | 'pressed'>('idle')
-  const [thankAnim, setThankAnim] = useState<'idle' | 'pressed'>('idle')
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [optionsModalOpen, setOptionsModalOpen] = useState(false)
+  const [showComments, setShowComments] = useState(false)
   const [storyPrideIndex, setStoryPrideIndex] = useState<number | null>(null)
-  // ЭТАП 13 — выбранная гордость, которую пересылаем другу в чат
   const [forwardPride, setForwardPride] = useState<ChatAttachment | null>(null)
   const [mediaIndex, setMediaIndex] = useState<number | null>(null)
+  const [expandedDetails, setExpandedDetails] = useState(false)
   const reduce = useReducedMotion()
 
-  // ЭТАП 9 — приватность дня и аватар для публикации в Сторис
   const dayVisibility = normalizeVisibility(day.visibility)
   const myAvatarSrc = usePhotoUrl(state.profile.avatarImage)
 
-  const rawPhotos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
+  const firstPride = useMemo(() => {
+    return day.prides?.find((p) => p.text && p.text !== '—')
+  }, [day.prides])
 
-  // Resolve photo IDs (IndexedDB) → displayable URLs
+  const otherPrides = useMemo(() => {
+    return (day.prides || []).filter((p) => p !== firstPride && p.text && p.text !== '—')
+  }, [day.prides, firstPride])
+
+  const otherGratitudes = useMemo(() => {
+    return (day.gratitudes || []).filter((g) => {
+      const t = typeof g === 'string' ? g : g.text
+      return t && t !== '—'
+    })
+  }, [day.gratitudes])
+
+  const handleAiEvaluateDay = async () => {
+    setOptionsModalOpen(false)
+    const itemsToEval = (day.prides || []).map((p) => p.text).filter((t) => t && t !== '—')
+    if (itemsToEval.length === 0) {
+      onNotify?.('Нет записей для оценки')
+      return
+    }
+    onNotify?.('ИИ оценивает день...')
+    try {
+      const res = await fetch('/api/ai/evaluate-day', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'pride', items: itemsToEval, dayId: day.id }),
+      })
+      const data = await res.json()
+      if (res.ok && data.evaluations) {
+        data.evaluations.forEach((ev: { index: number; score: number }) => {
+          if (typeof ev.score === 'number') {
+            ratePride(day.id, ev.index, ev.score)
+          }
+        })
+        onNotify?.('ИИ оценил день!')
+      } else {
+        onNotify?.('Оценка сохранена')
+      }
+    } catch {
+      onNotify?.('Оценка сохранена')
+    }
+  }
+
+  const rawPhotos = Array.isArray(day.photos) ? day.photos.filter((p): p is string => Boolean(p)) : []
   const [photoUrls, setPhotoUrls] = useState<string[]>([])
+
   useEffect(() => {
     if (rawPhotos.length === 0) {
       setPhotoUrls([])
@@ -93,7 +161,6 @@ export function DayCard({
       if (!cancelled) setPhotoUrls(urls.filter(Boolean))
     })
     return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day.photos])
 
   useEffect(() => {
@@ -108,38 +175,38 @@ export function DayCard({
     if (becameActive) onNotify?.('🔥 Огонёк зажжён!')
   }
 
-  const handleThank = () => {
-    const becameActive = toggleReaction(target, 'heart')
-    playClick(soundEnabled)
-    setThankAnim('pressed')
-    setTimeout(() => setThankAnim('idle'), 400)
-    onNotify?.(becameActive ? '❤️ Благодарность отправлена!' : 'Благодарность снята')
+  const handlePinTopFact = () => {
+    const firstPride = day.prides.find((p) => p.text && p.text !== '—')
+    const fact = firstPride?.text || day.title
+    if (fact) {
+      onPinToVault?.(fact)
+      playClick(soundEnabled)
+    }
   }
 
-  // Handle missed days
   if (day.status === 'missed') {
     return (
       <article
-        className="border-b border-[#2f3336] px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150"
+        className="border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-4"
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">
           <div
-            className="w-10 h-10 rounded-full flex-none flex items-center justify-center text-[#71767b] bg-[#1c1e22] text-base"
+            className="w-10 h-10 rounded-full flex-none flex items-center justify-center text-zinc-400 bg-zinc-100 dark:bg-zinc-800 text-base"
             aria-hidden="true"
           >
             ✦
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1">
-              <strong className="text-[15px] font-bold text-[#e7e9ea] tracking-[-0.015em]">Льготный мост</strong>
-              <span className="text-[#71767b] text-[14px]">· День #{day.id}</span>
+              <strong className="text-[15px] font-bold text-zinc-900 dark:text-zinc-100">Льготный мост</strong>
+              <span className="text-zinc-500 dark:text-zinc-400 text-[14px]">· День #{day.id}</span>
             </div>
             <span className="text-xs text-amber-500 font-medium flex items-center gap-1">
               <ShieldAlert size={12} /> Grace Period
             </span>
-            <p className="text-[14px] text-[#71767b] italic mt-2 leading-[1.45]">
-              В этот день записей не было, но огонёк непрерывного пути сохранён льготным периодом (3 дня допуска).
+            <p className="text-[14px] text-zinc-500 dark:text-zinc-400 italic mt-1.5 leading-relaxed">
+              В этот день записей не было, но огонёк пути сохранён.
             </p>
           </div>
         </div>
@@ -156,33 +223,23 @@ export function DayCard({
     return Math.round((sum / valid.length) * 10) / 10
   }, [day.prides])
 
-  const scoreBadgeClass = useMemo(() => {
-    if (averageScore === null) return 'score-none'
-    if (averageScore >= 9.0) return 'score-green'
-    if (averageScore >= 7.0) return 'score-yellow'
-    return 'score-red'
-  }, [averageScore])
-
   const dateStr = day.dateISO
-    ? new Date(day.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+    ? new Date(day.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     : 'сегодня'
 
   return (
     <>
       <article
-        className="border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150 px-4 py-4"
+        className="border-b border-[var(--border)] px-4 py-4"
         id={`day-card-${day.id}`}
-        style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 280px' }}
       >
         <div className="flex gap-3">
-          {/* Avatar */}
-          <div className="flex-none">
+          {/* Avatar with gradient ring */}
+          <div className="flex-none pt-0.5">
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none"
+              className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none text-white shadow-sm"
               style={{
-                background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
-                color: '#fff',
-                textShadow: '0 1px 2px #000',
+                background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
               }}
               aria-hidden="true"
             >
@@ -192,83 +249,296 @@ export function DayCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Header row */}
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <div className="flex items-center gap-1 flex-wrap min-w-0">
-                <span className="font-bold text-[15px] text-[#e7e9ea] tracking-[-0.015em]">
+            {/* Header row: Name, handle, date, Day badge, score, options */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
                   Alexei Cerna
                 </span>
-                {/* Blue verified badge */}
                 <span
-                  className="inline-grid place-items-center rounded-full text-white flex-none"
-                  style={{ background: '#1d9bf0', width: 16, height: 16, fontSize: 9, fontWeight: 900 }}
+                  className="inline-flex items-center justify-center rounded-full text-white flex-none"
+                  style={{ background: 'var(--accent)', width: 15, height: 15 }}
                   title="Верифицирован"
                   aria-label="Верифицирован"
                 >
-                  ✓
+                  <Check size={9} strokeWidth={3} />
                 </span>
-                <span className="text-[12px] leading-[16px] text-[#71767b] tracking-[-0.01em]">
+                {dayVisibility !== 'public' && (
+                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--text-2)] flex-none" aria-label="Приватность">
+                    <Lock size={13} />
+                  </span>
+                )}
+                <span className="text-[13px] text-[var(--text-2)]">
                   @cernavation · {dateStr}
                 </span>
+                {averageScore !== null && (
+                  <span
+                    className="inline-flex items-center gap-0.5 text-[13px] font-bold text-amber-500"
+                    title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
+                  >
+                    ★ {averageScore.toFixed(1)}
+                  </span>
+                )}
                 <span
-                  className="text-[11px] px-2 py-0.5 rounded-full font-bold"
-                  style={{ background: '#2b1d16', color: '#ffad5a' }}
+                  className="text-[14px] px-2.5 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]"
                 >
                   День #{day.id}
                 </span>
               </div>
 
-              {/* Score badge + action buttons */}
-              <div className="flex items-center gap-0.5 flex-none">
-                {averageScore !== null && (
-                  <div
-                    className={`score-badge ${scoreBadgeClass}`}
-                    title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
-                    style={{ minWidth: 42, height: 36, fontSize: 15, borderRadius: 9999, padding: '0 10px' }}
-                  >
-                    {averageScore.toFixed(1)}
-                  </div>
-                )}
-                <Tooltip content="Редактировать день" side="left">
-                  <button
-                    type="button"
-                    className="p-2 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
-                    aria-label="Редактировать день"
-                    onClick={() => onEdit?.(day)}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                </Tooltip>
-                <Tooltip content="Опции дня" side="left">
-                  <button
-                    type="button"
-                    className="p-2 rounded-full text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.08] transition-colors duration-150"
-                    aria-label="Опции публикации"
-                    onClick={() => setShareModalOpen(true)}
-                  >
-                    <MoreHorizontal size={15} />
-                  </button>
-                </Tooltip>
+              <div className="flex items-center gap-1 flex-none">
+                <IconButton
+                  icon={<MoreHorizontal size={18} />}
+                  label="Опции дня"
+                  size="sm"
+                  onClick={() => setOptionsModalOpen(true)}
+                />
               </div>
             </div>
 
-            {/* Post body */}
-            <p className="text-[15px] leading-[23px] text-[#e7e9ea] tracking-[-0.015em] mb-3">
-              {day.title}
+            {/* Post body — ТЕКСТ КРУПНО (X.com standard) */}
+            <p className="text-[17px] leading-[24px] text-[var(--text)] font-normal mb-2">
+              {firstPride?.text || day.title}
             </p>
 
-            {/* ЭТАП 9 — приватность всего дня */}
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#2f3336] bg-white/[0.02] px-3 py-2">
-              <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#e7e9ea]">
-                <Shield size={13} className="text-[#ff8a50]" /> Приватность дня
+            {/* Toggle «ещё N гордостей · M благодарностей» */}
+            {(otherPrides.length > 0 || otherGratitudes.length > 0) && (
+              <div className="mb-3">
+                {!expandedDetails ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setExpandedDetails(true)
+                    }}
+                    className="text-[13px] font-medium text-[var(--text-2)] hover:text-[var(--text)] hover:underline flex items-center gap-1.5 py-1 min-h-[32px] transition-colors"
+                  >
+                    <span>
+                      {otherPrides.length > 0 && `ещё ${otherPrides.length} гордост${otherPrides.length === 1 ? 'ь' : otherPrides.length < 5 ? 'и' : 'ей'}`}
+                      {otherPrides.length > 0 && otherGratitudes.length > 0 && ' · '}
+                      {otherGratitudes.length > 0 && `${otherGratitudes.length} благодарност${otherGratitudes.length === 1 ? 'ь' : otherGratitudes.length < 5 ? 'и' : 'ей'}`}
+                    </span>
+                  </button>
+                ) : (
+                  <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                    {otherPrides.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[13px] font-bold text-[var(--accent)] flex items-center gap-1">
+                          <Flame size={13} /> Другие гордости дня:
+                        </span>
+                        {otherPrides.map((p, pIdx) => (
+                          <div key={p.num || pIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-0.5">
+                            <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
+                              {p.num || pIdx + 2}
+                            </span>
+                            <span className="flex-1 break-words leading-relaxed">{p.text}</span>
+                            {typeof p.scale === 'number' && p.scale > 0 && (
+                              <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
+                                {p.scale}★
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {otherGratitudes.length > 0 && (
+                      <div className="flex flex-col gap-1.5 pt-2">
+                        <span className="text-[13px] font-bold text-rose-500 flex items-center gap-1">
+                          <Heart size={13} /> Благодарности дня:
+                        </span>
+                        {otherGratitudes.map((g, gIdx) => {
+                          const text = typeof g === 'string' ? g : g.text
+                          return (
+                            <div key={gIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-0.5">
+                              <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
+                                {gIdx + 1}
+                              </span>
+                              <span className="flex-1 break-words leading-relaxed">{text}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setExpandedDetails(false)
+                      }}
+                      className="text-[13px] font-medium text-[var(--accent)] hover:underline self-start pt-1 min-h-[32px]"
+                    >
+                      Свернуть ↑
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Photos */}
+            {photoUrls.length > 0 && (
+              <div
+                className={`mt-3 overflow-hidden rounded-2xl border border-[var(--border)] ${
+                  photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
+                }`}
+              >
+                {photoUrls.map((url, i) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={() => setMediaIndex(i)}
+                    className="block w-full focus:outline-none"
+                    aria-label={`Открыть фото ${i + 1}`}
+                  >
+                    <img
+                      src={url}
+                      alt="Фото дня"
+                      loading="lazy"
+                      className="w-full max-h-[380px] object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* 5 канонических IconButton в футере поста (X.com standard) */}
+            <div
+              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--border)]"
+              role="group"
+              aria-label="Действия с публикацией"
+            >
+              {/* 1. Комментарии */}
+              <IconButton
+                icon={<MessageCircle size={18} />}
+                label="Комментарии"
+                count={state.comments?.[target]?.length || ''}
+                active={showComments}
+                variant="blue"
+                onClick={() => setShowComments((prev) => !prev)}
+              />
+
+              {/* 2. В копилку / Сейф */}
+              <IconButton
+                icon={<BookmarkPlus size={18} />}
+                label="В Сейф доказательств"
+                variant="default"
+                onClick={handlePinTopFact}
+              />
+
+              {/* 3. 🔥 Огонёк */}
+              <IconButton
+                icon={<Flame size={18} className={liked ? 'fill-[var(--accent)] text-[var(--accent)]' : ''} />}
+                label={liked ? 'Снять огонёк' : 'Зажечь огонёк'}
+                count={fireCount > 0 ? fireCount : ''}
+                active={liked}
+                variant="accent"
+                onClick={handleLike}
+              />
+
+              {/* 4. ↗ Поделиться */}
+              <IconButton
+                icon={<Share2 size={18} />}
+                label="Поделиться карточкой"
+                variant="default"
+                onClick={() => setShareModalOpen(true)}
+              />
+
+              {/* 5. ⋯ Опции */}
+              <IconButton
+                icon={<MoreHorizontal size={18} />}
+                label="Опции публикации"
+                variant="default"
+                onClick={() => setOptionsModalOpen(true)}
+              />
+            </div>
+
+            {/* Раскрывающийся блок комментариев */}
+            {showComments && (
+              <div className="pt-3 mt-2 border-t border-zinc-100 dark:border-zinc-800/80">
+                <CommentsThread
+                  target={target}
+                  variant="day"
+                  soundEnabled={soundEnabled}
+                  onNotify={onNotify}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+
+      {/* Меню «⋯» опций дня */}
+      {optionsModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setOptionsModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 shadow-2xl flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
+              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-base">
+                Опции дня #{day.id}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOptionsModalOpen(false)}
+                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={handleAiEvaluateDay}
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Sparkles size={16} className="text-amber-500" />
+                <span>Оценить с ИИ</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOptionsModalOpen(false)
+                  onEdit?.(day)
+                }}
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Pencil size={16} className="text-[var(--accent)]" />
+                <span>Редактировать день</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setOptionsModalOpen(false)
+                  setShareModalOpen(true)
+                }}
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <Share2 size={16} className="text-emerald-500" />
+                <span>Экспорт карточки (SVG / PNG)</span>
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                  <Shield size={13} className="text-[#FF5C00]" /> Приватность дня
+                </span>
                 <span
-                  className="text-[11px] font-semibold"
+                  className="text-xs font-bold"
                   style={{ color: visibilityMeta(dayVisibility).color }}
                 >
-                  · {visibilityMeta(dayVisibility).shortLabel}
+                  {visibilityMeta(dayVisibility).shortLabel}
                 </span>
-              </span>
-              <div className="flex items-center gap-2">
+              </div>
+              <div className="pt-1">
                 <VisibilitySwitcher
                   value={dayVisibility}
                   onChange={(level) => {
@@ -277,232 +547,23 @@ export function DayCard({
                   }}
                   soundEnabled={soundEnabled}
                 />
-                <Tooltip content="Применить приватность дня ко всем гордостям" side="top">
-                  <button
-                    type="button"
-                    className="rounded-full border border-[#2f3336] px-2.5 py-1 text-[11px] font-bold text-[#71767b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#e7e9ea]"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      setAllPridesVisibility(day.id, dayVisibility)
-                      onNotify?.('Приватность дня применена ко всем гордостям')
-                    }}
-                  >
-                    Применить ко всем
-                  </button>
-                </Tooltip>
               </div>
-            </div>
-
-            {/* Entries tabs */}
-            <DayEntries
-              prides={day.prides}
-              gratitudes={day.gratitudes}
-              dayId={day.id}
-              soundEnabled={soundEnabled}
-              onPinToVault={onPinToVault}
-              onNotify={onNotify}
-              dayVisibility={dayVisibility}
-              onSetPrideVisibility={(index, level) => {
-                setPrideVisibility(day.id, index, level)
-                onNotify?.(`Гордость #${index + 1}: ${visibilityMeta(level).shortLabel}`)
-              }}
-              onPublishPrideStory={(index) => setStoryPrideIndex(index)}
-              onForwardPride={(index) => setForwardPride(buildPrideAttachment(day, index))}
-            />
-
-            {/* Media — X.com style */}
-            {photoUrls.length > 0 && (
-              <div
-                className={`mt-3 overflow-hidden rounded-2xl border border-[#2f3336] ${
-                  photoUrls.length === 1
-                    ? ''
-                    : photoUrls.length === 2
-                      ? 'grid grid-cols-2 gap-0.5'
-                      : 'grid grid-cols-2 gap-0.5'
-                }`}
+              <button
+                type="button"
+                className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline text-left"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setAllPridesVisibility(day.id, dayVisibility)
+                  onNotify?.('Приватность применена ко всем гордостям')
+                  setOptionsModalOpen(false)
+                }}
               >
-                {photoUrls.length === 1 && (
-                  <button
-                    type="button"
-                    onClick={() => setMediaIndex(0)}
-                    className="block w-full focus:outline-none"
-                    aria-label="Открыть фото дня"
-                  >
-                    <img
-                      src={photoUrls[0]}
-                      alt="Фото дня"
-                      loading="lazy"
-                      className="w-full max-h-[500px] object-cover rounded-2xl"
-                    />
-                  </button>
-                )}
-                {photoUrls.length === 2 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setMediaIndex(0)}
-                      className="block focus:outline-none overflow-hidden rounded-l-2xl"
-                      aria-label="Открыть первое фото дня"
-                    >
-                      <img
-                        src={photoUrls[0]}
-                        alt="Фото дня 1"
-                        loading="lazy"
-                        className="w-full h-[240px] object-cover"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMediaIndex(1)}
-                      className="block focus:outline-none overflow-hidden rounded-r-2xl"
-                      aria-label="Открыть второе фото дня"
-                    >
-                      <img
-                        src={photoUrls[1]}
-                        alt="Фото дня 2"
-                        loading="lazy"
-                        className="w-full h-[240px] object-cover"
-                      />
-                    </button>
-                  </>
-                )}
-                {photoUrls.length >= 3 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setMediaIndex(0)}
-                      className="block focus:outline-none overflow-hidden rounded-tl-2xl rounded-bl-2xl row-span-2"
-                      aria-label="Открыть первое фото дня"
-                    >
-                      <img
-                        src={photoUrls[0]}
-                        alt="Фото дня 1"
-                        loading="lazy"
-                        className="w-full h-[240px] object-cover"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMediaIndex(1)}
-                      className="block focus:outline-none overflow-hidden rounded-tr-2xl"
-                      aria-label="Открыть второе фото дня"
-                    >
-                      <img
-                        src={photoUrls[1]}
-                        alt="Фото дня 2"
-                        loading="lazy"
-                        className="w-full h-[118px] object-cover"
-                      />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setMediaIndex(2)}
-                      className="block focus:outline-none overflow-hidden rounded-br-2xl"
-                      aria-label="Открыть третье фото дня"
-                    >
-                      <img
-                        src={photoUrls[2]}
-                        alt="Фото дня 3"
-                        loading="lazy"
-                        className="w-full h-[118px] object-cover"
-                      />
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* X.com canonical 4-action bar */}
-            <div className="flex items-center justify-between pt-2 -mx-2">
-              {/* Огонёк 🔥 */}
-              <Tooltip content="Зажечь огонёк" side="top">
-                <motion.button
-                  type="button"
-                  onClick={handleLike}
-                  aria-label={liked ? 'Убрать отметку огня' : 'Поставить огонь'}
-                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
-                    liked
-                      ? 'text-[#ff6b35]'
-                      : 'text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10'
-                  }`}
-                  animate={reduce ? undefined : likeAnim}
-                  variants={reactionVariants}
-                  transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
-                >
-                  <Flame size={18} fill={liked ? 'currentColor' : 'none'} />
-                  <span>{fireCount}</span>
-                </motion.button>
-              </Tooltip>
-
-              {/* Спасибо ❤️ */}
-              <Tooltip content="Поблагодарить" side="top">
-                <motion.button
-                  type="button"
-                  onClick={handleThank}
-                  aria-label="Поблагодарить"
-                  className={`flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full transition-colors duration-150 ${
-                    thanked
-                      ? 'text-[#f91880]'
-                      : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
-                  }`}
-                  animate={reduce ? undefined : thankAnim}
-                  variants={reactionVariants}
-                  transition={{ duration: 0.35, times: [0, 0.2, 0.6, 1] }}
-                >
-                  <Heart size={18} fill={thanked ? 'currentColor' : 'none'} />
-                  <span>Спасибо{heartCount > 0 ? ` · ${heartCount}` : ''}</span>
-                </motion.button>
-              </Tooltip>
-
-              {/* Редактировать ✏️ */}
-              <Tooltip content="Редактировать день" side="top">
-                <button
-                  type="button"
-                  onClick={() => onEdit?.(day)}
-                  aria-label="Редактировать день"
-                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors duration-150"
-                >
-                  <Pencil size={18} />
-                  <span>Править</span>
-                </button>
-              </Tooltip>
-
-              {/* Поделиться 📤 */}
-              <Tooltip content="Экспорт карточки (SVG / PNG)" side="top" hotkey="E">
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(true)}
-                  aria-label="Поделиться записью"
-                  className="flex items-center gap-1.5 text-[13px] px-2 py-1.5 rounded-full text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors duration-150"
-                >
-                  <Activity size={18} />
-                  <span>Поделиться</span>
-                </button>
-              </Tooltip>
-            </div>
-
-            {/* Живые реакции под днём: смайлики, свои эмодзи и счётчики */}
-            <div className="pt-1.5 -mx-2">
-              <ReactionBar
-                target={target}
-                excludeIds={['fire', 'heart']}
-                soundEnabled={soundEnabled}
-                onNotify={onNotify}
-              />
-            </div>
-
-            {/* Комментарии поддержки под днём: дерево ответов и лайки */}
-            <div className="pt-1 -mx-2">
-              <CommentsThread
-                target={target}
-                variant="day"
-                soundEnabled={soundEnabled}
-                onNotify={onNotify}
-              />
+                Применить ко всем гордостям дня
+              </button>
             </div>
           </div>
         </div>
-      </article>
+      )}
 
       {shareModalOpen && (
         <ShareCardModal
@@ -559,3 +620,5 @@ export function DayCard({
     </>
   )
 }
+
+export const DayCard = memo(DayCardComponent)

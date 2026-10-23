@@ -1,9 +1,9 @@
 'use client'
 
-import { ChevronRight, UserPlus, Users } from 'lucide-react'
+import { ChevronRight, Copy, Check, Search, Share2, Users, Flame } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useMemo, useState } from 'react'
-import { playClick } from '@/lib/ogonek/sound'
+import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
   getActiveFriends,
@@ -21,18 +21,13 @@ type Props = {
   soundEnabled?: boolean
 }
 
-/**
- * ЭТАП 11 — Виджет активных друзей в правой боковой панели.
- * Показывает ближайших соратников с кружочком онлайн-статуса, свежей сторис
- * (мини-кадр) и переход в карточку друга. Заявки в друзья — отдельной кнопкой.
- */
 export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true }: Props) {
   const { state, toggleFollow, addFriend } = useOgonekStore()
   const [openFriendId, setOpenFriendId] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
   const friendIds = state.friendIds ?? []
   const viewedStoryIds = state.viewedStoryIds ?? []
-  const followingIds = state.followingIds ?? []
   const incoming = state.incomingFriendRequests ?? []
 
   const active = useMemo(() => getActiveFriends(friendIds, 6), [friendIds])
@@ -49,29 +44,22 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
     setOpenFriendId(id)
   }
 
-  const handleQuickFriend = (friend: FriendProfile) => {
+  const handleCopyInvite = () => {
     playClick(soundEnabled)
-    if (friendIds.includes(friend.id)) {
-      toggleFollow(friend.id)
-      onNotify(`Обновлена подписка на @${friend.username}`)
-    } else {
-      addFriend(friend.id)
-      onNotify(`@${friend.username} добавлен в друзья ✓`)
-    }
-  }
-
-  const goFriends = () => {
-    playClick(soundEnabled)
-    onNavigate('profile')
-    onNotify('Открываю круг друзей в профиле')
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${state.profile.username}` : 'https://ogonek.app'
+    navigator.clipboard?.writeText(url)
+    setCopied(true)
+    playSuccess(soundEnabled)
+    onNotify('Ссылка-приглашение скопирована в буфер обмена!')
+    setTimeout(() => setCopied(false), 2500)
   }
 
   return (
     <section className="af-widget" aria-labelledby="active-friends-title">
       <header className="af-widget__head">
         <h2 id="active-friends-title">
-          <Users size={17} className="text-[#22c55e]" aria-hidden="true" />
-          Активные друзья
+          <Users size={17} className="text-[var(--accent)]" aria-hidden="true" />
+          Друзья
         </h2>
         <span className="af-widget__badge">
           {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} друзей`}
@@ -79,11 +67,36 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
       </header>
 
       {active.length === 0 ? (
-        <p className="af-widget__empty">
-          Пока никого рядом. Добавь соратников — и здесь появится, кто сейчас держит огонь.
-        </p>
+        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center my-2">
+          <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
+            <Flame size={16} />
+          </div>
+          <p className="text-xs font-semibold text-white mb-1">У тебя пока нет соратников</p>
+          <p className="text-[11px] text-white/50 mb-3 leading-snug">
+            Пригласи друзей вести дневник вместе, делиться гордостями и держать огонь.
+          </p>
+
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleCopyInvite}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#ff5722] text-white text-xs font-semibold hover:bg-[#ff5722]/90 transition-all shadow-sm"
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+              {copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onNavigate('explore')}
+              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-medium transition-all"
+            >
+              <Search size={13} /> Найти людей по нику
+            </button>
+          </div>
+        </div>
       ) : (
-        <ul className="af-list">
+        <ul className="af-list flex flex-col gap-2" role="group">
           {active.map((friend) => {
             const presence = presenceMeta(friend.presence)
             const slide = storyChip(friend)
@@ -111,20 +124,19 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
                   </span>
 
                   <span className="af-row__text">
-                    <span className="af-row__name">
+                    <span className="af-row__name flex items-center gap-1">
                       {friend.name.split(/\s+/)[0]}
                       {friend.verified && (
-                        <span className="friend-verified" aria-label="Верифицирован">
-                          ✓
+                        <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-hidden="true">
+                          <Check size={9} strokeWidth={3} />
                         </span>
                       )}
                     </span>
-                    <span className="af-row__sub" style={{ color: presence.color }}>
+                    <span className="af-row__sub" style={{ color: friend.presence === 'online' ? 'var(--success)' : 'var(--text-2)' }}>
                       {presence.short} · 🔥 {friend.streak}
                     </span>
                   </span>
 
-                  {/* Мини-кадр свежей сторис */}
                   <span
                     className={`af-story ${viewed ? 'is-viewed' : ''}`}
                     style={{ background: `linear-gradient(150deg, ${slide.from}, ${slide.to})` }}
@@ -147,20 +159,17 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
         </ul>
       )}
 
-      <div className="af-widget__actions">
-        <button type="button" className="af-action" onClick={goFriends}>
-          Все друзья →
-        </button>
-        {incoming.length > 0 && (
+      {active.length > 0 && (
+        <div className="af-widget__actions pt-2">
           <button
             type="button"
-            className="af-action af-action--accent"
-            onClick={goFriends}
+            className="w-full py-2 px-3 rounded-full text-[13px] font-bold text-[var(--text)] bg-[var(--surface2)] hover:bg-[var(--bg-hover)] border border-[var(--border)] transition-colors min-h-[36px]"
+            onClick={() => onNavigate('profile')}
           >
-            <UserPlus size={13} /> Заявки: {incoming.length}
+            Все друзья →
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <AnimatePresence>
         {openFriendId && (
