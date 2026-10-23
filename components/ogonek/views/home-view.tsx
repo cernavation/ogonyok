@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreHorizontal, Plus } from 'lucide-react'
+import { MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
@@ -8,6 +8,7 @@ import { computeFocusFlame } from '@/lib/ogonek/morning-focus'
 import { playClick } from '@/lib/ogonek/sound'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
+import { Button } from '../ui'
 import { DayCard } from '../day-card'
 import { EveningReview } from '../evening-review'
 import { FocusHistoryModal } from '../focus-history-modal'
@@ -15,8 +16,9 @@ import { MobileHeader } from '../mobile-header'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
+import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 
-const CHUNK_SIZE = 25
+const CHUNK_SIZE = 20
 
 type Props = {
   days: Day[]
@@ -40,6 +42,7 @@ type Props = {
   hoursLeft?: number | null
   onOpenProfile?: () => void
   soundEnabled?: boolean
+  userId?: string
 }
 
 export function HomeView({
@@ -63,6 +66,7 @@ export function HomeView({
   hoursLeft,
   onOpenProfile,
   soundEnabled = true,
+  userId,
 }: Props) {
   const [filter, setFilter] = useState<string>('Для тебя')
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
@@ -85,20 +89,16 @@ export function HomeView({
   }
 
   const filteredDays = useMemo(() => {
-    // «Для тебя» — показывает ВСЕ дни без исключений
-    if (filter === 'Для тебя') {
+    if (filter === 'Для тебя' || filter === 'Подписки') {
       return days
     }
-    // «Гордости» — по фактическому наличию гордостей, а не по строковым тегам
-    if (filter === '🔥 Гордости') {
+    if (filter === 'Гордости' || filter === '🔥 Гордости') {
       return days.filter((d) => d.prides && d.prides.length > 0)
     }
-    // «Благодарности» — по фактическому наличию благодарностей
-    if (filter === '❤️ Благодарности') {
+    if (filter === 'Благодарности' || filter === '❤️ Благодарности') {
       return days.filter((d) => d.gratitudes && d.gratitudes.length > 0)
     }
-    // Остальные хэштег-табы продолжают фильтроваться по тегам
-    return days.filter((d) => d.tags.includes(filter))
+    return days.filter((d) => d.tags && d.tags.includes(filter))
   }, [days, filter])
 
   const visibleDays = useMemo(() => {
@@ -160,9 +160,8 @@ export function HomeView({
           <Tooltip content="Настройки ленты" side="left">
             <button
               type="button"
-              className="muted"
+              className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] transition-colors"
               aria-label="Настройки ленты"
-              style={{ padding: 4 }}
             >
               <MoreHorizontal size={20} />
             </button>
@@ -197,46 +196,73 @@ export function HomeView({
         onOpenProfile={onOpenProfile}
       />
 
-      {/* Inline "What's happening?" compose prompt — X.com style */}
+      {/* Inline composer — X.com canonical layout */}
       {onCompose && (
         <div
-          className="flex items-center gap-3 px-4 py-3 border-b border-[#2f3336] cursor-pointer hover:bg-white/[0.02] transition-colors duration-150"
+          className="flex gap-3 px-4 pt-3 pb-3 border-b border-[var(--border)] cursor-pointer hover:bg-[var(--bg-hover-post)] transition-colors duration-150"
           onClick={onCompose}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') onCompose?.() }}
-          aria-label="Открыть форму записи дня"
+          role="region"
+          aria-label="Создать запись дня"
         >
-          {/* Mini avatar */}
           <div
-            className="w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none"
+            className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none text-white shadow-sm mt-0.5"
             style={{
-              background: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
-              color: '#fff',
-              textShadow: '0 1px 2px #000',
+              background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
             }}
             aria-hidden="true"
           >
             AC
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[#71767b] text-[19px] font-normal select-none truncate">
-              Что произошло сегодня?
-            </p>
+            <div className="py-2 text-[var(--text-2)] text-[18px] font-normal select-none">
+              Чем гордишься сегодня?
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] mt-1">
+              <div className="flex items-center gap-1 -ml-2 text-[var(--accent)]" aria-label="Инструменты записи">
+                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
+                  <ImageIcon size={18} />
+                </span>
+                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
+                  <Sparkles size={18} />
+                </span>
+                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
+                  <Smile size={18} />
+                </span>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCompose?.()
+                }}
+                className="font-bold min-h-[36px]"
+              >
+                Записать
+              </Button>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onCompose?.() }}
-            className="flex-none flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[14px] font-bold transition-colors duration-150"
-            aria-label="Записать день"
-          >
-            <Plus size={15} strokeWidth={2.5} />
-            Записать
-          </button>
         </div>
       )}
 
       <div className="feed-content">
+        {userId && (
+          <div className="px-4 pt-3">
+            <LegacyMigrationBanner
+              userId={userId}
+              localDaysCount={days.length}
+              localDays={days}
+              soundEnabled={soundEnabled}
+              onNotify={onNotify}
+              onCompleted={() => {
+                setTimeout(() => {
+                  window.location.reload()
+                }, 1200)
+              }}
+            />
+          </div>
+        )}
+
         <QuickFocus
           initialFocus={morningIntentions?.[todayKey]}
           record={todayFocusRecord}

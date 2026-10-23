@@ -380,6 +380,7 @@ export function AppShell() {
     () => ({
       home: (
         <HomeView
+          userId={state.auth.activeAccountId ?? undefined}
           days={state.days}
           morningIntentions={state.morningIntentions}
           morningFocusHistory={state.morningFocusHistory}
