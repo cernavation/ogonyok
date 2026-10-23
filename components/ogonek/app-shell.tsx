@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
-import { computeStreak } from '@/lib/ogonek/streak'
+import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
 import { hasUnlockMethod, persistSecurityHint } from '@/lib/ogonek/security'
 import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -28,10 +28,12 @@ import { MessagesView } from './views/messages-view'
 import { ProfileView } from './views/profile-view'
 import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
+import { LeaderboardView } from './views/leaderboard-view'
 
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
+const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -40,6 +42,7 @@ export function AppShell() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
@@ -177,6 +180,11 @@ export function AppShell() {
     window.scrollTo(0, 0)
   }, [state.soundEnabled])
 
+  // Single source of truth for streak (PRODUCT_SPEC.md Rule 3: стрик = закрытые дни)
+  const streakCount = useMemo(() => {
+    return calculateStreak(state.days)
+  }, [state.days])
+
   // Compute live streak state
   const streakState = useMemo(() => {
     const dates = new Set<string>()
@@ -185,12 +193,17 @@ export function AppShell() {
         dates.add(d.dateISO.slice(0, 10))
       }
     }
-    return computeStreak(dates, new Date(), {
+    const computed = computeStreak(dates, new Date(), {
       tz: state.streak?.timeZone,
       deadlineMinutes: state.streak?.deadlineMinutes,
       weekendBonus: state.streak?.weekendBonus,
     })
-  }, [state.days, state.streak])
+    return {
+      ...computed,
+      streak: streakCount,
+      best: Math.max(computed.best, streakCount),
+    }
+  }, [state.days, state.streak, streakCount])
 
   // Keyboard navigation shortcuts
   useKeyboardNavigation({
@@ -234,6 +247,44 @@ export function AppShell() {
         .catch(() => {})
     }
   }, [state.days.length, importState, notify])
+
+  // Onboarding event listener & automation events
+  useEffect(() => {
+    const handleOpenOnboarding = () => setOnboardingOpen(true)
+    const handleNavigate = (e: Event) => {
+      const custom = e as CustomEvent<ViewId>
+      if (custom.detail) navigate(custom.detail)
+    }
+    const handleOpenComposer = () => setComposer(true)
+    const handleCloseComposer = () => {
+      setComposer(false)
+      setEditingDay(null)
+    }
+    const handleOpenAuth = (e: Event) => {
+      const custom = e as CustomEvent<'signin' | 'register'>
+      setAuthModal(custom.detail || 'signin')
+    }
+    const handleCloseAuth = () => setAuthModal(null)
+    const handleCloseOnboarding = () => setOnboardingOpen(false)
+
+    window.addEventListener('ogonek:open-onboarding', handleOpenOnboarding)
+    window.addEventListener('ogonek:close-onboarding', handleCloseOnboarding)
+    window.addEventListener('ogonek:navigate', handleNavigate)
+    window.addEventListener('ogonek:open-composer', handleOpenComposer)
+    window.addEventListener('ogonek:close-composer', handleCloseComposer)
+    window.addEventListener('ogonek:open-auth', handleOpenAuth)
+    window.addEventListener('ogonek:close-auth', handleCloseAuth)
+
+    return () => {
+      window.removeEventListener('ogonek:open-onboarding', handleOpenOnboarding)
+      window.removeEventListener('ogonek:close-onboarding', handleCloseOnboarding)
+      window.removeEventListener('ogonek:navigate', handleNavigate)
+      window.removeEventListener('ogonek:open-composer', handleOpenComposer)
+      window.removeEventListener('ogonek:close-composer', handleCloseComposer)
+      window.removeEventListener('ogonek:open-auth', handleOpenAuth)
+      window.removeEventListener('ogonek:close-auth', handleCloseAuth)
+    }
+  }, [navigate])
 
   // Key 'p' to open profile modal (legacy — keep for hotkey compat)
   useEffect(() => {
@@ -402,6 +453,7 @@ export function AppShell() {
           onResetAppearance={resetAppearance}
           onImportState={importState}
           onResetToDefaults={resetToDefaults}
+          onUpdateProfile={updateProfile}
         />
       ),
       profile: (
@@ -422,6 +474,13 @@ export function AppShell() {
           onNavigate={navigate}
           onSave={saveMorningIntentions}
           notify={notify}
+          soundEnabled={state.soundEnabled}
+        />
+      ),
+      leaderboard: (
+        <LeaderboardView
+          onNavigate={navigate}
+          onNotify={notify}
           soundEnabled={state.soundEnabled}
         />
       ),
@@ -480,18 +539,15 @@ export function AppShell() {
         />
 
         <section className="feed" aria-label="Основное содержимое">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={view}
-              className="view"
-              initial={reduce ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reduce ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: reduce ? 0 : 0.14, ease: 'easeOut' }}
-            >
-              {content[view]}
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={view}
+            className="view"
+            initial={{ opacity: 0.95 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.04 }}
+          >
+            {content[view]}
+          </motion.div>
         </section>
 
         <RightRail
@@ -547,6 +603,35 @@ export function AppShell() {
               storeState={state}
               onClose={() => setProfileModal(false)}
               onNavigate={navigate}
+            />
+          )}
+          {onboardingOpen && (
+            <OnboardingModal
+              isOpen={onboardingOpen}
+              onClose={() => setOnboardingOpen(false)}
+              onSaveFirstPride={(text, level) => {
+                updateProfile({ level, levelChangedAtISO: new Date().toISOString() })
+                addNewDay({
+                  prides: [
+                    text,
+                    'Зафиксировал цель вести летопись 700 дней',
+                    'Выбрал оптимальный ритм сложности (3 гордости)',
+                  ],
+                  gratitudes: [
+                    'Благодарен себе за решимость начать новый путь',
+                    'Благодарен близким за поддержку',
+                    'Благодарен этому дню за возможности',
+                  ],
+                  photo: null,
+                  ratings: {
+                    0: { scale: 9.0, overcome: 2 },
+                    1: { scale: 8.5, overcome: 1 },
+                    2: { scale: 8.0, overcome: 1 },
+                  },
+                })
+              }}
+              onNotify={notify}
+              soundEnabled={state.soundEnabled}
             />
           )}
         </AnimatePresence>

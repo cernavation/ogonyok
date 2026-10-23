@@ -1,5 +1,6 @@
-import { computeStreak } from './streak'
-import type { OgonekProfile, OgonekStoreState } from './types'
+import { computeStreak } from './streak.ts'
+import { calculateStreak } from './diary-engine.ts'
+import type { Day, OgonekProfile, OgonekStoreState } from './types'
 
 /**
  * ЭТАП 4 — SaaS-профиль Pro.
@@ -32,16 +33,22 @@ export type ProfileStats = {
 }
 
 export function computeProfileStats(
-  storeState: OgonekStoreState,
-  now: Date = new Date()
+  storeStateOrDays: OgonekStoreState | Day[] | any,
+  nowOrCount?: Date | number
 ): ProfileStats {
+  const now = nowOrCount instanceof Date ? nowOrCount : new Date()
+  const days: Day[] = Array.isArray(storeStateOrDays)
+    ? storeStateOrDays
+    : Array.isArray(storeStateOrDays?.days)
+    ? storeStateOrDays.days
+    : []
   const entryDates = new Set<string>()
   let totalPrides = 0
   let totalGratitudes = 0
   let ratingSum = 0
   let ratingCount = 0
 
-  for (const day of storeState.days) {
+  for (const day of days) {
     if (day.dateISO) entryDates.add(day.dateISO.slice(0, 10))
     if (day.status !== 'missed') {
       totalPrides += day.prides.length
@@ -56,13 +63,15 @@ export function computeProfileStats(
   }
 
   const streakInfo = computeStreak(entryDates, now)
-  const recordedDays = storeState.days.filter((day) => day.status !== 'missed').length
-  const demo = storeState.isDemo
-  const streakFloor = demo ? 717 : 0
-
-  const streakDays = Math.max(streakInfo.streak, recordedDays, streakFloor)
+  const recordedDays = days.filter((day) => day.status !== 'missed').length
+  const demo = Boolean(
+    storeStateOrDays && typeof storeStateOrDays === 'object' && 'isDemo' in storeStateOrDays
+      ? storeStateOrDays.isDemo
+      : false
+  )
+  const streakDays = calculateStreak(days)
   const best = Math.max(streakInfo.best, streakDays)
-  const totalDays = Math.max(recordedDays, demo ? 719 : 0)
+  const totalDays = Math.max(recordedDays, streakDays)
 
   return {
     streakDays,

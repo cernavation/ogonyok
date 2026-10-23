@@ -2,7 +2,7 @@
 
 import { Award, Calendar, Download, Flame, Heart, Settings, ShieldCheck, Sparkles, X, Zap } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
-import { computeStreak } from '@/lib/ogonek/streak'
+import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { downloadBlob } from '@/lib/ogonek/card-export'
 import type { OgonekStoreState, ViewId } from '@/lib/ogonek/types'
@@ -102,9 +102,8 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
     }
   }
 
-  const streakInfo = computeStreak(entryDates, new Date())
-  const daysCount = Math.max(storeState.days.length, 719)
-  const isFlameProof = streakInfo.best >= 100
+  const daysCount = calculateStreak(storeState.days)
+  const isFlameProof = daysCount >= 100
   const isChronicler = daysCount >= 500
   const isDepthMaster = highOvercomeCount >= 10
   const isVaultKeeper = storeState.evidenceItems.length >= 5

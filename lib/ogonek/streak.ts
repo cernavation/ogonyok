@@ -1,4 +1,5 @@
 import type { StreakSettings } from './types'
+export { calculateStreak } from './diary-engine.ts'
 
 export const GRACE_DAYS = 3
 export const TZ = 'Europe/Chisinau'

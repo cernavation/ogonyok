@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence } from 'framer-motion'
-import { Eye, Plus, RefreshCw, Sparkles } from 'lucide-react'
+import { Check, Eye, Plus, RefreshCw, Sparkles } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { FRIEND_PROFILES, getFriend } from '@/lib/ogonek/friends'
 import { playClick } from '@/lib/ogonek/sound'
@@ -14,6 +14,7 @@ import {
 } from '@/lib/ogonek/stories'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { calculateStreak } from '@/lib/ogonek/streak'
 import { StoryComposerModal } from './story-composer-modal'
 import { StoryViewerModal } from './story-viewer-modal'
 
@@ -73,7 +74,7 @@ export function StoriesBar({
           avatarColor: profile.avatarColor,
           verified: profile.verified,
           city: profile.city,
-          streak: state.days.length,
+          streak: calculateStreak(state.days),
         },
         state.days[0] ?? null
       ),
@@ -207,17 +208,6 @@ export function StoriesBar({
             </span>
             <span className="story-ring__name">Моя история</span>
           </button>
-          <button
-            type="button"
-            className="stories-item__sub"
-            onClick={() => {
-              playClick(soundEnabled)
-              setComposerOpen(true)
-            }}
-            aria-label="Добавить кадр в мою историю"
-          >
-            + добавить
-          </button>
         </div>
 
         {/* Кружочки друзей */}
@@ -243,14 +233,12 @@ export function StoriesBar({
                   </span>
                 </span>
                 {viewable.verified && (
-                  <span className="story-ring__verified" aria-hidden="true">
-                    ✓
+                  <span className="story-ring__verified flex items-center justify-center" aria-hidden="true">
+                    <Check size={8} strokeWidth={3} />
                   </span>
                 )}
-                {!viewed && <span className="story-ring__dot" aria-hidden="true" />}
                 <span className="story-ring__name">{firstName(viewable.name)}</span>
               </button>
-              {friend && <span className="stories-item__streak">🔥 {friend.streak}</span>}
             </div>
           )
         })}
