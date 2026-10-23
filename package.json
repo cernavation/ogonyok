@@ -12,7 +12,8 @@
     "check-setup": "node scripts/check-setup.mjs",
     "migrate:history": "node scripts/migrate-html.mjs",
     "audit-ui": "node scripts/ui-audit.mjs",
-    "audit-ui:fast": "node scripts/ui-audit.mjs --fast"
+    "audit-ui:fast": "node scripts/ui-audit.mjs --fast",
+    "crawl-ui": "node scripts/ui-crawl.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
