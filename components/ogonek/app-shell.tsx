@@ -29,6 +29,7 @@ import { ProfileView } from './views/profile-view'
 import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
+import { GuestLanding } from './landing/guest-landing'
 
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
@@ -77,6 +78,7 @@ export function AppShell() {
     getNextDayId,
     lockAppNow,
     provisionDemoAccountSecrets,
+    continueAsGuest,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -514,6 +516,19 @@ export function AppShell() {
       handleEditDay,
     ]
   )
+
+  // Неавторизованный гость видит ТОЛЬКО лендинг в стиле X.com (Требование 2)
+  if (!state.auth.signedIn && process.env.NEXT_PUBLIC_DEMO_MODE !== '1') {
+    return (
+      <GuestLanding
+        onEnterDemo={() => {
+          continueAsGuest()
+          notify('Включён демонстрационный режим')
+        }}
+        onNotify={notify}
+      />
+    )
+  }
 
   return (
     <TooltipProvider>
