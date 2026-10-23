@@ -58,11 +58,17 @@ export function StoriesBar({
   const viewedStoryIds = state.viewedStoryIds ?? []
   const myStories = state.myStories ?? []
 
-  // Только подписки; если список пуст — показываем весь круг
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === '1'
+  // В обычном режиме показываем только реальные подписки; демо-персонажи только при NEXT_PUBLIC_DEMO_MODE=1
   const friendStories = useMemo(() => {
-    const ids = followingIds.length > 0 ? followingIds : FRIEND_PROFILES.map((f) => f.id)
-    return buildFriendStories(ids)
-  }, [followingIds])
+    if (followingIds.length > 0) {
+      return buildFriendStories(followingIds)
+    }
+    if (isDemo) {
+      return buildFriendStories(FRIEND_PROFILES.map((f) => f.id))
+    }
+    return []
+  }, [followingIds, isDemo])
 
   const myViewable = useMemo(
     () =>

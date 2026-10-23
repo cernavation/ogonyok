@@ -433,6 +433,11 @@ export const DEFAULT_PROFILE: OgonekProfile = {
   monthlyGoal: 'Закрыть сделку с Alibaba и вывести партнёрство на новый уровень',
   monthlyGoalUpdatedAtISO: '2026-10-01T09:00:00.000Z',
   verified: true,
+  level: 3,
+  levelChangedAtISO: null,
+  telegramChatId: null,
+  reminderTimes: ['21:00'],
+  inLeaderboard: true,
 }
 
 /** Валидирует и восстанавливает профиль пользователя из хранилища */
@@ -466,6 +471,11 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
       40
     ),
     verified: typeof p.verified === 'boolean' ? p.verified : DEFAULT_PROFILE.verified,
+    level: typeof p.level === 'number' && p.level >= 1 && p.level <= 5 ? p.level : 3,
+    levelChangedAtISO: typeof p.levelChangedAtISO === 'string' ? p.levelChangedAtISO : null,
+    telegramChatId: typeof p.telegramChatId === 'string' ? p.telegramChatId : null,
+    reminderTimes: Array.isArray(p.reminderTimes) ? p.reminderTimes : ['21:00'],
+    inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : true,
   }
 }
 
@@ -752,35 +762,37 @@ export const DEFAULT_CHAT_THREADS: ChatThreads = buildDemoThreads()
 /** ЭТАП 10: демо-история утренних фокусов за последние дни */
 const DEMO_MORNING_FOCUS = buildDemoMorningFocus(new Date().toISOString().split('T')[0])
 
+const isDemoEnv = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_DEMO_MODE === '1'
+
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
-  days: INITIAL_DAYS,
+  days: isDemoEnv ? INITIAL_DAYS : [],
   verifiedAchievements: DEFAULT_VERIFIED_ACHIEVEMENTS,
-  morningIntentions: DEMO_MORNING_FOCUS.intentions,
-  morningFocusHistory: DEMO_MORNING_FOCUS.history,
+  morningIntentions: isDemoEnv ? DEMO_MORNING_FOCUS.intentions : {},
+  morningFocusHistory: isDemoEnv ? DEMO_MORNING_FOCUS.history : {},
   composerDraft: null,
-  evidenceItems: EVIDENCE_ITEMS,
-  evidenceFavorites: ['ev-1', 'ev-2'],
+  evidenceItems: isDemoEnv ? EVIDENCE_ITEMS : [],
+  evidenceFavorites: isDemoEnv ? ['ev-1', 'ev-2'] : [],
   soundEnabled: true,
   pinEnabled: false,
-  isDemo: true,
+  isDemo: isDemoEnv,
   customEmojis: DEFAULT_CUSTOM_EMOJIS,
   dayReactions: {},
   myReactions: {},
   comments: {},
   profile: DEFAULT_PROFILE,
-  followingIds: DEFAULT_FOLLOWING_IDS,
-  viewedStoryIds: DEFAULT_VIEWED_STORY_IDS,
-  myStories: DEFAULT_MY_STORIES,
-  friendIds: DEFAULT_FRIEND_IDS,
-  incomingFriendRequests: DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
-  outgoingFriendRequests: DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
+  followingIds: isDemoEnv ? DEFAULT_FOLLOWING_IDS : [],
+  viewedStoryIds: isDemoEnv ? DEFAULT_VIEWED_STORY_IDS : [],
+  myStories: isDemoEnv ? DEFAULT_MY_STORIES : [],
+  friendIds: isDemoEnv ? DEFAULT_FRIEND_IDS : [],
+  incomingFriendRequests: isDemoEnv ? DEFAULT_INCOMING_FRIEND_REQUEST_IDS : [],
+  outgoingFriendRequests: isDemoEnv ? DEFAULT_OUTGOING_FRIEND_REQUEST_IDS : [],
   dismissedSuggestions: [],
-  exploreFollowingIds: ['gu-hana', 'gu-adeyemi', 'fr-voloshin'],
+  exploreFollowingIds: isDemoEnv ? ['gu-hana', 'gu-adeyemi', 'fr-voloshin'] : [],
   exploreLikedPosts: [],
-  exploreSavedPosts: ['cp-6', 'cp-11'],
+  exploreSavedPosts: isDemoEnv ? ['cp-6', 'cp-11'] : [],
   exploreRecentSearches: [],
-  chatThreads: DEFAULT_CHAT_THREADS,
+  chatThreads: isDemoEnv ? DEFAULT_CHAT_THREADS : {},
   chatActiveFriendId: null,
   theme: DEFAULT_THEME,
   accent: DEFAULT_ACCENT,
@@ -789,7 +801,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   security: DEFAULT_SECURITY_STATE,
   privacy: DEFAULT_PRIVACY,
   streak: DEFAULT_STREAK_SETTINGS,
-  monthlyKpis: DEFAULT_MONTHLY_KPIS,
+  monthlyKpis: isDemoEnv ? DEFAULT_MONTHLY_KPIS : [],
   auth: DEFAULT_AUTH_STATE,
 }
 

@@ -41,14 +41,23 @@ import {
 } from './kpi'
 import {
   CHAT_MESSAGE_LIMIT,
+  DEFAULT_CHAT_FOLDERS,
   MY_CHAT_ID,
   emptyThread,
+  isGroupThread,
   makeChatMessage,
   pickAutoReply,
   sanitizeChatThreads,
   threadOf,
   unreadCount,
 } from './messenger'
+import type {
+  ChatFolder,
+  ChatGroupMeta,
+  ChatMessageForward,
+  ChatMessageMedia,
+  ChatMessageReply,
+} from './types'
 import {
   applyStepStatus,
   createMorningFocusRecord,
@@ -2588,12 +2597,22 @@ export function useOgonekStore() {
    */
   const scheduleChatAutoReply = useCallback(
     (friendId: string, userText: string, hasAttachment: boolean) => {
-      if (typeof window === 'undefined') return
-      const friend = getFriend(friendId)
+      // Боты и автоответы выключены в боевом режиме (Требование 3)
+      if (typeof window === 'undefined' || process.env.NEXT_PUBLIC_DEMO_MODE !== '1') return
+      let friend = getFriend(friendId)
+      const isGroup = isGroupThread(threadOf(getSnapshot().chatThreads ?? {}, friendId), friendId)
+      if (!friend && isGroup) {
+        const thread = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+        const candidates = (thread.groupMeta?.memberIds ?? []).filter((m) => m !== MY_CHAT_ID)
+        if (candidates.length > 0) {
+          const pickedId = candidates[Math.floor(Math.random() * candidates.length)]
+          friend = getFriend(pickedId)
+        }
+      }
       if (!friend) return
 
       const auto = pickAutoReply(friend, userText, hasAttachment)
-      const delay = 1200 + Math.floor(Math.random() * 1100)
+      const delay = 1000 + Math.floor(Math.random() * 1000)
 
       window.setTimeout(() => {
         updateStore((prev) => {
@@ -2603,10 +2622,10 @@ export function useOgonekStore() {
 
           // Мои сообщения «прочитаны» собеседником (галочки ✓✓)
           let messages: ChatMessage[] = thread.messages.map((m) =>
-            m.authorId === MY_CHAT_ID ? { ...m, read: true } : m
+            m.authorId === MY_CHAT_ID ? { ...m, read: true, status: 'read' } : m
           )
 
-          // Друг реагирует на последнее моё сообщение
+          // Собеседник реагирует на последнее моё сообщение
           if (auto.reactionId) {
             let idx = -1
             for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -2617,21 +2636,22 @@ export function useOgonekStore() {
             }
             if (idx >= 0) {
               const target = messages[idx]
+              const responderId = friend!.id
               const already = target.reactions.some(
-                (r) => r.by === friendId && r.emojiId === auto.reactionId
+                (r) => r.by === responderId && r.emojiId === auto.reactionId
               )
               if (!already) {
                 const reactionId = auto.reactionId
                 messages = messages.map((m, k) =>
                   k === idx
-                    ? { ...m, reactions: [...m.reactions, { emojiId: reactionId, by: friendId }] }
+                    ? { ...m, reactions: [...m.reactions, { emojiId: reactionId, by: responderId }] }
                     : m
                 )
               }
             }
           }
 
-          const reply = makeChatMessage({ authorId: friendId, text: auto.text })
+          const reply = makeChatMessage({ authorId: friend!.id, text: auto.text })
           return {
             ...prev,
             chatThreads: {
@@ -2646,19 +2666,33 @@ export function useOgonekStore() {
   )
 
   /**
-   * Отправить сообщение другу (с вложением-карточкой или без).
+   * Отправить сообщение другу или в группу (с вложением, ответом, медиа или без).
    * Возвращает созданное сообщение или null, если отправлять нечего.
    */
   const sendChatMessage = useCallback(
-    (friendId: string, text: string, attachment?: ChatAttachment | null): ChatMessage | null => {
-      if (!friendId || !getFriend(friendId)) return null
+    (
+      friendId: string,
+      text: string,
+      attachment?: ChatAttachment | null,
+      extra?: {
+        replyTo?: ChatMessageReply | null
+        forwardFrom?: ChatMessageForward | null
+        media?: ChatMessageMedia | null
+      }
+    ): ChatMessage | null => {
+      const isGroup = isGroupThread(threadOf(getSnapshot().chatThreads ?? {}, friendId), friendId)
+      if (!friendId || (!getFriend(friendId) && !isGroup)) return null
       const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
-      if (!clean && !attachment) return null
+      if (!clean && !attachment && !extra?.media) return null
 
       const message = makeChatMessage({
         authorId: MY_CHAT_ID,
         text: clean,
         attachment: attachment ?? null,
+        replyTo: extra?.replyTo ?? null,
+        forwardFrom: extra?.forwardFrom ?? null,
+        media: extra?.media ?? null,
+        status: 'sent',
       })
 
       updateStore((prev) => {
@@ -2673,10 +2707,220 @@ export function useOgonekStore() {
         }
       })
 
-      scheduleChatAutoReply(friendId, clean, Boolean(attachment))
+      scheduleChatAutoReply(friendId, clean, Boolean(attachment || extra?.media))
       return message
     },
     [updateStore, scheduleChatAutoReply]
+  )
+
+  /** Редактирование текста своего сообщения */
+  const editChatMessage = useCallback(
+    (friendId: string, messageId: string, newText: string): boolean => {
+      if (!friendId || !messageId) return false
+      const clean = (newText ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
+      if (!clean) return false
+
+      let success = false
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId && m.authorId === MY_CHAT_ID) {
+            success = true
+            return {
+              ...m,
+              text: clean,
+              editedAtISO: new Date().toISOString(),
+            }
+          }
+          return m
+        })
+        if (!success) return prev
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages },
+          },
+        }
+      })
+      return success
+    },
+    [updateStore]
+  )
+
+  /** Удаление нескольких сообщений из переписки */
+  const deleteChatMessages = useCallback(
+    (friendId: string, messageIds: string[]) => {
+      if (!friendId || !Array.isArray(messageIds) || messageIds.length === 0) return
+      const idsSet = new Set(messageIds)
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              messages: thread.messages.filter((m) => !idsSet.has(m.id)),
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Закрепить / открепить сообщение внутри чата (баннер в шапке) */
+  const togglePinChatMessage = useCallback(
+    (friendId: string, messageId: string): boolean => {
+      if (!friendId || !messageId) return false
+      let isPinned = false
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const currentlyPinned = thread.pinnedMessageId === messageId
+        const newPinnedId = currentlyPinned ? null : messageId
+        isPinned = !currentlyPinned
+
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId) return { ...m, pinned: isPinned }
+          if (currentlyPinned && m.pinned) return { ...m, pinned: false }
+          return m
+        })
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              pinnedMessageId: newPinnedId,
+              messages,
+            },
+          },
+        }
+      })
+      return isPinned
+    },
+    [updateStore]
+  )
+
+  /** Создание новой группы */
+  const createGroupChat = useCallback(
+    (
+      title: string,
+      memberIds: string[],
+      avatarColor = 'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+      avatarEmoji = '👥',
+      description = ''
+    ): string => {
+      const cleanTitle = (title || 'Новая группа').trim().slice(0, 100)
+      const groupId = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+      const groupMeta: ChatGroupMeta = {
+        id: groupId,
+        title: cleanTitle,
+        avatarColor,
+        avatarEmoji,
+        avatarImage: null,
+        memberIds: Array.from(new Set([MY_CHAT_ID, ...memberIds])),
+        createdAtISO: new Date().toISOString(),
+        createdBy: MY_CHAT_ID,
+        description,
+      }
+
+      const initialMessage = makeChatMessage({
+        authorId: MY_CHAT_ID,
+        text: `Группа «${cleanTitle}» создана. Добро пожаловать! 🎉`,
+        system: true,
+      })
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              messages: [initialMessage],
+              readAtISO: new Date().toISOString(),
+              muted: false,
+              pinned: true,
+              draft: '',
+              groupMeta,
+            },
+          },
+          chatActiveFriendId: groupId,
+        }
+      })
+
+      return groupId
+    },
+    [updateStore]
+  )
+
+  /** Добавление / обновление пользовательской папки */
+  const setChatFolder = useCallback(
+    (folder: ChatFolder) => {
+      if (!folder?.id || !folder?.title) return
+      updateStore((prev) => {
+        const current = prev.chatFolders ?? DEFAULT_CHAT_FOLDERS
+        const exists = current.some((f) => f.id === folder.id)
+        const updated = exists
+          ? current.map((f) => (f.id === folder.id ? folder : f))
+          : [...current, folder]
+        return { ...prev, chatFolders: updated }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Удаление пользовательской папки */
+  const deleteChatFolder = useCallback(
+    (folderId: string) => {
+      if (!folderId) return
+      updateStore((prev) => {
+        const current = prev.chatFolders ?? DEFAULT_CHAT_FOLDERS
+        return {
+          ...prev,
+          chatFolders: current.filter((f) => f.id !== folderId || f.isBuiltIn),
+          chatActiveFolderId:
+            prev.chatActiveFolderId === folderId ? 'all' : prev.chatActiveFolderId,
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Переключение архива диалога */
+  const toggleThreadArchive = useCallback(
+    (friendId: string): boolean => {
+      if (!friendId) return false
+      let nowArchived = false
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        nowArchived = !thread.archived
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, archived: nowArchived },
+          },
+        }
+      })
+      return nowArchived
+    },
+    [updateStore]
+  )
+
+  /** Смена активной папки */
+  const setChatActiveFolderId = useCallback(
+    (folderId: string) => {
+      updateStore((prev) => ({ ...prev, chatActiveFolderId: folderId }))
+    },
+    [updateStore]
   )
 
   /** Переслать карточку сразу нескольким друзьям. Возвращает число получателей. */
@@ -3332,6 +3576,14 @@ export function useOgonekStore() {
     deleteChatMessage,
     toggleThreadMute,
     toggleThreadPin,
+    toggleThreadArchive,
+    editChatMessage,
+    deleteChatMessages,
+    togglePinChatMessage,
+    createGroupChat,
+    setChatFolder,
+    deleteChatFolder,
+    setChatActiveFolderId,
     toggleReaction,
     getReactionsFor,
     getMyReactionsFor,

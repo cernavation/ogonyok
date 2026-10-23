@@ -10,7 +10,7 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import {
   EXPLORE_CATEGORY_BY_ID,
@@ -24,6 +24,7 @@ import {
   type ExploreTag,
 } from '@/lib/ogonek/explore-content'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { searchProfiles, type ProfileRecord } from '@/lib/supabase/api'
 import type { Day, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
 import { MobileHeader } from '../mobile-header'
@@ -95,12 +96,66 @@ export function ExploreView({
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [openUserId, setOpenUserId] = useState<string | null>(null)
   const [openPostId, setOpenPostId] = useState<string | null>(null)
+  const [dbProfiles, setDbProfiles] = useState<ProfileRecord[]>([])
 
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === '1'
   const recentSearches = state.exploreRecentSearches ?? []
   const followingIds = state.exploreFollowingIds ?? []
 
+  // Поиск профилей в Supabase по никнейму или имени
+  useEffect(() => {
+    const clean = query.trim().replace(/^@/, '')
+    if (!clean) {
+      setDbProfiles([])
+      return
+    }
+
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const list = await searchProfiles(clean, state.profile.username)
+        if (!cancelled) {
+          setDbProfiles(list)
+        }
+      } catch {
+        if (!cancelled) setDbProfiles([])
+      }
+    }, 200)
+
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [query, state.profile.username])
+
   const hasQuery = query.trim().length > 0
-  const results = useMemo(() => searchExplore(query, 12), [query])
+  const results = useMemo(() => {
+    if (!isDemo) {
+      // В обычном режиме возвращаем результаты из реальной базы
+      return {
+        total: dbProfiles.length,
+        categories: [],
+        tags: [],
+        posts: [],
+        users: dbProfiles.map((p) => ({
+          id: p.id,
+          name: p.display_name,
+          username: p.username,
+          initials: p.display_name.slice(0, 2).toUpperCase() || 'U',
+          avatarUrl: p.avatar_url || '',
+          avatarColor: '#FF5C00',
+          city: p.city || '',
+          streak: p.streak || 0,
+          verified: false,
+          bio: p.bio || '',
+          followers: 0,
+          tags: [],
+          isMe: p.username === state.profile.username,
+        })) as any,
+      }
+    }
+    return searchExplore(query, 12)
+  }, [query, isDemo, dbProfiles, state.profile.username])
   const feed = useMemo(
     () => getCommunityFeed({ categoryId: activeCategory, tag: activeTag }),
     [activeCategory, activeTag]
@@ -147,7 +202,7 @@ export function ExploreView({
     clearQuery()
   }
 
-  const totalFound = results.total + ownResults.length
+  const totalFound = ((results as any).total ?? results.users.length) + ownResults.length
 
   return (
     <div className="view-explore">
@@ -245,7 +300,7 @@ export function ExploreView({
                   <Users size={14} /> Люди
                 </div>
                 <ul className="xh-people">
-                  {results.users.map((user) => {
+                  {results.users.map((user: any) => {
                     const isFollowing = followingIds.includes(user.id)
                     return (
                       <li key={user.id} className="xh-person-row">
@@ -326,8 +381,38 @@ export function ExploreView({
               </section>
             )}
           </div>
+        ) : !isDemo ? (
+          /* ── БОЕВОЙ РЕЖИМ (ТРЕБОВАНИЕ 3): ПУСТОЕ СОСТОЯНИЕ ПОИСКА ДРУЗЕЙ ── */
+          <div className="p-8 my-6 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+              <Search size={24} />
+            </div>
+            <div className="max-w-sm">
+              <h3 className="font-bold text-base text-[var(--text)]">
+                Найди друзей по нику
+              </h3>
+              <p className="text-xs text-[var(--text-2)] mt-1 leading-relaxed">
+                Введи @никнейм или имя соратника в строке поиска выше, чтобы найти его профиль, подписаться и видеть победы в ленте.
+              </p>
+            </div>
+
+            {recentSearches.length > 0 && (
+              <div className="pt-2 flex flex-wrap gap-2 justify-center">
+                {recentSearches.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setQuery(s)}
+                    className="px-3 py-1 rounded-full bg-[var(--surface2)] text-xs text-[var(--text)] hover:border-[var(--accent)] border border-[var(--border)] transition-colors"
+                  >
+                    @{s}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
-          /* ── РЕЖИМ ХАБА ИССЛЕДОВАНИЯ ────────────────────────────────── */
+          /* ── ТЕСТОВЫЙ ДЕМО-РЕЖИМ (NEXT_PUBLIC_DEMO_MODE=1) ─────────────── */
           <>
             <section className="xh-stats" aria-label="Сообщество в цифрах">
               <div className="xh-stats__item">

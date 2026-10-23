@@ -232,9 +232,9 @@ export function AppShell() {
     },
   })
 
-  // Auto-seed real history if store is in initial single/dual-day demo state
+  // Auto-seed history ТОЛЬКО в тестовом демо-режиме (Требование 3)
   useEffect(() => {
-    if (state.days.length <= 2) {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === '1' && state.days.length <= 2) {
       fetch('/seeds/ogonek-import.v1.json')
         .then((res) => {
           if (!res.ok) throw new Error('Not found')
@@ -243,7 +243,7 @@ export function AppShell() {
         .then((data) => {
           if (data && Array.isArray(data.days) && data.days.length > 2) {
             importState(data)
-            notify(`Загружена подлинная летопись (${data.days.length} дней)!`)
+            notify(`Загружена летопись демо-режима (${data.days.length} дней)!`)
           }
         })
         .catch(() => {})
