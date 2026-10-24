@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   BarChart3,
   Home,
@@ -26,6 +27,7 @@ type Props = {
 }
 
 export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenProfile }: Props) {
+  const router = useRouter()
   const { state } = useOgonekStore()
   const avatarSrc = usePhotoUrl(state.profile.avatarImage)
   const unreadCount = totalUnread(state.chatThreads ?? {})
@@ -40,6 +42,18 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
     { id: 'settings', icon: Settings, label: 'Настройки', href: '/?view=settings' },
   ]
 
+  const handleHomeClick = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'home' }))
+    }
+  }
+
+  const handleNavClick = (item: (typeof NAV_ITEMS)[0]) => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: item.id }))
+    }
+  }
+
   return (
     <aside
       className="w-[88px] h-full shrink-0 flex flex-col items-center justify-between py-4 border-r border-[var(--border)] bg-[var(--bg)] select-none z-20"
@@ -51,6 +65,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
         <Tooltip content="На главную" side="right">
           <Link
             href="/"
+            onClick={handleHomeClick}
             className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-[var(--text)] hover:bg-[var(--bg-hover)] transition-all hover:scale-105 active:scale-95 group"
             aria-label="На главную"
           >
@@ -69,6 +84,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
             <Tooltip key={item.id} content={item.label} side="right">
               <Link
                 href={item.href}
+                onClick={() => handleNavClick(item)}
                 className={`relative w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all ${
                   isActive
                     ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-md scale-105'
@@ -80,7 +96,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
 
                 {/* Бейдж непрочитанных */}
                 {Boolean(item.badge && item.badge > 0) && (
-                  <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 bg-[var(--accent)] text-white text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-[var(--bg)] shadow">
+                  <span className="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 bg-[var(--accent)] text-[var(--accent-text)] text-[10px] font-extrabold rounded-full flex items-center justify-center border-2 border-[var(--bg)] shadow">
                     {item.badge! > 99 ? '99+' : item.badge}
                   </span>
                 )}

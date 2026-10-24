@@ -270,7 +270,8 @@ export async function runUiExplore() {
             if (homeLink && await homeLink.isVisible()) {
               totalButtonsClicked++
               await homeLink.click({ timeout: 1500 }).catch(() => {})
-              await page.waitForTimeout(250)
+              await page.waitForURL((u) => u.pathname === '/' || !u.pathname.includes('/chats'), { timeout: 2500 }).catch(() => {})
+              await page.waitForTimeout(200)
               const currentUrl = page.url()
               const isBackAtHome = currentUrl === CONFIG.baseUrl + '/' || currentUrl.includes('view=home') || !currentUrl.includes('/chats')
               if (!isBackAtHome && stateId === 'messages') {

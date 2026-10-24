@@ -280,7 +280,6 @@ export async function runCrawl() {
             }))
           } catch {}
         })
-        })
 
         const page = await context.newPage()
 

@@ -419,7 +419,7 @@ export function MessengerChatPane({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full hidden sm:flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 lg:hidden"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 lg:hidden"
               aria-label="На главную"
             >
               <Home size={18} />

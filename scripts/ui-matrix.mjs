@@ -265,7 +265,8 @@ export async function runUiMatrix() {
 
           // ПРОВЕРКА 3: primary-not-accent (главные кнопки перекрашены в активный акцент)
           const primaryCheck = await page.evaluate(({ expectedAccentHex }) => {
-            const primaryBtn = document.querySelector('button.x-compose-btn, button:has-text("Записать"), .primary-accent-btn')
+            const btns = Array.from(document.querySelectorAll('button, .x-compose-btn, .primary-accent-btn'))
+            const primaryBtn = btns.find((b) => b.classList.contains('x-compose-btn') || b.textContent?.includes('Записать'))
             if (!primaryBtn) return { found: false }
             const style = window.getComputedStyle(primaryBtn)
             return {
