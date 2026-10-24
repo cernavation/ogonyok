@@ -253,7 +253,7 @@ function DayCardComponent({
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
-                  Alexei Cerna
+                  {state.profile?.displayName || 'Alexei Cerna'}
                 </span>
                 <span
                   className="inline-flex items-center justify-center rounded-full text-white flex-none"
@@ -269,7 +269,7 @@ function DayCardComponent({
                   </span>
                 )}
                 <span className="text-[13px] text-[var(--text-2)]">
-                  @cernavation · {dateStr}
+                  @{state.profile?.username || 'cernavation'} · {dateStr}
                 </span>
                 {averageScore !== null && (
                   <span
@@ -280,7 +280,7 @@ function DayCardComponent({
                   </span>
                 )}
                 <span
-                  className="text-[14px] px-2.5 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]"
+                  className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]"
                 >
                   День #{day.id}
                 </span>

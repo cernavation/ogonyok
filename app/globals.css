@@ -385,11 +385,11 @@ main.main-content {
   content: "";
   position: absolute;
   bottom: 0;
-  left: 17px;
-  right: 17px;
+  left: 20%;
+  right: 20%;
   height: 4px;
   border-radius: 4px;
-  background: var(--blue);
+  background: var(--accent);
 }
 
 .feed-content {

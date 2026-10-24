@@ -117,7 +117,7 @@ export function StoriesBar({
     const latest = state.days[0]
     return {
       displayName: profile.displayName,
-      streak: state.days.length,
+      streak: calculateStreak(state.days),
       latestTitle: latest?.prides[0]?.text || latest?.title || 'Новый день силы',
       latestDayId: latest?.id ?? null,
       totalPrides: state.days.reduce((sum, d) => sum + d.prides.length, 0),
