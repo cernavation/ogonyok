@@ -283,7 +283,7 @@ export function VaultView({
                       </span>
                     )}
                     {isPinned && (
-                      <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+                      <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]">
                         Закреплено
                       </span>
                     )}

@@ -51,12 +51,14 @@ export function computeProfileStats(
   for (const day of days) {
     if (day.dateISO) entryDates.add(day.dateISO.slice(0, 10))
     if (day.status !== 'missed') {
-      totalPrides += day.prides.length
-      totalGratitudes += day.gratitudes.length
-      for (const pride of day.prides) {
-        if (typeof pride.scale === 'number' && pride.scale > 0 && pride.text !== '—') {
-          ratingSum += pride.scale
-          ratingCount++
+      totalPrides += day.prides ? day.prides.length : 0
+      totalGratitudes += day.gratitudes ? day.gratitudes.length : 0
+      if (Array.isArray(day.prides)) {
+        for (const pride of day.prides) {
+          if (typeof pride.scale === 'number' && pride.scale > 0 && pride.text !== '—') {
+            ratingSum += pride.scale
+            ratingCount++
+          }
         }
       }
     }

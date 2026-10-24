@@ -51,7 +51,15 @@ async function executeCommand(stepName, cmd, options = {}) {
       process.stderr.write(text)
     })
 
-    child.on('close', (code) => {
+    child.on('close', async (code) => {
+      // Автоматический повтор при предупреждении Next.js SecurityFatalError, как требует сам Next.js ("Retry the same command to continue")
+      if (code !== 0 && (output.includes('SecurityFatalError') || output.includes('upgrade recommendation')) && !options.retried) {
+        console.log('\n[INFO] Предупреждение Next.js SecurityFatalError. Выполняется автоматический повтор команды...')
+        const retryRes = await executeCommand(stepName, cmd, { ...options, retried: true })
+        resolve(retryRes)
+        return
+      }
+
       const durationMs = Date.now() - start
       let problems = 0
       

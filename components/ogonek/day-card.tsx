@@ -280,7 +280,7 @@ function DayCardComponent({
                   </span>
                 )}
                 <span
-                  className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)]"
+                  className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]"
                 >
                   День #{day.id}
                 </span>

@@ -238,18 +238,13 @@ async function setTheme(page, themeId) {
     document.documentElement.style.colorScheme = theme === 'apple-light' ? 'light' : 'dark'
     if (theme === 'apple-light') {
       document.documentElement.classList.remove('dark')
-      // Calibrated high-contrast accent for light mode (WCAG AA > 5:1)
-      document.documentElement.style.setProperty('--accent', '#b54000')
-      document.documentElement.style.setProperty('--accent-soft', 'rgba(181, 64, 0, 0.08)')
-      document.documentElement.style.setProperty('--accent-contrast', '#FFFFFF')
-      document.documentElement.style.setProperty('--accent-text', '#FFFFFF')
     } else {
       document.documentElement.classList.add('dark')
-      document.documentElement.style.setProperty('--accent', '#FF5C00')
-      document.documentElement.style.setProperty('--accent-soft', 'rgba(255, 92, 0, 0.12)')
-      document.documentElement.style.setProperty('--accent-contrast', '#000000')
-      document.documentElement.style.setProperty('--accent-text', '#000000')
     }
+    document.documentElement.style.setProperty('--accent', '#FF5C00')
+    document.documentElement.style.setProperty('--accent-soft', 'rgba(255, 92, 0, 0.12)')
+    document.documentElement.style.setProperty('--accent-contrast', '#000000')
+    document.documentElement.style.setProperty('--accent-text', '#000000')
 
     try {
       const stored = JSON.parse(localStorage.getItem('ogonek.appearance.v1') || '{}')

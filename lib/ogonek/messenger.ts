@@ -362,16 +362,17 @@ export function buildGratitudeAttachment(day: Day, index: number): ChatAttachmen
 /** Карточка всего дня летописи */
 export function buildDayAttachment(day: Day): ChatAttachment {
   const theme = themeFor(day.id)
-  const gratitudes = day.gratitudes.map(getGratitudeText).filter(Boolean)
+  const gratitudes = (day.gratitudes || []).map(getGratitudeText).filter(Boolean)
+  const prides = day.prides || []
   const summary =
-    day.prides.map((p) => p.text).filter(Boolean).slice(0, 2).join(' · ') ||
+    prides.map((p) => p.text).filter(Boolean).slice(0, 2).join(' · ') ||
     day.title ||
     'Запись дня'
 
   return {
     kind: 'day',
     title: day.title || 'Запись дня',
-    subtitle: `День #${day.id} · ${day.prides.length} гордостей${
+    subtitle: `День #${day.id} · ${prides.length} гордостей${
       gratitudes.length ? ` · ${gratitudes.length} благодарностей` : ''
     }`,
     emoji: '🔥',

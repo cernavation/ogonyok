@@ -92,11 +92,13 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
       entryDates.add(day.dateISO.slice(0, 10))
     }
     if (day.status !== 'missed') {
-      totalPrides += day.prides.length
-      totalGratitudes += day.gratitudes.length
-      for (const p of day.prides) {
-        if (p.overcome >= 2) {
-          highOvercomeCount++
+      totalPrides += day.prides ? day.prides.length : 0
+      totalGratitudes += day.gratitudes ? day.gratitudes.length : 0
+      if (Array.isArray(day.prides)) {
+        for (const p of day.prides) {
+          if (p.overcome >= 2) {
+            highOvercomeCount++
+          }
         }
       }
     }

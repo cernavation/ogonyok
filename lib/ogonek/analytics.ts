@@ -95,8 +95,8 @@ export function extractRatings(day: Day): RatingExtract {
   return {
     prideRatings,
     gratitudeRatings,
-    prideCount: day.prides.length,
-    gratitudeCount: day.gratitudes.length,
+    prideCount: day.prides?.length ?? 0,
+    gratitudeCount: day.gratitudes?.length ?? 0,
   }
 }
 
@@ -383,7 +383,7 @@ export function computeKpiProgress(
       for (const day of days) {
         const t = dayTime(day)
         if (t < startMs || t >= endMs || day.status === 'missed') continue
-        count += day.prides.length
+        count += day.prides?.length ?? 0
       }
       current = count
       break
@@ -393,7 +393,7 @@ export function computeKpiProgress(
       for (const day of days) {
         const t = dayTime(day)
         if (t < startMs || t >= endMs || day.status === 'missed') continue
-        count += day.gratitudes.length
+        count += day.gratitudes?.length ?? 0
       }
       current = count
       break

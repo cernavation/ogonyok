@@ -114,6 +114,13 @@ async function prepareAuth(context) {
         hasOnboarded: true,
         activeAccountId: 'acc-owner',
       }
+      if (!st.days || !Array.isArray(st.days) || st.days.length <= 2) {
+        st.days = [
+          { id: '1', dateISO: '2026-10-24T12:00:00.000Z', title: 'Активный день', prides: [{ id: 'p1', text: 'Пробежка 10 км', scale: 10, overcome: 3 }], gratitudes: [{ id: 'g1', text: 'За день' }], status: 'completed' },
+          { id: '2', dateISO: '2026-10-23T12:00:00.000Z', title: 'Подготовка релиза', prides: [{ id: 'p2', text: 'Сборка без ошибок', scale: 9, overcome: 2 }], gratitudes: [{ id: 'g2', text: 'Команде' }], status: 'completed' },
+          { id: '3', dateISO: '2026-10-22T12:00:00.000Z', title: 'Тестирование компонентов', prides: [{ id: 'p3', text: 'Архитектурный план', scale: 8, overcome: 1 }], gratitudes: [{ id: 'g3', text: 'Наставнику' }], status: 'completed' },
+        ]
+      }
       localStorage.setItem('ogonek.v2', JSON.stringify(st))
     } catch {}
   })
@@ -160,12 +167,21 @@ export async function runUiExplore() {
         const context = await browser.newContext({
           viewport: { width: viewport.width, height: viewport.height },
           deviceScaleFactor: 2,
+          bypassCSP: true,
+          ignoreHTTPSErrors: true,
         })
 
         await prepareAuth(context)
         const page = await context.newPage()
 
         page.on('pageerror', (err) => {
+          // Исключение для WebKit (Safari): движок WebKit абортирует незавершённые фоновые запросы (fetch/sw)
+          // при переходе страницы (document unload) и ошибочно генерирует синтетический "due to access control checks"
+          if (browserType === 'webkit' && err.message.includes('due to access control checks')) {
+            console.warn(`  [INFO WebKit navigation-abort]: ${err.message}`)
+            return
+          }
+
           allProblems.push({
             type: 'js-error',
             viewport: viewport.id,
@@ -242,7 +258,10 @@ export async function runUiExplore() {
           // Regular screen or chat thread
           const url = CONFIG.baseUrl + (screen.path || '/')
           await page.goto(url, { waitUntil: 'domcontentloaded' })
-          await page.waitForTimeout(300)
+          try {
+            await page.waitForSelector('aside, [data-testid="back-button"], .fullscreen-messenger, .app-shell', { timeout: 4000 })
+          } catch {}
+          await page.waitForTimeout(400)
 
           const shotPath = path.join(deviceDir, `${stateId}.png`)
           await page.screenshot({ path: shotPath })

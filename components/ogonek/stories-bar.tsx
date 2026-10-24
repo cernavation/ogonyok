@@ -120,8 +120,8 @@ export function StoriesBar({
       streak: calculateStreak(state.days),
       latestTitle: latest?.prides[0]?.text || latest?.title || 'Новый день силы',
       latestDayId: latest?.id ?? null,
-      totalPrides: state.days.reduce((sum, d) => sum + d.prides.length, 0),
-      totalGratitudes: state.days.reduce((sum, d) => sum + d.gratitudes.length, 0),
+      totalPrides: state.days.reduce((sum, d) => sum + (d.prides ? d.prides.length : 0), 0),
+      totalGratitudes: state.days.reduce((sum, d) => sum + (d.gratitudes ? d.gratitudes.length : 0), 0),
       monthlyGoal: profile.monthlyGoal,
     }
   }, [state.days, profile.displayName, profile.monthlyGoal])

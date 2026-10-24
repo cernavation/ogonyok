@@ -228,18 +228,14 @@ export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Do
   }
 
   const details = computeAccentDetails(accentHex)
-  const isLight = settings.theme === 'apple-light'
-  const effectiveAccent = isLight ? getDarkenedForLight(accentHex) : details.color
-  const effectiveDetails = computeAccentDetails(effectiveAccent)
-  const effRgb = hexToRgb(effectiveAccent) || { r: 181, g: 64, b: 0 }
 
-  root.style.setProperty('--accent', effectiveAccent)
-  root.style.setProperty('--accent-hover', isLight ? effectiveDetails.hover : details.hover)
-  root.style.setProperty('--accent-soft', isLight ? `rgba(${effRgb.r}, ${effRgb.g}, ${effRgb.b}, 0.08)` : details.soft)
-  root.style.setProperty('--accent-contrast', isLight ? '#FFFFFF' : details.contrast)
-  root.style.setProperty('--accent-text', isLight ? '#FFFFFF' : details.contrast)
-  root.style.setProperty('--orange', effectiveAccent)
-  root.style.setProperty('--blue', effectiveAccent)
+  root.style.setProperty('--accent', details.color)
+  root.style.setProperty('--accent-hover', details.hover)
+  root.style.setProperty('--accent-soft', details.soft)
+  root.style.setProperty('--accent-contrast', details.contrast)
+  root.style.setProperty('--accent-text', details.contrast)
+  root.style.setProperty('--orange', details.color)
+  root.style.setProperty('--blue', details.color)
 
   // Подсказываем браузеру схему
   const scheme = getThemePreset(settings.theme).scheme

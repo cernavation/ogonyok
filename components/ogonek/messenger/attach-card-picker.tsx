@@ -48,10 +48,12 @@ export function AttachCardPicker({ onPick, onClose, soundEnabled = true }: Props
   const prideCards = useMemo(() => {
     const cards: Array<{ key: string; attachment: ChatAttachment }> = []
     for (const day of days) {
-      for (let i = 0; i < day.prides.length; i += 1) {
-        if (!day.prides[i]?.text) continue
-        cards.push({ key: `${day.id}-${i}`, attachment: buildPrideAttachment(day, i) })
-        if (cards.length >= 18) return cards
+      if (Array.isArray(day.prides)) {
+        for (let i = 0; i < day.prides.length; i += 1) {
+          if (!day.prides[i]?.text) continue
+          cards.push({ key: `${day.id}-${i}`, attachment: buildPrideAttachment(day, i) })
+          if (cards.length >= 18) return cards
+        }
       }
     }
     return cards

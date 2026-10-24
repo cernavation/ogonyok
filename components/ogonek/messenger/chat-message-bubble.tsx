@@ -475,7 +475,7 @@ export function ChatMessageBubble({
             >
               {/* Имя автора в группе */}
               {isGroup && !isMine && showAuthorHeader && (
-                <div className="mb-1 text-[12px] font-bold tracking-wide text-[var(--accent)]">
+                <div className="mb-1 text-[12px] font-bold tracking-wide text-[var(--text)] dark:text-[var(--accent)]">
                   {authorName}
                 </div>
               )}
@@ -499,7 +499,7 @@ export function ChatMessageBubble({
                       : 'border-[var(--accent)] bg-[var(--bg-hover)] text-[var(--text)]'
                   }`}
                 >
-                  <span className="text-[11px] font-bold text-[var(--accent)] leading-none mb-0.5">
+                  <span className="text-[11px] font-bold text-[var(--text)] dark:text-[var(--accent)] leading-none mb-0.5">
                     {message.replyTo.authorId === 'me' ? 'Ты' : authorName}
                   </span>
                   <span className="truncate text-xs opacity-90 leading-tight">
@@ -554,7 +554,7 @@ export function ChatMessageBubble({
                       type="button"
                       onClick={handleTranscribeClick}
                       disabled={transcribing}
-                      className="flex items-center gap-1 font-bold text-[var(--accent)] hover:opacity-80 transition-opacity"
+                      className="flex items-center gap-1 font-bold text-[var(--text)] dark:text-[var(--accent)] hover:opacity-80 transition-opacity"
                     >
                       <Sparkles size={12} />
                       {transcribing
@@ -684,7 +684,7 @@ export function ChatMessageBubble({
                   rel="noreferrer"
                   className="mt-2 flex flex-col rounded-xl border border-white/15 bg-black/15 p-2.5 text-xs transition-opacity hover:opacity-90"
                 >
-                  <div className="flex items-center justify-between font-bold text-[var(--accent)] text-[11px] mb-0.5">
+                  <div className="flex items-center justify-between font-bold text-[var(--text)] dark:text-[var(--accent)] text-[11px] mb-0.5">
                     <span>{message.linkPreview.siteName}</span>
                     <ExternalLink size={12} />
                   </div>

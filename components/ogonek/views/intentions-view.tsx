@@ -126,7 +126,7 @@ export function IntentionsView({
               Сегодня
             </h2>
             {todayRecord && (
-              <span className="text-[12px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--accent)]">
+              <span className="text-[12px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] dark:text-[var(--accent)]">
                 {todayRecord.completionPercent}% обещаний
               </span>
             )}

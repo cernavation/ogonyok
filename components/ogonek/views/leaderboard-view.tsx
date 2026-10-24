@@ -259,7 +259,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                         {user.display_name}
                       </span>
                       {isMe && (
-                        <span className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)] flex-none">
+                        <span className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)] flex-none">
                           Ты
                         </span>
                       )}
@@ -361,7 +361,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
             </div>
 
             <div className="flex items-center gap-2 flex-none">
-              <span className="px-3 py-1 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--accent)]">
+              <span className="px-3 py-1 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]">
                 🔥 {myStreak} дн.
               </span>
               <DifficultyLevelBadge
