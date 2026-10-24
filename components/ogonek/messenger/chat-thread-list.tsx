@@ -180,7 +180,7 @@ export function ChatThreadList({
                 role="listitem"
                 className={`relative flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors border-b border-[var(--border)] ${
                   activeFriendId === id
-                    ? 'bg-[#1d9bf0]/15 hover:bg-[#1d9bf0]/20'
+                    ? 'bg-[var(--accent-soft)] hover:bg-[var(--accent-soft)]'
                     : 'hover:bg-[var(--bg-hover)]'
                 }`}
                 onClick={() => onSelect(id)}
@@ -216,7 +216,7 @@ export function ChatThreadList({
                     <span className="truncate text-[14px] font-semibold text-[var(--text)] flex items-center gap-1">
                       {title}
                       {friend?.verified && (
-                        <Check size={11} className="text-[#1d9bf0] inline-block" />
+                        <Check size={11} className="text-[var(--accent)] inline-block" />
                       )}
                     </span>
                     <span className="shrink-0 text-[11px] font-mono text-[var(--text-2)]">

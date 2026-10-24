@@ -319,10 +319,10 @@ export function ChatMessageBubble({
                   className={`mb-1.5 flex w-full flex-col text-left rounded-md border-l-2 py-1 px-2 transition-opacity hover:opacity-85 ${
                     isMine
                       ? 'border-white bg-white/10 text-white'
-                      : 'border-[#1d9bf0] bg-[#1d9bf0]/10 text-[#e7e9ea]'
+                      : 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
                   }`}
                 >
-                  <span className="text-[11px] font-semibold text-[#ffad5a] leading-none mb-0.5">
+                  <span className="text-[11px] font-semibold text-[var(--accent)] leading-none mb-0.5">
                     {message.replyTo.authorId === 'me' ? 'Ты' : authorName}
                   </span>
                   <span className="truncate text-xs opacity-90 leading-tight">
