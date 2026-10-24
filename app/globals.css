@@ -85,6 +85,66 @@ main.main-content {
   display: none;
 }
 
+/* ── Адаптация сайдбара под высоты экранов 600–1080 (ЗАДАЧА 2) ──────────────── */
+@media (max-height: 860px) {
+  .sidebar {
+    padding: 12px 14px 10px 16px;
+  }
+  .brand {
+    margin: 0 0 16px 8px;
+    font-size: 21px;
+  }
+  .nav-item {
+    padding: 9px 14px;
+    font-size: 15px;
+    gap: 14px;
+  }
+  .x-compose-btn {
+    margin: 8px 0;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-height: 720px) {
+  .sidebar {
+    padding: 8px 12px 8px 14px;
+  }
+  .brand {
+    margin: 0 0 10px 6px;
+    font-size: 19px;
+  }
+  .nav-item {
+    padding: 6px 12px;
+    font-size: 14px;
+    gap: 12px;
+  }
+  .x-compose-btn {
+    margin: 6px 0;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 620px) {
+  .sidebar {
+    padding: 6px 10px 6px 12px;
+  }
+  .brand {
+    margin: 0 0 6px 4px;
+    font-size: 18px;
+  }
+  .nav-item {
+    padding: 5px 10px;
+    font-size: 13px;
+    gap: 10px;
+  }
+  .x-compose-btn {
+    margin: 4px 0;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
 .brand {
   display: flex;
   align-items: center;

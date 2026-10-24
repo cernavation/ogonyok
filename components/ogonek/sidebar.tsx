@@ -12,7 +12,6 @@ import {
   Trophy,
   User,
   Zap,
-  HelpCircle,
 } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { totalUnread } from '@/lib/ogonek/messenger'
@@ -40,18 +39,22 @@ interface NavItemDef {
   label: string
 }
 
-const PRIMARY_NAV: NavItemDef[] = [
+/**
+ * ЕДИНЫЙ КАНОНИЧЕСКИЙ СПИСОК X.COM (ЗАДАЧА 2):
+ * Главная, Поиск, Чаты, Профиль, Evidence Vault, Статистика, Рейтинг, Намерения, Настройки.
+ * Заголовок «ИНСТРУМЕНТЫ» и разделитель удалены.
+ * «Гайд» перенесён в меню аккаунта и настройки.
+ */
+const UNIFIED_NAV: NavItemDef[] = [
   { id: 'home', icon: Home, label: 'Главная' },
   { id: 'explore', icon: Search, label: 'Поиск' },
   { id: 'messages', icon: MessageCircle, label: 'Чаты' },
   { id: 'profile', icon: User, label: 'Профиль' },
-]
-
-const TOOLS_NAV: NavItemDef[] = [
   { id: 'vault', icon: Zap, label: 'Evidence Vault' },
   { id: 'analytics', icon: BarChart3, label: 'Статистика' },
   { id: 'leaderboard', icon: Trophy, label: 'Рейтинг' },
   { id: 'intentions', icon: Target, label: 'Намерения' },
+  { id: 'settings', icon: Settings, label: 'Настройки' },
 ]
 
 export function Sidebar({
@@ -72,8 +75,6 @@ export function Sidebar({
     const handleClick = () => {
       if (id === 'intentions') {
         onFocusIntentions()
-      } else if (id === ('guide' as any)) {
-        window.dispatchEvent(new CustomEvent('ogonek:open-onboarding'))
       } else {
         onNavigate(id)
       }
@@ -122,43 +123,10 @@ export function Sidebar({
         <span className="font-bold tracking-tight text-[19px]">Огонёк</span>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation — единый список без искусственных групп */}
       <nav className="nav-list flex-1" aria-label="Разделы приложения">
-        {/* Группа 1: Основное */}
         <div className="flex flex-col gap-0.5">
-          {PRIMARY_NAV.map(renderNavItem)}
-        </div>
-
-        {/* Разделитель групп */}
-        <div className="my-2.5 px-3">
-          <div className="h-px bg-zinc-200/80 dark:bg-zinc-800/80" />
-          <div className="sidebar-group-title pt-2 pb-0.5 px-1 text-[13px] font-semibold uppercase tracking-wider text-[var(--text-3)]">
-            Инструменты
-          </div>
-        </div>
-
-        {/* Группа 2: Инструменты */}
-        <div className="flex flex-col gap-0.5">
-          {TOOLS_NAV.map(renderNavItem)}
-        </div>
-
-        {/* Разделитель перед настройками */}
-        <div className="my-2.5 px-3">
-          <div className="h-px bg-zinc-200/80 dark:bg-zinc-800/80" />
-        </div>
-
-        {/* Внизу: Гайд и Настройки */}
-        <div className="flex flex-col gap-0.5">
-          {renderNavItem({
-            id: 'guide' as any,
-            icon: HelpCircle,
-            label: 'Гайд',
-          })}
-          {renderNavItem({
-            id: 'settings',
-            icon: Settings,
-            label: 'Настройки',
-          })}
+          {UNIFIED_NAV.map(renderNavItem)}
         </div>
       </nav>
 
@@ -175,7 +143,7 @@ export function Sidebar({
         </button>
       </Tooltip>
 
-      {/* Profile block — переключатель аккаунтов */}
+      {/* Profile block — карточка пользователя и меню аккаунта */}
       <AccountSwitcher
         streak={streak}
         onOpenProfile={onOpenProfile}

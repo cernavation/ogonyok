@@ -85,14 +85,13 @@ export function EditProfileModal({
     flashTimer.current = setTimeout(() => setSavedFlash(false), 1400)
   }, [])
 
-  /** Мгновенно применяет патч: обновляет локальный черновик и пишет в store */
+  /** Обновляет локальный черновик формы без преждевременного закрытия окна */
   const applyPatch = useCallback(
     (patch: Partial<OgonekProfile>) => {
       setDraft((prev) => ({ ...prev, ...patch }))
-      onSave(patch)
       flashSaved()
     },
-    [onSave, flashSaved]
+    [flashSaved]
   )
 
   const [cropperFile, setCropperFile] = useState<File | null>(null)
@@ -142,6 +141,7 @@ export function EditProfileModal({
 
   const handleDone = () => {
     playSuccess(soundEnabled)
+    onSave(draft)
     onNotify('Профиль сохранён ✓')
     onClose()
   }

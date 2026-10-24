@@ -318,6 +318,12 @@ export async function runVerifyAll() {
   // 9. E2E Тесты чатов
   await executeCommand('9. Chat E2E Suite (test:chat)', 'node scripts/chat-e2e.mjs')
 
+  // 10. Тестирование непрерывного набора и стабильности фокуса (test:typing)
+  await executeCommand('10. Непрерывный ввод и стабильность фокуса (test:typing)', isFast ? 'node scripts/ui-typing.mjs --fast' : 'node scripts/ui-typing.mjs')
+
+  // 11. Визуальный регрессионный дифф (visual-diff)
+  await executeCommand('11. Визуальный регрессионный дифф (visual-diff)', 'node scripts/visual-diff.mjs')
+
   // Генерация gallery.html
   generateGalleryHtml()
 

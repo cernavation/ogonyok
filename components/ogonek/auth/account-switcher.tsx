@@ -2,22 +2,15 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  BadgeCheck,
-  Check,
-  ChevronUp,
+  HelpCircle,
   LogIn,
   LogOut,
   Settings,
-  Trash2,
   UserPlus,
   UserRound,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  AUTH_PROVIDER_META,
-  accountHandle,
-  accountSubtitle,
-} from '@/lib/ogonek/accounts'
+import { accountHandle } from '@/lib/ogonek/accounts'
 import { playClick } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ViewId } from '@/lib/ogonek/types'
@@ -34,12 +27,15 @@ type Props = {
 }
 
 /**
- * ЭТАП 18 — ПЕРЕКЛЮЧАТЕЛЬ АККАУНТОВ (нижний левый угол сайдбара).
- * Показывает активную личность, а по клику открывает всплывающее меню со
- * списком профилей, быстрым переключением, добавлением и выходом.
+ * КАРТОЧКА ПОЛЬЗОВАТЕЛЯ И МЕНЮ АККАУНТА (ЗАДАЧА 2):
+ * - Внизу сайдбара в стиле X.com
+ * - Для авторизованного пользователя: только текущий пользователь,
+ *   пункты «Мой профиль», «Настройки», «Как пользоваться», «Выйти».
+ * - Для гостя: кнопки «Войти» и «Зарегистрироваться», «Как пользоваться».
+ * - Никаких хардкодных тестовых аккаунтов.
  */
 export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, onOpenAuth }: Props) {
-  const { state, switchAccount, signOut, removeAccount } = useOgonekStore()
+  const { state, signOut } = useOgonekStore()
   const auth = state.auth
   const sound = state.soundEnabled
 
@@ -47,6 +43,7 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
   const rootRef = useRef<HTMLDivElement>(null)
 
   const active = auth.accounts.find((a) => a.id === auth.activeAccountId) ?? auth.accounts[0]
+  const isGuest = !auth.signedIn || Boolean(active?.isGuest)
 
   // Закрытие по клику вне меню и по Escape
   useEffect(() => {
@@ -67,22 +64,6 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
     }
   }, [open])
 
-  const handleSwitch = useCallback(
-    (accountId: string) => {
-      if (accountId === auth.activeAccountId) {
-        setOpen(false)
-        return
-      }
-      const target = auth.accounts.find((a) => a.id === accountId)
-      if (!target) return
-      playClick(sound)
-      switchAccount(accountId)
-      setOpen(false)
-      onNotify(`Аккаунт переключён: ${target.snapshot.displayName}`)
-    },
-    [auth.activeAccountId, auth.accounts, switchAccount, sound, onNotify]
-  )
-
   const handleSignOut = useCallback(() => {
     playClick(sound)
     signOut()
@@ -90,19 +71,10 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
     onNotify('Вы вышли из аккаунта')
   }, [signOut, sound, onNotify])
 
-  const handleRemove = useCallback(
-    (accountId: string, name: string) => {
-      if (typeof window !== 'undefined' && !window.confirm(`Удалить аккаунт ${name} с этого устройства?`)) {
-        return
-      }
-      playClick(sound)
-      const ok = removeAccount(accountId)
-      onNotify(ok ? `Аккаунт ${name} удалён` : 'Нельзя удалить последний аккаунт')
-    },
-    [removeAccount, sound, onNotify]
-  )
-
-  if (!active) return null
+  const handleOpenGuide = () => {
+    setOpen(false)
+    window.dispatchEvent(new CustomEvent('ogonek:open-onboarding'))
+  }
 
   return (
     <div className="account-switcher" ref={rootRef}>
@@ -111,134 +83,119 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
           <motion.div
             className="account-menu"
             role="menu"
-            aria-label="Меню аккаунтов"
+            aria-label="Меню пользователя"
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.15, ease: 'easeOut' }}
           >
-            <div className="account-menu__head">
-              <b>Аккаунты</b>
-              <span>{auth.accounts.length}</span>
-              <button
-                type="button"
-                className="account-menu__add"
-                onClick={() => {
-                  setOpen(false)
-                  onOpenAuth('register')
-                }}
-                aria-label="Добавить аккаунт"
-                title="Добавить аккаунт"
-              >
-                <UserPlus size={15} />
-              </button>
-            </div>
+            {/* Карточка текущего пользователя в шапке попапа */}
+            {!isGuest && active ? (
+              <div className="px-4 py-3 border-b border-[var(--border)] flex items-center gap-3">
+                <AccountAvatar account={active} size={42} active />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-bold text-[var(--text)] truncate leading-tight">
+                    {active.snapshot?.displayName || state.profile.displayName || 'Пользователь'}
+                  </p>
+                  <p className="text-[13px] text-[var(--text-3)] truncate font-mono">
+                    {accountHandle(active)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="px-4 py-3 border-b border-[var(--border)]">
+                <p className="text-[14px] font-bold text-[var(--text)]">Гостевой режим</p>
+                <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+                  Войди, чтобы сохранять летопись в облако
+                </p>
+              </div>
+            )}
 
-            <ul className="account-menu__list">
-              {auth.accounts.map((account) => {
-                const isActive = account.id === auth.activeAccountId
-                return (
-                  <li key={account.id}>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className={`account-menu__item ${isActive ? 'is-active' : ''}`}
-                      onClick={() => handleSwitch(account.id)}
-                    >
-                      <AccountAvatar account={account} size={38} active={isActive} />
-                      <span className="account-menu__meta">
-                        <b>
-                          {account.snapshot.displayName}
-                          {account.snapshot.verified && (
-                            <BadgeCheck size={12} className="account-menu__verified" />
-                          )}
-                        </b>
-                        <small>{accountSubtitle(account)}</small>
-                      </span>
-                      <span
-                        className="account-menu__badge"
-                        style={{ color: AUTH_PROVIDER_META[account.provider].color }}
-                      >
-                        {isActive ? <Check size={14} /> : AUTH_PROVIDER_META[account.provider].short}
-                      </span>
-                    </button>
-                    {auth.accounts.length > 1 && (
-                      <button
-                        type="button"
-                        className="account-menu__remove"
-                        onClick={() => handleRemove(account.id, account.snapshot.displayName)}
-                        aria-label={`Удалить аккаунт ${account.snapshot.displayName}`}
-                        title="Удалить с устройства"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
+            <div className="account-menu__actions py-1.5">
+              {!isGuest ? (
+                <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="account-menu__action"
+                    onClick={() => {
+                      setOpen(false)
+                      if (onOpenProfile) onOpenProfile()
+                      else onNavigate?.('profile')
+                    }}
+                  >
+                    <UserRound size={17} /> Мой профиль
+                  </button>
 
-            <div className="account-menu__actions">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="account-menu__action"
+                    onClick={() => {
+                      setOpen(false)
+                      onNavigate?.('settings')
+                    }}
+                  >
+                    <Settings size={17} /> Настройки
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="account-menu__action font-bold text-[var(--accent)]"
+                    onClick={() => {
+                      setOpen(false)
+                      onOpenAuth('signin')
+                    }}
+                  >
+                    <LogIn size={17} /> Войти
+                  </button>
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="account-menu__action"
+                    onClick={() => {
+                      setOpen(false)
+                      onOpenAuth('register')
+                    }}
+                  >
+                    <UserPlus size={17} /> Зарегистрироваться
+                  </button>
+                </>
+              )}
+
+              {/* Раздел «Гайд» перенесён сюда */}
               <button
                 type="button"
                 role="menuitem"
                 className="account-menu__action"
-                onClick={() => {
-                  setOpen(false)
-                  onOpenAuth('register')
-                }}
+                onClick={handleOpenGuide}
               >
-                <UserPlus size={15} /> Добавить аккаунт
+                <HelpCircle size={17} /> Как пользоваться
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="account-menu__action"
-                onClick={() => {
-                  setOpen(false)
-                  onOpenAuth('signin')
-                }}
-              >
-                <LogIn size={15} /> Войти в другой аккаунт
-              </button>
-              {onOpenProfile && (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="account-menu__action"
-                  onClick={() => {
-                    setOpen(false)
-                    onOpenProfile()
-                  }}
-                >
-                  <UserRound size={15} /> Открыть профиль
-                </button>
-              )}
-              {onNavigate && (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="account-menu__action"
-                  onClick={() => {
-                    setOpen(false)
-                    onNavigate('settings')
-                  }}
-                >
-                  <Settings size={15} /> Настройки аккаунта
-                </button>
-              )}
             </div>
 
-            <div className="account-menu__divider" />
-
-            <button type="button" role="menuitem" className="account-menu__action is-danger" onClick={handleSignOut}>
-              <LogOut size={15} /> Выйти из {accountHandle(active)}
-            </button>
+            {!isGuest && (
+              <>
+                <div className="account-menu__divider" />
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="account-menu__action is-danger"
+                  onClick={handleSignOut}
+                >
+                  <LogOut size={16} /> Выйти
+                </button>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <Tooltip content="Аккаунты и профиль" side="top">
+      <Tooltip content={isGuest ? 'Войти в аккаунт' : 'Меню пользователя'} side="top">
         <button
           type="button"
           className={`profile-mini account-switcher__trigger ${open ? 'is-open' : ''}`}
@@ -248,17 +205,23 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
           }}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={`Аккаунт ${active.snapshot.displayName}. Открыть меню аккаунтов`}
+          aria-label={isGuest ? 'Войти' : `Аккаунт ${active?.snapshot.displayName || ''}`}
         >
-          <AccountAvatar account={active} size={40} active />
+          {active ? (
+            <AccountAvatar account={active} size={40} active={!isGuest} />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)]">
+              <UserRound size={18} />
+            </div>
+          )}
+
           <span className="account-switcher__text">
-            <strong>{active.snapshot.displayName}</strong>
+            <strong>
+              {isGuest ? 'Войти' : active?.snapshot?.displayName || state.profile.displayName || 'Огонёк'}
+            </strong>
             <small>
-              {accountHandle(active)} · {streak}д
+              {isGuest ? 'Гость' : `${accountHandle(active || { provider: 'email', email: '' } as any)} · ${streak}д`}
             </small>
-          </span>
-          <span className="account-switcher__caret" aria-hidden="true">
-            <ChevronUp size={18} />
           </span>
         </button>
       </Tooltip>

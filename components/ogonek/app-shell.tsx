@@ -110,6 +110,11 @@ export function AppShell() {
 
   const closeAuth = useCallback(() => setAuthModal(null), [])
 
+  const handleCloseComposer = useCallback(() => {
+    setComposer(false)
+    setEditingDay(null)
+  }, [])
+
   /* ── ЭТАП 15: экран блокировки, автоблокировка и ручная блокировка ─────── */
 
   // До гидратации CSS держал контент под чёрной заглушкой — снимаем флаг
@@ -305,7 +310,7 @@ export function AppShell() {
       if (custom.detail) navigate(custom.detail)
     }
     const handleOpenComposer = () => setComposer(true)
-    const handleCloseComposer = () => {
+    const handleCloseComposerEvent = () => {
       setComposer(false)
       setEditingDay(null)
     }
@@ -320,7 +325,7 @@ export function AppShell() {
     window.addEventListener('ogonek:close-onboarding', handleCloseOnboarding)
     window.addEventListener('ogonek:navigate', handleNavigate)
     window.addEventListener('ogonek:open-composer', handleOpenComposer)
-    window.addEventListener('ogonek:close-composer', handleCloseComposer)
+    window.addEventListener('ogonek:close-composer', handleCloseComposerEvent)
     window.addEventListener('ogonek:open-auth', handleOpenAuth)
     window.addEventListener('ogonek:close-auth', handleCloseAuth)
 
@@ -329,7 +334,7 @@ export function AppShell() {
       window.removeEventListener('ogonek:close-onboarding', handleCloseOnboarding)
       window.removeEventListener('ogonek:navigate', handleNavigate)
       window.removeEventListener('ogonek:open-composer', handleOpenComposer)
-      window.removeEventListener('ogonek:close-composer', handleCloseComposer)
+      window.removeEventListener('ogonek:close-composer', handleCloseComposerEvent)
       window.removeEventListener('ogonek:open-auth', handleOpenAuth)
       window.removeEventListener('ogonek:close-auth', handleCloseAuth)
     }
@@ -659,10 +664,7 @@ export function AppShell() {
               nextDayDateISO={editingDay ? undefined : getNextDayDate()}
               onSaveDraft={saveComposerDraft}
               onClearDraft={clearComposerDraft}
-              onClose={() => {
-                setComposer(false)
-                setEditingDay(null)
-              }}
+              onClose={handleCloseComposer}
               onSaved={handleSaveComposer}
               soundEnabled={state.soundEnabled}
               onNotify={notify}

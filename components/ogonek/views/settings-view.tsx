@@ -59,7 +59,7 @@ type Props = {
   onUpdateProfile?: (patch: Partial<OgonekProfile>) => void
 }
 
-type SettingsSection = 'appearance' | 'diary' | 'notifications' | 'privacy' | 'account'
+type SettingsSection = 'appearance' | 'diary' | 'notifications' | 'privacy' | 'account' | 'guide'
 
 const THEME_ICONS: Record<ThemeMode, typeof Moon> = {
   'x-black': Moon,
@@ -73,6 +73,7 @@ const SECTIONS = [
   { id: 'notifications' as SettingsSection, label: 'Уведомления', hint: 'Напоминания в Telegram и расписание', icon: Bell },
   { id: 'privacy' as SettingsSection, label: 'Приватность', hint: 'Видимость записей, Face ID и PIN-код', icon: Eye },
   { id: 'account' as SettingsSection, label: 'Аккаунт', hint: 'Профиль, резервное копирование и сброс', icon: User },
+  { id: 'guide' as SettingsSection, label: 'Как пользоваться', hint: 'Руководство, правила стрика и уровней', icon: HelpCircle },
 ] as const
 
 export function SettingsView({
@@ -456,6 +457,39 @@ export function SettingsView({
               >
                 <RotateCcw size={14} />
                 <span>Сбросить</span>
+              </button>
+            </div>
+          </div>
+        )
+
+      case 'guide':
+        return (
+          <div className="flex flex-col gap-4 p-4 sm:p-5">
+            <div className="p-5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
+              <div>
+                <h3 className="text-[16px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <HelpCircle size={18} className="text-[var(--accent)]" /> Как пользоваться Огоньком
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-1.5 leading-relaxed">
+                  «Огонёк» — твой честный дневник силы без фальши и токсичной продуктивности.
+                  Каждый день фиксируй свои победы и слова благодарности.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-3 border-t border-[var(--border)] text-[13px] text-[var(--text-2)]">
+                <p>• <b>Стрик никогда не сгорает</b>: стрик равен общему количеству закрытых дней.</p>
+                <p>• <b>Уровни сложности 1–5</b>: требуют от 1 до 5 побед каждый день.</p>
+                <p>• <b>Evidence Vault</b>: прикрепляй фотофиксации и сертификаты к рекордам.</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('ogonek:open-onboarding'))
+                }}
+                className="x-primary-btn mt-3 py-2.5 px-4 rounded-full text-[14px] font-bold text-center"
+              >
+                Открыть интерактивный гайд
               </button>
             </div>
           </div>

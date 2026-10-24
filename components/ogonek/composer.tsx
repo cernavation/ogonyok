@@ -1,7 +1,7 @@
 'use client'
 
 import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto } from '@/lib/ogonek/photos'
@@ -96,8 +96,18 @@ type Props = {
   onNotify?: (message: string) => void
 }
 
+function getCachedComposerDraft(): ComposerDraft | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem('ogonek.draft.composer')
+    return raw ? (JSON.parse(raw) as ComposerDraft) : null
+  } catch {
+    return null
+  }
+}
+
 export function Composer({
-  initialDraft,
+  initialDraft: passedInitialDraft,
   editingDay,
   nextDayId,
   nextDayDateISO,
@@ -108,6 +118,10 @@ export function Composer({
   soundEnabled = true,
   onNotify,
 }: Props) {
+  const initialDraft = useMemo(() => {
+    return passedInitialDraft || (editingDay ? null : getCachedComposerDraft())
+  }, [passedInitialDraft, editingDay])
+
   const [tab, setTab] = useState<Mode>(() => initialDraft?.tab || 'pride')
   const [extra, setExtra] = useState(() => {
     if (editingDay) {
@@ -223,16 +237,16 @@ export function Composer({
     }
   }, [])
 
-  // Auto-save draft in real time (only when creating a new day, not editing an archived day)
+  // Auto-save draft in real time (debounce 500ms + synchronous localStorage backup)
   useEffect(() => {
-    if (editingDay || !onSaveDraft) return
+    if (editingDay) return
     const hasAnyContent =
       prides.some((p) => p.trim().length > 0) ||
       gratitudes.some((g) => g.trim().length > 0) ||
       Boolean(preview)
 
     if (hasAnyContent) {
-      onSaveDraft({
+      const draftPayload: ComposerDraft = {
         prides,
         gratitudes,
         photo: preview,
@@ -241,7 +255,18 @@ export function Composer({
         lastSavedISO: new Date().toISOString(),
         visibility: dayVisibility,
         prideVisibilities: prideVis,
-      })
+      }
+
+      // 1. Синхронное резервное сохранение
+      try {
+        localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
+      } catch {}
+
+      // 2. Дебаунсированная синхронизация с внешним хранилищем
+      const timer = setTimeout(() => {
+        onSaveDraft?.(draftPayload)
+      }, 500)
+      return () => clearTimeout(timer)
     }
   }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis])
 
@@ -429,6 +454,9 @@ export function Composer({
         playSuccess(soundEnabled)
         onSaved(buildPayload(evMap), editingDay?.id, editingDay ? undefined : dateISO)
         if (!editingDay) {
+          try {
+            localStorage.removeItem('ogonek.draft.composer')
+          } catch {}
           onClearDraft?.()
         }
       } finally {
@@ -440,6 +468,9 @@ export function Composer({
     playSuccess(soundEnabled)
     onSaved(buildPayload(), editingDay?.id, editingDay ? undefined : dateISO)
     if (!editingDay) {
+      try {
+        localStorage.removeItem('ogonek.draft.composer')
+      } catch {}
       onClearDraft?.()
     }
   }

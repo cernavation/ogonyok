@@ -322,7 +322,7 @@ function buildSeedAccount(input: {
   }
 }
 
-/** Базовый набор личностей: владелец журнала, коллега и гость */
+/** Базовый набор личностей: текущий авторизованный пользователь (тестовые аккаунты удалены по ЗАДАЧЕ 2) */
 export function buildSeedAccounts(now: Date = new Date()): AuthAccount[] {
   const created = new Date(now.getTime() - 200 * 86_400_000).toISOString()
   return [
@@ -338,52 +338,6 @@ export function buildSeedAccounts(now: Date = new Date()): AuthAccount[] {
         'Moldova',
         'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
         true
-      ),
-    }),
-    buildSeedAccount({
-      id: 'acct-marina',
-      provider: 'email',
-      email: 'marina.kovaleva@gmail.com',
-      createdAtISO: new Date(now.getTime() - 120 * 86_400_000).toISOString(),
-      snapshot: accountSnapshot(
-        'Марина Ковалёва',
-        'marina.k',
-        'Продуктовый дизайнер. Учусь держать слово перед собой и записывать маленькие победы каждый день.',
-        'Кишинёв',
-        'linear-gradient(145deg, #a855f7 0%, #5b21b6 100%)',
-        false,
-        'violet-haze'
-      ),
-    }),
-    buildSeedAccount({
-      id: 'acct-google-daniil',
-      provider: 'google',
-      email: 'daniil.sokolov@gmail.com',
-      createdAtISO: new Date(now.getTime() - 45 * 86_400_000).toISOString(),
-      snapshot: accountSnapshot(
-        'Даниил Соколов',
-        'dsokolov',
-        'Вошёл через Google. Тренируюсь, читаю и отмечаю прогресс в Огоньке.',
-        'Тбилиси',
-        'linear-gradient(145deg, #22c55e 0%, #0f5132 100%)',
-        true,
-        'deep-forest'
-      ),
-    }),
-    buildSeedAccount({
-      id: 'acct-guest',
-      provider: 'guest',
-      email: null,
-      isGuest: true,
-      createdAtISO: now.toISOString(),
-      snapshot: accountSnapshot(
-        'Гость Огонька',
-        'guest',
-        'Пробую Огонёк без регистрации — все записи остаются на этом устройстве.',
-        'Online',
-        'linear-gradient(145deg, #536471 0%, #1f2429 100%)',
-        false,
-        'steel-grid'
       ),
     }),
   ]

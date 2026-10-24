@@ -16,11 +16,13 @@ type Props = {
 
 export function ModalShell({ title, onClose, children, closeOnEscape = true, hideHeader = false }: Props) {
   const modalRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && closeOnEscape) {
-        onClose()
+        onCloseRef.current()
       }
 
       if (event.key === 'Tab' && modalRef.current) {
@@ -43,16 +45,23 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
 
     window.addEventListener('keydown', handleKeyDown)
 
-    // Initial focus on mount
+    // Initial focus on mount: only if focus is not already inside an interactive element in the modal
     const timer = setTimeout(() => {
-      modalRef.current?.focus()
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(document.activeElement) &&
+        document.activeElement?.tagName !== 'INPUT' &&
+        document.activeElement?.tagName !== 'TEXTAREA'
+      ) {
+        modalRef.current.focus()
+      }
     }, 40)
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       clearTimeout(timer)
     }
-  }, [onClose, closeOnEscape])
+  }, [closeOnEscape])
 
   return (
     <motion.div
