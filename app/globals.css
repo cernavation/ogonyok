@@ -6922,17 +6922,17 @@ kbd {
   font-size: 15px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #ffffff !important;
+  color: var(--text) !important;
 }
 .xh-cat__tag {
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.72) !important;
+  color: var(--text-2) !important;
 }
 .xh-cat__desc {
   font-size: 13px;
-  line-height: 15px;
-  color: rgba(255, 255, 255, 0.85) !important;
+  line-height: 16px;
+  color: var(--text-2) !important;
   margin-top: 3px;
 }
 .xh-cat__members {
@@ -6940,7 +6940,7 @@ kbd {
   padding-top: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.75) !important;
+  color: var(--text-3) !important;
 }
 .xh-trend {
   margin-top: 14px;
@@ -6969,10 +6969,10 @@ kbd {
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 13px;
-  background: #0d0f11;
+  background: var(--bg-elev);
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .xh-trend__chip em {
@@ -6981,15 +6981,16 @@ kbd {
   color: var(--muted);
 }
 .xh-trend__chip:hover {
-  border-color: #4b5156;
+  border-color: var(--text-2);
+  background: var(--bg-hover);
 }
 .xh-trend__chip.is-active {
-  border-color: #ff6b35;
-  background: rgba(255, 107, 53, 0.12);
-  color: #ffad5a;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 .xh-trend__chip.is-active em {
-  color: #ffad5a;
+  color: var(--accent);
 }
 
 /* ── Лучшее за сегодня в мире ────────────────────────────────────────── */
