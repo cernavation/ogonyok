@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 import {
   ArrowLeft,
   Calendar,
+  Camera,
   Check,
   ChevronRight,
   Download,
@@ -45,6 +46,8 @@ import { FriendsManager } from '../friends-manager'
 import { ShareProfileModal } from '../share-profile-modal'
 import { AchievementsPanel } from '../achievements/achievements-panel'
 import { GoldVerificationBadge } from '../achievements/verification-badge'
+import { ProfileImageCropperModal } from '../profile/profile-image-cropper-modal'
+import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 import { Button, Card, Badge } from '../ui'
 
 interface Props {
@@ -100,11 +103,14 @@ export function ProfileView({
   const profile = storeState.profile
   const bannerPreset = getBannerPreset(profile.bannerPreset)
   const avatarSrc = usePhotoUrl(profile.avatarImage)
+  const coverSrc = usePhotoUrl(profile.coverUrl || profile.bannerImage)
   const followingIds = storeState.followingIds ?? []
 
   const [activeTab, setActiveTab] = useState<ProfileTabId>('days')
   const [editOpen, setEditOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [coverCropperOpen, setCoverCropperOpen] = useState(false)
+  const [avatarCropperOpen, setAvatarCropperOpen] = useState(false)
   const [selectedDayModal, setSelectedDayModal] = useState<Day | null>(null)
   const [jumpDayNumber, setJumpDayNumber] = useState('')
 
@@ -276,19 +282,41 @@ export function ProfileView({
 
       {/* Cover Banner 200px */}
       <div
-        className="h-[200px] w-full relative overflow-hidden"
+        className="h-[200px] w-full relative overflow-hidden group"
         style={{
-          background: bannerPreset.background || 'linear-gradient(135deg, #FF6A1A 0%, #16181C 100%)',
+          background: coverSrc ? undefined : (bannerPreset.background || 'linear-gradient(135deg, #FF6A1A 0%, #16181C 100%)'),
         }}
-      />
+      >
+        {coverSrc && (
+          <img
+            src={coverSrc}
+            alt="Обложка профиля"
+            className="w-full h-full object-cover"
+          />
+        )}
+        {/* Кнопка смены обложки */}
+        <button
+          type="button"
+          onClick={() => {
+            playClick(soundEnabled)
+            setCoverCropperOpen(true)
+          }}
+          className="absolute bottom-3 right-3 sm:right-6 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-white/20 transition-all hover:scale-105 active:scale-95"
+          title="Сменить обложку профиля"
+          aria-label="Сменить обложку"
+        >
+          <Camera size={14} />
+          <span className="hidden sm:inline">Сменить обложку</span>
+        </button>
+      </div>
 
       {/* Profile Info Header */}
       <div className="px-4 sm:px-6 relative">
         <div className="flex items-end justify-between -mt-[67px] mb-3 gap-3">
           {/* Avatar 134px с рамкой цвета фона (4px solid var(--bg)), 50% нахлёст */}
-          <div className="relative flex-none">
+          <div className="relative flex-none group">
             <div
-              className="w-[134px] h-[134px] rounded-full border-4 border-[var(--bg)] bg-[var(--bg-elev)] shadow-xl overflow-hidden flex items-center justify-center font-black text-3xl text-white select-none"
+              className="w-[134px] h-[134px] rounded-full border-4 border-[var(--bg)] bg-[var(--bg-elev)] shadow-xl overflow-hidden flex items-center justify-center font-black text-3xl text-white select-none relative"
               style={{ background: avatarSrc ? undefined : profile.avatarColor || 'var(--accent)' }}
             >
               {avatarSrc ? (
@@ -297,6 +325,19 @@ export function ProfileView({
                 initialsFrom(profile.displayName)
               )}
             </div>
+            {/* Кнопка смены аватара */}
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                setAvatarCropperOpen(true)
+              }}
+              className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-[var(--bg-elev)] border-2 border-[var(--bg)] text-[var(--text)] flex items-center justify-center shadow-lg hover:bg-[var(--bg-hover)] hover:scale-105 active:scale-95 transition-all"
+              title="Сменить аватар"
+              aria-label="Сменить аватар"
+            >
+              <Camera size={15} />
+            </button>
           </div>
 
           {/* Action buttons: Изменить / Поделиться в пилюлях */}
@@ -347,13 +388,19 @@ export function ProfileView({
           </p>
         )}
 
-        {/* Ряд «N дней дневника · N записей · N подписчиков» */}
+        {/* Ряд «N дней дневника · N записей · N подписчиков · 🔥 Уровень N» */}
         <div className="flex items-center gap-3 text-[14px] text-[var(--text-2)] mb-4 flex-wrap">
           <span><strong className="font-bold text-[var(--text)]">{stats.streakDays}</strong> дней дневника</span>
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{stats.totalPrides + stats.totalGratitudes}</strong> записей</span>
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{storeState.friendIds?.length ?? 0}</strong> подписчиков</span>
+          <span>·</span>
+          <DifficultyLevelBadge
+            level={profile.difficultyLevel || 2}
+            soundEnabled={soundEnabled}
+            onNotify={onNotify}
+          />
         </div>
 
         {/* Вкладки на всю ширину (Записи | Благодарности | Календарь | Друзья) */}
@@ -732,6 +779,39 @@ export function ProfileView({
           stats={stats}
           avatarSrc={null}
           onClose={() => setShareOpen(false)}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Cover Image Cropper */}
+      {coverCropperOpen && (
+        <ProfileImageCropperModal
+          mode="cover"
+          currentPreset={profile.bannerPreset}
+          onClose={() => setCoverCropperOpen(false)}
+          onApplyImage={(url) => {
+            onUpdateProfile({ bannerImage: url, coverUrl: url })
+          }}
+          onRemovePhoto={() => {
+            onUpdateProfile({ bannerImage: null, coverUrl: null })
+          }}
+          onSelectPreset={(presetId) => {
+            onUpdateProfile({ bannerPreset: presetId, bannerImage: null, coverUrl: null })
+          }}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Avatar Image Cropper */}
+      {avatarCropperOpen && (
+        <ProfileImageCropperModal
+          mode="avatar"
+          onClose={() => setAvatarCropperOpen(false)}
+          onApplyImage={(url) => {
+            onUpdateProfile({ avatarImage: url })
+          }}
           onNotify={onNotify}
           soundEnabled={soundEnabled}
         />

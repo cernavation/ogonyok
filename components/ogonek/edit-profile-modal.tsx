@@ -31,6 +31,7 @@ import {
 import type { OgonekProfile, ProfileSocialLink, ProfileSocialPlatform } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { ModalShell } from './modal-shell'
+import { ProfileImageCropperModal } from './profile/profile-image-cropper-modal'
 
 type Props = {
   profile: OgonekProfile
@@ -94,34 +95,23 @@ export function EditProfileModal({
     [onSave, flashSaved]
   )
 
-  const handleAvatarFile = async (e: ChangeEvent<HTMLInputElement>) => {
+  const [cropperFile, setCropperFile] = useState<File | null>(null)
+  const [cropperMode, setCropperMode] = useState<'cover' | 'avatar' | null>(null)
+
+  const handleAvatarFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    playClick(soundEnabled)
-    try {
-      const id = await savePhoto(file)
-      applyPatch({ avatarImage: id })
-      playSuccess(soundEnabled)
-      onNotify('Аватар обновлён и сохранён')
-    } catch {
-      onNotify('Не удалось загрузить аватар')
-    }
+    setCropperFile(file)
+    setCropperMode('avatar')
   }
 
-  const handleBannerFile = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleBannerFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
-    playClick(soundEnabled)
-    try {
-      const id = await savePhoto(file)
-      applyPatch({ bannerImage: id })
-      playSuccess(soundEnabled)
-      onNotify('Обложка профиля обновлена')
-    } catch {
-      onNotify('Не удалось загрузить обложку')
-    }
+    setCropperFile(file)
+    setCropperMode('cover')
   }
 
   const updateLink = (id: string, patch: Partial<ProfileSocialLink>) => {
@@ -566,6 +556,37 @@ export function EditProfileModal({
           </button>
         </footer>
       </div>
+
+      {cropperMode && (
+        <ProfileImageCropperModal
+          mode={cropperMode}
+          initialFile={cropperFile}
+          currentPreset={draft.bannerPreset}
+          onClose={() => {
+            setCropperMode(null)
+            setCropperFile(null)
+          }}
+          onApplyImage={(url) => {
+            if (cropperMode === 'cover') {
+              applyPatch({ bannerImage: url, coverUrl: url })
+            } else {
+              applyPatch({ avatarImage: url })
+            }
+            setCropperMode(null)
+            setCropperFile(null)
+          }}
+          onRemovePhoto={() => {
+            if (cropperMode === 'cover') {
+              applyPatch({ bannerImage: null, coverUrl: null })
+            }
+          }}
+          onSelectPreset={(presetId) => {
+            applyPatch({ bannerPreset: presetId, bannerImage: null, coverUrl: null })
+          }}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
     </ModalShell>
   )
 }

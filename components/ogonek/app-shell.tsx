@@ -181,29 +181,52 @@ export function AppShell() {
   const navigate = useCallback((next: ViewId) => {
     playClick(state.soundEnabled)
     setView(next)
+    if (typeof window !== 'undefined') {
+      const url = next === 'home' ? '/' : `/?view=${next}`
+      window.history.pushState(null, '', url)
+    }
     window.scrollTo(0, 0)
   }, [state.soundEnabled])
 
-  // Поддержка кнопки «Назад» в браузере для полноэкранного чата
+  // Синхронизация view с URL (query param ?view=...) и поддержка кнопки «Назад»
   useEffect(() => {
-    const handlePopState = () => {
-      if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return
+    const readViewFromUrl = () => {
       const path = window.location.pathname
       if (path.startsWith('/chats/')) {
         const friendId = path.split('/chats/')[1]
         if (friendId) {
-          navigate('messages')
+          setView('messages')
           setActiveChatFriend(friendId)
+          return
         }
-      } else {
-        if (state.chatActiveFriendId) {
-          setActiveChatFriend(null)
-        }
+      } else if (path === '/chats') {
+        setView('messages')
+        return
+      }
+
+      const params = new URLSearchParams(window.location.search)
+      const v = params.get('view') as ViewId | null
+      const validViews: ViewId[] = [
+        'home',
+        'explore',
+        'messages',
+        'profile',
+        'vault',
+        'analytics',
+        'leaderboard',
+        'settings',
+        'intentions',
+      ]
+      if (v && validViews.includes(v)) {
+        setView(v)
       }
     }
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
-  }, [state.chatActiveFriendId, setActiveChatFriend, navigate])
+
+    readViewFromUrl()
+    window.addEventListener('popstate', readViewFromUrl)
+    return () => window.removeEventListener('popstate', readViewFromUrl)
+  }, [setActiveChatFriend])
 
   // Single source of truth for streak (PRODUCT_SPEC.md Rule 3: стрик = закрытые дни)
   const streakCount = useMemo(() => {

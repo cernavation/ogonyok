@@ -3345,16 +3345,19 @@ export function useOgonekStore() {
 
   /** Смена уровня сложности (1..5) с фиксацией в истории */
   const setDifficultyLevel = useCallback(
-    (newLevel: number) => {
+    (newLevel: number, reason?: string) => {
       if (newLevel < 1 || newLevel > 5) return
       const nowISO = new Date().toISOString()
       updateStore((prev) => {
-        const currentLevel = prev.profile.level ?? 3
+        const currentLevel = prev.profile.difficultyLevel ?? prev.profile.level ?? 2
         const history = prev.profile.levelHistory ?? []
         const entry: LevelHistoryEntry = {
           id: `lh-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
           fromLevel: currentLevel,
           toLevel: newLevel,
+          oldLevel: currentLevel,
+          newLevel: newLevel,
+          reason,
           changedAtISO: nowISO,
         }
         return {
@@ -3362,6 +3365,7 @@ export function useOgonekStore() {
           profile: {
             ...prev.profile,
             level: newLevel,
+            difficultyLevel: newLevel,
             levelChangedAtISO: nowISO,
             levelHistory: [entry, ...history],
           },

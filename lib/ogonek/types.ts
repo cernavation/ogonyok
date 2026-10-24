@@ -186,6 +186,8 @@ export type OgonekProfile = {
   avatarColor: string
   /** Пользовательская обложка: id фото, data URL или null */
   bannerImage: string | null
+  /** URL обложки профиля (Supabase Storage или remote) */
+  coverUrl?: string | null
   /** id пресета обложки (используется, когда bannerImage пуст) */
   bannerPreset: string
   socialLinks: ProfileSocialLink[]
@@ -195,6 +197,7 @@ export type OgonekProfile = {
   verified: boolean
   /** Уровень сложности дневника: 1..5 гордостей и благодарностей в день (Правило 1 ТЗ) */
   level?: number
+  difficultyLevel?: number
   /** Дата последней смены уровня (ISO string, смена заблокирована на 30 дней) */
   levelChangedAtISO?: string | null
   /** Показывать ли уровень сложности в публичном профиле */
@@ -215,6 +218,9 @@ export type LevelHistoryEntry = {
   userId?: string
   fromLevel: number
   toLevel: number
+  oldLevel?: number
+  newLevel?: number
+  reason?: string
   changedAtISO: string
 }
 

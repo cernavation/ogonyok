@@ -6,6 +6,7 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Button, Card, Badge } from '../ui'
+import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -269,15 +270,19 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                   </div>
                 </div>
 
-                {/* Right: Число + Пилюля «Подписаться» */}
-                <div className="flex items-center gap-3 flex-none">
-                  <div className="text-right">
+                {/* Right: Число + Уровень + Пилюля «Подписаться» */}
+                <div className="flex items-center gap-2.5 flex-none">
+                  <div className="text-right flex flex-col items-end gap-1">
                     <span className="text-[14px] font-bold text-[var(--text)] block leading-tight">
                       🔥 {user.streak} дн.
                     </span>
-                    <span className="text-[13px] text-[var(--text-2)] block leading-tight">
-                      ★ {user.avg_score}
-                    </span>
+                    <DifficultyLevelBadge
+                      level={isMe ? (state.profile.difficultyLevel || 2) : ((user.streak % 3) + 2)}
+                      isInteractive={Boolean(isMe)}
+                      showNumber={false}
+                      soundEnabled={soundEnabled}
+                      onNotify={onNotify}
+                    />
                   </div>
 
                   {!isMe && (
@@ -359,6 +364,13 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
               <span className="px-3 py-1 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--accent)]">
                 🔥 {myStreak} дн.
               </span>
+              <DifficultyLevelBadge
+                level={state.profile.difficultyLevel || 2}
+                isInteractive={true}
+                showNumber={false}
+                soundEnabled={soundEnabled}
+                onNotify={onNotify}
+              />
             </div>
           </div>
         </div>
