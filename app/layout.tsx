@@ -4,8 +4,10 @@ import './globals.css'
 import { APPEARANCE_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/appearance'
 import { SECURITY_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/security'
 import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
+import { OfflineBanner } from '@/components/ogonek/offline-banner'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://ogonek.app'),
   title: 'Огонёк — Твой личный дневник силы',
   description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
   manifest: '/manifest.json',
@@ -76,6 +78,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SECURITY_BOOTSTRAP_SCRIPT }} />
         <ServiceWorkerRegister />
+        <OfflineBanner />
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
