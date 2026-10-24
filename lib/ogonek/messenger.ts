@@ -14,7 +14,23 @@
 import { FRIEND_PROFILES, getFriend, type FriendProfile } from './friends.ts'
 import { BUILTIN_EMOJIS } from './reactions.ts'
 import { getStoryBackground } from './stories.ts'
-import { getGratitudeText, type ChatAttachment, type ChatAttachmentKind, type ChatMessage, type ChatThreadState, type ChatThreads, type Day, type StorySlide, type VisibilityLevel } from './types.ts'
+import {
+  getGratitudeText,
+  type ChatAttachment,
+  type ChatAttachmentKind,
+  type ChatFolder,
+  type ChatGroupMeta,
+  type ChatLinkPreview,
+  type ChatMessage,
+  type ChatMessageForward,
+  type ChatMessageMedia,
+  type ChatMessageReply,
+  type ChatThreadState,
+  type ChatThreads,
+  type Day,
+  type StorySlide,
+  type VisibilityLevel,
+} from './types.ts'
 import { normalizeVisibility } from './visibility.ts'
 
 /** Идентификатор автора-пользователя в переписке */
@@ -180,9 +196,61 @@ export function sortThreadIds(threads: ChatThreads, ids: string[]): string[] {
   })
 }
 
-/** Заголовок треда для списка: имя друга + @username */
-export function threadTitle(friend: FriendProfile): string {
-  return friend.name
+/** Встроенные папки по умолчанию (Telegram Web Folders) */
+export const DEFAULT_CHAT_FOLDERS: ChatFolder[] = [
+  { id: 'all', title: 'Все', isBuiltIn: true, type: 'all', chatIds: [] },
+  { id: 'direct', title: 'Личные', icon: '👤', isBuiltIn: true, type: 'direct', chatIds: [] },
+  { id: 'groups', title: 'Группы', icon: '👥', isBuiltIn: true, type: 'groups', chatIds: [] },
+  { id: 'unread', title: 'Непрочитанные', icon: '💬', isBuiltIn: true, type: 'unread', chatIds: [] },
+]
+
+/** Проверка, является ли тред групповым чатом */
+export function isGroupThread(thread: ChatThreadState | undefined, id: string): boolean {
+  return Boolean(thread?.groupMeta || id.startsWith('group-'))
+}
+
+/** Фильтрация тредов по папке */
+export function filterThreadsByFolder(
+  threads: ChatThreads,
+  ids: string[],
+  folderId: string = 'all',
+  customFolders: ChatFolder[] = []
+): string[] {
+  if (folderId === 'all') return ids
+  if (folderId === 'direct') {
+    return ids.filter((id) => !isGroupThread(threads[id], id))
+  }
+  if (folderId === 'groups') {
+    return ids.filter((id) => isGroupThread(threads[id], id))
+  }
+  if (folderId === 'unread') {
+    return ids.filter((id) => unreadCount(threads[id]) > 0)
+  }
+  // Кастомная папка
+  const allFolders = [...DEFAULT_CHAT_FOLDERS, ...customFolders]
+  const target = allFolders.find((f) => f.id === folderId)
+  if (!target) return ids
+  return ids.filter((id) => target.chatIds.includes(id))
+}
+
+/** Подсчёт непрочитанных сообщений для папки */
+export function unreadCountForFolder(
+  threads: ChatThreads,
+  ids: string[],
+  folderId: string,
+  customFolders: ChatFolder[] = []
+): number {
+  const filtered = filterThreadsByFolder(threads, ids, folderId, customFolders)
+  return filtered.reduce((sum, id) => sum + unreadCount(threads[id]), 0)
+}
+
+/** Заголовок треда для списка: имя друга, группы или id */
+export function threadTitle(friendOrId: FriendProfile | string, thread?: ChatThreadState): string {
+  if (thread?.groupMeta?.title) return thread.groupMeta.title
+  if (typeof friendOrId === 'object' && 'name' in friendOrId) return friendOrId.name
+  const f = getFriend(friendOrId)
+  if (f) return f.name
+  return thread?.groupMeta?.title || friendOrId
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -229,6 +297,33 @@ export function buildPrideAttachment(day: Day, index: number): ChatAttachment {
     author: null,
     photo: day.photos?.[0] ?? null,
     visibility: normalizeVisibility(pride?.visibility ?? day.visibility),
+  }
+}
+
+/** Карточка конкретной благодарности дня — её и пересылают в чат */
+export function buildGratitudeAttachment(day: Day, index: number): ChatAttachment {
+  const g = day.gratitudes[index]
+  const text = (getGratitudeText(g) || 'Благодарность дня').trim()
+  const theme = {
+    from: '#1a1006',
+    to: '#4a2608',
+    accent: '#ffa654',
+    emoji: '🙏',
+  }
+
+  return {
+    kind: 'gratitude',
+    title: text || 'Благодарность дня',
+    subtitle: `Благодарность №${index + 1} · ${dayLabelOf(day)}`,
+    emoji: theme.emoji,
+    from: theme.from,
+    to: theme.to,
+    accent: theme.accent,
+    dayId: day.id,
+    prideIndex: null,
+    author: null,
+    photo: null,
+    visibility: normalizeVisibility(day.visibility),
   }
 }
 
@@ -323,6 +418,8 @@ export function attachmentKindLabel(kind: ChatAttachment['kind']): string {
   switch (kind) {
     case 'pride':
       return 'Карточка гордости'
+    case 'gratitude':
+      return 'Карточка благодарности'
     case 'day':
       return 'Карточка дня'
     case 'story':
@@ -338,6 +435,12 @@ export function attachmentKindLabel(kind: ChatAttachment['kind']): string {
 export function summarizeMessage(message: ChatMessage | null): string {
   if (!message) return 'Начни переписку — скажи, что ты рядом 🤝'
   const text = (message.text ?? '').trim()
+  if (message.media) {
+    if (message.media.type === 'image') return text ? `📷 ${text}` : '📷 Фотография'
+    if (message.media.type === 'audio') return '🎤 Голосовое сообщение'
+    if (message.media.type === 'file') return `📎 ${message.media.name || 'Файл'}`
+    if (message.media.type === 'sticker') return '✨ Стикер'
+  }
   if (message.attachment) {
     const label = attachmentKindLabel(message.attachment.kind)
     return text ? `${text} · ${label}` : `${label}: ${message.attachment.title}`
@@ -427,6 +530,76 @@ export function makeChatMessageId(): string {
   return `msg-${Date.now().toString(36)}-${chatSeq.toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 }
 
+/** Ссылка из текста сообщения */
+export function extractUrl(text: string): string | null {
+  const match = text.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/i)
+  return match ? match[0] : null
+}
+
+/** Создание превью ссылки в стиле Telegram */
+export function buildLinkPreview(url: string): ChatLinkPreview {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    let title = host
+    let desc = `Перейти на ${host}`
+    if (host.includes('github.com')) {
+      title = 'GitHub · Где создаётся лучший софт'
+      desc = 'Хостинг репозиториев, открытый код и совместная разработка.'
+    } else if (host.includes('t.me') || host.includes('telegram.org')) {
+      title = 'Telegram Messenger'
+      desc = 'Быстрый, приватный и защищённый мессенджер.'
+    } else if (host.includes('youtube.com') || host.includes('youtu.be')) {
+      title = 'YouTube Видео'
+      desc = 'Смотрите видео, делитесь с друзьями и вдохновляйтесь.'
+    } else if (host.includes('ogonek.app') || host.includes('localhost')) {
+      title = 'Огонёк — CRM твоей жизни'
+      desc = 'Дневник 5 гордостей и благодарностей каждый день. Стрик не сгорает!'
+    } else if (host.includes('supabase.com')) {
+      title = 'Supabase | Open Source Firebase Alternative'
+      desc = 'Postgres база данных, Auth, Realtime и Storage.'
+    }
+    return { url, title, description: desc, siteName: host }
+  } catch {
+    return { url, title: url, siteName: 'Ссылка' }
+  }
+}
+
+export type ChatSticker = {
+  id: string
+  emoji: string
+  title: string
+  color: string
+}
+
+/** Набор стикеров Огонька (крупные анимированные/выразительные эмодзи) */
+export const STICKER_PACK: ChatSticker[] = [
+  { id: 'st-fire', emoji: '🔥', title: 'Огонь!', color: '#ff7a18' },
+  { id: 'st-muscle', emoji: '💪', title: 'Сила и мощь', color: '#ffad5a' },
+  { id: 'st-rocket', emoji: '🚀', title: 'На взлёт', color: '#1d9bf0' },
+  { id: 'st-crown', emoji: '👑', title: 'Победитель', color: '#ffd700' },
+  { id: 'st-heart', emoji: '❤️', title: 'С любовью', color: '#f4212e' },
+  { id: 'st-clap', emoji: '👏', title: 'Браво!', color: '#00ba7c' },
+  { id: 'st-target', emoji: '🎯', title: 'В яблочко', color: '#7856ff' },
+  { id: 'st-tada', emoji: '🎉', title: 'Празднуем', color: '#ff8a3d' },
+  { id: 'st-pray', emoji: '🙏', title: 'Благодарю', color: '#ffa654' },
+  { id: 'st-sparkles', emoji: '✨', title: 'Магия дня', color: '#f59e0b' },
+  { id: 'st-lightning', emoji: '⚡', title: 'Энергия 100%', color: '#eab308' },
+  { id: 'st-cool', emoji: '😎', title: 'На стиле', color: '#06b6d4' },
+]
+
+/** Категории эмодзи панели Telegram */
+export const EMOJI_CATEGORIES = [
+  { id: 'recent', label: 'Недавние', icon: '🕒' },
+  { id: 'smileys', label: 'Смайлики', icon: '😀' },
+  { id: 'gestures', label: 'Люди и жесты', icon: '👋' },
+  { id: 'animals', label: 'Природа и животные', icon: '🐻' },
+  { id: 'food', label: 'Еда и напитки', icon: '🍔' },
+  { id: 'activity', label: 'Спорт и активности', icon: '⚽' },
+  { id: 'travel', label: 'Места и транспорт', icon: '🚗' },
+  { id: 'objects', label: 'Символы и объекты', icon: '💡' },
+]
+
 /** Собирает сообщение с валидными полями */
 export function makeChatMessage(input: {
   authorId: string
@@ -435,16 +608,34 @@ export function makeChatMessage(input: {
   createdAtISO?: string
   read?: boolean
   system?: boolean
+  replyTo?: ChatMessageReply | null
+  forwardFrom?: ChatMessageForward | null
+  editedAtISO?: string | null
+  status?: 'sending' | 'sent' | 'read'
+  pinned?: boolean
+  media?: ChatMessageMedia | null
+  linkPreview?: ChatLinkPreview | null
 }): ChatMessage {
+  const text = (input.text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
+  const linkUrl = !input.linkPreview && !input.attachment && !input.media ? extractUrl(text) : null
+  const linkPreview = input.linkPreview ?? (linkUrl ? buildLinkPreview(linkUrl) : null)
+
   return {
     id: makeChatMessageId(),
     authorId: input.authorId,
-    text: (input.text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT),
+    text,
     createdAtISO: input.createdAtISO ?? new Date().toISOString(),
     attachment: input.attachment ?? null,
     reactions: [],
     read: input.read ?? false,
     system: input.system ?? false,
+    replyTo: input.replyTo ?? null,
+    forwardFrom: input.forwardFrom ?? null,
+    editedAtISO: input.editedAtISO ?? null,
+    status: input.status ?? (input.authorId === 'me' ? 'sent' : 'read'),
+    pinned: input.pinned ?? false,
+    media: input.media ?? null,
+    linkPreview,
   }
 }
 
@@ -588,6 +779,50 @@ export function buildDemoThreads(now: Date = new Date()): ChatThreads {
     }
   }
 
+  // Групповой чат соратников по умолчанию (Telegram Web Groups)
+  threads['group-runners'] = {
+    messages: [
+      makeChatMessage({
+        authorId: 'fr-voloshin',
+        text: 'Всем привет! Создал группу соратников Огонька 🔥 Кто сегодня держит стрик?',
+        createdAtISO: minutesAgo(180, now),
+        read: true,
+      }),
+      makeChatMessage({
+        authorId: 'fr-sokolova',
+        text: 'Я уже записала свои 5 гордостей! День закрыт 💪',
+        createdAtISO: minutesAgo(120, now),
+        read: true,
+      }),
+      makeChatMessage({
+        authorId: MY_CHAT_ID,
+        text: 'Тоже в строю! Идём к 700 дням ⚡',
+        createdAtISO: minutesAgo(60, now),
+        read: true,
+      }),
+      makeChatMessage({
+        authorId: 'fr-kovaleva',
+        text: 'Ребята, ловите настрой на день! Всем сил и фокуса 🌟',
+        createdAtISO: minutesAgo(10, now),
+        read: false,
+      }),
+    ],
+    readAtISO: minutesAgo(30, now),
+    pinned: true,
+    muted: false,
+    draft: '',
+    groupMeta: {
+      id: 'group-runners',
+      title: 'Огонёк · Соратники 700 дней',
+      avatarColor: 'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+      avatarEmoji: '🔥',
+      memberIds: ['me', 'fr-voloshin', 'fr-sokolova', 'fr-kovaleva'],
+      createdAtISO: minutesAgo(240, now),
+      createdBy: 'fr-voloshin',
+      description: 'Чат тех, кто не сбрасывает стрик и держит огонь каждый день',
+    },
+  }
+
   return threads
 }
 
@@ -595,7 +830,7 @@ export function buildDemoThreads(now: Date = new Date()): ChatThreads {
    Валидация переписок из хранилища
    ──────────────────────────────────────────────────────────────────────── */
 
-const CHAT_ATTACHMENT_KINDS: ChatAttachmentKind[] = ['pride', 'day', 'story', 'achievement']
+const CHAT_ATTACHMENT_KINDS: ChatAttachmentKind[] = ['pride', 'gratitude', 'day', 'story', 'achievement']
 
 function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
   if (!value || typeof value !== 'object') return null
@@ -634,7 +869,8 @@ function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): Chat
     const m = raw as Partial<ChatMessage>
     const text = typeof m.text === 'string' ? m.text.trim().slice(0, CHAT_MESSAGE_LIMIT) : ''
     const attachment = sanitizeChatAttachment(m.attachment)
-    if (!text && !attachment) continue
+    const media = m.media && typeof m.media === 'object' ? (m.media as any) : null
+    if (!text && !attachment && !media) continue
 
     const id = typeof m.id === 'string' && m.id ? m.id.slice(0, 80) : `msg-${result.length}`
     if (seen.has(id)) continue
@@ -667,6 +903,13 @@ function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): Chat
       reactions,
       read: Boolean(m.read),
       system: Boolean(m.system),
+      replyTo: m.replyTo && typeof m.replyTo === 'object' ? (m.replyTo as any) : null,
+      forwardFrom: m.forwardFrom && typeof m.forwardFrom === 'object' ? (m.forwardFrom as any) : null,
+      editedAtISO: typeof m.editedAtISO === 'string' ? m.editedAtISO : null,
+      status: m.status === 'sending' || m.status === 'sent' || m.status === 'read' ? m.status : 'read',
+      pinned: Boolean(m.pinned),
+      media,
+      linkPreview: m.linkPreview && typeof m.linkPreview === 'object' ? (m.linkPreview as any) : null,
     })
   }
 
@@ -685,7 +928,8 @@ export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}):
   const result: ChatThreads = {}
 
   for (const [friendId, rawThread] of Object.entries(value as Record<string, unknown>)) {
-    if (!validFriendIds.has(friendId)) continue
+    const isGroup = friendId.startsWith('group-') || Boolean((rawThread as any)?.groupMeta)
+    if (!validFriendIds.has(friendId) && !isGroup) continue
     if (!rawThread || typeof rawThread !== 'object') continue
     const t = rawThread as Partial<ChatThreadState>
 
@@ -695,6 +939,9 @@ export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}):
       muted: Boolean(t.muted),
       pinned: Boolean(t.pinned),
       draft: typeof t.draft === 'string' ? t.draft.slice(0, CHAT_MESSAGE_LIMIT) : '',
+      archived: Boolean(t.archived),
+      pinnedMessageId: typeof t.pinnedMessageId === 'string' ? t.pinnedMessageId : null,
+      groupMeta: t.groupMeta && typeof t.groupMeta === 'object' ? (t.groupMeta as any) : null,
     }
   }
 

@@ -89,11 +89,9 @@ export const EVIDENCE_CATEGORIES = [
 
 export const FEED_TABS = [
   'Для тебя',
-  '🔥 Гордости',
-  '❤️ Благодарности',
-  '#Memernity',
-  '#Спорт',
-  '#Учёба',
+  'Подписки',
+  'Гордости',
+  'Благодарности',
 ] as const
 
 export const TRENDING_TAGS = [

@@ -148,8 +148,8 @@ export function FriendDetailModal({ friendId, onClose, onNotify, soundEnabled = 
             <p className="friend-detail__name">
               {friend.name}
               {friend.verified && (
-                <span className="friend-verified" title="Верифицирован" aria-label="Верифицирован">
-                  ✓
+                <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован" aria-label="Верифицирован">
+                  <Check size={8} strokeWidth={3} />
                 </span>
               )}
             </p>

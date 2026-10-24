@@ -1,21 +1,50 @@
 import { NextResponse } from 'next/server'
+import { getServerSupabase } from '@/lib/supabase/server'
 
-export async function POST() {
+export async function POST(request: Request) {
   const token = process.env.TELEGRAM_BOT_TOKEN
-  const chatId = process.env.TELEGRAM_CHAT_ID
-
-  if (!token || !chatId) {
+  if (!token) {
     return NextResponse.json(
       {
         success: false,
-        error: 'TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не настроены в .env.local',
+        error: 'TELEGRAM_BOT_TOKEN не настроен в .env.local',
+      },
+      { status: 400 }
+    )
+  }
+
+  const body = (await request.json().catch(() => ({}))) as {
+    chatId?: string
+    userId?: string
+  }
+
+  let chatId = body.chatId || process.env.TELEGRAM_CHAT_ID
+
+  // Если передали userId, ищем chat_id в профиле
+  if (!chatId && body.userId) {
+    const supabase = getServerSupabase()
+    if (supabase) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('telegram_chat_id')
+        .eq('id', body.userId)
+        .single()
+      chatId = data?.telegram_chat_id || undefined
+    }
+  }
+
+  if (!chatId) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Telegram Chat ID не указан. Подключите бота по ссылке или введите свой Chat ID.',
       },
       { status: 400 }
     )
   }
 
   try {
-    const text = '✦ Огонёк: Тестовое сообщение!\nСвязь между дневником и Telegram успешно установлена. Напоминания о дедлайне стрика активны.'
+    const text = '✦ <b>Огонёк: Тестовое сообщение!</b>\n\nСвязь между дневником и Telegram успешно установлена. Напоминания о дневнике активны!'
 
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
@@ -47,7 +76,7 @@ export async function POST() {
     return NextResponse.json(
       {
         success: false,
-        error: `Не удалось связаться с Telegram: ${String(err)}`,
+        error: `Не удалось связаться с Telegram: ${err instanceof Error ? err.message : String(err)}`,
       },
       { status: 500 }
     )

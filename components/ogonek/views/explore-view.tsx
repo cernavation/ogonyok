@@ -414,22 +414,20 @@ export function ExploreView({
         ) : (
           /* ── ТЕСТОВЫЙ ДЕМО-РЕЖИМ (NEXT_PUBLIC_DEMO_MODE=1) ─────────────── */
           <>
-            <section className="xh-stats" aria-label="Сообщество в цифрах">
-              <div className="xh-stats__item">
-                <b>412K</b>
-                <small>участников</small>
-              </div>
-              <div className="xh-stats__item">
-                <b>3.6K</b>
-                <small>достижений в фото-ленте</small>
-              </div>
-              <div className="xh-stats__item">
-                <b>5</b>
-                <small>категорий пути</small>
+            <section className="xh-stats flex flex-wrap items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] mb-5" aria-label="Сообщество в цифрах">
+              <div className="flex items-center gap-6 flex-wrap">
+                <div className="xh-stats__item">
+                  <b>3.6K</b>
+                  <small>достижений в фото-ленте</small>
+                </div>
+                <div className="xh-stats__item">
+                  <b>5</b>
+                  <small>категорий пути</small>
+                </div>
               </div>
               <button
                 type="button"
-                className="xh-stats__cta"
+                className="xh-stats__cta flex-none"
                 onClick={() => {
                   playClick(soundEnabled)
                   setQuery('#Спорт')

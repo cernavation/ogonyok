@@ -5,7 +5,6 @@ import { useMemo, useState } from 'react'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { EvidenceItem, ViewId } from '@/lib/ogonek/types'
-import { MobileHeader } from '../mobile-header'
 
 type Props = {
   evidenceItems?: EvidenceItem[]
@@ -87,243 +86,82 @@ export function VaultView({
   }
 
   return (
-    <div className="view-vault">
-      <MobileHeader title="Evidence Vault" />
-
-      <header className="view-header">
-        <button
-          type="button"
-          className="back-button"
-          onClick={() => onNavigate('home')}
-          aria-label="Вернуться на главную"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1>Evidence Vault</h1>
-          <p className="view-subtitle">Факты силы: подтверждения того, что ты способен побеждать</p>
-        </div>
-      </header>
-
-      <div className="vault-content">
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 16 }}>
-          <div className="search-bar" style={{ flex: 1, marginBottom: 0 }}>
-            <Search size={18} />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Искать в доказательствах..."
-              aria-label="Поиск по доказательствам"
-            />
-            {search && (
-              <button
-                type="button"
-                className="clear-button"
-                onClick={() => setSearch('')}
-                aria-label="Очистить поиск"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </div>
-
+    <div className="view-vault min-h-screen pb-20">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              setIsAdding(!isAdding)
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 16px',
-              borderRadius: 999,
-              background: isAdding ? 'var(--surface2)' : 'linear-gradient(135deg, var(--orange), #ff975c)',
-              color: '#fff',
-              fontSize: 13,
-              fontWeight: 800,
-              border: 0,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: isAdding ? 'none' : '0 4px 14px rgba(255,107,53,0.25)',
-            }}
+            className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+            onClick={() => onNavigate('home')}
+            aria-label="Вернуться на главную"
           >
-            {isAdding ? <X size={16} /> : <Plus size={16} />}
-            <span>{isAdding ? 'Отмена' : 'Добавить факт'}</span>
+            <ArrowLeft size={19} />
           </button>
+          <div>
+            <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
+              Evidence Vault
+            </h1>
+            <p className="text-[13px] text-[var(--text-2)]">
+              {evidenceItems.length} фактов силы
+            </p>
+          </div>
         </div>
 
-        {/* Compact Form to Add Fact of Strength */}
-        {isAdding && (
-          <div
-            className="add-fact-card"
-            style={{
-              padding: 18,
-              borderRadius: 14,
-              background: '#0d0f12',
-              border: '1px solid var(--orange)',
-              marginBottom: 20,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--orange-light)' }}>
-                ✦ Новый факт силы
-              </span>
-              <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                Сохраняется в локальное хранилище
-              </span>
-            </div>
+        <button
+          type="button"
+          onClick={() => {
+            playClick(soundEnabled)
+            setIsAdding(!isAdding)
+          }}
+          className="min-h-[36px] px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
+        >
+          {isAdding ? <X size={15} /> : <Plus size={15} />}
+          <span>{isAdding ? 'Отмена' : 'Добавить факт'}</span>
+        </button>
+      </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
-                  Дата победы
-                </label>
-                <input
-                  type="text"
-                  value={newDate}
-                  onChange={(e) => setNewDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: '#050505',
-                    border: '1px solid var(--line)',
-                    color: 'var(--text)',
-                    fontSize: 12,
-                  }}
-                  aria-label="Дата победы"
-                />
-              </div>
+      {/* Search Pill + Category Pills */}
+      <div className="p-4 border-b border-[var(--border)] flex flex-col gap-3">
+        <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] focus-within:border-[var(--accent)] transition-colors">
+          <Search size={16} className="text-[var(--text-3)] flex-none" />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Искать в доказательствах..."
+            aria-label="Поиск по доказательствам"
+            className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[var(--text)] placeholder-[var(--text-3)]"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              className="w-6 h-6 min-w-[24px] rounded-full flex items-center justify-center text-[var(--text-3)] hover:text-[var(--text)]"
+              aria-label="Очистить поиск"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
 
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
-                  Категория
-                </label>
-                <select
-                  value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: '#050505',
-                    border: '1px solid var(--line)',
-                    color: 'var(--text)',
-                    fontSize: 12,
-                  }}
-                  aria-label="Категория победы"
-                >
-                  <option value="Сомнения">Сомнения</option>
-                  <option value="Memernity">Memernity</option>
-                  <option value="Спорт">Спорт</option>
-                  <option value="Школа">Школа</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
-                Что ты совершил? (Факт)
-              </label>
-              <input
-                type="text"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Например: Проехал 130 км, хотя хотел остановиться"
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  background: '#050505',
-                  border: '1px solid var(--line)',
-                  color: 'var(--text)',
-                  fontSize: 13,
-                }}
-                aria-label="Название факта силы"
-              />
-            </div>
-
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>
-                Цитата преодоления (почему это доказывает силу)
-              </label>
-              <textarea
-                value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
-                rows={2}
-                placeholder="Ты продолжил, когда было проще сдаться..."
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  borderRadius: 8,
-                  background: '#050505',
-                  border: '1px solid var(--line)',
-                  color: 'var(--text)',
-                  fontSize: 12,
-                  resize: 'vertical',
-                }}
-                aria-label="Цитата преодоления"
-              />
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
-              <button
-                type="button"
-                onClick={() => setIsAdding(false)}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: 8,
-                  background: 'none',
-                  border: '1px solid var(--line)',
-                  color: 'var(--muted)',
-                  fontSize: 12,
-                  cursor: 'pointer',
-                }}
-              >
-                Отмена
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveFact}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '7px 16px',
-                  borderRadius: 8,
-                  background: 'var(--orange)',
-                  color: '#fff',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  border: 0,
-                  cursor: 'pointer',
-                }}
-              >
-                <Check size={14} /> Сохранить факт
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Category Filter Chips */}
-        <div className="chip-row" role="region" aria-label="Категории Evidence Vault">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5" role="tablist">
           {EVIDENCE_CATEGORIES.map((cat) => {
             const active = selectedCategory === cat
             return (
               <button
                 key={cat}
                 type="button"
-                className={`tag-chip ${active ? 'active' : ''}`}
+                role="tab"
                 onClick={() => {
                   playClick(soundEnabled)
                   setSelectedCategory(cat)
                 }}
+                className={`min-h-[34px] px-3.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors ${
+                  active
+                    ? 'bg-[var(--text)] text-[var(--bg)]'
+                    : 'bg-[var(--bg-elev)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)]'
+                }`}
                 aria-pressed={active}
               >
                 {cat}
@@ -331,77 +169,170 @@ export function VaultView({
             )
           })}
         </div>
-
-        {filteredItems.length > 0 ? (
-          <div className="evidence-results">
-            {filteredItems.map((item) => {
-              const isPinned = Boolean(item.pinned)
-              return (
-                <article
-                  className="evidence-result"
-                  key={item.id || item.title}
-                  style={{
-                    position: 'relative',
-                    borderLeft: isPinned ? '3px solid var(--orange)' : '1px solid var(--line)',
-                    paddingLeft: isPinned ? 16 : 14,
-                    background: isPinned ? '#0e1014' : '#111315',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="result-date">{item.date}</span>
-                      {item.category && (
-                        <span
-                          style={{
-                            fontSize: 10,
-                            padding: '1px 6px',
-                            borderRadius: 4,
-                            background: 'var(--surface2)',
-                            color: 'var(--muted)',
-                          }}
-                        >
-                          {item.category}
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClick(soundEnabled)
-                        if (onTogglePin) onTogglePin(item.id)
-                      }}
-                      title={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
-                      aria-label={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
-                      style={{
-                        background: 'none',
-                        border: 0,
-                        color: isPinned ? 'var(--orange)' : 'var(--muted)',
-                        padding: 4,
-                        cursor: 'pointer',
-                        display: 'grid',
-                        placeItems: 'center',
-                      }}
-                    >
-                      <Pin size={16} fill={isPinned ? 'currentColor' : 'none'} />
-                    </button>
-                  </div>
-
-                  <b>{item.title}</b>
-                  <p>{item.description}</p>
-                </article>
-              )
-            })}
-          </div>
-        ) : (
-          <div className="empty-state" role="status">
-            <p className="empty-state__title">Ничего не найдено</p>
-            <p className="empty-state__desc">
-              В Evidence Vault нет записей, соответствующих критериям поиска.
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Compact Add Form */}
+      {isAdding && (
+        <div className="p-4 m-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[13px] font-extrabold text-[var(--accent)]">
+              ✦ Новый факт силы
+            </span>
+            <span className="text-[11px] text-[var(--text-3)]">
+              Сохраняется локально
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <div>
+              <label className="text-[11px] text-[var(--text-2)] font-semibold block mb-1">
+                Дата победы
+              </label>
+              <input
+                type="text"
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] text-[12px] outline-none focus:border-[var(--accent)]"
+                aria-label="Дата победы"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] text-[var(--text-2)] font-semibold block mb-1">
+                Категория
+              </label>
+              <select
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] text-[12px] outline-none focus:border-[var(--accent)]"
+                aria-label="Категория победы"
+              >
+                <option value="Сомнения">Сомнения</option>
+                <option value="Memernity">Memernity</option>
+                <option value="Спорт">Спорт</option>
+                <option value="Школа">Школа</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] text-[var(--text-2)] font-semibold block mb-1">
+              Что ты совершил? (Факт)
+            </label>
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Например: Проехал 130 км, хотя хотел остановиться"
+              className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] text-[13px] outline-none focus:border-[var(--accent)]"
+              aria-label="Название факта силы"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] text-[var(--text-2)] font-semibold block mb-1">
+              Цитата преодоления (почему это доказывает силу)
+            </label>
+            <textarea
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              rows={2}
+              placeholder="Ты продолжил, когда было проще сдаться..."
+              className="w-full px-3 py-1.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] text-[12px] outline-none focus:border-[var(--accent)] resize-none"
+              aria-label="Цитата преодоления"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setIsAdding(false)}
+              className="px-3.5 py-1.5 rounded-full text-[12px] font-bold text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveFact}
+              className="h-8 px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[12px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
+            >
+              <Check size={14} /> Сохранить факт
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Flat List like X Feed */}
+      {filteredItems.length > 0 ? (
+        <div className="divide-y divide-[var(--border)]">
+          {filteredItems.map((item) => {
+            const isPinned = Boolean(item.pinned)
+            return (
+              <article
+                key={item.id || item.title}
+                className="px-4 py-3.5 hover:bg-[var(--bg-hover)] transition-colors relative"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-bold text-[var(--text-2)] uppercase tracking-wider">
+                      {item.date}
+                    </span>
+                    {item.category && (
+                      <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text-2)]">
+                        {item.category}
+                      </span>
+                    )}
+                    {isPinned && (
+                      <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
+                        Закреплено
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      if (onTogglePin) onTogglePin(item.id)
+                    }}
+                    title={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
+                    aria-label={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
+                    className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
+                  >
+                    <Pin size={15} fill={isPinned ? 'currentColor' : 'none'} className={isPinned ? 'text-[var(--accent)]' : ''} />
+                  </button>
+                </div>
+                <h2 className="text-[15px] font-bold text-[var(--text)] leading-snug">
+                  {item.title}
+                </h2>
+                <p className="text-[14px] text-[var(--text-2)] leading-normal mt-1">
+                  {item.description}
+                </p>
+              </article>
+            )
+          })}
+        </div>
+      ) : (
+        /* Empty State: Icon + 1 line + Button */
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+          <div className="w-12 h-12 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)] mb-3">
+            <Pin size={20} className="rotate-45" />
+          </div>
+          <p className="text-[16px] font-bold text-[var(--text)] mb-3">
+            {query ? 'Ничего не найдено' : 'В Evidence Vault пока пусто'}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (query) setSearch('')
+              else setIsAdding(true)
+            }}
+            className="h-9 px-5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[14px] font-extrabold transition-colors inline-flex items-center gap-1.5"
+          >
+            <Plus size={16} />
+            <span>{query ? 'Сбросить поиск' : 'Добавить факт силы'}</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

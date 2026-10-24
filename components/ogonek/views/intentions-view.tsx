@@ -13,7 +13,6 @@ import type { MorningFocusRecord, MorningFocusStepStatus, ViewId } from '@/lib/o
 
 type Props = {
   morningIntentions: Record<string, [string, string, string]>
-  /** ЭТАП 10: история фокусов с вечерней сверкой */
   morningFocusHistory?: Record<string, MorningFocusRecord>
   onNavigate: (view: ViewId) => void
   onSave?: (dateKey: string, focus: [string, string, string]) => void
@@ -38,10 +37,10 @@ function getTodayKey(): string {
   return new Date().toISOString().split('T')[0]
 }
 
-const STEP_STATUS_META: Record<MorningFocusStepStatus, { label: string; color: string; bg: string }> = {
-  done: { label: 'Выполнил', color: '#00ba7c', bg: 'rgba(0,186,124,0.12)' },
-  missed: { label: 'Не выполнил', color: '#f91880', bg: 'rgba(249,24,128,0.12)' },
-  pending: { label: 'Не сверено', color: '#71767b', bg: 'rgba(113,118,123,0.12)' },
+const STEP_STATUS_META: Record<MorningFocusStepStatus, { label: string; color: string }> = {
+  done: { label: 'Выполнил', color: 'var(--success)' },
+  missed: { label: 'Не выполнил', color: '#f91880' },
+  pending: { label: 'Не сверено', color: 'var(--text-3)' },
 }
 
 export function IntentionsView({
@@ -61,7 +60,6 @@ export function IntentionsView({
 
   const stats = useMemo(() => computeFocusFlame(history, todayKey), [history, todayKey])
 
-  // Past intentions sorted newest-first (exclude today)
   const pastEntries = Object.entries(morningIntentions)
     .filter(([key]) => key !== todayKey)
     .sort(([a], [b]) => b.localeCompare(a))
@@ -76,25 +74,22 @@ export function IntentionsView({
   const PLACEHOLDERS = ['Главный шаг дня', 'Для себя', 'Если останется время'] as const
 
   return (
-    <div className="view-intentions">
-      {/* Header */}
-      <header
-        className="flex items-center gap-4 px-4 py-3 sticky top-0 z-10 border-b border-[#2f3336]"
-        style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(14px)' }}
-      >
+    <div className="view-intentions min-h-screen pb-20">
+      {/* Sticky Header */}
+      <header className="flex items-center gap-4 px-4 py-3 sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur-md">
         <button
           type="button"
           onClick={() => onNavigate('home')}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-[#e7e9ea] hover:bg-white/[0.08] transition-colors flex-none"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors flex-none"
           aria-label="Назад"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={19} />
         </button>
         <div>
-          <p className="text-[#e7e9ea] text-[20px] font-bold leading-[24px] tracking-[-0.02em]">
+          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
             Утренние намерения
-          </p>
-          <p className="text-[#71767b] text-[13px] leading-[16px]">
+          </h1>
+          <p className="text-[12px] text-[var(--text-2)]">
             {Object.keys(morningIntentions).length} записей
           </p>
         </div>
@@ -104,16 +99,16 @@ export function IntentionsView({
         {/* Огонёк фокуса — счётчик выполнения обещаний */}
         {stats.hasHistory && (
           <section
-            className="px-4 py-4 border-b border-[#2f3336] flex items-center gap-4"
+            className="px-4 py-4 border-b border-[var(--border)] flex items-center gap-4"
             aria-label="Огонёк фокуса"
           >
             <FocusFlame stats={stats} />
             <div className="min-w-0 ml-auto text-right">
-              <p className="text-[#71767b] text-[11px] uppercase tracking-[0.05em]">Средний результат</p>
-              <p className="text-[#00ba7c] text-[22px] font-extrabold tabular-nums leading-tight">
+              <p className="text-[var(--text-2)] text-[12px] uppercase tracking-[0.05em] font-semibold">Средний результат</p>
+              <p className="text-[var(--success)] text-[22px] font-extrabold tabular-nums leading-tight">
                 {stats.avgPercent}%
               </p>
-              <p className="text-[#71767b] text-[11px]">
+              <p className="text-[var(--text-2)] text-[12px]">
                 {stats.totalFulfilled} из {stats.totalPromises} обещаний
               </p>
             </div>
@@ -121,38 +116,32 @@ export function IntentionsView({
         )}
 
         {/* Today's intentions card */}
-        <section className="px-4 py-5 border-b border-[#2f3336]" aria-labelledby="today-focus-title">
+        <section className="px-4 py-4 border-b border-[var(--border)]" aria-labelledby="today-focus-title">
           <div className="flex items-center gap-2 mb-3">
-            <Target size={18} className="text-[#1d9bf0] flex-none" aria-hidden="true" />
+            <Target size={17} className="text-[var(--accent)] flex-none" aria-hidden="true" />
             <h2
               id="today-focus-title"
-              className="text-[#e7e9ea] text-[17px] font-bold leading-[22px] tracking-[-0.015em]"
+              className="text-[var(--text)] text-[16px] font-bold leading-tight"
             >
               Сегодня
             </h2>
             {todayRecord && (
-              <span
-                className="text-[12px] font-bold px-2 py-0.5 rounded-full"
-                style={{
-                  color: todayRecord.completionPercent >= 66 ? '#00ba7c' : '#ffad5a',
-                  background: 'rgba(255,255,255,0.05)',
-                }}
-              >
+              <span className="text-[12px] font-bold px-2 py-0.5 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--accent)]">
                 {todayRecord.completionPercent}% обещаний
               </span>
             )}
-            <span className="text-[#71767b] text-[13px] leading-[16px] ml-auto">
+            <span className="text-[var(--text-2)] text-[13px] ml-auto">
               {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
             </span>
           </div>
 
-          <div className="flex flex-col gap-2 mb-3">
+          <div className="flex flex-col gap-2.5 mb-4">
             {draftFocus.map((val, i) => (
               <div
                 key={i}
-                className="flex items-center gap-3 border border-[#2f3336] rounded-2xl px-4 py-3 bg-[#16181c] focus-within:border-[#1d9bf0] transition-colors"
+                className="flex items-center gap-3 border border-[var(--border)] rounded-2xl px-4 py-3 bg-[var(--surface)] focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent)]/30 transition-all"
               >
-                <span className="text-[#1d9bf0] font-bold text-[13px] flex-none w-4">{i + 1}</span>
+                <span className="text-[var(--accent)] font-bold text-[14px] flex-none w-4">{i + 1}</span>
                 <input
                   type="text"
                   value={val}
@@ -163,11 +152,11 @@ export function IntentionsView({
                     setDraftFocus(next)
                   }}
                   placeholder={PLACEHOLDERS[i]}
-                  className="flex-1 min-w-0 bg-transparent text-[#e7e9ea] text-[15px] leading-[23px] tracking-[-0.015em] outline-none placeholder-[#71767b] disabled:opacity-60"
+                  className="flex-1 min-w-0 bg-transparent text-[var(--text)] text-[15px] font-medium outline-none placeholder:text-[var(--text-2)] disabled:opacity-75"
                   aria-label={`Намерение ${i + 1}: ${PLACEHOLDERS[i]}`}
                 />
                 {saved && val.trim().length > 0 && (
-                  <Check size={15} className="text-[#1d9bf0] flex-none" aria-hidden="true" />
+                  <Check size={16} className="text-[var(--accent)] flex-none" aria-hidden="true" />
                 )}
               </div>
             ))}
@@ -178,15 +167,24 @@ export function IntentionsView({
               type="button"
               onClick={handleSaveToday}
               disabled={!draftFocus.some((f) => f.trim().length > 0)}
-              className="flex items-center gap-2 h-10 px-5 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-[14px] font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="min-h-[42px] px-6 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[14px] font-extrabold transition-all shadow-md active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-2"
             >
-              <Check size={15} />
-              Зафиксировать фокус
+              <Check size={16} />
+              <span>Сохранить фокус</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2 text-[#1d9bf0] text-[14px] font-bold">
-              <Check size={15} />
-              Фокус зафиксирован — действуй!
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 text-[var(--accent)] text-[14px] font-bold">
+                <Check size={16} />
+                <span>Фокус сохранён — действуй!</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSaved(false)}
+                className="text-[13px] font-semibold text-[var(--text-2)] hover:text-[var(--text)] underline transition-colors"
+              >
+                Изменить
+              </button>
             </div>
           )}
         </section>
@@ -194,10 +192,10 @@ export function IntentionsView({
         {/* Past intentions history */}
         {pastEntries.length > 0 ? (
           <section aria-labelledby="past-focus-title">
-            <div className="px-4 py-3 border-b border-[#2f3336]">
+            <div className="px-4 py-2.5 border-b border-[var(--border)]">
               <h3
                 id="past-focus-title"
-                className="text-[#71767b] text-[13px] leading-[16px] font-bold uppercase tracking-[0.05em]"
+                className="text-[var(--text-2)] text-[12px] font-bold uppercase tracking-[0.05em]"
               >
                 История намерений
               </h3>
@@ -209,38 +207,27 @@ export function IntentionsView({
               const fulfilled = record ? countFulfilledSteps(record.steps) : 0
               const reviewed = Boolean(record?.reviewedAtISO)
               const verdict = focusVerdict(percent)
-              const barColor =
-                verdict.tone === 'elite'
-                  ? '#00ba7c'
-                  : verdict.tone === 'good'
-                    ? '#1d9bf0'
-                    : verdict.tone === 'mid'
-                      ? '#ffad5a'
-                      : '#f91880'
 
               return (
                 <article
                   key={key}
-                  className="px-4 py-4 border-b border-[#2f3336] hover:bg-white/[0.02] transition-colors duration-150"
+                  className="px-4 py-3.5 border-b border-[var(--border)] hover:bg-[var(--bg-hover)] transition-colors"
                 >
                   <div className="flex items-center justify-between gap-2 mb-2">
-                    <p className="text-[#71767b] text-[12px] leading-[16px] capitalize">
+                    <p className="text-[var(--text-2)] text-[12px] font-medium capitalize">
                       {formatDateRu(key)}
                     </p>
                     {reviewed && (
-                      <span
-                        className="text-[12px] font-extrabold tabular-nums flex-none"
-                        style={{ color: barColor }}
-                      >
+                      <span className="text-[12px] font-extrabold tabular-nums flex-none text-[var(--accent)]">
                         {percent}%
                       </span>
                     )}
-                    <ChevronRight size={14} className="text-[#2f3336] flex-none" aria-hidden="true" />
+                    <ChevronRight size={14} className="text-[var(--text-3)] flex-none" aria-hidden="true" />
                   </div>
 
                   {reviewed && (
-                    <div className="h-1 rounded-full overflow-hidden mb-2.5" style={{ background: '#2f3336' }} aria-hidden="true">
-                      <div className="h-full rounded-full" style={{ width: `${percent}%`, background: barColor }} />
+                    <div className="h-1 rounded-full overflow-hidden mb-2 bg-[var(--bg-elev)] border border-[var(--border)]" aria-hidden="true">
+                      <div className="h-full rounded-full bg-[var(--accent)]" style={{ width: `${percent}%` }} />
                     </div>
                   )}
 
@@ -256,14 +243,14 @@ export function IntentionsView({
                           ) : status === 'missed' ? (
                             <X size={13} strokeWidth={3} className="flex-none" style={{ color: meta.color }} aria-hidden="true" />
                           ) : (
-                            <span className="text-[#1d9bf0] text-[12px] font-bold flex-none w-[13px] text-center">
+                            <span className="text-[var(--accent)] text-[12px] font-bold flex-none w-[13px] text-center">
                               {idx + 1}
                             </span>
                           )}
                           <span
-                            className="text-[15px] leading-[23px] tracking-[-0.015em] truncate"
+                            className="text-[14px] leading-snug truncate"
                             style={{
-                              color: status === 'missed' ? '#71767b' : '#e7e9ea',
+                              color: status === 'missed' ? 'var(--text-3)' : 'var(--text)',
                               textDecoration: status === 'missed' ? 'line-through' : 'none',
                             }}
                           >
@@ -275,7 +262,7 @@ export function IntentionsView({
                   </div>
 
                   {reviewed && (
-                    <p className="text-[11px] mt-2 text-[#71767b]">
+                    <p className="text-[11px] mt-2 text-[var(--text-2)]">
                       {verdict.label} · {fulfilled} из {activeCount} сдержано
                     </p>
                   )}
@@ -284,16 +271,24 @@ export function IntentionsView({
             })}
           </section>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-            <div className="w-14 h-14 rounded-full bg-[#1d9bf0]/10 flex items-center justify-center mb-4">
-              <Target size={28} className="text-[#1d9bf0]" aria-hidden="true" />
+          /* Empty state: Icon + 1 line + Button */
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center text-[var(--text-2)] mb-3">
+              <Target size={20} />
             </div>
-            <p className="text-[#e7e9ea] text-[23px] font-bold tracking-[-0.02em] mb-2">
-              История пуста
+            <p className="text-[16px] font-bold text-[var(--text)] mb-3">
+              История намерений пуста
             </p>
-            <p className="text-[#71767b] text-[15px] leading-[23px] max-w-[280px]">
-              Начни фиксировать ежедневный фокус — и здесь появится история твоих намерений.
-            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const el = document.querySelector<HTMLInputElement>('input[aria-label^="Намерение 1"]')
+                el?.focus()
+              }}
+              className="h-9 px-5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[14px] font-extrabold transition-colors"
+            >
+              Задать фокус на сегодня
+            </button>
           </div>
         )}
       </div>

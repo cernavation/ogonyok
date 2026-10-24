@@ -1,0 +1,118 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ОГОНЁК — ДИЗАЙН-СИСТЕМА X.COM (ТОКЕНЫ ОФОРМЛЕНИЯ)
+   Светлая и тёмная («Lights out») цветовые схемы.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root,
+html[data-theme='x-black'],
+html.dark {
+  /* Тёмная схема («Lights out» OLED) */
+  --bg: #000000;
+  --bg-elev: #16181C;
+  --surface: #16181C;
+  --surface2: #1E2124;
+  --bg-hover: rgba(231, 233, 234, 0.08);
+  --bg-hover-post: rgba(255, 255, 255, 0.03);
+  --border: #2F3336;
+  --border-subtle: #202327;
+  --line: #2F3336;
+  
+  --text: #E7E9EA;
+  --text-2: #8B98A5; /* Контраст ≥ 4.5:1 на чёрном */
+  --text-3: #8B98A5;
+  --muted: #8B98A5;
+  
+  --accent: #FF6A1A;
+  --accent-hover: #E85F15;
+  --accent-soft: rgba(255, 106, 26, 0.12);
+  --accent-text: #000000;
+  --blue: #FF6A1A;
+  --orange: #FF6A1A;
+  --orange-light: #FF8533;
+  
+  --danger: #F4212E;
+  --danger-soft: rgba(244, 33, 46, 0.1);
+  --success: #00BA7C;
+  --success-soft: rgba(0, 186, 124, 0.1);
+
+  --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Нативные скроллбары */
+  color-scheme: dark;
+}
+
+html[data-theme='apple-light'],
+html:not(.dark):not([data-theme='x-black']) {
+  /* Светлая схема */
+  --bg: #FFFFFF;
+  --bg-elev: #F7F9F9;
+  --surface: #F7F9F9;
+  --surface2: #EFF3F4;
+  --bg-hover: rgba(15, 20, 25, 0.06);
+  --bg-hover-post: rgba(0, 0, 0, 0.02);
+  --border: #EFF3F4;
+  --border-subtle: #CFD9DE;
+  --line: #EFF3F4;
+  
+  --text: #0F1419;
+  --text-2: #536471;
+  --text-3: #536471;
+  --muted: #536471;
+  
+  --accent: #C03C00;
+  --accent-hover: #A53300;
+  --accent-soft: rgba(192, 60, 0, 0.08);
+  --accent-text: #FFFFFF;
+  --blue: #C03C00;
+  --orange: #C03C00;
+  --orange-light: #C03C00;
+  
+  --danger: #F4212E;
+  --danger-soft: rgba(244, 33, 46, 0.1);
+  --success: #00875A;
+  --success-soft: rgba(0, 135, 90, 0.1);
+
+  color-scheme: light;
+}
+
+/* Глобальные скроллбары для тишины интерфейса */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Стандарт типографики X: минимальный кегль strictly >= 13px */
+.text-xs,
+[class*="text-[10px]"],
+[class*="text-[11px]"],
+[class*="text-[12px]"],
+small {
+  font-size: 13px !important;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+}
+
+/* Скрытие dev-индикаторов */
+[data-nextjs-dialog-overlay],
+nextjs-portal,
+.nextjs-toast,
+#nextjs-dev-tools,
+div[data-nextjs-toast] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

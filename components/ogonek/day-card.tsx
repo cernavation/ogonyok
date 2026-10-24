@@ -402,26 +402,28 @@ function DayCardComponent({
               </div>
             )}
 
-            {/* 5 канонических IconButton в футере поста (X.com standard) */}
+            {/* 5 канонических IconButton в футере поста (X.com standard: Ответить, В копилку, Огонёк, Поделиться, Ещё) */}
             <div
-              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--border)]"
+              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--border)] max-w-[460px]"
               role="group"
               aria-label="Действия с публикацией"
             >
-              {/* 1. Комментарии */}
+              {/* 1. Ответить */}
               <IconButton
                 icon={<MessageCircle size={18} />}
-                label="Комментарии"
+                label="Ответить"
+                tooltip="Ответить"
                 count={state.comments?.[target]?.length || ''}
                 active={showComments}
                 variant="blue"
                 onClick={() => setShowComments((prev) => !prev)}
               />
 
-              {/* 2. В копилку / Сейф */}
+              {/* 2. В копилку */}
               <IconButton
                 icon={<BookmarkPlus size={18} />}
-                label="В Сейф доказательств"
+                label="В копилку"
+                tooltip="В копилку"
                 variant="default"
                 onClick={handlePinTopFact}
               />
@@ -429,7 +431,8 @@ function DayCardComponent({
               {/* 3. 🔥 Огонёк */}
               <IconButton
                 icon={<Flame size={18} className={liked ? 'fill-[var(--accent)] text-[var(--accent)]' : ''} />}
-                label={liked ? 'Снять огонёк' : 'Зажечь огонёк'}
+                label={liked ? 'Снять огонёк' : 'Огонёк'}
+                tooltip={liked ? 'Снять огонёк' : 'Огонёк'}
                 count={fireCount > 0 ? fireCount : ''}
                 active={liked}
                 variant="accent"
@@ -439,15 +442,17 @@ function DayCardComponent({
               {/* 4. ↗ Поделиться */}
               <IconButton
                 icon={<Share2 size={18} />}
-                label="Поделиться карточкой"
+                label="Поделиться"
+                tooltip="Поделиться"
                 variant="default"
                 onClick={() => setShareModalOpen(true)}
               />
 
-              {/* 5. ⋯ Опции */}
+              {/* 5. ⋯ Ещё */}
               <IconButton
                 icon={<MoreHorizontal size={18} />}
-                label="Опции публикации"
+                label="Ещё"
+                tooltip="Ещё"
                 variant="default"
                 onClick={() => setOptionsModalOpen(true)}
               />

@@ -1,6 +1,6 @@
 'use client'
 
-import { ImagePlus, Loader2, Lock, Sparkles, Trash2, Upload } from 'lucide-react'
+import { Check, ImagePlus, Loader2, Lock, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useMemo, useState, type ChangeEvent } from 'react'
 import { savePhoto } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -170,8 +170,8 @@ export function PublishPrideStoryModal({
                   <span className="flex items-center gap-1 truncate text-[11px] font-extrabold text-white">
                     {displayName}
                     {verified && (
-                      <span className="grid h-3 w-3 flex-none place-items-center rounded-full bg-[#1d9bf0] text-[7px] font-black text-white">
-                        ✓
+                      <span className="flex h-3.5 w-3.5 flex-none items-center justify-center rounded-full bg-[#1d9bf0] text-white">
+                        <Check size={8} strokeWidth={3} />
                       </span>
                     )}
                   </span>

@@ -1,51 +1,47 @@
 'use client'
 
+import React, { useRef, useState } from 'react'
 import {
   ArrowLeft,
+  Bell,
   Check,
+  ChevronDown,
+  ChevronRight,
   Download,
   Eye,
-  Loader2,
+  Flame,
+  Lock,
   Moon,
   Palette,
-  RefreshCw,
   RotateCcw,
-  Rows3,
-  Send,
-  ShieldCheck,
-  Sparkles,
   Sun,
   SunDim,
   Type,
   Upload,
+  User,
   Volume2,
-  Zap,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
 import {
   ACCENT_PRESETS,
-  FEED_DENSITY_PRESETS,
   FONT_SCALE_PRESETS,
   THEME_PRESETS,
-  getAccentPreset,
-  getFeedDensityPreset,
-  getFontScalePreset,
-  getThemePreset,
 } from '@/lib/ogonek/appearance'
-import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { exportStoreAsJson, validateAndImportJson } from '@/lib/ogonek/storage'
 import type {
   AccentId,
   FeedDensityId,
   FontScaleId,
+  OgonekProfile,
   OgonekStoreState,
   ThemeMode,
   ViewId,
 } from '@/lib/ogonek/types'
-import { MobileHeader } from '../mobile-header'
 import { SecurityPanel } from '../security'
-import { BackupSyncPanel, PrivacyPanel, StreakDeadlinePanel, SupabaseSyncPanel } from '../settings'
+import { PrivacyPanel, StreakDeadlinePanel } from '../settings'
+import { DifficultyLevelPanel } from '../settings/difficulty-level-panel'
+import { TelegramReminderPanel } from '../settings/telegram-reminder-panel'
+import { Button } from '../ui'
 
 type Props = {
   state: OgonekStoreState
@@ -59,13 +55,24 @@ type Props = {
   onResetAppearance: () => void
   onImportState: (newState: OgonekStoreState) => void
   onResetToDefaults: () => void
+  onUpdateProfile?: (patch: Partial<OgonekProfile>) => void
 }
+
+type SettingsSection = 'appearance' | 'diary' | 'notifications' | 'privacy' | 'account'
 
 const THEME_ICONS: Record<ThemeMode, typeof Moon> = {
   'x-black': Moon,
   'apple-light': Sun,
   dim: SunDim,
 }
+
+const SECTIONS = [
+  { id: 'appearance' as SettingsSection, label: 'Внешний вид', hint: 'Тема, акцентный цвет, шрифт и звук', icon: Palette },
+  { id: 'diary' as SettingsSection, label: 'Дневник', hint: 'Уровень сложности, стрик и дедлайн дня', icon: Flame },
+  { id: 'notifications' as SettingsSection, label: 'Уведомления', hint: 'Напоминания в Telegram и расписание', icon: Bell },
+  { id: 'privacy' as SettingsSection, label: 'Приватность', hint: 'Видимость записей, Face ID и PIN-код', icon: Eye },
+  { id: 'account' as SettingsSection, label: 'Аккаунт', hint: 'Профиль, резервное копирование и сброс', icon: User },
+] as const
 
 export function SettingsView({
   state,
@@ -75,668 +82,429 @@ export function SettingsView({
   onSetTheme,
   onSetAccent,
   onSetFontScale,
-  onSetFeedDensity,
-  onResetAppearance,
-  onImportState,
   onResetToDefaults,
+  onImportState,
+  onUpdateProfile,
 }: Props) {
+  const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [tgStatus, setTgStatus] = useState<{
-    configured: boolean
-    botUsername?: string
-    chatIdConfigured?: boolean
-  } | null>(null)
-  const [isSyncingStreak, setIsSyncingStreak] = useState(false)
-  const [isSendingTestMsg, setIsSendingTestMsg] = useState(false)
 
-  // Актуальные настройки оформления из стора
-  const activeTheme = getThemePreset(state.theme)
-  const activeAccent = getAccentPreset(state.accent)
-  const activeFont = getFontScalePreset(state.fontScale)
-  const activeDensity = getFeedDensityPreset(state.feedDensity)
-
-  // Fetch Telegram status on mount
-  useEffect(() => {
-    fetch('/api/telegram/status')
-      .then((res) => res.json())
-      .then((data) => setTgStatus(data))
-      .catch(() => setTgStatus({ configured: false }))
-  }, [])
-
-  /* ── Оформление: обработчики ─────────────────────────────────────────── */
-
-  const handleSelectTheme = (theme: ThemeMode) => {
-    if (theme === state.theme) return
-    onSetTheme(theme)
-    playClick(state.soundEnabled)
-    const preset = getThemePreset(theme)
-    onNotify(`Тема «${preset.label} · ${preset.code}» применена`)
+  const handleExport = () => {
+    try {
+      const json = exportStoreAsJson(state)
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `ogonek-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      playSuccess(state.soundEnabled)
+      onNotify('Резервная копия сохранена')
+    } catch {
+      onNotify('Ошибка при экспорте данных')
+    }
   }
 
-  const handleSelectAccent = (accent: AccentId) => {
-    if (accent === state.accent) return
-    onSetAccent(accent)
-    playClick(state.soundEnabled)
-    onNotify(`Акцент «${getAccentPreset(accent).label}» активирован`)
-  }
-
-  const handleSelectFontScale = (scale: FontScaleId) => {
-    if (scale === state.fontScale) return
-    onSetFontScale(scale)
-    playClick(state.soundEnabled)
-    onNotify(`Размер интерфейса: ${getFontScalePreset(scale).label}`)
-  }
-
-  const handleSelectDensity = (density: FeedDensityId) => {
-    if (density === state.feedDensity) return
-    onSetFeedDensity(density)
-    playClick(state.soundEnabled)
-    onNotify(`Плотность ленты: ${getFeedDensityPreset(density).label}`)
-  }
-
-  const handleResetAppearance = () => {
-    onResetAppearance()
-    playSuccess(state.soundEnabled)
-    onNotify('Оформление сброшено к заводским значениям Огонька')
-  }
-
-  /* ── Экспорт / импорт ────────────────────────────────────────────────── */
-
-  const handleExportBackup = () => {
-    const jsonStr = exportStoreAsJson(state)
-    const blob = new Blob([jsonStr], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `ogonok-backup-day-${CURRENT_DAY}-${new Date().toISOString().split('T')[0]}.json`
-    link.click()
-    URL.revokeObjectURL(url)
-
-    playSuccess(state.soundEnabled)
-    onNotify('Резервная копия скачана на устройство')
-  }
-
-  const handleImportClick = () => {
-    playClick(state.soundEnabled)
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     const reader = new FileReader()
     reader.onload = (event) => {
-      const content = event.target?.result
-      if (typeof content !== 'string') {
-        onNotify('Не удалось прочитать файл бэкапа')
-        return
-      }
-
-      const result = validateAndImportJson(content)
-      if (result.success) {
-        onImportState(result.data)
+      const raw = event.target?.result as string
+      const res = validateAndImportJson(raw)
+      if (res.success) {
+        onImportState(res.data)
         playSuccess(state.soundEnabled)
-        onNotify(`Бэкап успешно восстановлен (${result.data.days.length} дней)!`)
+        onNotify('Данные успешно импортированы')
       } else {
-        onNotify(`Ошибка валидации бэкапа: ${result.error}`)
+        onNotify(res.error || 'Неверный формат файла бэкапа')
       }
     }
     reader.readAsText(file)
-    e.target.value = ''
   }
 
-  const [isLoadingAuthentic, setIsLoadingAuthentic] = useState(false)
+  const renderSectionContent = (sec: SettingsSection) => {
+    switch (sec) {
+      case 'appearance':
+        return (
+          <div className="flex flex-col gap-5 p-4 sm:p-5">
+            {/* Тема оформления */}
+            <div className="flex flex-col gap-3">
+              <div>
+                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Moon size={16} className="text-[var(--accent)]" /> Тема оформления
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Тёмная X Black, Dim или светлая Apple Light
+                </p>
+              </div>
 
-  const handleLoadAuthenticHistory = async () => {
-    playClick(state.soundEnabled)
-    setIsLoadingAuthentic(true)
-    try {
-      const res = await fetch('/seeds/ogonek-import.v1.json')
-      if (!res.ok) throw new Error('Файл сида не найден')
-      const data = await res.json()
-      if (data && Array.isArray(data.days) && data.days.length > 0) {
-        onImportState(data)
-        playSuccess(state.soundEnabled)
-        onNotify(`100% подлинная летопись успешно загружена (${data.days.length} дней)!`)
-      } else {
-        throw new Error('Некорректная структура данных в архиве')
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Ошибка загрузки'
-      onNotify(`Не удалось загрузить архив: ${msg}`)
-    } finally {
-      setIsLoadingAuthentic(false)
+              <div className="grid grid-cols-3 gap-2">
+                {THEME_PRESETS.map((t) => {
+                  const Icon = THEME_ICONS[t.id]
+                  const active = state.theme === t.id
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        onSetTheme(t.id)
+                        playClick(state.soundEnabled)
+                      }}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                        active
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)] shadow-sm'
+                          : 'border-[var(--border)] bg-[var(--bg-elev)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                      }`}
+                    >
+                      <Icon size={20} className={active ? 'text-[var(--accent)]' : ''} />
+                      <span className="text-[12px] font-bold mt-1.5">{t.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Акцентный цвет */}
+            <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
+              <div>
+                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Palette size={16} className="text-[var(--accent)]" /> Акцентный цвет
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Главный цвет кнопок, бейджей и активных элементов
+                </p>
+              </div>
+
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                {ACCENT_PRESETS.map((a) => {
+                  const active = state.accent === a.id
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => {
+                        onSetAccent(a.id)
+                        playClick(state.soundEnabled)
+                      }}
+                      className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border text-center transition-all ${
+                        active
+                          ? 'border-[var(--text)] bg-[var(--bg-elev)] shadow-sm'
+                          : 'border-[var(--border)] bg-[var(--bg-elev)]/50 hover:border-[var(--border-strong)]'
+                      }`}
+                    >
+                      <span
+                        className="w-5 h-5 rounded-full shadow-sm mb-1"
+                        style={{ background: a.color }}
+                      />
+                      <span className="text-[13px] font-semibold text-[var(--text)] truncate w-full">
+                        {a.label}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Размер шрифта */}
+            <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
+              <div>
+                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Type size={16} className="text-[var(--accent)]" /> Размер шрифта
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Масштабирование текста интерфейса
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {FONT_SCALE_PRESETS.map((f) => {
+                  const active = state.fontScale === f.id
+                  return (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => {
+                        onSetFontScale(f.id)
+                        playClick(state.soundEnabled)
+                      }}
+                      className={`p-2.5 rounded-xl border text-center text-[13px] font-semibold transition-all ${
+                        active
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                          : 'border-[var(--border)] bg-[var(--bg-elev)] text-[var(--text-2)]'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Звуковые эффекты */}
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+              <div>
+                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Volume2 size={16} className="text-[var(--accent)]" /> Звуковые эффекты
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Тактильный отклик и щелчки при взаимодействии
+                </p>
+              </div>
+
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.soundEnabled}
+                  onChange={(e) => onSetSoundEnabled(e.target.checked)}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-11 h-6 rounded-full transition-colors ${
+                    state.soundEnabled ? 'bg-[var(--accent)]' : 'bg-[var(--border)]'
+                  }`}
+                >
+                  <div
+                    className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 left-0.5 ${
+                      state.soundEnabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </div>
+              </label>
+            </div>
+          </div>
+        )
+
+      case 'diary':
+        return (
+          <div className="flex flex-col gap-5 p-4 sm:p-5">
+            <DifficultyLevelPanel
+              currentLevel={state.profile.level ?? 5}
+              levelChangedAtISO={state.profile.levelChangedAtISO ?? null}
+              soundEnabled={state.soundEnabled}
+              onChangeLevel={(newLevel) => {
+                onUpdateProfile?.({ level: newLevel, levelChangedAtISO: new Date().toISOString() })
+              }}
+              onNotify={onNotify}
+            />
+
+            <StreakDeadlinePanel onNotify={onNotify} />
+          </div>
+        )
+
+      case 'notifications':
+        return (
+          <div className="flex flex-col gap-5 p-4 sm:p-5">
+            <TelegramReminderPanel
+              chatId={state.profile.telegramChatId}
+              reminderTimes={state.profile.reminderTimes}
+              soundEnabled={state.soundEnabled}
+              onNotify={onNotify}
+              onSaveChatId={(id) => onUpdateProfile?.({ telegramChatId: id })}
+              onSaveReminderTimes={(times) => onUpdateProfile?.({ reminderTimes: times })}
+            />
+          </div>
+        )
+
+      case 'privacy':
+        return (
+          <div className="flex flex-col gap-5 p-4 sm:p-5">
+            <PrivacyPanel onNotify={onNotify} />
+            <SecurityPanel onNotify={onNotify} />
+          </div>
+        )
+
+      case 'account':
+        return (
+          <div className="flex flex-col gap-5 p-4 sm:p-5">
+            {/* Данные профиля */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white"
+                  style={{ background: state.profile.avatarColor || 'var(--accent)' }}
+                >
+                  {state.profile.displayName.slice(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="font-bold text-[15px] text-[var(--text)]">
+                    {state.profile.displayName}
+                  </h3>
+                  <p className="text-[13px] text-[var(--text-2)]">
+                    @{state.profile.username}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onNavigate('profile')}
+                className="h-8 px-4 rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)] text-[13px] font-bold transition-colors"
+              >
+                Профиль
+              </button>
+            </div>
+
+            {/* Резервная копия */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
+              <div>
+                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Download size={16} className="text-[var(--accent)]" /> Резервное копирование
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Сохранение всех записей дневника в локальный JSON файл
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="h-9 px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Download size={15} />
+                  <span>Скачать JSON</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-9 px-4 rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)] text-[13px] font-bold inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <Upload size={15} />
+                  <span>Импортировать JSON</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </div>
+            </div>
+
+            {/* Сброс к демо */}
+            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between">
+              <div>
+                <h3 className="text-[15px] font-bold text-rose-500">
+                  Сброс к демо-данным
+                </h3>
+                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+                  Вернуть дневник в исходное состояние
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm('Сбросить все данные дневника к демо-состоянию?')) {
+                    onResetToDefaults()
+                    onNotify('Данные сброшены к демо')
+                  }
+                }}
+                className="h-8 px-4 rounded-full border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 text-[13px] font-bold inline-flex items-center gap-1.5 transition-colors"
+              >
+                <RotateCcw size={14} />
+                <span>Сбросить</span>
+              </button>
+            </div>
+          </div>
+        )
     }
   }
-
-  const handleSyncStreak = async () => {
-    playClick(state.soundEnabled)
-    setIsSyncingStreak(true)
-
-    try {
-      const dates = state.days
-        .map((d) => d.dateISO?.slice(0, 10))
-        .filter((d): d is string => typeof d === 'string')
-
-      const res = await fetch('/api/streak/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ days: dates }),
-      })
-
-      if (res.ok) {
-        playSuccess(state.soundEnabled)
-        onNotify('Стрик успешно синхронизирован с сервером!')
-      } else {
-        onNotify('Ошибка при сохранении снимка на сервере')
-      }
-    } catch {
-      onNotify('Не удалось связаться с сервером')
-    } finally {
-      setIsSyncingStreak(false)
-    }
-  }
-
-  const handleSendTestTg = async () => {
-    playClick(state.soundEnabled)
-    setIsSendingTestMsg(true)
-
-    try {
-      const res = await fetch('/api/telegram/test', { method: 'POST' })
-      const data = (await res.json()) as { success?: boolean; error?: string }
-
-      if (data.success) {
-        playSuccess(state.soundEnabled)
-        onNotify('Тестовое сообщение отправлено в Telegram!')
-      } else {
-        onNotify(data.error || 'Ошибка отправки в Telegram')
-      }
-    } catch {
-      onNotify('Не удалось связаться с Telegram')
-    } finally {
-      setIsSendingTestMsg(false)
-    }
-  }
-
-  const handleReset = () => {
-    if (typeof window !== 'undefined' && window.confirm('Сбросить данные к начальным сид-значениям?')) {
-      onResetToDefaults()
-      playClick(state.soundEnabled)
-      onNotify('Хранилище сброшено к исходным значениям')
-    }
-  }
-
-  const isDefaultAppearance =
-    state.theme === 'x-black' &&
-    state.accent === 'flame' &&
-    state.fontScale === 'regular' &&
-    state.feedDensity === 'cozy'
 
   return (
-    <div className="view-settings">
-      <MobileHeader title="Настройки & Экспорт" />
-
-      <header className="view-header">
+    <div className="min-h-screen pb-24">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
         <button
           type="button"
-          className="back-button"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
           onClick={() => onNavigate('home')}
-          aria-label="Вернуться на главную"
+          aria-label="Назад"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={19} />
         </button>
         <div>
-          <h1>Настройки &amp; Экспорт</h1>
-          <p className="view-subtitle">
-            Оформление, локальное хранилище, звук, безопасность и серверная синхронизация
+          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
+            Настройки
+          </h1>
+          <p className="text-[13px] text-[var(--text-2)]">
+            Персонализация дневника и системы
           </p>
         </div>
       </header>
 
-      <div className="settings-content">
-        {/* ═══ ТЕМА ОФОРМЛЕНИЯ ═══ */}
-        <section className="settings-section appearance-hero" aria-labelledby="theme-title">
-          <div className="appearance-section-head">
-            <div>
-              <b id="theme-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Palette size={16} className="text-[#ff6b35]" /> Тема оформления
-              </b>
-              <small>
-                Активно: <strong style={{ color: 'var(--accent)' }}>{activeTheme.label} · {activeTheme.code}</strong>
-              </small>
-            </div>
-            <span
-              className="appearance-live-badge"
-              style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}
-            >
-              <Eye size={12} /> Применяется мгновенно
-            </span>
-          </div>
+      {/* Main Settings Container */}
+      <div className="max-w-5xl mx-auto md:grid md:grid-cols-[320px_1fr] md:divide-x md:divide-[var(--border)]">
+        {/* Left Column (Desktop) / Section List with Chevrons (Mobile) */}
+        <div className="divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
+          {SECTIONS.map((sec) => {
+            const Icon = sec.icon
+            const isSelected = activeSection === sec.id
 
-          <div className="theme-grid" role="radiogroup" aria-label="Выбор темы оформления">
-            {THEME_PRESETS.map((preset) => {
-              const Icon = THEME_ICONS[preset.id]
-              const active = preset.id === state.theme
-              return (
+            return (
+              <div key={sec.id} className="flex flex-col">
                 <button
-                  key={preset.id}
                   type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={`theme-card ${active ? 'is-active' : ''}`}
-                  onClick={() => handleSelectTheme(preset.id)}
+                  role="tab"
+                  onClick={() => {
+                    playClick(state.soundEnabled)
+                    setActiveSection(sec.id)
+                  }}
+                  className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors ${
+                    isSelected
+                      ? 'bg-[var(--bg-elev)] border-l-4 border-l-[var(--accent)] text-[var(--text)]'
+                      : 'hover:bg-[var(--bg-hover)] text-[var(--text-2)]'
+                  }`}
+                  aria-label={sec.label}
+                  aria-selected={isSelected}
+                  aria-current={isSelected ? 'true' : undefined}
                 >
-                  <span
-                    className="theme-card__preview"
-                    style={{
-                      background: preset.preview.bg,
-                      borderColor: active ? 'var(--accent)' : preset.preview.line,
-                    }}
-                    aria-hidden="true"
-                  >
-                    <span className="theme-card__bar" style={{ background: preset.preview.surface }}>
-                      <span
-                        className="theme-card__dot"
-                        style={{ background: 'var(--accent)' }}
-                      />
-                      <span
-                        className="theme-card__line"
-                        style={{ background: preset.preview.text, opacity: 0.75 }}
-                      />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center flex-none transition-colors ${
+                        isSelected
+                          ? 'bg-[var(--accent)] text-[var(--accent-text)]'
+                          : 'bg-[var(--bg-elev)] text-[var(--text-2)]'
+                      }`}
+                    >
+                      <Icon size={17} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-bold text-[var(--text)] leading-tight">
+                        {sec.label}
+                      </p>
+                      <p className="text-[13px] text-[var(--text-2)] truncate mt-0.5">
+                        {sec.hint}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1 flex-none text-[var(--text-3)] ml-2">
+                    <span className="hidden md:block">
+                      <ChevronRight size={17} />
                     </span>
-                    <span
-                      className="theme-card__line"
-                      style={{ background: preset.preview.muted, width: '82%' }}
-                    />
-                    <span
-                      className="theme-card__line"
-                      style={{ background: preset.preview.muted, width: '64%' }}
-                    />
-                    <span className="theme-card__chip" style={{ background: 'var(--accent)' }} />
-                  </span>
-
-                  <span className="theme-card__meta">
-                    <span className="theme-card__name">
-                      <Icon size={14} />
-                      <b>{preset.label}</b>
+                    <span className="md:hidden">
+                      {isSelected ? <ChevronDown size={17} /> : <ChevronRight size={17} />}
                     </span>
-                    <small>{preset.code}</small>
-                  </span>
-
-                  {active && (
-                    <span className="theme-card__check" aria-hidden="true">
-                      <Check size={13} />
-                    </span>
-                  )}
+                  </div>
                 </button>
-              )
-            })}
-          </div>
 
-          <p className="appearance-hint">{activeTheme.hint}</p>
-        </section>
-
-        {/* ═══ АКЦЕНТНЫЙ ЦВЕТ ═══ */}
-        <section className="settings-section" aria-labelledby="accent-title">
-          <div className="appearance-section-head">
-            <div>
-              <b id="accent-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Zap size={16} style={{ color: 'var(--accent)' }} /> Акцентный цвет
-              </b>
-              <small>
-                Акцент: <strong style={{ color: activeAccent.color }}>{activeAccent.label}</strong>
-              </small>
-            </div>
-          </div>
-
-          <div className="accent-swatches" role="radiogroup" aria-label="Акцентный цвет приложения">
-            {ACCENT_PRESETS.map((accent) => {
-              const active = accent.id === state.accent
-              return (
-                <button
-                  key={accent.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  aria-label={accent.label}
-                  title={accent.label}
-                  className={`accent-swatch ${active ? 'is-active' : ''}`}
-                  style={{ background: accent.color }}
-                  onClick={() => handleSelectAccent(accent.id)}
-                >
-                  {active && <Check size={16} />}
-                </button>
-              )
-            })}
-          </div>
-          <p className="appearance-hint">
-            Акцент меняет активные вкладки, ссылки, прогресс и кнопки действия по всему приложению.
-          </p>
-        </section>
-
-        {/* ═══ РАЗМЕР ШРИФТА ═══ */}
-        <section className="settings-section" aria-labelledby="font-title">
-          <div className="appearance-section-head">
-            <div>
-              <b id="font-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Type size={16} className="text-[#1d9bf0]" /> Размер шрифта
-              </b>
-              <small>
-                Активно: <strong style={{ color: 'var(--accent)' }}>{activeFont.label}</strong> (масштаб{' '}
-                {Math.round(activeFont.scale * 100)}%)
-              </small>
-            </div>
-          </div>
-
-          <div className="font-scale-row" role="radiogroup" aria-label="Размер шрифта">
-            {FONT_SCALE_PRESETS.map((font) => {
-              const active = font.id === state.fontScale
-              return (
-                <button
-                  key={font.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={`font-scale-btn ${active ? 'is-active' : ''}`}
-                  onClick={() => handleSelectFontScale(font.id)}
-                >
-                  <span className="font-scale-btn__sample" style={{ fontSize: `${Math.round(16 * font.scale)}px` }}>
-                    {font.sample}
-                  </span>
-                  <span className="font-scale-btn__label">{font.label}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          <div className="type-preview" aria-hidden="true">
-            <strong>День #{CURRENT_DAY} — я держу слово</strong>
-            <span>
-              Сегодня закрыл важную задачу и провёл вечернюю сверку обещаний. Так выглядит текст при
-              выбранном размере.
-            </span>
-          </div>
-        </section>
-
-        {/* ═══ ПЛОТНОСТЬ ЛЕНТЫ ═══ */}
-        <section className="settings-section" aria-labelledby="density-title">
-          <div className="appearance-section-head">
-            <div>
-              <b id="density-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Rows3 size={16} className="text-[#f5b942]" /> Плотность ленты
-              </b>
-              <small>
-                Активно: <strong style={{ color: 'var(--accent)' }}>{activeDensity.label}</strong>
-              </small>
-            </div>
-          </div>
-
-          <div className="density-grid" role="radiogroup" aria-label="Плотность ленты">
-            {FEED_DENSITY_PRESETS.map((density) => {
-              const active = density.id === state.feedDensity
-              const rows = density.id === 'compact' ? 4 : density.id === 'comfortable' ? 2 : 3
-              return (
-                <button
-                  key={density.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={`density-card density-card--${density.id} ${active ? 'is-active' : ''}`}
-                  onClick={() => handleSelectDensity(density.id)}
-                >
-                  <span className="density-visual" aria-hidden="true">
-                    {Array.from({ length: rows }).map((_, i) => (
-                      <span key={i} className="density-visual__row" />
-                    ))}
-                  </span>
-                  <span className="density-card__meta">
-                    <b>{density.label}</b>
-                    <small>{density.hint}</small>
-                  </span>
-                  {active && (
-                    <span className="theme-card__check" aria-hidden="true">
-                      <Check size={13} />
-                    </span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* ═══ ЖИВОЙ ПРЕДПРОСМОТР ═══ */}
-        <section className="settings-section" aria-labelledby="preview-title" style={{ paddingBottom: 12 }}>
-          <div className="appearance-section-head">
-            <div>
-              <b id="preview-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Sparkles size={16} style={{ color: 'var(--accent)' }} /> Предпросмотр оформления
-              </b>
-              <small>Так будет выглядеть карточка дня с текущими настройками</small>
-            </div>
-          </div>
-
-          <article
-            className="appearance-preview-card"
-            style={{
-              background: activeTheme.preview.bg,
-              borderColor: activeTheme.preview.line,
-              color: activeTheme.preview.text,
-            }}
-          >
-            <div className="appearance-preview-card__head">
-              <span className="appearance-preview-card__avatar" style={{ background: activeAccent.soft, color: activeAccent.color }}>
-                AC
-              </span>
-              <span className="appearance-preview-card__who">
-                <strong>Alexei Cerna</strong>
-                <small style={{ color: activeTheme.preview.muted }}>
-                  День #{CURRENT_DAY} · только что
-                </small>
-              </span>
-              <span className="appearance-preview-card__tag" style={{ background: activeAccent.soft, color: activeAccent.color }}>
-                🔥 Гордость
-              </span>
-            </div>
-            <p style={{ color: activeTheme.preview.text }}>
-              Закрыл спринт и провёл вечернюю сверку обещаний — держу слово четвёртый день подряд.
-            </p>
-            <div className="appearance-preview-card__bar" style={{ background: activeTheme.preview.surface }}>
-              <span style={{ background: activeAccent.color, width: '72%' }} />
-            </div>
-            <div className="appearance-preview-card__actions" style={{ color: activeTheme.preview.muted }}>
-              <span style={{ color: activeAccent.color }}>
-                <Zap size={13} /> Огонёк
-              </span>
-              <span>
-                <Rows3 size={13} /> {activeDensity.label}
-              </span>
-              <span>
-                <Type size={13} /> {activeFont.label}
-              </span>
-            </div>
-          </article>
-        </section>
-
-        <div className="appearance-reset-row">
-          <button
-            type="button"
-            className="appearance-reset-btn"
-            onClick={handleResetAppearance}
-            disabled={isDefaultAppearance}
-            aria-label="Сбросить оформление к заводским значениям"
-          >
-            <RotateCcw size={14} />
-            <span>{isDefaultAppearance ? 'Оформление по умолчанию' : 'Сбросить оформление'}</span>
-          </button>
+                {/* Mobile accordion expansion */}
+                <div className={`md:hidden ${isSelected ? 'block border-b border-[var(--border)] bg-[var(--bg)]' : 'hidden'}`}>
+                  {renderSectionContent(sec.id)}
+                </div>
+              </div>
+            )
+          })}
         </div>
 
-        {/* ═══ ИНТЕРФЕЙС ═══ */}
-        <section className="settings-section" aria-label="Параметры интерфейса">
-          <div className="setting-row">
-            <div>
-              <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Volume2 size={16} /> Звуковые эффекты
-              </b>
-              <small>Ультра-короткие щелчки табов и звук триумфа при записи дня</small>
-            </div>
-            <button
-              type="button"
-              className={`switch ${state.soundEnabled ? 'on' : ''}`}
-              onClick={() => {
-                const next = !state.soundEnabled
-                onSetSoundEnabled(next)
-                if (next) playClick(true)
-                onNotify(next ? 'Звуковые эффекты включены' : 'Звук отключен')
-              }}
-              aria-label={state.soundEnabled ? 'Отключить звук' : 'Включить звук'}
-              aria-pressed={state.soundEnabled}
-            >
-              <i />
-            </button>
-          </div>
-        </section>
-
-        {/* ═══ БЕЗОПАСНОСТЬ И ВХОД (ЭТАП 15) ═══ */}
-        <SecurityPanel onNotify={onNotify} />
-
-        {/* ═══ ПРИВАТНОСТЬ ПРОФИЛЯ (ЭТАП 16) ═══ */}
-        <PrivacyPanel onNotify={onNotify} />
-
-        {/* ═══ НОЧНОЙ ДЕДЛАЙН СТРИКА (ЭТАП 16) ═══ */}
-        <StreakDeadlinePanel onNotify={onNotify} />
-
-        {/* Telegram & Server Streak Synchronization Section */}
-        <section className="settings-section" aria-labelledby="sync-title">
-          <div className="setting-row" style={{ alignItems: 'flex-start' }}>
-            <div>
-              <b id="sync-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Send size={16} className="text-blue-400" /> Telegram &amp; Серверный стрик
-              </b>
-              <small className={tgStatus?.configured ? 'text-green-400' : 'text-muted'}>
-                {tgStatus?.configured
-                  ? `Бот активен (${tgStatus.botUsername ? `@${tgStatus.botUsername}` : 'подключен'})`
-                  : 'Бот не настроен (добавьте TELEGRAM_BOT_TOKEN в .env.local)'}
-              </small>
-            </div>
-            <div className="telegram-status" aria-label="Статус бота">
-              {tgStatus?.configured ? (
-                <Check className="text-green-400" size={20} />
-              ) : (
-                <span className="text-xs text-muted">Офлайн</span>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              className="secondary-btn flex items-center gap-2 text-xs py-2 px-3"
-              onClick={handleSyncStreak}
-              disabled={isSyncingStreak}
-            >
-              {isSyncingStreak ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-              <span>Синхронизировать стрик с сервером</span>
-            </button>
-
-            {tgStatus?.configured && (
-              <button
-                type="button"
-                className="secondary-btn flex items-center gap-2 text-xs py-2 px-3"
-                onClick={handleSendTestTg}
-                disabled={isSendingTestMsg}
-              >
-                {isSendingTestMsg ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-                <span>Тестовое уведомление в Telegram</span>
-              </button>
-            )}
-          </div>
-        </section>
-
-        {/* Local Storage & Backup Section */}
-        <section className="export-section" aria-labelledby="export-title">
-          <div className="export-info">
-            <ShieldCheck size={24} className="stat-icon--orange" />
-            <div>
-              <b id="export-title">Локальное хранилище (Local-first)</b>
-              <p>
-                Все записи (гордости, благодарности, факты Evidence Vault и утренний фокус)
-                хранятся в вашем браузере (схема v2, ключ <code>ogonek.v2</code>). Фотографии сохраняются в оффлайн-базе IndexedDB.
-              </p>
-            </div>
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,application/json"
-            style={{ display: 'none' }}
-            onChange={handleFileSelected}
-            aria-label="Загрузить файл бэкапа"
-          />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-            <button
-              type="button"
-              className="export-button"
-              onClick={handleLoadAuthenticHistory}
-              disabled={isLoadingAuthentic}
-              style={{ color: '#ff8a50', borderColor: 'rgba(255, 107, 53, 0.4)' }}
-              aria-label="Загрузить подлинную историю из архива (719 дней)"
-            >
-              {isLoadingAuthentic ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-              <span>Загрузить подлинную историю (719 дней)</span>
-            </button>
-
-            <button
-              type="button"
-              className="export-button"
-              onClick={handleExportBackup}
-              aria-label="Экспорт бэкапа в формате JSON"
-            >
-              <Download size={18} />
-              <span>Экспорт бэкапа (.json)</span>
-            </button>
-
-            <button
-              type="button"
-              className="export-button"
-              onClick={handleImportClick}
-              style={{ color: '#53d3a3', borderColor: '#234d3d' }}
-              aria-label="Импорт бэкапа из файла JSON"
-            >
-              <Upload size={18} />
-              <span>Импорт бэкапа (.json)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              style={{
-                marginTop: 8,
-                padding: '10px',
-                background: 'none',
-                border: 0,
-                color: 'var(--muted)',
-                fontSize: 12,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 6,
-              }}
-            >
-              <RefreshCw size={13} />
-              <span>Сбросить хранилище к исходным значениям</span>
-            </button>
-          </div>
-        </section>
-
-        {/* ═══ ПОЛНЫЙ ЭКСПОРТ / ИМПОРТ И СИНХРОНИЗАЦИЯ (ЭТАП 16) ═══ */}
-        <BackupSyncPanel onNotify={onNotify} />
-
-        {/* ═══ ОБЛАЧНАЯ СИНХРОНИЗАЦИЯ SUPABASE (ЭТАП 19) ═══ */}
-        <SupabaseSyncPanel onNotify={onNotify} />
+        {/* Right Column (Desktop only pane) */}
+        <div className="hidden md:block min-h-[500px]">
+          {renderSectionContent(activeSection)}
+        </div>
       </div>
     </div>
   )

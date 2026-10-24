@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Mic, Send, Shield, Sparkles, Users, X } from 'lucide-react'
+import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -295,8 +295,9 @@ export function Composer({
   const filledGratitudes = gratitudes.filter((g) => g.trim().length > 0)
   const totalFilled = filledPrides.length + filledGratitudes.length
 
-  // Validation: require at least 5 pride entries to publish
-  const canPublish = filledPrides.length >= 5
+  const userLevel = storeState.profile?.level || 3
+  // Validation: require at least level entries to publish (Правило 1 ТЗ)
+  const canPublish = filledPrides.length >= userLevel
   // Can save as draft with any content
   const canDraft = totalFilled > 0
 
@@ -448,6 +449,25 @@ export function Composer({
 
   const displayDayId = editingDay?.id ?? nextDayId
 
+  const [activeSlot, setActiveSlot] = useState(0)
+  const activeValue = currentValues[activeSlot] || ''
+
+  const handleActiveChange = (val: string) => {
+    if (tab === 'pride') {
+      setPrides((prev) => {
+        const next = [...prev]
+        next[activeSlot] = val
+        return next
+      })
+    } else {
+      setGratitudes((prev) => {
+        const next = [...prev]
+        next[activeSlot] = val
+        return next
+      })
+    }
+  }
+
   const storyDayLabel = (() => {
     const iso = editingDay?.dateISO || dateISO
     if (!iso) return undefined
@@ -460,345 +480,157 @@ export function Composer({
     <ModalShell
       title={editingDay ? `Редактировать День #${editingDay.id}` : `Записать День #${displayDayId ?? '?'}`}
       onClose={onClose}
+      hideHeader
       closeOnEscape={storyModalIndex === null}
     >
-      <p className="text-[13px] leading-[18px] text-[#71767b]">
-        {editingDay
-          ? `День #${editingDay.id} · редактируй формулировки и оценки дня.`
-          : `День #${displayDayId ?? '?'} · добавь факты, которые хочется помнить.`}
-      </p>
-
-      {/* Date picker — only for new days */}
-      {!editingDay && (
-        <div className="mb-4 mt-3 flex items-center gap-2">
-          <CalendarDays size={15} className="flex-none text-[#71767b]" />
-          <label className="flex-none text-xs text-[#71767b]">Дата дня:</label>
-          <input
-            type="date"
-            value={dateValue}
-            onChange={(e) => {
-              if (e.target.value) {
-                setDateISO(new Date(e.target.value).toISOString())
-              }
-            }}
-            className="cursor-pointer rounded-md border border-zinc-800/80 bg-black px-2 py-1 text-xs text-[#e7e9ea] [color-scheme:dark]"
-            aria-label="Дата записи дня"
-          />
-        </div>
-      )}
-
-      {/* Segmented tab switcher */}
-      <div
-        className="mt-4 flex rounded-full border border-zinc-800/80 bg-black p-1"
-        role="tablist"
-        aria-label="Разделы записи"
-      >
+      {/* ── X.COM CANONICAL COMPOSER ────────────────────────────────────────── */}
+      {/* 1. Хедер: крестик слева, «Записать» справа; сверху сегменты Гордость | Благодарность и прогресс-точки «3/5» */}
+      <div className="flex items-center justify-between pb-3 mb-2 border-b border-[var(--border)] gap-2">
         <button
           type="button"
-          role="tab"
-          aria-selected={tab === 'pride'}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-bold transition-colors duration-150 ${
-            tab === 'pride' ? 'bg-[#202327] text-[#ffad5a]' : 'text-[#71767b] hover:text-[#e7e9ea]'
-          }`}
-          onClick={() => {
-            playClick(soundEnabled)
-            setTab('pride')
-          }}
+          onClick={onClose}
+          aria-label="Закрыть"
+          className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
         >
-          <Flame size={14} /> Гордости
+          <X size={20} />
         </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'gratitude'}
-          className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-[13px] font-bold transition-colors duration-150 ${
-            tab === 'gratitude' ? 'bg-[#202327] text-[#ff73ab]' : 'text-[#71767b] hover:text-[#e7e9ea]'
-          }`}
-          onClick={() => {
-            playClick(soundEnabled)
-            setTab('gratitude')
-          }}
-        >
-          <Heart size={14} /> Благодарности
-        </button>
-      </div>
 
-      {/* ЭТАП 9 — Приватность всего дня */}
-      <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-white/[0.02] p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
-            <span className="flex items-center gap-1.5 text-[13px] font-bold text-[#e7e9ea]">
-              <Shield size={14} className="text-[#ff8a50]" /> Приватность дня
-            </span>
-            <span className="mt-0.5 block text-[11px] leading-[14px] text-[#71767b]">
-              Кто увидит день и по умолчанию — каждую гордость
+        {/* Сверху сегменты Гордость | Благодарность и прогресс-точки «3/5» */}
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-full bg-[var(--bg-elev)] p-0.5 border border-[var(--border)]" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'pride'}
+              onClick={() => {
+                playClick(soundEnabled)
+                setTab('pride')
+              }}
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
+                tab === 'pride'
+                  ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm'
+                  : 'text-[var(--text-2)] hover:text-[var(--text)]'
+              }`}
+            >
+              Гордость
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tab === 'gratitude'}
+              onClick={() => {
+                playClick(soundEnabled)
+                setTab('gratitude')
+              }}
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
+                tab === 'gratitude'
+                  ? 'bg-rose-500 text-white shadow-sm'
+                  : 'text-[var(--text-2)] hover:text-[var(--text)]'
+              }`}
+            >
+              Благодарность
+            </button>
+          </div>
+
+          <div
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)]"
+            title={`Заполнено ${tab === 'pride' ? filledPrides.length : filledGratitudes.length} из 5`}
+          >
+            {Array.from({ length: 5 }).map((_, idx) => {
+              const isFilled = tab === 'pride' ? idx < filledPrides.length : idx < filledGratitudes.length
+              return (
+                <div
+                  key={idx}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    isFilled ? 'bg-[var(--accent)] scale-110' : 'bg-[var(--text-3)]/30'
+                  }`}
+                />
+              )
+            })}
+            <span className="text-[12px] font-mono font-bold text-[var(--text-2)] ml-0.5">
+              {tab === 'pride' ? filledPrides.length : filledGratitudes.length}/5
             </span>
           </div>
-          <VisibilitySwitcher
-            value={dayVisibility}
-            onChange={setDayVisibility}
-            soundEnabled={soundEnabled}
-          />
         </div>
-        {tab === 'pride' && (
-          <button
-            type="button"
-            className="mt-2.5 flex items-center gap-1.5 text-[12px] font-bold text-[#1d9bf0] transition-colors hover:underline"
-            onClick={() => {
-              playClick(soundEnabled)
-              setPrideVis(() => {
-                const next: Record<number, VisibilityLevel> = {}
-                prides.forEach((_, i) => {
-                  next[i] = dayVisibility
-                })
-                return next
-              })
-            }}
-          >
-            <Check size={13} /> Применить ко всем гордостям дня
-          </button>
-        )}
+
+        {/* Кнопка «Записать» справа */}
+        <button
+          type="button"
+          onClick={handlePublish}
+          disabled={isPublishing || (editingDay ? totalFilled === 0 : !canPublish)}
+          className="x-primary-btn px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] disabled:opacity-40 shadow-sm"
+        >
+          {isPublishing ? 'Запись…' : 'Записать'}
+        </button>
       </div>
 
-      {/* ЭТАП 22 — быстрые умные подсказки "О чем написать сегодня?" */}
-      <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-white/[0.02] p-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-[13px] font-bold text-[#e7e9ea]">
-            О чем написать сегодня?
-          </span>
-          <span className="text-[11px] text-[#71767b]">
-            Вопросы-триггеры по сферам помогут вспомнить гордости и благодарности
-          </span>
-        </div>
-
-        <div
-          className="mt-2 flex flex-wrap gap-2"
-          role="tablist"
-          aria-label="Сферы подсказок"
-        >
-          {COMPOSER_PROMPT_SPHERES.map((sphere) => {
-            const Icon = sphere.Icon
-            const isActive = sphere.id === promptSphereId
+      {/* Переключатель слотов пунктов 1..5 */}
+      <div className="flex items-center justify-between gap-2 py-1 mb-1">
+        <div className="flex items-center gap-1.5" role="group" aria-label="Пункты записи">
+          {[0, 1, 2, 3, 4].map((slot) => {
+            const val = currentValues[slot] || ''
+            const isFilled = val.trim().length > 0
+            const isActive = activeSlot === slot
             return (
               <button
-                key={sphere.id}
+                key={slot}
                 type="button"
-                role="tab"
-                aria-selected={isActive}
                 onClick={() => {
                   playClick(soundEnabled)
-                  setPromptSphereId(sphere.id)
+                  setActiveSlot(slot)
                 }}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-bold transition-colors duration-150 ${
+                className={`w-8 h-8 rounded-full font-mono text-[13px] font-bold transition-all flex items-center justify-center min-h-[34px] min-w-[34px] ${
                   isActive
-                    ? 'border-[#ffad5a] bg-[#ffad5a]/10 text-[#ffad5a]'
-                    : 'border-zinc-800/80 text-[#71767b] hover:text-[#e7e9ea]'
+                    ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm ring-2 ring-[var(--accent)]/30'
+                    : isFilled
+                    ? 'bg-[var(--bg-elev)] text-[var(--text)] border border-[var(--accent)]'
+                    : 'bg-[var(--bg-elev)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
                 }`}
+                title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'}`}
               >
-                <Icon size={13} /> {sphere.label}
+                {slot + 1}
               </button>
             )
           })}
         </div>
 
-        <ul className="mt-3 flex flex-col gap-1.5" aria-label="Вопросы-триггеры">
-          {(COMPOSER_PROMPT_SPHERES.find((s) => s.id === promptSphereId)?.questions ?? []).map(
-            (question) => {
-              const isApplied = activePrompt === question
-              return (
-                <li key={question}>
-                  <button
-                    type="button"
-                    onClick={() => applyPrompt(question)}
-                    className={`w-full rounded-xl border px-3 py-2 text-left text-[13px] leading-[18px] transition-colors duration-150 ${
-                      isApplied
-                        ? 'border-[#1d9bf0] bg-[#1d9bf0]/10 text-[#1d9bf0]'
-                        : 'border-zinc-800/80 text-[#e7e9ea] hover:bg-white/[0.04]'
-                    }`}
-                  >
-                    {question}
-                  </button>
-                </li>
-              )
-            }
-          )}
-        </ul>
+        <span className="text-[13px] text-[var(--text-2)]">
+          {tab === 'pride' ? `Гордость #${activeSlot + 1}` : `Благодарность #${activeSlot + 1}`}
+        </span>
       </div>
 
-      {/* Fields — numbered rows with hairline dividers */}
-      <div className="mt-1 flex flex-col">
-        {visibleValues.map((val, i) => {
-          const ev = tab === 'pride' ? evaluations[i] : null
+      {/* 2. Большое поле 20px без рамки */}
+      <textarea
+        rows={4}
+        value={activeValue}
+        onChange={(e) => handleActiveChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey && activeValue.trim().length > 0 && activeSlot < 4) {
+            e.preventDefault()
+            setActiveSlot(activeSlot + 1)
+          }
+        }}
+        placeholder={
+          tab === 'pride'
+            ? 'Что получилось? Чем гордишься сегодня?'
+            : 'За что благодарен сегодня?'
+        }
+        className="w-full bg-transparent text-[20px] leading-[28px] text-[var(--text)] placeholder:text-[var(--text-3)] border-0 outline-none resize-none p-0 focus:ring-0 my-3 min-h-[130px]"
+        aria-label={`Пункт ${activeSlot + 1}`}
+      />
 
-          return (
-            <div key={`${tab}-${i}`}>
-              <div className="flex items-center gap-3 border-b border-zinc-800/80">
-                <span
-                  className={`w-5 flex-none text-center text-[13px] font-bold ${
-                    tab === 'pride' ? 'text-[#ffad5a]' : 'text-[#ff73ab]'
-                  }`}
-                >
-                  {i + 1}
-                </span>
-                <input
-                  value={val}
-                  onChange={(e) => handleInputChange(i, e.target.value)}
-                  placeholder={
-                    tab === 'pride'
-                      ? 'Что сегодня получилось?'
-                      : 'За что благодарен сегодня?'
-                  }
-                  aria-label={`Пункт ${i + 1} в разделе ${
-                    tab === 'pride' ? 'Гордости' : 'Благодарности'
-                  }`}
-                  className="min-w-0 flex-1 bg-transparent py-2.5 text-[15px] leading-[23px] text-[#e7e9ea] placeholder:text-[#71767b] focus:outline-none"
-                />
-                <button
-                  type="button"
-                  className={`grid h-8 w-8 flex-none place-items-center rounded-full transition-colors duration-150 ${
-                    recording === i
-                      ? 'animate-pulse bg-[#ff6b35]/15 text-[#ff6b35]'
-                      : 'text-[#71767b] hover:bg-white/[0.08] hover:text-[#e7e9ea]'
-                  }`}
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    setRecording(recording === i ? null : i)
-                  }}
-                  aria-label={`Записать голос для пункта ${i + 1}`}
-                >
-                  <Mic size={17} />
-                </button>
-              </div>
-
-              {ev && (
-                <div className="flex items-center justify-between pt-1.5 text-xs text-[#71767b]">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-orange-400">Оценка: {ev.scale}/10</span>
-                    <span>·</span>
-                    <span className="font-semibold text-amber-400">Преодоление: {ev.overcome}/3</span>
-                    <span>·</span>
-                    <span className="max-w-[200px] truncate italic" title={ev.verdict}>
-                      «{ev.verdict}»
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[11px] text-[#71767b]">Балл:</span>
-                    <select
-                      value={ev.scale}
-                      onChange={(e) => {
-                        const newScale = parseInt(e.target.value, 10)
-                        setRatingsAreDefault(false)
-                        setEvaluations((prev) => ({
-                          ...prev,
-                          [i]: {
-                            scale: newScale,
-                            overcome: prev[i]?.overcome ?? 0,
-                            tags: prev[i]?.tags ?? [],
-                            verdict: 'Изменено пользователем',
-                          },
-                        }))
-                      }}
-                      className="cursor-pointer rounded-md border border-zinc-800/80 bg-black px-1.5 py-0.5 text-xs text-[#e7e9ea]"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                        <option key={num} value={num}>
-                          {num}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {tab === 'pride' && (
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 pl-8 pr-1">
-                  <VisibilitySwitcher
-                    size="sm"
-                    value={normalizeVisibility(prideVis[i] ?? dayVisibility)}
-                    onChange={(level) => setPrideVis((prev) => ({ ...prev, [i]: level }))}
-                    soundEnabled={soundEnabled}
-                  />
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[#71767b]">
-                      гордость #{i + 1}
-                    </span>
-                    <Tooltip content="Опубликовать эту гордость в Сторис" side="top">
-                      <button
-                        type="button"
-                        className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-2.5 py-1 text-[11px] font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
-                        onClick={() => {
-                          playClick(soundEnabled)
-                          setStoryModalIndex(i)
-                        }}
-                        disabled={!val.trim()}
-                      >
-                        <Send size={12} className="text-[#ff6b35]" />
-                        В Сторис
-                      </button>
-                    </Tooltip>
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {!extra && (
-        <button
-          type="button"
-          className="mt-3 flex items-center gap-1.5 text-[13px] font-bold text-[#1d9bf0] transition-colors hover:underline"
-          onClick={() => {
-            playClick(soundEnabled)
-            setExtra(true)
-          }}
-        >
-          <ListPlus size={16} /> Добавить 6-й пункт
-        </button>
-      )}
-
-      {/* Validation hint */}
-      {!editingDay && filledPrides.length < 5 && filledPrides.length > 0 && (
-        <p className="mt-2 pl-1 text-xs text-amber-500">
-          ⚠ Заполните минимум 5 гордостей для публикации ({filledPrides.length}/5)
-        </p>
-      )}
-
-      <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-2xl border border-zinc-800/80 px-4 py-3 transition-colors duration-150 hover:bg-white/[0.03]">
-        <ImagePlus size={22} className="flex-none text-[#1d9bf0]" />
-        <div className="min-w-0">
-          <b className="block text-[14px] font-bold text-[#e7e9ea]">
-            {preview ? 'Фото добавлено ✓' : 'Добавить воспоминания'}
-          </b>
-          <small className="mt-0.5 block text-[12px] text-[#71767b]">
-            Перетащи фото или выбери файл
-          </small>
-        </div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="sr-only"
-          aria-label="Загрузить фото воспоминания"
-        />
-      </label>
-
+      {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative mt-2">
-          <img
-            className="w-full rounded-2xl object-cover"
-            style={{ maxHeight: 240, objectFit: 'cover' }}
-            src={preview.startsWith('photo_') ? undefined : preview}
-            alt="Предпросмотр загруженной фотографии"
-          />
+        <div className="relative mb-3 rounded-2xl overflow-hidden border border-[var(--border)] max-h-[160px]">
+          <img src={preview} alt="Фото" className="w-full h-full object-cover" />
           <button
             type="button"
-            className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white transition-colors hover:bg-black/80"
             onClick={() => {
               setPreview(null)
               setPhotoId(null)
               previewRef.current = null
             }}
+            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black min-h-[32px] min-w-[32px]"
             aria-label="Удалить фото"
           >
             <X size={14} />
@@ -806,75 +638,112 @@ export function Composer({
         </div>
       )}
 
-      <footer className="mt-5 flex items-center justify-between gap-3 border-t border-zinc-800/80 pt-4">
-        <div className="flex items-center gap-2">
-          {tab === 'pride' && filledPrides.length > 0 && (
-            <Tooltip content="Оценить масштаб и преодоление через AI или эвристику" side="top">
-              <button
-                type="button"
-                className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-3 py-1.5 text-xs font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06] disabled:opacity-50"
-                onClick={handleEvaluateAi}
-                disabled={isEvaluating || isPublishing}
-              >
-                {isEvaluating ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : (
-                  <Sparkles size={14} className="text-yellow-400" />
-                )}
-                <span>{isEvaluating ? 'Оцениваем...' : '⚡ Оценить через AI'}</span>
-              </button>
-            </Tooltip>
-          )}
-          <span className="text-[12px] text-[#71767b]">
-            {totalFilled} {totalFilled === 1 ? 'запись' : totalFilled < 5 ? 'записи' : 'записей'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Save as draft button */}
-          {!editingDay && canDraft && (
-            <Tooltip content="Сохранить черновик и продолжить позже" side="top">
-              <button
-                type="button"
-                className="flex items-center gap-1.5 rounded-full border border-zinc-800/80 px-3 py-1.5 text-xs font-bold text-[#e7e9ea] transition-colors duration-150 hover:bg-white/[0.06]"
-                onClick={handleSaveDraft}
-              >
-                <BookmarkCheck size={14} className="text-blue-400" />
-                <span>Черновик</span>
-              </button>
-            </Tooltip>
-          )}
-
-          {/* Publish button */}
-          <Tooltip
-            content={
-              !canPublish && !editingDay
-                ? 'Заполните минимум 5 гордостей'
-                : editingDay
-                  ? 'Сохранить изменения'
-                  : 'Опубликовать день'
-            }
-            side="top"
-          >
+      {/* 3. Под полем ряд иконок (оценка, приватность, эмодзи, «Нужна идея?», «Оценить с ИИ»), справа счётчик */}
+      <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border)]">
+        <div className="flex items-center gap-1.5" role="group" aria-label="Инструменты записи">
+          {/* Оценка */}
+          {tab === 'pride' && (
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-full bg-[#1d9bf0] px-5 py-2 text-[15px] font-bold text-white transition-colors duration-150 hover:bg-[#1a8cd8] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-[#1d9bf0]"
-              onClick={handlePublish}
-              disabled={isPublishing || (editingDay ? totalFilled === 0 : !canPublish)}
+              onClick={() => {
+                playClick(soundEnabled)
+                const currentRating = evaluations[activeSlot]?.scale ?? 8
+                const nextRating = currentRating >= 10 ? 6 : currentRating + 1
+                setEvaluations((prev) => ({
+                  ...prev,
+                  [activeSlot]: {
+                    scale: nextRating,
+                    overcome: 1,
+                    tags: [],
+                    verdict: 'Оценка пользователя',
+                  },
+                }))
+                setRatingsAreDefault(false)
+                onNotify?.(`Оценка гордости #${activeSlot + 1}: ${nextRating}/10 ★`)
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
+              title={`Оценка: ${evaluations[activeSlot]?.scale ?? 8}/10`}
+              aria-label="Задать оценку"
             >
-              {isPublishing ? (
-                <>
-                  <Loader2 size={17} className="animate-spin" /> Оцениваю...
-                </>
-              ) : (
-                <>
-                  <Check size={17} /> {editingDay ? 'Сохранить изменения' : 'Опубликовать день'}
-                </>
-              )}
+              <Star size={18} className="fill-amber-400" />
             </button>
-          </Tooltip>
+          )}
+
+          {/* Приватность */}
+          <button
+            type="button"
+            onClick={() => {
+              playClick(soundEnabled)
+              const next = dayVisibility === 'public' ? 'private' : 'public'
+              setDayVisibility(next)
+              onNotify?.(next === 'public' ? 'Виден в общей ленте' : 'Личная запись (только себе)')
+            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
+            title={`Приватность: ${dayVisibility === 'public' ? 'Общая' : 'Личная'}`}
+            aria-label="Переключить приватность"
+          >
+            {dayVisibility === 'public' ? <Shield size={18} /> : <Lock size={18} />}
+          </button>
+
+          {/* Фото / Медиа */}
+          <label
+            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer min-h-[40px] min-w-[40px]"
+            title="Прикрепить фото"
+            aria-label="Прикрепить фото"
+          >
+            <ImagePlus size={18} />
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="sr-only"
+            />
+          </label>
+
+          {/* «Нужна идея?» */}
+          <button
+            type="button"
+            onClick={() => {
+              playClick(soundEnabled)
+              const sphere = COMPOSER_PROMPT_SPHERES[Math.floor(Math.random() * COMPOSER_PROMPT_SPHERES.length)]
+              const question = sphere.questions[Math.floor(Math.random() * sphere.questions.length)]
+              handleActiveChange(question)
+              onNotify?.(`💡 Подсказка: ${question}`)
+            }}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
+            title="Нужна идея?"
+            aria-label="Нужна идея?"
+          >
+            <Sparkles size={18} />
+          </button>
+
+          {/* «Оценить с ИИ» */}
+          {tab === 'pride' && (
+            <button
+              type="button"
+              disabled={isEvaluating}
+              onClick={handleEvaluateAi}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 min-h-[40px] min-w-[40px]"
+              title="Оценить с ИИ"
+              aria-label="Оценить с ИИ"
+            >
+              {isEvaluating ? <Loader2 size={18} className="animate-spin" /> : <Flame size={18} />}
+            </button>
+          )}
         </div>
-      </footer>
+
+        {/* Справа счётчик */}
+        <div className="flex items-center gap-2">
+          {activeValue.length > 0 && (
+            <span className="text-[12px] text-[var(--text-3)] font-mono">
+              {activeValue.length} симв.
+            </span>
+          )}
+          <span className="text-[13px] font-bold text-[var(--text-2)] font-mono">
+            {activeSlot + 1}/5
+          </span>
+        </div>
+      </div>
 
       {storyModalIndex !== null &&
         typeof document !== 'undefined' &&

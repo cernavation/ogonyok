@@ -103,6 +103,7 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
   }
 
   const daysCount = calculateStreak(storeState.days)
+  const streakInfo = { streak: daysCount, best: daysCount }
   const isFlameProof = daysCount >= 100
   const isChronicler = daysCount >= 500
   const isDepthMaster = highOvercomeCount >= 10

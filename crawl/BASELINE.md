@@ -1,8 +1,8 @@
 # Отчёт обхода интерфейса и кнопок (CRAWL BASELINE)
 
-> **Дата замера:** 2026-10-24T06:58:59.220Z  
+> **Дата замера:** 2026-10-24T07:21:32.286Z  
 > **Режим:** Быстрый (--fast, Desktop 1440×900, Dark)  
-> **Длительность обхода:** 19.0 сек  
+> **Длительность обхода:** 10.8 сек  
 > **Всего проверено экранов:** 9  
 
 ---
@@ -11,9 +11,9 @@
 
 | Метрика | Значение | Статус |
 | :--- | :---: | :--- |
-| **Всего обнаружено кнопок и кликабельных зон** | **245** | — |
-| **Живые интерактивные кнопки** | **213** | 🟢 OK |
-| **Законные пассивные кнопки (`CONFIG.deadOk`)** | **32** | 🟢 OK (активные табы, disabled) |
+| **Всего обнаружено кнопок и кликабельных зон** | **240** | — |
+| **Живые интерактивные кнопки** | **209** | 🟢 OK |
+| **Законные пассивные кнопки (`CONFIG.deadOk`)** | **31** | 🟢 OK (активные табы, disabled) |
 | **Мёртвые кнопки (Dead Buttons)** | **0** | 🟢 0 дефектов |
 | **Критические ошибки JS (Uncaught)** | **0** | 🟢 0 ошибок |
 
@@ -29,9 +29,9 @@
 
 | Экран | Разрешение | Тема | Всего кнопок | Живых | DeadOk | Мёртвых | Скриншот |
 | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Главная** | Desktop Standard (1440×900) | Dark (x-black) | 33 | 25 | 8 | **0** | [`desktop-1440-x-black-home.png`](./desktop-1440-x-black-home.png) |
+| **Главная** | Desktop Standard (1440×900) | Dark (x-black) | 33 | 26 | 7 | **0** | [`desktop-1440-x-black-home.png`](./desktop-1440-x-black-home.png) |
 | **Поиск** | Desktop Standard (1440×900) | Dark (x-black) | 20 | 19 | 1 | **0** | [`desktop-1440-x-black-explore.png`](./desktop-1440-x-black-explore.png) |
-| **Чаты** | Desktop Standard (1440×900) | Dark (x-black) | 27 | 22 | 5 | **0** | [`desktop-1440-x-black-messages.png`](./desktop-1440-x-black-messages.png) |
+| **Чаты** | Desktop Standard (1440×900) | Dark (x-black) | 22 | 17 | 5 | **0** | [`desktop-1440-x-black-messages.png`](./desktop-1440-x-black-messages.png) |
 | **Evidence Vault** | Desktop Standard (1440×900) | Dark (x-black) | 27 | 26 | 1 | **0** | [`desktop-1440-x-black-vault.png`](./desktop-1440-x-black-vault.png) |
 | **Статистика** | Desktop Standard (1440×900) | Dark (x-black) | 24 | 19 | 5 | **0** | [`desktop-1440-x-black-analytics.png`](./desktop-1440-x-black-analytics.png) |
 | **Рейтинг** | Desktop Standard (1440×900) | Dark (x-black) | 26 | 23 | 3 | **0** | [`desktop-1440-x-black-leaderboard.png`](./desktop-1440-x-black-leaderboard.png) |

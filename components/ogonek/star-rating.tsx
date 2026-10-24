@@ -98,13 +98,13 @@ export function StarRating({
           playClick(soundEnabled)
           setOpen((v) => !v)
         }}
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] leading-[16px] font-bold transition-colors duration-150 ${
+        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 min-h-[40px] sm:min-h-[34px] text-[13px] font-bold transition-colors duration-150 ${
           hasRating
             ? 'text-amber-400 bg-amber-400/10 hover:bg-amber-400/20'
-            : 'text-[#71767b] hover:text-amber-400 hover:bg-amber-400/10'
+            : 'text-[var(--text-2)] hover:text-amber-400 hover:bg-amber-400/10'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
-        <Star size={12} fill={hasRating ? 'currentColor' : 'none'} />
+        <Star size={14} fill={hasRating ? 'currentColor' : 'none'} />
         <span>{hasRating ? `${clamped}/${max}` : 'Оценить'}</span>
       </button>
 
@@ -116,20 +116,20 @@ export function StarRating({
           initial={reduce ? { opacity: 1 } : { opacity: 0, y: 6, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: reduce ? 0 : 0.14, ease: 'easeOut' }}
-          className="absolute right-0 bottom-full mb-2 z-30 rounded-2xl border border-[#2f3336] bg-[#0b0c0d] shadow-[0_18px_50px_rgba(0,0,0,0.6)] px-3 py-2.5"
+          className="absolute right-0 bottom-full mb-2 z-30 rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] shadow-[0_18px_50px_rgba(0,0,0,0.6)] px-3 py-2.5"
           style={{ width: 'max-content' }}
         >
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#71767b]">
+            <span className="text-[13px] font-bold uppercase tracking-wider text-[var(--text-2)]">
               {label}
             </span>
-            <span className="text-[11px] font-bold text-amber-400 tabular-nums">
+            <span className="text-[13px] font-bold text-amber-400 tabular-nums">
               {active > 0 ? `${active}/${max}` : '—'}
             </span>
           </div>
 
           <div
-            className="flex items-center gap-0.5"
+            className="flex items-center gap-1"
             onMouseLeave={() => setHover(null)}
             role="radiogroup"
             aria-label={label}
@@ -146,7 +146,7 @@ export function StarRating({
                   onMouseEnter={() => setHover(n)}
                   onFocus={() => setHover(n)}
                   onClick={() => commit(n)}
-                  className="p-0.5 rounded transition-transform duration-100 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60"
+                  className="w-8 h-8 flex items-center justify-center rounded transition-transform duration-100 hover:scale-125 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/60"
                 >
                   <Star
                     size={SIZE}
@@ -159,17 +159,17 @@ export function StarRating({
             })}
           </div>
 
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#2f3336]">
-            <span className="text-[11px] text-[#71767b]">
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-[var(--border)] gap-3">
+            <span className="text-[13px] text-[var(--text-2)]">
               {hasRating ? `Текущая: ${clamped}` : 'Оценка не поставлена'}
             </span>
             {onClear && hasRating && (
               <button
                 type="button"
                 onClick={clear}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#71767b] hover:text-[#e7e9ea] transition-colors"
+                className="inline-flex items-center gap-1 text-[13px] font-bold text-[var(--text-2)] hover:text-[var(--text)] transition-colors min-h-[32px] px-2 py-1 rounded-full hover:bg-[var(--bg-hover)]"
               >
-                <RotateCcw size={11} /> Сбросить
+                <RotateCcw size={13} /> Сбросить
               </button>
             )}
           </div>

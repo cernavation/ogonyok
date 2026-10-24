@@ -52,10 +52,10 @@ export function VisibilitySwitcher({
         </span>
       )}
       <div
-        className={`inline-flex items-center gap-0.5 rounded-full border border-zinc-800/80 bg-black p-0.5 ${
+        className={`inline-flex items-center gap-1 rounded-full border border-zinc-800/80 bg-black p-0.5 ${
           disabled ? 'opacity-50' : ''
         }`}
-        role="radiogroup"
+        role="group"
         aria-label={label ?? 'Приватность записи'}
       >
         {VISIBILITY_LEVELS.map((level) => {
@@ -65,14 +65,14 @@ export function VisibilitySwitcher({
             <button
               key={level.id}
               type="button"
-              role="radio"
-              aria-checked={isActive}
+              role="button"
+              aria-pressed={isActive}
               aria-label={level.label}
               disabled={disabled}
               onClick={() => handleSelect(level.id)}
               className={`flex items-center gap-1.5 rounded-full font-bold transition-colors duration-150 disabled:cursor-not-allowed ${
-                size === 'sm' ? 'h-7 w-7 justify-center' : 'px-3 py-1.5 text-[12px]'
-              } ${isActive ? '' : 'text-[#71767b] hover:bg-white/[0.06] hover:text-[#e7e9ea]'}`}
+                size === 'sm' ? 'h-9 w-9 min-h-[36px] min-w-[36px] justify-center' : 'px-3.5 py-1.5 min-h-[36px] sm:min-h-[34px] text-[13px]'
+              } ${isActive ? '' : 'text-[#8b98a5] hover:bg-white/[0.06] hover:text-[#e7e9ea]'}`}
               style={isActive ? { color: level.color, background: `${level.color}22` } : undefined}
             >
               <Icon size={size === 'sm' ? 13 : 14} />

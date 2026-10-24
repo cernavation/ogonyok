@@ -23,21 +23,21 @@ export function MobileHeader({
     <header className="mobile-header">
       <button
         type="button"
-        className="brand-flame p-0 border-0 bg-transparent cursor-pointer"
+        className="brand-flame p-0 border-0 bg-transparent cursor-pointer w-10 h-10 flex items-center justify-center"
         onClick={onOpenProfile}
         aria-label="Профиль Alexei Cerna"
       >
-        <span className="avatar avatar-photo" style={{ width: 28, height: 28, fontSize: 11 }}>AC</span>
+        <span className="avatar avatar-photo" style={{ width: 32, height: 32, fontSize: 13 }}>AC</span>
       </button>
       <b>{title}</b>
       <button
         type="button"
         onClick={onOpenProfile}
-        className="day-pill cursor-pointer border-0"
+        className="day-pill cursor-pointer border-0 min-h-[40px] px-3.5 flex items-center gap-1"
         aria-label={`Текущий стрик: ${streak} дней`}
       >
-        <FlameIcon status={streakStatus} hoursLeft={hoursLeft} size={14} />
-        <span className="ml-1">{streak}</span>
+        <FlameIcon status={streakStatus} hoursLeft={hoursLeft} size={16} />
+        <span className="ml-1 text-[13px] font-bold">{streak}</span>
       </button>
     </header>
   )

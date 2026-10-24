@@ -49,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" suppressHydrationWarning>
       <body className="antialiased">
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SECURITY_BOOTSTRAP_SCRIPT }} />

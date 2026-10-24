@@ -94,7 +94,7 @@ export function ReactionBar({
   )
 
   return (
-    <div className="relative flex flex-wrap items-center gap-1.5">
+    <div className="relative flex flex-wrap items-center gap-2" role="group" aria-label="Реакции">
       {/* Всплывающие эмодзи */}
       <AnimatePresence>
         {floats.map((f) => (
@@ -127,17 +127,17 @@ export function ReactionBar({
                   ? `Убрать реакцию ${emoji.label} (${count})`
                   : `Поставить реакцию ${emoji.label}`
               }
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[15px] leading-none transition-colors duration-150 ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[15px] leading-none transition-colors duration-150 min-h-[34px] min-w-[34px] ${
                 active
-                  ? 'border-[#ff6b35] bg-[#ff6b35]/15 text-[#ffad5a]'
-                  : 'border-transparent bg-transparent text-[#71767b] hover:bg-white/[0.06] hover:border-[#2f3336]'
+                  ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                  : 'border-[var(--border)] bg-transparent text-[var(--text-2)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               <span aria-hidden="true">{emoji.char}</span>
               {count > 0 && (
                 <span
-                  className={`text-[11px] font-bold tabular-nums ${
-                    active ? 'text-[#ffad5a]' : 'text-[#71767b]'
+                  className={`text-[13px] font-bold tabular-nums ${
+                    active ? 'text-[var(--accent)]' : 'text-[var(--text-2)]'
                   }`}
                 >
                   {count}
@@ -157,10 +157,10 @@ export function ReactionBar({
             setPickerOpen(true)
           }}
           aria-label="Открыть конструктор реакций и смайликов"
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-[#2f3336] px-2 py-0.5 text-[13px] leading-none text-[#71767b] hover:text-[#ffad5a] hover:border-[#ff6b35]/60 hover:bg-[#ff6b35]/10 transition-colors duration-150"
+          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[var(--border)] px-2.5 py-1 text-[13px] leading-none text-[var(--text-2)] hover:text-[var(--accent)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors duration-150 min-h-[34px]"
         >
-          <SmilePlus size={14} />
-          {!compact && <span className="text-[12px] font-bold">Свой</span>}
+          <SmilePlus size={15} />
+          {!compact && <span className="text-[13px] font-bold">Свой</span>}
         </button>
       </Tooltip>
 

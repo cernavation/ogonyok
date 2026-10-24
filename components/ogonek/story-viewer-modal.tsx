@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -475,8 +476,8 @@ export function StoryViewerModal({
             <span className="story-viewer__name">
               {story.name}
               {story.verified && (
-                <span className="story-viewer__verified" aria-label="Верифицирован">
-                  ✓
+                <span className="story-viewer__verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
+                  <Check size={8} strokeWidth={3} />
                 </span>
               )}
             </span>

@@ -54,12 +54,12 @@ export function FocusFlame({ stats, compact = false, className = '', onClick, ti
 
       <div className="min-w-0 text-left">
         <p
-          className={`font-bold leading-tight ${compact ? 'text-[12px]' : 'text-[14px]'}`}
+          className={`font-bold leading-tight ${compact ? 'text-[13px]' : 'text-[14px]'}`}
           style={{ color: 'var(--text)' }}
         >
           {compact ? `Огонёк фокуса · ${stats.currentStreak} дн.` : 'Огонёк фокуса'}
         </p>
-        <p className={`leading-tight ${compact ? 'text-[11px]' : 'text-[12px]'}`} style={{ color: 'var(--muted)' }}>
+        <p className={`leading-tight text-[13px]`} style={{ color: 'var(--muted)' }}>
           {stats.hasHistory
             ? `${tier.label} · ${stats.totalFulfilled} обещаний сдержано`
             : 'Запиши утренний фокус — зажги огонёк'}
@@ -74,7 +74,7 @@ export function FocusFlame({ stats, compact = false, className = '', onClick, ti
         type="button"
         onClick={onClick}
         title={title}
-        className={`flex items-center gap-2.5 bg-transparent border-0 p-0 cursor-pointer rounded-xl transition-transform active:scale-[0.98] ${className}`}
+        className={`flex items-center gap-2.5 bg-transparent border-0 p-1 min-h-[40px] cursor-pointer rounded-xl transition-transform active:scale-[0.98] ${className}`}
       >
         {inner}
       </button>

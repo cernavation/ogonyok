@@ -27,7 +27,7 @@ export function AccountAvatar({ account, size = 40, active = false, className = 
         width: size,
         height: size,
         minWidth: size,
-        fontSize: Math.round(size * 0.36),
+        fontSize: Math.max(13, Math.round(size * 0.4)),
         background: account.snapshot.avatarColor,
       }}
       aria-hidden="true"

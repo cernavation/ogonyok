@@ -25,7 +25,7 @@ export function CommunityAvatar({ user, size = 42, ring = false, showVerified = 
     >
       <span
         className="xh-avatar__img"
-        style={{ background: user.avatarColor, fontSize: Math.round(size * 0.36) }}
+        style={{ background: user.avatarColor, fontSize: Math.max(13, Math.round(size * 0.4)) }}
       >
         {user.initials}
       </span>

@@ -175,8 +175,8 @@ export function ConnectionsModal({
                   <span className="connections-row__name">
                     {person.name}
                     {person.verified && (
-                      <span className="friend-verified" title="Верифицирован">
-                        ✓
+                      <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован">
+                        <Check size={8} strokeWidth={3} />
                       </span>
                     )}
                   </span>

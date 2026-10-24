@@ -1,6 +1,19 @@
 'use client'
 
-import { BarChart3, Home, MessageCircle, Plus, Search, Settings, Target, User, Zap } from 'lucide-react'
+import React from 'react'
+import {
+  BarChart3,
+  Home,
+  MessageCircle,
+  Plus,
+  Search,
+  Settings,
+  Target,
+  Trophy,
+  User,
+  Zap,
+  HelpCircle,
+} from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { totalUnread } from '@/lib/ogonek/messenger'
 import type { ViewId } from '@/lib/ogonek/types'
@@ -21,14 +34,24 @@ type Props = {
   streak?: number
 }
 
-const NAV = [
-  { id: 'home' as ViewId,       icon: Home,     label: 'Главная' },
-  { id: 'explore' as ViewId,   icon: Search,   label: 'Поиск' },
-  { id: 'messages' as ViewId,  icon: MessageCircle, label: 'Чаты' },
-  { id: 'vault' as ViewId,     icon: Zap,      label: 'Evidence Vault' },
-  { id: 'analytics' as ViewId, icon: BarChart3, label: 'Аналитика' },
-  { id: 'profile' as ViewId,   icon: User,     label: 'Профиль' },
-  { id: 'settings' as ViewId,  icon: Settings, label: 'Настройки' },
+interface NavItemDef {
+  id: ViewId
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>
+  label: string
+}
+
+const PRIMARY_NAV: NavItemDef[] = [
+  { id: 'home', icon: Home, label: 'Главная' },
+  { id: 'explore', icon: Search, label: 'Поиск' },
+  { id: 'messages', icon: MessageCircle, label: 'Чаты' },
+  { id: 'profile', icon: User, label: 'Профиль' },
+]
+
+const TOOLS_NAV: NavItemDef[] = [
+  { id: 'vault', icon: Zap, label: 'Evidence Vault' },
+  { id: 'analytics', icon: BarChart3, label: 'Статистика' },
+  { id: 'leaderboard', icon: Trophy, label: 'Рейтинг' },
+  { id: 'intentions', icon: Target, label: 'Намерения' },
 ]
 
 export function Sidebar({
@@ -43,56 +66,103 @@ export function Sidebar({
 }: Props) {
   const { state } = useOgonekStore()
   const unread = totalUnread(state.chatThreads ?? {})
+
+  const renderNavItem = ({ id, icon: Icon, label }: NavItemDef) => {
+    const isActive = view === id
+    const handleClick = () => {
+      if (id === 'intentions') {
+        onFocusIntentions()
+      } else if (id === ('guide' as any)) {
+        window.dispatchEvent(new CustomEvent('ogonek:open-onboarding'))
+      } else {
+        onNavigate(id)
+      }
+    }
+
+    return (
+      <Tooltip key={id} content={label} side="right">
+        <button
+          type="button"
+          className={`nav-item ${isActive ? 'active' : ''}`}
+          onClick={handleClick}
+          aria-label={label}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <Icon size={22} strokeWidth={isActive ? 2.4 : 1.8} className="shrink-0" />
+          <span className="text-[16px] leading-tight font-medium">{label}</span>
+          {id === 'messages' && unread > 0 && (
+            <span
+              className="nav-item__badge"
+              aria-label={`${unread} непрочитанных`}
+            >
+              {unread > 99 ? '99+' : unread}
+            </span>
+          )}
+        </button>
+      </Tooltip>
+    )
+  }
+
   return (
-    <aside className="sidebar" aria-label="Боковая панель">
-      {/* X-style logo mark */}
-      <div className="brand">
+    <aside className="sidebar select-none" aria-label="Боковая панель">
+      {/* Brand mark */}
+      <div
+        className="brand cursor-pointer group min-h-[40px] flex items-center"
+        onClick={() => onNavigate('home')}
+        role="button"
+        tabIndex={0}
+      >
         <span
-          className="brand-flame"
+          className="brand-flame group-hover:scale-110 transition-transform duration-200"
           aria-hidden="true"
-          style={{ fontSize: 28, letterSpacing: '-0.04em', fontWeight: 900 }}
+          style={{ fontSize: 26, letterSpacing: '-0.04em', fontWeight: 900 }}
         >
           ✦
         </span>
-        <span>Огонёк</span>
+        <span className="font-bold tracking-tight text-[19px]">Огонёк</span>
       </div>
 
       {/* Navigation */}
-      <nav className="nav-list" aria-label="Разделы приложения">
-        {NAV.map(({ id, icon: Icon, label }) => (
-          <Tooltip key={id} content={label} side="right">
-            <button
-              type="button"
-              className={`nav-item ${view === id ? 'active' : ''}`}
-              onClick={() => onNavigate(id)}
-              aria-label={label}
-              aria-current={view === id ? 'page' : undefined}
-            >
-              <Icon size={24} strokeWidth={view === id ? 2.5 : 1.75} />
-              <span>{label}</span>
-              {id === 'messages' && unread > 0 && (
-                <span className="nav-item__badge" aria-label={`${unread} непрочитанных`}>
-                  {unread > 99 ? '99+' : unread}
-                </span>
-              )}
-            </button>
-          </Tooltip>
-        ))}
+      <nav className="nav-list flex-1" aria-label="Разделы приложения">
+        {/* Группа 1: Основное */}
+        <div className="flex flex-col gap-0.5">
+          {PRIMARY_NAV.map(renderNavItem)}
+        </div>
 
-        <Tooltip content="Утренние намерения" side="right">
-          <button
-            type="button"
-            className="nav-item"
-            onClick={onFocusIntentions}
-            aria-label="Утренние намерения"
-          >
-            <Target size={24} strokeWidth={1.75} />
-            <span>Намерения</span>
-          </button>
-        </Tooltip>
+        {/* Разделитель групп */}
+        <div className="my-2.5 px-3">
+          <div className="h-px bg-zinc-200/80 dark:bg-zinc-800/80" />
+          <div className="sidebar-group-title pt-2 pb-0.5 px-1 text-[13px] font-semibold uppercase tracking-wider text-[var(--text-3)]">
+            Инструменты
+          </div>
+        </div>
+
+        {/* Группа 2: Инструменты */}
+        <div className="flex flex-col gap-0.5">
+          {TOOLS_NAV.map(renderNavItem)}
+        </div>
+
+        {/* Разделитель перед настройками */}
+        <div className="my-2.5 px-3">
+          <div className="h-px bg-zinc-200/80 dark:bg-zinc-800/80" />
+        </div>
+
+        {/* Внизу: Гайд и Настройки */}
+        <div className="flex flex-col gap-0.5">
+          {renderNavItem({
+            id: 'guide' as any,
+            icon: HelpCircle,
+            label: 'Гайд',
+          })}
+          {renderNavItem({
+            id: 'settings',
+            icon: Settings,
+            label: 'Настройки',
+          })}
+        </div>
       </nav>
 
-      {/* Primary CTA — Twitter Blue pill */}
+      {/* Primary CTA — Flame Pill Button */}
       <Tooltip content="Записать день" side="top" hotkey="N">
         <button
           type="button"
@@ -105,7 +175,7 @@ export function Sidebar({
         </button>
       </Tooltip>
 
-      {/* Profile block — переключатель аккаунтов (ЭТАП 18) */}
+      {/* Profile block — переключатель аккаунтов */}
       <AccountSwitcher
         streak={streak}
         onOpenProfile={onOpenProfile}

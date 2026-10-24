@@ -90,8 +90,8 @@ function PersonRow({
           <span className="fm-row__name">
             {friend.name}
             {friend.verified && (
-              <span className="friend-verified" title="Верифицирован" aria-label="Верифицирован">
-                ✓
+              <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован" aria-label="Верифицирован">
+                <Check size={8} strokeWidth={3} />
               </span>
             )}
           </span>
@@ -436,8 +436,8 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
                           <span className="fm-row__name">
                             {friend.name}
                             {friend.verified && (
-                              <span className="friend-verified" aria-label="Верифицирован">
-                                ✓
+                              <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
+                                <Check size={8} strokeWidth={3} />
                               </span>
                             )}
                           </span>
@@ -533,8 +533,8 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
                         <span className="fm-row__name">
                           {friend.name}
                           {friend.verified && (
-                            <span className="friend-verified" aria-label="Верифицирован">
-                              ✓
+                            <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
+                              <Check size={8} strokeWidth={3} />
                             </span>
                           )}
                           <span className="fm-match">{matchPercent}%</span>

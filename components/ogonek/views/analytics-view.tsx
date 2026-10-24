@@ -109,20 +109,20 @@ export function AnalyticsView({
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 backdrop-blur-xl bg-white/80 dark:bg-[#09090B]/85 border-b border-zinc-200 dark:border-zinc-800">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
         <button
           type="button"
-          className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
           onClick={() => onNavigate('home')}
           aria-label="Назад"
         >
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-[19px] font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
+          <h1 className="text-[19px] font-bold text-[var(--text)] tracking-tight">
             Статистика & Стрик
           </h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-[13px] text-[var(--text-2)]">
             Качество и динамика твоих побед
           </p>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Trash2, Upload } from 'lucide-react'
+import { Check, Sparkles, Trash2, Upload } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
@@ -92,7 +92,7 @@ export function StoryComposerModal({
             />
             <div className="story-composer__head">
               <span className="story-composer__ring">
-                <span className="story-composer__ava" style={{ background: '#1d9bf0' }}>
+                <span className="story-composer__ava" style={{ background: '#1d4ed8', color: '#ffffff' }}>
                   {myAvatarSrc ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={myAvatarSrc} alt="" />
@@ -104,7 +104,7 @@ export function StoryComposerModal({
               <span className="story-composer__head-text">
                 <span className="story-composer__head-name">
                   {displayName}
-                  <span className="story-composer__verified" aria-hidden="true">✓</span>
+                  <span className="story-composer__verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-hidden="true"><Check size={8} strokeWidth={3} /></span>
                 </span>
                 <span className="story-composer__head-meta">@{username} · твоя история</span>
               </span>
@@ -124,7 +124,7 @@ export function StoryComposerModal({
         {/* Редактор */}
         <div className="story-composer__editor">
           <p className="story-composer__label">Шаблон кадра</p>
-          <div className="story-composer__templates">
+          <div className="story-composer__templates" role="group" aria-label="Шаблоны кадра">
             {STORY_TEMPLATES.map((t) => {
               const active = t.id === templateId
               return (
@@ -137,7 +137,7 @@ export function StoryComposerModal({
                     setTemplateId(t.id)
                   }}
                   aria-pressed={active}
-                  style={active ? { borderColor: t.accent, color: t.accent } : undefined}
+                  style={active ? { borderColor: t.accent } : undefined}
                 >
                   <span aria-hidden="true">{t.emoji}</span>
                   {t.label}

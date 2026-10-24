@@ -58,8 +58,8 @@ export function ExploreCategoryRail({
               type="button"
               className={`xh-cat ${active ? 'is-active' : ''}`}
               style={{
-                background: `linear-gradient(150deg, ${cat.from}, ${cat.to})`,
-                borderColor: active ? cat.accent : undefined,
+                background: 'var(--bg-elev)',
+                borderColor: active ? 'var(--accent)' : 'var(--border)',
               }}
               onClick={() => {
                 playClick(soundEnabled)
@@ -68,10 +68,10 @@ export function ExploreCategoryRail({
               }}
               aria-pressed={active}
             >
-              <span className="xh-cat__glow" style={{ background: cat.accent }} aria-hidden="true" />
+              <span className="xh-cat__glow" style={{ background: 'var(--accent)' }} aria-hidden="true" />
               <span className="xh-cat__top">
                 <span className="xh-cat__emoji">{cat.emoji}</span>
-                <span className="xh-cat__count" style={{ color: cat.accent }}>
+                <span className="xh-cat__count" style={{ color: 'var(--accent)' }}>
                   {countPostsByCategory(cat.id)} фото
                 </span>
               </span>

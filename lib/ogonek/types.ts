@@ -7,6 +7,7 @@ export type ViewId =
   | 'settings'
   | 'profile'
   | 'intentions'
+  | 'leaderboard'
 
 export type Mode = 'pride' | 'gratitude'
 
@@ -192,6 +193,16 @@ export type OgonekProfile = {
   monthlyGoal: string
   monthlyGoalUpdatedAtISO: string
   verified: boolean
+  /** Уровень сложности дневника: 1..5 гордостей и благодарностей в день (Правило 1 ТЗ) */
+  level?: number
+  /** Дата последней смены уровня (ISO string, смена заблокирована на 30 дней) */
+  levelChangedAtISO?: string | null
+  /** Telegram Chat ID для напоминаний */
+  telegramChatId?: string | null
+  /** Настройки времени напоминаний Telegram */
+  reminderTimes?: string[]
+  /** Участие в общем рейтинге (лидерборде) */
+  inLeaderboard?: boolean
 }
 
 export type EvidenceItem = {
@@ -531,7 +542,7 @@ export type AppSecurityState = {
    ──────────────────────────────────────────────────────────────────────── */
 
 /** Тип карточки, которую можно переслать в чат одним кликом */
-export type ChatAttachmentKind = 'pride' | 'day' | 'story' | 'achievement'
+export type ChatAttachmentKind = 'pride' | 'gratitude' | 'day' | 'story' | 'achievement'
 
 /**
  * Компактная карточка-вложение в переписке: гордость дня, целый день
@@ -569,6 +580,40 @@ export type ChatReaction = {
   by: string
 }
 
+/** Информация об ответе на другое сообщение (Telegram Quote) */
+export type ChatMessageReply = {
+  id: string
+  authorId: string
+  authorName?: string
+  text: string
+  attachmentSnippet?: string
+}
+
+/** Информация о пересланном сообщении (Telegram Forwarded) */
+export type ChatMessageForward = {
+  authorName: string
+  originalDateISO?: string
+}
+
+/** Медиа-вложение: фото, файл, голосовое, стикер */
+export type ChatMessageMedia = {
+  type: 'image' | 'file' | 'audio' | 'sticker'
+  url: string
+  name?: string
+  sizeBytes?: number
+  durationSec?: number
+  waveform?: number[]
+}
+
+/** Превью ссылки OpenGraph */
+export type ChatLinkPreview = {
+  url: string
+  title: string
+  description?: string
+  image?: string
+  siteName?: string
+}
+
 /** Одно сообщение переписки */
 export type ChatMessage = {
   id: string
@@ -582,9 +627,46 @@ export type ChatMessage = {
   read: boolean
   /** Системное сообщение (без пузыря пользователя) */
   system: boolean
+  /** Ответ на сообщение */
+  replyTo?: ChatMessageReply | null
+  /** Переслано от пользователя */
+  forwardFrom?: ChatMessageForward | null
+  /** Время редактирования (метка ред.) */
+  editedAtISO?: string | null
+  /** Статус отправки */
+  status?: 'sending' | 'sent' | 'read'
+  /** Закреплено ли внутри чата */
+  pinned?: boolean
+  /** Вложенный медиафайл / голос / стикер */
+  media?: ChatMessageMedia | null
+  /** Ссылка с превью */
+  linkPreview?: ChatLinkPreview | null
 }
 
-/** Состояние одной переписки с другом */
+/** Метаданные группового чата */
+export type ChatGroupMeta = {
+  id: string
+  title: string
+  avatarColor: string
+  avatarEmoji?: string
+  avatarImage?: string | null
+  memberIds: string[]
+  createdAtISO: string
+  createdBy: string
+  description?: string
+}
+
+/** Папка для группировки чатов (Telegram Folders) */
+export type ChatFolder = {
+  id: string
+  title: string
+  icon?: string
+  chatIds: string[]
+  isBuiltIn?: boolean
+  type?: 'all' | 'direct' | 'groups' | 'unread' | 'custom'
+}
+
+/** Состояние одной переписки с другом или группой */
 export type ChatThreadState = {
   messages: ChatMessage[]
   /** Когда я последний раз открывал переписку (ISO) — база непрочитанных */
@@ -595,9 +677,17 @@ export type ChatThreadState = {
   pinned: boolean
   /** Черновик неотправленного сообщения */
   draft: string
+  /** Диалог в архиве */
+  archived?: boolean
+  /** ID закреплённого сообщения в шапке чата */
+  pinnedMessageId?: string | null
+  /** Кто сейчас печатает */
+  typingUserIds?: string[]
+  /** Метаданные группы (если это групповой чат) */
+  groupMeta?: ChatGroupMeta | null
 }
 
-/** Все переписки: ключ — id друга */
+/** Все переписки: ключ — id друга или id группы */
 export type ChatThreads = Record<string, ChatThreadState>
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -708,8 +798,12 @@ export type OgonekStoreState = {
   /* ── ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР ─────────────────────────────────── */
   /** Переписки с друзьями: id друга → тред (сообщения, реакции, черновик) */
   chatThreads: ChatThreads
-  /** Открытый диалог (id друга) или null — раздел «Чаты» */
+  /** Открытый диалог (id друга или группы) или null — раздел «Чаты» */
   chatActiveFriendId: string | null
+  /** Папки чатов (Telegram Web Folders) */
+  chatFolders?: ChatFolder[]
+  /** Активная папка (id) */
+  chatActiveFolderId?: string
   /* ── ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ВНЕШНИЙ ВИД ──────────────────────────── */
   /** Режим оформления: X Black / Apple Light / Dim */
   theme: ThemeMode

@@ -88,7 +88,7 @@ export function CommunityPhotoGrid({
                 </span>
               )}
 
-              <div className="xh-tile__actions">
+              <div className="xh-tile__actions" role="group" aria-label="Действия">
                 <button
                   type="button"
                   className={`xh-icon-btn ${isLiked ? 'is-like' : ''}`}

@@ -10,9 +10,11 @@ type Props = {
   children: ReactNode
   /** Закрывать ли по Escape (по умолчанию true) */
   closeOnEscape?: boolean
+  /** Скрыть дефолтный заголовок для кастомного хедера (композер X) */
+  hideHeader?: boolean
 }
 
-export function ModalShell({ title, onClose, children, closeOnEscape = true }: Props) {
+export function ModalShell({ title, onClose, children, closeOnEscape = true, hideHeader = false }: Props) {
   const modalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -75,16 +77,19 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true }: P
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 25, scale: 0.98 }}
       >
-        <header>
-          <h2>{title}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Закрыть"
-          >
-            <X size={20} />
-          </button>
-        </header>
+        {!hideHeader && (
+          <header>
+            <h2>{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Закрыть"
+              className="w-9 h-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </header>
+        )}
         {children}
       </motion.div>
     </motion.div>
