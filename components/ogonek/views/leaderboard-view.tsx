@@ -243,10 +243,10 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                   </span>
 
                   <div
-                    className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-[14px] text-white shadow-sm"
+                    className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-[14px] shadow-sm"
                     style={{
-                      background: isMe ? 'var(--accent)' : '#3F3F46',
-                      color: isMe ? 'var(--accent-text)' : '#FFFFFF',
+                      background: isMe ? 'var(--accent)' : 'var(--surface2)',
+                      color: isMe ? 'var(--accent-text)' : 'var(--text)',
                     }}
                   >
                     {user.display_name.slice(0, 2).toUpperCase()}
@@ -258,7 +258,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                         {user.display_name}
                       </span>
                       {isMe && (
-                        <span className="text-[13px] px-1.5 py-0.2 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)] flex-none">
+                        <span className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--accent)] flex-none">
                           Ты
                         </span>
                       )}
