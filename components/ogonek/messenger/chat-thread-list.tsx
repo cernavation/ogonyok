@@ -1,184 +1,286 @@
 'use client'
 
-import { CheckCheck, Pin, Search, VolumeX, X } from 'lucide-react'
+import { Archive, Check, CheckCheck, Clock, Pin, Search, VolumeX, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import {
+  filterThreadsByFolder,
+  isGroupThread,
   lastMessage,
   sortThreadIds,
   summarizeMessage,
+  threadTitle,
   totalUnread,
   unreadCount,
 } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
-import type { ChatThreads } from '@/lib/ogonek/types'
+import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
-
-type Filter = 'all' | 'unread' | 'online'
+import { ChatFoldersBar } from './chat-folders-bar'
 
 type Props = {
   threads: ChatThreads
   activeFriendId: string | null
   onSelect: (friendId: string) => void
   onMarkAllRead: () => void
-  /** Друзья, с которыми есть смысл начать диалог (все из круга) */
+  folders?: ChatFolder[]
+  activeFolderId?: string
+  onSelectFolder?: (folderId: string) => void
+  onSaveCustomFolder?: (folder: ChatFolder) => void
+  onDeleteCustomFolder?: (folderId: string) => void
   soundEnabled?: boolean
 }
 
-/**
- * ЭТАП 13 — Список диалогов.
- * Живой поиск по друзьям, фильтры «Все / Непрочитанные / Онлайн», превью
- * последнего сообщения, счётчик непрочитанных, метки закрепления и «выкл. звук».
- */
 export function ChatThreadList({
   threads,
   activeFriendId,
   onSelect,
   onMarkAllRead,
+  folders = [],
+  activeFolderId = 'all',
+  onSelectFolder,
+  onSaveCustomFolder,
+  onDeleteCustomFolder,
   soundEnabled = true,
 }: Props) {
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState<Filter>('all')
+  const [showArchived, setShowArchived] = useState(false)
 
-  const ids = useMemo(() => Object.keys(threads), [threads])
+  const allIds = useMemo(() => Object.keys(threads), [threads])
   const unreadTotal = useMemo(() => totalUnread(threads), [threads])
+
+  // Filter by folder first
+  const folderFilteredIds = useMemo(() => {
+    return filterThreadsByFolder(threads, allIds, activeFolderId, folders)
+  }, [threads, allIds, activeFolderId, folders])
+
+  // Split into active and archived
+  const { activeIds, archivedIds } = useMemo(() => {
+    const act: string[] = []
+    const arc: string[] = []
+    for (const id of folderFilteredIds) {
+      if (threads[id]?.archived) arc.push(id)
+      else act.push(id)
+    }
+    return { activeIds: act, archivedIds: arc }
+  }, [folderFilteredIds, threads])
+
+  const targetIds = showArchived ? archivedIds : activeIds
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return sortThreadIds(threads, ids)
-      .flatMap((id) => {
-        const friend = getFriend(id)
+    return sortThreadIds(threads, targetIds)
+      .map((id) => {
         const thread = threads[id]
-        if (!friend || !thread) return []
-        return [{ id, friend, thread }]
+        const isGroup = isGroupThread(thread, id)
+        const friend = !isGroup ? getFriend(id) : null
+        const title = threadTitle(id, thread)
+        return { id, isGroup, friend, thread, title }
       })
-      .filter(({ friend, thread }) => {
-        if (q) {
-          const hit =
-            friend.name.toLowerCase().includes(q) ||
-            friend.username.toLowerCase().includes(q) ||
-            friend.city.toLowerCase().includes(q) ||
-            (lastMessage(thread)?.text ?? '').toLowerCase().includes(q)
-          if (!hit) return false
-        }
-        if (filter === 'unread') return unreadCount(thread) > 0
-        if (filter === 'online') return friend.presence === 'online'
-        return true
+      .filter(({ friend, thread, title }) => {
+        if (!q) return true
+        const last = lastMessage(thread)?.text ?? ''
+        return (
+          title.toLowerCase().includes(q) ||
+          (friend?.username && friend.username.toLowerCase().includes(q)) ||
+          (friend?.city && friend.city.toLowerCase().includes(q)) ||
+          last.toLowerCase().includes(q)
+        )
       })
-  }, [threads, ids, query, filter])
-
-  const FILTERS: Array<{ id: Filter; label: string }> = [
-    { id: 'all', label: 'Все' },
-    { id: 'unread', label: unreadTotal > 0 ? `Непрочитанные · ${unreadTotal}` : 'Непрочитанные' },
-    { id: 'online', label: 'Онлайн' },
-  ]
+  }, [threads, targetIds, query])
 
   return (
-    <div className="msgr__sidebar">
-      <div className="msgr__sidebar-head">
-        <div className="msgr__search">
-          <Search size={16} aria-hidden="true" />
+    <div className="msgr__sidebar flex flex-col h-full w-full bg-[var(--bg)] select-none">
+      {/* Шапка: поиск и папки-вкладки как в Telegram Web */}
+      <div className="msgr__sidebar-head border-b border-[var(--border)] p-2.5 pb-0">
+        <div className="relative mb-2 flex items-center">
+          <Search size={16} className="absolute left-3 text-[var(--text-2)]" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Поиск по диалогам"
-            aria-label="Поиск по диалогам"
+            placeholder="Поиск диалогов или людей..."
+            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface2)] py-2 pl-9 pr-8 text-xs text-[var(--text)] placeholder-[var(--text-2)] outline-none transition-colors focus:border-[var(--accent)]"
           />
           {query && (
-            <button type="button" onClick={() => setQuery('')} aria-label="Очистить поиск">
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-2.5 text-[#71767b] hover:text-white"
+              aria-label="Очистить поиск"
+            >
               <X size={15} />
             </button>
           )}
         </div>
 
-        <div className="msgr__filters" role="tablist" aria-label="Фильтр диалогов">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              role="tab"
-              aria-selected={filter === f.id}
-              className={`msgr-filter ${filter === f.id ? 'is-active' : ''}`}
-              onClick={() => {
-                playClick(soundEnabled)
-                setFilter(f.id)
-              }}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {/* Папки-вкладки Telegram (Все, Личные, Группы, Непрочитанные + кастомные) */}
+        {onSelectFolder && onSaveCustomFolder && onDeleteCustomFolder && (
+          <ChatFoldersBar
+            threads={threads}
+            activeFolderId={activeFolderId}
+            folders={folders}
+            onSelectFolder={onSelectFolder}
+            onSaveCustomFolder={onSaveCustomFolder}
+            onDeleteCustomFolder={onDeleteCustomFolder}
+            soundEnabled={soundEnabled}
+          />
+        )}
       </div>
 
-      <div className="msgr__list" role="list">
+      {/* Список диалогов */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar" role="list">
+        {/* Кнопка перехода в Архив, если есть архивированные чаты */}
+        {archivedIds.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              playClick(soundEnabled)
+              setShowArchived((v) => !v)
+            }}
+            className="flex w-full items-center justify-between border-b border-white/5 px-4 py-2.5 text-xs text-[#71767b] hover:bg-white/5 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Archive size={15} />
+              <span className="font-medium">{showArchived ? '← Назад ко всем чатам' : 'Архив чатов'}</span>
+            </div>
+            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-semibold">
+              {archivedIds.length}
+            </span>
+          </button>
+        )}
+
         {rows.length === 0 ? (
-          <p className="msgr__empty">
-            {filter === 'unread'
-              ? 'Всё прочитано — ни одного непрочитанного сообщения 🔥'
-              : 'Диалогов пока нет. Нажми «Написать» и начни первым.'}
-          </p>
+          <div className="p-8 text-center">
+            <p className="text-xs text-[#71767b]">
+              {query
+                ? 'Ничего не найдено'
+                : activeFolderId === 'unread'
+                ? 'Всё прочитано — ни одного непрочитанного сообщения 🔥'
+                : activeFolderId === 'groups'
+                ? 'В этой папке пока нет групп. Нажми «Написать» → «Создать группу».'
+                : 'Диалогов пока нет. Нажми «Написать» и начни первым.'}
+            </p>
+          </div>
         ) : (
-          rows.map(({ id, friend, thread }) => {
+          rows.map(({ id, isGroup, friend, thread, title }) => {
             const last = lastMessage(thread)
             const unread = unreadCount(thread)
-            const presence = presenceMeta(friend.presence)
+            const presence = friend ? presenceMeta(friend.presence) : null
             const preview = summarizeMessage(last)
             const isMine = last?.authorId === 'me'
+            const isMuted = thread.muted
+            const isPinned = thread.pinned
+
             return (
               <button
                 key={id}
                 type="button"
                 role="listitem"
-                className={`msgr-thread ${activeFriendId === id ? 'is-active' : ''}`}
+                className={`relative flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors border-b border-[var(--border)] ${
+                  activeFriendId === id
+                    ? 'bg-[#1d9bf0]/15 hover:bg-[#1d9bf0]/20'
+                    : 'hover:bg-[var(--bg-hover)]'
+                }`}
                 onClick={() => onSelect(id)}
-                aria-label={`Диалог с ${friend.name}${unread > 0 ? `, ${unread} непрочитанных` : ''}`}
+                aria-label={`Диалог с ${title}${unread > 0 ? `, ${unread} непрочитанных` : ''}`}
               >
-                <ChatAvatar friendId={id} size={48} ringColor="#0b0c0d" />
-                <span className="msgr-thread__body">
-                  <span className="msgr-thread__top">
-                    <span className="msgr-thread__name">
-                      {friend.name}
-                      {friend.verified && <span className="friend-verified">✓</span>}
-                      {thread.pinned && <Pin size={12} className="msgr-thread__pin" />}
-                      {thread.muted && <VolumeX size={12} className="msgr-thread__mute" />}
+                {/* Аватар (личный или группы) */}
+                <div className="relative shrink-0">
+                  {isGroup ? (
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-full text-xl shadow-md"
+                      style={{
+                        background:
+                          thread.groupMeta?.avatarColor ||
+                          'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                      }}
+                    >
+                      {thread.groupMeta?.avatarEmoji || '👥'}
+                    </div>
+                  ) : (
+                    <ChatAvatar friendId={id} size={48} ringColor="var(--bg)" />
+                  )}
+                  {presence?.short === 'онлайн' && (
+                    <span
+                      className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--bg)] bg-[#00ba7c]"
+                      title="Онлайн"
+                    />
+                  )}
+                </div>
+
+                {/* Тело строки диалога */}
+                <div className="flex flex-1 flex-col min-w-0">
+                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                    <span className="truncate text-[14px] font-semibold text-[var(--text)] flex items-center gap-1">
+                      {title}
+                      {friend?.verified && (
+                        <Check size={11} className="text-[#1d9bf0] inline-block" />
+                      )}
                     </span>
-                    <span className={`msgr-thread__stamp ${unread > 0 ? 'is-hot' : ''}`}>
-                      {last ? new Date(last.createdAtISO).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) : ''}
+                    <span className="shrink-0 text-[11px] font-mono text-[var(--text-2)]">
+                      {last
+                        ? new Date(last.createdAtISO).toLocaleTimeString('ru-RU', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : ''}
                     </span>
-                  </span>
-                  <span className="msgr-thread__bottom">
-                    <span className={`msgr-thread__preview ${unread > 0 ? 'is-unread' : ''}`}>
-                      {isMine && <em className="msgr-thread__you">Ты: </em>}
-                      {preview}
-                    </span>
-                    {unread > 0 ? (
-                      <span className="msgr-thread__unread">{unread}</span>
-                    ) : (
-                      <span className="msgr-thread__dot" style={{ background: presence.color }} title={presence.label} />
-                    )}
-                  </span>
-                </span>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="truncate text-xs text-[var(--text-2)] flex items-center gap-1">
+                      {isMine && (
+                        <span className="text-[var(--text-2)] shrink-0">
+                          {last?.read ? (
+                            <CheckCheck size={13} className="text-[#66ffd9] inline" />
+                          ) : (
+                            <Check size={12} className="inline" />
+                          )}
+                        </span>
+                      )}
+                      <span className="truncate">{preview}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {isMuted && <VolumeX size={13} className="text-[#71767b]" />}
+                      {isPinned && (
+                        <Pin size={12} className="rotate-45 text-[#ffad5a]" fill="currentColor" />
+                      )}
+                      {unread > 0 && (
+                        <span
+                          className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${
+                            isMuted
+                              ? 'bg-[#2f3336] text-[#71767b]'
+                              : 'bg-[#ff7a18] text-white shadow-sm'
+                          }`}
+                        >
+                          {unread}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </button>
             )
           })
         )}
       </div>
 
-      <div className="msgr__sidebar-foot">
-        <button
-          type="button"
-          className="msgr__mark-all"
-          onClick={() => {
-            playClick(soundEnabled)
-            onMarkAllRead()
-          }}
-          disabled={unreadTotal === 0}
-        >
-          <CheckCheck size={15} /> Прочитать всё
-        </button>
-      </div>
+      {/* Подвал сайдбара: Прочитать все */}
+      {unreadTotal > 0 && (
+        <div className="border-t border-[var(--border)] p-2 bg-[var(--bg-elev)]">
+          <button
+            type="button"
+            onClick={onMarkAllRead}
+            className="flex w-full items-center justify-center gap-2 rounded-full py-2 min-h-[36px] sm:min-h-[34px] text-[13px] font-semibold text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)] transition-colors"
+          >
+            <CheckCheck size={16} />
+            <span>Прочитать все ({unreadTotal})</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

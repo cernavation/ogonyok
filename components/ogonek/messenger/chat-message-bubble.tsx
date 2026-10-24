@@ -1,34 +1,57 @@
 'use client'
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { Copy, Forward, SmilePlus, Trash2 } from 'lucide-react'
+import {
+  Check,
+  CheckCheck,
+  Clock,
+  Copy,
+  Download,
+  ExternalLink,
+  FileText,
+  Forward,
+  MoreHorizontal,
+  Pencil,
+  Pin,
+  Reply,
+  SmilePlus,
+  Trash2,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { formatChatTime } from '@/lib/ogonek/messenger'
+import { getFriend } from '@/lib/ogonek/friends'
+import { formatChatTime, STICKER_PACK } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessage, CustomEmoji } from '@/lib/ogonek/types'
 import { ChatAttachmentCard } from './chat-attachment-card'
+import { ChatMediaLightbox } from './chat-media-lightbox'
+import { ChatVoicePlayer } from './chat-voice-player'
 import { MessageReactionPicker } from './message-reaction-picker'
 
 type Props = {
   message: ChatMessage
-  /** Сообщение отправлено мной (справа), иначе — другом (слева) */
   isMine: boolean
-  /** Глиф для любого emojiId (встроенный/кастомный) */
   resolveChar: (emojiId: string) => string
   customEmojis: CustomEmoji[]
   onToggleReaction: (emojiId: string) => void
   onForward: (message: ChatMessage) => void
+  onReply?: (message: ChatMessage) => void
+  onEdit?: (message: ChatMessage) => void
+  onPin?: (messageId: string) => void
   onDelete: (messageId: string) => void
+  onJumpToReply?: (replyMessageId: string) => void
+  isSelectionMode?: boolean
+  isSelected?: boolean
+  onToggleSelect?: (messageId: string) => void
+  isGroup?: boolean
+  showAuthorHeader?: boolean
+  isFirstInGroup?: boolean
+  isLastInGroup?: boolean
+  searchQuery?: string
   soundEnabled?: boolean
   onNotify?: (message: string) => void
 }
 
-/**
- * ЭТАП 13 — Сообщение чата в стиле Telegram: пузырь со хвостом, вложение-карточка,
- * реакции под сообщением и панель действий при наведении (реакция, переслать,
- * копировать, удалить). Все действия реально меняют состояние в сторе.
- */
 export function ChatMessageBubble({
   message,
   isMine,
@@ -36,12 +59,29 @@ export function ChatMessageBubble({
   customEmojis,
   onToggleReaction,
   onForward,
+  onReply,
+  onEdit,
+  onPin,
   onDelete,
+  onJumpToReply,
+  isSelectionMode = false,
+  isSelected = false,
+  onToggleSelect,
+  isGroup = false,
+  showAuthorHeader = false,
+  isFirstInGroup = true,
+  isLastInGroup = true,
+  searchQuery = '',
   soundEnabled = true,
   onNotify,
 }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   const reduce = useReducedMotion()
+
+  const friend = !isMine ? getFriend(message.authorId) : null
+  const authorName = isMine ? 'Ты' : friend?.name || 'Участник'
 
   const reactions = useMemo(() => {
     const map = new Map<string, { count: number; mine: boolean }>()
@@ -60,143 +100,383 @@ export function ChatMessageBubble({
     if (!message.text) return
     try {
       await navigator.clipboard.writeText(message.text)
-      onNotify?.('Текст сообщения скопирован')
+      onNotify?.('Текст скопирован')
     } catch {
-      onNotify?.('Не удалось скопировать текст')
+      onNotify?.('Не удалось скопировать')
     }
+    setMenuOpen(false)
   }
 
+  // Highlight search query in text
+  const renderHighlightedText = (text: string) => {
+    if (!searchQuery.trim()) return text
+    const parts = text.split(new RegExp(`(${searchQuery.trim()})`, 'gi'))
+    return parts.map((part, i) =>
+      part.toLowerCase() === searchQuery.trim().toLowerCase() ? (
+        <mark key={i} className="bg-[#ff7a18] text-white rounded px-0.5">
+          {part}
+        </mark>
+      ) : (
+        part
+      )
+    )
+  }
+
+  // Is this message a standalone sticker?
+  const isSticker = message.media?.type === 'sticker'
+  const stickerData = isSticker
+    ? STICKER_PACK.find((s) => s.id === message.media?.url)
+    : null
+
   return (
-    <motion.div
-      className={`group flex ${isMine ? 'justify-end' : 'justify-start'}`}
-      initial={reduce ? false : { opacity: 0, y: 6, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: reduce ? 0 : 0.16, ease: 'easeOut' }}
-    >
-      <div className={`relative max-w-[80%] ${isMine ? 'items-end' : 'items-start'}`}>
-        {/* Панель действий при наведении */}
-        <div
-          className={`absolute top-0 z-20 flex items-center gap-0.5 rounded-full border border-[#2f3336] bg-[#16181c] p-0.5 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 ${
-            isMine ? 'right-full mr-2' : 'left-full ml-2'
-          }`}
-        >
+    <>
+      <motion.div
+        id={`msg-${message.id}`}
+        className={`group relative flex items-end gap-2 my-0.5 ${
+          isMine ? 'justify-end' : 'justify-start'
+        } ${isSelected ? 'bg-white/[0.04] -mx-4 px-4 py-1 rounded-xl' : ''}`}
+        initial={reduce ? false : { opacity: 0, y: 6, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: reduce ? 0 : 0.14, ease: 'easeOut' }}
+      >
+        {/* Чекбокс выбора сообщений */}
+        {isSelectionMode && (
           <button
             type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              setPickerOpen((v) => !v)
-            }}
-            className="grid h-7 w-7 place-items-center rounded-full text-[#71767b] hover:bg-white/[0.08] hover:text-[#ffad5a]"
-            aria-label="Поставить реакцию"
+            onClick={() => onToggleSelect?.(message.id)}
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition-all ${
+              isSelected
+                ? 'border-[#ff7a18] bg-[#ff7a18] text-white'
+                : 'border-white/30 hover:border-white'
+            }`}
           >
-            <SmilePlus size={15} />
+            {isSelected && <Check size={12} />}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              onForward(message)
-            }}
-            className="grid h-7 w-7 place-items-center rounded-full text-[#71767b] hover:bg-white/[0.08] hover:text-[#1d9bf0]"
-            aria-label="Переслать сообщение другу"
-            title="Переслать другу"
-          >
-            <Forward size={15} />
-          </button>
-          {message.text && (
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="grid h-7 w-7 place-items-center rounded-full text-[#71767b] hover:bg-white/[0.08] hover:text-[#e7e9ea]"
-              aria-label="Скопировать текст"
-            >
-              <Copy size={14} />
-            </button>
-          )}
-          {isMine && (
-            <button
-              type="button"
-              onClick={() => {
-                playClick(soundEnabled)
-                onDelete(message.id)
-              }}
-              className="grid h-7 w-7 place-items-center rounded-full text-[#71767b] hover:bg-[#f4212e]/15 hover:text-[#f4212e]"
-              aria-label="Удалить сообщение"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
+        )}
 
-        <AnimatePresence>
-          {pickerOpen && (
-            <MessageReactionPicker
-              currentIds={myReactionIds}
-              customEmojis={customEmojis}
-              onPick={(emojiId) => onToggleReaction(emojiId)}
-              onClose={() => setPickerOpen(false)}
-            />
-          )}
-        </AnimatePresence>
-
-        <div className={`flex flex-col gap-1 ${isMine ? 'items-end' : 'items-start'}`}>
-          {message.attachment && (
-            <div className="w-full min-w-[210px]">
-              <ChatAttachmentCard attachment={message.attachment} />
-            </div>
-          )}
-
-          {message.text && (
+        <div className={`relative max-w-[82%] sm:max-w-[70%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+          {/* Панель быстрых действий на hover / focus */}
+          {!isSelectionMode && (
             <div
-              className={`px-3.5 py-2 text-[14px] leading-[20px] shadow-sm ${
-                isMine
-                  ? 'rounded-2xl rounded-br-md bg-[#1d9bf0] text-white'
-                  : 'rounded-2xl rounded-bl-md bg-[#202327] text-[#e7e9ea]'
-              } ${message.attachment ? 'mt-0.5' : ''}`}
+              className={`absolute top-0 z-20 flex items-center gap-0.5 rounded-full border border-white/10 bg-[#16181c]/95 px-1 py-0.5 opacity-0 shadow-xl backdrop-blur-md transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 ${
+                isMine ? 'right-full mr-1.5' : 'left-full ml-1.5'
+              }`}
             >
-              <p className="whitespace-pre-wrap break-words">{message.text}</p>
-            </div>
-          )}
-
-          <div className={`flex items-center gap-1.5 px-1 text-[11px] text-[#71767b] ${isMine ? 'flex-row-reverse' : ''}`}>
-            <span className="tabular-nums">{formatChatTime(message.createdAtISO)}</span>
-            {isMine && (
-              <span
-                className={message.read ? 'text-[#1d9bf0]' : ''}
-                title={message.read ? 'Прочитано' : 'Отправлено'}
-                aria-label={message.read ? 'Прочитано' : 'Отправлено'}
+              <button
+                type="button"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setPickerOpen((v) => !v)
+                }}
+                className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-[#ffad5a]"
+                title="Поставить реакцию"
+                aria-label="Поставить реакцию"
               >
-                {message.read ? '✓✓' : '✓'}
-              </span>
-            )}
-          </div>
-
-          {reactions.length > 0 && (
-            <div className={`flex flex-wrap gap-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
-              {reactions.map((reaction) => (
+                <SmilePlus size={14} />
+              </button>
+              {onReply && (
                 <button
-                  key={reaction.emojiId}
                   type="button"
                   onClick={() => {
                     playClick(soundEnabled)
-                    onToggleReaction(reaction.emojiId)
+                    onReply(message)
                   }}
-                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[13px] leading-none transition-colors duration-150 ${
-                    reaction.mine
-                      ? 'border-[#ff6b35]/60 bg-[#ff6b35]/15 text-[#ffad5a]'
-                      : 'border-[#2f3336] bg-[#16181c] text-[#e7e9ea] hover:border-[#3a3f45]'
-                  }`}
-                  aria-pressed={reaction.mine}
-                  aria-label={`Реакция ${resolveChar(reaction.emojiId)}, ${reaction.count}`}
+                  className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-[#1d9bf0]"
+                  title="Ответить"
+                  aria-label="Ответить"
                 >
-                  <span aria-hidden="true">{resolveChar(reaction.emojiId)}</span>
-                  {reaction.count > 1 && <span className="text-[11px] font-bold tabular-nums">{reaction.count}</span>}
+                  <Reply size={14} />
+                </button>
+              )}
+              {isMine && onEdit && !isSticker && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    onEdit(message)
+                  }}
+                  className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-[#ffad5a]"
+                  title="Редактировать"
+                  aria-label="Редактировать"
+                >
+                  <Pencil size={13} />
+                </button>
+              )}
+              {onPin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    onPin(message.id)
+                  }}
+                  className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-[#ffd700]"
+                  title={message.pinned ? 'Открепить' : 'Закрепить'}
+                  aria-label="Закрепить сообщение"
+                >
+                  <Pin size={13} className="rotate-45" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  onForward(message)
+                }}
+                className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-[#00ba7c]"
+                title="Переслать"
+                aria-label="Переслать"
+              >
+                <Forward size={14} />
+              </button>
+              {message.text && (
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-white/10 hover:text-white"
+                  title="Копировать"
+                  aria-label="Копировать текст"
+                >
+                  <Copy size={13} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  onDelete(message.id)
+                }}
+                className="grid h-6 w-6 place-items-center rounded-full text-[#71767b] hover:bg-red-500/20 hover:text-red-400"
+                title="Удалить"
+                aria-label="Удалить сообщение"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          )}
+
+          {/* Всплывающее окно реакций */}
+          <AnimatePresence>
+            {pickerOpen && (
+              <MessageReactionPicker
+                currentIds={myReactionIds}
+                customEmojis={customEmojis}
+                onPick={(emojiId) => {
+                  onToggleReaction(emojiId)
+                  setPickerOpen(false)
+                }}
+                onClose={() => setPickerOpen(false)}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Каркас сообщения */}
+          {isSticker ? (
+            /* Стикер (без пузыря, как в Telegram) */
+            <div className="flex flex-col items-end my-1">
+              <span className="text-6xl hover:scale-110 transition-transform cursor-pointer drop-shadow-lg">
+                {stickerData?.emoji || '🔥'}
+              </span>
+              <span className="text-[10px] text-[#71767b] font-mono mt-0.5">
+                {formatChatTime(message.createdAtISO)}
+              </span>
+            </div>
+          ) : (
+            /* Пузырь сообщения (свои — акцентный цвет, чужие — --bg-elev) */
+            <div
+              className={`relative overflow-hidden px-3.5 py-2.5 text-[14px] leading-[20px] shadow-sm transition-all ${
+                isMine
+                  ? 'rounded-2xl bg-[var(--accent)] text-[var(--accent-text)]'
+                  : 'rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)]'
+              } ${isFirstInGroup && isMine ? 'rounded-tr-2xl' : ''} ${
+                isLastInGroup && isMine ? 'rounded-br-sm' : ''
+              } ${isFirstInGroup && !isMine ? 'rounded-tl-2xl' : ''} ${
+                isLastInGroup && !isMine ? 'rounded-bl-sm' : ''
+              }`}
+            >
+              {/* Имя автора в группе */}
+              {isGroup && !isMine && showAuthorHeader && (
+                <div
+                  className="mb-1 text-[12px] font-semibold tracking-wide"
+                  style={{ color: friend?.avatarColor ? '#ffad5a' : '#1d9bf0' }}
+                >
+                  {authorName}
+                </div>
+              )}
+
+              {/* Метка "Переслано от" (Telegram Forward) */}
+              {message.forwardFrom && (
+                <div className="mb-1 flex items-center gap-1 text-[11px] font-medium text-white/70 italic border-l-2 border-white/40 pl-1.5">
+                  <Forward size={12} />
+                  <span>Переслано от {message.forwardFrom.authorName}</span>
+                </div>
+              )}
+
+              {/* Цитата ответа (Telegram Reply Quote) */}
+              {message.replyTo && (
+                <button
+                  type="button"
+                  onClick={() => onJumpToReply?.(message.replyTo!.id)}
+                  className={`mb-1.5 flex w-full flex-col text-left rounded-md border-l-2 py-1 px-2 transition-opacity hover:opacity-85 ${
+                    isMine
+                      ? 'border-white bg-white/10 text-white'
+                      : 'border-[#1d9bf0] bg-[#1d9bf0]/10 text-[#e7e9ea]'
+                  }`}
+                >
+                  <span className="text-[11px] font-semibold text-[#ffad5a] leading-none mb-0.5">
+                    {message.replyTo.authorId === 'me' ? 'Ты' : authorName}
+                  </span>
+                  <span className="truncate text-xs opacity-90 leading-tight">
+                    {message.replyTo.text}
+                  </span>
+                </button>
+              )}
+
+              {/* Карточка-вложение Огонька (гордость, день, сторис) */}
+              {message.attachment && (
+                <div className="mb-1.5 w-full min-w-[220px]">
+                  <ChatAttachmentCard attachment={message.attachment} />
+                </div>
+              )}
+
+              {/* Фотография */}
+              {message.media?.type === 'image' && (
+                <div className="mb-1.5 overflow-hidden rounded-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={message.media.url}
+                    alt={message.media.name || 'Фотография'}
+                    className="max-h-72 w-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
+                    onClick={() => setLightboxUrl(message.media!.url)}
+                  />
+                </div>
+              )}
+
+              {/* Голосовое сообщение */}
+              {message.media?.type === 'audio' && (
+                <div className="min-w-[200px] mb-1">
+                  <ChatVoicePlayer
+                    media={message.media}
+                    isMine={isMine}
+                    soundEnabled={soundEnabled}
+                  />
+                </div>
+              )}
+
+              {/* Документ / Файл */}
+              {message.media?.type === 'file' && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-2.5 mb-1.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#ff7a18]/20 text-[#ffad5a]">
+                      <FileText size={18} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium text-white">{message.media.name}</p>
+                      <p className="text-[10px] text-white/60">
+                        {message.media.sizeBytes
+                          ? `${Math.round(message.media.sizeBytes / 1024)} КБ`
+                          : 'Файл'}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={message.media.url}
+                    download={message.media.name || 'file'}
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+                  >
+                    <Download size={14} />
+                  </a>
+                </div>
+              )}
+
+              {/* Текст сообщения */}
+              {message.text && (
+                <p className="whitespace-pre-wrap break-words">
+                  {renderHighlightedText(message.text)}
+                </p>
+              )}
+
+              {/* Превью ссылки (OpenGraph) */}
+              {message.linkPreview && (
+                <a
+                  href={message.linkPreview.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`mt-2 flex flex-col rounded-xl border p-2.5 text-xs transition-opacity hover:opacity-90 ${
+                    isMine
+                      ? 'border-white/20 bg-white/10 text-white'
+                      : 'border-white/10 bg-black/20 text-[#e7e9ea]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between font-semibold text-[#ffad5a] text-[11px] mb-0.5">
+                    <span>{message.linkPreview.siteName}</span>
+                    <ExternalLink size={12} />
+                  </div>
+                  <p className="font-medium text-white text-xs mb-0.5">{message.linkPreview.title}</p>
+                  {message.linkPreview.description && (
+                    <p className="line-clamp-2 text-[11px] text-white/70">
+                      {message.linkPreview.description}
+                    </p>
+                  )}
+                </a>
+              )}
+
+              {/* Нижняя строка: время, (ред.), закреп, галочки ✓✓ */}
+              <div
+                className={`mt-1 flex items-center justify-end gap-1 text-[11px] font-mono leading-none ${
+                  isMine ? 'text-white/80' : 'text-[#71767b]'
+                }`}
+              >
+                {message.pinned && <Pin size={11} className="rotate-45 text-[#ffd700]" />}
+                {message.editedAtISO && <span className="text-[10px] italic">ред.</span>}
+                <span>{formatChatTime(message.createdAtISO)}</span>
+                {isMine && (
+                  <span className="ml-0.5">
+                    {message.status === 'sending' ? (
+                      <Clock size={11} className="opacity-70 animate-spin" />
+                    ) : message.read || message.status === 'read' ? (
+                      <CheckCheck size={14} className="text-[#66ffd9]" />
+                    ) : (
+                      <Check size={13} className="opacity-80" />
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Реакции под пузырём */}
+          {reactions.length > 0 && (
+            <div className={`flex flex-wrap gap-1 mt-1 ${isMine ? 'justify-end' : 'justify-start'}`}>
+              {reactions.map((r) => (
+                <button
+                  key={r.emojiId}
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    onToggleReaction(r.emojiId)
+                  }}
+                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm transition-transform active:scale-95 ${
+                    r.mine
+                      ? 'border border-[#ff7a18] bg-[#ff7a18]/20 text-[#ffad5a]'
+                      : 'border border-white/10 bg-[#202327] text-white hover:bg-white/10'
+                  }`}
+                >
+                  <span>{resolveChar(r.emojiId)}</span>
+                  <span className="text-[11px]">{r.count}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* Лайтбокс фото */}
+      {lightboxUrl && (
+        <ChatMediaLightbox
+          imageUrl={lightboxUrl}
+          onClose={() => setLightboxUrl(null)}
+        />
+      )}
+    </>
   )
 }

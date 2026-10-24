@@ -30,6 +30,7 @@ import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
 import { GuestLanding } from './landing/guest-landing'
+import { ChatWindow } from './messenger'
 
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
@@ -79,6 +80,7 @@ export function AppShell() {
     lockAppNow,
     provisionDemoAccountSecrets,
     continueAsGuest,
+    setActiveChatFriend,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -181,6 +183,27 @@ export function AppShell() {
     setView(next)
     window.scrollTo(0, 0)
   }, [state.soundEnabled])
+
+  // Поддержка кнопки «Назад» в браузере для полноэкранного чата
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return
+      const path = window.location.pathname
+      if (path.startsWith('/chats/')) {
+        const friendId = path.split('/chats/')[1]
+        if (friendId) {
+          navigate('messages')
+          setActiveChatFriend(friendId)
+        }
+      } else {
+        if (state.chatActiveFriendId) {
+          setActiveChatFriend(null)
+        }
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [state.chatActiveFriendId, setActiveChatFriend, navigate])
 
   // Single source of truth for streak (PRODUCT_SPEC.md Rule 3: стрик = закрытые дни)
   const streakCount = useMemo(() => {
@@ -543,47 +566,72 @@ export function AppShell() {
         feedDensity={state.feedDensity}
       />
       <main className="app-shell" data-locked={locked ? 'true' : undefined}>
-        <Sidebar
-          view={view}
-          onNavigate={navigate}
-          onFocusIntentions={handleFocusIntentions}
-          onCompose={() => setComposer(true)}
-          onOpenProfile={() => navigate('profile')}
-          onOpenAuth={openAuth}
-          onNotify={notify}
-          streak={streakState.streak}
-        />
+        {view === 'messages' && Boolean(state.chatActiveFriendId) ? (
+          <div className="w-full h-[100dvh] flex flex-col items-center justify-center bg-[var(--bg)] select-none">
+            <div className="w-full max-w-[720px] h-full flex flex-col bg-[var(--bg)] sm:border-x sm:border-[var(--border)] shadow-2xl relative select-text">
+              <ChatWindow
+                friendId={state.chatActiveFriendId!}
+                onNotify={notify}
+                onBack={() => {
+                  setActiveChatFriend(null)
+                  if (typeof window !== 'undefined') {
+                    window.history.pushState(null, '', '/?view=messages')
+                  }
+                }}
+                soundEnabled={state.soundEnabled}
+              />
+            </div>
+          </div>
+        ) : (
+          <>
+            <Sidebar
+              view={view}
+              onNavigate={navigate}
+              onFocusIntentions={handleFocusIntentions}
+              onCompose={() => setComposer(true)}
+              onOpenProfile={() => navigate('profile')}
+              onOpenAuth={openAuth}
+              onNotify={notify}
+              streak={streakState.streak}
+            />
 
-        <section className="feed" aria-label="Основное содержимое">
-          <motion.div
-            key={view}
-            className="view"
-            initial={{ opacity: 0.95 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.04 }}
-          >
-            {content[view]}
-          </motion.div>
-        </section>
+            <section
+              className={`feed ${view === 'messages' ? 'feed--full-width' : ''}`}
+              aria-label="Основное содержимое"
+            >
+              <motion.div
+                key={view}
+                className="view"
+                initial={{ opacity: 0.95 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.04 }}
+              >
+                {content[view]}
+              </motion.div>
+            </section>
 
-        <RightRail
-          onNavigate={navigate}
-          onCompose={() => setComposer(true)}
-          streak={streakState.streak}
-          streakStatus={streakState.status}
-          hoursLeft={streakState.hoursLeft}
-          isDemo={state.isDemo}
-          onNotify={notify}
-          soundEnabled={state.soundEnabled}
-        />
+            {view !== 'messages' && (
+              <RightRail
+                onNavigate={navigate}
+                onCompose={() => setComposer(true)}
+                streak={streakState.streak}
+                streakStatus={streakState.status}
+                hoursLeft={streakState.hoursLeft}
+                isDemo={state.isDemo}
+                onNotify={notify}
+                soundEnabled={state.soundEnabled}
+              />
+            )}
 
-        <ScrollPill onScrollBottom={handleScrollBottom} />
+            <ScrollPill onScrollBottom={handleScrollBottom} />
 
-        <BottomNav
-          view={view}
-          onNavigate={navigate}
-          onCompose={() => setComposer(true)}
-        />
+            <BottomNav
+              view={view}
+              onNavigate={navigate}
+              onCompose={() => setComposer(true)}
+            />
+          </>
+        )}
 
         <AnimatePresence>
           {composer && (

@@ -188,7 +188,7 @@ export function ForwardToChatModal({
                 <span className="forward-row__text">
                   <span className="forward-row__name">
                     {friend.name}
-                    {friend.verified && <span className="friend-verified">✓</span>}
+                    {friend.verified && <Check size={11} className="friend-verified text-[#1d9bf0] inline-block" />}
                     {friendSet.has(friend.id) && <em className="forward-row__tag">друг</em>}
                   </span>
                   <span className="forward-row__sub" style={{ color: presence.color }}>

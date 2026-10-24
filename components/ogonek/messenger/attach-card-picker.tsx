@@ -5,9 +5,9 @@ import { Flame, Sparkles, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import { buildPrideAttachment, buildStoryAttachment } from '@/lib/ogonek/messenger'
+import { buildGratitudeAttachment, buildPrideAttachment, buildStoryAttachment } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
-import type { ChatAttachment, Day, MyStory, StorySlide } from '@/lib/ogonek/types'
+import { getGratitudeText, type ChatAttachment, type Day, type MyStory, type StorySlide } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ChatAttachmentCard } from './chat-attachment-card'
 
@@ -17,7 +17,7 @@ type Props = {
   soundEnabled?: boolean
 }
 
-type Tab = 'prides' | 'stories'
+type Tab = 'prides' | 'gratitudes' | 'stories'
 
 function myStoryToSlide(story: MyStory): StorySlide {
   return {
@@ -57,6 +57,19 @@ export function AttachCardPicker({ onPick, onClose, soundEnabled = true }: Props
     return cards
   }, [days])
 
+  const gratitudeCards = useMemo(() => {
+    const cards: Array<{ key: string; attachment: ChatAttachment }> = []
+    for (const day of days) {
+      for (let i = 0; i < day.gratitudes.length; i += 1) {
+        const text = getGratitudeText(day.gratitudes[i])
+        if (!text || text === '—') continue
+        cards.push({ key: `g-${day.id}-${i}`, attachment: buildGratitudeAttachment(day, i) })
+        if (cards.length >= 18) return cards
+      }
+    }
+    return cards
+  }, [days])
+
   const storyCards = useMemo(
     () =>
       myStories.map((story) => ({
@@ -75,7 +88,7 @@ export function AttachCardPicker({ onPick, onClose, soundEnabled = true }: Props
     [myStories, state.profile.displayName, state.profile.username]
   )
 
-  const items = tab === 'prides' ? prideCards : storyCards
+  const items = tab === 'prides' ? prideCards : tab === 'gratitudes' ? gratitudeCards : storyCards
 
   if (typeof document === 'undefined') return null
 
@@ -122,6 +135,18 @@ export function AttachCardPicker({ onPick, onClose, soundEnabled = true }: Props
             }}
           >
             <Flame size={15} /> Гордости ({prideCards.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'gratitudes'}
+            className={tab === 'gratitudes' ? 'is-active' : ''}
+            onClick={() => {
+              playClick(soundEnabled)
+              setTab('gratitudes')
+            }}
+          >
+            <Sparkles size={15} /> Благодарности ({gratitudeCards.length})
           </button>
           <button
             type="button"

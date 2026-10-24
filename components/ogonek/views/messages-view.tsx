@@ -75,23 +75,20 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
     }
   }, [onNotify])
 
-  // На широком экране сразу открываем первый диалог, если ничего не выбрано
-  useEffect(() => {
-    if (activeFriendId || threadIds.length === 0) return
-    if (typeof window === 'undefined') return
-    if (window.matchMedia('(min-width: 901px)').matches) {
-      setActiveChatFriend(sortThreadIds(threads, threadIds)[0] ?? null)
-    }
-  }, [activeFriendId, threadIds, threads, setActiveChatFriend])
-
   const openThread = (friendId: string) => {
     playClick(soundEnabled)
     setActiveChatFriend(friendId)
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ chatId: friendId }, '', `/chats/${friendId}`)
+    }
   }
 
   const startWith = (friendId: string) => {
     playClick(soundEnabled)
     startChatWithFriend(friendId)
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ chatId: friendId }, '', `/chats/${friendId}`)
+    }
   }
 
   const isChatAvailable =
@@ -129,104 +126,22 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
         </button>
       </header>
 
-      <div className="messages-content">
-        <div className={`msgr ${activeFriendId ? 'is-chat-open' : ''}`}>
-          <ChatThreadList
-            threads={threads}
-            activeFriendId={activeFriendId}
-            onSelect={openThread}
-            onMarkAllRead={() => {
-              markAllThreadsRead()
-              onNotify('Все переписки прочитаны ✓')
-            }}
-            folders={folders}
-            activeFolderId={activeFolderId}
-            onSelectFolder={setChatActiveFolderId}
-            onSaveCustomFolder={setChatFolder}
-            onDeleteCustomFolder={deleteChatFolder}
-            soundEnabled={soundEnabled}
-          />
-
-          <section className="msgr__chat" aria-label="Окно переписки">
-            {isChatAvailable ? (
-              <ChatWindow
-                friendId={activeFriendId!}
-                onNotify={onNotify}
-                onBack={() => {
-                  playClick(soundEnabled)
-                  setActiveChatFriend(null)
-                }}
-                soundEnabled={soundEnabled}
-              />
-            ) : (
-              <div className="msgr__placeholder">
-                <div className="msgr__placeholder-icon">
-                  <MessageCircle size={32} className="text-[var(--accent)]" />
-                </div>
-                <h2>Напиши первому другу</h2>
-                <p>
-                  Здесь будут твои личные и групповые диалоги. Делись гордостями, обменивайся опытом и держи огонь вместе.
-                </p>
-
-                {threadIds.length > 0 && (
-                  <div className="msgr__placeholder-stats">
-                    <span>
-                      <Users size={14} /> {threadIds.length} диалогов
-                    </span>
-                    <span>
-                      <Sparkles size={14} /> {unreadTotal} непрочитанных
-                    </span>
-                    <span className="is-online">{onlineCount} в сети</span>
-                  </div>
-                )}
-
-                {/* Подсказки демо-собеседников выводятся ТОЛЬКО при NEXT_PUBLIC_DEMO_MODE=1 */}
-                {process.env.NEXT_PUBLIC_DEMO_MODE === '1' && (
-                  <div className="msgr__suggest">
-                    <p className="msgr__suggest-title">Кому написать прямо сейчас (демо)</p>
-                    <div className="msgr__suggest-row">
-                      {SUGGESTED_IDS.map((id) => {
-                        const friend = getFriend(id)
-                        if (!friend) return null
-                        const hasThread = Boolean(threads[id])
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            className="msgr__suggest-chip"
-                            onClick={() => (hasThread ? openThread(id) : startWith(id))}
-                          >
-                            <span
-                              className="msgr__suggest-ava"
-                              style={{ background: friend.avatarColor }}
-                              aria-hidden="true"
-                            >
-                              {friend.initials}
-                            </span>
-                            {friend.name.split(/\s+/)[0]}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center gap-2 py-2.5 px-6 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold shadow-md hover:opacity-90 transition-all active:scale-95"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      onNavigate('explore')
-                    }}
-                  >
-                    <Search size={14} /> Найти друзей по нику
-                  </button>
-                </div>
-              </div>
-            )}
-          </section>
-        </div>
+      <div className="messages-content flex-1 min-h-0 w-full flex flex-col">
+        <ChatThreadList
+          threads={threads}
+          activeFriendId={activeFriendId}
+          onSelect={openThread}
+          onMarkAllRead={() => {
+            markAllThreadsRead()
+            onNotify('Все переписки прочитаны ✓')
+          }}
+          folders={folders}
+          activeFolderId={activeFolderId}
+          onSelectFolder={setChatActiveFolderId}
+          onSaveCustomFolder={setChatFolder}
+          onDeleteCustomFolder={deleteChatFolder}
+          soundEnabled={soundEnabled}
+        />
       </div>
 
       {newChatOpen && (
