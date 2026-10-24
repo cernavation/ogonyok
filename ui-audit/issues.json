@@ -1,0 +1,146 @@
+[
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-home.png",
+    "issues": []
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-explore.png",
+    "issues": []
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-messages.png",
+    "issues": []
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-vault.png",
+    "issues": []
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-analytics.png",
+    "issues": []
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-leaderboard.png",
+    "issues": []
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-profile.png",
+    "issues": []
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-settings.png",
+    "issues": []
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-intentions.png",
+    "issues": []
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-composer.png",
+    "issues": []
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-onboarding.png",
+    "issues": []
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-auth-register.png",
+    "issues": []
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-story-viewer.png",
+    "issues": []
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-chat-open.png",
+    "issues": []
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-post-menu.png",
+    "issues": []
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "x-black",
+    "screenshot": "desktop-x-black-state-quick-focus-expanded.png",
+    "issues": []
+  }
+]

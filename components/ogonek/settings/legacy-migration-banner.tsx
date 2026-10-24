@@ -108,7 +108,7 @@ export function LegacyMigrationBanner({
       <button
         type="button"
         onClick={handleDismiss}
-        className="absolute top-3 right-3 text-white/40 hover:text-white transition-colors"
+        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
         aria-label="Скрыть баннер"
       >
         <X size={16} />
@@ -150,7 +150,7 @@ export function LegacyMigrationBanner({
               type="button"
               disabled={migrating}
               onClick={handleStartMigration}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#ff5722] text-white text-xs font-bold hover:bg-[#ff5722]/90 transition-all shadow-md disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 min-h-[36px] rounded-xl bg-[#c2410c] text-white text-xs font-bold hover:bg-[#9a3412] transition-all shadow-md disabled:opacity-50"
             >
               {migrating ? <Loader2 size={14} className="animate-spin" /> : <CloudUpload size={14} />}
               Перенести мой старый дневник
@@ -160,7 +160,7 @@ export function LegacyMigrationBanner({
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="text-xs text-white/50 hover:text-white/80 transition-colors"
+                className="min-h-[36px] px-3 py-1.5 flex items-center justify-center text-xs text-white/70 hover:text-white transition-colors"
               >
                 Позже
               </button>

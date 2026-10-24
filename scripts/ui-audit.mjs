@@ -34,8 +34,14 @@ export const CONFIG = {
   fastMode: process.argv.includes('--fast'),
 
   viewports: [
+    { id: 'desktop-1920', name: 'Desktop Large (1920×1080)', width: 1920, height: 1080, isMobile: false },
     { id: 'desktop', name: 'Desktop (1440×900)', width: 1440, height: 900, isMobile: false },
+    { id: 'desktop-1280', name: 'Desktop Compact (1280×800)', width: 1280, height: 800, isMobile: false },
+    { id: 'tablet-1024', name: 'Tablet Landscape (1024×768)', width: 1024, height: 768, isMobile: false },
+    { id: 'tablet-768', name: 'Tablet Portrait (768×1024)', width: 768, height: 1024, isMobile: true },
+    { id: 'mobile-430', name: 'Mobile Pro Max (430×932)', width: 430, height: 932, isMobile: true },
     { id: 'mobile', name: 'Mobile (390×844)', width: 390, height: 844, isMobile: true },
+    { id: 'mobile-360', name: 'Mobile Small (360×780)', width: 360, height: 780, isMobile: true },
   ],
 
   themes: [
@@ -747,7 +753,9 @@ export async function runUiAudit() {
   const allResults = []
   const consoleErrors = []
 
-  const viewportsToRun = CONFIG.fastMode ? [CONFIG.viewports[0]] : CONFIG.viewports
+  const viewportsToRun = CONFIG.fastMode
+    ? [CONFIG.viewports.find((v) => v.id === 'desktop') || CONFIG.viewports[0]]
+    : CONFIG.viewports
   const themesToRun = CONFIG.fastMode ? [CONFIG.themes[0]] : CONFIG.themes
 
   for (const viewport of viewportsToRun) {

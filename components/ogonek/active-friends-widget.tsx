@@ -80,18 +80,18 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#ff5722] text-white text-xs font-semibold hover:bg-[#ff5722]/90 transition-all shadow-sm"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#c2410c] text-white text-xs font-bold hover:bg-[#9a3412] transition-all shadow-sm"
             >
-              {copied ? <Check size={13} /> : <Copy size={13} />}
-              {copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              <span>{copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => onNavigate('explore')}
-              className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 text-xs font-medium transition-all"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 text-xs font-medium transition-all"
             >
-              <Search size={13} /> Найти людей по нику
+              <Search size={14} /> <span>Найти людей по нику</span>
             </button>
           </div>
         </div>
