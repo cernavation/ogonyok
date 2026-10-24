@@ -12717,10 +12717,7 @@ html[data-theme='apple-light'] .dynamics-bar {
 .dynamics-tooltip span b { font-size: 13px; color: var(--text); }
 
 .dynamics-chart__totals {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-top: 16px;
+  display: none !important;
 }
 
 .dynamics-total {
