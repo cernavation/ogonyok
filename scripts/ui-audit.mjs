@@ -756,7 +756,12 @@ export async function runUiAudit() {
   const viewportsToRun = CONFIG.fastMode
     ? [CONFIG.viewports.find((v) => v.id === 'desktop') || CONFIG.viewports[0]]
     : CONFIG.viewports
-  const themesToRun = CONFIG.fastMode ? [CONFIG.themes[0]] : CONFIG.themes
+  const themeArg = process.argv.find((a) => a.startsWith('--theme='))?.split('=')[1]
+  const themesToRun = themeArg
+    ? CONFIG.themes.filter((t) => t.id === themeArg)
+    : CONFIG.fastMode
+    ? [CONFIG.themes[0]]
+    : CONFIG.themes
 
   for (const viewport of viewportsToRun) {
     for (const theme of themesToRun) {

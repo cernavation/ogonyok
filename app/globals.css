@@ -1540,8 +1540,6 @@ kbd {
   .right-rail {
     display: none !important;
   }
-    display: none;
-  }
   .feed {
     border: 0;
   }
