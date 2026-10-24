@@ -124,20 +124,20 @@ export function VaultView({
       {/* Search Pill + Category Pills */}
       <div className="p-4 border-b border-[var(--border)] flex flex-col gap-3">
         <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] focus-within:border-[var(--accent)] transition-colors">
-          <Search size={16} className="text-[var(--text-3)] flex-none" />
+          <Search size={16} className="text-[var(--text-2)] flex-none" />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Искать в доказательствах..."
             aria-label="Поиск по доказательствам"
-            className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[var(--text)] placeholder-[var(--text-3)]"
+            className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[var(--text)] placeholder:text-[var(--text-2)]"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="w-6 h-6 min-w-[24px] rounded-full flex items-center justify-center text-[var(--text-3)] hover:text-[var(--text)]"
+              className="w-7 h-7 min-w-[28px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               aria-label="Очистить поиск"
             >
               <X size={14} />
