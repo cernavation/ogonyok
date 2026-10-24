@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   Calendar,
@@ -111,8 +111,30 @@ export function ProfileView({
   const [shareOpen, setShareOpen] = useState(false)
   const [coverCropperOpen, setCoverCropperOpen] = useState(false)
   const [avatarCropperOpen, setAvatarCropperOpen] = useState(false)
+  const [cropperFile, setCropperFile] = useState<File | null>(null)
   const [selectedDayModal, setSelectedDayModal] = useState<Day | null>(null)
   const [jumpDayNumber, setJumpDayNumber] = useState('')
+
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
+
+  const handleDropAvatar = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      setCropperFile(file)
+      setAvatarCropperOpen(true)
+    }
+  }
+
+  const handleDropCover = (e: React.DragEvent) => {
+    e.preventDefault()
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      setCropperFile(file)
+      setCoverCropperOpen(true)
+    }
+  }
 
   const days = useMemo(() => {
     return Array.isArray(storeState?.days) ? storeState.days : []
@@ -280,12 +302,45 @@ export function ProfileView({
         </div>
       </header>
 
+      {/* Hidden file inputs for direct upload */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) {
+            setCropperFile(file)
+            setAvatarCropperOpen(true)
+          }
+        }}
+      />
+      <input
+        ref={coverInputRef}
+        type="file"
+        accept="image/*,.heic,.heif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (file) {
+            setCropperFile(file)
+            setCoverCropperOpen(true)
+          }
+        }}
+      />
+
       {/* Cover Banner 200px */}
       <div
-        className="h-[200px] w-full relative overflow-hidden group"
+        className="h-[200px] w-full relative overflow-hidden group cursor-pointer"
         style={{
           background: coverSrc ? undefined : (bannerPreset.background || 'linear-gradient(135deg, #FF6A1A 0%, #16181C 100%)'),
         }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleDropCover}
+        onClick={() => coverInputRef.current?.click()}
       >
         {coverSrc && (
           <img
@@ -297,9 +352,10 @@ export function ProfileView({
         {/* Кнопка смены обложки */}
         <button
           type="button"
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation()
             playClick(soundEnabled)
-            setCoverCropperOpen(true)
+            coverInputRef.current?.click()
           }}
           className="absolute bottom-3 right-3 sm:right-6 min-h-[34px] px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-white/20 transition-all hover:scale-105 active:scale-95"
           title="Сменить обложку профиля"
@@ -314,7 +370,12 @@ export function ProfileView({
       <div className="px-4 sm:px-6 relative">
         <div className="flex items-end justify-between -mt-[67px] mb-3 gap-3">
           {/* Avatar 134px с рамкой цвета фона (4px solid var(--bg)), 50% нахлёст */}
-          <div className="relative flex-none group">
+          <div
+            className="relative flex-none group cursor-pointer"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDropAvatar}
+            onClick={() => avatarInputRef.current?.click()}
+          >
             <div
               className="w-[134px] h-[134px] rounded-full border-4 border-[var(--bg)] bg-[var(--bg-elev)] shadow-xl overflow-hidden flex items-center justify-center font-black text-3xl text-white select-none relative"
               style={{ background: avatarSrc ? undefined : profile.avatarColor || 'var(--accent)' }}
@@ -328,9 +389,10 @@ export function ProfileView({
             {/* Кнопка смены аватара */}
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
                 playClick(soundEnabled)
-                setAvatarCropperOpen(true)
+                avatarInputRef.current?.click()
               }}
               className="absolute bottom-1 right-1 w-9 h-9 rounded-full bg-[var(--bg-elev)] border-2 border-[var(--bg)] text-[var(--text)] flex items-center justify-center shadow-lg hover:bg-[var(--bg-hover)] hover:scale-105 active:scale-95 transition-all"
               title="Сменить аватар"
@@ -788,10 +850,16 @@ export function ProfileView({
       {coverCropperOpen && (
         <ProfileImageCropperModal
           mode="cover"
+          initialFile={cropperFile}
           currentPreset={profile.bannerPreset}
-          onClose={() => setCoverCropperOpen(false)}
+          onClose={() => {
+            setCoverCropperOpen(false)
+            setCropperFile(null)
+          }}
           onApplyImage={(url) => {
             onUpdateProfile({ bannerImage: url, coverUrl: url })
+            setCoverCropperOpen(false)
+            setCropperFile(null)
           }}
           onRemovePhoto={() => {
             onUpdateProfile({ bannerImage: null, coverUrl: null })
@@ -808,9 +876,15 @@ export function ProfileView({
       {avatarCropperOpen && (
         <ProfileImageCropperModal
           mode="avatar"
-          onClose={() => setAvatarCropperOpen(false)}
+          initialFile={cropperFile}
+          onClose={() => {
+            setAvatarCropperOpen(false)
+            setCropperFile(null)
+          }}
           onApplyImage={(url) => {
             onUpdateProfile({ avatarImage: url })
+            setAvatarCropperOpen(false)
+            setCropperFile(null)
           }}
           onNotify={onNotify}
           soundEnabled={soundEnabled}

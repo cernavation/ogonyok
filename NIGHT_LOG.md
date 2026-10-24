@@ -657,3 +657,21 @@
 5. **Результаты прогона `test:typing`**:
    - Прогон `node scripts/ui-typing.mjs`: **0 ПРОБЛЕМ** (18/18 тестов PASS в Chromium и WebKit).
    - Composer (гордость, благодарность, 2000 симв, эмодзи, Shift+Enter), Explore, Чаты, Vault, Намерения, Профиль, Настройки, Auth — все поля ввода работают без потери фокуса и перемонтирования.
+
+---
+
+## [23:12] ЗАДАЧА 4. АВАТАР И ОБЛОЖКА В SUPABASE STORAGE (OGONYOK-MEDIA)
+1. **Идемпотентная миграция `supabase/migrations/001_ogonyok_media_storage.sql`**:
+   - Создание бакета `ogonyok-media` с лимитом 2 МБ на файл и разрешением MIME-типов `image/jpeg`, `image/png`, `image/webp`, `image/heic`.
+   - Настройка RLS-политик: публичное чтение `ogonyok_media_public_read`, изолированная загрузка `ogonyok_media_user_insert` строго в свои папки `(storage.foldername(name))[2] = auth.uid()::text`.
+2. **Модуль `lib/ogonek/profile-media-service.ts`**:
+   - Валидация типов (JPG, PNG, WebP, HEIC).
+   - Сжатие на Canvas до размера ≤ 2 МБ с конвертацией в WebP.
+   - Загрузка по путям `avatars/{uid}/{timestamp}.webp` и `banners/{uid}/{timestamp}.webp`.
+   - Формирование cache-busting URL (`?v=timestamp`).
+   - Синхронизация `profiles.avatar_image` и `profiles.banner_image`.
+3. **Интерактивность в интерфейсе**:
+   - В `ProfileView` и `ProfileImageCropperModal` поддержан клик по аватару/обложке и Drag-and-Drop картинок.
+   - Мгновенное обновление аватара во всех компонентах UI (`Sidebar`, `MobileHeader`, `ProfileView`, `DayCard`, `StoriesBar`).
+4. **Тесты**:
+   - Написан сьют `test/profile-media.test.ts` (9 тестов). 168/168 unit-тестов проекта проходят успешно.

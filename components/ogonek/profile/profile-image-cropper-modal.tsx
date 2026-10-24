@@ -16,6 +16,11 @@ import {
 } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase/client'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import {
+  MAX_FILE_SIZE_BYTES,
+  uploadProfileMedia,
+  validateMediaFileType,
+} from '@/lib/ogonek/profile-media-service'
 
 export const OGONEK_GRADIENTS = [
   {
@@ -95,17 +100,9 @@ export function ProfileImageCropperModal({
 
   // Load and read image from File
   const handleLoadFile = useCallback((file: File) => {
-    if (file.size > MAX_FILE_SIZE) {
-      onNotify('Файл больше 5 МБ. Выберите файл меньшего размера.')
-      return
-    }
-
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
-    const ext = file.name.split('.').pop()?.toLowerCase()
-    const isHeic = ext === 'heic' || ext === 'heif' || file.type.includes('heic')
-
-    if (!validTypes.includes(file.type) && !isHeic && !file.type.startsWith('image/')) {
-      onNotify('Формат не поддерживается. Используйте JPG, PNG, WebP или HEIC.')
+    const check = validateMediaFileType(file)
+    if (!check.valid) {
+      onNotify(check.error || 'Формат не поддерживается. Используйте JPG, PNG, WebP или HEIC.')
       return
     }
 
@@ -261,48 +258,27 @@ export function ProfileImageCropperModal({
 
       ctx.drawImage(img, cx, cy, renderW, renderH)
 
-      // 2. Compress to Blob / DataURL (quality 0.85)
-      const dataUrl = targetCanvas.toDataURL('image/jpeg', 0.85)
+      // 2. Сжатие в WebP (<= 2 МБ) и загрузка в бакет ogonyok-media (avatars/{uid}/ или banners/{uid}/)
+      const res = await uploadProfileMedia({
+        kind: isCover ? 'banner' : 'avatar',
+        fileOrCanvas: targetCanvas,
+      })
 
-      // 3. Try uploading to Supabase Storage bucket
-      let appliedUrl = dataUrl
-      const supabase = getSupabase()
-
-      if (supabase) {
-        const blob = await new Promise<Blob | null>((resolve) =>
-          targetCanvas.toBlob((b) => resolve(b), 'image/jpeg', 0.85)
-        )
-
-        if (blob) {
-          const bucket = isCover ? 'covers' : 'avatars'
-          const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`
-
-          const { data, error } = await supabase.storage
-            .from(bucket)
-            .upload(filename, blob, {
-              contentType: 'image/jpeg',
-              upsert: true,
-            })
-
-          if (error) {
-            console.warn('Supabase storage upload error:', error.message)
-            onNotify('Бакет хранилища не настроен, фото сохранено локально.')
-          } else if (data?.path) {
-            const { data: pubData } = supabase.storage.from(bucket).getPublicUrl(data.path)
-            if (pubData?.publicUrl) {
-              appliedUrl = pubData.publicUrl
-            }
-          }
-        }
+      if (!res.ok || !res.url) {
+        throw new Error(res.error || 'Не удалось сохранить изображение')
       }
 
-      // 4. Instant optimistic update
-      onApplyImage(appliedUrl)
+      // 3. Мгновенное обновление UI с cache-busting (?v=timestamp)
+      onApplyImage(res.url)
       playSuccess(soundEnabled)
-      onNotify(isCover ? 'Обложка профиля обновлена ✨' : 'Аватар профиля обновлён ✨')
+      if (res.fallbackApplied) {
+        onNotify(isCover ? 'Обложка обновлена локально ✨' : 'Аватар обновлён локально ✨')
+      } else {
+        onNotify(isCover ? 'Обложка сохранена в облаке ✨' : 'Аватар сохранён в облаке ✨')
+      }
       onClose()
-    } catch {
-      onNotify('Ошибка при обработке изображения. Попробуйте другой файл.')
+    } catch (err: any) {
+      onNotify(err?.message || 'Ошибка при обработке изображения. Попробуйте другой файл.')
     } finally {
       setIsUploading(false)
     }
@@ -312,6 +288,12 @@ export function ProfileImageCropperModal({
     <div
       className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in select-none"
       onClick={onClose}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault()
+        const file = e.dataTransfer.files?.[0]
+        if (file) handleLoadFile(file)
+      }}
     >
       <div
         className="w-full max-w-xl bg-[var(--bg-elev)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-2xl flex flex-col"
