@@ -353,7 +353,7 @@ export function ProfileView({
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{stats.totalPrides + stats.totalGratitudes}</strong> записей</span>
           <span>·</span>
-          <span><strong className="font-bold text-[var(--text)]">{storeState.friendIds?.length || 12}</strong> подписчиков</span>
+          <span><strong className="font-bold text-[var(--text)]">{storeState.friendIds?.length ?? 0}</strong> подписчиков</span>
         </div>
 
         {/* Вкладки на всю ширину (Записи | Благодарности | Календарь | Друзья) */}
