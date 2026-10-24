@@ -1,8 +1,8 @@
 # Отчёт базового аудита интерфейса (BASELINE)
 
-> **Дата замера:** 2026-10-24T07:21:13.456Z  
+> **Дата замера:** 2026-10-24T07:24:19.852Z  
 > **Режим:** Быстрый (--fast, десктоп x-black)  
-> **Длительность выполнения:** 29.4 сек  
+> **Длительность выполнения:** 22.9 сек  
 > **Всего проверено экранов и состояний:** 16  
 
 ---
@@ -15,20 +15,155 @@
 | **Карточки в карточках (вложенность ≥ 2)** | 0 | 🔴 Critical |
 | **Налезающие кнопки (Overlap)** | 0 | 🔴 Critical |
 | **Горизонтальный скролл** | 0 | 🔴 Critical |
-| **Ошибки в консоли браузера** | 0 | 🔴 Critical |
+| **Ошибки в консоли браузера** | 4 | 🔴 Critical |
 | **Слипшиеся кнопки (зазор < 6px)** | 0 | 🟡 Warning |
 | **Мелкий шрифт (< 13px)** | 0 | 🟡 Warning |
 | **Низкий контраст (< 4.5:1 WCAG AA)** | 0 | 🟡 Warning |
 | **Малые зоны нажатия (< 32px / 40px)** | 0 | 🟡 Warning |
 | **Обрезанный текст (overflow without ellipsis)** | 0 | 🟡 Warning |
 | **Warning'и в консоли браузера** | 0 | 🟡 Warning |
-| **ИТОГО ДЕФЕКТОВ** | **0** | **(Критичных: 0, Предупреждений: 0)** |
+| **ИТОГО ДЕФЕКТОВ** | **5** | **(Критичных: 5, Предупреждений: 0)** |
 
 ---
 
 ## 2. ТОП-10 самых грубых дефектов
 
-🎉 Замечаний не обнаружено!
+### 1. [🔴 КРИТИЧНО] Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+- **Экран/Состояние:** Console Logs (desktop / x-black)
+- **Элемент/Селектор:** `DOM`
+- **Подробности:** В консоли браузера: Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+
+
+### 2. [🔴 КРИТИЧНО] ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+
+
+- **Экран/Состояние:** Console Logs (desktop / x-black)
+- **Элемент/Селектор:** `DOM`
+- **Подробности:** В консоли браузера: ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+
+
+
+
+### 3. [🔴 КРИТИЧНО] Failed to load resource: the server responded with a status of 404 (Not Found)
+- **Экран/Состояние:** Console Logs (desktop / x-black)
+- **Элемент/Селектор:** `DOM`
+- **Подробности:** В консоли браузера: Failed to load resource: the server responded with a status of 404 (Not Found)
+
+
+### 4. [🔴 КРИТИЧНО] ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+- **Экран/Состояние:** Console Logs (desktop / x-black)
+- **Элемент/Селектор:** `DOM`
+- **Подробности:** В консоли браузера: ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+
+
+### 5. [🔴 КРИТИЧНО] ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+- **Экран/Состояние:** Console Logs (desktop / x-black)
+- **Элемент/Селектор:** `DOM`
+- **Подробности:** В консоли браузера: ./app/globals.css
+Error: Error evaluating Node.js code
+CssSyntaxError: /Users/user/Desktop/ogonyok-ai-clone/app/globals.css:1709:1: Unexpected }
+    [at Input.error (turbopack:///[project]/node_modules/postcss/lib/input.js:135:16)]
+    [at Parser.unexpectedClose (turbopack:///[project]/node_modules/postcss/lib/parser.js:602:22)]
+    [at Parser.end (turbopack:///[project]/node_modules/postcss/lib/parser.js:337:12)]
+    [at Parser.parse (turbopack:///[project]/node_modules/postcss/lib/parser.js:466:16)]
+    [at parser (turbopack:///[project]/node_modules/postcss/lib/parse.js:11:12)]
+    [at new LazyResult (turbopack:///[project]/node_modules/postcss/lib/lazy-result.js:171:16)]
+    [at Processor.process (turbopack:///[project]/node_modules/postcss/lib/processor.js:53:14)]
+    [at transform (turbopack:///[turbopack-node]/transforms/postcss.ts?config=[project]/postcss.config.mjs:70:51)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:89:29)]
+    [at run (turbopack:///[turbopack-node]/child_process/evaluate.ts:112:11)]
+
+Import trace:
+  Client Component Browser:
+    ./app/globals.css [Client Component Browser]
+    ./app/layout.tsx [Server Component]
+
+
 
 ---
 

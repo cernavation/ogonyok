@@ -1498,7 +1498,17 @@ kbd {
   }
 }
 
-@media (max-width: 760px) {
+/* Планшет 768px (iPad Portrait) — правая колонка скрыта, левое меню узкое (иконки) */
+@media (max-width: 1000px) and (min-width: 701px) {
+  .app-shell {
+    grid-template-columns: 82px minmax(0, 1fr) !important;
+  }
+  .right-rail {
+    display: none !important;
+  }
+}
+
+@media (max-width: 700px) {
   button,
   [role="button"],
   input[type="button"],
@@ -1528,6 +1538,8 @@ kbd {
   }
   .sidebar,
   .right-rail {
+    display: none !important;
+  }
     display: none;
   }
   .feed {
@@ -1666,18 +1678,20 @@ kbd {
     z-index: 31;
     right: 16px;
     bottom: calc(56px + env(safe-area-inset-bottom) + 14px);
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
+    min-width: 60px;
+    min-height: 60px;
     border-radius: 9999px;
     color: #fff;
     border: 0;
-    background: linear-gradient(135deg, #FF5C00 0%, #FF7A18 100%);
-    box-shadow: 0 6px 20px rgba(255, 92, 0, 0.42);
+    background: var(--accent);
+    box-shadow: 0 6px 20px rgba(255, 106, 26, 0.45);
     transition: transform 0.15s, box-shadow 0.15s;
   }
   .fab:active {
     transform: scale(0.92);
-    box-shadow: 0 2px 10px rgba(255, 92, 0, 0.3);
+    box-shadow: 0 2px 10px rgba(255, 106, 26, 0.3);
   }
   .toast {
     bottom: calc(49px + env(safe-area-inset-bottom) + 16px);

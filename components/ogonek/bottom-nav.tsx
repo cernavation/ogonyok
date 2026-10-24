@@ -54,7 +54,7 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
         })}
       </nav>
       <button type="button" className="fab" aria-label="Записать день" onClick={onCompose}>
-        <Plus size={22} strokeWidth={2.25} />
+        <Plus size={26} strokeWidth={2.5} />
       </button>
     </>
   )
