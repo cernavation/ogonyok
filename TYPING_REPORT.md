@@ -1,17 +1,26 @@
 # ОТЧЁТ ТЕСТИРОВАНИЯ ВВОДА ТЕКСТА И СТАБИЛЬНОСТИ ФОКУСА
 
-- **Дата**: 2026-10-24T19:43:35.755Z
-- **Общий статус**: ❌ НАЙДЕНО 2 ПРОБЛЕМ
-- **Время прогона**: 37.8 сек
+- **Дата**: 2026-10-24T20:02:47.012Z
+- **Общий статус**: ✅ 0 ПРОБЛЕМ (УСПЕШНО)
+- **Время прогона**: 86.1 сек
 
 | Браузер | Вьюпорт | Сцена | Статус | Время | Детали |
 |---|---|---|---|---|---|
-| chromium | desktop-1440 | Composer: Гордость (посимвольный ввод, эмодзи, 2000 симв) | ✅ PASS | 4366ms | — |
-| chromium | desktop-1440 | Composer: Благодарность (переключение вкладки и ввод) | ✅ PASS | 3941ms | — |
-| chromium | desktop-1440 | Поиск: строка запроса в Explore | ✅ PASS | 2762ms | — |
-| chromium | desktop-1440 | Чаты: поле ввода сообщения в диалоге | ✅ PASS | 2179ms | — |
-| chromium | desktop-1440 | Evidence Vault: поиск и ввод данных улики | ✅ PASS | 1643ms | — |
-| chromium | desktop-1440 | Намерения / Фокус: утренний фокус дня | ✅ PASS | 2239ms | — |
-| chromium | desktop-1440 | Редактирование профиля: имя и bio | ✅ PASS | 2526ms | — |
-| chromium | desktop-1440 | Настройки: кастомный акцент / ник | ❌ FAIL | 5992ms | not-found: Селектор input[placeholder*="#FF5C00"], input[type="text"] не найден или невидим |
-| chromium | desktop-1440 | Окно входа/регистрации: логин и пароль | ❌ FAIL | 7106ms | not-found: Селектор input[placeholder*="alex_cerna"], input[autoComplete="username"], input[type="text"] не найден или невидим |
+| chromium | desktop-1440 | Composer: Гордость (посимвольный ввод, эмодзи, 2000 симв) | ✅ PASS | 4718ms | — |
+| chromium | desktop-1440 | Composer: Благодарность (переключение вкладки и ввод) | ✅ PASS | 5181ms | — |
+| chromium | desktop-1440 | Поиск: строка запроса в Explore | ✅ PASS | 3387ms | — |
+| chromium | desktop-1440 | Чаты: поле ввода сообщения в диалоге | ✅ PASS | 11215ms | — |
+| chromium | desktop-1440 | Evidence Vault: поиск и ввод данных улики | ✅ PASS | 3333ms | — |
+| chromium | desktop-1440 | Намерения / Фокус: утренний фокус дня | ✅ PASS | 3096ms | — |
+| chromium | desktop-1440 | Редактирование профиля: имя и bio | ✅ PASS | 3035ms | — |
+| chromium | desktop-1440 | Настройки: кастомный акцент / ник | ✅ PASS | 2762ms | — |
+| chromium | desktop-1440 | Окно входа/регистрации: логин и пароль | ✅ PASS | 2588ms | — |
+| webkit | desktop-1440 | Composer: Гордость (посимвольный ввод, эмодзи, 2000 симв) | ✅ PASS | 4835ms | — |
+| webkit | desktop-1440 | Composer: Благодарность (переключение вкладки и ввод) | ✅ PASS | 4338ms | — |
+| webkit | desktop-1440 | Поиск: строка запроса в Explore | ✅ PASS | 3882ms | — |
+| webkit | desktop-1440 | Чаты: поле ввода сообщения в диалоге | ✅ PASS | 11600ms | — |
+| webkit | desktop-1440 | Evidence Vault: поиск и ввод данных улики | ✅ PASS | 3273ms | — |
+| webkit | desktop-1440 | Намерения / Фокус: утренний фокус дня | ✅ PASS | 3762ms | — |
+| webkit | desktop-1440 | Редактирование профиля: имя и bio | ✅ PASS | 3073ms | — |
+| webkit | desktop-1440 | Настройки: кастомный акцент / ник | ✅ PASS | 2578ms | — |
+| webkit | desktop-1440 | Окно входа/регистрации: логин и пароль | ✅ PASS | 3922ms | — |

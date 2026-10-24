@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   ArrowLeft,
   Bell,
@@ -10,6 +10,7 @@ import {
   Download,
   Eye,
   Flame,
+  HelpCircle,
   Lock,
   Moon,
   Palette,
@@ -75,6 +76,51 @@ const SECTIONS = [
   { id: 'account' as SettingsSection, label: 'Аккаунт', hint: 'Профиль, резервное копирование и сброс', icon: User },
   { id: 'guide' as SettingsSection, label: 'Как пользоваться', hint: 'Руководство, правила стрика и уровней', icon: HelpCircle },
 ] as const
+
+function HexColorInput({
+  currentAccent,
+  onSetAccent,
+}: {
+  currentAccent: string
+  onSetAccent: (val: any) => void
+}) {
+  const [localHex, setLocalHex] = useState(currentAccent.startsWith('#') ? currentAccent : '')
+
+  useEffect(() => {
+    if (currentAccent.startsWith('#')) {
+      setLocalHex(currentAccent)
+    }
+  }, [currentAccent])
+
+  return (
+    <input
+      type="text"
+      value={localHex}
+      placeholder="#FF5C00"
+      onChange={(e) => {
+        const val = e.target.value
+        setLocalHex(val)
+        const clean = val.trim()
+        if (/^#[0-9a-fA-F]{6}$/.test(clean)) {
+          onSetAccent(clean)
+        }
+      }}
+      onBlur={() => {
+        const clean = localHex.trim()
+        if (/^#[0-9a-fA-F]{6}$/.test(clean)) {
+          onSetAccent(clean)
+        } else if (!clean) {
+          setLocalHex('')
+        } else if (currentAccent.startsWith('#')) {
+          setLocalHex(currentAccent)
+        }
+      }}
+      className="w-24 h-8 px-2.5 text-xs font-mono font-bold rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] outline-none focus:border-[var(--accent)]"
+      maxLength={7}
+      aria-label="HEX код акцента"
+    />
+  )
+}
 
 export function SettingsView({
   state,
@@ -240,19 +286,7 @@ export function SettingsView({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={state.accent.startsWith('#') ? state.accent : ''}
-                    placeholder="#FF5C00"
-                    onChange={(e) => {
-                      const val = e.target.value.trim()
-                      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
-                        onSetAccent(val as any)
-                      }
-                    }}
-                    className="w-24 h-8 px-2.5 text-xs font-mono font-bold rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] outline-none focus:border-[var(--accent)]"
-                    maxLength={7}
-                  />
+                  <HexColorInput currentAccent={state.accent} onSetAccent={onSetAccent} />
                 </div>
               </div>
             </div>

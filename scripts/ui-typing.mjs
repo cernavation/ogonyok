@@ -58,14 +58,14 @@ export const CONFIG = {
       id: 'vault-search',
       title: 'Evidence Vault: поиск и ввод данных улики',
       path: '/?view=vault',
-      selector: 'input[placeholder*="Поиск"], input[placeholder*="поиск"], input[type="search"], input[type="text"]',
+      selector: 'input[placeholder*="доказательствам"], input[placeholder*="Поиск"], input[placeholder*="поиск"], input[type="search"]',
       testText: 'Сертификат полумарафона',
     },
     {
       id: 'intentions-focus',
       title: 'Намерения / Фокус: утренний фокус дня',
       path: '/?view=intentions',
-      selector: 'input[placeholder*="фокус"], input[placeholder*="намерени"], input[placeholder*="Цель"], input[type="text"]',
+      selector: 'input[aria-label*="Намерение"], input[placeholder*="задача"], input[type="text"]',
       testText: 'Сфокусироваться на архитектуре и тестах',
     },
     {
@@ -80,14 +80,15 @@ export const CONFIG = {
       id: 'settings-goal',
       title: 'Настройки: кастомный акцент / ник',
       path: '/?view=settings',
-      selector: 'input[placeholder*="#FF5C00"], input[type="text"]',
+      action: 'open-settings-appearance',
+      selector: 'input[placeholder*="#FF5C00"]:visible',
       testText: '#1D9BF0',
     },
     {
       id: 'auth-modal',
       title: 'Окно входа/регистрации: логин и пароль',
       action: 'open-auth',
-      selector: 'input[placeholder*="alex_cerna"], input[autoComplete="username"], input[type="text"]',
+      selector: 'input[name="username"], input[autoComplete="username"], input[placeholder*="alex_cerna"]',
       testText: 'alex_champion',
     },
   ],
@@ -140,6 +141,13 @@ async function prepareAuth(context) {
         signedIn: true,
         hasOnboarded: true,
         activeAccountId: 'acc-owner',
+      }
+      if (!st.days || !Array.isArray(st.days) || st.days.length <= 2) {
+        st.days = [
+          { id: '1', dateISO: '2026-10-24T12:00:00.000Z', title: 'Активный день', prides: [{ id: 'p1', text: 'Пробежка 10 км', scale: 10, overcome: 3 }], gratitudes: [{ id: 'g1', text: 'За день' }], status: 'completed' },
+          { id: '2', dateISO: '2026-10-23T12:00:00.000Z', title: 'Подготовка релиза', prides: [{ id: 'p2', text: 'Сборка без ошибок', scale: 9, overcome: 2 }], gratitudes: [{ id: 'g2', text: 'Команде' }], status: 'completed' },
+          { id: '3', dateISO: '2026-10-22T12:00:00.000Z', title: 'Тестирование компонентов', prides: [{ id: 'p3', text: 'Архитектурный план', scale: 8, overcome: 1 }], gratitudes: [{ id: 'g3', text: 'Наставнику' }], status: 'completed' },
+        ]
       }
       localStorage.setItem('ogonek.v2', JSON.stringify(st))
     } catch {}
@@ -264,12 +272,13 @@ export async function runTypingSuite() {
         try {
           if (scene.kind === 'composer') {
             // Открываем главную страницу
-            await page.goto(CONFIG.baseUrl, { waitUntil: 'domcontentloaded' })
+            await page.goto(CONFIG.baseUrl + '/?view=home', { waitUntil: 'networkidle' })
+            await page.waitForSelector('aside.sidebar, .sidebar, button:has-text("Записать")', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
             await resetModals(page)
 
-            // Открываем Composer через кнопку или событие
-            const composeBtn = await page.$('button:has-text("Записать"), [aria-label="Записать"]')
+            // Открываем Composer кликом по «Записать» или через событие
+            const composeBtn = await page.$('aside.sidebar button:has-text("Записать"), .sidebar button:has-text("Записать"), button:has-text("Записать")')
             if (composeBtn && await composeBtn.isVisible()) {
               await composeBtn.click()
             } else {
@@ -277,7 +286,7 @@ export async function runTypingSuite() {
                 window.dispatchEvent(new CustomEvent('ogonek:open-composer'))
               })
             }
-            await page.waitForSelector('.modal textarea, textarea[aria-label*="Пункт"], textarea', { state: 'visible', timeout: 5000 })
+            await page.waitForSelector('div[role="dialog"] textarea, textarea', { state: 'visible', timeout: 5000 })
 
             if (scene.mode === 'gratitude') {
               // Переключаемся на вкладку «Благодарность»
@@ -320,13 +329,15 @@ export async function runTypingSuite() {
               }
             }
           } else if (scene.action === 'open-edit-profile') {
-            await page.goto(CONFIG.baseUrl + '/?view=profile', { waitUntil: 'domcontentloaded' })
+            await page.goto(CONFIG.baseUrl + '/?view=profile', { waitUntil: 'networkidle' })
+            await page.waitForSelector('aside.sidebar, .sidebar', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
 
             // Нажимаем кнопку редактирования профиля
             const editBtn = await page.waitForSelector('button:has-text("Редактировать профиль"), button:has-text("Изменить")', { timeout: 4000 }).catch(() => null)
             if (editBtn) {
               await editBtn.click()
+              await page.waitForSelector('.epm-overlay, div[role="dialog"]', { state: 'visible', timeout: 3000 }).catch(() => {})
               await page.waitForTimeout(200)
               const issues = await testFieldTyping(page, scene.selector, scene.testText, scene.title)
               sceneIssues.push(...issues)
@@ -334,28 +345,33 @@ export async function runTypingSuite() {
               sceneIssues.push({ type: 'not-found', detail: 'Кнопка "Редактировать профиль" не найдена' })
             }
           } else if (scene.action === 'open-auth') {
-            await page.goto(CONFIG.baseUrl, { waitUntil: 'domcontentloaded' })
+            await page.goto(CONFIG.baseUrl + '/?view=home', { waitUntil: 'networkidle' })
+            await page.waitForSelector('aside.sidebar, .sidebar', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
 
             // Открываем Auth Modal
             await page.evaluate(() => {
               window.dispatchEvent(new CustomEvent('ogonek:open-auth', { detail: 'signin' }))
             })
+            await page.waitForSelector('input[name="username"]', { state: 'visible', timeout: 5000 }).catch(() => {})
+            await page.waitForTimeout(200)
+
+            const issues = await testFieldTyping(page, scene.selector, scene.testText, scene.title)
+            sceneIssues.push(...issues)
+          } else if (scene.action === 'open-settings-appearance') {
+            await page.goto(CONFIG.baseUrl + '/?view=settings', { waitUntil: 'networkidle' })
+            await page.waitForSelector('aside.sidebar, .sidebar', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
-
-            // Если поля скрыты за «Другие способы входа» — кликаем
-            const altBtn = await page.$('button:has-text("Другие способы входа")')
-            if (altBtn) {
-              await altBtn.click()
-              await page.waitForTimeout(200)
-            }
-
+            const secBtn = await page.$('button[role="tab"]:has-text("Внешний вид"), button:has-text("Внешний вид")')
+            if (secBtn) await secBtn.click().catch(() => {})
+            await page.waitForTimeout(200)
             const issues = await testFieldTyping(page, scene.selector, scene.testText, scene.title)
             sceneIssues.push(...issues)
           } else {
             // Обычный экран по URL
             const url = CONFIG.baseUrl + (scene.path || '/')
-            await page.goto(url, { waitUntil: 'domcontentloaded' })
+            await page.goto(url, { waitUntil: 'networkidle' })
+            await page.waitForSelector('aside.sidebar, .sidebar', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
 
             const issues = await testFieldTyping(page, scene.selector, scene.testText, scene.title)
