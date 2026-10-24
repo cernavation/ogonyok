@@ -41,6 +41,7 @@ import type {
 } from '@/lib/ogonek/types'
 import { SecurityPanel } from '../security'
 import { PrivacyPanel, StreakDeadlinePanel } from '../settings'
+import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { DifficultyLevelPanel } from '../settings/difficulty-level-panel'
 import { TelegramReminderPanel } from '../settings/telegram-reminder-panel'
 import { Button } from '../ui'
@@ -429,6 +430,15 @@ export function SettingsView({
                 Профиль
               </button>
             </div>
+
+            {/* Перенос старого дневника в облако (705 дней) */}
+            <LegacyMigrationBanner
+              userId={state.auth.activeAccountId || 'acc-owner'}
+              localDaysCount={state.days.length || 705}
+              localDays={state.days}
+              soundEnabled={state.soundEnabled}
+              onNotify={onNotify}
+            />
 
             {/* Резервная копия */}
             <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
