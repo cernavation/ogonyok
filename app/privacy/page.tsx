@@ -86,9 +86,12 @@ export default function PrivacyPage() {
           </div>
         </section>
 
-        <footer className="pt-8 border-t border-zinc-900 text-xs text-zinc-500 flex justify-between">
+        <footer className="pt-8 border-t border-zinc-900 text-xs text-zinc-500 flex flex-wrap gap-3 justify-between items-center">
           <span>© 2026 Огонёк. Все права защищены.</span>
-          <Link href="/" className="text-zinc-400 hover:text-white">Вернуться на главную</Link>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="text-zinc-400 hover:text-white transition-colors">Условия использования</Link>
+            <Link href="/" className="text-zinc-400 hover:text-white transition-colors">На главную</Link>
+          </div>
         </footer>
       </div>
     </div>

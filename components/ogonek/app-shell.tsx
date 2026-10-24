@@ -217,6 +217,7 @@ export function AppShell() {
         'leaderboard',
         'settings',
         'intentions',
+        'landing',
       ]
       if (v && validViews.includes(v)) {
         setView(v)
@@ -565,7 +566,7 @@ export function AppShell() {
   )
 
   // Неавторизованный гость видит ТОЛЬКО лендинг в стиле X.com (Требование 2)
-  if (!state.auth.signedIn && process.env.NEXT_PUBLIC_DEMO_MODE !== '1') {
+  if (view === 'landing' || (!state.auth.signedIn && process.env.NEXT_PUBLIC_DEMO_MODE !== '1')) {
     return (
       <GuestLanding
         onEnterDemo={() => {

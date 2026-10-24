@@ -6,9 +6,31 @@ import { SECURITY_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/security'
 import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
 
 export const metadata: Metadata = {
-  title: 'Огонёк — Дневник силы и благодарности',
-  description: 'Личный дневник достижений, благодарностей и фиксации внутренней опоры.',
+  title: 'Огонёк — Твой личный дневник силы',
+  description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Огонёк — Твой личный дневник силы',
+    description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
+    url: 'https://ogonek.app',
+    siteName: 'Огонёк',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'Огонёк — Твой личный дневник силы',
+      },
+    ],
+    locale: 'ru_RU',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Огонёк — Твой личный дневник силы',
+    description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
+    images: ['/og-image.png'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

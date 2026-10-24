@@ -8,6 +8,7 @@ export type ViewId =
   | 'profile'
   | 'intentions'
   | 'leaderboard'
+  | 'landing'
 
 export type Mode = 'pride' | 'gratitude'
 
