@@ -17,6 +17,7 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   chatPolicy: 'friends',
   showStreakPublicly: true,
   showBadgesPublicly: true,
+  showDifficultyLevelPublicly: true,
   searchableByUsername: true,
   hideFromLeaderboards: false,
   updatedAtISO: '2026-10-01T00:00:00.000Z',
@@ -125,6 +126,7 @@ export function sanitizePrivacySettings(value: unknown): PrivacySettings {
     chatPolicy: normalizeAudience(v.chatPolicy),
     showStreakPublicly: bool(v.showStreakPublicly, DEFAULT_PRIVACY.showStreakPublicly),
     showBadgesPublicly: bool(v.showBadgesPublicly, DEFAULT_PRIVACY.showBadgesPublicly),
+    showDifficultyLevelPublicly: bool(v.showDifficultyLevelPublicly, DEFAULT_PRIVACY.showDifficultyLevelPublicly ?? true),
     searchableByUsername: bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
     hideFromLeaderboards: bool(v.hideFromLeaderboards, DEFAULT_PRIVACY.hideFromLeaderboards),
     updatedAtISO:

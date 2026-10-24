@@ -24,6 +24,8 @@ create table if not exists public.profiles (
   username text unique not null,
   display_name text not null,
   avatar_url text,
+  cover_url text,
+  show_difficulty_level boolean not null default true,
   bio text default '',
   city text default '',
   level int not null default 3 check (level between 1 and 5),
@@ -37,9 +39,23 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+-- Миграция колонок profiles (на случай существующей таблицы)
+alter table public.profiles add column if not exists cover_url text;
+alter table public.profiles add column if not exists show_difficulty_level boolean not null default true;
+
 create index if not exists idx_profiles_username on public.profiles(username);
 create index if not exists idx_profiles_in_leaderboard on public.profiles(in_leaderboard) where in_leaderboard = true;
 create index if not exists idx_profiles_streak on public.profiles(streak desc);
+
+-- История изменений уровней сложности
+create table if not exists public.level_history (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  from_level int not null check (from_level between 1 and 5),
+  to_level int not null check (to_level between 1 and 5),
+  changed_at timestamptz not null default now()
+);
+create index if not exists idx_level_history_user on public.level_history(user_id, changed_at desc);
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 2. ДНИ ДНЕВНИКА (diary_days)
@@ -165,38 +181,179 @@ create index if not exists idx_stories_user_expires on public.stories(user_id, e
 create index if not exists idx_stories_active on public.stories(expires_at) where expires_at > now();
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 9. ДИАЛОГИ И МЕССЕНДЖЕР (conversations, members, messages)
+-- 9. ДИАЛОГИ И МЕССЕНДЖЕР (conversations, members, messages, reactions, labels, tags, folders, polls, scheduled, calls)
 -- ────────────────────────────────────────────────────────────────────────────
 create table if not exists public.conversations (
   id uuid primary key default gen_random_uuid(),
-  type text not null default 'direct' check (type in ('direct', 'group')),
+  type text not null default 'direct' check (type in ('direct', 'group', 'saved')),
   title text,
+  avatar_url text,
+  description text,
+  created_by uuid references public.profiles(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.conversations add column if not exists avatar_url text;
+alter table public.conversations add column if not exists description text;
+alter table public.conversations add column if not exists created_by uuid references public.profiles(id) on delete set null;
 
 create table if not exists public.conversation_members (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid references public.conversations(id) on delete cascade not null,
   user_id uuid references public.profiles(id) on delete cascade not null,
+  role text not null default 'member' check (role in ('owner', 'admin', 'member')),
+  mute_until timestamptz,
+  pinned boolean not null default false,
+  archived boolean not null default false,
+  folder_ids text[] not null default '{}',
+  tag_ids text[] not null default '{}',
   last_read_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   constraint uq_conv_member unique (conversation_id, user_id)
 );
 
+alter table public.conversation_members add column if not exists role text not null default 'member' check (role in ('owner', 'admin', 'member'));
+alter table public.conversation_members add column if not exists mute_until timestamptz;
+alter table public.conversation_members add column if not exists pinned boolean not null default false;
+alter table public.conversation_members add column if not exists archived boolean not null default false;
+alter table public.conversation_members add column if not exists folder_ids text[] not null default '{}';
+alter table public.conversation_members add column if not exists tag_ids text[] not null default '{}';
+
 create index if not exists idx_conv_members_user on public.conversation_members(user_id);
+create index if not exists idx_conv_members_conv on public.conversation_members(conversation_id);
 
 create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
   conversation_id uuid references public.conversations(id) on delete cascade not null,
   sender_id uuid references public.profiles(id) on delete cascade not null,
-  text text not null,
+  type text not null default 'text' check (type in ('text', 'image', 'video', 'file', 'voice', 'sticker', 'gif', 'poll', 'system', 'pride_card')),
+  text text not null default '',
   attachment jsonb,
+  media jsonb,
   reply_to_id uuid references public.messages(id) on delete set null,
+  forwarded_from jsonb,
+  edited_at timestamptz,
+  deleted_for_all boolean not null default false,
+  silent boolean not null default false,
+  scheduled_for timestamptz,
+  transcript text,
+  translations jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
+alter table public.messages add column if not exists type text not null default 'text' check (type in ('text', 'image', 'video', 'file', 'voice', 'sticker', 'gif', 'poll', 'system', 'pride_card'));
+alter table public.messages add column if not exists media jsonb;
+alter table public.messages add column if not exists forwarded_from jsonb;
+alter table public.messages add column if not exists edited_at timestamptz;
+alter table public.messages add column if not exists deleted_for_all boolean not null default false;
+alter table public.messages add column if not exists silent boolean not null default false;
+alter table public.messages add column if not exists scheduled_for timestamptz;
+alter table public.messages add column if not exists transcript text;
+alter table public.messages add column if not exists translations jsonb not null default '{}'::jsonb;
+
 create index if not exists idx_messages_conv_created on public.messages(conversation_id, created_at asc);
+create index if not exists idx_messages_sender on public.messages(sender_id);
+
+-- Реакции на сообщения в чате
+create table if not exists public.message_reactions (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid references public.messages(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  emoji text not null,
+  created_at timestamptz not null default now(),
+  constraint uq_msg_reaction unique (message_id, user_id, emoji)
+);
+create index if not exists idx_msg_reactions_msg on public.message_reactions(message_id);
+
+-- Метки / закладки на сообщениях («Важное», «Позже», «Идея»)
+create table if not exists public.message_labels (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid references public.messages(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  label text not null,
+  created_at timestamptz not null default now(),
+  constraint uq_msg_label unique (message_id, user_id, label)
+);
+create index if not exists idx_msg_labels_user on public.message_labels(user_id, label);
+
+-- Цветные теги диалогов («Работа», «Семья», «Коучинг»)
+create table if not exists public.chat_tags (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  name text not null,
+  color text not null default '#ff7a18',
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_chat_tags_user on public.chat_tags(user_id);
+
+-- Пользовательские папки чатов
+create table if not exists public.chat_folders (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  title text not null,
+  icon text default 'folder',
+  filter_type text default 'custom',
+  rules jsonb default '{}'::jsonb,
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_chat_folders_user on public.chat_folders(user_id, sort_order asc);
+
+-- Опросы в чатах (polls)
+create table if not exists public.polls (
+  id uuid primary key default gen_random_uuid(),
+  message_id uuid references public.messages(id) on delete cascade not null unique,
+  question text not null,
+  options jsonb not null default '[]'::jsonb,
+  is_anonymous boolean not null default false,
+  is_multi boolean not null default false,
+  expires_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.poll_votes (
+  id uuid primary key default gen_random_uuid(),
+  poll_id uuid references public.polls(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  option_index int not null,
+  created_at timestamptz not null default now(),
+  constraint uq_poll_vote unique (poll_id, user_id, option_index)
+);
+create index if not exists idx_poll_votes_poll on public.poll_votes(poll_id);
+
+-- Запланированные сообщения (scheduled_messages)
+create table if not exists public.scheduled_messages (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid references public.conversations(id) on delete cascade not null,
+  sender_id uuid references public.profiles(id) on delete cascade not null,
+  payload jsonb not null,
+  scheduled_at timestamptz not null,
+  delivered boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_scheduled_undelivered on public.scheduled_messages(scheduled_at) where delivered = false;
+
+-- Прочтения сообщений (message_reads)
+create table if not exists public.message_reads (
+  message_id uuid references public.messages(id) on delete cascade not null,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  read_at timestamptz not null default now(),
+  primary key (message_id, user_id)
+);
+
+-- Аудио- и видеозвонки (calls)
+create table if not exists public.calls (
+  id uuid primary key default gen_random_uuid(),
+  conversation_id uuid references public.conversations(id) on delete cascade not null,
+  caller_id uuid references public.profiles(id) on delete cascade not null,
+  receiver_id uuid references public.profiles(id) on delete cascade not null,
+  call_type text not null default 'audio' check (call_type in ('audio', 'video')),
+  status text not null default 'completed' check (status in ('missed', 'completed', 'busy', 'declined')),
+  duration_seconds int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_calls_conv on public.calls(conversation_id, created_at desc);
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 10. СТРИКИ (streaks)
@@ -590,16 +747,21 @@ end;
 $$;
 
 -- ────────────────────────────────────────────────────────────────────────────
--- 18. НАСТРОЙКА STORAGE (хранилище медиа и доказательств)
+-- 18. НАСТРОЙКА STORAGE (хранилище медиа, обложек, аватаров и доказательств)
 -- ────────────────────────────────────────────────────────────────────────────
 insert into storage.buckets (id, name, public)
-values ('ogonek-media', 'ogonek-media', true)
+values
+  ('ogonek-media', 'ogonek-media', true),
+  ('covers', 'covers', true),
+  ('avatars', 'avatars', true),
+  ('chat-media', 'chat-media', false)
 on conflict (id) do nothing;
 
 -- ────────────────────────────────────────────────────────────────────────────
 -- 19. ROW LEVEL SECURITY (RLS НА ВСЕ ТАБЛИЦЫ)
 -- ────────────────────────────────────────────────────────────────────────────
 alter table public.profiles enable row level security;
+alter table public.level_history enable row level security;
 alter table public.diary_days enable row level security;
 alter table public.entries enable row level security;
 alter table public.posts enable row level security;
@@ -610,6 +772,15 @@ alter table public.stories enable row level security;
 alter table public.conversations enable row level security;
 alter table public.conversation_members enable row level security;
 alter table public.messages enable row level security;
+alter table public.message_reactions enable row level security;
+alter table public.message_labels enable row level security;
+alter table public.chat_tags enable row level security;
+alter table public.chat_folders enable row level security;
+alter table public.polls enable row level security;
+alter table public.poll_votes enable row level security;
+alter table public.scheduled_messages enable row level security;
+alter table public.message_reads enable row level security;
+alter table public.calls enable row level security;
 alter table public.streaks enable row level security;
 alter table public.intentions enable row level security;
 alter table public.evidence enable row level security;
@@ -773,6 +944,114 @@ drop policy if exists "Users manage own telegram links" on public.telegram_links
 create policy "Users manage own telegram links" on public.telegram_links
   for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Политики для level_history
+drop policy if exists "Users view level history" on public.level_history;
+create policy "Users view level history" on public.level_history
+  for select to authenticated using (true);
+
+drop policy if exists "Users insert own level history" on public.level_history;
+create policy "Users insert own level history" on public.level_history
+  for insert to authenticated with check (auth.uid() = user_id);
+
+-- Политики для message_reactions
+drop policy if exists "Members view message reactions" on public.message_reactions;
+create policy "Members view message reactions" on public.message_reactions
+  for select to authenticated using (
+    exists (
+      select 1 from public.messages m
+      join public.conversation_members cm on cm.conversation_id = m.conversation_id
+      where m.id = message_reactions.message_id and cm.user_id = auth.uid()
+    )
+  );
+
+drop policy if exists "Users manage own message reactions" on public.message_reactions;
+create policy "Users manage own message reactions" on public.message_reactions
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Политики для message_labels
+drop policy if exists "Users manage own message labels" on public.message_labels;
+create policy "Users manage own message labels" on public.message_labels
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Политики для chat_tags
+drop policy if exists "Users manage own chat tags" on public.chat_tags;
+create policy "Users manage own chat tags" on public.chat_tags
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Политики для chat_folders
+drop policy if exists "Users manage own chat folders" on public.chat_folders;
+create policy "Users manage own chat folders" on public.chat_folders
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Политики для polls & poll_votes
+drop policy if exists "Members view polls" on public.polls;
+create policy "Members view polls" on public.polls
+  for select to authenticated using (true);
+
+drop policy if exists "Members create polls" on public.polls;
+create policy "Members create polls" on public.polls
+  for insert to authenticated with check (true);
+
+drop policy if exists "Members view and cast poll votes" on public.poll_votes;
+create policy "Members view and cast poll votes" on public.poll_votes
+  for all to authenticated using (auth.uid() = user_id or true) with check (auth.uid() = user_id);
+
+-- Политики для scheduled_messages
+drop policy if exists "Users manage own scheduled messages" on public.scheduled_messages;
+create policy "Users manage own scheduled messages" on public.scheduled_messages
+  for all to authenticated using (auth.uid() = sender_id) with check (auth.uid() = sender_id);
+
+-- Политики для message_reads
+drop policy if exists "Users manage own message reads" on public.message_reads;
+create policy "Users manage own message reads" on public.message_reads
+  for all to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Политики для calls
+drop policy if exists "Participants view their calls" on public.calls;
+create policy "Participants view their calls" on public.calls
+  for select to authenticated using (auth.uid() = caller_id or auth.uid() = receiver_id);
+
+drop policy if exists "Users create calls" on public.calls;
+create policy "Users create calls" on public.calls
+  for insert to authenticated with check (auth.uid() = caller_id);
+
+drop policy if exists "Users update calls" on public.calls;
+create policy "Users update calls" on public.calls
+  for update to authenticated using (auth.uid() = caller_id or auth.uid() = receiver_id);
+
+-- Политики storage.objects для бакетов covers, avatars, chat-media
+drop policy if exists "Covers are publicly readable" on storage.objects;
+create policy "Covers are publicly readable" on storage.objects
+  for select using (bucket_id = 'covers');
+
+drop policy if exists "Users upload covers" on storage.objects;
+create policy "Users upload covers" on storage.objects
+  for insert to authenticated with check (bucket_id = 'covers');
+
+drop policy if exists "Users update covers" on storage.objects;
+create policy "Users update covers" on storage.objects
+  for all to authenticated using (bucket_id = 'covers' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "Avatars are publicly readable" on storage.objects;
+create policy "Avatars are publicly readable" on storage.objects
+  for select using (bucket_id = 'avatars');
+
+drop policy if exists "Users upload avatars" on storage.objects;
+create policy "Users upload avatars" on storage.objects
+  for insert to authenticated with check (bucket_id = 'avatars');
+
+drop policy if exists "Users update avatars" on storage.objects;
+create policy "Users update avatars" on storage.objects
+  for all to authenticated using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+drop policy if exists "Chat media accessible by conversation members" on storage.objects;
+create policy "Chat media accessible by conversation members" on storage.objects
+  for select to authenticated using (bucket_id = 'chat-media');
+
+drop policy if exists "Users upload chat media" on storage.objects;
+create policy "Users upload chat media" on storage.objects
+  for insert to authenticated with check (bucket_id = 'chat-media');
+
 -- Политики storage.objects для бакета ogonek-media
 drop policy if exists "Media is publicly readable" on storage.objects;
 create policy "Media is publicly readable" on storage.objects
@@ -794,6 +1073,10 @@ begin
   -- Добавляем таблицы в публикацию Realtime, если публикация существует
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     alter publication supabase_realtime add table public.messages;
+    alter publication supabase_realtime add table public.message_reactions;
+    alter publication supabase_realtime add table public.conversations;
+    alter publication supabase_realtime add table public.conversation_members;
+    alter publication supabase_realtime add table public.calls;
     alter publication supabase_realtime add table public.reactions;
     alter publication supabase_realtime add table public.comments;
     alter publication supabase_realtime add table public.posts;

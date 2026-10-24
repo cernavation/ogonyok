@@ -22,7 +22,7 @@ import {
 import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
 import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
 import { DEFAULT_MONTHLY_KPIS, sanitizeMonthlyKpis } from './kpi'
-import { buildDemoThreads, sanitizeChatThreads } from './messenger'
+import { buildDemoThreads, sanitizeChatThreads, DEFAULT_CHAT_FOLDERS, DEFAULT_CHAT_SETTINGS } from './messenger'
 import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
 import { DEFAULT_PRIVACY, sanitizePrivacySettings } from './privacy'
 import { DEFAULT_SECURITY_STATE, sanitizeSecurityState } from './security'
@@ -435,6 +435,15 @@ export const DEFAULT_PROFILE: OgonekProfile = {
   verified: true,
   level: 3,
   levelChangedAtISO: null,
+  showDifficultyLevel: true,
+  levelHistory: [
+    {
+      id: 'lh-initial',
+      fromLevel: 1,
+      toLevel: 3,
+      changedAtISO: '2026-10-12T10:00:00.000Z',
+    },
+  ],
   telegramChatId: null,
   reminderTimes: ['21:00'],
   inLeaderboard: true,
@@ -473,6 +482,8 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     verified: typeof p.verified === 'boolean' ? p.verified : DEFAULT_PROFILE.verified,
     level: typeof p.level === 'number' && p.level >= 1 && p.level <= 5 ? p.level : 3,
     levelChangedAtISO: typeof p.levelChangedAtISO === 'string' ? p.levelChangedAtISO : null,
+    showDifficultyLevel: typeof p.showDifficultyLevel === 'boolean' ? p.showDifficultyLevel : true,
+    levelHistory: Array.isArray(p.levelHistory) ? p.levelHistory : DEFAULT_PROFILE.levelHistory ?? [],
     telegramChatId: typeof p.telegramChatId === 'string' ? p.telegramChatId : null,
     reminderTimes: Array.isArray(p.reminderTimes) ? p.reminderTimes : ['21:00'],
     inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : true,
@@ -794,6 +805,10 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   exploreRecentSearches: [],
   chatThreads: isDemoEnv ? DEFAULT_CHAT_THREADS : {},
   chatActiveFriendId: null,
+  chatFolders: DEFAULT_CHAT_FOLDERS,
+  chatActiveFolderId: 'all',
+  chatTags: [],
+  chatSettings: DEFAULT_CHAT_SETTINGS,
   theme: DEFAULT_THEME,
   accent: DEFAULT_ACCENT,
   fontScale: DEFAULT_FONT_SCALE,
@@ -982,6 +997,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
         chatThreads: sanitizeChatThreads(parsed.chatThreads, DEFAULT_CHAT_THREADS),
         chatActiveFriendId: sanitizeChatActiveFriendId(parsed.chatActiveFriendId),
+        chatFolders: Array.isArray(parsed.chatFolders) && parsed.chatFolders.length > 0 ? parsed.chatFolders : DEFAULT_CHAT_FOLDERS,
+        chatActiveFolderId: typeof parsed.chatActiveFolderId === 'string' ? parsed.chatActiveFolderId : 'all',
+        chatTags: Array.isArray(parsed.chatTags) ? parsed.chatTags : [],
+        chatSettings: parsed.chatSettings && typeof parsed.chatSettings === 'object' ? { ...DEFAULT_CHAT_SETTINGS, ...parsed.chatSettings } : DEFAULT_CHAT_SETTINGS,
         theme: sanitizeTheme(parsed.theme),
         accent: sanitizeAccent(parsed.accent),
         fontScale: sanitizeFontScale(parsed.fontScale),

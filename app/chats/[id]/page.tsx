@@ -1,10 +1,16 @@
-import { StandaloneChatPage } from '@/components/ogonek/messenger/standalone-chat-page'
+import { FullscreenMessenger } from '@/components/ogonek/messenger/fullscreen-messenger'
+
+export const metadata = {
+  title: 'Диалог — Огонёк',
+  description: 'Полноэкранный мессенджер Огонёк',
+}
 
 type Props = {
-  params: Promise<{ id: string }> | { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ChatRoutePage({ params }: Props) {
   const resolvedParams = await params
-  return <StandaloneChatPage friendId={resolvedParams.id} />
+  return <FullscreenMessenger initialThreadId={resolvedParams.id} />
 }
+

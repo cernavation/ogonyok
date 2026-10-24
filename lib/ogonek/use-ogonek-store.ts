@@ -42,6 +42,7 @@ import {
 import {
   CHAT_MESSAGE_LIMIT,
   DEFAULT_CHAT_FOLDERS,
+  DEFAULT_CHAT_SETTINGS,
   MY_CHAT_ID,
   emptyThread,
   isGroupThread,
@@ -52,7 +53,6 @@ import {
   unreadCount,
 } from './messenger'
 import type {
-  ChatFolder,
   ChatGroupMeta,
   ChatMessageForward,
   ChatMessageMedia,
@@ -90,7 +90,13 @@ import type {
   AppSecurityState,
   ChatAttachment,
   ChatMessage,
+  ChatMessageType,
+  ChatPoll,
+  ChatFolder,
+  ChatTag,
+  ChatSettings,
   ChatThreads,
+  LevelHistoryEntry,
   Comment,
   CommentPersona,
   ComposerDraft,
@@ -2563,10 +2569,23 @@ export function useOgonekStore() {
   /** Открыть/закрыть диалог в разделе «Чаты» (только реальный друг) */
   const setActiveChatFriend = useCallback(
     (friendId: string | null): string | null => {
-      const next = friendId && getFriend(friendId) ? friendId : null
-      updateStore((prev) =>
-        prev.chatActiveFriendId === next ? prev : { ...prev, chatActiveFriendId: next }
-      )
+      let next: string | null = null
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        if (!friendId) {
+          return prev.chatActiveFriendId === null ? prev : { ...prev, chatActiveFriendId: null }
+        }
+        const exists =
+          friendId === 'saved-messages' ||
+          Boolean(getFriend(friendId)) ||
+          Boolean(threads[friendId])
+        if (!exists) return prev
+        next = friendId
+        const nextThreads = threads[friendId]
+          ? threads
+          : { ...threads, [friendId]: emptyThread() }
+        return { ...prev, chatThreads: nextThreads, chatActiveFriendId: friendId }
+      })
       return next
     },
     [updateStore]
@@ -2678,12 +2697,18 @@ export function useOgonekStore() {
         replyTo?: ChatMessageReply | null
         forwardFrom?: ChatMessageForward | null
         media?: ChatMessageMedia | null
+        silent?: boolean
+        scheduledForISO?: string | null
+        poll?: ChatPoll | null
+        type?: ChatMessageType
       }
     ): ChatMessage | null => {
       const isGroup = isGroupThread(threadOf(getSnapshot().chatThreads ?? {}, friendId), friendId)
-      if (!friendId || (!getFriend(friendId) && !isGroup)) return null
+      if (!friendId || (!getFriend(friendId) && !isGroup && friendId !== 'saved-messages')) return null
       const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
-      if (!clean && !attachment && !extra?.media) return null
+      if (!clean && !attachment && !extra?.media && !extra?.poll) return null
+
+      const isScheduled = Boolean(extra?.scheduledForISO && new Date(extra.scheduledForISO).getTime() > Date.now())
 
       const message = makeChatMessage({
         authorId: MY_CHAT_ID,
@@ -2692,12 +2717,26 @@ export function useOgonekStore() {
         replyTo: extra?.replyTo ?? null,
         forwardFrom: extra?.forwardFrom ?? null,
         media: extra?.media ?? null,
-        status: 'sent',
+        silent: extra?.silent ?? false,
+        scheduledForISO: extra?.scheduledForISO ?? null,
+        poll: extra?.poll ?? null,
+        type: extra?.type,
+        status: isScheduled ? 'sending' : 'sent',
       })
 
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
+        if (isScheduled) {
+          const scheduled = thread.scheduledMessages ?? []
+          return {
+            ...prev,
+            chatThreads: {
+              ...threads,
+              [friendId]: { ...thread, scheduledMessages: [...scheduled, message], draft: '' },
+            },
+          }
+        }
         return {
           ...prev,
           chatThreads: {
@@ -2707,7 +2746,9 @@ export function useOgonekStore() {
         }
       })
 
-      scheduleChatAutoReply(friendId, clean, Boolean(attachment || extra?.media))
+      if (!isScheduled && friendId !== 'saved-messages') {
+        scheduleChatAutoReply(friendId, clean, Boolean(attachment || extra?.media))
+      }
       return message
     },
     [updateStore, scheduleChatAutoReply]
@@ -3045,21 +3086,284 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Удаляет одно сообщение из переписки */
+  /** Удаляет одно сообщение из переписки (у себя или для всех) */
   const deleteChatMessage = useCallback(
-    (friendId: string, messageId: string) => {
+    (friendId: string, messageId: string, forEveryone = false) => {
       if (!friendId || !messageId) return
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
+        let messages = thread.messages
+        if (forEveryone) {
+          messages = messages.map((m) =>
+            m.id === messageId
+              ? {
+                  ...m,
+                  deletedForAll: true,
+                  text: 'Сообщение удалено',
+                  media: null,
+                  attachment: null,
+                  poll: null,
+                }
+              : m
+          )
+        } else {
+          messages = messages.filter((m) => m.id !== messageId)
+        }
+        const scheduled = (thread.scheduledMessages ?? []).filter((m) => m.id !== messageId)
         return {
           ...prev,
           chatThreads: {
             ...threads,
             [friendId]: {
               ...thread,
-              messages: thread.messages.filter((m) => m.id !== messageId),
+              messages,
+              scheduledMessages: scheduled,
             },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Сохраняет перевод сообщения */
+  const translateChatMessage = useCallback(
+    (friendId: string, messageId: string, targetLang: string, translatedText: string) => {
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId) {
+            return {
+              ...m,
+              translations: {
+                ...(m.translations ?? {}),
+                [targetLang]: translatedText,
+              },
+            }
+          }
+          return m
+        })
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Сохраняет расшифровку аудиосообщения */
+  const transcribeVoiceMessage = useCallback(
+    (friendId: string, messageId: string, transcript: string) => {
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId) {
+            return { ...m, transcript }
+          }
+          return m
+        })
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Голосование в опросе */
+  const voteInPoll = useCallback(
+    (friendId: string, messageId: string, optionIndex: number) => {
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId && m.poll) {
+            const poll = m.poll
+            const alreadyVoted = Boolean(poll.options[optionIndex]?.votedByMe)
+            const newOptions = poll.options.map((opt, idx) => {
+              if (idx === optionIndex) {
+                return {
+                  ...opt,
+                  votes: alreadyVoted ? Math.max(0, opt.votes - 1) : opt.votes + 1,
+                  votedByMe: !alreadyVoted,
+                }
+              }
+              if (!poll.isMulti && !alreadyVoted && opt.votedByMe) {
+                return { ...opt, votes: Math.max(0, opt.votes - 1), votedByMe: false }
+              }
+              return opt
+            })
+            const totalVotes = newOptions.reduce((s, o) => s + o.votes, 0)
+            return {
+              ...m,
+              poll: { ...poll, options: newOptions, totalVotes },
+            }
+          }
+          return m
+        })
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Переключение метки на сообщении («Важное», «Позже», «Идея») */
+  const toggleMessageLabel = useCallback(
+    (friendId: string, messageId: string, label: string) => {
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const messages = thread.messages.map((m) => {
+          if (m.id === messageId) {
+            const currentLabels = m.labels ?? []
+            const exists = currentLabels.includes(label)
+            const updated = exists ? currentLabels.filter((l) => l !== label) : [...currentLabels, label]
+            return { ...m, labels: updated }
+          }
+          return m
+        })
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, messages },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Назначить / снять цветной тег с диалога */
+  const assignChatTag = useCallback(
+    (friendId: string, tagId: string) => {
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const currentTags = thread.tagIds ?? []
+        const exists = currentTags.includes(tagId)
+        const updated = exists ? currentTags.filter((t) => t !== tagId) : [...currentTags, tagId]
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, tagIds: updated },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Создать / обновить пользовательский тег диалогов */
+  const setChatTag = useCallback(
+    (tag: ChatTag) => {
+      updateStore((prev) => {
+        const tags = prev.chatTags ?? []
+        const exists = tags.some((t) => t.id === tag.id)
+        const updated = exists ? tags.map((t) => (t.id === tag.id ? tag : t)) : [...tags, tag]
+        return { ...prev, chatTags: updated }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Удалить тег диалогов */
+  const deleteChatTag = useCallback(
+    (tagId: string) => {
+      updateStore((prev) => {
+        const tags = prev.chatTags ?? []
+        return { ...prev, chatTags: tags.filter((t) => t.id !== tagId) }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Обновить настройки чатов */
+  const updateChatSettings = useCallback(
+    (patch: Partial<ChatSettings>) => {
+      updateStore((prev) => {
+        const current = prev.chatSettings ?? DEFAULT_CHAT_SETTINGS
+        return { ...prev, chatSettings: { ...current, ...patch } }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Доставить созревшие запланированные сообщения */
+  const deliverScheduledMessages = useCallback(
+    (friendId?: string) => {
+      const now = Date.now()
+      updateStore((prev) => {
+        const threads = { ...(prev.chatThreads ?? {}) }
+        let changed = false
+        const targetIds = friendId ? [friendId] : Object.keys(threads)
+
+        for (const fId of targetIds) {
+          const thread = threads[fId]
+          if (!thread?.scheduledMessages || thread.scheduledMessages.length === 0) continue
+          const ready = thread.scheduledMessages.filter(
+            (m) => m.scheduledForISO && new Date(m.scheduledForISO).getTime() <= now
+          )
+          if (ready.length === 0) continue
+
+          const remaining = thread.scheduledMessages.filter(
+            (m) => !m.scheduledForISO || new Date(m.scheduledForISO).getTime() > now
+          )
+          const sent = ready.map((m) => ({ ...m, status: 'sent' as const, scheduledForISO: null }))
+          threads[fId] = {
+            ...thread,
+            messages: [...thread.messages, ...sent],
+            scheduledMessages: remaining,
+          }
+          changed = true
+        }
+
+        if (!changed) return prev
+        return { ...prev, chatThreads: threads }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Смена уровня сложности (1..5) с фиксацией в истории */
+  const setDifficultyLevel = useCallback(
+    (newLevel: number) => {
+      if (newLevel < 1 || newLevel > 5) return
+      const nowISO = new Date().toISOString()
+      updateStore((prev) => {
+        const currentLevel = prev.profile.level ?? 3
+        const history = prev.profile.levelHistory ?? []
+        const entry: LevelHistoryEntry = {
+          id: `lh-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          fromLevel: currentLevel,
+          toLevel: newLevel,
+          changedAtISO: nowISO,
+        }
+        return {
+          ...prev,
+          profile: {
+            ...prev.profile,
+            level: newLevel,
+            levelChangedAtISO: nowISO,
+            levelHistory: [entry, ...history],
           },
         }
       })
@@ -3584,6 +3888,16 @@ export function useOgonekStore() {
     setChatFolder,
     deleteChatFolder,
     setChatActiveFolderId,
+    translateChatMessage,
+    transcribeVoiceMessage,
+    voteInPoll,
+    toggleMessageLabel,
+    assignChatTag,
+    setChatTag,
+    deleteChatTag,
+    updateChatSettings,
+    deliverScheduledMessages,
+    setDifficultyLevel,
     toggleReaction,
     getReactionsFor,
     getMyReactionsFor,

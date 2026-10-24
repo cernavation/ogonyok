@@ -164,12 +164,32 @@ if (!tgToken) {
 }
 
 // 5. CRON SECRET
-console.log('\n⏰ 5. Планировщик напоминаний (CRON_SECRET):')
+console.log('\n⏰ 5. Планировщик напоминаний и отправки (CRON_SECRET):')
 const cronSecret = process.env.CRON_SECRET
 if (!cronSecret) {
-  console.log('  ⚠️ (Опционально) CRON_SECRET не указан — напоминания будут работать без проверки секрета.')
+  console.log('  ⚠️ (Опционально) CRON_SECRET не указан — напоминания и доставка по расписанию будут работать без строгой проверки секрета.')
 } else {
   console.log('  ✅ готово: CRON_SECRET указан')
+}
+
+// 6. GIPHY API KEY
+console.log('\n🎬 6. Поиск GIF (Giphy API):')
+const giphyKey = process.env.GIPHY_API_KEY
+if (!giphyKey) {
+  console.log('  ⚠️ (Опционально) GIPHY_API_KEY не указан — вкладка GIF скрыта.')
+  console.log('     Получить бесплатный ключ: https://developers.giphy.com')
+} else {
+  console.log('  ✅ готово: GIPHY_API_KEY указан')
+}
+
+// 7. WEBRTC TURN/STUN СЕРВЕР ДЛЯ ЗВОНКОВ
+console.log('\n📞 7. Аудио- и видеозвонки WebRTC (TURN/STUN):')
+const turnUrl = process.env.TURN_URL
+if (!turnUrl) {
+  console.log('  ⚠️ (Опционально) TURN_URL не указан — звонки используют бесплатные публичные STUN-серверы Google.')
+  console.log('     Для работы за строгими корпоративными NAT/firewall добавьте бесплатный Metered/Cloudflare TURN в .env.local.')
+} else {
+  console.log('  ✅ готово: TURN-сервер настроен')
 }
 
 console.log('\n───────────────────────────────────────────────────────────')

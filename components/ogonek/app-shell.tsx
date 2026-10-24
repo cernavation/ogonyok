@@ -30,7 +30,7 @@ import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
 import { GuestLanding } from './landing/guest-landing'
-import { ChatWindow } from './messenger'
+import { ChatWindow, FullscreenMessenger } from './messenger'
 
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
@@ -566,22 +566,8 @@ export function AppShell() {
         feedDensity={state.feedDensity}
       />
       <main className="app-shell" data-locked={locked ? 'true' : undefined}>
-        {view === 'messages' && Boolean(state.chatActiveFriendId) ? (
-          <div className="w-full h-[100dvh] flex flex-col items-center justify-center bg-[var(--bg)] select-none">
-            <div className="w-full max-w-[720px] h-full flex flex-col bg-[var(--bg)] sm:border-x sm:border-[var(--border)] shadow-2xl relative select-text">
-              <ChatWindow
-                friendId={state.chatActiveFriendId!}
-                onNotify={notify}
-                onBack={() => {
-                  setActiveChatFriend(null)
-                  if (typeof window !== 'undefined') {
-                    window.history.pushState(null, '', '/?view=messages')
-                  }
-                }}
-                soundEnabled={state.soundEnabled}
-              />
-            </div>
-          </div>
+        {view === 'messages' ? (
+          <FullscreenMessenger initialThreadId={state.chatActiveFriendId || undefined} />
         ) : (
           <>
             <Sidebar
@@ -596,7 +582,7 @@ export function AppShell() {
             />
 
             <section
-              className={`feed ${view === 'messages' ? 'feed--full-width' : ''}`}
+              className="feed"
               aria-label="Основное содержимое"
             >
               <motion.div
@@ -610,8 +596,7 @@ export function AppShell() {
               </motion.div>
             </section>
 
-            {view !== 'messages' && (
-              <RightRail
+            <RightRail
                 onNavigate={navigate}
                 onCompose={() => setComposer(true)}
                 streak={streakState.streak}
@@ -621,7 +606,6 @@ export function AppShell() {
                 onNotify={notify}
                 soundEnabled={state.soundEnabled}
               />
-            )}
 
             <ScrollPill onScrollBottom={handleScrollBottom} />
 

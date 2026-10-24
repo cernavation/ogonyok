@@ -22,6 +22,8 @@ import {
   type ChatGroupMeta,
   type ChatLinkPreview,
   type ChatMessage,
+  type ChatMessageType,
+  type ChatPoll,
   type ChatMessageForward,
   type ChatMessageMedia,
   type ChatMessageReply,
@@ -202,35 +204,65 @@ export const DEFAULT_CHAT_FOLDERS: ChatFolder[] = [
   { id: 'direct', title: 'Личные', icon: '👤', isBuiltIn: true, type: 'direct', chatIds: [] },
   { id: 'groups', title: 'Группы', icon: '👥', isBuiltIn: true, type: 'groups', chatIds: [] },
   { id: 'unread', title: 'Непрочитанные', icon: '💬', isBuiltIn: true, type: 'unread', chatIds: [] },
+  { id: 'pinned', title: 'Закреплённые', icon: '📌', isBuiltIn: true, type: 'custom', chatIds: [] },
+  { id: 'archived', title: 'Архив', icon: '📦', isBuiltIn: true, type: 'custom', chatIds: [] },
 ]
+
+/** Дефолтные настройки мессенджера */
+export const DEFAULT_CHAT_SETTINGS = {
+  soundEnabled: true,
+  notificationPreview: true,
+  autoTranslate: false,
+  targetLanguage: 'ru',
+  autoTranscribeVoice: false,
+  autoDownloadMedia: true,
+  fontSize: 'base' as const,
+  sendOnEnter: true,
+  whoCanMessageMe: 'all' as const,
+  whoCanSeeOnline: 'all' as const,
+}
 
 /** Проверка, является ли тред групповым чатом */
 export function isGroupThread(thread: ChatThreadState | undefined, id: string): boolean {
   return Boolean(thread?.groupMeta || id.startsWith('group-'))
 }
 
-/** Фильтрация тредов по папке */
+/** Фильтрация тредов по папке или тегу */
 export function filterThreadsByFolder(
   threads: ChatThreads,
   ids: string[],
   folderId: string = 'all',
   customFolders: ChatFolder[] = []
 ): string[] {
-  if (folderId === 'all') return ids
+  if (folderId === 'archived') {
+    return ids.filter((id) => threads[id]?.archived)
+  }
+
+  // Для остальных папок архивированные чаты по умолчанию скрыты
+  const baseIds = ids.filter((id) => !threads[id]?.archived)
+
+  if (folderId === 'all') return baseIds
   if (folderId === 'direct') {
-    return ids.filter((id) => !isGroupThread(threads[id], id))
+    return baseIds.filter((id) => !isGroupThread(threads[id], id))
   }
   if (folderId === 'groups') {
-    return ids.filter((id) => isGroupThread(threads[id], id))
+    return baseIds.filter((id) => isGroupThread(threads[id], id))
   }
   if (folderId === 'unread') {
-    return ids.filter((id) => unreadCount(threads[id]) > 0)
+    return baseIds.filter((id) => unreadCount(threads[id]) > 0)
+  }
+  if (folderId === 'pinned') {
+    return baseIds.filter((id) => threads[id]?.pinned)
+  }
+  if (folderId.startsWith('tag:')) {
+    const tagId = folderId.slice(4)
+    return baseIds.filter((id) => threads[id]?.tagIds?.includes(tagId))
   }
   // Кастомная папка
   const allFolders = [...DEFAULT_CHAT_FOLDERS, ...customFolders]
   const target = allFolders.find((f) => f.id === folderId)
-  if (!target) return ids
-  return ids.filter((id) => target.chatIds.includes(id))
+  if (!target) return baseIds
+  return baseIds.filter((id) => target.chatIds?.includes(id) || target.rules?.tagIds?.some((t) => threads[id]?.tagIds?.includes(t)))
 }
 
 /** Подсчёт непрочитанных сообщений для папки */
@@ -608,17 +640,35 @@ export function makeChatMessage(input: {
   createdAtISO?: string
   read?: boolean
   system?: boolean
+  type?: ChatMessageType
   replyTo?: ChatMessageReply | null
   forwardFrom?: ChatMessageForward | null
   editedAtISO?: string | null
   status?: 'sending' | 'sent' | 'read'
   pinned?: boolean
+  silent?: boolean
+  scheduledForISO?: string | null
+  transcript?: string | null
+  translations?: Record<string, string>
+  poll?: ChatPoll | null
+  labels?: string[]
+  deletedForAll?: boolean
   media?: ChatMessageMedia | null
   linkPreview?: ChatLinkPreview | null
 }): ChatMessage {
   const text = (input.text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
   const linkUrl = !input.linkPreview && !input.attachment && !input.media ? extractUrl(text) : null
   const linkPreview = input.linkPreview ?? (linkUrl ? buildLinkPreview(linkUrl) : null)
+
+  let derivedType: ChatMessageType = input.type ?? 'text'
+  if (input.system) derivedType = 'system'
+  else if (input.poll) derivedType = 'poll'
+  else if (input.media?.type === 'image') derivedType = 'image'
+  else if (input.media?.type === 'video') derivedType = 'video'
+  else if (input.media?.type === 'audio') derivedType = 'voice'
+  else if (input.media?.type === 'file') derivedType = 'file'
+  else if (input.media?.type === 'sticker') derivedType = 'sticker'
+  else if (input.attachment?.kind === 'pride' || input.attachment?.kind === 'day') derivedType = 'pride_card'
 
   return {
     id: makeChatMessageId(),
@@ -629,9 +679,17 @@ export function makeChatMessage(input: {
     reactions: [],
     read: input.read ?? false,
     system: input.system ?? false,
+    type: derivedType,
     replyTo: input.replyTo ?? null,
     forwardFrom: input.forwardFrom ?? null,
     editedAtISO: input.editedAtISO ?? null,
+    silent: input.silent ?? false,
+    scheduledForISO: input.scheduledForISO ?? null,
+    transcript: input.transcript ?? null,
+    translations: input.translations ?? {},
+    poll: input.poll ?? null,
+    labels: input.labels ?? [],
+    deletedForAll: input.deletedForAll ?? false,
     status: input.status ?? (input.authorId === 'me' ? 'sent' : 'read'),
     pinned: input.pinned ?? false,
     media: input.media ?? null,
@@ -820,6 +878,32 @@ export function buildDemoThreads(now: Date = new Date()): ChatThreads {
       createdAtISO: minutesAgo(240, now),
       createdBy: 'fr-voloshin',
       description: 'Чат тех, кто не сбрасывает стрик и держит огонь каждый день',
+    },
+  }
+
+  // Личный чат «Избранное» с собой (Telegram Saved Messages)
+  threads['saved-messages'] = {
+    messages: [
+      makeChatMessage({
+        authorId: MY_CHAT_ID,
+        text: 'Твоё личное пространство для заметок, сохранённых карточек гордостей и важных мыслей. Пересылай сюда любые сообщения! ⭐️',
+        createdAtISO: minutesAgo(300, now),
+        read: true,
+      }),
+    ],
+    readAtISO: now.toISOString(),
+    pinned: true,
+    muted: true,
+    draft: '',
+    groupMeta: {
+      id: 'saved-messages',
+      title: 'Избранное',
+      avatarColor: 'linear-gradient(135deg, #ff7a18 0%, #ff5200 100%)',
+      avatarEmoji: '⭐️',
+      memberIds: ['me'],
+      createdAtISO: minutesAgo(300, now),
+      createdBy: 'me',
+      description: 'Личные заметки и сохранённые сообщения',
     },
   }
 

@@ -34,7 +34,12 @@ type Props = {
 const RING_RADIUS = 46
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 
-type ToggleKey = 'showStreakPublicly' | 'showBadgesPublicly' | 'searchableByUsername' | 'hideFromLeaderboards'
+type ToggleKey =
+  | 'showStreakPublicly'
+  | 'showDifficultyLevelPublicly'
+  | 'showBadgesPublicly'
+  | 'searchableByUsername'
+  | 'hideFromLeaderboards'
 
 const TOGGLES: {
   key: ToggleKey
@@ -53,6 +58,15 @@ const TOGGLES: {
     onHint: 'Другие видят длину твоей серии в профиле',
     offLabel: 'Стрик скрыт',
     offHint: 'Длину серии видишь только ты',
+    privateWhen: false,
+  },
+  {
+    key: 'showDifficultyLevelPublicly',
+    icon: Flame,
+    onLabel: 'Показывать мой уровень сложности',
+    onHint: 'Значок уровня сложности и количество побед видны другим',
+    offLabel: 'Уровень сложности скрыт',
+    offHint: 'Твой уровень виден только тебе',
     privateWhen: false,
   },
   {

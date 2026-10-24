@@ -197,12 +197,25 @@ export type OgonekProfile = {
   level?: number
   /** Дата последней смены уровня (ISO string, смена заблокирована на 30 дней) */
   levelChangedAtISO?: string | null
+  /** Показывать ли уровень сложности в публичном профиле */
+  showDifficultyLevel?: boolean
+  /** История изменений уровня сложности */
+  levelHistory?: LevelHistoryEntry[]
   /** Telegram Chat ID для напоминаний */
   telegramChatId?: string | null
   /** Настройки времени напоминаний Telegram */
   reminderTimes?: string[]
   /** Участие в общем рейтинге (лидерборде) */
   inLeaderboard?: boolean
+}
+
+/** Запись в истории смен уровней сложности */
+export type LevelHistoryEntry = {
+  id: string
+  userId?: string
+  fromLevel: number
+  toLevel: number
+  changedAtISO: string
 }
 
 export type EvidenceItem = {
@@ -595,9 +608,9 @@ export type ChatMessageForward = {
   originalDateISO?: string
 }
 
-/** Медиа-вложение: фото, файл, голосовое, стикер */
+/** Медиа-вложение: фото, видео, файл, голосовое, стикер */
 export type ChatMessageMedia = {
-  type: 'image' | 'file' | 'audio' | 'sticker'
+  type: 'image' | 'video' | 'file' | 'audio' | 'sticker'
   url: string
   name?: string
   sizeBytes?: number
@@ -614,6 +627,44 @@ export type ChatLinkPreview = {
   siteName?: string
 }
 
+/** Тип содержимого сообщения */
+export type ChatMessageType =
+  | 'text'
+  | 'image'
+  | 'video'
+  | 'file'
+  | 'voice'
+  | 'sticker'
+  | 'gif'
+  | 'poll'
+  | 'system'
+  | 'pride_card'
+
+/** Вариант опроса */
+export type ChatPollOption = {
+  text: string
+  votes: number
+  votedByMe?: boolean
+}
+
+/** Опрос внутри сообщения */
+export type ChatPoll = {
+  id: string
+  question: string
+  options: ChatPollOption[]
+  isAnonymous?: boolean
+  isMulti?: boolean
+  totalVotes: number
+  closed?: boolean
+}
+
+/** Цветной тег чата */
+export type ChatTag = {
+  id: string
+  name: string
+  color: string
+}
+
 /** Одно сообщение переписки */
 export type ChatMessage = {
   id: string
@@ -627,12 +678,28 @@ export type ChatMessage = {
   read: boolean
   /** Системное сообщение (без пузыря пользователя) */
   system: boolean
+  /** Тип сообщения */
+  type?: ChatMessageType
   /** Ответ на сообщение */
   replyTo?: ChatMessageReply | null
   /** Переслано от пользователя */
   forwardFrom?: ChatMessageForward | null
   /** Время редактирования (метка ред.) */
   editedAtISO?: string | null
+  /** Удалено для всех */
+  deletedForAll?: boolean
+  /** Без звука / без пуша */
+  silent?: boolean
+  /** Запланировано на будущее время (ISO) */
+  scheduledForISO?: string | null
+  /** Расшифровка голосового */
+  transcript?: string | null
+  /** Переводы: код языка → переведённый текст */
+  translations?: Record<string, string>
+  /** Опрос, если сообщение типа 'poll' */
+  poll?: ChatPoll | null
+  /** Метки сообщения («Важное», «Позже», «Идея») */
+  labels?: string[]
   /** Статус отправки */
   status?: 'sending' | 'sent' | 'read'
   /** Закреплено ли внутри чата */
@@ -654,6 +721,7 @@ export type ChatGroupMeta = {
   createdAtISO: string
   createdBy: string
   description?: string
+  role?: 'owner' | 'admin' | 'member'
 }
 
 /** Папка для группировки чатов (Telegram Folders) */
@@ -664,6 +732,12 @@ export type ChatFolder = {
   chatIds: string[]
   isBuiltIn?: boolean
   type?: 'all' | 'direct' | 'groups' | 'unread' | 'custom'
+  rules?: {
+    includePersonal?: boolean
+    includeGroups?: boolean
+    includeUnread?: boolean
+    tagIds?: string[]
+  }
 }
 
 /** Состояние одной переписки с другом или группой */
@@ -673,6 +747,8 @@ export type ChatThreadState = {
   readAtISO: string | null
   /** Уведомления отключены */
   muted: boolean
+  /** Отключить звук до определённого времени (null — бессрочно) */
+  muteUntilISO?: string | null
   /** Диалог закреплён сверху */
   pinned: boolean
   /** Черновик неотправленного сообщения */
@@ -685,6 +761,26 @@ export type ChatThreadState = {
   typingUserIds?: string[]
   /** Метаданные группы (если это групповой чат) */
   groupMeta?: ChatGroupMeta | null
+  /** Назначенные теги диалога */
+  tagIds?: string[]
+  /** Папки, куда включён диалог */
+  folderIds?: string[]
+  /** Запланированные сообщения чата */
+  scheduledMessages?: ChatMessage[]
+}
+
+/** Настройки чатов */
+export type ChatSettings = {
+  soundEnabled: boolean
+  notificationPreview: boolean
+  autoTranslate: boolean
+  targetLanguage: string
+  autoTranscribeVoice: boolean
+  autoDownloadMedia: boolean
+  fontSize: 'sm' | 'base' | 'lg'
+  sendOnEnter: boolean
+  whoCanMessageMe: 'all' | 'followers' | 'none'
+  whoCanSeeOnline: 'all' | 'followers' | 'none'
 }
 
 /** Все переписки: ключ — id друга или id группы */
@@ -804,6 +900,10 @@ export type OgonekStoreState = {
   chatFolders?: ChatFolder[]
   /** Активная папка (id) */
   chatActiveFolderId?: string
+  /** Пользовательские теги диалогов */
+  chatTags?: ChatTag[]
+  /** Настройки мессенджера (звук, перевод, расшифровка, Enter) */
+  chatSettings?: ChatSettings
   /* ── ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ВНЕШНИЙ ВИД ──────────────────────────── */
   /** Режим оформления: X Black / Apple Light / Dim */
   theme: ThemeMode
@@ -864,6 +964,8 @@ export type PrivacySettings = {
   showStreakPublicly: boolean
   /** Показывать верифицированные бейджи публично */
   showBadgesPublicly: boolean
+  /** Показывать уровень сложности публично (по умолчанию true) */
+  showDifficultyLevelPublicly?: boolean
   /** Можно ли найти профиль по @username */
   searchableByUsername: boolean
   /** Скрыть пользователя из публичных таблиц лидеров */
