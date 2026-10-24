@@ -12,7 +12,8 @@
     border-color: var(--line);
   }
   html {
-    background: #000;
+    background: var(--bg);
+    color: var(--text);
     overflow-x: hidden;
     max-width: 100vw;
   }
@@ -142,9 +143,9 @@ main.main-content {
   justify-content: center;
   align-items: center;
   gap: 8px;
-  background-color: #FF5C00;
-  background-image: linear-gradient(135deg, #FF5C00 0%, #FF7A18 100%);
-  color: #000000;
+  background-color: var(--accent);
+  background-image: none;
+  color: var(--accent-contrast, #000000);
   font-weight: 800;
   font-size: 16px;
   border-radius: 9999px;
@@ -153,14 +154,14 @@ main.main-content {
   width: 100%;
   margin-top: 16px;
   border: 0;
-  box-shadow: 0 4px 18px rgba(255, 92, 0, 0.32);
+  box-shadow: 0 4px 18px var(--accent-soft);
   transition: all 0.15s ease;
   letter-spacing: -0.01em;
 }
 
 .x-compose-btn:hover {
-  background: linear-gradient(135deg, #FF6B14 0%, #FF8824 100%);
-  box-shadow: 0 6px 24px rgba(255, 92, 0, 0.44);
+  background-color: var(--accent-hover, var(--accent));
+  box-shadow: 0 6px 24px var(--accent-soft);
   transform: translateY(-1px);
 }
 
@@ -178,22 +179,22 @@ main.main-content {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background-color: #FF5C00;
-  background-image: linear-gradient(135deg, #FF5C00 0%, #FF7A18 100%);
-  color: #000000;
+  background-color: var(--accent);
+  background-image: none;
+  color: var(--accent-contrast, #000000);
   font-weight: 800;
   font-size: 15px;
   border-radius: 9999px;
   height: 48px;
   padding: 0 24px;
   border: 0;
-  box-shadow: 0 4px 14px rgba(255, 92, 0, 0.28);
+  box-shadow: 0 4px 14px var(--accent-soft);
   transition: all 0.15s ease;
 }
 
 .x-primary-btn:hover {
-  background: linear-gradient(135deg, #FF6B14 0%, #FF8824 100%);
-  box-shadow: 0 6px 20px rgba(255, 92, 0, 0.38);
+  background-color: var(--accent-hover, var(--accent));
+  box-shadow: 0 6px 20px var(--accent-soft);
 }
 
 /* X secondary button (outline pill) */
@@ -9877,58 +9878,43 @@ html[data-theme='x-black'] .msgr__placeholder-stats .is-online {
 
 /* ── Акцентный цвет: базовые переменные + палитры ────────────────────────── */
 :root {
-  --accent: #ff6b35;
-  --accent-strong: #e8562a;
-  --accent-soft: rgba(255, 107, 53, 0.14);
-  /* Основной интерактивный цвет приложения теперь следует акценту */
+  /* Основной интерактивный цвет приложения следует акценту */
   --blue: var(--accent);
 }
 
-html[data-accent='flame']:not([data-theme='apple-light']) {
-  --accent: #FF6A1A;
-  --accent-strong: #E85F15;
-  --accent-soft: rgba(255, 106, 26, 0.12);
-}
-html[data-theme='apple-light'],
-html[data-theme='apple-light'][data-accent='flame'] {
-  --accent: #C03C00 !important;
-  --accent-strong: #A53300 !important;
-  --accent-soft: rgba(192, 60, 0, 0.08) !important;
-  --accent-text: #FFFFFF !important;
-}
-html[data-accent='blue'] {
-  --accent: #1d9bf0;
-  --accent-strong: #1a8cd8;
-  --accent-soft: rgba(29, 155, 240, 0.14);
-}
-html[data-accent='violet'] {
-  --accent: #8b5cf6;
-  --accent-strong: #7c3aed;
-  --accent-soft: rgba(139, 92, 246, 0.16);
-}
-html[data-accent='emerald'] {
-  --accent: #12b886;
-  --accent-strong: #0ca678;
-  --accent-soft: rgba(18, 184, 134, 0.16);
-}
-html[data-accent='rose'] {
-  --accent: #f91880;
-  --accent-strong: #db0e6f;
-  --accent-soft: rgba(249, 24, 128, 0.16);
-}
-html[data-accent='gold'] {
-  --accent: #f5b942;
-  --accent-strong: #e0a52f;
-  --accent-soft: rgba(245, 185, 66, 0.16);
+/* Токены акцентов определены в styles/tokens.css */
+
+/* Акцент перекрашивает элементы по всему приложению */
+html[data-accent] .text-\[\#1d9bf0\],
+html[data-accent] .text-\[\#5cb8f5\],
+html[data-accent] .text-\[\#FF5C00\],
+html[data-accent] .text-\[\#ff7a18\],
+html[data-accent] .text-\[\#FF6A1A\],
+html[data-accent] .text-orange-500 {
+  color: var(--accent) !important;
 }
 
-/* Акцент перекрашивает «голубые» Tailwind-токены по всему приложению */
-html[data-accent] .text-\[\#1d9bf0\] { color: var(--accent) !important; }
-html[data-accent] .bg-\[\#1d9bf0\] { background-color: var(--accent) !important; }
-html[data-accent] .border-\[\#1d9bf0\] { border-color: var(--accent) !important; }
-html[data-accent] .bg-\[\#1a8cd8\] { background-color: var(--accent-strong) !important; }
-html[data-accent] .text-\[\#5cb8f5\] { color: var(--accent) !important; }
-html[data-accent] .hover\:bg-\[\#1d9bf0\]:hover { background-color: var(--accent-strong) !important; }
+html[data-accent] .bg-\[\#1d9bf0\],
+html[data-accent] .bg-\[\#FF5C00\],
+html[data-accent] .bg-\[\#ff7a18\],
+html[data-accent] .bg-\[\#FF6A1A\],
+html[data-accent] .bg-orange-500 {
+  background-color: var(--accent) !important;
+}
+
+html[data-accent] .border-\[\#1d9bf0\],
+html[data-accent] .border-\[\#FF5C00\],
+html[data-accent] .border-\[\#ff7a18\],
+html[data-accent] .border-\[\#FF6A1A\],
+html[data-accent] .border-orange-500 {
+  border-color: var(--accent) !important;
+}
+
+html[data-accent] .hover\:bg-\[\#1d9bf0\]:hover,
+html[data-accent] .hover\:bg-\[\#FF5C00\]:hover,
+html[data-accent] .hover\:bg-\[\#ff7a18\]:hover {
+  background-color: var(--accent-hover, var(--accent)) !important;
+}
 
 /* Плавный переход при смене оформления отключён для мгновенного отклика как в X.com */
 html,
@@ -9965,10 +9951,6 @@ html[data-theme='apple-light'] {
   --text-2: #536471;
   --text-3: #536471;
   --muted: #536471;
-  --accent: #C03C00;
-  --accent-strong: #A53300;
-  --accent-text: #FFFFFF;
-  --blue: #C03C00;
 }
 html[data-theme='apple-light'] body {
   background: #ffffff;

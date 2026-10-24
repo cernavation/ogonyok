@@ -90,13 +90,54 @@ export type AccentPreset = {
 }
 
 export const ACCENT_PRESETS: AccentPreset[] = [
-  { id: 'flame', label: 'Огонёк', color: '#FF5C00', strong: '#FF7A18', soft: 'rgba(255,92,0,0.16)' },
-  { id: 'blue', label: 'Небесный', color: '#1d9bf0', strong: '#1a8cd8', soft: 'rgba(29,155,240,0.14)' },
-  { id: 'violet', label: 'Аметист', color: '#8b5cf6', strong: '#7c3aed', soft: 'rgba(139,92,246,0.16)' },
-  { id: 'emerald', label: 'Изумруд', color: '#12b886', strong: '#0ca678', soft: 'rgba(18,184,134,0.16)' },
-  { id: 'rose', label: 'Роза', color: '#f91880', strong: '#db0e6f', soft: 'rgba(249,24,128,0.16)' },
-  { id: 'gold', label: 'Золото', color: '#f5b942', strong: '#e0a52f', soft: 'rgba(245,185,66,0.16)' },
+  { id: 'flame', label: 'Огонёк', color: '#FF5C00', strong: '#E65300', soft: 'rgba(255,92,0,0.12)' },
+  { id: 'blue', label: 'Небесный', color: '#1D9BF0', strong: '#1A8CD8', soft: 'rgba(29,155,240,0.12)' },
+  { id: 'violet', label: 'Аметист', color: '#7856FF', strong: '#6742ED', soft: 'rgba(120,86,255,0.12)' },
+  { id: 'emerald', label: 'Изумруд', color: '#00BA7C', strong: '#009664', soft: 'rgba(0,186,124,0.12)' },
+  { id: 'rose', label: 'Роза', color: '#F91880', strong: '#D70F6B', soft: 'rgba(249,24,128,0.12)' },
+  { id: 'gold', label: 'Золото', color: '#FFD400', strong: '#E6BF00', soft: 'rgba(255,212,0,0.12)' },
 ]
+
+export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const clean = hex.replace('#', '')
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16)
+    const g = parseInt(clean[1] + clean[1], 16)
+    const b = parseInt(clean[2] + clean[2], 16)
+    return { r, g, b }
+  }
+  if (clean.length === 6) {
+    const r = parseInt(clean.slice(0, 2), 16)
+    const g = parseInt(clean.slice(2, 4), 16)
+    const b = parseInt(clean.slice(4, 6), 16)
+    return { r, g, b }
+  }
+  return null
+}
+
+export function getLuminance(r: number, g: number, b: number): number {
+  const [rs, gs, bs] = [r, g, b].map((c) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
+  })
+  return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
+}
+
+export function computeAccentDetails(hex: string) {
+  const rgb = hexToRgb(hex) || { r: 255, g: 92, b: 0 }
+  const lum = getLuminance(rgb.r, rgb.g, rgb.b)
+  // Contrast text: black if luminance > 0.45, else white
+  const contrast = lum > 0.45 ? '#000000' : '#FFFFFF'
+  // Soft color: 12% opacity
+  const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`
+  // Hover: 10% darker if light, 10% lighter if dark
+  const factor = lum > 0.45 ? 0.88 : 1.15
+  const hr = Math.min(255, Math.max(0, Math.round(rgb.r * factor)))
+  const hg = Math.min(255, Math.max(0, Math.round(rgb.g * factor)))
+  const hb = Math.min(255, Math.max(0, Math.round(rgb.b * factor)))
+  const hover = `#${hr.toString(16).padStart(2, '0')}${hg.toString(16).padStart(2, '0')}${hb.toString(16).padStart(2, '0')}`
+  return { color: hex, hover, soft, contrast }
+}
 
 /* ── Размер шрифта / масштаб интерфейса ──────────────────────────────────── */
 
@@ -148,15 +189,40 @@ export function getFeedDensityPreset(id: FeedDensityId): FeedDensityPreset {
   return FEED_DENSITY_PRESETS.find((d) => d.id === id) ?? FEED_DENSITY_PRESETS[0]
 }
 
-/** Применяет оформление к <html> через data-атрибуты (мгновенно, без перезагрузки) */
+/** Применяет оформление к <html> через data-атрибуты и CSS-переменные (мгновенно, без перезагрузки) */
 export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Document): void {
   if (typeof document === 'undefined' && !doc) return
   const root = (doc ?? document).documentElement
+  const body = (doc ?? document).body
+
   root.setAttribute('data-theme', settings.theme)
-  root.setAttribute('data-accent', settings.accent)
   root.setAttribute('data-font-scale', settings.fontScale)
   root.setAttribute('data-density', settings.feedDensity)
-  // Подсказываем браузеру схему — от неё зависят нативные скроллбары, формы и т.п.
+  if (body) {
+    body.setAttribute('data-theme', settings.theme)
+  }
+
+  // Расчёт и применение переменных акцента
+  let accentHex = '#FF5C00'
+  if (typeof settings.accent === 'string' && settings.accent.startsWith('#')) {
+    root.setAttribute('data-accent', 'custom')
+    accentHex = settings.accent
+  } else {
+    root.setAttribute('data-accent', settings.accent)
+    const preset = getAccentPreset(settings.accent)
+    accentHex = preset.color
+  }
+
+  const details = computeAccentDetails(accentHex)
+  root.style.setProperty('--accent', details.color)
+  root.style.setProperty('--accent-hover', details.hover)
+  root.style.setProperty('--accent-soft', details.soft)
+  root.style.setProperty('--accent-contrast', details.contrast)
+  root.style.setProperty('--accent-text', details.contrast)
+  root.style.setProperty('--orange', details.color)
+  root.style.setProperty('--blue', details.color)
+
+  // Подсказываем браузеру схему
   const scheme = getThemePreset(settings.theme).scheme
   root.style.colorScheme = scheme
   const themePreset = getThemePreset(settings.theme)
@@ -216,7 +282,9 @@ export function isThemeId(value: unknown): value is ThemeMode {
 }
 
 export function isAccentId(value: unknown): value is AccentId {
-  return typeof value === 'string' && (ACCENT_IDS as string[]).includes(value)
+  if (typeof value !== 'string') return false
+  if ((ACCENT_IDS as string[]).includes(value as any)) return true
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value)
 }
 
 export function isFontScaleId(value: unknown): value is FontScaleId {
@@ -228,4 +296,4 @@ export function isFeedDensityId(value: unknown): value is FeedDensityId {
 }
 
 /** Inline-скрипт для <head>: применяет тему из localStorage до первой отрисовки */
-export const APPEARANCE_BOOTSTRAP_SCRIPT = `(function(){try{var k='${APPEARANCE_STORAGE_KEY}';var r=document.documentElement;var raw=localStorage.getItem(k);var s=raw?JSON.parse(raw):{};var t=['x-black','apple-light','dim'].indexOf(s.theme)>-1?s.theme:'${DEFAULT_THEME}';var a=['flame','blue','violet','emerald','rose','gold'].indexOf(s.accent)>-1?s.accent:'${DEFAULT_ACCENT}';var f=['compact','regular','large','xlarge'].indexOf(s.fontScale)>-1?s.fontScale:'${DEFAULT_FONT_SCALE}';var d=['cozy','comfortable','compact'].indexOf(s.feedDensity)>-1?s.feedDensity:'${DEFAULT_FEED_DENSITY}';r.setAttribute('data-theme',t);r.setAttribute('data-accent',a);r.setAttribute('data-font-scale',f);r.setAttribute('data-density',d);r.style.colorScheme=(t==='apple-light')?'light':'dark';}catch(e){}})();`
+export const APPEARANCE_BOOTSTRAP_SCRIPT = `(function(){try{var k='${APPEARANCE_STORAGE_KEY}';var r=document.documentElement;var raw=localStorage.getItem(k);var s=raw?JSON.parse(raw):{};var t=['x-black','apple-light','dim'].indexOf(s.theme)>-1?s.theme:'${DEFAULT_THEME}';var a=s.accent||'${DEFAULT_ACCENT}';var f=['compact','regular','large','xlarge'].indexOf(s.fontScale)>-1?s.fontScale:'${DEFAULT_FONT_SCALE}';var d=['cozy','comfortable','compact'].indexOf(s.feedDensity)>-1?s.feedDensity:'${DEFAULT_FEED_DENSITY}';r.setAttribute('data-theme',t);if(typeof a==='string'&&a.charAt(0)==='#'){r.setAttribute('data-accent','custom');r.style.setProperty('--accent',a);}else{r.setAttribute('data-accent',a);}r.setAttribute('data-font-scale',f);r.setAttribute('data-density',d);r.style.colorScheme=(t==='apple-light')?'light':'dark';}catch(e){}})();`

@@ -681,16 +681,16 @@ export function MessengerChatPane({
             </div>
           ) : (
             groups.map((group) => (
-              <div key={group.key} className="space-y-1">
-                {/* Разделитель дня: плавающий по центру, не налезает на пузыри */}
-                <div className="flex justify-center my-3.5 sticky top-2 z-10 pointer-events-none">
-                  <span className="rounded-full bg-[var(--bg-elev)]/90 px-3.5 py-1 text-[11px] font-bold text-[var(--text)] backdrop-blur-md border border-[var(--border)] shadow-md pointer-events-auto">
+              <div key={group.key} className="w-full flex flex-col space-y-1">
+                {/* Разделитель дня: отдельная центрированная строка на всю ширину */}
+                <div className="w-full flex justify-center my-4 sticky top-2 z-10 pointer-events-none select-none clear-both">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[var(--bg-elev)]/90 px-4 py-1 text-[12px] font-bold text-[var(--text-2)] backdrop-blur-md border border-[var(--border)] shadow-sm pointer-events-auto">
                     {group.label}
                   </span>
                 </div>
 
                 {/* Сообщения дня */}
-                <div className="space-y-1">
+                <div className="w-full flex flex-col space-y-1">
                   {group.items.map((msg, idx) => {
                     const prev = group.items[idx - 1]
                     const next = group.items[idx + 1]

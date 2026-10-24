@@ -13,6 +13,7 @@ import {
   Lock,
   Moon,
   Palette,
+  Pipette,
   RotateCcw,
   Sun,
   SunDim,
@@ -177,6 +178,7 @@ export function SettingsView({
                 </p>
               </div>
 
+              {/* 6 Пресетов */}
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {ACCENT_PRESETS.map((a) => {
                   const active = state.accent === a.id
@@ -204,6 +206,53 @@ export function SettingsView({
                     </button>
                   )
                 })}
+              </div>
+
+              {/* Выбор своего цвета (Color Picker) */}
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border border-[var(--border)] mt-1">
+                <div className="flex items-center gap-2.5">
+                  <div className="relative">
+                    <input
+                      type="color"
+                      value={state.accent.startsWith('#') ? state.accent : '#FF5C00'}
+                      onChange={(e) => {
+                        onSetAccent(e.target.value as any)
+                      }}
+                      className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
+                      aria-label="Выбрать свой цвет"
+                    />
+                    <div
+                      className="w-9 h-9 rounded-full border-2 border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-105"
+                      style={{
+                        background: state.accent.startsWith('#') ? state.accent : 'var(--accent)',
+                      }}
+                    >
+                      <Pipette size={14} className="text-white drop-shadow" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-[var(--text)]">Свой цвет (HEX)</p>
+                    <p className="text-[12px] text-[var(--text-2)]">
+                      {state.accent.startsWith('#') ? state.accent.toUpperCase() : 'Выбери любой оттенок'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={state.accent.startsWith('#') ? state.accent : ''}
+                    placeholder="#FF5C00"
+                    onChange={(e) => {
+                      const val = e.target.value.trim()
+                      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                        onSetAccent(val as any)
+                      }
+                    }}
+                    className="w-24 h-8 px-2.5 text-xs font-mono font-bold rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] outline-none focus:border-[var(--accent)]"
+                    maxLength={7}
+                  />
+                </div>
               </div>
             </div>
 

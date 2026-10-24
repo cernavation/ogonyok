@@ -10,6 +10,7 @@ import {
   isFeedDensityId,
   isFontScaleId,
   isThemeId,
+  readPersistedAppearance,
 } from './appearance'
 import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
 import {
@@ -821,6 +822,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
 }
 
 export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): OgonekStoreState {
+  const persistedApp = readPersistedAppearance()
   try {
     const raw = adapter.getItem(STORAGE_KEY)
     if (!raw) {
@@ -873,10 +875,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               exploreRecentSearches: sanitizeExploreRecentSearches(parsedV3.exploreRecentSearches),
               chatThreads: sanitizeChatThreads(parsedV3.chatThreads, DEFAULT_CHAT_THREADS),
               chatActiveFriendId: sanitizeChatActiveFriendId(parsedV3.chatActiveFriendId),
-              theme: sanitizeTheme(parsedV3.theme),
-              accent: sanitizeAccent(parsedV3.accent),
-              fontScale: sanitizeFontScale(parsedV3.fontScale),
-              feedDensity: sanitizeFeedDensity(parsedV3.feedDensity),
+              theme: sanitizeTheme(parsedV3.theme ?? persistedApp.theme),
+              accent: sanitizeAccent(parsedV3.accent ?? persistedApp.accent),
+              fontScale: sanitizeFontScale(parsedV3.fontScale ?? persistedApp.fontScale),
+              feedDensity: sanitizeFeedDensity(parsedV3.feedDensity ?? persistedApp.feedDensity),
               security: sanitizeSecurityState(parsedV3.security),
               privacy: sanitizePrivacySettings(parsedV3.privacy),
               streak: sanitizeStreakSettings(parsedV3.streak),
@@ -899,6 +901,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
             // Legacy items exist
             const migratedState: OgonekStoreState = {
               ...DEFAULT_STORE_STATE,
+              theme: persistedApp.theme,
+              accent: persistedApp.accent,
+              fontScale: persistedApp.fontScale,
+              feedDensity: persistedApp.feedDensity,
               schemaVersion: CURRENT_SCHEMA_VERSION,
               isDemo: false,
             }
@@ -910,13 +916,25 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         }
       }
 
-      return DEFAULT_STORE_STATE
+      return {
+        ...DEFAULT_STORE_STATE,
+        theme: persistedApp.theme,
+        accent: persistedApp.accent,
+        fontScale: persistedApp.fontScale,
+        feedDensity: persistedApp.feedDensity,
+      }
     }
 
     try {
       const parsed = JSON.parse(raw) as Partial<OgonekStoreState>
       if (!parsed || typeof parsed !== 'object') {
-        return DEFAULT_STORE_STATE
+        return {
+          ...DEFAULT_STORE_STATE,
+          theme: persistedApp.theme,
+          accent: persistedApp.accent,
+          fontScale: persistedApp.fontScale,
+          feedDensity: persistedApp.feedDensity,
+        }
       }
 
       const days: Day[] = Array.isArray(parsed.days) && parsed.days.length > 0
@@ -1001,10 +1019,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         chatActiveFolderId: typeof parsed.chatActiveFolderId === 'string' ? parsed.chatActiveFolderId : 'all',
         chatTags: Array.isArray(parsed.chatTags) ? parsed.chatTags : [],
         chatSettings: parsed.chatSettings && typeof parsed.chatSettings === 'object' ? { ...DEFAULT_CHAT_SETTINGS, ...parsed.chatSettings } : DEFAULT_CHAT_SETTINGS,
-        theme: sanitizeTheme(parsed.theme),
-        accent: sanitizeAccent(parsed.accent),
-        fontScale: sanitizeFontScale(parsed.fontScale),
-        feedDensity: sanitizeFeedDensity(parsed.feedDensity),
+        theme: sanitizeTheme(persistedApp.theme ?? parsed.theme),
+        accent: sanitizeAccent(persistedApp.accent ?? parsed.accent),
+        fontScale: sanitizeFontScale(persistedApp.fontScale ?? parsed.fontScale),
+        feedDensity: sanitizeFeedDensity(persistedApp.feedDensity ?? parsed.feedDensity),
         security: sanitizeSecurityState(parsed.security),
         privacy: sanitizePrivacySettings(parsed.privacy),
         streak: sanitizeStreakSettings(parsed.streak),

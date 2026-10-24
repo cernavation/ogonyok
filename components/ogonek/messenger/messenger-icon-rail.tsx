@@ -42,16 +42,28 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
     { id: 'settings', icon: Settings, label: 'Настройки', href: '/?view=settings' },
   ]
 
-  const handleHomeClick = () => {
+  const handleHomeClick = (e: React.MouseEvent) => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'home' }))
+      if (window.location.pathname.startsWith('/chats')) {
+        e.preventDefault()
+        window.location.href = '/'
+        return
+      }
     }
+    router.push('/')
   }
 
-  const handleNavClick = (item: (typeof NAV_ITEMS)[0]) => {
+  const handleNavClick = (e: React.MouseEvent, item: (typeof NAV_ITEMS)[0]) => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: item.id }))
+      if (window.location.pathname.startsWith('/chats')) {
+        e.preventDefault()
+        window.location.href = item.href
+        return
+      }
     }
+    router.push(item.href)
   }
 
   return (
@@ -84,7 +96,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
             <Tooltip key={item.id} content={item.label} side="right">
               <Link
                 href={item.href}
-                onClick={() => handleNavClick(item)}
+                onClick={(e) => handleNavClick(e, item)}
                 className={`relative w-[52px] h-[52px] rounded-full flex items-center justify-center transition-all ${
                   isActive
                     ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-md scale-105'

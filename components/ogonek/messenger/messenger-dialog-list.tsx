@@ -9,6 +9,7 @@ import {
   FileText,
   Filter,
   Flame,
+  Home,
   Image as ImageIcon,
   Mic,
   PenSquare,
@@ -40,6 +41,7 @@ type Props = {
   activeThreadId: string | null
   onSelectThread: (threadId: string) => void
   onNewChat: () => void
+  onNavigateHome?: () => void
   soundEnabled?: boolean
   className?: string
 }
@@ -48,6 +50,7 @@ export function MessengerDialogList({
   activeThreadId,
   onSelectThread,
   onNewChat,
+  onNavigateHome,
   soundEnabled = true,
   className = '',
 }: Props) {
@@ -118,14 +121,26 @@ export function MessengerDialogList({
 
   return (
     <div
-      className={`w-full lg:w-[400px] lg:min-w-[340px] lg:max-w-[440px] h-full flex flex-col border-r border-[var(--border)] bg-[var(--bg)] select-none shrink-0 ${className}`}
-      style={{ width: 'clamp(340px, 30vw, 440px)' }}
+      className={`w-full h-full flex flex-col bg-[var(--bg)] select-none shrink-0 min-w-0 ${className}`}
     >
-      {/* 1. Верхняя панель: Заголовок «Чаты» 20px/800, пилюля-фильтр «Все ▾» и круглая кнопка «Написать» */}
-      <div className="h-[72px] px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0 gap-2">
-        <h1 className="text-[20px] font-[800] text-[var(--text)] tracking-tight">Чаты</h1>
+      {/* 1. Верхняя панель: Заголовок «Чаты» 20px/800, пилюля-фильтр «Все ▾» и кнопка «Написать» */}
+      <div className="h-[64px] px-3.5 sm:px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0 gap-2 min-w-0 w-full">
+        <div className="flex items-center gap-2 min-w-0">
+          {onNavigateHome && (
+            <button
+              type="button"
+              onClick={onNavigateHome}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text)] hover:bg-[var(--bg-hover)] active:scale-95 transition-all -ml-1 shrink-0"
+              aria-label="На главную"
+              title="На главную"
+            >
+              <Home size={20} className="text-[var(--accent)]" />
+            </button>
+          )}
+          <h1 className="text-[19px] sm:text-[20px] font-[800] text-[var(--text)] tracking-tight shrink-0">Чаты</h1>
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Пилюля-фильтр «Все ▾» */}
           <div className="relative">
             <button
@@ -259,25 +274,25 @@ export function MessengerDialogList({
       </div>
 
       {/* 2. Поиск-пилюля 44px («Поиск» по людям и сообщениям) */}
-      <div className="px-4 py-2.5 border-b border-[var(--border)] shrink-0">
-        <div className="relative flex items-center h-[44px] w-full rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-4 focus-within:border-[var(--accent)] transition-colors">
-          <Search size={18} className="text-[var(--text-2)] shrink-0 mr-2.5" />
+      <div className="px-3.5 sm:px-4 py-2 border-b border-[var(--border)] shrink-0 w-full min-w-0">
+        <div className="relative flex items-center h-[42px] w-full rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-3.5 focus-within:border-[var(--accent)] transition-colors min-w-0">
+          <Search size={17} className="text-[var(--text-2)] shrink-0 mr-2" />
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Поиск людей и сообщений..."
-            className="w-full bg-transparent text-[14px] text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
+            className="flex-1 min-w-0 bg-transparent text-[13px] text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
             aria-label="Поиск"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="text-[var(--text-2)] hover:text-[var(--text)] p-1 ml-1"
+              className="text-[var(--text-2)] hover:text-[var(--text)] p-1 ml-1 shrink-0"
               aria-label="Очистить поиск"
             >
-              <X size={16} />
+              <X size={15} />
             </button>
           )}
         </div>
@@ -357,12 +372,12 @@ export function MessengerDialogList({
                   )}
                 </div>
 
-                {/* Основная колонка: Имя 17px/700 + галочка, время справа, превью сообщения */}
+                {/* Основная колонка: Имя + галочка, время справа, превью сообщения */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
                   {/* Верхняя строка: Имя и Время */}
-                  <div className="flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[17px] font-[700] text-[var(--text)] truncate leading-tight">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                      <span className="text-[15px] sm:text-[16px] font-[700] text-[var(--text)] truncate leading-tight">
                         {title}
                       </span>
                       {friend?.verified && (
@@ -373,7 +388,10 @@ export function MessengerDialogList({
                     </div>
 
                     {timeStamp && (
-                      <span suppressHydrationWarning className="text-[13px] text-[var(--text-2)] shrink-0 font-medium">
+                      <span
+                        suppressHydrationWarning
+                        className="text-[12px] text-[var(--text-2)] shrink-0 font-medium whitespace-nowrap [font-variant-numeric:tabular-nums]"
+                      >
                         {timeStamp}
                       </span>
                     )}

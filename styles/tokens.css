@@ -1,12 +1,12 @@
 /* ══════════════════════════════════════════════════════════════════════════
    ОГОНЁК — ДИЗАЙН-СИСТЕМА X.COM (ТОКЕНЫ ОФОРМЛЕНИЯ)
-   Светлая и тёмная («Lights out») цветовые схемы.
+   3 темы: Dark (x-black), Light (apple-light), Dim (сумеречная).
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* 1. DARK / X-BLACK (По умолчанию) */
 :root,
 html[data-theme='x-black'],
-html.dark {
-  /* Тёмная схема («Lights out» OLED) */
+body[data-theme='x-black'] {
   --bg: #000000;
   --bg-elev: #16181C;
   --surface: #16181C;
@@ -15,36 +15,28 @@ html.dark {
   --bg-hover-post: rgba(255, 255, 255, 0.03);
   --border: #2F3336;
   --border-subtle: #202327;
+  --border-strong: #3E4144;
   --line: #2F3336;
-  
+
   --text: #E7E9EA;
-  --text-2: #8B98A5; /* Контраст ≥ 4.5:1 на чёрном */
-  --text-3: #8B98A5;
+  --text-2: #8B98A5; /* WCAG 4.5:1+ */
+  --text-3: #71767B;
   --muted: #8B98A5;
-  
-  --accent: #FF6A1A;
-  --accent-hover: #E85F15;
-  --accent-soft: rgba(255, 106, 26, 0.12);
-  --accent-text: #000000;
-  --blue: #FF6A1A;
-  --orange: #FF6A1A;
-  --orange-light: #FF8533;
-  
+
   --danger: #F4212E;
-  --danger-soft: rgba(244, 33, 46, 0.1);
+  --danger-soft: rgba(244, 33, 46, 0.12);
   --success: #00BA7C;
-  --success-soft: rgba(0, 186, 124, 0.1);
+  --success-soft: rgba(0, 186, 124, 0.12);
 
   --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Нативные скроллбары */
   color-scheme: dark;
 }
 
+/* 2. LIGHT / APPLE-LIGHT */
 html[data-theme='apple-light'],
-html:not(.dark):not([data-theme='x-black']) {
-  /* Светлая схема */
+body[data-theme='apple-light'] {
   --bg: #FFFFFF;
   --bg-elev: #F7F9F9;
   --surface: #F7F9F9;
@@ -53,27 +45,110 @@ html:not(.dark):not([data-theme='x-black']) {
   --bg-hover-post: rgba(0, 0, 0, 0.02);
   --border: #EFF3F4;
   --border-subtle: #CFD9DE;
+  --border-strong: #D1D9DE;
   --line: #EFF3F4;
-  
+
   --text: #0F1419;
-  --text-2: #536471;
+  --text-2: #536471; /* WCAG 4.5:1+ */
   --text-3: #536471;
   --muted: #536471;
-  
-  --accent: #C03C00;
-  --accent-hover: #A53300;
-  --accent-soft: rgba(192, 60, 0, 0.08);
-  --accent-text: #FFFFFF;
-  --blue: #C03C00;
-  --orange: #C03C00;
-  --orange-light: #C03C00;
-  
+
   --danger: #F4212E;
   --danger-soft: rgba(244, 33, 46, 0.1);
   --success: #00875A;
   --success-soft: rgba(0, 135, 90, 0.1);
 
   color-scheme: light;
+}
+
+/* 3. DIM / СУМЕРЕЧНАЯ */
+html[data-theme='dim'],
+body[data-theme='dim'] {
+  --bg: #15202B;
+  --bg-elev: #1E2732;
+  --surface: #1E2732;
+  --surface2: #273340;
+  --bg-hover: rgba(231, 233, 234, 0.08);
+  --bg-hover-post: rgba(255, 255, 255, 0.03);
+  --border: #38444D;
+  --border-subtle: #2C3640;
+  --border-strong: #4B5966;
+  --line: #38444D;
+
+  --text: #E7E9EA;
+  --text-2: #8B98A5; /* WCAG 4.5:1+ */
+  --text-3: #8B98A5;
+  --muted: #8B98A5;
+
+  --danger: #F4212E;
+  --danger-soft: rgba(244, 33, 46, 0.12);
+  --success: #00BA7C;
+  --success-soft: rgba(0, 186, 124, 0.12);
+
+  color-scheme: dark;
+}
+
+/* ── ПРЕСЕТЫ АКЦЕНТНЫХ ЦВЕТОВ (ТОКЕНЫ) ──────────────────────────────────────── */
+
+/* 1. Огонёк (Flame) */
+:root,
+html[data-accent='flame'] {
+  --accent: #FF5C00;
+  --accent-hover: #E65300;
+  --accent-soft: rgba(255, 92, 0, 0.14);
+  --accent-contrast: #000000;
+  --orange: #FF5C00;
+  --blue: #FF5C00;
+}
+
+/* 2. Небо (Blue) */
+html[data-accent='blue'] {
+  --accent: #1D9BF0;
+  --accent-hover: #1A8CD8;
+  --accent-soft: rgba(29, 155, 240, 0.14);
+  --accent-contrast: #FFFFFF;
+  --orange: #1D9BF0;
+  --blue: #1D9BF0;
+}
+
+/* 3. Фиолет (Violet) */
+html[data-accent='violet'] {
+  --accent: #7856FF;
+  --accent-hover: #6742ED;
+  --accent-soft: rgba(120, 86, 255, 0.14);
+  --accent-contrast: #FFFFFF;
+  --orange: #7856FF;
+  --blue: #7856FF;
+}
+
+/* 4. Изумруд (Emerald) */
+html[data-accent='emerald'] {
+  --accent: #00BA7C;
+  --accent-hover: #009664;
+  --accent-soft: rgba(0, 186, 124, 0.14);
+  --accent-contrast: #FFFFFF;
+  --orange: #00BA7C;
+  --blue: #00BA7C;
+}
+
+/* 5. Роза (Rose) */
+html[data-accent='rose'] {
+  --accent: #F91880;
+  --accent-hover: #D70F6B;
+  --accent-soft: rgba(249, 24, 128, 0.14);
+  --accent-contrast: #FFFFFF;
+  --orange: #F91880;
+  --blue: #F91880;
+}
+
+/* 6. Золото (Gold) */
+html[data-accent='gold'] {
+  --accent: #FFD400;
+  --accent-hover: #E6BF00;
+  --accent-soft: rgba(255, 212, 0, 0.14);
+  --accent-contrast: #000000;
+  --orange: #FFD400;
+  --blue: #FFD400;
 }
 
 /* Глобальные скроллбары для тишины интерфейса */

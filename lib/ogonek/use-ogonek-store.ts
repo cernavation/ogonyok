@@ -291,7 +291,7 @@ function subscribe(callback: () => void): () => void {
 
   const handleCustom = (e: Event) => {
     const customEvent = e as CustomEvent<OgonekStoreState>
-    if (customEvent.detail) {
+    if (customEvent.detail && Array.isArray((customEvent.detail as any).days)) {
       cachedState = customEvent.detail
     } else {
       cachedState = loadStore()
@@ -2135,10 +2135,10 @@ export function useOgonekStore() {
             ? sanitizeChatThreads(newState.chatThreads, {})
             : prev.chatThreads,
         chatActiveFriendId: sanitizeChatActiveFriendId(newState.chatActiveFriendId),
-        theme: sanitizeTheme(newState.theme),
-        accent: sanitizeAccent(newState.accent),
-        fontScale: sanitizeFontScale(newState.fontScale),
-        feedDensity: sanitizeFeedDensity(newState.feedDensity),
+        theme: newState.theme !== undefined ? sanitizeTheme(newState.theme) : prev.theme,
+        accent: newState.accent !== undefined ? sanitizeAccent(newState.accent) : prev.accent,
+        fontScale: newState.fontScale !== undefined ? sanitizeFontScale(newState.fontScale) : prev.fontScale,
+        feedDensity: newState.feedDensity !== undefined ? sanitizeFeedDensity(newState.feedDensity) : prev.feedDensity,
         security: sanitizeSecurityState(newState.security),
         privacy: sanitizePrivacySettings(newState.privacy),
         streak: sanitizeStreakSettings(newState.streak),

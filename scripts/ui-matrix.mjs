@@ -74,11 +74,7 @@ async function launchBrowser(browserType = getBrowserType()) {
   if (browserType === 'firefox') {
     return await firefox.launch({ headless: true })
   }
-  try {
-    return await chromium.launch({ channel: 'chrome', headless: true })
-  } catch {
-    return await chromium.launch({ headless: true })
-  }
+  return await chromium.launch({ headless: true })
 }
 
 function normalizeHex(hex) {
@@ -158,7 +154,6 @@ export async function runUiMatrix() {
             deviceScaleFactor: 2,
           })
 
-          // Устанавливаем настройки темы и акцента до загрузки
           await context.addInitScript(({ th, ac, isCustom, customHex }) => {
             try {
               localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
@@ -173,27 +168,15 @@ export async function runUiMatrix() {
               st.accent = ac
               st.auth = { ...(st.auth || {}), signedIn: true, hasOnboarded: true }
               localStorage.setItem('ogonek.v2', JSON.stringify(st))
-            } catch {}
+            } catch (e) {}
           }, { th: theme.id, ac: accent.id, isCustom: accent.id === 'custom', customHex: accent.hex })
 
           const page = await context.newPage()
           await page.goto(CONFIG.baseUrl, { waitUntil: 'domcontentloaded' })
-          await page.waitForTimeout(300)
-
-          // Явно вызываем применение на странице
-          await page.evaluate(({ th, ac, hex }) => {
-            document.documentElement.setAttribute('data-theme', th)
-            document.documentElement.setAttribute('data-accent', ac)
-            document.documentElement.style.setProperty('--accent', hex)
-            if (th === 'apple-light') {
-              document.documentElement.classList.remove('dark')
-              document.documentElement.style.colorScheme = 'light'
-            } else {
-              document.documentElement.classList.add('dark')
-              document.documentElement.style.colorScheme = 'dark'
-            }
-          }, { th: theme.id, ac: accent.id, hex: accent.hex })
-          await page.waitForTimeout(200)
+          try {
+            await page.waitForSelector('.app-shell', { timeout: 8000 })
+          } catch {}
+          await page.waitForTimeout(400)
 
           const shotPath = path.join(comboDir, 'home.png')
           await page.screenshot({ path: shotPath })
@@ -204,11 +187,20 @@ export async function runUiMatrix() {
             const htmlStyle = window.getComputedStyle(document.documentElement)
             const bg = bodyStyle.backgroundColor || htmlStyle.backgroundColor
             const text = bodyStyle.color
-            return { bg, text }
+            return {
+              bg,
+              text,
+              storedApp: localStorage.getItem('ogonek.appearance.v1'),
+              storedStore: localStorage.getItem('ogonek.v2'),
+              htmlTheme: document.documentElement.getAttribute('data-theme'),
+              bodyTheme: document.body ? document.body.getAttribute('data-theme') : null,
+              htmlAccent: document.documentElement.getAttribute('data-accent'),
+            }
           }, { isDark: theme.isDark, expectedBg: theme.expectedBg })
 
           const actualBgHex = normalizeHex(surfaceCheck.bg)
           if (actualBgHex && actualBgHex !== theme.expectedBg) {
+            console.log(`\n    >> FAIL BG for ${comboKey}: actual="${actualBgHex}", expected="${theme.expectedBg}", raw="${surfaceCheck.bg}"`)
             allProblems.push({
               type: 'theme-broken',
               combination: comboKey,
@@ -280,6 +272,7 @@ export async function runUiMatrix() {
             const btnBg = normalizeHex(primaryCheck.bg)
             const targetHex = normalizeHex(accent.hex)
             if (btnBg && targetHex && btnBg !== targetHex) {
+              console.log(`\n    >> FAIL PRIMARY for ${comboKey}: actual="${btnBg}", expected="${targetHex}", raw="${primaryCheck.bg}"`)
               allProblems.push({
                 type: 'primary-not-accent',
                 combination: comboKey,

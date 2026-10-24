@@ -133,17 +133,14 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
             soundEnabled={state.soundEnabled}
           />
 
-          {/* Column 2: Dialog List (clamp 340-440px) */}
-          <aside
-            className="flex-shrink-0 h-full border-r border-[var(--border)] overflow-hidden"
-            style={{ width: 'clamp(340px, 28vw, 440px)' }}
-          >
+          {/* Column 2: Dialog List (360-420px) */}
+          <aside className="w-[360px] lg:w-[380px] xl:w-[420px] shrink-0 h-full border-r border-[var(--border)] overflow-hidden flex flex-col min-w-0">
             <MessengerDialogList
               activeThreadId={activeThreadId}
               onSelectThread={handleSelectThread}
               onNewChat={() => setIsNewChatOpen(true)}
               soundEnabled={state.soundEnabled}
-              className="h-full"
+              className="w-full h-full"
             />
           </aside>
 
@@ -162,48 +159,20 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
         {/* TABLET & MOBILE (< 1024px): Master-Detail views via CSS responsive display */}
         <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
           {!activeThreadId ? (
-            // View 1: Dialog List with prominent Header and Back/Home
-            <div className="w-full h-full flex flex-col relative">
-              <header className="flex-shrink-0 h-14 px-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg)]/90 backdrop-blur-md sticky top-0 z-20">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleNavigateHome}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text)] hover:bg-[var(--bg-hover)] active:scale-95 transition-all -ml-2"
-                    aria-label="На главную"
-                    title="На главную"
-                  >
-                    <Home size={22} className="text-[var(--accent)]" />
-                  </button>
-                  <h1 className="text-lg font-[800] text-[var(--text)] tracking-tight">Чаты</h1>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewChatOpen(true)}
-                    className="h-9 px-3.5 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
-                    aria-label="Новый чат"
-                  >
-                    <PenSquare size={15} />
-                    <span>Написать</span>
-                  </button>
-                </div>
-              </header>
-
-              <div className="flex-1 overflow-hidden">
-                <MessengerDialogList
-                  activeThreadId={null}
-                  onSelectThread={handleSelectThread}
-                  onNewChat={() => setIsNewChatOpen(true)}
-                  soundEnabled={state.soundEnabled}
-                  className="h-full"
-                />
-              </div>
+            // View 1: Dialog List with single unified Header with Home and New Chat
+            <div className="w-full h-full flex flex-col relative min-w-0">
+              <MessengerDialogList
+                activeThreadId={null}
+                onSelectThread={handleSelectThread}
+                onNewChat={() => setIsNewChatOpen(true)}
+                onNavigateHome={handleNavigateHome}
+                soundEnabled={state.soundEnabled}
+                className="w-full h-full"
+              />
             </div>
           ) : (
             // View 2: Chat Pane
-            <div className="w-full h-full flex flex-col">
+            <div className="w-full h-full flex flex-col min-w-0">
               <MessengerChatPane
                 friendId={activeThreadId}
                 onBack={handleBackToList}
@@ -219,6 +188,7 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
         {isNewChatOpen && (
           <NewChatModal
             onClose={() => setIsNewChatOpen(false)}
+            onOpenThread={handleSelectThread}
             onNotify={notify}
             soundEnabled={state.soundEnabled}
           />

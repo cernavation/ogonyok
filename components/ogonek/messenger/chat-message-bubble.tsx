@@ -36,6 +36,29 @@ import { ChatMediaLightbox } from './chat-media-lightbox'
 import { ChatVoicePlayer } from './chat-voice-player'
 import { MessageReactionPicker } from './message-reaction-picker'
 
+function checkOnlyEmojis(text?: string): boolean {
+  if (!text) return false
+  const trimmed = text.trim()
+  if (!trimmed) return false
+  if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+    try {
+      const segmenter = new (Intl as any).Segmenter('ru', { granularity: 'grapheme' })
+      const segments = Array.from(segmenter.segment(trimmed)) as any[]
+      if (segments.length >= 1 && segments.length <= 3) {
+        const emojiSegmentRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation})+$/u
+        return segments.every((s) =>
+          emojiSegmentRegex.test(s.segment.replace(/[\uFE00-\uFE0F\u200D\u{1F3FB}-\u{1F3FF}]/gu, ''))
+        )
+      }
+      return false
+    } catch {
+      // Fallback below
+    }
+  }
+  const fallbackRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Presentation}){1,3}$/u
+  return fallbackRegex.test(trimmed)
+}
+
 type Props = {
   message: ChatMessage
   isMine: boolean
@@ -204,6 +227,15 @@ export function ChatMessageBubble({
   const stickerData = isSticker
     ? STICKER_PACK.find((s) => s.id === message.media?.url)
     : null
+
+  const isEmojiOnly =
+    !isSticker &&
+    !message.media &&
+    !message.attachment &&
+    !message.poll &&
+    !message.replyTo &&
+    !message.forwardFrom &&
+    checkOnlyEmojis(message.text)
 
   const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
 
@@ -399,15 +431,37 @@ export function ChatMessageBubble({
           {isSticker ? (
             /* Стикер крупно */
             <div
-              className="flex flex-col items-end my-1 cursor-pointer"
+              className="flex flex-col items-end my-1 cursor-pointer select-none"
               onDoubleClick={() => onToggleReaction('fire')}
             >
               <span className="text-6xl hover:scale-110 transition-transform drop-shadow-lg">
                 {stickerData?.emoji || '🔥'}
               </span>
-              <span className="text-[11px] text-[var(--text-2)] font-mono mt-0.5">
+              <span className="text-[12px] text-[var(--text-2)] [font-variant-numeric:tabular-nums] mt-1 font-medium">
                 {formatChatTime(message.createdAtISO)}
               </span>
+            </div>
+          ) : isEmojiOnly ? (
+            /* Сообщение из 1–3 эмодзи крупно БЕЗ оранжевого пузыря */
+            <div
+              className={`flex flex-col my-1 cursor-pointer select-none ${isMine ? 'items-end' : 'items-start'}`}
+              onDoubleClick={() => onToggleReaction('fire')}
+            >
+              <div className="text-5xl sm:text-6xl leading-none tracking-wider py-1 drop-shadow-sm hover:scale-105 transition-transform">
+                {message.text}
+              </div>
+              <div className="flex items-center gap-1.5 text-[12px] text-[var(--text-2)] [font-variant-numeric:tabular-nums] mt-1 px-1 font-medium">
+                <span suppressHydrationWarning>{formatChatTime(message.createdAtISO)}</span>
+                {isMine && (
+                  <span className="shrink-0">
+                    {message.read || message.status === 'read' ? (
+                      <CheckCheck size={14} className="text-[var(--accent)]" />
+                    ) : (
+                      <Check size={13} className="opacity-80" />
+                    )}
+                  </span>
+                )}
+              </div>
             </div>
           ) : (
             /* Пузырь сообщения: радиус 20px, хвост 6px */
@@ -660,9 +714,9 @@ export function ChatMessageBubble({
                 </div>
               )}
 
-              {/* Нижняя строка: значок "без звука", запланировано, время 13px, галочки доставки ✓✓ */}
+              {/* Нижняя строка: значок "без звука", запланировано, время 12px, галочки доставки ✓✓ */}
               <div
-                className={`mt-1 flex items-center justify-end gap-1.5 text-[13px] font-mono leading-none ${
+                className={`mt-1 flex items-center justify-end gap-1.5 text-[12px] [font-variant-numeric:tabular-nums] leading-none ${
                   isMine ? 'opacity-85' : 'text-[var(--text-2)]'
                 }`}
               >
