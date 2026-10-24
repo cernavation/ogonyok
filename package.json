@@ -20,6 +20,10 @@
     "matrix:fast": "node scripts/ui-matrix.mjs --fast",
     "test:chat": "node scripts/chat-e2e.mjs",
     "security-check": "node scripts/security-check.mjs",
+    "setup": "node scripts/setup.mjs",
+    "check-google": "node scripts/check-google.mjs",
+    "verify-live": "node scripts/verify-live.mjs",
+    "predeploy": "npm run verify:all",
     "verify:all": "node scripts/verify-all.mjs"
   },
   "dependencies": {
@@ -45,6 +49,7 @@
     "@types/react-dom": "^19",
     "playwright-core": "^1.64.1",
     "postcss": "^8.5",
+    "postgres": "^3.4.9",
     "tailwindcss": "^4.3.3",
     "typescript": "5.7.3"
   }

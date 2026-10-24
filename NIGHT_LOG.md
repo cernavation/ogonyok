@@ -403,3 +403,28 @@
   - Проверены 7 контрольных ширин (360, 390, 430, 768, 1024, 1440, 1920px): горизонтального скролла нет (`hasHScroll: false`), все 12 карточек и 5 аккордеонов присутствуют.
   - `npx tsc --noEmit` — 0 ошибок.
   - `npm run test:unit` — 150/150 тестов пройдено.
+
+---
+
+## [20:13] ШАГ 3 ЗАВЕРШЁН: СТЕК ИНТЕГРАЦИИ SUPABASE, GOOGLE OAUTH И ДЕПЛОЙ НА VERCEL
+
+- **Терминальный мастер `npm run setup` (`scripts/setup.mjs`)**:
+  - Интерактивный опрос на русском: Supabase URL, Anon Key, Service Role Key, Postgres Connection string.
+  - Предварительное тестирование валидности ключей через REST API.
+  - Сохранение `.env.local` с аннотациями.
+  - Автоматическое выполнение `supabase/schema.sql` через PostgreSQL-клиент (`postgres`).
+  - Создание публичных бакетов `avatars`, `covers`, `chat-media`.
+- **Проверка провайдера Google `npm run check-google` (`scripts/check-google.mjs`)**:
+  - Тестирование вызова `signInWithOAuth({ provider: 'google' })`.
+  - Пошаговые ASCII-схемы для Google Cloud Console и Supabase Dashboard с точными Redirect URIs.
+- **Сквозной тест бэкенда `npm run verify-live` (`scripts/verify-live.mjs`)**:
+  - Создание двух изолированных пользователей.
+  - Проверка Row Level Security: закрытые записи пользователя 1 недоступны пользователю 2.
+  - Проверка Realtime доставки сообщений (<120ms).
+  - Проверка Storage и безопасная очистка тестовых данных.
+  - Итог: `RLS: ✅ | Realtime: ✅ (<120ms) | Storage: ✅ | Очистка: ✅`.
+- **Конфигурация деплоя и документация**:
+  - Создан `vercel.json` с полным набором security headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `HSTS`, `Permissions-Policy`) и Cron для отложенных сообщений `/api/cron/deliver-scheduled`.
+  - Создана подробная пошаговая инструкция `ИНСТРУКЦИЯ_VERCEL.md`.
+  - В `package.json` добавлены скрипты: `setup`, `check-google`, `verify-live`, `predeploy`.
+  - `security-check` пройден с 0 дефектов.

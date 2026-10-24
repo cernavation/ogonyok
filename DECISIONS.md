@@ -178,3 +178,31 @@
 3. **Социальные сети и метатеги**:
    - Сгенерирован эталонный OpenGraph-баннер 1200×630 в `public/og-image.png`.
    - В `app/layout.tsx` внедрены `openGraph` и `twitter:card` (summary_large_image).
+
+---
+
+## 11. Набор утилит интеграции Supabase и Google
+
+### Контекст
+Развёртывание бэкенда не должно требовать от пользователя ручного копания в SQL-миграциях или догадок о настройке Google Cloud Console. Требовалась автоматизация «под ключ» от ввода ключей до проверки RLS и Realtime.
+
+### Решение
+1. **Интерактивный мастер (`scripts/setup.mjs`)**:
+   - Терминальный интерфейс на русском языке.
+   - Проверка ключей через вызов Supabase REST API до сохранения.
+   - Запись валидированных значений в `.env.local` с поясняющими комментариями.
+   - Прямой накат `supabase/schema.sql` через PostgreSQL connection string (библиотека `postgres`).
+   - Автоматическая инициализация Storage-бакетов (`avatars`, `covers`, `chat-media`) с публичным чтением и записью только владельцем.
+2. **Верификатор Google OAuth (`scripts/check-google.mjs`)**:
+   - Проверка генерации ссылки провайдера Google.
+   - Чёткий ASCII-гайд с точными Redirect URIs (`http://localhost:3000/auth/callback`, `https://*.vercel.app/auth/callback`).
+3. **Сквозной тест живого окружения (`scripts/verify-live.mjs`)**:
+   - Создание 2 тестовых пользователей через Admin API.
+   - Проверка RLS: гарантия, что пользователь 2 не может прочитать приватные записи пользователя 1 (0 строк).
+   - Замер задержки Realtime broadcast (<120ms).
+   - Загрузка и проверка раздачи файлов из Storage.
+   - Гарантированная очистка (удаление тестовых записей, файлов и пользователей).
+4. **Конфигурация деплоя**:
+   - `vercel.json`: заголовки безопасности (`nosniff`, `X-Frame-Options: DENY`, `Strict-Transport-Security`, `Permissions-Policy`), расписание Vercel Cron для отложенных сообщений.
+   - Добавлена подробная инструкция `ИНСТРУКЦИЯ_VERCEL.md`.
+   - В `package.json` внедрён хук `"predeploy": "npm run verify:all"`.
