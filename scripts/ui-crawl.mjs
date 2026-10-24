@@ -11,9 +11,19 @@
  * - Генерирует итоговый отчёт crawl/BASELINE.md
  */
 
-import { chromium } from 'playwright-core'
+import { chromium, webkit, firefox } from 'playwright-core'
 import fs from 'fs'
 import path from 'path'
+
+function getBrowserType() {
+  const arg = process.argv.find((a) => a.startsWith('--browser='))
+  if (arg) {
+    const val = arg.split('=')[1].toLowerCase()
+    if (val === 'webkit') return 'webkit'
+    if (val === 'firefox') return 'firefox'
+  }
+  return 'chromium'
+}
 
 export const CONFIG = {
   baseUrl: process.env.AUDIT_BASE_URL || 'http://localhost:3000',
@@ -35,6 +45,7 @@ export const CONFIG = {
   themes: [
     { id: 'x-black', label: 'Dark (x-black)' },
     { id: 'apple-light', label: 'Light (apple-light)' },
+    { id: 'dim', label: 'Dim (twilight)' },
   ],
 
   // 9 основных экранов приложения
@@ -74,7 +85,13 @@ export const CONFIG = {
   ],
 }
 
-async function launchBrowser() {
+async function launchBrowser(browserType = getBrowserType()) {
+  if (browserType === 'webkit') {
+    return await webkit.launch({ headless: true })
+  }
+  if (browserType === 'firefox') {
+    return await firefox.launch({ headless: true })
+  }
   const possiblePaths = [
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Chromium.app/Contents/MacOS/Chromium',
@@ -235,7 +252,7 @@ export async function runCrawl() {
         // Гарантируем тестовый демо-режим для полного обхода
         await context.addInitScript(() => {
           try {
-            const raw = localStorage.getItem('ogonek.store.v1')
+            const raw = localStorage.getItem('ogonek.v2')
             const store = raw ? JSON.parse(raw) : {}
             store.auth = {
               ...(store.auth || {}),
@@ -254,8 +271,15 @@ export async function runCrawl() {
                 },
               ],
             }
-            localStorage.setItem('ogonek.store.v1', JSON.stringify(store))
+            localStorage.setItem('ogonek.v2', JSON.stringify(store))
+            localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
+              theme: 'x-black',
+              accent: 'flame',
+              fontScale: 'regular',
+              feedDensity: 'cozy',
+            }))
           } catch {}
+        })
         })
 
         const page = await context.newPage()

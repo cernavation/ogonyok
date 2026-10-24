@@ -19,9 +19,19 @@
  *   10. Огромные hover-подсветки (> 12% площади экрана)
  */
 
-import { chromium } from 'playwright-core'
+import { chromium, webkit, firefox } from 'playwright-core'
 import fs from 'fs'
 import path from 'path'
+
+function getBrowserType() {
+  const arg = process.argv.find((a) => a.startsWith('--browser='))
+  if (arg) {
+    const val = arg.split('=')[1].toLowerCase()
+    if (val === 'webkit') return 'webkit'
+    if (val === 'firefox') return 'firefox'
+  }
+  return 'chromium'
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    1. КОНФИГУРАЦИЯ И СЕТКА ПРОВЕРОК
@@ -47,6 +57,7 @@ export const CONFIG = {
   themes: [
     { id: 'x-black', label: 'Dark (x-black)' },
     { id: 'apple-light', label: 'Light (apple-light)' },
+    { id: 'dim', label: 'Dim (twilight)' },
   ],
 
   // 9 основных экранов приложения
@@ -224,24 +235,18 @@ async function setTheme(page, themeId) {
     document.documentElement.style.colorScheme = theme === 'apple-light' ? 'light' : 'dark'
     if (theme === 'apple-light') {
       document.documentElement.classList.remove('dark')
-      document.documentElement.style.setProperty('--accent', '#C03C00')
-      document.documentElement.style.setProperty('--accent-soft', 'rgba(192, 60, 0, 0.08)')
-      document.documentElement.style.setProperty('--accent-text', '#FFFFFF')
     } else {
       document.documentElement.classList.add('dark')
-      document.documentElement.style.removeProperty('--accent')
-      document.documentElement.style.removeProperty('--accent-soft')
-      document.documentElement.style.removeProperty('--accent-text')
     }
 
     try {
       const stored = JSON.parse(localStorage.getItem('ogonek.appearance.v1') || '{}')
       stored.theme = theme
       localStorage.setItem('ogonek.appearance.v1', JSON.stringify(stored))
-      const storeState = JSON.parse(localStorage.getItem('ogonek_v1') || '{}')
+      const storeState = JSON.parse(localStorage.getItem('ogonek.v2') || '{}')
       if (storeState) {
         storeState.theme = theme
-        localStorage.setItem('ogonek_v1', JSON.stringify(storeState))
+        localStorage.setItem('ogonek.v2', JSON.stringify(storeState))
       }
     } catch {}
   }, themeId)
@@ -728,7 +733,13 @@ async function checkGiantHovers(page) {
    4. ДВИЖОК ЗАПУСКА АУДИТА
    ══════════════════════════════════════════════════════════════════════════ */
 
-async function launchBrowser() {
+async function launchBrowser(browserType = getBrowserType()) {
+  if (browserType === 'webkit') {
+    return await webkit.launch({ headless: true })
+  }
+  if (browserType === 'firefox') {
+    return await firefox.launch({ headless: true })
+  }
   try {
     return await chromium.launch({ channel: 'chrome', headless: true })
   } catch (err) {

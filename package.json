@@ -14,7 +14,13 @@
     "audit-ui": "node scripts/ui-audit.mjs",
     "audit-ui:fast": "node scripts/ui-audit.mjs --fast",
     "crawl-ui": "node scripts/ui-crawl.mjs",
-    "test:chat": "node scripts/chat-e2e.mjs"
+    "explore": "node scripts/ui-explore.mjs",
+    "explore:fast": "node scripts/ui-explore.mjs --fast",
+    "matrix": "node scripts/ui-matrix.mjs",
+    "matrix:fast": "node scripts/ui-matrix.mjs --fast",
+    "test:chat": "node scripts/chat-e2e.mjs",
+    "security-check": "node scripts/security-check.mjs",
+    "verify:all": "node scripts/verify-all.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

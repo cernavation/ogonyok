@@ -86,9 +86,9 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
           {!keyConfigured ? (
             <div className="h-full flex flex-col items-center justify-center p-6 text-center text-[var(--text-2)]">
               <Sparkles size={36} className="text-[var(--accent)] mb-2" />
-              <p className="text-sm font-bold text-[var(--text)] mb-1">Giphy API не подключён</p>
+              <p className="text-sm font-bold text-[var(--text)] mb-1">Поиск GIF не подключён</p>
               <p className="text-xs text-[var(--text-2)] max-w-xs leading-relaxed">
-                Добавьте бесплатный ключ <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">GIPHY_API_KEY</code> в файл <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">.env.local</code> для поиска сотен тысяч GIF-анимаций.
+                Добавьте бесплатный ключ провайдера GIF в файл <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">.env.local</code> для поиска сотен тысяч GIF-анимаций.
               </p>
             </div>
           ) : loading ? (

@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server'
+import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request)
+  const rateLimit = checkRateLimit('translate', ip, 30, 60_000)
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { success: false, error: 'Слишком много запросов на перевод. Попробуйте через минуту.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = (await request.json().catch(() => ({}))) as {
       text?: string
