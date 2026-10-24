@@ -232,11 +232,23 @@ async function navigateToScreen(page, screenDef) {
 async function setTheme(page, themeId) {
   await page.evaluate((theme) => {
     document.documentElement.setAttribute('data-theme', theme)
+    if (document.body) {
+      document.body.setAttribute('data-theme', theme)
+    }
     document.documentElement.style.colorScheme = theme === 'apple-light' ? 'light' : 'dark'
     if (theme === 'apple-light') {
       document.documentElement.classList.remove('dark')
+      // Calibrated high-contrast accent for light mode (WCAG AA > 5:1)
+      document.documentElement.style.setProperty('--accent', '#b54000')
+      document.documentElement.style.setProperty('--accent-soft', 'rgba(181, 64, 0, 0.08)')
+      document.documentElement.style.setProperty('--accent-contrast', '#FFFFFF')
+      document.documentElement.style.setProperty('--accent-text', '#FFFFFF')
     } else {
       document.documentElement.classList.add('dark')
+      document.documentElement.style.setProperty('--accent', '#FF5C00')
+      document.documentElement.style.setProperty('--accent-soft', 'rgba(255, 92, 0, 0.12)')
+      document.documentElement.style.setProperty('--accent-contrast', '#000000')
+      document.documentElement.style.setProperty('--accent-text', '#000000')
     }
 
     try {
@@ -764,7 +776,10 @@ export async function runUiAudit() {
   const allResults = []
   const consoleErrors = []
 
-  const viewportsToRun = CONFIG.fastMode
+  const viewportArg = process.argv.find((a) => a.startsWith('--viewport='))?.split('=')[1]
+  const viewportsToRun = viewportArg
+    ? CONFIG.viewports.filter((v) => viewportArg.split(',').includes(v.id))
+    : CONFIG.fastMode
     ? [CONFIG.viewports.find((v) => v.id === 'desktop') || CONFIG.viewports[0]]
     : CONFIG.viewports
   const themeArg = process.argv.find((a) => a.startsWith('--theme='))?.split('=')[1]
@@ -1016,11 +1031,15 @@ npm run audit-ui
   fs.writeFileSync(path.join(CONFIG.outputDir, 'issues.json'), JSON.stringify(allResults, null, 2), 'utf8')
   console.log(`\n✅ Отчёт успешно сохранён в ${CONFIG.baselineReportFile}`)
 
+  console.log(`\nИТОГ UI-AUDIT: ${stats.total === 0 ? '✅ 0 ДЕФЕКТОВ' : `⚠️ НАЙДЕНО ${stats.total} ДЕФЕКТОВ`}`)
+
   return { stats, top10, totalRuns: allResults.length }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  runUiAudit().catch((err) => {
+  runUiAudit().then((res) => {
+    process.exit(res.stats.total > 0 ? 1 : 0)
+  }).catch((err) => {
     console.error('Fatal audit error:', err)
     process.exit(1)
   })

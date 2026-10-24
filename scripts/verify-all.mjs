@@ -56,11 +56,16 @@ async function executeCommand(stepName, cmd, options = {}) {
       let problems = 0
       
       // Parse problems count if possible
-      const matchProblems = output.match(/НАЙДЕНО (\d+) ПРОБЛЕМ|ДЕФЕКТОВ: (\d+)|(\d+) ДЕФЕКТ|(\d+) failing|(\d+) error/i)
-      if (matchProblems) {
-        problems = parseInt(matchProblems[1] || matchProblems[2] || matchProblems[3] || matchProblems[4] || matchProblems[5] || '0', 10)
-      } else if (code !== 0) {
-        problems = 1
+      if (code === 0 && /ИТОГ.*(?:0 ДЕФЕКТ|0 ПРОБЛЕМ|0 дефект|0 проблем)|0 failing|0 errors/i.test(output)) {
+        problems = 0
+      } else {
+        const matchProblems = output.match(/НАЙДЕНО (\d+) ПРОБЛЕМ|ДЕФЕКТОВ: (\d+)|НАЙДЕНО (\d+) ДЕФЕКТ|(\d+) failing|(\d+)\s+errors?/i)
+        if (matchProblems) {
+          problems = parseInt(matchProblems[1] || matchProblems[2] || matchProblems[3] || matchProblems[4] || matchProblems[5] || '0', 10)
+        }
+        if (code !== 0 && problems === 0) {
+          problems = 1
+        }
       }
 
       steps.push({
@@ -287,16 +292,16 @@ export async function runVerifyAll() {
   await executeCommand('4. Проверка безопасности (security-check)', 'node scripts/security-check.mjs')
 
   // 5. UI-Аудит
-  await executeCommand('5. UI-Аудит интерфейса (audit-ui)', isFast ? 'node scripts/ui-audit.mjs --fast' : 'node scripts/ui-audit.mjs')
+  await executeCommand('5. UI-Аудит интерфейса (audit-ui)', isFast ? 'node scripts/ui-audit.mjs --fast' : 'node scripts/ui-audit.mjs --viewport=desktop,mobile')
 
   // 6. UI-Crawl
-  await executeCommand('6. Обход кнопок интерфейса (crawl-ui)', isFast ? 'node scripts/ui-crawl.mjs --fast' : 'node scripts/ui-crawl.mjs')
+  await executeCommand('6. Обход кнопок интерфейса (crawl-ui)', isFast ? 'node scripts/ui-crawl.mjs --fast' : 'node scripts/ui-crawl.mjs --viewport=desktop-1440,mobile-390')
 
   // 7. Explore: Chromium (все устр-ва), WebKit (телефоны + 1 десктоп), Firefox (1 десктоп)
   await executeCommand('7a. UI-Explore (Chromium)', isFast ? 'node scripts/ui-explore.mjs --fast' : 'node scripts/ui-explore.mjs --browser=chromium')
   if (!isFast) {
-    await executeCommand('7b. UI-Explore (WebKit: iOS/Safari)', 'node scripts/ui-explore.mjs --browser=webkit --fast')
-    await executeCommand('7c. UI-Explore (Firefox: Gecko)', 'node scripts/ui-explore.mjs --browser=firefox --fast')
+    await executeCommand('7b. UI-Explore (WebKit: iOS/Safari)', 'node scripts/ui-explore.mjs --browser=webkit --viewport=mobile-390,desktop-1440')
+    await executeCommand('7c. UI-Explore (Firefox: Gecko)', 'node scripts/ui-explore.mjs --browser=firefox --viewport=desktop-1440')
   }
 
   // 8. Matrix (Темы × Акценты × Устройства)

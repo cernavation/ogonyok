@@ -133,7 +133,10 @@ export async function runUiExplore() {
   }
 
   const browser = await launchBrowser(browserType)
-  const viewportsToRun = CONFIG.fastMode
+  const viewportArg = process.argv.find((a) => a.startsWith('--viewport='))?.split('=')[1]
+  const viewportsToRun = viewportArg
+    ? CONFIG.viewports.filter((v) => viewportArg.split(',').includes(v.id))
+    : CONFIG.fastMode
     ? [CONFIG.viewports[1], CONFIG.viewports[7]] // mobile-390 and desktop-1440
     : CONFIG.viewports
 

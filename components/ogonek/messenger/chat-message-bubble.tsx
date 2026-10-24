@@ -475,10 +475,7 @@ export function ChatMessageBubble({
             >
               {/* Имя автора в группе */}
               {isGroup && !isMine && showAuthorHeader && (
-                <div
-                  className="mb-1 text-[12px] font-bold tracking-wide"
-                  style={{ color: friend?.avatarColor ? '#ffad5a' : '#1d9bf0' }}
-                >
+                <div className="mb-1 text-[12px] font-bold tracking-wide text-[var(--accent)]">
                   {authorName}
                 </div>
               )}

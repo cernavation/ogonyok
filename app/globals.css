@@ -7249,13 +7249,21 @@ html[data-theme='apple-light'] .xh-leader.is-me {
   font-style: normal;
   font-size: 13px;
   font-weight: 800;
-  color: var(--accent);
+  color: #FFA05C;
   background: var(--accent-soft, rgba(255, 107, 53, 0.16));
   border-radius: 999px;
   padding: 1px 7px;
 }
 [data-theme='apple-light'] .xh-leader__me {
-  color: #932800;
+  color: #7C2000;
+  background: rgba(181, 64, 0, 0.12);
+}
+[data-theme='apple-light'] .xh-leader__self {
+  color: #7C2000;
+  border-color: #7C2000;
+}
+[data-theme='apple-light'] .xh-cat__count {
+  color: #7C2000 !important;
 }
 .xh-leader__text small {
   font-size: 13px;

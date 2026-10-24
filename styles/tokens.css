@@ -19,9 +19,9 @@ body[data-theme='x-black'] {
   --line: #2F3336;
 
   --text: #E7E9EA;
-  --text-2: #8B98A5; /* WCAG 4.5:1+ */
-  --text-3: #8B98A5;
-  --muted: #8B98A5;
+  --text-2: #94A3B8; /* WCAG 4.5:1+ */
+  --text-3: #94A3B8;
+  --muted: #94A3B8;
 
   --danger: #F4212E;
   --danger-soft: rgba(244, 33, 46, 0.12);
@@ -49,14 +49,14 @@ body[data-theme='apple-light'] {
   --line: #EFF3F4;
 
   --text: #0F1419;
-  --text-2: #536471; /* WCAG 4.5:1+ */
-  --text-3: #536471;
-  --muted: #536471;
+  --text-2: #475569; /* WCAG 4.5:1+ */
+  --text-3: #475569;
+  --muted: #475569;
 
   --danger: #F4212E;
   --danger-soft: rgba(244, 33, 46, 0.1);
-  --success: #00875A;
-  --success-soft: rgba(0, 135, 90, 0.1);
+  --success: #007A51;
+  --success-soft: rgba(0, 122, 81, 0.1);
 
   color-scheme: light;
 }
@@ -76,9 +76,9 @@ body[data-theme='dim'] {
   --line: #38444D;
 
   --text: #E7E9EA;
-  --text-2: #8B98A5; /* WCAG 4.5:1+ */
-  --text-3: #8B98A5;
-  --muted: #8B98A5;
+  --text-2: #94A3B8; /* WCAG 4.5:1+ */
+  --text-3: #94A3B8;
+  --muted: #94A3B8;
 
   --danger: #F4212E;
   --danger-soft: rgba(244, 33, 46, 0.12);

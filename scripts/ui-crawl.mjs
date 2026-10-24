@@ -231,7 +231,12 @@ export async function runCrawl() {
   const allResults = []
   const uncaughtErrors = []
 
-  const viewportsToRun = CONFIG.fastMode ? [CONFIG.viewports[1]] : CONFIG.viewports
+  const viewportArg = process.argv.find((a) => a.startsWith('--viewport='))?.split('=')[1]
+  const viewportsToRun = viewportArg
+    ? CONFIG.viewports.filter((v) => viewportArg.split(',').includes(v.id))
+    : CONFIG.fastMode
+    ? [CONFIG.viewports[1]]
+    : CONFIG.viewports
   const themeArg = process.argv.find((a) => a.startsWith('--theme='))?.split('=')[1]
   const themesToRun = themeArg
     ? CONFIG.themes.filter((t) => t.id === themeArg)

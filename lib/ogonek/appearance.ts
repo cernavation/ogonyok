@@ -123,6 +123,20 @@ export function getLuminance(r: number, g: number, b: number): number {
   return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs
 }
 
+export function getDarkenedForLight(hex: string): string {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return hex
+  let { r, g, b } = rgb
+  let lum = getLuminance(r, g, b)
+  while (lum > 0.14 && (r > 0 || g > 0 || b > 0)) {
+    r = Math.floor(r * 0.92)
+    g = Math.floor(g * 0.92)
+    b = Math.floor(b * 0.92)
+    lum = getLuminance(r, g, b)
+  }
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
+}
+
 export function computeAccentDetails(hex: string) {
   const rgb = hexToRgb(hex) || { r: 255, g: 92, b: 0 }
   const lum = getLuminance(rgb.r, rgb.g, rgb.b)
@@ -214,13 +228,18 @@ export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Do
   }
 
   const details = computeAccentDetails(accentHex)
-  root.style.setProperty('--accent', details.color)
-  root.style.setProperty('--accent-hover', details.hover)
-  root.style.setProperty('--accent-soft', details.soft)
-  root.style.setProperty('--accent-contrast', details.contrast)
-  root.style.setProperty('--accent-text', details.contrast)
-  root.style.setProperty('--orange', details.color)
-  root.style.setProperty('--blue', details.color)
+  const isLight = settings.theme === 'apple-light'
+  const effectiveAccent = isLight ? getDarkenedForLight(accentHex) : details.color
+  const effectiveDetails = computeAccentDetails(effectiveAccent)
+  const effRgb = hexToRgb(effectiveAccent) || { r: 181, g: 64, b: 0 }
+
+  root.style.setProperty('--accent', effectiveAccent)
+  root.style.setProperty('--accent-hover', isLight ? effectiveDetails.hover : details.hover)
+  root.style.setProperty('--accent-soft', isLight ? `rgba(${effRgb.r}, ${effRgb.g}, ${effRgb.b}, 0.08)` : details.soft)
+  root.style.setProperty('--accent-contrast', isLight ? '#FFFFFF' : details.contrast)
+  root.style.setProperty('--accent-text', isLight ? '#FFFFFF' : details.contrast)
+  root.style.setProperty('--orange', effectiveAccent)
+  root.style.setProperty('--blue', effectiveAccent)
 
   // Подсказываем браузеру схему
   const scheme = getThemePreset(settings.theme).scheme

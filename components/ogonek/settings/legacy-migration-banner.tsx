@@ -104,41 +104,41 @@ export function LegacyMigrationBanner({
   }
 
   return (
-    <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-[#ff5722]/15 to-[#ffa600]/10 border border-[#ff5722]/30 text-white relative shadow-sm">
+    <div className="mb-6 p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] relative shadow-sm">
       <button
         type="button"
         onClick={handleDismiss}
-        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
         aria-label="Скрыть баннер"
       >
         <X size={16} />
       </button>
 
       <div className="flex items-start gap-3 pr-6">
-        <div className="w-10 h-10 rounded-xl bg-[#ff5722]/20 flex items-center justify-center text-[#ff5722] shrink-0 mt-0.5">
+        <div className="w-10 h-10 rounded-xl bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center text-[var(--accent)] shrink-0 mt-0.5">
           <History size={20} />
         </div>
         <div className="flex-1">
-          <h4 className="font-bold text-sm text-white flex items-center gap-2">
+          <h4 className="font-bold text-sm text-[var(--text)] flex items-center gap-2">
             <span>Перенести старый дневник</span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#ff5722]/20 text-[#ff7849] font-medium">
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 font-semibold">
               {availableCount} дн. истории
             </span>
           </h4>
-          <p className="text-xs text-white/70 mt-1 leading-relaxed">
+          <p className="text-xs text-[var(--text-2)] mt-1 leading-relaxed">
             Перенеси архив записей в твой облачный аккаунт Supabase одним кликом. История сохранится навсегда,
             будет доступна с любого устройства, а стрик обновится автоматически. Повторный клик безопасен (без дублей).
           </p>
 
           {progress && (
             <div className="mt-3">
-              <div className="flex justify-between text-[11px] text-white/60 mb-1">
+              <div className="flex justify-between text-[11px] text-[var(--text-2)] mb-1">
                 <span>Перенос записей в облако...</span>
                 <span>{progress.done} из {progress.total}</span>
               </div>
-              <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="w-full h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
                 <div
-                  className="h-full bg-[#ff5722] transition-all duration-200"
+                  className="h-full bg-[var(--accent)] transition-all duration-200"
                   style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
                 />
               </div>

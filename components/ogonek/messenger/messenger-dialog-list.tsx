@@ -264,7 +264,7 @@ export function MessengerDialogList({
               playClick(soundEnabled)
               onNewChat()
             }}
-            className="w-[38px] h-[38px] rounded-full bg-[var(--accent)] text-[var(--accent-text)] flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-sm"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-[var(--accent)] text-[var(--accent-text)] flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-sm"
             aria-label="Написать сообщение или создать группу"
             title="Написать"
           >
