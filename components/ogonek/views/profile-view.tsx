@@ -301,7 +301,7 @@ export function ProfileView({
             playClick(soundEnabled)
             setCoverCropperOpen(true)
           }}
-          className="absolute bottom-3 right-3 sm:right-6 px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-white/20 transition-all hover:scale-105 active:scale-95"
+          className="absolute bottom-3 right-3 sm:right-6 min-h-[34px] px-3 py-1.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-white/20 transition-all hover:scale-105 active:scale-95"
           title="Сменить обложку профиля"
           aria-label="Сменить обложку"
         >

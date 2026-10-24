@@ -226,7 +226,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
         </div>
 
         {/* Строки как «Who to follow» в X */}
-        <div className="flex flex-col border-t border-[var(--border)]">
+        <div className="flex flex-col border-t border-[var(--border)] pb-36 sm:pb-32">
           {currentList.map((user, idx) => {
             const rank = idx + 1
             const isMe = user.is_me
@@ -366,7 +366,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
               </span>
               <DifficultyLevelBadge
                 level={state.profile.difficultyLevel || 2}
-                isInteractive={true}
+                isInteractive={false}
                 showNumber={false}
                 soundEnabled={soundEnabled}
                 onNotify={onNotify}

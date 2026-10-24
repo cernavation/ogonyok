@@ -119,8 +119,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
               />
             ) : (
               <div
-                className="w-full h-full flex items-center justify-center text-xs font-bold text-white"
-                style={{ background: state.profile.avatarColor || 'var(--accent)' }}
+                className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-[#1e293b]"
               >
                 {state.profile.displayName?.slice(0, 2).toUpperCase() || 'ОГ'}
               </div>

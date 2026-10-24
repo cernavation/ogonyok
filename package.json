@@ -13,7 +13,8 @@
     "migrate:history": "node scripts/migrate-html.mjs",
     "audit-ui": "node scripts/ui-audit.mjs",
     "audit-ui:fast": "node scripts/ui-audit.mjs --fast",
-    "crawl-ui": "node scripts/ui-crawl.mjs"
+    "crawl-ui": "node scripts/ui-crawl.mjs",
+    "test:chat": "node scripts/chat-e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

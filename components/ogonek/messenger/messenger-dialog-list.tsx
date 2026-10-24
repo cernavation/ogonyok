@@ -338,7 +338,7 @@ export function MessengerDialogList({
                 {/* Аватар 56px */}
                 <div className="relative shrink-0 w-[56px] h-[56px]">
                   {isSaved ? (
-                    <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-[#ff7a18] to-[#ff5200] flex items-center justify-center text-2xl shadow-md text-white">
+                    <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-[#c2410c] to-[#9a3412] flex items-center justify-center text-2xl shadow-md text-white">
                       ⭐️
                     </div>
                   ) : isGroup ? (
@@ -373,7 +373,7 @@ export function MessengerDialogList({
                     </div>
 
                     {timeStamp && (
-                      <span className="text-[13px] text-[var(--text-2)] shrink-0 font-medium">
+                      <span suppressHydrationWarning className="text-[13px] text-[var(--text-2)] shrink-0 font-medium">
                         {timeStamp}
                       </span>
                     )}

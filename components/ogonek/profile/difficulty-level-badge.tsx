@@ -32,17 +32,39 @@ export function DifficultyLevelBadge({
     setModalOpen(true)
   }
 
+  if (!isInteractive) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[11px] font-bold select-none ${className}`}
+        title={`Уровень сложности: ${safeLevel} из 5`}
+      >
+        <div className="flex items-center gap-0.5" aria-hidden="true">
+          {[1, 2, 3, 4, 5].map((idx) => (
+            <Flame
+              key={idx}
+              className={`w-2.5 h-2.5 ${
+                idx <= safeLevel
+                  ? 'text-orange-500 fill-orange-500'
+                  : 'text-white/20'
+              }`}
+            />
+          ))}
+        </div>
+        {showNumber && (
+          <span className="text-[10px] font-extrabold text-[var(--text)]">
+            Ур. {safeLevel}
+          </span>
+        )}
+      </span>
+    )
+  }
+
   return (
     <>
       <button
         type="button"
         onClick={handleClick}
-        disabled={!isInteractive}
-        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-xs font-bold transition-all shadow-sm ${
-          isInteractive
-            ? 'hover:border-[var(--accent)] hover:scale-105 active:scale-95 cursor-pointer'
-            : 'cursor-default'
-        } ${className}`}
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-xs font-bold transition-all shadow-sm hover:border-[var(--accent)] hover:scale-105 active:scale-95 cursor-pointer ${className}`}
         title={`Уровень сложности: ${safeLevel} из 5. Нажмите для подробностей.`}
       >
         {/* 5 mini flames */}

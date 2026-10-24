@@ -237,7 +237,7 @@ export function ChatMessageBubble({
           {/* Панель быстрых действий на hover */}
           {!isSelectionMode && (
             <div
-              className={`absolute top-0 z-20 flex items-center gap-0.5 rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-1 py-0.5 opacity-0 shadow-xl backdrop-blur-md transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 ${
+              className={`absolute top-0 z-20 flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-1.5 py-1 opacity-0 shadow-xl backdrop-blur-md transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 ${
                 isMine ? 'right-full mr-2' : 'left-full ml-2'
               }`}
             >
@@ -247,11 +247,11 @@ export function ChatMessageBubble({
                   playClick(soundEnabled)
                   setPickerOpen((v) => !v)
                 }}
-                className="grid h-6 w-6 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)]"
+                className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)]"
                 title="Реакция"
                 aria-label="Поставить реакцию"
               >
-                <SmilePlus size={14} />
+                <SmilePlus size={15} />
               </button>
               {onReply && (
                 <button
@@ -260,11 +260,11 @@ export function ChatMessageBubble({
                     playClick(soundEnabled)
                     onReply(message)
                   }}
-                  className="grid h-6 w-6 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[#1d9bf0]"
+                  className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[#1d9bf0]"
                   title="Ответить"
                   aria-label="Ответить"
                 >
-                  <Reply size={14} />
+                  <Reply size={15} />
                 </button>
               )}
               {isMine && onEdit && !isSticker && (
@@ -274,11 +274,11 @@ export function ChatMessageBubble({
                     playClick(soundEnabled)
                     onEdit(message)
                   }}
-                  className="grid h-6 w-6 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)]"
+                  className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--accent)]"
                   title="Редактировать"
                   aria-label="Редактировать"
                 >
-                  <Pencil size={13} />
+                  <Pencil size={14} />
                 </button>
               )}
               {onPin && (
@@ -288,18 +288,18 @@ export function ChatMessageBubble({
                     playClick(soundEnabled)
                     onPin(message.id)
                   }}
-                  className="grid h-6 w-6 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[#ffd700]"
+                  className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[#ffd700]"
                   title={message.pinned ? 'Открепить' : 'Закрепить'}
                   aria-label="Закрепить"
                 >
-                  <Pin size={13} className="rotate-45" />
+                  <Pin size={14} className="rotate-45" />
                 </button>
               )}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="grid h-6 w-6 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
+                  className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
                   title="Ещё"
                   aria-label="Меню сообщения"
                 >
@@ -669,7 +669,7 @@ export function ChatMessageBubble({
                 {message.silent && <span title="Отправлено без звука"><BellOff size={11} className="opacity-70" /></span>}
                 {message.pinned && <span title="Закреплено"><Pin size={11} className="rotate-45 text-[#ffd700]" /></span>}
                 {message.editedAtISO && <span className="text-[11px] italic">изм.</span>}
-                <span>{formatChatTime(message.createdAtISO)}</span>
+                <span suppressHydrationWarning>{formatChatTime(message.createdAtISO)}</span>
                 {isMine && (
                   <span className="ml-0.5 shrink-0">
                     {message.status === 'sending' ? (
