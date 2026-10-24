@@ -126,8 +126,8 @@ export function getLuminance(r: number, g: number, b: number): number {
 export function computeAccentDetails(hex: string) {
   const rgb = hexToRgb(hex) || { r: 255, g: 92, b: 0 }
   const lum = getLuminance(rgb.r, rgb.g, rgb.b)
-  // Contrast text: black if luminance > 0.45, else white
-  const contrast = lum > 0.45 ? '#000000' : '#FFFFFF'
+  // Contrast text: black if relative luminance > 0.179 (WCAG mathematical midpoint), else white
+  const contrast = lum > 0.179 ? '#000000' : '#FFFFFF'
   // Soft color: 12% opacity
   const soft = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.12)`
   // Hover: 10% darker if light, 10% lighter if dark

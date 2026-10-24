@@ -49,10 +49,10 @@ export const CONFIG = {
   accents: [
     { id: 'flame', label: 'Огонёк', hex: '#FF5C00', isOrange: true },
     { id: 'blue', label: 'Небесный', hex: '#1D9BF0', isOrange: false },
-    { id: 'violet', label: 'Аметист', hex: '#8B5CF6', isOrange: false },
-    { id: 'emerald', label: 'Изумруд', hex: '#12B886', isOrange: false },
+    { id: 'violet', label: 'Аметист', hex: '#7856FF', isOrange: false },
+    { id: 'emerald', label: 'Изумруд', hex: '#00BA7C', isOrange: false },
     { id: 'rose', label: 'Роза', hex: '#F91880', isOrange: false },
-    { id: 'gold', label: 'Золото', hex: '#F5B942', isOrange: false },
+    { id: 'gold', label: 'Золото', hex: '#FFD400', isOrange: false },
     { id: 'custom', label: 'Свой цвет (Рубин)', hex: '#E11D48', isOrange: false },
   ],
 }
@@ -156,16 +156,17 @@ export async function runUiMatrix() {
 
           await context.addInitScript(({ th, ac, isCustom, customHex }) => {
             try {
+              const effectiveAccent = isCustom ? customHex : ac
               localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
                 theme: th,
-                accent: ac,
+                accent: effectiveAccent,
                 customAccentHex: isCustom ? customHex : undefined,
                 fontScale: 'regular',
                 feedDensity: 'cozy',
               }))
               const st = JSON.parse(localStorage.getItem('ogonek.v2') || '{}')
               st.theme = th
-              st.accent = ac
+              st.accent = effectiveAccent
               st.auth = { ...(st.auth || {}), signedIn: true, hasOnboarded: true }
               localStorage.setItem('ogonek.v2', JSON.stringify(st))
             } catch (e) {}

@@ -524,7 +524,7 @@ export function Composer({
               }}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
                 tab === 'gratitude'
-                  ? 'bg-rose-500 text-white shadow-sm'
+                  ? 'bg-rose-600 text-white shadow-sm'
                   : 'text-[var(--text-2)] hover:text-[var(--text)]'
               }`}
             >

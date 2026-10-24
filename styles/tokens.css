@@ -20,7 +20,7 @@ body[data-theme='x-black'] {
 
   --text: #E7E9EA;
   --text-2: #8B98A5; /* WCAG 4.5:1+ */
-  --text-3: #71767B;
+  --text-3: #8B98A5;
   --muted: #8B98A5;
 
   --danger: #F4212E;

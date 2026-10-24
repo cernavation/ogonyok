@@ -6941,7 +6941,7 @@ kbd {
   padding-top: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-3) !important;
+  color: var(--text-2) !important;
 }
 .xh-trend {
   margin-top: 14px;
@@ -12532,7 +12532,8 @@ html:is([data-theme='apple-light'], [data-theme='dim']) .streak-deadline-field s
 }
 
 .analytics-period-btn.is-active small {
-  opacity: 0.85;
+  opacity: 1;
+  font-weight: 700;
 }
 
 /* ── График динамики ────────────────────────────────────────────────────── */

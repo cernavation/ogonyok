@@ -534,6 +534,15 @@ export function AppShell() {
           soundEnabled={state.soundEnabled}
         />
       ),
+      landing: (
+        <GuestLanding
+          onEnterDemo={() => {
+            continueAsGuest()
+            notify('Включён демонстрационный режим')
+          }}
+          onNotify={notify}
+        />
+      ),
     }),
     [
       state,
