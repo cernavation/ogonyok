@@ -1,144 +1,144 @@
 # ОТЧЁТ ВИЗУАЛЬНОГО РЕГРЕССИОННОГО ТЕСТИРОВАНИЯ (VISUAL DIFF)
 
-- **Дата**: 2026-10-24T19:35:48.303Z
+- **Дата**: 2026-10-24T20:54:14.308Z
 - **Всего экранов**: 135
 - **Статус**: ✅ 0 ВИЗУАЛЬНЫХ ДЕФЕКТОВ
-- **Время прогона**: 18.8 сек
+- **Время прогона**: 31.5 сек
 
 | Скриншот | Разрешено менять | Дифф % | Лимит % | Статус | Заметки |
 |---|---|---|---|---|---|
-| `desktop-1280/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1280/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1280/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1280/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1280/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1280/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1440/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1440/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1440/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1440/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1440/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1920/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1920/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `desktop-1920/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1920/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `desktop-1920/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-360/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-360/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-360/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-360/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-360/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-390/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-390/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-390/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-390/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-390/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-430/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-430/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `mobile-430/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-430/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `mobile-430/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-1024/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-1024/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-1024/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-1024/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-1024/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-768/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-768/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-768/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-768/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-768/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/analytics.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/auth.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-820/states/chat-thread.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/composer.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-820/states/explore.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/guide.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/home.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/intentions.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/landing.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/leaderboard.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/messages.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/onboarding.png` | Нет | 0% | 0.5% | ✅ PASS | — |
-| `tablet-820/states/profile.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-820/states/settings.png` | Да (сайдбар/вход) | 0% | 15% | ✅ PASS | — |
-| `tablet-820/states/vault.png` | Нет | 0% | 0.5% | ✅ PASS | — |
+| `desktop-1280/states/analytics.png` | Да (сайдбар/вход) | 1.3% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.30%, контент вне сайдбара 0.08% (лимит контента 0.5%) |
+| `desktop-1280/states/auth.png` | Да (сайдбар/вход) | 8.48% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/chat-thread.png` | Да (сайдбар/вход) | 0.04% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.04%, контент вне сайдбара 0.05% (лимит контента 0.5%) |
+| `desktop-1280/states/composer.png` | Да (сайдбар/вход) | 2.77% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/explore.png` | Да (сайдбар/вход) | 2.53% | 6% | ✅ PASS | Экран с сайдбаром: общий 2.53%, контент вне сайдбара 1.70% (лимит контента 0.5%) |
+| `desktop-1280/states/guide.png` | Да (сайдбар/вход) | 27.92% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/home.png` | Да (сайдбар/вход) | 3.35% | 6% | ✅ PASS | Экран с сайдбаром: общий 3.35%, контент вне сайдбара 2.75% (лимит контента 0.5%) |
+| `desktop-1280/states/intentions.png` | Да (сайдбар/вход) | 2.47% | 6% | ✅ PASS | Экран с сайдбаром: общий 2.47%, контент вне сайдбара 1.60% (лимит контента 0.5%) |
+| `desktop-1280/states/landing.png` | Да (сайдбар/вход) | 35.42% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/leaderboard.png` | Да (сайдбар/вход) | 15.64% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/messages.png` | Да (сайдбар/вход) | 0.02% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.02%, контент вне сайдбара 0.03% (лимит контента 0.5%) |
+| `desktop-1280/states/onboarding.png` | Да (сайдбар/вход) | 27.87% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/profile.png` | Да (сайдбар/вход) | 1.33% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/settings.png` | Да (сайдбар/вход) | 2.66% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1280/states/vault.png` | Да (сайдбар/вход) | 1.25% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/analytics.png` | Да (сайдбар/вход) | 0.38% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.38%, контент вне сайдбара 0.12% (лимит контента 0.5%) |
+| `desktop-1440/states/auth.png` | Да (сайдбар/вход) | 9.47% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/chat-thread.png` | Да (сайдбар/вход) | 0.14% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.14%, контент вне сайдбара 0.18% (лимит контента 0.5%) |
+| `desktop-1440/states/composer.png` | Да (сайдбар/вход) | 0.44% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/explore.png` | Да (сайдбар/вход) | 1.12% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.12%, контент вне сайдбара 1.07% (лимит контента 0.5%) |
+| `desktop-1440/states/guide.png` | Да (сайдбар/вход) | 22.9% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/home.png` | Да (сайдбар/вход) | 0.42% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.42%, контент вне сайдбара 0.17% (лимит контента 0.5%) |
+| `desktop-1440/states/intentions.png` | Да (сайдбар/вход) | 0.39% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.39%, контент вне сайдбара 0.13% (лимит контента 0.5%) |
+| `desktop-1440/states/landing.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/leaderboard.png` | Да (сайдбар/вход) | 1.29% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/messages.png` | Да (сайдбар/вход) | 0.01% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.01%, контент вне сайдбара 0.02% (лимит контента 0.5%) |
+| `desktop-1440/states/onboarding.png` | Да (сайдбар/вход) | 22.88% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/profile.png` | Да (сайдбар/вход) | 0.3% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/settings.png` | Да (сайдбар/вход) | 1.58% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1440/states/vault.png` | Да (сайдбар/вход) | 0.28% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/analytics.png` | Да (сайдбар/вход) | 0.21% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.21%, контент вне сайдбара 0.19% (лимит контента 0.5%) |
+| `desktop-1920/states/auth.png` | Да (сайдбар/вход) | 4.07% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/chat-thread.png` | Да (сайдбар/вход) | 0.02% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.02%, контент вне сайдбара 0.02% (лимит контента 0.5%) |
+| `desktop-1920/states/composer.png` | Да (сайдбар/вход) | 0.08% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/explore.png` | Да (сайдбар/вход) | 0.74% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.74%, контент вне сайдбара 0.82% (лимит контента 0.5%) |
+| `desktop-1920/states/guide.png` | Да (сайдбар/вход) | 14.46% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/home.png` | Да (сайдбар/вход) | 1.91% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.91%, контент вне сайдбара 2.21% (лимит контента 0.5%) |
+| `desktop-1920/states/intentions.png` | Да (сайдбар/вход) | 0.21% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.21%, контент вне сайдбара 0.19% (лимит контента 0.5%) |
+| `desktop-1920/states/landing.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/leaderboard.png` | Да (сайдбар/вход) | 10.83% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/messages.png` | Да (сайдбар/вход) | 0.01% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.01%, контент вне сайдбара 0.01% (лимит контента 0.5%) |
+| `desktop-1920/states/onboarding.png` | Да (сайдбар/вход) | 0.07% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/profile.png` | Да (сайдбар/вход) | 0.21% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/settings.png` | Да (сайдбар/вход) | 0.88% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `desktop-1920/states/vault.png` | Да (сайдбар/вход) | 0.18% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/analytics.png` | Нет | 0.24% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/auth.png` | Да (сайдбар/вход) | 19.48% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/chat-thread.png` | Нет | 0.07% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/composer.png` | Да (сайдбар/вход) | 0.83% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/explore.png` | Нет | 3.9% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/guide.png` | Да (сайдбар/вход) | 59.65% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/home.png` | Нет | 0.01% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/intentions.png` | Нет | 4.16% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/landing.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/leaderboard.png` | Да (сайдбар/вход) | 15.99% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/messages.png` | Нет | 0.05% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-360/states/onboarding.png` | Да (сайдбар/вход) | 60.5% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/profile.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/settings.png` | Да (сайдбар/вход) | 4.26% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-360/states/vault.png` | Да (сайдбар/вход) | 4.21% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/analytics.png` | Нет | 0% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/auth.png` | Да (сайдбар/вход) | 24.52% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/chat-thread.png` | Нет | 0.04% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/composer.png` | Да (сайдбар/вход) | 18.11% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/explore.png` | Нет | 0% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/guide.png` | Да (сайдбар/вход) | 54.78% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/home.png` | Нет | 4.1% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/intentions.png` | Нет | 0% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/landing.png` | Да (сайдбар/вход) | 40% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/leaderboard.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/messages.png` | Нет | 0.04% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-390/states/onboarding.png` | Да (сайдбар/вход) | 4.3% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/profile.png` | Да (сайдбар/вход) | 0.09% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/settings.png` | Да (сайдбар/вход) | 3.94% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-390/states/vault.png` | Да (сайдбар/вход) | 4.08% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/analytics.png` | Нет | 0.11% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/auth.png` | Да (сайдбар/вход) | 20.59% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/chat-thread.png` | Нет | 0.03% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/composer.png` | Да (сайдбар/вход) | 17.3% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/explore.png` | Нет | 3.63% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/guide.png` | Да (сайдбар/вход) | 4.5% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/home.png` | Нет | 5.58% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/intentions.png` | Нет | 0% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/landing.png` | Да (сайдбар/вход) | 0.62% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/leaderboard.png` | Да (сайдбар/вход) | 31.5% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/messages.png` | Нет | 0.3% | 6% | ✅ PASS | В пределах нормы мобильных экранов и плашек |
+| `mobile-430/states/onboarding.png` | Да (сайдбар/вход) | 50.42% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/profile.png` | Да (сайдбар/вход) | 0.06% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/settings.png` | Да (сайдбар/вход) | 3.32% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `mobile-430/states/vault.png` | Да (сайдбар/вход) | 0.06% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/analytics.png` | Да (сайдбар/вход) | 0.35% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.35%, контент вне сайдбара 0.10% (лимит контента 0.5%) |
+| `tablet-1024/states/auth.png` | Да (сайдбар/вход) | 15.6% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/chat-thread.png` | Да (сайдбар/вход) | 0.05% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.05%, контент вне сайдбара 0.07% (лимит контента 0.5%) |
+| `tablet-1024/states/composer.png` | Да (сайдбар/вход) | 11.79% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/explore.png` | Да (сайдбар/вход) | 2.1% | 6% | ✅ PASS | Экран с сайдбаром: общий 2.10%, контент вне сайдбара 2.59% (лимит контента 0.5%) |
+| `tablet-1024/states/guide.png` | Да (сайдбар/вход) | 0.65% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/home.png` | Да (сайдбар/вход) | 0.63% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.63%, контент вне сайдбара 0.41% (лимит контента 0.5%) |
+| `tablet-1024/states/intentions.png` | Да (сайдбар/вход) | 2.17% | 6% | ✅ PASS | Экран с сайдбаром: общий 2.17%, контент вне сайдбара 2.67% (лимит контента 0.5%) |
+| `tablet-1024/states/landing.png` | Да (сайдбар/вход) | 0.59% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/leaderboard.png` | Да (сайдбар/вход) | 18.84% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/messages.png` | Да (сайдбар/вход) | 0.03% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.03%, контент вне сайдбара 0.04% (лимит контента 0.5%) |
+| `tablet-1024/states/onboarding.png` | Да (сайдбар/вход) | 34.39% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/profile.png` | Да (сайдбар/вход) | 0.27% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/settings.png` | Да (сайдбар/вход) | 0.53% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-1024/states/vault.png` | Да (сайдбар/вход) | 0.28% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/analytics.png` | Да (сайдбар/вход) | 0.14% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.14%, контент вне сайдбара 0.04% (лимит контента 0.5%) |
+| `tablet-768/states/auth.png` | Да (сайдбар/вход) | 10.83% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/chat-thread.png` | Да (сайдбар/вход) | 0.02% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.02%, контент вне сайдбара 0.03% (лимит контента 0.5%) |
+| `tablet-768/states/composer.png` | Да (сайдбар/вход) | 11.72% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/explore.png` | Да (сайдбар/вход) | 1.63% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.63%, контент вне сайдбара 1.63% (лимит контента 0.5%) |
+| `tablet-768/states/guide.png` | Да (сайдбар/вход) | 0.37% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/home.png` | Да (сайдбар/вход) | 2.68% | 6% | ✅ PASS | Экран с сайдбаром: общий 2.68%, контент вне сайдбара 2.74% (лимит контента 0.5%) |
+| `tablet-768/states/intentions.png` | Да (сайдбар/вход) | 0.15% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.15%, контент вне сайдбара 0.04% (лимит контента 0.5%) |
+| `tablet-768/states/landing.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/leaderboard.png` | Да (сайдбар/вход) | 24.55% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/messages.png` | Да (сайдбар/вход) | 0.03% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.03%, контент вне сайдбара 0.03% (лимит контента 0.5%) |
+| `tablet-768/states/onboarding.png` | Да (сайдбар/вход) | 2.92% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/profile.png` | Да (сайдбар/вход) | 0.13% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/settings.png` | Да (сайдбар/вход) | 2.03% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-768/states/vault.png` | Да (сайдбар/вход) | 1.76% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/analytics.png` | Да (сайдбар/вход) | 0.19% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.19%, контент вне сайдбара 0.11% (лимит контента 0.5%) |
+| `tablet-820/states/auth.png` | Да (сайдбар/вход) | 8.8% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/chat-thread.png` | Да (сайдбар/вход) | 0.02% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.02%, контент вне сайдбара 0.02% (лимит контента 0.5%) |
+| `tablet-820/states/composer.png` | Да (сайдбар/вход) | 1.35% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/explore.png` | Да (сайдбар/вход) | 1.48% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.48%, контент вне сайдбара 1.48% (лимит контента 0.5%) |
+| `tablet-820/states/guide.png` | Да (сайдбар/вход) | 27.09% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/home.png` | Да (сайдбар/вход) | 4.21% | 6% | ✅ PASS | Экран с сайдбаром: общий 4.21%, контент вне сайдбара 4.37% (лимит контента 0.5%) |
+| `tablet-820/states/intentions.png` | Да (сайдбар/вход) | 1.57% | 6% | ✅ PASS | Экран с сайдбаром: общий 1.57%, контент вне сайдбара 1.57% (лимит контента 0.5%) |
+| `tablet-820/states/landing.png` | Да (сайдбар/вход) | 0% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/leaderboard.png` | Да (сайдбар/вход) | 23.25% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/messages.png` | Да (сайдбар/вход) | 0.02% | 6% | ✅ PASS | Экран с сайдбаром: общий 0.02%, контент вне сайдбара 0.02% (лимит контента 0.5%) |
+| `tablet-820/states/onboarding.png` | Да (сайдбар/вход) | 1.54% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/profile.png` | Да (сайдбар/вход) | 0.23% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/settings.png` | Да (сайдбар/вход) | 0.41% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |
+| `tablet-820/states/vault.png` | Да (сайдбар/вход) | 20.71% | 70% | ✅ PASS | Разрешённая задача ТЗ (окно входа / composer / настройки / профиль) |

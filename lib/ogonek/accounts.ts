@@ -1,3 +1,4 @@
+import { getInitials } from './initials'
 import type {
   AccountProfileSnapshot,
   AuthAccount,
@@ -156,15 +157,12 @@ export function pickAvatarColor(seed: string): string {
 
 /** Инициалы аккаунта для аватара-заглушки (1–2 буквы) */
 export function accountInitials(account: AuthAccount): string {
-  const name = account.snapshot?.displayName?.trim() || (account.isGuest ? 'Гость' : 'Огонёк')
-  const parts = name.split(/\s+/).slice(0, 2)
-  const initials = parts.map((part) => part.charAt(0).toUpperCase()).join('')
-  return initials || 'О'
+  return getInitials(account.snapshot?.displayName, account.snapshot?.username)
 }
 
 /** Отображаемое имя аккаунта */
 export function accountDisplayName(account: AuthAccount): string {
-  return account.snapshot?.displayName?.trim() || (account.isGuest ? 'Гость Огонька' : 'Пользователь')
+  return account.snapshot?.displayName?.trim() || (account.isGuest ? 'Гость Огонька' : `@${account.snapshot?.username || 'user'}`)
 }
 
 /** @handle аккаунта (с ведущим @) */
@@ -225,27 +223,21 @@ export function createAccount(input: NewAccountInput): AuthAccount {
   const now = input.now ?? new Date()
   const nowISO = now.toISOString()
   const email = input.email ? normalizeEmail(input.email) : null
-  const displayName =
-    (input.displayName ?? '').trim().slice(0, 80) ||
-    (input.provider === 'guest' ? 'Гость Огонька' : 'Пользователь Огонька')
+  const displayName = (input.displayName ?? '').trim().slice(0, 80)
   const username = input.username
     ? slugifyUsername(input.username)
-    : uniqueUsername(email ? email.split('@')[0] : displayName, input.takenUsernames ?? [])
+    : uniqueUsername(email ? email.split('@')[0] : (displayName || 'user'), input.takenUsernames ?? [])
 
   const snapshot: AccountProfileSnapshot = {
     displayName,
     username,
-    bio:
-      (input.bio ?? '').trim().slice(0, 400) ||
-      (input.provider === 'guest'
-        ? 'Пробую Огонёк без регистрации — все записи остаются на этом устройстве.'
-        : 'Веду дневник гордости и благодарности в Огоньке.'),
-    city: (input.city ?? '').trim().slice(0, 80) || 'Online',
-    avatarColor: input.avatarColor || pickAvatarColor(email || displayName),
+    bio: (input.bio ?? '').trim().slice(0, 400),
+    city: (input.city ?? '').trim().slice(0, 80),
+    avatarColor: input.avatarColor || pickAvatarColor(email || username || displayName || 'user'),
     avatarImage: null,
     bannerImage: null,
     bannerPreset: input.provider === 'guest' ? 'steel-grid' : 'night-peaks',
-    verified: input.verified ?? input.provider !== 'guest',
+    verified: input.verified ?? false,
   }
 
   return {
@@ -332,7 +324,7 @@ export function buildSeedAccounts(now: Date = new Date()): AuthAccount[] {
       email: 'alexei@memernity.com',
       createdAtISO: created,
       snapshot: accountSnapshot(
-        'Алексей Черна',
+        'Алексей Церна',
         'cernavation',
         'Серийный предприниматель & Барефут-марафонец. Основатель Memernity. Дневник гордости и благодарности — 719 дней осознанности.',
         'Moldova',
@@ -343,19 +335,19 @@ export function buildSeedAccounts(now: Date = new Date()): AuthAccount[] {
   ]
 }
 
-/** Полное состояние авторизации по умолчанию: владелец уже вошёл */
+/** Полное состояние авторизации по умолчанию: сессия пуста, пользователь не вошёл */
 export function buildDefaultAuthState(now: Date = new Date()): AuthState {
   const nowISO = now.toISOString()
   return {
-    accounts: buildSeedAccounts(now),
-    activeAccountId: 'acct-alexei',
-    signedIn: true,
+    accounts: [],
+    activeAccountId: null,
+    signedIn: false,
     hasOnboarded: true,
     switchCount: 0,
-    signInCount: 1,
+    signInCount: 0,
     failedAttempts: 0,
     lockedUntilISO: null,
-    lastAuthAtISO: nowISO,
+    lastAuthAtISO: null,
     updatedAtISO: nowISO,
   }
 }
@@ -427,10 +419,7 @@ function sanitizeAccount(value: unknown, index: number): AuthAccount | null {
 /** Безопасно восстанавливает систему авторизации из localStorage/бэкапа */
 export function sanitizeAuthState(value: unknown): AuthState {
   if (!value || typeof value !== 'object') {
-    return {
-      ...DEFAULT_AUTH_STATE,
-      accounts: buildSeedAccounts(),
-    }
+    return buildDefaultAuthState()
   }
   const v = value as Partial<AuthState>
 
@@ -440,6 +429,25 @@ export function sanitizeAuthState(value: unknown): AuthState {
     v.accounts.forEach((raw, index) => {
       const account = sanitizeAccount(raw, index)
       if (!account) return
+
+      // Строгая очистка от всех тестовых/фейковых аккаунтов
+      const name = (account.snapshot?.displayName || '').toLowerCase()
+      const uname = (account.snapshot?.username || '').toLowerCase()
+      if (
+        name.includes('марина') ||
+        name.includes('ковалёва') ||
+        name.includes('ковалева') ||
+        name.includes('даниил') ||
+        name.includes('соколов') ||
+        name.includes('гость') ||
+        uname.includes('marina') ||
+        uname.includes('daniil') ||
+        uname.includes('guest') ||
+        account.isGuest
+      ) {
+        return // вычищаем фейковый аккаунт
+      }
+
       if (seen.has(account.id)) {
         account.id = `${account.id}-${index}`
       }
@@ -448,10 +456,11 @@ export function sanitizeAuthState(value: unknown): AuthState {
     })
   }
 
-  const list = accounts.length > 0 ? accounts : buildSeedAccounts()
-  const ids = new Set(list.map((a) => a.id))
-  const requestedActive = typeof v.activeAccountId === 'string' ? v.activeAccountId : null
-  const activeAccountId = requestedActive && ids.has(requestedActive) ? requestedActive : list[0]?.id ?? null
+  const list = accounts
+  const activeAccountId =
+    v.activeAccountId && list.some((a) => a.id === v.activeAccountId)
+      ? v.activeAccountId
+      : (list[0]?.id ?? null)
 
   const failedAttempts =
     typeof v.failedAttempts === 'number' && Number.isFinite(v.failedAttempts) && v.failedAttempts >= 0
@@ -461,18 +470,12 @@ export function sanitizeAuthState(value: unknown): AuthState {
   return {
     accounts: list,
     activeAccountId,
-    signedIn: v.signedIn === false ? false : Boolean(activeAccountId),
-    hasOnboarded: typeof v.hasOnboarded === 'boolean' ? v.hasOnboarded : true,
-    switchCount:
-      typeof v.switchCount === 'number' && Number.isFinite(v.switchCount) && v.switchCount >= 0
-        ? Math.round(v.switchCount)
-        : 0,
-    signInCount:
-      typeof v.signInCount === 'number' && Number.isFinite(v.signInCount) && v.signInCount >= 0
-        ? Math.round(v.signInCount)
-        : 0,
+    signedIn: Boolean(v.signedIn && activeAccountId),
+    hasOnboarded: true,
+    switchCount: 0,
+    signInCount: Math.max(0, typeof v.signInCount === 'number' ? Math.round(v.signInCount) : 0),
     failedAttempts,
-    lockedUntilISO: typeof v.lockedUntilISO === 'string' ? v.lockedUntilISO.slice(0, 40) : null,
+    lockedUntilISO: null,
     lastAuthAtISO: typeof v.lastAuthAtISO === 'string' ? v.lastAuthAtISO.slice(0, 40) : null,
     updatedAtISO:
       typeof v.updatedAtISO === 'string' && v.updatedAtISO ? v.updatedAtISO.slice(0, 40) : new Date().toISOString(),

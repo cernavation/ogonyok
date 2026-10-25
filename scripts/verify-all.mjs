@@ -308,8 +308,8 @@ export async function runVerifyAll() {
   // 7. Explore: Chromium (все устр-ва), WebKit (телефоны + 1 десктоп), Firefox (1 десктоп)
   await executeCommand('7a. UI-Explore (Chromium)', isFast ? 'node scripts/ui-explore.mjs --fast' : 'node scripts/ui-explore.mjs --browser=chromium')
   if (!isFast) {
-    await executeCommand('7b. UI-Explore (WebKit: iOS/Safari)', 'node scripts/ui-explore.mjs --browser=webkit --viewport=mobile-390,desktop-1440')
-    await executeCommand('7c. UI-Explore (Firefox: Gecko)', 'node scripts/ui-explore.mjs --browser=firefox --viewport=desktop-1440')
+    await executeCommand('7b. UI-Explore (WebKit: iOS/Safari)', 'node scripts/ui-explore.mjs --browser=webkit --viewport=mobile-390,desktop-1440 --outdir=explore-webkit')
+    await executeCommand('7c. UI-Explore (Firefox: Gecko)', 'node scripts/ui-explore.mjs --browser=firefox --viewport=desktop-1440 --outdir=explore-firefox')
   }
 
   // 8. Matrix (Темы × Акценты × Устройства)

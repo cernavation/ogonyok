@@ -117,7 +117,7 @@ function sanitizeIncomingPayload(raw: unknown): ModerationSubmissionPayload | nu
   }
 
   const cleanApplicant: ModerationApplicant = {
-    displayName: asString(applicant.displayName, 80) || 'Алексей Черна',
+    displayName: asString(applicant.displayName, 80) || 'Алексей Церна',
     username: asString(applicant.username, 40) || 'cernavation',
     contactEmail: asString(applicant.contactEmail, 160),
   }

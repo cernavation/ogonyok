@@ -10,6 +10,8 @@ import {
   type ExploreCategory,
   type ExploreCategoryId,
 } from '@/lib/ogonek/explore-content'
+import { searchProfiles, type ProfileRecord } from '@/lib/supabase/api'
+import { getInitials } from '@/lib/ogonek/initials'
 import { CommunityAvatar } from './community-avatar'
 
 type Props = {
@@ -46,11 +48,34 @@ export function ExploreSearchBar({
   soundEnabled = true,
 }: Props) {
   const [focused, setFocused] = useState(false)
+  const [liveUsers, setLiveUsers] = useState<ProfileRecord[]>([])
   const wrapRef = useRef<HTMLDivElement>(null)
 
   const results = useMemo(() => searchExplore(value, 6), [value])
   const hasQuery = value.trim().length > 0
-  const showPanel = focused && (hasQuery ? results.total > 0 : recentSearches.length > 0)
+
+  useEffect(() => {
+    const clean = value.trim().replace(/^@/, '')
+    if (!clean) {
+      setLiveUsers([])
+      return
+    }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const list = await searchProfiles(clean)
+        if (!cancelled) setLiveUsers(list.slice(0, 4))
+      } catch {
+        if (!cancelled) setLiveUsers([])
+      }
+    }, 200)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [value])
+
+  const showPanel = focused && (hasQuery ? (results.total > 0 || liveUsers.length > 0) : recentSearches.length > 0)
 
   useEffect(() => {
     if (!focused) return
@@ -171,35 +196,44 @@ export function ExploreSearchBar({
                 </div>
               )}
 
-              {results.users.length > 0 && (
+              {liveUsers.length > 0 && (
                 <div className="xh-suggest__group">
                   <span className="xh-suggest__title">
                     <UserIcon size={12} /> Люди
                   </span>
-                  {results.users.slice(0, 4).map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      className="xh-suggest"
-                      onClick={() =>
-                        pick(() => {
-                          commit(user.name)
-                          onPickUser(user.id)
-                        })
-                      }
-                    >
-                      <CommunityAvatar user={user} size={34} />
-                      <span className="xh-suggest__main">
-                        <b>
-                          {user.name}
-                          {user.isMe && <em> · ты</em>}
-                        </b>
-                        <small>
-                          @{user.username} · 🔥 {user.streak}
-                        </small>
-                      </span>
-                    </button>
-                  ))}
+                  {liveUsers.map((user) => {
+                    const initials = getInitials(user.display_name, user.username)
+                    const avatarUrl = user.avatar_image || user.avatar_url
+                    return (
+                      <button
+                        key={user.id}
+                        type="button"
+                        className="xh-suggest"
+                        onClick={() =>
+                          pick(() => {
+                            commit(user.display_name || user.username)
+                            onPickUser(user.id)
+                          })
+                        }
+                      >
+                        <div className="w-[34px] h-[34px] rounded-full overflow-hidden shrink-0 flex items-center justify-center font-bold text-white text-xs bg-[var(--accent)]">
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt={user.display_name || user.username} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{initials}</span>
+                          )}
+                        </div>
+                        <span className="xh-suggest__main">
+                          <b>
+                            {user.display_name || `@${user.username}`}
+                          </b>
+                          <small>
+                            @{user.username} · 🔥 {user.streak ?? user.streak_count ?? 0}
+                          </small>
+                        </span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
 

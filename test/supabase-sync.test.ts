@@ -11,6 +11,8 @@ import {
   mergeRemoteDataset,
   parseReactionTarget,
   readEnvAutoSyncIntervalMs,
+  sanitizePostgresString,
+  sanitizePostgresValue,
   type RemoteDataset,
   type SyncMeta,
 } from '../lib/ogonek/supabase-sync.ts'
@@ -307,6 +309,66 @@ describe('Supabase: настройки автосинхронизации из �
       if (prevFlag === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC
       else process.env.NEXT_PUBLIC_SUPABASE_AUTO_SYNC = prevFlag
     }
+  })
+
+  it('sanitizePostgresString: удаляет нулевые байты, невалидные суррогаты и триммит', () => {
+    // 1. Нулевые байты \u0000
+    assert.equal(sanitizePostgresString('Привет\u0000 Мир\u0000!'), 'Привет Мир!')
+    assert.equal(sanitizePostgresString('Тест \\u0000 экранированного нуля'), 'Тест  экранированного нуля')
+    assert.equal(sanitizePostgresString('\u0000\u0000\u0000'), '')
+
+    // 2. Одиночные суррогаты (высокие без пары и низкие без пары)
+    const lonelyHigh = 'High: ' + String.fromCharCode(0xd83d) + ' end'
+    const lonelyLow = 'Low: ' + String.fromCharCode(0xdd25) + ' end'
+    assert.equal(sanitizePostgresString(lonelyHigh), 'High:  end')
+    assert.equal(sanitizePostgresString(lonelyLow), 'Low:  end')
+
+    // 3. Валидные суррогатные пары (эмодзи) не повреждаются
+    const emojis = '🔥 День победы ❤️ 10/10 ✨'
+    assert.equal(sanitizePostgresString(emojis), '🔥 День победы ❤️ 10/10 ✨')
+
+    // 4. Комбинированный случай (грязный исторический текст)
+    const dirty = '  \u0000Горжусь тем что\u0000 ' + String.fromCharCode(0xd83d) + ' победил лень\u0000   '
+    assert.equal(sanitizePostgresString(dirty), 'Горжусь тем что  победил лень')
+
+    // 5. Некорректные типы входных данных
+    assert.equal(sanitizePostgresString(null as any), '')
+    assert.equal(sanitizePostgresString(undefined as any), '')
+    assert.equal(sanitizePostgresString(123 as any), '')
+    assert.equal(sanitizePostgresString({} as any), '')
+  })
+
+  it('sanitizePostgresValue: рекурсивно очищает структуры данных', () => {
+    const dirtyObj = {
+      title: 'День\u0000 #1',
+      tags: ['#спорт\u0000', ' #учёба '],
+      count: 42,
+      active: true,
+      nested: {
+        raw: 'Текст\u0000 ' + String.fromCharCode(0xd800) + 'чистый',
+        list: ['\u0000A\u0000', 'B'],
+      },
+    }
+
+    const cleaned = sanitizePostgresValue(dirtyObj)
+    assert.equal(cleaned.title, 'День #1')
+    assert.deepEqual(cleaned.tags, ['#спорт', '#учёба'])
+    assert.equal(cleaned.count, 42)
+    assert.equal(cleaned.active, true)
+    assert.equal(cleaned.nested.raw, 'Текст чистый')
+    assert.deepEqual(cleaned.nested.list, ['A', 'B'])
+  })
+
+  it('buildRemoteDataset: автоматически санитизирует все строковые поля модели', () => {
+    const dirtyState = sampleState()
+    dirtyState.days[0].title = 'День\u0000 2'
+    dirtyState.days[0].prides[0].text = 'Зарядка\u0000 ' + String.fromCharCode(0xd800)
+    dirtyState.profile.displayName = 'Alex\u0000 Cerna'
+
+    const dataset = buildRemoteDataset(dirtyState, 'usr-1')
+    assert.equal(dataset.days[0].title, 'День 2')
+    assert.equal(dataset.prides[0].text, 'Зарядка')
+    assert.equal(dataset.profile?.display_name, 'Alex Cerna')
   })
 })
 

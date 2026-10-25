@@ -39,8 +39,8 @@ export function AuthScreen({ onAuthenticated, onNotify }: Props) {
       <div className="auth-screen__grid">
         <section className="auth-hero">
           <div className="auth-brand">
-            <span className="auth-flame" aria-hidden="true">
-              ✦
+            <span className="auth-flame flex items-center justify-center w-8 h-8 rounded-full bg-[#ff6b35]/10 text-[#ff6b35]" aria-hidden="true">
+              <Flame size={20} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
             </span>
             <span>Огонёк</span>
           </div>

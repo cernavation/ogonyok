@@ -12,6 +12,7 @@
  */
 
 import { FRIEND_PROFILES, type FriendProfile } from './friends.ts'
+import { getInitials } from './initials.ts'
 import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-digest.ts'
 import type { Day, FriendStory, MyStory, StorySlide, VisibilityLevel } from './types'
 import { normalizeVisibility } from './visibility.ts'
@@ -394,12 +395,7 @@ export function myStoriesToViewable(
     kind: 'mine',
     name: owner.displayName,
     username: owner.username,
-    initials: owner.displayName
-      .split(/\s+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() ?? '')
-      .join('') || 'Я',
+    initials: getInitials(owner.displayName, owner.username),
     avatarColor: owner.avatarColor,
     verified: owner.verified,
     postedLabel: formatStoryAge(ordered[ordered.length - 1]?.createdAtISO ?? ''),

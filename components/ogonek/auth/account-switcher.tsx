@@ -77,11 +77,11 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
   }
 
   return (
-    <div className="account-switcher" ref={rootRef}>
+    <div className="account-switcher overflow-x-hidden w-full max-w-full" ref={rootRef}>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="account-menu"
+            className="account-menu overflow-x-hidden w-full max-w-full"
             role="menu"
             aria-label="Меню пользователя"
             initial={{ opacity: 0, y: 10, scale: 0.98 }}

@@ -7,6 +7,7 @@ import {
   downloadBackupBeforeMigration,
   type MigrationProgress,
 } from '@/lib/ogonek/legacy-migration'
+import { getSupabase } from '@/lib/ogonek/supabase-client'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 
 type Props = {
@@ -68,22 +69,38 @@ export function LegacyMigrationBanner({
     isPausedRef.current = false
 
     try {
-      let daysToMigrate = localDays
-      if (!daysToMigrate || daysToMigrate.length === 0) {
-        // Загружаем из встроенного архива seeds
+      let daysToMigrate: any[] = []
+      // Загружаем 705 подлинных дней из локального файла public/seeds/ogonek-import.v1.json
+      try {
         const res = await fetch('/seeds/ogonek-import.v1.json')
         if (res.ok) {
           const json = await res.json()
-          if (json.days && Array.isArray(json.days)) {
+          if (json.days && Array.isArray(json.days) && json.days.length > 0) {
             daysToMigrate = json.days
           }
         }
+      } catch (err) {
+        console.warn('Could not fetch seeds:', err)
+      }
+
+      if (!daysToMigrate || daysToMigrate.length === 0) {
+        daysToMigrate = localDays
       }
 
       if (!daysToMigrate || daysToMigrate.length === 0) {
         onNotify('Данные для переноса не найдены')
         setMigrating(false)
         return
+      }
+
+      // Определяем актуальный auth.uid() из сессии Supabase
+      const supabase = getSupabase()
+      let targetUserId = userId
+      if (supabase) {
+        const { data: sessionData } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }))
+        if (sessionData?.session?.user?.id) {
+          targetUserId = sessionData.session.user.id
+        }
       }
 
       // 1. Авто-скачивание бэкапа перед стартом (ТЗ)
@@ -93,7 +110,7 @@ export function LegacyMigrationBanner({
       setProgress({ done: 0, total: daysToMigrate.length, percent: 0, status: 'migrating' })
 
       const result = await executeDaysMigration({
-        userId,
+        userId: targetUserId,
         days: daysToMigrate,
         chunkSize: 50,
         onProgress: (p) => {
@@ -198,7 +215,7 @@ export function LegacyMigrationBanner({
               ) : (
                 <CloudUpload size={14} />
               )}
-              <span>{isPaused ? 'Возобновить перенос' : 'Перенести мой старый дневник'}</span>
+              <span>{isPaused ? 'Возобновить перенос' : 'Перенести мой старый дневник в Supabase'}</span>
             </button>
 
             {migrating && (

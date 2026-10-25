@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   Camera,
   Check,
+  EyeOff,
   Globe,
   ImageIcon,
   Link2,
@@ -14,15 +15,14 @@ import {
   Target,
   Trash2,
   User,
-  Wand2,
 } from 'lucide-react'
 import { useCallback, useId, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { savePhoto } from '@/lib/ogonek/photos'
+import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   AVATAR_PRESETS,
   BANNER_PRESETS,
-  GOAL_SUGGESTIONS,
   SOCIAL_PLATFORMS,
   getBannerPreset,
   getSocialPlatformMeta,
@@ -35,6 +35,7 @@ import { ProfileImageCropperModal } from './profile/profile-image-cropper-modal'
 
 type Props = {
   profile: OgonekProfile
+  userId?: string
   onSave: (patch: Partial<OgonekProfile>) => void
   onReset: () => void
   onClose: () => void
@@ -46,22 +47,13 @@ const BIO_MAX = 400
 const NAME_MAX = 80
 const USERNAME_MAX = 40
 
-function initialsFrom(name: string): string {
-  const parts = (name || '')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-  if (parts.length === 0) return 'AC'
-  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('')
-}
-
 function newLinkId(): string {
   return `link-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 }
 
 export function EditProfileModal({
   profile,
+  userId,
   onSave,
   onReset,
   onClose,
@@ -78,6 +70,13 @@ export function EditProfileModal({
   const avatarSrc = usePhotoUrl(draft.avatarImage)
   const bannerSrc = usePhotoUrl(draft.bannerImage)
   const bannerPreset = useMemo(() => getBannerPreset(draft.bannerPreset), [draft.bannerPreset])
+  const [bannerFailed, setBannerFailed] = useState(false)
+  const hasBanner = Boolean(
+    bannerSrc &&
+    typeof bannerSrc === 'string' &&
+    bannerSrc !== 'Обложка профиля' &&
+    (bannerSrc.startsWith('http://') || bannerSrc.startsWith('https://') || bannerSrc.startsWith('data:') || bannerSrc.startsWith('blob:'))
+  )
 
   const flashSaved = useCallback(() => {
     setSavedFlash(true)
@@ -152,7 +151,7 @@ export function EditProfileModal({
     onNotify('Профиль сброшен к исходному виду')
   }
 
-  const initials = initialsFrom(draft.displayName)
+  const initials = getInitials(draft.displayName, draft.username)
 
   return (
     <ModalShell title="Редактировать профиль" onClose={onClose}>
@@ -172,14 +171,19 @@ export function EditProfileModal({
 
           {/* Live banner preview */}
           <div
-            className="epm-banner-preview"
+            className="epm-banner-preview bg-gradient-to-b from-neutral-900 to-black"
             style={{
-              background: bannerSrc ? undefined : bannerPreset.background,
+              background: hasBanner && !bannerFailed ? undefined : (bannerPreset.background || 'linear-gradient(180deg, #171717 0%, #000000 100%)'),
             }}
           >
-            {bannerSrc && (
+            {hasBanner && !bannerFailed && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={bannerSrc} alt="Обложка профиля" className="epm-banner-img" />
+              <img
+                src={bannerSrc!}
+                alt=""
+                className="w-full h-[200px] object-cover"
+                onError={() => setBannerFailed(true)}
+              />
             )}
             {!bannerSrc && bannerPreset.mountains && (
               <svg
@@ -349,7 +353,7 @@ export function EditProfileModal({
             </span>
             <input
               className="epm-input"
-              value={draft.displayName}
+              value={draft.displayName || ''}
               maxLength={NAME_MAX}
               placeholder="Как тебя зовут"
               onChange={(e) => applyPatch({ displayName: e.target.value })}
@@ -364,7 +368,7 @@ export function EditProfileModal({
               <span className="epm-prefix">@</span>
               <input
                 className="epm-input epm-input--with-prefix"
-                value={draft.username}
+                value={draft.username || ''}
                 maxLength={USERNAME_MAX}
                 placeholder="username"
                 onChange={(e) =>
@@ -380,14 +384,14 @@ export function EditProfileModal({
             <span className="epm-label">О себе</span>
             <textarea
               className="epm-textarea"
-              value={draft.bio}
+              value={draft.bio || ''}
               maxLength={BIO_MAX}
               rows={3}
               placeholder="Расскажи, чем гордишься и куда идёшь"
               onChange={(e) => applyPatch({ bio: e.target.value })}
             />
             <span className="epm-counter">
-              {draft.bio.length}/{BIO_MAX}
+              {(draft.bio || '').length}/{BIO_MAX}
             </span>
           </label>
 
@@ -398,7 +402,7 @@ export function EditProfileModal({
               </span>
               <input
                 className="epm-input"
-                value={draft.city}
+                value={draft.city || ''}
                 maxLength={80}
                 placeholder="Город / страна"
                 onChange={(e) => applyPatch({ city: e.target.value })}
@@ -411,12 +415,53 @@ export function EditProfileModal({
               </span>
               <input
                 className="epm-input"
-                value={draft.website}
+                value={draft.website || ''}
                 maxLength={300}
                 placeholder="https://..."
                 onChange={(e) => applyPatch({ website: e.target.value })}
               />
             </label>
+          </div>
+
+          <label className="epm-field">
+            <span className="epm-label">Возраст</span>
+            <input
+              type="number"
+              className="epm-input"
+              value={draft.age ?? ''}
+              min={1}
+              max={120}
+              placeholder="Например, 16"
+              onChange={(e) => {
+                const val = e.target.value.trim()
+                applyPatch({ age: val ? parseInt(val, 10) : null })
+              }}
+            />
+          </label>
+
+          <div className="epm-toggle-row">
+            <div className="epm-toggle-info">
+              <EyeOff size={16} className="text-[#ff6b35]" />
+              <div>
+                <b>Режим полной анонимности</b>
+                <small>Ваш профиль скрыт из глобального поиска. В подписках и лентах вы отображаетесь как «Анонимный соратник».</small>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`epm-switch ${draft.isAnonymous ? 'is-on' : ''}`}
+              aria-pressed={draft.isAnonymous}
+              onClick={() => {
+                playClick(soundEnabled)
+                const next = !draft.isAnonymous
+                applyPatch({
+                  isAnonymous: next,
+                  privacy: { ...(draft.privacy ?? {}), is_anonymous: next },
+                })
+              }}
+            >
+              <i />
+            </button>
           </div>
 
           <div className="epm-toggle-row">
@@ -519,28 +564,12 @@ export function EditProfileModal({
           </span>
           <textarea
             className="epm-textarea epm-textarea--goal"
-            value={draft.monthlyGoal}
+            value={draft.monthlyGoal || ''}
             maxLength={200}
             rows={2}
             placeholder="Одна большая цель на этот месяц"
             onChange={(e) => applyPatch({ monthlyGoal: e.target.value })}
           />
-          <div className="epm-goal-chips">
-            {GOAL_SUGGESTIONS.slice(0, 4).map((goal) => (
-              <button
-                key={goal}
-                type="button"
-                className={`epm-goal-chip ${draft.monthlyGoal === goal ? 'is-active' : ''}`}
-                onClick={() => {
-                  playClick(soundEnabled)
-                  applyPatch({ monthlyGoal: goal })
-                }}
-                title={goal}
-              >
-                <Wand2 size={12} /> {goal.length > 34 ? `${goal.slice(0, 34)}…` : goal}
-              </button>
-            ))}
-          </div>
           <p className="epm-hint">
             <Sparkles size={12} /> Цель синхронизируется с профилем и видна в шапке.
           </p>
@@ -552,7 +581,7 @@ export function EditProfileModal({
             <Trash2 size={14} /> Сбросить профиль
           </button>
           <button type="button" className="epm-done-btn" onClick={handleDone}>
-            <Check size={16} /> Готово
+            <Check size={16} /> Применить
           </button>
         </footer>
       </div>
@@ -562,6 +591,7 @@ export function EditProfileModal({
           mode={cropperMode}
           initialFile={cropperFile}
           currentPreset={draft.bannerPreset}
+          userId={userId}
           onClose={() => {
             setCropperMode(null)
             setCropperFile(null)

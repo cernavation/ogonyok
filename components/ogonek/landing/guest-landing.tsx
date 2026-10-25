@@ -17,7 +17,6 @@ import {
   Sun,
   Moon,
   ExternalLink,
-  Loader2,
   ChevronDown,
   ChevronRight,
   Mic,
@@ -30,8 +29,7 @@ import {
   Code2,
   Compass,
 } from 'lucide-react'
-import { GoogleIcon } from '../auth/google-icon'
-import { signInWithGoogle, isSupabaseConfigured } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
 import { AuthModal } from '../auth/auth-modal'
 
 type Props = {
@@ -41,34 +39,11 @@ type Props = {
 
 export function GuestLanding({ onEnterDemo, onNotify }: Props) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-  const [busy, setBusy] = useState(false)
   const [authModal, setAuthModal] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
   const isDark = theme === 'dark'
   const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === '1'
-  const hasSupabase = isSupabaseConfigured()
-
-  const handleGoogleLogin = async () => {
-    setError(null)
-    setBusy(true)
-    try {
-      if (!hasSupabase) {
-        setBusy(false)
-        setError('Supabase ключи пока не настроены. Воспользуйтесь демо-режимом или см. ИНСТРУКЦИЯ_GOOGLE.md.')
-        return
-      }
-      const res = await signInWithGoogle()
-      if (!res.ok) {
-        setBusy(false)
-        setError(res.error || 'Не удалось открыть авторизацию Google')
-      }
-    } catch (e: any) {
-      setBusy(false)
-      setError(e?.message || 'Ошибка запуска Google OAuth')
-    }
-  }
 
   const handleDemoClick = () => {
     if (onEnterDemo) {
@@ -245,16 +220,13 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
             Вход
           </button>
 
-          {/* Главная кнопка Google в шапке */}
+          {/* Главная кнопка в шапке */}
           <button
             type="button"
-            onClick={handleGoogleLogin}
-            disabled={busy}
+            onClick={() => setAuthModal(true)}
             className="flex items-center gap-2 py-2 px-3.5 rounded-xl bg-[#FF5C00] hover:bg-[#FF5C00]/90 text-white font-bold text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            <GoogleIcon size={14} />
-            <span className="hidden sm:inline">Войти через Google</span>
-            <span className="sm:hidden">Google</span>
+            <span>Начать</span>
           </button>
         </div>
       </header>
@@ -290,25 +262,15 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
           <div className="w-full max-w-md pt-2 flex flex-col gap-3">
             <button
               type="button"
-              onClick={handleGoogleLogin}
-              disabled={busy}
+              onClick={() => setAuthModal(true)}
               className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-bold text-base transition-all shadow-xl active:scale-[0.98] border cursor-pointer ${
                 isDark
                   ? 'bg-white hover:bg-zinc-100 text-zinc-950 border-white/20'
                   : 'bg-zinc-950 hover:bg-zinc-800 text-white border-zinc-950'
               }`}
             >
-              {busy ? (
-                <>
-                  <Loader2 size={20} className="animate-spin text-[#FF5C00]" />
-                  <span>Переход в Google...</span>
-                </>
-              ) : (
-                <>
-                  <GoogleIcon size={20} />
-                  <span>Начать вести бесплатно</span>
-                </>
-              )}
+              <span>Начать вести бесплатно</span>
+              <ArrowRight size={18} />
             </button>
 
             <button
@@ -324,19 +286,9 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               <span>Попробовать демо-режим (без регистрации)</span>
             </button>
 
-            {error && (
-              <p className="text-xs text-rose-500 bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-xl">
-                {error}
-              </p>
-            )}
-
             <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500 pt-1">
               <span className="flex items-center gap-1">
-                <Check size={14} className="text-emerald-500" /> Вход в 1 клик
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Check size={14} className="text-emerald-500" /> Без паролей
+                <Check size={14} className="text-emerald-500" /> Вход по никнейму
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
@@ -722,12 +674,11 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={handleGoogleLogin}
-                  disabled={busy}
+                  onClick={() => setAuthModal(true)}
                   className="w-full sm:w-auto flex items-center justify-center gap-2.5 py-3.5 px-7 rounded-2xl bg-[#FF5C00] hover:bg-[#FF5C00]/90 text-white font-bold text-sm shadow-lg shadow-[#FF5C00]/25 transition-all active:scale-95 cursor-pointer"
                 >
-                  <GoogleIcon size={18} />
-                  <span>Войти через Google</span>
+                  <span>Войти в аккаунт</span>
+                  <ArrowRight size={16} />
                 </button>
 
                 <button

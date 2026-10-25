@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Camera,
   Check,
+  Loader2,
   MessageCirclePlus,
   Plus,
   Search,
@@ -15,11 +16,10 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-import { FRIEND_PROFILES, presenceMeta } from '@/lib/ogonek/friends'
-import { lastActivityMs, unreadCount } from '@/lib/ogonek/messenger'
+import { searchProfiles, getRecentProfiles, type ProfileRecord } from '@/lib/supabase/api'
+import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { ChatAvatar } from './chat-avatar'
 
 type Props = {
   onClose: () => void
@@ -39,6 +39,35 @@ const GROUP_GRADIENTS = [
 
 const GROUP_EMOJIS = ['🔥', '👥', '⚡️', '🏃', '🎯', '🚀', '🏆', '❤️', '🌱', '💪']
 
+/** Simple initials-based avatar for Supabase users */
+function ProfileAvatar({ profile, size = 44 }: { profile: ProfileRecord; size?: number }) {
+  const initials = getInitials(profile.display_name, profile.username)
+  const colors = ['#ff7a18', '#1d9bf0', '#00ba7c', '#7856ff', '#f4212e', '#f59e0b']
+  const color = colors[profile.username.charCodeAt(0) % colors.length]
+  const avatar = profile.avatar_url || profile.avatar_image
+  if (avatar) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatar}
+        alt={profile.display_name || profile.username}
+        width={size}
+        height={size}
+        className="rounded-full object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center shrink-0 text-white font-bold"
+      style={{ width: size, height: size, background: color, fontSize: size * 0.38 }}
+    >
+      {initials}
+    </div>
+  )
+}
+
 export function NewChatModal({
   onClose,
   onOpenThread,
@@ -50,6 +79,10 @@ export function NewChatModal({
   const [groupStep, setGroupStep] = useState<1 | 2>(1)
   const [query, setQuery] = useState('')
 
+  // Supabase profiles state
+  const [profiles, setProfiles] = useState<ProfileRecord[]>([])
+  const [loadingProfiles, setLoadingProfiles] = useState(false)
+
   // Состояние создания группы
   const [groupTitle, setGroupTitle] = useState('')
   const [groupDescription, setGroupDescription] = useState('')
@@ -59,49 +92,49 @@ export function NewChatModal({
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
   const photoInputRef = useRef<HTMLInputElement>(null)
 
-  const friendIds = state.friendIds ?? []
-  const friendSet = useMemo(() => new Set(friendIds), [friendIds])
+  const currentUserId = state.auth?.activeAccountId ?? undefined
 
-  // Фильтрация контактов
-  const list = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return FRIEND_PROFILES.filter((f) => {
-      if (!q) return true
-      return (
-        f.name.toLowerCase().includes(q) ||
-        f.username.toLowerCase().includes(q) ||
-        f.city.toLowerCase().includes(q)
-      )
-    }).sort((a, b) => {
-      const af = friendSet.has(a.id) ? 1 : 0
-      const bf = friendSet.has(b.id) ? 1 : 0
-      if (af !== bf) return bf - af
-      const pa = presenceMeta(a.presence).short === 'онлайн' ? 1 : 0
-      const pb = presenceMeta(b.presence).short === 'онлайн' ? 1 : 0
-      if (pa !== pb) return pb - pa
-      const ta = lastActivityMs(state.chatThreads?.[a.id])
-      const tb = lastActivityMs(state.chatThreads?.[b.id])
-      if (ta !== tb) return tb - ta
-      return a.name.localeCompare(b.name)
-    })
-  }, [query, friendSet, state.chatThreads])
+  // Debounced Supabase search
+  useEffect(() => {
+    setLoadingProfiles(true)
+    const timer = setTimeout(async () => {
+      try {
+        let results: ProfileRecord[]
+        if (query.trim()) {
+          results = await searchProfiles(query.trim(), currentUserId)
+        } else {
+          results = await getRecentProfiles(24, currentUserId)
+        }
+        setProfiles(results)
+      } catch {
+        setProfiles([])
+      } finally {
+        setLoadingProfiles(false)
+      }
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [query, currentUserId])
 
   // Список уже выбранных участников как объектов
   const selectedMembers = useMemo(() => {
     return selectedMemberIds
-      .map((id) => FRIEND_PROFILES.find((f) => f.id === id))
-      .filter((f): f is (typeof FRIEND_PROFILES)[0] => Boolean(f))
-  }, [selectedMemberIds])
+      .map((id) => profiles.find((p) => p.id === id))
+      .filter((p): p is ProfileRecord => Boolean(p))
+  }, [selectedMemberIds, profiles])
 
   // Открыть личный диалог
-  const openDirect = (friendId: string) => {
+  const openDirect = (profile: ProfileRecord) => {
     playClick(soundEnabled)
-    const ok = startChatWithFriend(friendId)
-    if (ok) {
-      onOpenThread?.(friendId)
-      onNotify('Диалог открыт — напиши первое слово ✍️')
-      onClose()
-    }
+    const displayName = profile.display_name || `@${profile.username}`
+    const avatarUrl = profile.avatar_url || profile.avatar_image || undefined
+    startChatWithFriend(profile.id, {
+      name: displayName,
+      username: profile.username,
+      avatarUrl,
+    })
+    onClose()
+    onOpenThread?.(profile.id)
+    onNotify('Диалог открыт — напиши первое слово ✍️')
   }
 
   // Переключение выбора участника
@@ -265,57 +298,45 @@ export function NewChatModal({
                   className="w-full bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
                   autoFocus
                 />
+                {loadingProfiles && (
+                  <Loader2 size={14} className="animate-spin text-[var(--text-3)] shrink-0 ml-2" />
+                )}
               </div>
             </div>
 
-            {/* Список контактов */}
+            {/* Список пользователей */}
             <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]/60" role="listbox">
-              {list.length === 0 ? (
+              {!loadingProfiles && profiles.length === 0 && query.trim() ? (
                 <div className="p-8 text-center text-[var(--text-2)] text-xs">
                   Никого не найдено по запросу «{query}»
                 </div>
+              ) : !loadingProfiles && profiles.length === 0 ? (
+                <div className="p-8 text-center text-[var(--text-2)] text-xs">
+                  Нет пользователей в базе
+                </div>
               ) : (
-                list.map((friend) => {
-                  const presence = presenceMeta(friend.presence)
-                  const unread = unreadCount(state.chatThreads?.[friend.id])
-                  return (
-                    <button
-                      key={friend.id}
-                      type="button"
-                      role="option"
-                      aria-selected={false}
-                      className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--bg-hover)] transition-colors text-left"
-                      onClick={() => openDirect(friend.id)}
-                    >
-                      <ChatAvatar friendId={friend.id} size={44} ringColor="var(--bg-elev)" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-bold text-[var(--text)] truncate">
-                            {friend.name}
-                          </span>
-                          {friend.verified && (
-                            <span className="w-3.5 h-3.5 rounded-full bg-[var(--accent)] text-white inline-flex items-center justify-center shrink-0">
-                              <Check size={9} strokeWidth={3} />
-                            </span>
-                          )}
-                          {friendSet.has(friend.id) && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[var(--accent-soft)] text-[var(--accent)]">
-                              друг
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[var(--text-2)] truncate mt-0.5">
-                          {presence.short} · @{friend.username}
-                        </p>
-                      </div>
-                      {unread > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold">
-                          {unread}
+                profiles.map((profile) => (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    role="option"
+                    aria-selected={false}
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--bg-hover)] transition-colors text-left"
+                    onClick={() => openDirect(profile)}
+                  >
+                    <ProfileAvatar profile={profile} size={44} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-bold text-[var(--text)] truncate">
+                          {profile.display_name || profile.username}
                         </span>
-                      )}
-                    </button>
-                  )
-                })
+                      </div>
+                      <p className="text-xs text-[var(--text-2)] truncate mt-0.5">
+                        @{profile.username}{profile.city ? ` · ${profile.city}` : ''}
+                      </p>
+                    </div>
+                  </button>
+                ))
               )}
             </div>
           </div>
@@ -339,12 +360,12 @@ export function NewChatModal({
                       key={m.id}
                       className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-bold"
                     >
-                      <span className="truncate max-w-[120px]">{m.name}</span>
+                      <span className="truncate max-w-[120px]">{m.display_name || m.username}</span>
                       <button
                         type="button"
                         onClick={() => toggleMember(m.id)}
                         className="hover:opacity-75 transition-opacity"
-                        aria-label={`Удалить ${m.name}`}
+                        aria-label={`Удалить ${m.display_name || m.username}`}
                       >
                         <X size={13} />
                       </button>
@@ -364,27 +385,30 @@ export function NewChatModal({
                   className="w-full bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
                   autoFocus
                 />
+                {loadingProfiles && (
+                  <Loader2 size={14} className="animate-spin text-[var(--text-3)] shrink-0 ml-2" />
+                )}
               </div>
             </div>
 
             {/* Список контактов с чекбоксами */}
             <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]/60">
-              {list.map((friend) => {
-                const isSelected = selectedMemberIds.includes(friend.id)
+              {profiles.map((profile) => {
+                const isSelected = selectedMemberIds.includes(profile.id)
                 return (
                   <button
-                    key={friend.id}
+                    key={profile.id}
                     type="button"
-                    onClick={() => toggleMember(friend.id)}
+                    onClick={() => toggleMember(profile.id)}
                     className={`w-full px-4 py-3 flex items-center justify-between gap-3 transition-colors text-left ${
                       isSelected ? 'bg-[var(--accent-soft)]/40' : 'hover:bg-[var(--bg-hover)]'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <ChatAvatar friendId={friend.id} size={42} ringColor="var(--bg-elev)" />
+                      <ProfileAvatar profile={profile} size={42} />
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-[var(--text)] truncate">{friend.name}</p>
-                        <p className="text-xs text-[var(--text-2)] truncate">@{friend.username}</p>
+                        <p className="text-sm font-bold text-[var(--text)] truncate">{profile.display_name || profile.username}</p>
+                        <p className="text-xs text-[var(--text-2)] truncate">@{profile.username}</p>
                       </div>
                     </div>
 

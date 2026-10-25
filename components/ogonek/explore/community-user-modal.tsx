@@ -2,29 +2,30 @@
 
 import {
   Award,
+  CalendarDays,
   Flame,
+  Lock,
   MapPin,
   Send,
   Sparkles,
   UserCheck,
-  UserMinus,
   UserPlus,
-  Users,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { buildInviteUrl } from '@/lib/ogonek/profile-share'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import { getFriend } from '@/lib/ogonek/friends'
 import {
-  EXPLORE_CATEGORY_BY_ID,
-  formatCommunityCount,
-  getCommunityUser,
-  getPostsByAuthor,
-  type ExploreCategoryId,
-} from '@/lib/ogonek/explore-content'
+  getProfile,
+  getUserPublicDays,
+  followUser,
+  unfollowUser,
+  type ProfileRecord,
+  type PublicDayRecord,
+} from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ModalShell } from '../modal-shell'
-import { CommunityAvatar } from './community-avatar'
+import type { ExploreCategoryId } from '@/lib/ogonek/explore-content'
+import { getInitials } from '@/lib/ogonek/initials'
 
 type Props = {
   userId: string
@@ -35,11 +36,36 @@ type Props = {
   soundEnabled?: boolean
 }
 
+function ProfileAvatar({ profile, size = 64 }: { profile: ProfileRecord; size?: number }) {
+  const initials = getInitials(profile.display_name, profile.username)
+  const colors = ['#ff7a18', '#1d9bf0', '#00ba7c', '#7856ff', '#f4212e', '#f59e0b']
+  const color = colors[profile.username.charCodeAt(0) % colors.length]
+  const avatar = profile.avatar_url || profile.avatar_image
+  if (avatar) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatar}
+        alt={profile.display_name || profile.username}
+        className="rounded-full object-cover border-2 border-[var(--border)]"
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+  return (
+    <div
+      className="rounded-full flex items-center justify-center text-white font-bold shrink-0"
+      style={{ width: size, height: size, background: color, fontSize: size * 0.36 }}
+    >
+      {initials}
+    </div>
+  )
+}
+
 /**
  * КАРТОЧКА УЧАСТНИКА СООБЩЕСТВА.
- * Открывается из поиска, лидеров, ленты и лайтбоксов. Показывает визитку,
- * интересы, свежие достижения и живые действия: чтение, дружба, подписка,
- * приглашение. Все кнопки меняют состояние в сторе.
+ * Загружает реальный профиль из Supabase. Показывает визитку,
+ * публичные дни и кнопки подписки/отписки.
  */
 export function CommunityUserModal({
   userId,
@@ -49,30 +75,89 @@ export function CommunityUserModal({
   onOpenCategory,
   soundEnabled = true,
 }: Props) {
-  const {
-    state,
-    toggleExploreFollow,
-    toggleFollow,
-    addFriend,
-    removeFriend,
-  } = useOgonekStore()
+  const { state, toggleExploreFollow } = useOgonekStore()
 
-  const user = getCommunityUser(userId)
-  const friend = useMemo(() => (userId ? getFriend(userId) : undefined), [userId])
-  const posts = useMemo(
-    () => (userId ? getPostsByAuthor(userId, 6) : []),
-    [userId]
-  )
+  const [profile, setProfile] = useState<ProfileRecord | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [publicDays, setPublicDays] = useState<PublicDayRecord[]>([])
+  const [followBusy, setFollowBusy] = useState(false)
 
+  const currentUserId = state.auth?.activeAccountId ?? null
   const following = state.exploreFollowingIds ?? []
-  const friendIds = state.friendIds ?? []
-  const subscribedIds = state.followingIds ?? []
+  const isReading = following.includes(userId)
 
-  if (!user) {
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    Promise.all([
+      getProfile(userId),
+      getUserPublicDays(userId, false),
+    ]).then(([prof, days]) => {
+      if (!cancelled) {
+        setProfile(prof)
+        setPublicDays(days)
+        setLoading(false)
+      }
+    }).catch(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [userId])
+
+  const handleRead = async () => {
+    if (!profile) return
+    playClick(soundEnabled)
+    const nowReading = toggleExploreFollow(userId)
+    if (currentUserId) {
+      if (nowReading) {
+        setFollowBusy(true)
+        await followUser(currentUserId, userId)
+        setFollowBusy(false)
+      } else {
+        setFollowBusy(true)
+        await unfollowUser(currentUserId, userId)
+        setFollowBusy(false)
+      }
+    }
+    onNotify(nowReading ? `Ты читаешь @${profile.username} ✓` : `Отписка от @${profile.username}`)
+  }
+
+  const handleInvite = async () => {
+    if (!profile) return
+    playClick(soundEnabled)
+    try {
+      await navigator.clipboard.writeText(buildInviteUrl(profile.username))
+      playSuccess(soundEnabled)
+      onNotify(`Ссылка-приглашение для @${profile.username} скопирована`)
+    } catch {
+      onNotify('Не удалось скопировать приглашение')
+    }
+  }
+
+  if (loading) {
+    return (
+      <ModalShell title="Профиль" onClose={onClose}>
+        <div className="xh-user">
+          {/* Skeleton */}
+          <div className="xh-user__head">
+            <div className="w-16 h-16 rounded-full bg-[var(--bg-hover)] animate-pulse" />
+            <div className="xh-user__identity space-y-2">
+              <div className="h-4 w-32 rounded bg-[var(--bg-hover)] animate-pulse" />
+              <div className="h-3 w-24 rounded bg-[var(--bg-hover)] animate-pulse" />
+            </div>
+          </div>
+          <div className="h-3 w-full rounded bg-[var(--bg-hover)] animate-pulse mt-2" />
+          <div className="h-3 w-3/4 rounded bg-[var(--bg-hover)] animate-pulse mt-1" />
+        </div>
+      </ModalShell>
+    )
+  }
+
+  if (!profile) {
     return (
       <ModalShell title="Участник не найден" onClose={onClose}>
         <div className="xh-user__empty">
-          <p>Профиль недоступен — возможно, он больше не в сообществе.</p>
+          <p>Профиль недоступен — пользователь не найден.</p>
           <button type="button" className="xh-btn xh-btn--ghost" onClick={onClose}>
             Закрыть
           </button>
@@ -81,138 +166,86 @@ export function CommunityUserModal({
     )
   }
 
-  const isReading = following.includes(user.id)
-  const isFriend = friendIds.includes(user.id)
-  const isSubscribed = subscribedIds.includes(user.id)
-
-  const handleRead = () => {
-    playClick(soundEnabled)
-    const now = toggleExploreFollow(user.id)
-    onNotify(now ? `Ты читаешь @${user.username} ✓` : `Отписка от @${user.username}`)
-  }
-
-  const handleFriend = () => {
-    if (!friend) return
-    playClick(soundEnabled)
-    if (isFriend) {
-      removeFriend(user.id)
-      onNotify(`@${user.username} убран из друзей`)
-    } else {
-      addFriend(user.id)
-      playSuccess(soundEnabled)
-      onNotify(`@${user.username} теперь в друзьях ✓`)
-    }
-  }
-
-  const handleSubscribe = () => {
-    if (!friend) return
-    playClick(soundEnabled)
-    const now = toggleFollow(user.id)
-    onNotify(now ? `Ты подписался на @${user.username} ✓` : `Отписка от @${user.username}`)
-  }
-
-  const handleInvite = async () => {
-    playClick(soundEnabled)
-    try {
-      await navigator.clipboard.writeText(buildInviteUrl(user.username))
-      playSuccess(soundEnabled)
-      onNotify(`Ссылка-приглашение для @${user.username} скопирована`)
-    } catch {
-      onNotify('Не удалось скопировать приглашение')
-    }
-  }
+  const isMe = currentUserId === profile.id
+  const isAnon = Boolean(profile.is_anonymous || profile.privacy?.is_anonymous)
+  const displayName = isAnon && !isMe ? 'Анонимный соратник' : (profile.display_name || profile.username)
 
   return (
-    <ModalShell title={user.name} onClose={onClose}>
+    <ModalShell title={displayName} onClose={onClose}>
       <div className="xh-user">
         <div className="xh-user__head">
-          <CommunityAvatar user={user} size={64} ring={isReading} />
+          <ProfileAvatar profile={profile} size={64} />
           <div className="xh-user__identity">
             <p className="xh-user__name">
-              {user.name}
-              {user.isMe && <span className="xh-user__you">это ты</span>}
+              {displayName}
+              {isMe && <span className="xh-user__you">это ты</span>}
+              {isAnon && isMe && <span className="xh-user__you">анонимно</span>}
             </p>
-            <p className="xh-user__handle">@{user.username}</p>
-            <p className="xh-user__place">
-              <MapPin size={13} /> {user.city}, {user.country} · {user.activeLabel}
-            </p>
+            <p className="xh-user__handle">@{profile.username}</p>
+            <div className="flex items-center gap-2 text-xs text-[var(--text-2)] mt-0.5">
+              {profile.city && (
+                <span className="flex items-center gap-1">
+                  <MapPin size={12} /> {profile.city}
+                </span>
+              )}
+              {profile.age && (
+                <span>· {profile.age} лет</span>
+              )}
+            </div>
           </div>
         </div>
 
-        <p className="xh-user__bio">{user.bio}</p>
+        {profile.bio && <p className="xh-user__bio">{profile.bio}</p>}
 
         <div className="xh-user__stats">
           <div className="xh-user__stat">
-            <span className="xh-user__stat-value">🔥 {user.streak}</span>
+            <span className="xh-user__stat-value">🔥 {profile.streak}</span>
             <span className="xh-user__stat-label">дней подряд</span>
           </div>
           <div className="xh-user__stat">
             <span className="xh-user__stat-value">
-              <Award size={16} /> {user.achievements}
+              <Award size={16} /> {profile.level}
             </span>
-            <span className="xh-user__stat-label">достижений</span>
+            <span className="xh-user__stat-label">уровень</span>
           </div>
           <div className="xh-user__stat">
             <span className="xh-user__stat-value">
-              <Users size={16} /> {formatCommunityCount(user.followers)}
+              <CalendarDays size={16} /> {publicDays.length}
             </span>
-            <span className="xh-user__stat-label">читателей</span>
+            <span className="xh-user__stat-label">публ. дней</span>
           </div>
         </div>
 
-        <div className="xh-user__interests">
-          <span className="xh-user__section-title">Интересы</span>
-          <div className="xh-user__cats">
-            {user.categories.map((id) => {
-              const cat = EXPLORE_CATEGORY_BY_ID[id]
-              if (!cat) return null
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="xh-user__cat"
-                  style={{ borderColor: `${cat.accent}55`, color: cat.accent }}
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    onOpenCategory?.(id)
-                    onClose()
-                  }}
-                >
-                  {cat.emoji} {cat.label}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {posts.length > 0 && (
+        {/* Публичные дни */}
+        {publicDays.length > 0 ? (
           <div className="xh-user__posts">
             <span className="xh-user__section-title">
-              <Sparkles size={13} /> Достижения
+              <Sparkles size={13} /> Публичные дни
             </span>
             <div className="xh-user__post-row">
-              {posts.map((post) => (
-                <button
-                  key={post.id}
-                  type="button"
+              {publicDays.slice(0, 6).map((day) => (
+                <div
+                  key={day.id}
                   className="xh-user__post"
-                  style={{ background: `linear-gradient(150deg, ${post.from}, ${post.to})` }}
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    onOpenPost(post.id)
-                  }}
-                  aria-label={`Открыть достижение: ${post.kicker}`}
+                  style={{ background: day.closed_at
+                    ? 'linear-gradient(150deg, #ff7a18, #af002d)'
+                    : 'linear-gradient(150deg, #374151, #1f2937)' }}
                 >
                   <span className="xh-user__post-emoji" aria-hidden="true">
-                    {post.emoji}
+                    {day.closed_at ? '🔥' : '📝'}
                   </span>
-                  <span className="xh-user__post-kicker">{post.kicker}</span>
+                  <span className="xh-user__post-kicker">День #{day.day_number}</span>
                   <span className="xh-user__post-likes">
-                    <Flame size={11} /> {formatCommunityCount(post.likes)}
+                    <Flame size={11} /> {day.day_date}
                   </span>
-                </button>
+                </div>
               ))}
             </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-xs text-[var(--text-3)] p-3 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
+            <Lock size={13} />
+            <span>Записи скрыты настройками приватности</span>
           </div>
         )}
 
@@ -221,33 +254,11 @@ export function CommunityUserModal({
             type="button"
             className={`xh-btn ${isReading ? 'xh-btn--ghost' : 'xh-btn--primary'}`}
             onClick={handleRead}
-            disabled={user.isMe}
+            disabled={isMe || followBusy}
           >
             {isReading ? <UserCheck size={15} /> : <UserPlus size={15} />}
-            {user.isMe ? 'Это ты' : isReading ? 'Ты читаешь' : 'Читать'}
+            {isMe ? 'Это ты' : isReading ? 'Ты читаешь' : 'Читать'}
           </button>
-
-          {friend && (
-            <button
-              type="button"
-              className={`xh-btn ${isFriend ? 'xh-btn--ghost' : 'xh-btn--soft'}`}
-              onClick={handleFriend}
-            >
-              {isFriend ? <UserMinus size={15} /> : <UserPlus size={15} />}
-              {isFriend ? 'Убрать из друзей' : 'Добавить в друзья'}
-            </button>
-          )}
-
-          {friend && (
-            <button
-              type="button"
-              className={`xh-btn ${isSubscribed ? 'xh-btn--ghost' : 'xh-btn--soft'}`}
-              onClick={handleSubscribe}
-            >
-              <UserCheck size={15} />
-              {isSubscribed ? 'Вы подписаны' : 'Подписаться'}
-            </button>
-          )}
 
           <button type="button" className="xh-btn xh-btn--ghost" onClick={handleInvite}>
             <Send size={15} /> Позвать

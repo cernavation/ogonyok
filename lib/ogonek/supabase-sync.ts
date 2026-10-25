@@ -455,6 +455,43 @@ function hashRow(row: unknown): string {
   return computeChecksum(JSON.stringify(row))
 }
 
+/**
+ * Строгая очистка строк от недопустимых Unicode-символов перед отправкой в PostgreSQL:
+ * 1. Удаление нулевых байтов \u0000 (код PostgreSQL 22P05: unsupported Unicode escape sequence)
+ * 2. Удаление экранированных нулевых последовательностей \u0000
+ * 3. Удаление одиночных суррогатов (высоких и низких), не образующих валидную пару
+ * 4. Обрезка граничных пробелов
+ */
+export function sanitizePostgresString(str: string): string {
+  if (!str || typeof str !== 'string') return ''
+  return str
+    .replace(/\u0000/g, '') // удаляем нулевые байты
+    .replace(/\\u0000/gi, '') // удаляем экранированные нулевые последовательности
+    .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '') // одиночные высокие суррогаты
+    .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '') // одиночные низкие суррогаты
+    .trim()
+}
+
+/**
+ * Рекурсивная очистка объектов, массивов и примитивных значений перед отправкой в Postgres / Supabase
+ */
+export function sanitizePostgresValue<T>(value: T): T {
+  if (typeof value === 'string') {
+    return sanitizePostgresString(value) as unknown as T
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizePostgresValue(item)) as unknown as T
+  }
+  if (value !== null && typeof value === 'object') {
+    const res: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(value)) {
+      res[k] = sanitizePostgresValue(v)
+    }
+    return res as unknown as T
+  }
+  return value
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    REST-КЛИЕНТ SUPABASE (PostgREST + GoTrue), БЕЗ ВНЕШНИХ ЗАВИСИМОСТЕЙ
    ══════════════════════════════════════════════════════════════════════════ */
@@ -544,9 +581,10 @@ export class SupabaseRestClient {
 
   /** UPSERT строк (merge-duplicates) — идемпотентно по onConflict */
   async upsert(table: SupabaseTable, rows: RowRecord[], onConflict: string): Promise<RestResponse<null>> {
+    const sanitizedRows = rows.map((r) => sanitizePostgresValue(r))
     return this.request<null>(`/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`, {
       method: 'POST',
-      body: rows,
+      body: sanitizedRows,
       headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
     })
   }
@@ -791,18 +829,18 @@ function profileContentRow(state: OgonekStoreState, userId: string): ProfileRow 
   return {
     id: userId,
     client_id: userId,
-    display_name: state.profile.displayName,
-    username: state.profile.username,
-    bio: state.profile.bio,
-    city: state.profile.city,
-    website: state.profile.website,
-    joined_label: state.profile.joinedLabel,
+    display_name: sanitizePostgresString(state.profile.displayName),
+    username: sanitizePostgresString(state.profile.username),
+    bio: sanitizePostgresString(state.profile.bio),
+    city: sanitizePostgresString(state.profile.city),
+    website: sanitizePostgresString(state.profile.website),
+    joined_label: sanitizePostgresString(state.profile.joinedLabel),
     avatar_image: state.profile.avatarImage,
     avatar_color: state.profile.avatarColor,
     banner_image: state.profile.bannerImage,
     banner_preset: state.profile.bannerPreset,
     social_links: state.profile.socialLinks,
-    monthly_goal: state.profile.monthlyGoal,
+    monthly_goal: sanitizePostgresString(state.profile.monthlyGoal),
     monthly_goal_updated_at: state.profile.monthlyGoalUpdatedAtISO || null,
     verified: state.profile.verified,
     streak_count: 0,
@@ -819,8 +857,8 @@ function profileContentRow(state: OgonekStoreState, userId: string): ProfileRow 
 function dayRowFrom(day: Day): DayRow {
   return {
     client_id: String(day.id),
-    title: day.title,
-    tags: day.tags,
+    title: sanitizePostgresString(day.title),
+    tags: Array.isArray(day.tags) ? day.tags.map((t) => sanitizePostgresString(String(t))) : [],
     photos: day.photos ?? [],
     date_iso: day.dateISO ?? null,
     day_number: day.id,
@@ -834,8 +872,8 @@ function prideRowsFrom(day: Day): PrideRow[] {
     client_id: `day:${day.id}:pride:${index}`,
     day_client_id: String(day.id),
     position: index,
-    num: pride.num,
-    text: pride.text,
+    num: sanitizePostgresString(pride.num),
+    text: sanitizePostgresString(pride.text),
     scale: pride.scale,
     overcome: pride.overcome,
     visibility: asVisibility(pride.visibility ?? day.visibility),
@@ -847,8 +885,8 @@ function gratitudeRowsFrom(day: Day): GratitudeRow[] {
     client_id: `day:${day.id}:grat:${index}`,
     day_client_id: String(day.id),
     position: index,
-    num: typeof gratitude === 'object' && gratitude && typeof gratitude.num === 'string' ? gratitude.num : null,
-    text: getGratitudeText(gratitude),
+    num: typeof gratitude === 'object' && gratitude && typeof gratitude.num === 'string' ? sanitizePostgresString(gratitude.num) : null,
+    text: sanitizePostgresString(getGratitudeText(gratitude)),
     rating: Number.isFinite(getGratitudeRating(gratitude)) ? getGratitudeRating(gratitude) : 10,
   }))
 }
@@ -857,8 +895,8 @@ function achievementRowFrom(achievement: VerifiedAchievement): AchievementRow {
   return {
     client_id: achievement.id,
     category_id: achievement.categoryId,
-    title: achievement.title,
-    topic: achievement.topic,
+    title: sanitizePostgresString(achievement.title),
+    topic: sanitizePostgresString(achievement.topic),
     achieved_at: achievement.achievedAtISO || null,
     status: achievement.status,
     regulation: achievement.regulation,
@@ -866,7 +904,7 @@ function achievementRowFrom(achievement: VerifiedAchievement): AchievementRow {
     submission: achievement.submission,
     submitted_at: achievement.submittedAtISO,
     verified_at: achievement.verifiedAtISO,
-    reviewer_note: achievement.reviewerNote,
+    reviewer_note: achievement.reviewerNote ? sanitizePostgresString(achievement.reviewerNote) : '',
     moderator_status: achievement.submission?.status ?? null,
     tracking_code: achievement.submission?.trackingCode ?? null,
     created_at: achievement.createdAtISO,
@@ -877,10 +915,10 @@ function storyRowFrom(story: MyStory): StoryRow {
   return {
     client_id: story.id,
     friend_id: null,
-    emoji: story.emoji,
-    kicker: story.kicker,
-    headline: story.headline,
-    detail: story.detail,
+    emoji: sanitizePostgresString(story.emoji),
+    kicker: sanitizePostgresString(story.kicker),
+    headline: sanitizePostgresString(story.headline),
+    detail: sanitizePostgresString(story.detail),
     from_color: story.from,
     to_color: story.to,
     accent: story.accent,
@@ -972,9 +1010,9 @@ function commentRowsFrom(state: OgonekStoreState): CommentRow[] {
         target_key: target,
         day_client_id: dayClientId,
         parent_client_id: comment.parentId,
-        author: comment.author,
-        initials: comment.initials,
-        text: comment.text,
+        author: sanitizePostgresString(comment.author),
+        initials: sanitizePostgresString(comment.initials),
+        text: sanitizePostgresString(comment.text),
         likes: comment.likes,
         liked_by_me: comment.likedByMe,
         is_mine: comment.isMine,
@@ -996,7 +1034,7 @@ function messageRowsFrom(state: OgonekStoreState): MessageRow[] {
         thread_key: friendId,
         author_id: message.authorId,
         recipient_id: message.authorId === MY_CHAT_ID ? friendId : MY_CHAT_ID,
-        body: message.text,
+        body: sanitizePostgresString(message.text),
         attachment: message.attachment,
         reactions: message.reactions,
         is_read: message.read,
@@ -1143,7 +1181,7 @@ function withUser(row: RowRecord, table: SupabaseTable, userId: string, timestam
   const payload: RowRecord = { ...row, client_updated_at: timestamp }
   if (table === 'profiles') payload.id = userId
   else payload.user_id = userId
-  return payload
+  return sanitizePostgresValue(payload)
 }
 
 function deleteFilters(table: SupabaseTable, clientId: string, userId: string): Record<string, string> {
@@ -1303,8 +1341,8 @@ function assembleComment(row: CommentRow): Comment {
   return {
     id: row.client_id,
     parentId: row.parent_client_id ?? null,
-    author: row.author || (persona === 'support' ? 'Огонёк поддержки' : 'Alexei Cerna'),
-    initials: row.initials || (persona === 'support' ? '✦' : 'AC'),
+    author: row.author || (persona === 'support' ? 'Огонёк поддержки' : 'Алексей Церна'),
+    initials: row.initials || (persona === 'support' ? '✦' : 'ОГ'),
     text: row.text ?? '',
     createdAt: row.created_at ?? new Date().toISOString(),
     likes: Math.max(0, row.likes ?? 0),

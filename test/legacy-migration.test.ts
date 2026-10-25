@@ -67,6 +67,42 @@ test('Legacy Migration: Структура строк и ключи идемпо
     assert.equal(rows[0].text, 'Благодарен за терпение')
     assert.equal(rows[1].text, 'Команде и наставникам')
   })
+
+  await t.test('удаляет недопустимые Unicode-символы (\u0000 и суррогаты) из days, prides и gratitudes (ЧАНК 13)', () => {
+    // Симуляция проблемного дня из чанка 13 (код Postgres 22P05)
+    const dirtyDay = {
+      id: 105,
+      title: 'День\u0000 с нулевыми байтами  ',
+      tags: ['#победа\u0000', ' #фокус '],
+      prides: [
+        {
+          id: 'p1',
+          text: 'Горжусь тем что \u0000\u0000\u0000' + String.fromCharCode(0xd83d) + ' начал видеть больше комбинаций',
+          scale: 9,
+          overcome: 1,
+        },
+      ],
+      gratitudes: [
+        'Благодарен \u0000другу за ' + String.fromCharCode(0xdd25) + 'поддержку\u0000 ',
+      ],
+    }
+
+    const dayRow = mapDayToSupabaseRow(dirtyDay, 'usr-alex', 600)
+    assert.equal(dayRow.title, 'День с нулевыми байтами')
+    assert.deepEqual(dayRow.tags, ['#победа', '#фокус'])
+    assert.ok(!dayRow.title.includes('\u0000'))
+
+    const prideRows = mapPridesToSupabaseRows(dirtyDay, 'usr-alex')
+    assert.equal(prideRows.length, 1)
+    assert.equal(prideRows[0].text, 'Горжусь тем что  начал видеть больше комбинаций')
+    assert.ok(!prideRows[0].text.includes('\u0000'))
+    assert.ok(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/.test(prideRows[0].text))
+
+    const gratRows = mapGratitudesToSupabaseRows(dirtyDay, 'usr-alex')
+    assert.equal(gratRows.length, 1)
+    assert.equal(gratRows[0].text, 'Благодарен другу за поддержку')
+    assert.ok(!gratRows[0].text.includes('\u0000'))
+  })
 })
 
 test('Legacy Migration: Батчевая вставка и прогресс (ЗАДАЧА 5)', async (t) => {

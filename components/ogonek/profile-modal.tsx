@@ -5,6 +5,7 @@ import { useEffect, useId, useRef } from 'react'
 import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { downloadBlob } from '@/lib/ogonek/card-export'
+import { getInitials } from '@/lib/ogonek/initials'
 import type { OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 
 interface ProfileModalProps {
@@ -156,22 +157,35 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
 
         {/* Profile Card Header */}
         <div className="profile-banner">
-          <div className="profile-avatar-large">AC</div>
-          <div className="profile-info">
-            <h2 className="profile-name">Alexei Cerna</h2>
-            <div className="profile-handle">@cernavation</div>
-            <div
-              className="text-[11px] mt-1 px-2 py-0.5 rounded-full font-semibold inline-block"
-              style={{ background: '#1a1f0f', color: '#a3e635', border: '1px solid #365314' }}
-            >
-              Серийный предприниматель & Барефут-марафонец
+          {storeState.profile.avatarImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={storeState.profile.avatarImage}
+              alt=""
+              className="profile-avatar-large object-cover"
+            />
+          ) : (
+            <div className="profile-avatar-large">
+              {getInitials(storeState.profile.displayName, storeState.profile.username)}
             </div>
+          )}
+          <div className="profile-info">
+            <h2 className="profile-name">{storeState.profile.displayName || 'Пользователь'}</h2>
+            <div className="profile-handle">@{storeState.profile.username || 'user'}</div>
+            {storeState.profile.monthlyGoal && (
+              <div
+                className="text-[11px] mt-1 px-2 py-0.5 rounded-full font-semibold inline-block"
+                style={{ background: '#1a1f0f', color: '#a3e635', border: '1px solid #365314' }}
+              >
+                {storeState.profile.monthlyGoal}
+              </div>
+            )}
           </div>
         </div>
 
-        <p className="profile-bio">
-          Дневник гордости и благодарности. 719 дней осознанности, преодоления и фиксации внутренней опоры.
-        </p>
+        {storeState.profile.bio && (
+          <p className="profile-bio">{storeState.profile.bio}</p>
+        )}
 
         {/* Streak counter */}
         <div

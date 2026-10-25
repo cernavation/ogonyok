@@ -18,6 +18,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { totalUnread } from '@/lib/ogonek/messenger'
 import { Tooltip } from '../tooltip'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { getInitials } from '@/lib/ogonek/initials'
 
 type Props = {
   activeSection?: string
@@ -149,7 +150,7 @@ export function MessengerIconRail({ activeSection = 'chats', onNewChat, onOpenPr
               <div
                 className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-[#1e293b]"
               >
-                {state.profile.displayName?.slice(0, 2).toUpperCase() || 'ОГ'}
+                {getInitials(state.profile.displayName, state.profile.username)}
               </div>
             )}
           </button>

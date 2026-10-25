@@ -431,14 +431,16 @@ export function SettingsView({
               </button>
             </div>
 
-            {/* Перенос старого дневника в облако (705 дней) */}
-            <LegacyMigrationBanner
-              userId={state.auth.activeAccountId || 'acc-owner'}
-              localDaysCount={state.days.length || 705}
-              localDays={state.days}
-              soundEnabled={state.soundEnabled}
-              onNotify={onNotify}
-            />
+            {/* Перенос старого дневника в облако (705 дней) — строго для cernavation */}
+            {(state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)?.snapshot?.username || state.profile.username || '').toLowerCase() === 'cernavation' && (
+              <LegacyMigrationBanner
+                userId={state.auth.activeAccountId || 'acc-owner'}
+                localDaysCount={state.days.length || 705}
+                localDays={state.days}
+                soundEnabled={state.soundEnabled}
+                onNotify={onNotify}
+              />
+            )}
 
             {/* Резервная копия */}
             <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">

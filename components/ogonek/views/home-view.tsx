@@ -1,11 +1,13 @@
 'use client'
 
-import { MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile } from 'lucide-react'
+import { Flame, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
 import { computeFocusFlame } from '@/lib/ogonek/morning-focus'
 import { playClick } from '@/lib/ogonek/sound'
+import { getInitials } from '@/lib/ogonek/initials'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import { Button } from '../ui'
@@ -43,6 +45,7 @@ type Props = {
   onOpenProfile?: () => void
   soundEnabled?: boolean
   userId?: string
+  currentUsername?: string
 }
 
 export function HomeView({
@@ -67,8 +70,15 @@ export function HomeView({
   onOpenProfile,
   soundEnabled = true,
   userId,
+  currentUsername,
 }: Props) {
-  const [filter, setFilter] = useState<string>('Для тебя')
+  const { state, currentUser } = useOgonekStore()
+  const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
+  const username = currentUsername || currentUser?.username || state.profile.username || 'user'
+  const initials = getInitials(displayName, username)
+  const avatarImage = currentUser?.avatarImage || state.profile.avatarImage
+  const isOwner = (username || '').toLowerCase() === 'cernavation'
+  const [filter, setFilter] = useState<string>('Мои гордости')
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -89,14 +99,14 @@ export function HomeView({
   }
 
   const filteredDays = useMemo(() => {
-    if (filter === 'Для тебя' || filter === 'Подписки') {
+    if (filter === 'Мои гордости') {
       return days
     }
-    if (filter === 'Гордости' || filter === '🔥 Гордости') {
-      return days.filter((d) => d.prides && d.prides.length > 0)
+    if (filter === 'Друзья') {
+      return days
     }
-    if (filter === 'Благодарности' || filter === '❤️ Благодарности') {
-      return days.filter((d) => d.gratitudes && d.gratitudes.length > 0)
+    if (filter === 'Подписки') {
+      return days
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
   }, [days, filter])
@@ -149,6 +159,8 @@ export function HomeView({
         streak={streak}
         streakStatus={streakStatus}
         hoursLeft={hoursLeft}
+        userInitials={initials}
+        userName={displayName}
         onOpenProfile={onOpenProfile}
       />
 
@@ -204,15 +216,24 @@ export function HomeView({
           role="region"
           aria-label="Создать запись дня"
         >
-          <div
-            className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none text-white shadow-sm mt-0.5"
-            style={{
-              background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-            }}
-            aria-hidden="true"
-          >
-            AC
-          </div>
+          {avatarImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarImage}
+              alt={displayName}
+              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--border)] mt-0.5"
+            />
+          ) : (
+            <div
+              className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none text-white shadow-sm mt-0.5"
+              style={{
+                background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
+              }}
+              aria-hidden="true"
+            >
+              {initials}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="py-2 text-[var(--text-2)] text-[18px] font-normal select-none">
               Чем гордишься сегодня?
@@ -246,7 +267,7 @@ export function HomeView({
       )}
 
       <div className="feed-content">
-        {userId && (
+        {isOwner && userId && (
           <div className="px-4 pt-3">
             <LegacyMigrationBanner
               userId={userId}
@@ -289,16 +310,18 @@ export function HomeView({
 
         {days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
-            <span className="text-4xl text-[#1d9bf0]">✦</span>
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
+              <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+            </span>
             <h2 className="empty-state__title text-lg font-bold mt-2">Твой огонёк готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md mx-auto my-2">
               {onCompose && (
                 <button
                   type="button"
-                  className="x-primary-btn flex items-center gap-1.5"
+                  className="x-primary-btn flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3"
                   onClick={onCompose}
                 >
                   <Plus size={16} /> Записать первый день
@@ -307,7 +330,7 @@ export function HomeView({
               {onNavigate && (
                 <button
                   type="button"
-                  className="x-secondary-btn"
+                  className="x-secondary-btn flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3"
                   onClick={() => onNavigate('settings')}
                 >
                   Импортировать архив
@@ -350,10 +373,20 @@ export function HomeView({
             )}
           </>
         ) : (
-          <div className="empty-state" role="status">
-            <p className="empty-state__title">Ничего не найдено</p>
-            <p className="empty-state__desc">
-              Записей с тегом «{filter}» пока нет. Нажмите «+», чтобы создать запись.
+          <div className="empty-state p-8 text-center" role="status">
+            <p className="empty-state__title font-bold text-sm text-[var(--text)] mb-1">
+              {filter === 'Друзья'
+                ? 'В ленте друзей пока пусто'
+                : filter === 'Подписки'
+                ? 'У вас пока нет подписок'
+                : 'Ничего не найдено'}
+            </p>
+            <p className="empty-state__desc text-xs text-[var(--text-2)]">
+              {filter === 'Друзья'
+                ? 'Подпишитесь на соратников в разделе «Поиск», чтобы видеть их огонь и гордости.'
+                : filter === 'Подписки'
+                ? 'Здесь будут отображаться записи людей, на которых вы подписались.'
+                : `Записей с тегом «${filter}» пока нет. Нажмите «+», чтобы создать запись.`}
             </p>
           </div>
         )}

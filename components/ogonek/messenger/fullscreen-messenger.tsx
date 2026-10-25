@@ -129,7 +129,12 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
           <MessengerIconRail
             activeSection="chats"
             onNewChat={() => setIsNewChatOpen(true)}
-            onOpenProfile={() => router.push('/?view=profile')}
+            onOpenProfile={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
+              }
+              router.push('/?view=profile')
+            }}
             soundEnabled={state.soundEnabled}
           />
 
@@ -139,6 +144,7 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
               activeThreadId={activeThreadId}
               onSelectThread={handleSelectThread}
               onNewChat={() => setIsNewChatOpen(true)}
+              onNavigateHome={handleNavigateHome}
               soundEnabled={state.soundEnabled}
               className="w-full h-full"
             />

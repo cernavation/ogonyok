@@ -480,17 +480,18 @@ function DayCardComponent({
           onClick={() => setOptionsModalOpen(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 shadow-2xl flex flex-col gap-4"
+            className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-4"
+            style={{ background: '#16181c', border: '1px solid #2f3336' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-base">
+            <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid #2f3336' }}>
+              <h3 className="font-bold text-[var(--text)] text-base">
                 Опции дня #{day.id}
               </h3>
               <button
                 type="button"
                 onClick={() => setOptionsModalOpen(false)}
-                className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                className="text-[var(--text-2)] hover:text-[var(--text)]"
               >
                 ✕
               </button>
@@ -500,7 +501,7 @@ function DayCardComponent({
               <button
                 type="button"
                 onClick={handleAiEvaluateDay}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <Sparkles size={16} className="text-amber-500" />
                 <span>Оценить с ИИ</span>
@@ -512,7 +513,7 @@ function DayCardComponent({
                   setOptionsModalOpen(false)
                   onEdit?.(day)
                 }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <Pencil size={16} className="text-[var(--accent)]" />
                 <span>Редактировать день</span>
@@ -524,16 +525,16 @@ function DayCardComponent({
                   setOptionsModalOpen(false)
                   setShareModalOpen(true)
                 }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-zinc-800 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <Share2 size={16} className="text-emerald-500" />
                 <span>Экспорт карточки (SVG / PNG)</span>
               </button>
             </div>
 
-            <div className="p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex flex-col gap-2">
+            <div className="p-3 rounded-2xl flex flex-col gap-2" style={{ background: '#0d0e10', border: '1px solid #2f3336' }}>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-[var(--text-2)] flex items-center gap-1.5">
                   <Shield size={13} className="text-[#FF5C00]" /> Приватность дня
                 </span>
                 <span
@@ -555,7 +556,7 @@ function DayCardComponent({
               </div>
               <button
                 type="button"
-                className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline text-left"
+                className="mt-1 text-xs text-[var(--text-3)] hover:text-[var(--text)] underline text-left"
                 onClick={() => {
                   playClick(soundEnabled)
                   setAllPridesVisibility(day.id, dayVisibility)
@@ -564,6 +565,28 @@ function DayCardComponent({
                 }}
               >
                 Применить ко всем гордостям дня
+              </button>
+              <button
+                type="button"
+                className="mt-1 text-xs text-rose-400 hover:text-rose-300 underline text-left"
+                onClick={async () => {
+                  playClick(soundEnabled)
+                  const { getSupabase } = await import('@/lib/ogonek/supabase-client')
+                  const supabase = getSupabase()
+                  if (supabase && state.auth?.activeAccountId) {
+                    await supabase
+                      .from('days')
+                      .update({ visibility: dayVisibility })
+                      .eq('user_id', state.auth.activeAccountId)
+                  }
+                  for (const d of state.days ?? []) {
+                    setDayVisibility(d.id, dayVisibility)
+                  }
+                  onNotify?.(`Приватность "${visibilityMeta(dayVisibility).shortLabel}" применена ко всем дням`)
+                  setOptionsModalOpen(false)
+                }}
+              >
+                Применить ко всем дням
               </button>
             </div>
           </div>

@@ -15,6 +15,7 @@ import {
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { calculateStreak } from '@/lib/ogonek/streak'
+import { getInitials } from '@/lib/ogonek/initials'
 import { StoryComposerModal } from './story-composer-modal'
 import { StoryViewerModal } from './story-viewer-modal'
 
@@ -204,7 +205,7 @@ export function StoriesBar({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={myAvatarSrc} alt="" />
                   ) : (
-                    (profile.displayName.split(/\s+/)[0]?.[0] ?? 'Я').toUpperCase()
+                    getInitials(profile.displayName, profile.username)
                   )}
                 </span>
               </span>

@@ -88,10 +88,9 @@ export const EVIDENCE_CATEGORIES = [
 ] as const
 
 export const FEED_TABS = [
-  'Для тебя',
+  'Мои гордости',
+  'Друзья',
   'Подписки',
-  'Гордости',
-  'Благодарности',
 ] as const
 
 export const TRENDING_TAGS = [

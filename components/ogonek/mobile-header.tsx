@@ -9,6 +9,8 @@ type Props = {
   streak?: number
   streakStatus?: StreakStatus
   hoursLeft?: number | null
+  userInitials?: string
+  userName?: string
   onOpenProfile?: () => void
 }
 
@@ -17,6 +19,8 @@ export function MobileHeader({
   streak = CURRENT_DAY,
   streakStatus = 'safe',
   hoursLeft,
+  userInitials = 'ОГ',
+  userName = 'Мой профиль',
   onOpenProfile,
 }: Props) {
   return (
@@ -25,9 +29,9 @@ export function MobileHeader({
         type="button"
         className="brand-flame p-0 border-0 bg-transparent cursor-pointer w-10 h-10 flex items-center justify-center"
         onClick={onOpenProfile}
-        aria-label="Профиль Alexei Cerna"
+        aria-label={`Профиль ${userName}`}
       >
-        <span className="avatar avatar-photo" style={{ width: 32, height: 32, fontSize: 13 }}>AC</span>
+        <span className="avatar avatar-photo" style={{ width: 32, height: 32, fontSize: 13 }}>{userInitials}</span>
       </button>
       <b>{title}</b>
       <button

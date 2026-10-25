@@ -90,7 +90,7 @@ describe('Achievement moderation (ЭТАП 6)', () => {
     const payload = buildModerationSubmissionPayload({
       trackingCode: 'OGN-ABC123',
       achievement,
-      applicant: { displayName: 'Алексей Черна', username: 'cernavation', contactEmail: 'a@b.com' },
+      applicant: { displayName: 'Алексей Церна', username: 'cernavation', contactEmail: 'a@b.com' },
       description: 'Протокол серии приложен',
       attachments: [{ fileName: 'tracker.png', mime: 'image/png', size: 2048, dataUrl: 'data:image/png;base64,AAAA' }],
     })

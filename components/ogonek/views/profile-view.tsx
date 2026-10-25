@@ -38,6 +38,7 @@ import {
   prettySocialUrl,
 } from '@/lib/ogonek/profile-presets'
 import { playClick } from '@/lib/ogonek/sound'
+import { getInitials } from '@/lib/ogonek/initials'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
@@ -45,7 +46,6 @@ import { EditProfileModal } from '../edit-profile-modal'
 import { FriendsManager } from '../friends-manager'
 import { ShareProfileModal } from '../share-profile-modal'
 import { AchievementsPanel } from '../achievements/achievements-panel'
-import { GoldVerificationBadge } from '../achievements/verification-badge'
 import { ProfileImageCropperModal } from '../profile/profile-image-cropper-modal'
 import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 import { Button, Card, Badge } from '../ui'
@@ -68,12 +68,6 @@ const PROFILE_TABS: { id: ProfileTabId; label: string; icon: LucideIcon }[] = [
   { id: 'calendar', label: 'Календарь', icon: Flame },
   { id: 'friends', label: 'Друзья', icon: Users },
 ]
-
-function initialsFrom(name: string): string {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2)
-  if (parts.length === 0) return 'Я'
-  return parts.map((p) => p[0].toUpperCase()).join('')
-}
 
 function formatDayDate(iso?: string): string {
   if (!iso) return 'сегодня'
@@ -105,6 +99,18 @@ export function ProfileView({
   const avatarSrc = usePhotoUrl(profile.avatarImage)
   const coverSrc = usePhotoUrl(profile.coverUrl || profile.bannerImage)
   const followingIds = storeState.followingIds ?? []
+
+  const [coverFailed, setCoverFailed] = useState(false)
+  const hasCover = Boolean(
+    coverSrc &&
+    typeof coverSrc === 'string' &&
+    coverSrc !== 'Обложка профиля' &&
+    (coverSrc.startsWith('http://') || coverSrc.startsWith('https://') || coverSrc.startsWith('data:') || coverSrc.startsWith('blob:'))
+  )
+
+  React.useEffect(() => {
+    setCoverFailed(false)
+  }, [coverSrc])
 
   const [activeTab, setActiveTab] = useState<ProfileTabId>('days')
   const [editOpen, setEditOpen] = useState(false)
@@ -334,19 +340,20 @@ export function ProfileView({
 
       {/* Cover Banner 200px */}
       <div
-        className="h-[200px] w-full relative overflow-hidden group cursor-pointer"
+        className="h-[200px] w-full relative overflow-hidden group cursor-pointer bg-gradient-to-b from-neutral-900 to-black"
         style={{
-          background: coverSrc ? undefined : (bannerPreset.background || 'linear-gradient(135deg, #FF6A1A 0%, #16181C 100%)'),
+          background: hasCover && !coverFailed ? undefined : 'linear-gradient(180deg, #171717 0%, #000000 100%)',
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={handleDropCover}
         onClick={() => coverInputRef.current?.click()}
       >
-        {coverSrc && (
+        {hasCover && !coverFailed && (
           <img
-            src={coverSrc}
-            alt="Обложка профиля"
-            className="w-full h-full object-cover"
+            src={coverSrc!}
+            alt=""
+            className="w-full h-[200px] object-cover"
+            onError={() => setCoverFailed(true)}
           />
         )}
         {/* Кнопка смены обложки */}
@@ -383,7 +390,7 @@ export function ProfileView({
               {avatarSrc ? (
                 <img src={avatarSrc} alt={profile.displayName} className="w-full h-full object-cover" />
               ) : (
-                initialsFrom(profile.displayName)
+                getInitials(profile.displayName, profile.username)
               )}
             </div>
             {/* Кнопка смены аватара */}
@@ -431,14 +438,13 @@ export function ProfileView({
         <div className="mb-2">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h2 className="text-[20px] font-[800] text-[var(--text)] tracking-tight">
-              {profile.displayName}
+              {profile.displayName || (profile.username ? `@${profile.username}` : 'Пользователь')}
             </h2>
             {profile.verified && (
-              <span className="w-4 h-4 rounded-full bg-[var(--accent)] text-[var(--accent-text)] inline-flex items-center justify-center flex-none">
+              <span className="w-4 h-4 rounded-full bg-[var(--accent)] text-[var(--accent-text)] inline-flex items-center justify-center flex-none" title="Верифицированный профиль">
                 <Check size={10} strokeWidth={3} />
               </span>
             )}
-            <GoldVerificationBadge size="sm" />
           </div>
           <p className="text-[15px] text-[var(--text-2)]">@{profile.username}</p>
         </div>
@@ -450,16 +456,30 @@ export function ProfileView({
           </p>
         )}
 
-        {/* Ряд «N дней дневника · N записей · N подписчиков · 🔥 Уровень N» */}
+        {/* Ряд «N дней дневника · N записей · N подписчиков · Возраст · 🔥 Уровень N» */}
         <div className="flex items-center gap-3 text-[14px] text-[var(--text-2)] mb-4 flex-wrap">
           <span><strong className="font-bold text-[var(--text)]">{stats.streakDays}</strong> дней дневника</span>
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{stats.totalPrides + stats.totalGratitudes}</strong> записей</span>
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{storeState.friendIds?.length ?? 0}</strong> подписчиков</span>
+          {profile.age && (
+            <>
+              <span>·</span>
+              <span><strong className="font-bold text-[var(--text)]">{profile.age}</strong> лет</span>
+            </>
+          )}
+          {profile.isAnonymous && (
+            <>
+              <span>·</span>
+              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-zinc-800 text-zinc-300 border border-zinc-700">
+                Анонимный профиль
+              </span>
+            </>
+          )}
           <span>·</span>
           <DifficultyLevelBadge
-            level={profile.difficultyLevel || 2}
+            level={profile.difficultyLevel || profile.level || 1}
             soundEnabled={soundEnabled}
             onNotify={onNotify}
           />
@@ -823,6 +843,7 @@ export function ProfileView({
       {editOpen && (
         <EditProfileModal
           profile={profile}
+          userId={storeState.auth.activeAccountId ?? undefined}
           onClose={() => setEditOpen(false)}
           onSave={(patch) => {
             onUpdateProfile(patch)
@@ -852,6 +873,7 @@ export function ProfileView({
           mode="cover"
           initialFile={cropperFile}
           currentPreset={profile.bannerPreset}
+          userId={storeState.auth.activeAccountId ?? undefined}
           onClose={() => {
             setCoverCropperOpen(false)
             setCropperFile(null)
@@ -877,6 +899,7 @@ export function ProfileView({
         <ProfileImageCropperModal
           mode="avatar"
           initialFile={cropperFile}
+          userId={storeState.auth.activeAccountId ?? undefined}
           onClose={() => {
             setAvatarCropperOpen(false)
             setCropperFile(null)

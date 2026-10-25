@@ -4,7 +4,7 @@ import { Check } from 'lucide-react'
 import type { CommunityUser } from '@/lib/ogonek/explore-content'
 
 type Props = {
-  user: Pick<CommunityUser, 'initials' | 'avatarColor' | 'verified'>
+  user: Pick<CommunityUser, 'initials' | 'avatarColor' | 'verified'> & { avatarUrl?: string }
   size?: number
   /** Тонкое кольцо «вы читаете этого человека» */
   ring?: boolean
@@ -12,7 +12,7 @@ type Props = {
 }
 
 /**
- * Аватар участника сообщества: градиент-заглушка с инициалами,
+ * Аватар участника сообщества: фото или градиент-заглушка с инициалами,
  * синий значок верификации и (опционально) кольцо подписки.
  */
 export function CommunityAvatar({ user, size = 42, ring = false, showVerified = true }: Props) {
@@ -23,12 +23,22 @@ export function CommunityAvatar({ user, size = 42, ring = false, showVerified = 
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      <span
-        className="xh-avatar__img"
-        style={{ background: user.avatarColor, fontSize: Math.max(13, Math.round(size * 0.4)) }}
-      >
-        {user.initials}
-      </span>
+      {user.avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={user.avatarUrl}
+          alt=""
+          className="w-full h-full object-cover rounded-full"
+          style={{ width: size, height: size }}
+        />
+      ) : (
+        <span
+          className="xh-avatar__img"
+          style={{ background: user.avatarColor || 'var(--accent)', fontSize: Math.max(13, Math.round(size * 0.4)) }}
+        >
+          {user.initials}
+        </span>
+      )}
       {showVerified && user.verified && (
         <span
           className="xh-avatar__verified"

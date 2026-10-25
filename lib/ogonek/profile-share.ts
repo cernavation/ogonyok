@@ -1,5 +1,6 @@
 import { computeStreak } from './streak.ts'
 import { calculateStreak } from './diary-engine.ts'
+import { getInitials } from './initials.ts'
 import type { Day, OgonekProfile, OgonekStoreState } from './types'
 
 /**
@@ -218,10 +219,8 @@ function escapeXml(unsafe: string): string {
     .replace(/'/g, '&apos;')
 }
 
-function initialsFrom(name: string): string {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2)
-  if (parts.length === 0) return 'AC'
-  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('')
+function initialsFrom(name: string, username?: string): string {
+  return getInitials(name, username)
 }
 
 /** Разбивает текст на строки заданной длины (с многоточием при обрезке) */
@@ -275,7 +274,7 @@ export function generateProfileCardSvg(
   const height = 620
 
   const bioLines = wrapText(profile.bio, 58, 2)
-  const initials = initialsFrom(profile.displayName)
+  const initials = initialsFrom(profile.displayName, profile.username)
 
   const avatarMarkup = options.avatarDataUrl
     ? `

@@ -12,6 +12,7 @@ import {
   hasSecurityPin,
 } from '@/lib/ogonek/security'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { PinPad } from './pin-pad'
@@ -71,11 +72,8 @@ export function AppLockScreen({ onUnlocked, reason = 'open' }: Props) {
   }, [lockout.isLocked])
 
   const initials = useMemo(() => {
-    const name = state.profile.displayName?.trim() || 'Огонёк'
-    const parts = name.split(/\s+/).slice(0, 2)
-    const result = parts.map((part) => part.charAt(0).toUpperCase()).join('')
-    return result || 'О'
-  }, [state.profile.displayName])
+    return getInitials(state.profile.displayName, state.profile.username)
+  }, [state.profile.displayName, state.profile.username])
 
   const triggerShake = useCallback(() => {
     setShaking(true)

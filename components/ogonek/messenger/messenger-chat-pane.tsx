@@ -52,6 +52,7 @@ import type {
   ChatMessageReply,
   ChatPoll,
 } from '@/lib/ogonek/types'
+import { getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import { ChatAvatar } from './chat-avatar'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
@@ -151,11 +152,37 @@ export function MessengerChatPane({
   const imageInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [peerProfile, setPeerProfile] = useState<ProfileRecord | null>(null)
+
   const thread = friendId ? threadOf(state.chatThreads ?? {}, friendId) : null
   const isGroup = friendId ? isGroupThread(thread ?? undefined, friendId) : false
   const isSaved = friendId === 'saved-messages'
   const friend = friendId && !isGroup && !isSaved ? getFriend(friendId) : null
-  const title = isSaved ? 'Избранное' : friendId ? threadTitle(friendId, thread ?? undefined) : ''
+  const title = isSaved
+    ? 'Избранное'
+    : friend
+    ? friend.name
+    : thread?.peerMeta?.name || peerProfile?.display_name || (peerProfile?.username ? `@${peerProfile.username}` : (friendId ? threadTitle(friendId, thread ?? undefined) : ''))
+
+  useEffect(() => {
+    if (friendId && !friend && !isGroup && !isSaved) {
+      getProfile(friendId).then((p) => {
+        if (p) setPeerProfile(p)
+      })
+    } else {
+      setPeerProfile(null)
+    }
+  }, [friendId, friend, isGroup, isSaved])
+
+  // Активировать поле ввода сообщения при открытии чата
+  useEffect(() => {
+    if (friendId) {
+      const timer = setTimeout(() => {
+        textareaRef.current?.focus()
+      }, 60)
+      return () => clearTimeout(timer)
+    }
+  }, [friendId])
 
   const allMessages = thread?.messages ?? []
   const totalMessagesCount = allMessages.length
@@ -367,9 +394,22 @@ export function MessengerChatPane({
   }
 
   // Если диалог не выбран — красивое пустое состояние на весь экран
-  if (!friendId || (!friend && !isGroup && !isSaved)) {
+  if (!friendId) {
     return (
-      <div className="flex-1 h-full flex flex-col items-center justify-center p-8 bg-[var(--bg)] text-center select-none">
+      <div className="flex-1 h-full flex flex-col items-center justify-center p-8 bg-[var(--bg)] text-center select-none relative">
+        {onNavigateHome && (
+          <div className="absolute top-4 left-4 z-10">
+            <button
+              type="button"
+              onClick={onNavigateHome}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border)] transition-colors shadow-sm"
+              aria-label="Назад в ленту"
+            >
+              <ArrowLeft size={16} />
+              <span>← Назад в ленту</span>
+            </button>
+          </div>
+        )}
         <div className="w-20 h-20 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center text-4xl shadow-lg mb-4">
           🔥
         </div>
@@ -410,6 +450,7 @@ export function MessengerChatPane({
               onClick={onBack}
               className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 -ml-1"
               aria-label="Назад к списку чатов"
+              title="Назад к списку чатов"
             >
               <ArrowLeft size={20} />
             </button>
@@ -419,10 +460,12 @@ export function MessengerChatPane({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 lg:hidden"
-              aria-label="На главную"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border)] transition-colors shrink-0"
+              aria-label="Назад в ленту"
+              title="Назад в ленту"
             >
-              <Home size={18} />
+              <ArrowLeft size={14} />
+              <span className="hidden sm:inline">Назад в ленту</span>
             </button>
           )}
 

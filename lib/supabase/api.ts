@@ -6,17 +6,22 @@ export interface ProfileRecord {
   username: string
   display_name: string
   avatar_url?: string | null
+  avatar_image?: string | null
   bio?: string | null
   city?: string | null
-  level: number
-  level_changed_at: string
-  timezone: string
+  level?: number
+  level_changed_at?: string
+  timezone?: string
   telegram_chat_id?: string | null
-  reminder_times: string[]
-  in_leaderboard: boolean
-  streak: number
-  created_at: string
-  updated_at: string
+  reminder_times?: string[]
+  in_leaderboard?: boolean
+  streak?: number
+  streak_count?: number
+  is_anonymous?: boolean
+  privacy?: { is_anonymous?: boolean; [key: string]: any }
+  age?: number | null
+  created_at?: string
+  updated_at?: string
 }
 
 export interface DayRecord {
@@ -59,42 +64,132 @@ export interface PostRecord {
 }
 
 /**
- * Получить профиль пользователя
+ * Получить профиль пользователя по id или username
  */
-export async function getProfile(userId: string): Promise<ProfileRecord | null> {
+export async function getProfile(userIdOrUsername: string): Promise<ProfileRecord | null> {
   const supabase = getSupabase()
   if (!supabase) return null
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrUsername)
+  let q = supabase.from('profiles').select('*')
+  if (isUuid) {
+    q = q.eq('id', userIdOrUsername)
+  } else {
+    q = q.eq('username', userIdOrUsername.replace(/^@/, ''))
+  }
+  const { data, error } = await q.maybeSingle()
   if (error || !data) return null
-  return data as ProfileRecord
+  const row = data as any
+  return {
+    ...row,
+    avatar_url: row.avatar_image || row.avatar_url || null,
+    avatar_image: row.avatar_image || row.avatar_url || null,
+    streak: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+    streak_count: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+    is_anonymous: row.is_anonymous === true || row.privacy?.is_anonymous === true,
+  } as ProfileRecord
 }
 
 /**
- * Поиск профилей по нику или имени
+ * Поиск профилей по нику или имени напрямую в Supabase public.profiles
  */
-export async function searchProfiles(query: string, currentUserId?: string): Promise<ProfileRecord[]> {
+export async function searchProfiles(query: string, currentUserIdOrUsername?: string): Promise<ProfileRecord[]> {
   const supabase = getSupabase()
   if (!supabase) return []
-  const clean = query.trim().toLowerCase()
-  if (!clean) return []
+  const searchQuery = query.trim().replace(/^@/, '')
+  if (!searchQuery) return getRecentProfiles(20, currentUserIdOrUsername)
 
-  let q = supabase
+  // Поиск участников делает реальный запрос к Supabase в таблицу public.profiles
+  let { data, error } = await supabase
     .from('profiles')
-    .select('*')
-    .or(`username.ilike.%${clean}%,display_name.ilike.%${clean}%`)
-    .limit(20)
+    .select('id, username, display_name, avatar_image, streak_count, is_anonymous')
+    .ilike('username', `%${searchQuery}%`)
+    .limit(30)
 
-  if (currentUserId) {
-    q = q.neq('id', currentUserId)
+  if (error) {
+    // Если колонка is_anonymous или streak_count не вынесена на верхний уровень, делаем select('*')
+    const fallback = await supabase
+      .from('profiles')
+      .select('*')
+      .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+      .limit(30)
+    data = fallback.data
+    error = fallback.error
   }
 
-  const { data, error } = await q
   if (error || !data) return []
-  return data as ProfileRecord[]
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
+
+  const results: ProfileRecord[] = []
+  for (const row of data as any[]) {
+    // В поиске: если у профиля is_anonymous === true, он НЕ выдается в общем поиске для других пользователей
+    const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
+    if (isAnon) continue
+
+    if (currentUserIdOrUsername) {
+      if (isUuid && row.id === currentUserIdOrUsername) continue
+      if (!isUuid && row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+    }
+
+    results.push({
+      ...row,
+      avatar_url: row.avatar_image || row.avatar_url || null,
+      avatar_image: row.avatar_image || row.avatar_url || null,
+      streak: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+      streak_count: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+      is_anonymous: false,
+    })
+  }
+
+  return results
+}
+
+/**
+ * Получение последних активных реальных пользователей из базы Supabase
+ */
+export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: string): Promise<ProfileRecord[]> {
+  const supabase = getSupabase()
+  if (!supabase) return []
+  try {
+    let q = supabase
+      .from('profiles')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(limit + 5)
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
+    if (currentUserIdOrUsername && isUuid) {
+      q = q.neq('id', currentUserIdOrUsername)
+    }
+
+    const { data, error } = await q
+    if (error || !data) return []
+
+    const results: ProfileRecord[] = []
+    for (const row of data as any[]) {
+      // Исключаем анонимных пользователей из общего списка
+      const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
+      if (isAnon) continue
+
+      if (currentUserIdOrUsername && !isUuid) {
+        if (row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+      }
+
+      results.push({
+        ...row,
+        avatar_url: row.avatar_image || row.avatar_url || null,
+        avatar_image: row.avatar_image || row.avatar_url || null,
+        streak: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+        streak_count: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
+        is_anonymous: false,
+      })
+      if (results.length >= limit) break
+    }
+
+    return results
+  } catch {
+    return []
+  }
 }
 
 /**
@@ -617,4 +712,51 @@ export async function migrateLegacyDaysToSupabase(
   } catch (err) {
     return { success: false, migratedDays: 0, error: String(err) }
   }
+}
+
+/**
+ * Получить профиль по нику
+ */
+export async function getProfileByUsername(username: string): Promise<ProfileRecord | null> {
+  const supabase = getSupabase()
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', username)
+    .single()
+  if (error || !data) return null
+  return data as ProfileRecord
+}
+
+export interface PublicDayRecord {
+  id: string
+  user_id: string
+  day_number: number
+  day_date: string
+  visibility: string
+  title?: string
+  closed_at: string | null
+  created_at: string
+}
+
+export async function getUserPublicDays(userId: string, isFriend: boolean = false): Promise<PublicDayRecord[]> {
+  const supabase = getSupabase()
+  if (!supabase) return []
+  let q = supabase
+    .from('days')
+    .select('id,user_id,day_number,day_date,visibility,title,closed_at,created_at')
+    .eq('user_id', userId)
+    .order('day_number', { ascending: false })
+    .limit(20)
+
+  if (isFriend) {
+    q = q.in('visibility', ['public', 'friends'])
+  } else {
+    q = q.eq('visibility', 'public')
+  }
+
+  const { data, error } = await q
+  if (error || !data) return []
+  return data as PublicDayRecord[]
 }

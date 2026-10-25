@@ -65,16 +65,17 @@ describe('Supabase Auth: Валидация пароля (ЗАДАЧА 3)', () =
 })
 
 describe('Supabase Auth: Маппинг email и понятные ошибки (ЗАДАЧА 3)', () => {
-  it('маппит никнейм в канонический email @ogonek.app, не допуская .local', () => {
-    assert.equal(usernameToEmail('cerna'), 'cerna@ogonek.app')
-    assert.equal(usernameToEmail('alex_99'), 'alex_99@ogonek.app')
-    assert.equal(usernameToEmail(''), 'user@ogonek.app')
-    assert.equal(emailToUsername('cerna@ogonek.app'), 'cerna')
+  it('маппит никнейм в канонический email @ogonek.local', () => {
+    assert.equal(usernameToEmail('cerna'), 'cerna@ogonek.local')
+    assert.equal(usernameToEmail('alex_99'), 'alex_99@ogonek.local')
+    assert.equal(usernameToEmail(''), 'user@ogonek.local')
+    assert.equal(emailToUsername('cerna@ogonek.local'), 'cerna')
+    assert.equal(usernameToEmail('cerna', 'ogonek.app'), 'cerna@ogonek.app')
   })
 
   it('переводит системные ошибки Supabase на дружелюбный русский язык', () => {
     assert.equal(friendlyAuthError('User already registered'), 'Этот ник уже занят')
-    assert.equal(friendlyAuthError('Invalid login credentials'), 'Неверный ник или пароль')
+    assert.equal(friendlyAuthError('Invalid login credentials'), 'Неверный логин или пароль')
     assert.equal(friendlyAuthError('Email rate limit exceeded'), 'Слишком много попыток, подожди минуту')
     assert.equal(friendlyAuthError('Failed to fetch'), 'Нет связи. Проверь интернет-соединение')
   })

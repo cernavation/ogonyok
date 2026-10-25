@@ -3,6 +3,7 @@ export type ViewId =
   | 'explore'
   | 'messages'
   | 'vault'
+  | 'premium'
   | 'analytics'
   | 'settings'
   | 'profile'
@@ -211,6 +212,12 @@ export type OgonekProfile = {
   reminderTimes?: string[]
   /** Участие в общем рейтинге (лидерборде) */
   inLeaderboard?: boolean
+  /** Возраст пользователя */
+  age?: number | null
+  /** Режим полной анонимности: скрыт из глобального поиска, в подписках/лентах как «Анонимный соратник» */
+  isAnonymous?: boolean
+  /** Настройки приватности */
+  privacy?: { is_anonymous?: boolean; [key: string]: any }
 }
 
 /** Запись в истории смен уровней сложности */
@@ -774,6 +781,13 @@ export type ChatThreadState = {
   folderIds?: string[]
   /** Запланированные сообщения чата */
   scheduledMessages?: ChatMessage[]
+  /** Метаданные собеседника для пользователей из базы данных Supabase */
+  peerMeta?: {
+    name?: string
+    username?: string
+    avatarUrl?: string
+    initials?: string
+  } | null
 }
 
 /** Настройки чатов */

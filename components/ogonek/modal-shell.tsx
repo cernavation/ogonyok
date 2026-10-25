@@ -65,7 +65,7 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
 
   return (
     <motion.div
-      className="modal-backdrop"
+      className="modal-backdrop overflow-x-hidden w-full max-w-full"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -81,7 +81,7 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
       <motion.div
         ref={modalRef}
         tabIndex={-1}
-        className="modal outline-none"
+        className="modal outline-none overflow-x-hidden w-full max-w-full"
         initial={{ y: 25, scale: 0.98 }}
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 25, scale: 0.98 }}

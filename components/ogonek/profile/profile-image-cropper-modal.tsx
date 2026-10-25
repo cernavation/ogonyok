@@ -59,6 +59,7 @@ type Props = {
   mode: 'cover' | 'avatar'
   initialFile?: File | null
   currentPreset?: string
+  userId?: string
   onClose: () => void
   onApplyImage: (imageUrl: string) => void
   onRemovePhoto?: () => void
@@ -73,6 +74,7 @@ export function ProfileImageCropperModal({
   mode,
   initialFile,
   currentPreset,
+  userId,
   onClose,
   onApplyImage,
   onRemovePhoto,
@@ -258,10 +260,11 @@ export function ProfileImageCropperModal({
 
       ctx.drawImage(img, cx, cy, renderW, renderH)
 
-      // 2. Сжатие в WebP (<= 2 МБ) и загрузка в бакет ogonyok-media (avatars/{uid}/ или banners/{uid}/)
+      // 2. Сжатие в WebP (<= 2 МБ) и загрузка в бакет ogonyok-media (avatars/${userId}-${Date.now()}.jpg)
       const res = await uploadProfileMedia({
         kind: isCover ? 'banner' : 'avatar',
         fileOrCanvas: targetCanvas,
+        userId,
       })
 
       if (!res.ok || !res.url) {
@@ -286,7 +289,7 @@ export function ProfileImageCropperModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in select-none"
+      className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in select-none overflow-x-hidden w-full max-w-full"
       onClick={onClose}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
@@ -296,7 +299,7 @@ export function ProfileImageCropperModal({
       }}
     >
       <div
-        className="w-full max-w-xl bg-[var(--bg-elev)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+        className="w-full max-w-xl bg-[var(--bg-elev)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-2xl flex flex-col max-w-full"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

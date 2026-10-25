@@ -187,20 +187,13 @@ export const FRIEND_PROFILES: FriendProfile[] = [
   },
 ]
 
-/** Подписки по умолчанию — ближайший круг соратников */
-export const DEFAULT_FOLLOWING_IDS: string[] = [
-  'fr-voloshin',
-  'fr-sokolova',
-  'fr-orlov',
-  'fr-kovaleva',
-]
+/** Подписки по умолчанию — пустой список для чистого старта */
+export const DEFAULT_FOLLOWING_IDS: string[] = []
 
 /**
- * Друзья по умолчанию — взаимные связи (принятые заявки).
- * Меньше, чем подписки: Орлов подписан, но ещё не в друзьях —
- * его можно позвать в друзья из вкладки «Подписки».
+ * Друзья по умолчанию — пустой список (пока пользователь сам не подпишется).
  */
-export const DEFAULT_FRIEND_IDS: string[] = ['fr-voloshin', 'fr-sokolova', 'fr-kovaleva']
+export const DEFAULT_FRIEND_IDS: string[] = []
 
 export function getFriend(id: string): FriendProfile | undefined {
   return FRIEND_PROFILES.find((friend) => friend.id === id)
@@ -281,13 +274,9 @@ export const OUTGOING_FRIEND_REQUESTS: FriendRequest[] = [
   },
 ]
 
-export const DEFAULT_INCOMING_FRIEND_REQUEST_IDS: string[] = INCOMING_FRIEND_REQUESTS.map(
-  (r) => r.friendId
-)
+export const DEFAULT_INCOMING_FRIEND_REQUEST_IDS: string[] = []
 
-export const DEFAULT_OUTGOING_FRIEND_REQUEST_IDS: string[] = OUTGOING_FRIEND_REQUESTS.map(
-  (r) => r.friendId
-)
+export const DEFAULT_OUTGOING_FRIEND_REQUEST_IDS: string[] = []
 
 /** Мета входящей заявки по id друга (или undefined, если заявки нет) */
 export function getIncomingRequestMeta(friendId: string): FriendRequest | undefined {

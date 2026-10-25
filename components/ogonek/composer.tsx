@@ -482,8 +482,13 @@ export function Composer({
 
   const [activeSlot, setActiveSlot] = useState(0)
   const activeValue = currentValues[activeSlot] || ''
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const cursorRef = useRef<number | null>(null)
 
   const handleActiveChange = (val: string) => {
+    if (textareaRef.current) {
+      cursorRef.current = textareaRef.current.selectionStart
+    }
     if (tab === 'pride') {
       setPrides((prev) => {
         const next = [...prev]
@@ -498,6 +503,16 @@ export function Composer({
       })
     }
   }
+
+  // Защита фокуса и позиции курсора при быстром вводе
+  useEffect(() => {
+    if (textareaRef.current && cursorRef.current !== null && document.activeElement === textareaRef.current) {
+      const pos = cursorRef.current
+      try {
+        textareaRef.current.setSelectionRange(pos, pos)
+      } catch {}
+    }
+  })
 
   const storyDayLabel = (() => {
     const iso = editingDay?.dateISO || dateISO
@@ -632,6 +647,8 @@ export function Composer({
 
       {/* 2. Большое поле 20px без рамки */}
       <textarea
+        ref={textareaRef}
+        id="composer-slot-textarea"
         rows={4}
         value={activeValue}
         onChange={(e) => handleActiveChange(e.target.value)}

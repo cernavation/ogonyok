@@ -75,11 +75,11 @@ export function validatePassword(password: string): { valid: boolean; score: num
 
 /**
  * Превращение никнейма в валидный email для Supabase Auth.
- * Supabase отклоняет псевдо-домены вроде .local, поэтому используется канонический @ogonek.app.
+ * По умолчанию используется канонический @ogonek.local.
  */
-export function usernameToEmail(username: string): string {
+export function usernameToEmail(username: string, domain: string = 'ogonek.local'): string {
   const clean = (username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
-  return `${clean || 'user'}@ogonek.app`
+  return `${clean || 'user'}@${domain}`
 }
 
 export function emailToUsername(email: string): string {
@@ -185,7 +185,7 @@ export function friendlyAuthError(errMessage: string): string {
     return 'Этот ник уже занят'
   }
   if (lower.includes('invalid login credentials') || lower.includes('invalid credentials') || lower.includes('email not confirmed')) {
-    return 'Неверный ник или пароль'
+    return 'Неверный логин или пароль'
   }
   if (lower.includes('rate limit') || lower.includes('too many requests') || lower.includes('over_email_send_rate_limit')) {
     return 'Слишком много попыток, подожди минуту'
@@ -205,7 +205,7 @@ export async function signUpWithUsername(params: {
   password: string
   displayName?: string
   level?: number
-}): Promise<{ ok: boolean; user?: User; error?: string }> {
+}): Promise<{ ok: boolean; user?: User; session?: Session | null; error?: string }> {
   const validNick = validateUsername(params.username)
   if (!validNick.valid) {
     return { ok: false, error: validNick.error }
@@ -227,22 +227,40 @@ export async function signUpWithUsername(params: {
     return { ok: false, error: 'Этот ник уже занят' }
   }
 
-  const email = usernameToEmail(validNick.clean)
-  const displayName = (params.displayName || validNick.clean).trim()
+  const cleanNick = validNick.clean
+  const email = `${cleanNick}@ogonek.local`
+  const displayName = (params.displayName || cleanNick).trim()
   const level = Math.max(1, Math.min(5, params.level || 3))
 
   try {
-    const { data, error } = await client.auth.signUp({
+    let { data, error } = await client.auth.signUp({
       email,
       password: params.password,
       options: {
         data: {
-          username: validNick.clean,
+          username: cleanNick,
           display_name: displayName,
           level,
         },
       },
     })
+
+    // Если Supabase GoTrue отклоняет псевдодомен .local, делаем автоматический фолбэк на .app
+    if (error && (error.message.includes('invalid') || (error as any).code === 'email_address_invalid')) {
+      const fallbackRes = await client.auth.signUp({
+        email: `${cleanNick}@ogonek.app`,
+        password: params.password,
+        options: {
+          data: {
+            username: cleanNick,
+            display_name: displayName,
+            level,
+          },
+        },
+      })
+      data = fallbackRes.data
+      error = fallbackRes.error
+    }
 
     if (error) {
       return { ok: false, error: friendlyAuthError(error.message) }
@@ -252,12 +270,12 @@ export async function signUpWithUsername(params: {
       return { ok: false, error: 'Не удалось создать пользователя' }
     }
 
-    // Гарантируем строку в public.profiles
+    // Гарантируем строку в public.profiles с введенными username и display_name
     try {
       await client.from('profiles').upsert(
         {
           id: data.user.id,
-          username: validNick.clean,
+          username: cleanNick,
           display_name: displayName,
           level,
           streak: 0,
@@ -269,7 +287,7 @@ export async function signUpWithUsername(params: {
       console.warn('Профиль будет синхронизирован триггером или фоновым sync:', profErr)
     }
 
-    return { ok: true, user: data.user }
+    return { ok: true, user: data.user, session: data.session }
   } catch (err: any) {
     return { ok: false, error: friendlyAuthError(err?.message) }
   }
@@ -281,7 +299,7 @@ export async function signUpWithUsername(params: {
 export async function signInWithUsername(params: {
   username: string
   password: string
-}): Promise<{ ok: boolean; user?: User; session?: Session; error?: string }> {
+}): Promise<{ ok: boolean; user?: User | null; session?: Session | null; error?: string }> {
   const validNick = validateUsername(params.username)
   if (!validNick.valid) {
     return { ok: false, error: validNick.error }
@@ -295,13 +313,26 @@ export async function signInWithUsername(params: {
     return { ok: false, error: 'База данных не подключена. Добавь ключи Supabase.' }
   }
 
-  const email = usernameToEmail(validNick.clean)
+  const cleanNick = validNick.clean
+  const email = `${cleanNick}@ogonek.local`
 
   try {
-    const { data, error } = await client.auth.signInWithPassword({
+    let { data, error } = await client.auth.signInWithPassword({
       email,
       password: params.password,
     })
+
+    // Если вход с .local не удался из-за credentials, пробуем .app для существующих юзеров
+    if (error && (error.message.includes('Invalid login credentials') || (error as any).code === 'invalid_credentials')) {
+      const fallbackRes = await client.auth.signInWithPassword({
+        email: `${cleanNick}@ogonek.app`,
+        password: params.password,
+      })
+      if (!fallbackRes.error && fallbackRes.data?.user) {
+        data = fallbackRes.data
+        error = null
+      }
+    }
 
     if (error) {
       return { ok: false, error: friendlyAuthError(error.message) }

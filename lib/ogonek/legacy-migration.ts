@@ -11,7 +11,10 @@
  */
 
 import { getSupabase } from './supabase-client.ts'
+import { sanitizePostgresString, sanitizePostgresValue } from './supabase-sync.ts'
 import type { Day, OgonekStoreState } from './types.ts'
+
+export { sanitizePostgresString, sanitizePostgresValue }
 
 export const BATCH_CHUNK_SIZE = 50
 
@@ -70,8 +73,8 @@ export function mapDayToSupabaseRow(d: any, userId: string, index: number) {
   return {
     user_id: userId,
     client_id: dayClientId,
-    title: (d.title || `День #${dayClientId}`).slice(0, 300),
-    tags: Array.isArray(d.tags) ? d.tags : [],
+    title: sanitizePostgresString(d.title || `День #${dayClientId}`).slice(0, 300),
+    tags: Array.isArray(d.tags) ? d.tags.map((t: any) => sanitizePostgresString(String(t))) : [],
     photos: Array.isArray(d.photos) ? d.photos : [],
     date_iso: d.dateISO || d.date || new Date().toISOString(),
     day_number: isNaN(dayNum) ? index + 1 : dayNum,
@@ -92,14 +95,15 @@ export function mapPridesToSupabaseRows(d: any, userId: string) {
     const prideClientId = String(p.id || p.client_id || `${dayClientId}_p_${pIdx + 1}`)
     const scale = Number(p.scale || 0)
     const overcome = Number(p.overcome || 0)
+    const rawText = typeof p === 'string' ? p : p.text || ''
 
     return {
       user_id: userId,
       day_client_id: dayClientId,
       client_id: prideClientId,
       position: pIdx,
-      num: String(p.num || (pIdx + 1 < 10 ? `0${pIdx + 1}` : `${pIdx + 1}`)),
-      text: (typeof p === 'string' ? p : p.text || '').slice(0, 1200),
+      num: sanitizePostgresString(String(p.num || (pIdx + 1 < 10 ? `0${pIdx + 1}` : `${pIdx + 1}`))),
+      text: sanitizePostgresString(rawText).slice(0, 1200),
       scale: Math.max(0, Math.min(10, isNaN(scale) ? 0 : scale)),
       overcome: Math.max(0, Math.min(3, isNaN(overcome) ? 0 : overcome)),
       visibility: p.visibility || 'public',
@@ -126,7 +130,7 @@ export function mapGratitudesToSupabaseRows(d: any, userId: string) {
       client_id: gratClientId,
       position: gIdx,
       num: String(gIdx + 1),
-      text: text.slice(0, 1200),
+      text: sanitizePostgresString(text).slice(0, 1200),
       rating: Math.max(0, Math.min(10, isNaN(rating) ? 10 : rating)),
       client_updated_at: new Date().toISOString(),
     }
@@ -172,9 +176,9 @@ export async function executeDaysMigration(params: {
     const chunkDays = days.slice(c * chunkSize, (c + 1) * chunkSize)
 
     // Подготовка батчей строк
-    const daysRows = chunkDays.map((d, i) => mapDayToSupabaseRow(d, userId, c * chunkSize + i))
-    const pridesRows = chunkDays.flatMap((d) => mapPridesToSupabaseRows(d, userId))
-    const gratitudesRows = chunkDays.flatMap((d) => mapGratitudesToSupabaseRows(d, userId))
+    const daysRows = chunkDays.map((d, i) => mapDayToSupabaseRow(d, userId, c * chunkSize + i)).map(sanitizePostgresValue)
+    const pridesRows = chunkDays.flatMap((d) => mapPridesToSupabaseRows(d, userId)).map(sanitizePostgresValue)
+    const gratitudesRows = chunkDays.flatMap((d) => mapGratitudesToSupabaseRows(d, userId)).map(sanitizePostgresValue)
 
     // Выполнение вставки с retry до 3 раз при сбоях
     let success = false

@@ -84,6 +84,7 @@ export function ChatThreadList({
         return (
           title.toLowerCase().includes(q) ||
           (friend?.username && friend.username.toLowerCase().includes(q)) ||
+          (thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
           (friend?.city && friend.city.toLowerCase().includes(q)) ||
           last.toLowerCase().includes(q)
         )
@@ -160,7 +161,7 @@ export function ChatThreadList({
                 ? 'Всё прочитано — ни одного непрочитанного сообщения 🔥'
                 : activeFolderId === 'groups'
                 ? 'В этой папке пока нет групп. Нажми «Написать» → «Создать группу».'
-                : 'Диалогов пока нет. Нажми «Написать» и начни первым.'}
+                : 'У вас пока нет активных диалогов'}
             </p>
           </div>
         ) : (

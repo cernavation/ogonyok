@@ -191,13 +191,13 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
             ? c.author.trim().slice(0, 60)
             : persona === 'support'
               ? 'Огонёк поддержки'
-              : 'Alexei Cerna',
+              : 'Пользователь',
         initials:
           typeof c.initials === 'string' && c.initials.trim()
             ? c.initials.trim().slice(0, 3)
             : persona === 'support'
               ? '✦'
-              : 'AC',
+              : 'ОГ',
         text: text.slice(0, 600),
         createdAt:
           typeof c.createdAt === 'string' && c.createdAt
@@ -223,7 +223,7 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
 /** Валидирует список ID друзей, на которых подписан пользователь */
 export function sanitizeFollowingIds(value: unknown): string[] {
   const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
-  if (!Array.isArray(value)) return [...DEFAULT_FOLLOWING_IDS]
+  if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
 }
@@ -234,7 +234,7 @@ export function sanitizeFollowingIds(value: unknown): string[] {
  */
 export function sanitizeViewedStoryIds(value: unknown): string[] {
   const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
-  if (!Array.isArray(value)) return [...DEFAULT_VIEWED_STORY_IDS]
+  if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
 }
@@ -246,7 +246,7 @@ export function sanitizeViewedStoryIds(value: unknown): string[] {
  */
 export function sanitizeFriendIds(value: unknown): string[] {
   const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
-  if (!Array.isArray(value)) return [...DEFAULT_FRIEND_IDS]
+  if (!Array.isArray(value)) return []
   const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
   return Array.from(new Set(clean))
 }
@@ -417,37 +417,31 @@ export function sanitizeSocialLinks(value: unknown): ProfileSocialLink[] {
 }
 
 export const DEFAULT_PROFILE: OgonekProfile = {
-  displayName: 'Алексей Черна',
-  username: 'cernavation',
-  bio: 'Серийный предприниматель & Барефут-марафонец. Основатель Memernity. Дневник гордости и благодарности — 719 дней осознанности.',
-  city: 'Moldova',
-  website: 'https://memernity.com',
-  joinedLabel: 'August 2024',
+  displayName: '',
+  username: '',
+  bio: '',
+  city: '',
+  website: '',
+  joinedLabel: '',
   avatarImage: null,
   avatarColor: 'linear-gradient(145deg, #7f95a3 0%, #7f95a3 35%, #d9ae8b 36%, #d9ae8b 66%, #29384b 67%)',
   bannerImage: null,
+  coverUrl: null,
   bannerPreset: 'night-peaks',
-  socialLinks: [
-    { id: 'link-website', platform: 'website', label: 'Memernity', url: 'https://memernity.com' },
-    { id: 'link-telegram', platform: 'telegram', label: 'Telegram', url: 'https://t.me/cernavation' },
-  ],
-  monthlyGoal: 'Закрыть сделку с Alibaba и вывести партнёрство на новый уровень',
-  monthlyGoalUpdatedAtISO: '2026-10-01T09:00:00.000Z',
-  verified: true,
-  level: 3,
+  socialLinks: [],
+  monthlyGoal: '',
+  monthlyGoalUpdatedAtISO: '',
+  verified: false,
+  level: 1,
   levelChangedAtISO: null,
-  showDifficultyLevel: true,
-  levelHistory: [
-    {
-      id: 'lh-initial',
-      fromLevel: 1,
-      toLevel: 3,
-      changedAtISO: '2026-10-12T10:00:00.000Z',
-    },
-  ],
+  showDifficultyLevel: false,
+  levelHistory: [],
   telegramChatId: null,
   reminderTimes: ['21:00'],
-  inLeaderboard: true,
+  inLeaderboard: false,
+  age: null,
+  isAnonymous: false,
+  privacy: {},
 }
 
 /** Валидирует и восстанавливает профиль пользователя из хранилища */
@@ -462,32 +456,33 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     typeof v === 'string' && v.trim() ? v.trim().slice(0, 2000) : null
 
   return {
-    displayName: str(p.displayName, DEFAULT_PROFILE.displayName, 80),
-    username: str(p.username, DEFAULT_PROFILE.username, 40).replace(/^@/, ''),
-    bio: typeof p.bio === 'string' ? p.bio.slice(0, 400) : DEFAULT_PROFILE.bio,
-    city: typeof p.city === 'string' ? p.city.slice(0, 80) : DEFAULT_PROFILE.city,
-    website: typeof p.website === 'string' ? p.website.slice(0, 300) : DEFAULT_PROFILE.website,
-    joinedLabel: str(p.joinedLabel, DEFAULT_PROFILE.joinedLabel, 40),
+    displayName: str(p.displayName, '', 80),
+    username: str(p.username, '', 40).replace(/^@/, ''),
+    bio: typeof p.bio === 'string' ? p.bio.slice(0, 400) : '',
+    city: typeof p.city === 'string' ? p.city.slice(0, 80) : '',
+    website: typeof p.website === 'string' ? p.website.slice(0, 300) : '',
+    joinedLabel: str(p.joinedLabel, '', 40),
     avatarImage: image(p.avatarImage),
     avatarColor: str(p.avatarColor, DEFAULT_PROFILE.avatarColor, 300),
     bannerImage: image(p.bannerImage),
-    bannerPreset: str(p.bannerPreset, DEFAULT_PROFILE.bannerPreset, 40),
+    coverUrl: image(p.coverUrl ?? p.bannerImage),
+    bannerPreset: str(p.bannerPreset, 'night-peaks', 40),
     socialLinks: sanitizeSocialLinks(p.socialLinks),
     monthlyGoal:
-      typeof p.monthlyGoal === 'string' ? p.monthlyGoal.slice(0, 200) : DEFAULT_PROFILE.monthlyGoal,
-    monthlyGoalUpdatedAtISO: str(
-      p.monthlyGoalUpdatedAtISO,
-      DEFAULT_PROFILE.monthlyGoalUpdatedAtISO,
-      40
-    ),
-    verified: typeof p.verified === 'boolean' ? p.verified : DEFAULT_PROFILE.verified,
-    level: typeof p.level === 'number' && p.level >= 1 && p.level <= 5 ? p.level : 3,
+      typeof p.monthlyGoal === 'string' ? p.monthlyGoal.slice(0, 200) : '',
+    monthlyGoalUpdatedAtISO:
+      typeof p.monthlyGoalUpdatedAtISO === 'string' ? p.monthlyGoalUpdatedAtISO.slice(0, 40) : '',
+    verified: typeof p.verified === 'boolean' ? p.verified : false,
+    level: typeof p.level === 'number' && p.level >= 1 && p.level <= 5 ? p.level : 1,
     levelChangedAtISO: typeof p.levelChangedAtISO === 'string' ? p.levelChangedAtISO : null,
-    showDifficultyLevel: typeof p.showDifficultyLevel === 'boolean' ? p.showDifficultyLevel : true,
-    levelHistory: Array.isArray(p.levelHistory) ? p.levelHistory : DEFAULT_PROFILE.levelHistory ?? [],
+    showDifficultyLevel: typeof p.showDifficultyLevel === 'boolean' ? p.showDifficultyLevel : false,
+    levelHistory: Array.isArray(p.levelHistory) ? p.levelHistory : [],
     telegramChatId: typeof p.telegramChatId === 'string' ? p.telegramChatId : null,
     reminderTimes: Array.isArray(p.reminderTimes) ? p.reminderTimes : ['21:00'],
-    inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : true,
+    inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : false,
+    age: typeof p.age === 'number' && Number.isFinite(p.age) && p.age >= 1 && p.age <= 150 ? Math.round(p.age) : null,
+    isAnonymous: typeof p.isAnonymous === 'boolean' ? p.isAnonymous : (typeof (p as any)?.is_anonymous === 'boolean' ? (p as any).is_anonymous : false),
+    privacy: typeof p.privacy === 'object' && p.privacy !== null ? p.privacy : {},
   }
 }
 
@@ -862,18 +857,18 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
               friendIds: sanitizeFriendIds(parsedV3.friendIds),
               incomingFriendRequests: sanitizeFriendRequestIds(
                 parsedV3.incomingFriendRequests,
-                DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+                []
               ),
               outgoingFriendRequests: sanitizeFriendRequestIds(
                 parsedV3.outgoingFriendRequests,
-                DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+                []
               ),
               dismissedSuggestions: sanitizeDismissedSuggestions(parsedV3.dismissedSuggestions),
               exploreFollowingIds: sanitizeExploreFollowingIds(parsedV3.exploreFollowingIds),
               exploreLikedPosts: sanitizeExplorePostIds(parsedV3.exploreLikedPosts),
               exploreSavedPosts: sanitizeExplorePostIds(parsedV3.exploreSavedPosts),
               exploreRecentSearches: sanitizeExploreRecentSearches(parsedV3.exploreRecentSearches),
-              chatThreads: sanitizeChatThreads(parsedV3.chatThreads, DEFAULT_CHAT_THREADS),
+              chatThreads: sanitizeChatThreads(parsedV3.chatThreads, {}),
               chatActiveFriendId: sanitizeChatActiveFriendId(parsedV3.chatActiveFriendId),
               theme: sanitizeTheme(parsedV3.theme ?? persistedApp.theme),
               accent: sanitizeAccent(parsedV3.accent ?? persistedApp.accent),
@@ -1002,18 +997,18 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         friendIds: sanitizeFriendIds(parsed.friendIds),
         incomingFriendRequests: sanitizeFriendRequestIds(
           parsed.incomingFriendRequests,
-          DEFAULT_INCOMING_FRIEND_REQUEST_IDS
+          []
         ),
         outgoingFriendRequests: sanitizeFriendRequestIds(
           parsed.outgoingFriendRequests,
-          DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
+          []
         ),
         dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
         exploreFollowingIds: sanitizeExploreFollowingIds(parsed.exploreFollowingIds),
         exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
         exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
         exploreRecentSearches: sanitizeExploreRecentSearches(parsed.exploreRecentSearches),
-        chatThreads: sanitizeChatThreads(parsed.chatThreads, DEFAULT_CHAT_THREADS),
+        chatThreads: sanitizeChatThreads(parsed.chatThreads, {}),
         chatActiveFriendId: sanitizeChatActiveFriendId(parsed.chatActiveFriendId),
         chatFolders: Array.isArray(parsed.chatFolders) && parsed.chatFolders.length > 0 ? parsed.chatFolders : DEFAULT_CHAT_FOLDERS,
         chatActiveFolderId: typeof parsed.chatActiveFolderId === 'string' ? parsed.chatActiveFolderId : 'all',

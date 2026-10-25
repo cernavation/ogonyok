@@ -1,6 +1,17 @@
 'use client'
 
-import { useCallback, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { getSupabase } from './supabase-client'
+
+export type CurrentUser = {
+  id: string
+  username: string
+  displayName: string
+  avatarImage: string | null
+  avatarColor: string
+  bio: string
+  city: string
+} | null
 import {
   DEMO_ACCOUNT_PASSWORD,
   accountSnapshotFromProfile,
@@ -66,6 +77,7 @@ import {
   sanitizeMorningFocusHistory,
 } from './morning-focus'
 import {
+  DEFAULT_PROFILE,
   DEFAULT_STORE_STATE,
   loadStore,
   saveStore,
@@ -88,6 +100,7 @@ import type {
   AchievementStatus,
   AccentId,
   AppSecurityState,
+  AuthAccount,
   ChatAttachment,
   ChatMessage,
   ChatMessageType,
@@ -166,6 +179,132 @@ import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
 
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
+let hasInitializedSupabaseSync = false
+
+function initSupabaseSessionSync() {
+  if (hasInitializedSupabaseSync || typeof window === 'undefined') return
+  hasInitializedSupabaseSync = true
+
+  try {
+    const client = getSupabase()
+    if (!client) return
+
+    client.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const userId = session.user.id
+        const userMeta = session.user.user_metadata || {}
+        const username = userMeta.username || session.user.email?.split('@')[0] || 'user'
+        const displayName = userMeta.display_name || username
+
+        let avatarImage = cachedState.profile.avatarImage
+        let bannerImage = cachedState.profile.bannerImage
+        let dbProfile: any = null
+
+        try {
+          const res = await client
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single()
+          dbProfile = res.data
+          if (dbProfile) {
+            if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
+            if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+          }
+        } catch {}
+
+        const nowISO = new Date().toISOString()
+        const existing = cachedState.auth.accounts.find((a) => a.id === userId)
+        let account: AuthAccount
+        if (existing) {
+          account = {
+            ...existing,
+            snapshot: {
+              ...existing.snapshot,
+              username,
+              displayName: dbProfile?.display_name || displayName,
+              avatarImage,
+              bannerImage,
+            },
+          }
+        } else {
+          account = createAccount({
+            provider: 'email',
+            displayName,
+            username,
+            email: session.user.email,
+            verified: true,
+            now: new Date(nowISO),
+          })
+          account.id = userId
+          account.snapshot.avatarImage = avatarImage
+          account.snapshot.bannerImage = bannerImage
+        }
+
+        cachedState = {
+          ...cachedState,
+          profile: sanitizeProfile({
+            ...cachedState.profile,
+            username,
+            displayName: account.snapshot.displayName,
+            avatarImage,
+            bannerImage,
+            coverUrl: bannerImage,
+          }),
+          auth: {
+            ...cachedState.auth,
+            accounts: [
+              ...cachedState.auth.accounts.filter(
+                (a) => a.id !== userId && a.snapshot.username?.toLowerCase() !== username.toLowerCase()
+              ),
+              account,
+            ],
+            activeAccountId: userId,
+            signedIn: true,
+            updatedAtISO: nowISO,
+          },
+        }
+        saveStore(cachedState)
+        emitChange()
+      } else {
+        // Если в Supabase сессия отсутствует, а пользователь не залогинен локально
+        if (!cachedState.auth.signedIn || cachedState.auth.accounts.length === 0) {
+          cachedState = {
+            ...cachedState,
+            profile: DEFAULT_PROFILE,
+            auth: {
+              ...cachedState.auth,
+              signedIn: false,
+              activeAccountId: null,
+              accounts: [],
+            },
+          }
+          saveStore(cachedState)
+          emitChange()
+        }
+      }
+    }).catch(() => {})
+
+    client.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        cachedState = {
+          ...cachedState,
+          profile: DEFAULT_PROFILE,
+          auth: {
+            ...cachedState.auth,
+            signedIn: false,
+            activeAccountId: null,
+            accounts: [],
+          },
+        }
+        saveStore(cachedState)
+        emitChange()
+      }
+    })
+  } catch (err) {
+    console.warn('[Ogonek] Supabase session sync failed to initialize:', err)
+  }
+}
 
 function getSnapshot(): OgonekStoreState {
   if (typeof window === 'undefined') {
@@ -176,6 +315,7 @@ function getSnapshot(): OgonekStoreState {
     cachedState = migrateSplitDays(cachedState)
     cachedState = ensureDemoComments(cachedState)
     isInitialized = true
+    initSupabaseSessionSync()
   }
   return cachedState
 }
@@ -329,6 +469,24 @@ export type AuthResult = {
 
 export function useOgonekStore() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+
+  const currentUser: CurrentUser = useMemo(() => {
+    if (!state.auth.signedIn || !state.auth.activeAccountId) return null
+    const active = state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)
+    if (!active) return null
+    const username = active.snapshot?.username || state.profile.username
+    const displayName = active.snapshot?.displayName || state.profile.displayName
+    if (!username && !displayName) return null
+    return {
+      id: active.id,
+      username: username || 'user',
+      displayName: displayName || username || 'Пользователь',
+      avatarImage: active.snapshot?.avatarImage ?? state.profile.avatarImage ?? null,
+      avatarColor: active.snapshot?.avatarColor ?? state.profile.avatarColor ?? '#ff6b35',
+      bio: active.snapshot?.bio ?? state.profile.bio ?? '',
+      city: active.snapshot?.city ?? state.profile.city ?? '',
+    }
+  }, [state.auth.signedIn, state.auth.activeAccountId, state.auth.accounts, state.profile])
 
   const updateStore = useCallback((updater: (prev: OgonekStoreState) => OgonekStoreState) => {
     const current = getSnapshot()
@@ -1744,6 +1902,38 @@ export function useOgonekStore() {
         // ЭТАП 18: правки профиля пишем и в слепок активного аккаунта,
         // чтобы личность сохранялась при переключении между аккаунтами.
         const activeId = prev.auth.activeAccountId
+        if (activeId && !activeId.startsWith('anon-') && !activeId.startsWith('acct-guest')) {
+          try {
+            const client = getSupabase()
+            if (client) {
+              const privacyPayload = {
+                ...(nextProfile.privacy ?? {}),
+                is_anonymous: Boolean(nextProfile.isAnonymous),
+              }
+              const payload: Record<string, any> = {
+                id: activeId,
+                display_name: nextProfile.displayName,
+                username: nextProfile.username,
+                bio: nextProfile.bio,
+                city: nextProfile.city,
+                avatar_image: nextProfile.avatarImage,
+                banner_image: nextProfile.bannerImage,
+                privacy: privacyPayload,
+                updated_at: new Date().toISOString(),
+              }
+              if (nextProfile.age !== undefined && nextProfile.age !== null) {
+                payload.age = nextProfile.age
+              }
+              const pQuery = (client.from('profiles') as any).upsert(
+                payload,
+                { onConflict: 'id' }
+              )
+              Promise.resolve(pQuery).catch((err: any) => {
+                console.warn('[Ogonek] Upsert profile error:', err)
+              })
+            }
+          } catch {}
+        }
         const accounts = activeId
           ? prev.auth.accounts.map((a) =>
               a.id === activeId ? { ...a, snapshot: accountSnapshotFromProfile(nextProfile) } : a
@@ -2592,17 +2782,33 @@ export function useOgonekStore() {
   )
 
   /**
-   * Начать (или открыть) диалог с другом: гарантирует тред в сторе и
-   * делает его активным. Возвращает true, если собеседник существует.
+   * Начать (или открыть) диалог с собеседником: гарантирует тред в сторе и
+   * делает его активным. Поддерживает как друзей, так и реальных пользователей Supabase.
    */
   const startChatWithFriend = useCallback(
-    (friendId: string): boolean => {
-      if (!friendId || !getFriend(friendId)) return false
+    (
+      friendId: string,
+      peerMeta?: { name?: string; username?: string; avatarUrl?: string; initials?: string }
+    ): boolean => {
+      if (!friendId) return false
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
-        const nextThreads = threads[friendId]
-          ? threads
-          : { ...threads, [friendId]: emptyThread() }
+        const existing = threads[friendId]
+        const nextThreads = existing
+          ? {
+              ...threads,
+              [friendId]: {
+                ...existing,
+                peerMeta: peerMeta || existing.peerMeta,
+              },
+            }
+          : {
+              ...threads,
+              [friendId]: {
+                ...emptyThread(),
+                peerMeta: peerMeta || undefined,
+              },
+            }
         return { ...prev, chatThreads: nextThreads, chatActiveFriendId: friendId }
       })
       return true
@@ -2703,8 +2909,7 @@ export function useOgonekStore() {
         type?: ChatMessageType
       }
     ): ChatMessage | null => {
-      const isGroup = isGroupThread(threadOf(getSnapshot().chatThreads ?? {}, friendId), friendId)
-      if (!friendId || (!getFriend(friendId) && !isGroup && friendId !== 'saved-messages')) return null
+      if (!friendId) return null
       const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
       if (!clean && !attachment && !extra?.media && !extra?.poll) return null
 
@@ -2745,6 +2950,45 @@ export function useOgonekStore() {
           },
         }
       })
+
+      // Запись строки в таблицу public.direct_messages Supabase
+      if (!isScheduled) {
+        try {
+          const client = getSupabase()
+          if (client) {
+            client.auth.getSession().then(({ data: sessData }) => {
+              const currentUserId = sessData?.session?.user?.id || getSnapshot().auth?.activeAccountId
+              if (currentUserId && !currentUserId.startsWith('anon-')) {
+                Promise.resolve(
+                  client
+                    .from('direct_messages')
+                    .insert({
+                      user_id: currentUserId,
+                      client_id: message.id,
+                      thread_key: friendId,
+                      author_id: currentUserId,
+                      recipient_id: friendId,
+                      body: clean,
+                      attachment: attachment ?? null,
+                      reactions: [],
+                      is_read: false,
+                      is_system: Boolean(extra?.type === 'system'),
+                      sent_at: message.createdAtISO,
+                    })
+                )
+                  .then(({ error }: any) => {
+                    if (error) {
+                      console.warn('[Ogonek] Direct message insert error:', error.message)
+                    }
+                  })
+                  .catch((err: any) => console.warn('[Ogonek] Direct message insert error:', err))
+              }
+            }).catch(() => {})
+          }
+        } catch (e) {
+          console.warn('[Ogonek] Direct message insert error:', e)
+        }
+      }
 
       if (!isScheduled && friendId !== 'saved-messages') {
         scheduleChatAutoReply(friendId, clean, Boolean(attachment || extra?.media))
@@ -3487,7 +3731,7 @@ export function useOgonekStore() {
           passwordSalt: salt,
           existingIds: prev.auth.accounts.map((a) => a.id),
           takenUsernames: takenUsernamesOf(prev.auth.accounts),
-          verified: true,
+          verified: false,
           now: new Date(nowISO),
         })
         account.signInCount = 1
@@ -3612,7 +3856,7 @@ export function useOgonekStore() {
           email,
           existingIds: prev.auth.accounts.map((a) => a.id),
           takenUsernames: takenUsernamesOf(prev.auth.accounts),
-          verified: true,
+          verified: false,
           now: new Date(nowISO),
         })
         account.signInCount = 1
@@ -3690,18 +3934,156 @@ export function useOgonekStore() {
       : { ok: false, error: 'Не удалось войти как гость' }
   }, [activateAccount, updateStore])
 
+  /**
+   * Применение сессии аутентифицированного пользователя из Supabase Auth:
+   * сохраняет реальный ID, никнейм, display_name и медиа пользователя в стейт и профиль.
+   */
+  const applyUserSession = useCallback(
+    async (params: {
+      userId: string
+      username: string
+      displayName?: string
+      email?: string
+      avatarUrl?: string | null
+      bannerUrl?: string | null
+    }): Promise<{ ok: boolean; accountId: string }> => {
+      const cleanNick = (params.username || 'user').trim().toLowerCase().replace(/^@/, '')
+      const displayName = (params.displayName || cleanNick).trim()
+      const email = params.email || `${cleanNick}@ogonek.local`
+      const nowISO = new Date().toISOString()
+      const accountId = params.userId || `acct-${cleanNick}`
+
+      // Загружаем актуальные аватарку и баннер из базы данных Supabase
+      let avatarImage = params.avatarUrl ?? null
+      let bannerImage = params.bannerUrl ?? null
+      try {
+        const client = getSupabase()
+        if (client && params.userId) {
+          const { data: dbProfile } = await client
+            .from('profiles')
+            .select('avatar_image, banner_image, display_name, username')
+            .eq('id', params.userId)
+            .single()
+          if (dbProfile) {
+            if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
+            if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch remote profile on applyUserSession:', err)
+      }
+
+      updateStore((prev) => {
+        const existing = prev.auth.accounts.find(
+          (a) => a.id === accountId || a.snapshot.username?.toLowerCase() === cleanNick
+        )
+
+        let account: AuthAccount
+        if (existing) {
+          account = {
+            ...existing,
+            id: accountId,
+            email,
+            lastActiveISO: nowISO,
+            signInCount: existing.signInCount + 1,
+            snapshot: {
+              ...existing.snapshot,
+              username: cleanNick,
+              displayName,
+              avatarImage: avatarImage || existing.snapshot.avatarImage,
+              bannerImage: bannerImage || existing.snapshot.bannerImage,
+            },
+          }
+        } else {
+          account = createAccount({
+            provider: 'email',
+            displayName,
+            username: cleanNick,
+            email,
+            verified: false,
+            now: new Date(nowISO),
+          })
+          account.id = accountId
+          account.signInCount = 1
+          account.lastActiveISO = nowISO
+          if (avatarImage) account.snapshot.avatarImage = avatarImage
+          if (bannerImage) account.snapshot.bannerImage = bannerImage
+        }
+
+        const isOwner = cleanNick === 'cernavation'
+        const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
+
+        return {
+          ...prev,
+          profile: sanitizeProfile({
+            ...baseProfile,
+            ...profilePatchFromAccount(account),
+            username: cleanNick,
+            displayName,
+            avatarImage: account.snapshot.avatarImage,
+            bannerImage: account.snapshot.bannerImage,
+            coverUrl: account.snapshot.bannerImage,
+            verified: false,
+            level: 1,
+            difficultyLevel: 1,
+            monthlyGoal: existing ? baseProfile.monthlyGoal : '',
+            bio: account.snapshot.bio || '',
+            city: account.snapshot.city || '',
+            website: existing ? baseProfile.website : '',
+          }),
+          // Для нового пользователя (не cernavation) лента чистая и готова к первому дню
+          days: isOwner
+            ? prev.days
+            : prev.days.length > 0 && prev.auth.accounts.some((a) => a.id === accountId)
+              ? prev.days
+              : [],
+          auth: {
+            ...prev.auth,
+            accounts: [
+              ...prev.auth.accounts.filter(
+                (a) => a.id !== account.id && a.snapshot.username?.toLowerCase() !== cleanNick
+              ),
+              account,
+            ],
+            activeAccountId: account.id,
+            signedIn: true,
+            signInCount: prev.auth.signInCount + 1,
+            failedAttempts: 0,
+            lockedUntilISO: null,
+            lastAuthAtISO: nowISO,
+            updatedAtISO: nowISO,
+          },
+        }
+      })
+
+      return { ok: true, accountId }
+    },
+    [updateStore]
+  )
+
   /** Быстрое переключение на другой аккаунт (без пароля — устройство доверенное) */
   const switchAccount = useCallback(
     (accountId: string): boolean => activateAccount(accountId, true),
     [activateAccount]
   )
 
-  /** Выход из аккаунта: список аккаунтов и активный id сохраняются */
+  /** Выход из аккаунта: очищает сессию, ставит currentUser = null и переводит на экран входа */
   const signOut = useCallback(() => {
     const nowISO = new Date().toISOString()
+    try {
+      const client = getSupabase()
+      if (client) client.auth.signOut().catch(() => {})
+    } catch {}
     updateStore((prev) => ({
       ...prev,
-      auth: { ...prev.auth, signedIn: false, updatedAtISO: nowISO },
+      profile: DEFAULT_PROFILE,
+      auth: {
+        ...prev.auth,
+        signedIn: false,
+        activeAccountId: null,
+        accounts: [],
+        updatedAtISO: nowISO,
+      },
     }))
   }, [updateStore])
 
@@ -3778,6 +4160,7 @@ export function useOgonekStore() {
 
   return {
     state,
+    currentUser,
     isHydrated: typeof window !== 'undefined',
     addDay,
     addNewDay,
@@ -3922,6 +4305,7 @@ export function useOgonekStore() {
     clearComments,
     registerWithEmail,
     signInWithEmail,
+    applyUserSession,
     signInWithGoogle,
     continueAsGuest,
     switchAccount,

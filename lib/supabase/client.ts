@@ -12,12 +12,12 @@ export function isSupabaseConfigured(): boolean {
   )
 }
 
-export function usernameToEmail(username: string): string {
+export function usernameToEmail(username: string, domain: string = 'ogonek.local'): string {
   const clean = (username || '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, '')
-  return `${clean || 'user'}@ogonek.app`
+  return `${clean || 'user'}@${domain}`
 }
 
 export function emailToUsername(email: string): string {
@@ -125,8 +125,8 @@ export async function signInWithUsername(params: {
   })
 
   if (error) {
-    if (error.message.includes('Invalid login credentials')) {
-      return { ok: false, error: 'Неверный никнейм или пароль' }
+    if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
+      return { ok: false, error: 'Неверный логин или пароль' }
     }
     return { ok: false, error: error.message }
   }

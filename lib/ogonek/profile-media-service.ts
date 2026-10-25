@@ -196,49 +196,47 @@ export async function uploadProfileMedia(params: {
       uid = 'anon-' + Math.random().toString(36).slice(2, 10)
     }
 
-    const storagePath = `${folder}/${uid}/${timestamp}.webp`
+    const ext = 'jpg'
+    const storagePath = `${folder}/${uid}-${timestamp}.${ext}`
 
     const { error: uploadError } = await supabase.storage
       .from('ogonyok-media')
       .upload(storagePath, blob, {
-        contentType: 'image/webp',
+        contentType: blob.type || 'image/jpeg',
         cacheControl: '31536000',
         upsert: true,
       })
 
     if (uploadError) {
-      console.warn(`[ProfileMedia] Storage upload failed: ${uploadError.message}. Using local preview.`)
+      console.error(`[ProfileMedia] Storage upload failed:`, uploadError)
       return {
-        ok: true,
-        url: dataUrl,
-        fallbackApplied: true,
+        ok: false,
+        error: uploadError.message || 'Ошибка загрузки в хранилище Supabase',
       }
     }
 
-    // 3. Получение publicUrl с cache-busting (?v=timestamp)
+    // 3. Получение publicUrl
     const { data: pubData } = supabase.storage.from('ogonyok-media').getPublicUrl(storagePath)
-    const publicUrlWithBust = `${pubData.publicUrl}?v=${timestamp}`
+    const publicUrl = pubData?.publicUrl || ''
 
     // 4. Запись в public.profiles (avatar_image или banner_image)
     if (uid && !uid.startsWith('anon-')) {
-      const updatePayload =
+      const upsertPayload: Record<string, any> =
         kind === 'avatar'
-          ? { avatar_image: publicUrlWithBust, updated_at: new Date().toISOString() }
-          : { banner_image: publicUrlWithBust, updated_at: new Date().toISOString() }
+          ? { id: uid, avatar_image: publicUrl, updated_at: new Date().toISOString() }
+          : { id: uid, banner_image: publicUrl, updated_at: new Date().toISOString() }
 
       try {
-        await supabase
-          .from('profiles')
-          .update(updatePayload)
-          .eq('id', uid)
+        await (supabase.from('profiles') as any)
+          .upsert(upsertPayload, { onConflict: 'id' })
       } catch (err) {
-        console.warn('[ProfileMedia] Profiles table update notice:', err)
+        console.warn('[ProfileMedia] Profiles table upsert notice:', err)
       }
     }
 
     return {
       ok: true,
-      url: publicUrlWithBust,
+      url: publicUrl,
     }
   } catch (err: any) {
     return {

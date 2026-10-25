@@ -58,8 +58,8 @@ export const SUPPORT_PERSONAS: Record<CommentPersona, PersonaMeta> = {
   me: {
     id: 'me',
     label: 'Ты',
-    author: 'Alexei Cerna',
-    initials: 'AC',
+    author: 'Ты',
+    initials: 'Я',
     hint: 'Записать от своего имени',
   },
   support: {

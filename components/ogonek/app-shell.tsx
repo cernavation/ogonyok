@@ -29,6 +29,7 @@ import { ProfileView } from './views/profile-view'
 import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
+import { PremiumView } from './views/premium-view'
 import { GuestLanding } from './landing/guest-landing'
 import { ChatWindow, FullscreenMessenger } from './messenger'
 
@@ -52,6 +53,7 @@ export function AppShell() {
 
   const {
     state,
+    currentUser,
     addNewDay,
     updateDayWithPayload,
     saveMorningIntentions,
@@ -433,6 +435,7 @@ export function AppShell() {
       home: (
         <HomeView
           userId={state.auth.activeAccountId ?? undefined}
+          currentUsername={state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)?.snapshot?.username || state.profile.username}
           days={state.days}
           morningIntentions={state.morningIntentions}
           morningFocusHistory={state.morningFocusHistory}
@@ -484,6 +487,15 @@ export function AppShell() {
           onAddEvidence={addEvidenceItem}
           onNotify={notify}
           soundEnabled={state.soundEnabled}
+        />
+      ),
+      premium: (
+        <PremiumView
+          onNavigate={navigate}
+          onUpdateProfile={updateProfile}
+          onNotify={notify}
+          soundEnabled={state.soundEnabled}
+          verified={state.profile.verified}
         />
       ),
       analytics: (
@@ -579,8 +591,28 @@ export function AppShell() {
     ]
   )
 
-  // Неавторизованный гость видит ТОЛЬКО лендинг в стиле X.com (Требование 2)
-  if (view === 'landing' || (!state.auth.signedIn && process.env.NEXT_PUBLIC_DEMO_MODE !== '1')) {
+  // Если пользователь не вошёл (currentUser === null) — показываем экран авторизации AuthForm
+  if (!currentUser) {
+    return (
+      <TooltipProvider>
+        <AppearanceProvider
+          theme={state.theme}
+          accent={state.accent}
+          fontScale={state.fontScale}
+          feedDensity={state.feedDensity}
+        />
+        <AuthScreen
+          onAuthenticated={() => {
+            navigate('home')
+          }}
+          onNotify={notify}
+        />
+        <Toast message={toast} />
+      </TooltipProvider>
+    )
+  }
+
+  if (view === 'landing') {
     return (
       <GuestLanding
         onEnterDemo={() => {
@@ -658,6 +690,7 @@ export function AppShell() {
         <AnimatePresence>
           {composer && (
             <Composer
+              key={editingDay ? `composer-day-${editingDay.id}` : 'composer-day-new'}
               initialDraft={state.composerDraft}
               editingDay={editingDay}
               nextDayId={editingDay ? undefined : getNextDayId()}

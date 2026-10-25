@@ -17,10 +17,13 @@ import { chromium, webkit, firefox } from 'playwright-core'
 import fs from 'fs'
 import path from 'path'
 
+const outdirArg = process.argv.find((a) => a.startsWith('--outdir='))?.split('=')[1]
+const outputDirResolved = path.resolve(outdirArg || process.env.EXPLORE_OUTPUT_DIR || 'explore')
+
 export const CONFIG = {
   baseUrl: process.env.AUDIT_BASE_URL || 'http://localhost:3000',
-  outputDir: path.resolve('explore'),
-  reportFile: path.resolve('explore/BASELINE.md'),
+  outputDir: outputDirResolved,
+  reportFile: path.join(outputDirResolved, 'BASELINE.md'),
   fastMode: process.argv.includes('--fast'),
 
   viewports: [
@@ -97,13 +100,12 @@ async function resetModals(page) {
   } catch {}
 }
 
-async function prepareAuth(context) {
-  await context.addInitScript(() => {
+async function prepareAuth(context, themeId = 'x-black') {
+  await context.addInitScript((targetTheme) => {
     try {
-      const app = JSON.parse(localStorage.getItem('ogonek.appearance.v1') || '{}')
       localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
-        theme: app.theme || 'x-black',
-        accent: app.accent || 'flame',
+        theme: targetTheme || 'x-black',
+        accent: 'flame',
         fontScale: 'regular',
         feedDensity: 'cozy',
       }))
@@ -123,7 +125,7 @@ async function prepareAuth(context) {
       }
       localStorage.setItem('ogonek.v2', JSON.stringify(st))
     } catch {}
-  })
+  }, themeId)
 }
 
 export async function runUiExplore() {
@@ -171,7 +173,7 @@ export async function runUiExplore() {
           ignoreHTTPSErrors: true,
         })
 
-        await prepareAuth(context)
+        await prepareAuth(context, theme.id)
         const page = await context.newPage()
 
         page.on('pageerror', (err) => {
@@ -202,16 +204,22 @@ export async function runUiExplore() {
               viewport: { width: viewport.width, height: viewport.height },
               deviceScaleFactor: 2,
             })
-            await guestContext.addInitScript(() => {
+            await guestContext.addInitScript((targetTheme) => {
               try {
+                localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
+                  theme: targetTheme || 'x-black',
+                  accent: 'flame',
+                  fontScale: 'regular',
+                  feedDensity: 'cozy',
+                }))
                 const st = JSON.parse(localStorage.getItem('ogonek.v2') || '{}')
                 st.auth = { ...(st.auth || {}), signedIn: false }
                 localStorage.setItem('ogonek.v2', JSON.stringify(st))
               } catch {}
-            })
+            }, theme.id)
             const guestPage = await guestContext.newPage()
             await guestPage.goto(CONFIG.baseUrl + '/?view=landing', { waitUntil: 'domcontentloaded' }).catch(() => {})
-            await guestPage.waitForTimeout(400)
+            await guestPage.waitForTimeout(600)
             const shotPath = path.join(deviceDir, `${stateId}.png`)
             await guestPage.screenshot({ path: shotPath })
             await guestContext.close()

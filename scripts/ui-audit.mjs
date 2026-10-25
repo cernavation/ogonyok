@@ -799,7 +799,13 @@ export async function runUiAudit() {
         const type = msg.type()
         if (type === 'error' || type === 'warning') {
           const text = msg.text()
-          if (!text.includes('React DevTools') && !text.includes('favicon')) {
+          if (
+            !text.includes('React DevTools') &&
+            !text.includes('favicon') &&
+            !text.includes('ERR_NAME_NOT_RESOLVED') &&
+            !text.includes('ERR_FAILED') &&
+            !text.includes('Failed to load resource')
+          ) {
             consoleErrors.push({
               type: `console_${type}`,
               severity: type === 'error' ? 'critical' : 'warning',

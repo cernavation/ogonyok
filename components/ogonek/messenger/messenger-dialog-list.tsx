@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   Archive,
+  ArrowLeft,
   Check,
   CheckCheck,
   ChevronDown,
@@ -88,6 +89,7 @@ export function MessengerDialogList({
         return (
           title.toLowerCase().includes(q) ||
           (friend?.username && friend.username.toLowerCase().includes(q)) ||
+          (thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
           last.toLowerCase().includes(q)
         )
       })
@@ -130,11 +132,12 @@ export function MessengerDialogList({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text)] hover:bg-[var(--bg-hover)] active:scale-95 transition-all -ml-1 shrink-0"
-              aria-label="На главную"
-              title="На главную"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border)] transition-colors shrink-0 -ml-1"
+              aria-label="Назад в ленту"
+              title="Назад в ленту"
             >
-              <Home size={20} className="text-[var(--accent)]" />
+              <ArrowLeft size={15} />
+              <span>← Назад в ленту</span>
             </button>
           )}
           <h1 className="text-[19px] sm:text-[20px] font-[800] text-[var(--text)] tracking-tight shrink-0">Чаты</h1>

@@ -1,4 +1,5 @@
 import { evaluatePrideItemHeuristic } from './evaluate-heuristic.ts'
+import { sanitizePostgresString } from './supabase-sync.ts'
 import type { Day, PrideEntry } from './types.ts'
 
 export interface GordzaRawItem {
@@ -80,7 +81,7 @@ export function migrateGordzaItems(
 
     // Convert pride entries
     const prideEntries: PrideEntry[] = (prideItem?.entries || []).map((e, idx) => {
-      const text = (e.text || '').trim()
+      const text = sanitizePostgresString(e.text || '')
       const rawRating = parseFloat(String(e.rating ?? ''))
       const scale = isNaN(rawRating) ? 7 : Math.min(10, Math.max(1, Math.round(rawRating)))
 
@@ -97,7 +98,7 @@ export function migrateGordzaItems(
 
     // Convert gratitudes
     const gratitudes: string[] = (gratItem?.entries || [])
-      .map((e) => (e.text || '').trim())
+      .map((e) => sanitizePostgresString(e.text || ''))
       .filter((t) => t.length > 0)
 
     // Map tags

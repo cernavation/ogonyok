@@ -26,11 +26,7 @@ type Props = {
   soundEnabled?: boolean
 }
 
-function initialsFrom(name: string): string {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean).slice(0, 2)
-  if (parts.length === 0) return 'Я'
-  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('')
-}
+import { getInitials } from '@/lib/ogonek/initials'
 
 export function StoryComposerModal({
   context,
@@ -97,7 +93,7 @@ export function StoryComposerModal({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={myAvatarSrc} alt="" />
                   ) : (
-                    initialsFrom(displayName)
+                    getInitials(displayName)
                   )}
                 </span>
               </span>
