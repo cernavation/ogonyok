@@ -134,6 +134,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     e.preventDefault()
     if (busy) return
 
+    const cleanUsername = username.replace(/^@+/, '').trim().toLowerCase()
+    const targetNick = cleanUsername
+
     if (!usernameCheck.valid) {
       setError(usernameCheck.error || 'Укажи корректный ник')
       return
@@ -147,8 +150,6 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       return
     }
 
-    const targetNick = usernameCheck.clean
-
     playClick(sound)
     setBusy(true)
     setError(null)
@@ -160,7 +161,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
         displayName: '',
       })
       if (!res.ok) {
-        setError(res.error || 'Ошибка при регистрации')
+        const authError = (res as any).error
+        console.error('[AUTH_ERROR_FULL]:', authError)
+        setError(typeof authError === 'object' && authError !== null ? (authError.message || JSON.stringify(authError)) : (authError || 'Ошибка при регистрации'))
         return
       }
 
@@ -169,7 +172,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       setRegisteredUsername(targetNick)
       setRegistrationStep(2)
     } catch (err: any) {
-      setError(err?.message || 'Ошибка подключения к серверу авторизации')
+      console.error('[AUTH_ERROR_FULL]:', err)
+      setError(err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err)))
     } finally {
       setBusy(false)
     }
@@ -226,6 +230,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     e.preventDefault()
     if (busy) return
 
+    const cleanUsername = username.replace(/^@+/, '').trim().toLowerCase()
+    const targetNick = cleanUsername
+
     if (!usernameCheck.valid) {
       setError(usernameCheck.error || 'Укажи корректный ник')
       return
@@ -235,7 +242,6 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       return
     }
 
-    const targetNick = usernameCheck.clean
     playClick(sound)
     setBusy(true)
     setError(null)
@@ -243,7 +249,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     try {
       const res = await signInWithUsername({ username: targetNick, password })
       if (!res.ok) {
-        setError(res.error || 'Неверный логин или пароль')
+        const authError = (res as any).error
+        console.error('[AUTH_ERROR_FULL]:', authError)
+        setError(typeof authError === 'object' && authError !== null ? (authError.message || JSON.stringify(authError)) : (authError || 'Неверный логин или пароль'))
         return
       }
 
@@ -257,7 +265,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
 
       finish(userId, `С возвращением, @${targetNick}!`)
     } catch (err: any) {
-      setError(err?.message || 'Ошибка подключения к серверу авторизации')
+      console.error('[AUTH_ERROR_FULL]:', err)
+      setError(err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err)))
     } finally {
       setBusy(false)
     }
@@ -344,8 +353,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                 value={username}
                 placeholder="alex_cerna"
                 onChange={(e) => {
-                  const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')
-                  setUsername(clean)
+                  const cleanUsername = e.target.value.replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+                  setUsername(cleanUsername)
                   if (error) setError(null)
                 }}
                 className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors font-mono"
@@ -452,8 +461,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                 value={username}
                 placeholder="alex_cerna"
                 onChange={(e) => {
-                  const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '')
-                  setUsername(clean)
+                  const cleanUsername = e.target.value.replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+                  setUsername(cleanUsername)
                   if (error) setError(null)
                 }}
                 className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors font-mono"
@@ -732,6 +741,11 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
           </button>
         </div>
       )}
+
+      {/* Диагностическая строка Supabase конфигурации */}
+      <div className="mt-4 pt-3 border-t border-[var(--border)]/40 text-center font-mono text-[11px] text-[#71767b] break-all select-all">
+        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT_SET'} | Ref: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'OK' : 'MISSING'}
+      </div>
     </div>
   )
 }

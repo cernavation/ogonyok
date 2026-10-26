@@ -60,10 +60,12 @@ export async function signUpWithUsername(params: {
 }): Promise<{ ok: boolean; user?: any; error?: string }> {
   const client = getSupabase()
   if (!client) {
-    return { ok: false, error: 'Supabase не настроен. Подключите базу данных.' }
+    const errMsg = 'Supabase не настроен. Подключите базу данных.'
+    console.error('[AUTH_ERROR_FULL]:', errMsg)
+    return { ok: false, error: errMsg }
   }
 
-  const cleanNick = params.username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+  const cleanNick = (params.username || '').replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
   if (cleanNick.length < 3) {
     return { ok: false, error: 'Никнейм должен содержать минимум 3 символа (a-z, 0-9, _, -)' }
   }
@@ -75,26 +77,29 @@ export async function signUpWithUsername(params: {
   const level = Math.max(1, Math.min(5, params.level || 3))
   const displayName = (params.displayName || cleanNick).trim()
 
-  const { data, error } = await client.auth.signUp({
-    email,
-    password: params.password,
-    options: {
-      data: {
-        username: cleanNick,
-        display_name: displayName,
-        level,
+  try {
+    const { data, error } = await client.auth.signUp({
+      email,
+      password: params.password,
+      options: {
+        data: {
+          username: cleanNick,
+          display_name: displayName,
+          level,
+        },
       },
-    },
-  })
+    })
 
-  if (error) {
-    if (error.message.includes('already registered')) {
-      return { ok: false, error: 'Пользователь с таким никнеймом уже зарегистрирован' }
+    if (error) {
+      console.error('[AUTH_ERROR_FULL]:', error)
+      return { ok: false, error: error.message || JSON.stringify(error) }
     }
-    return { ok: false, error: error.message }
-  }
 
-  return { ok: true, user: data.user }
+    return { ok: true, user: data.user }
+  } catch (err: any) {
+    console.error('[AUTH_ERROR_FULL]:', err)
+    return { ok: false, error: err?.message || JSON.stringify(err) }
+  }
 }
 
 /**
@@ -106,10 +111,12 @@ export async function signInWithUsername(params: {
 }): Promise<{ ok: boolean; user?: any; session?: any; error?: string }> {
   const client = getSupabase()
   if (!client) {
-    return { ok: false, error: 'Supabase не настроен. Подключите базу данных.' }
+    const errMsg = 'Supabase не настроен. Подключите базу данных.'
+    console.error('[AUTH_ERROR_FULL]:', errMsg)
+    return { ok: false, error: errMsg }
   }
 
-  const cleanNick = params.username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+  const cleanNick = (params.username || '').replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
   if (!cleanNick) {
     return { ok: false, error: 'Введите никнейм' }
   }
@@ -119,19 +126,22 @@ export async function signInWithUsername(params: {
 
   const email = usernameToEmail(cleanNick)
 
-  const { data, error } = await client.auth.signInWithPassword({
-    email,
-    password: params.password,
-  })
+  try {
+    const { data, error } = await client.auth.signInWithPassword({
+      email,
+      password: params.password,
+    })
 
-  if (error) {
-    if (error.message.includes('Invalid login credentials') || error.message.includes('invalid_credentials')) {
-      return { ok: false, error: 'Неверный логин или пароль' }
+    if (error) {
+      console.error('[AUTH_ERROR_FULL]:', error)
+      return { ok: false, error: error.message || JSON.stringify(error) }
     }
-    return { ok: false, error: error.message }
-  }
 
-  return { ok: true, user: data.user, session: data.session }
+    return { ok: true, user: data.user, session: data.session }
+  } catch (err: any) {
+    console.error('[AUTH_ERROR_FULL]:', err)
+    return { ok: false, error: err?.message || JSON.stringify(err) }
+  }
 }
 
 /**

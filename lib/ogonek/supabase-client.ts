@@ -33,20 +33,20 @@ export function isSupabaseConfigured(): boolean {
 export const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/
 
 export function validateUsername(username: string): { valid: boolean; error?: string; clean: string } {
-  const clean = (username || '').trim().toLowerCase()
-  if (!clean) {
+  const cleanUsername = (username || '').trim().replace(/^@+/, '').trim().toLowerCase()
+  if (!cleanUsername) {
     return { valid: false, error: 'Введи никнейм', clean: '' }
   }
-  if (clean.length < 3) {
-    return { valid: false, error: 'Минимум 3 символа', clean }
+  if (cleanUsername.length < 3) {
+    return { valid: false, error: 'Минимум 3 символа', clean: cleanUsername }
   }
-  if (clean.length > 20) {
-    return { valid: false, error: 'Максимум 20 символов', clean }
+  if (cleanUsername.length > 20) {
+    return { valid: false, error: 'Максимум 20 символов', clean: cleanUsername }
   }
-  if (!USERNAME_REGEX.test(clean)) {
-    return { valid: false, error: 'Только буквы a-z, цифры 0-9 и подчёркивание _', clean }
+  if (!USERNAME_REGEX.test(cleanUsername)) {
+    return { valid: false, error: 'Только буквы a-z, цифры 0-9 и подчёркивание _', clean: cleanUsername }
   }
-  return { valid: true, clean }
+  return { valid: true, clean: cleanUsername }
 }
 
 /**
@@ -78,8 +78,8 @@ export function validatePassword(password: string): { valid: boolean; score: num
  * По умолчанию используется канонический @ogonek.local.
  */
 export function usernameToEmail(username: string, domain: string = 'ogonek.local'): string {
-  const clean = (username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
-  return `${clean || 'user'}@${domain}`
+  const cleanUsername = (username || '').trim().replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+  return `${cleanUsername || 'user'}@${domain}`
 }
 
 export function emailToUsername(email: string): string {
@@ -206,7 +206,8 @@ export async function signUpWithUsername(params: {
   displayName?: string
   level?: number
 }): Promise<{ ok: boolean; user?: User; session?: Session | null; error?: string }> {
-  const validNick = validateUsername(params.username)
+  const cleanUsername = (params.username || '').trim().replace(/^@+/, '').trim().toLowerCase()
+  const validNick = validateUsername(cleanUsername)
   if (!validNick.valid) {
     return { ok: false, error: validNick.error }
   }
@@ -218,16 +219,18 @@ export async function signUpWithUsername(params: {
 
   const client = getSupabase()
   if (!client) {
-    return { ok: false, error: 'База данных не подключена. Добавь ключи Supabase.' }
+    const errMsg = 'База данных не подключена. Добавь ключи Supabase (NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY).'
+    console.error('[AUTH_ERROR_FULL]:', errMsg)
+    return { ok: false, error: errMsg }
   }
 
   // Проверяем доступность ника перед отправкой
-  const available = await isUsernameAvailable(validNick.clean)
+  const available = await isUsernameAvailable(cleanUsername)
   if (!available) {
     return { ok: false, error: 'Этот ник уже занят' }
   }
 
-  const cleanNick = validNick.clean
+  const cleanNick = cleanUsername
   const email = `${cleanNick}@ogonek.local`
   const displayName = (params.displayName || cleanNick).trim()
   const level = Math.max(1, Math.min(5, params.level || 3))
@@ -246,7 +249,7 @@ export async function signUpWithUsername(params: {
     })
 
     // Если Supabase GoTrue отклоняет псевдодомен .local, делаем автоматический фолбэк на .app
-    if (error && (error.message.includes('invalid') || (error as any).code === 'email_address_invalid')) {
+    if (error && (error.message?.includes('invalid') || (error as any).code === 'email_address_invalid')) {
       const fallbackRes = await client.auth.signUp({
         email: `${cleanNick}@ogonek.app`,
         password: params.password,
@@ -263,7 +266,8 @@ export async function signUpWithUsername(params: {
     }
 
     if (error) {
-      return { ok: false, error: friendlyAuthError(error.message) }
+      console.error('[AUTH_ERROR_FULL]:', error)
+      return { ok: false, error: error.message || JSON.stringify(error) }
     }
 
     if (!data.user) {
@@ -289,7 +293,8 @@ export async function signUpWithUsername(params: {
 
     return { ok: true, user: data.user, session: data.session }
   } catch (err: any) {
-    return { ok: false, error: friendlyAuthError(err?.message) }
+    console.error('[AUTH_ERROR_FULL]:', err)
+    return { ok: false, error: err?.message || JSON.stringify(err) }
   }
 }
 
@@ -300,7 +305,8 @@ export async function signInWithUsername(params: {
   username: string
   password: string
 }): Promise<{ ok: boolean; user?: User | null; session?: Session | null; error?: string }> {
-  const validNick = validateUsername(params.username)
+  const cleanUsername = (params.username || '').trim().replace(/^@+/, '').trim().toLowerCase()
+  const validNick = validateUsername(cleanUsername)
   if (!validNick.valid) {
     return { ok: false, error: validNick.error }
   }
@@ -310,10 +316,12 @@ export async function signInWithUsername(params: {
 
   const client = getSupabase()
   if (!client) {
-    return { ok: false, error: 'База данных не подключена. Добавь ключи Supabase.' }
+    const errMsg = 'База данных не подключена. Добавь ключи Supabase (NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY).'
+    console.error('[AUTH_ERROR_FULL]:', errMsg)
+    return { ok: false, error: errMsg }
   }
 
-  const cleanNick = validNick.clean
+  const cleanNick = cleanUsername
   const email = `${cleanNick}@ogonek.local`
 
   try {
@@ -323,7 +331,7 @@ export async function signInWithUsername(params: {
     })
 
     // Если вход с .local не удался из-за credentials, пробуем .app для существующих юзеров
-    if (error && (error.message.includes('Invalid login credentials') || (error as any).code === 'invalid_credentials')) {
+    if (error && (error.message?.includes('Invalid login credentials') || (error as any).code === 'invalid_credentials')) {
       const fallbackRes = await client.auth.signInWithPassword({
         email: `${cleanNick}@ogonek.app`,
         password: params.password,
@@ -335,12 +343,14 @@ export async function signInWithUsername(params: {
     }
 
     if (error) {
-      return { ok: false, error: friendlyAuthError(error.message) }
+      console.error('[AUTH_ERROR_FULL]:', error)
+      return { ok: false, error: error.message || JSON.stringify(error) }
     }
 
     return { ok: true, user: data.user, session: data.session }
   } catch (err: any) {
-    return { ok: false, error: friendlyAuthError(err?.message) }
+    console.error('[AUTH_ERROR_FULL]:', err)
+    return { ok: false, error: err?.message || JSON.stringify(err) }
   }
 }
 

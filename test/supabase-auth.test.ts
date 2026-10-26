@@ -23,6 +23,16 @@ describe('Supabase Auth: Валидация никнейма (ЗАДАЧА 3)', 
     assert.equal(res.clean, 'alex_cerna')
   })
 
+  it('очищает никнейм от ведущего символа @ и пробелов', () => {
+    const res1 = validateUsername('@cernavation')
+    assert.equal(res1.valid, true)
+    assert.equal(res1.clean, 'cernavation')
+
+    const res2 = validateUsername('  @@alex_cerna  ')
+    assert.equal(res2.valid, true)
+    assert.equal(res2.clean, 'alex_cerna')
+  })
+
   it('отклоняет слишком короткий (< 3 символов) никнейм', () => {
     assert.equal(validateUsername('').valid, false)
     assert.equal(validateUsername('a').valid, false)
