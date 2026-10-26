@@ -868,14 +868,14 @@ export function AppShell() {
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
       />
-      <main className="app-shell" data-locked={locked ? 'true' : undefined}>
+      <main className="w-full min-h-screen bg-black text-[#e7e9ea]" data-locked={locked ? 'true' : undefined}>
         {view === 'messages' ? (
           <FullscreenMessenger
             initialThreadId={state.chatActiveFriendId || undefined}
             currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
           />
         ) : (
-          <>
+          <div className="flex justify-center min-h-screen bg-black text-[#e7e9ea] w-full">
             <Sidebar
               view={view}
               onNavigate={navigate}
@@ -888,12 +888,12 @@ export function AppShell() {
             />
 
             <section
-              className="feed"
+              className="w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"
               aria-label="Основное содержимое"
             >
               <motion.div
                 key={view}
-                className="view"
+                className="view w-full"
                 initial={{ opacity: 0.95 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.04 }}
@@ -903,15 +903,15 @@ export function AppShell() {
             </section>
 
             <RightRail
-                onNavigate={navigate}
-                onCompose={() => setComposer(true)}
-                streak={streakState.streak}
-                streakStatus={streakState.status}
-                hoursLeft={streakState.hoursLeft}
-                isDemo={state.isDemo}
-                onNotify={notify}
-                soundEnabled={state.soundEnabled}
-              />
+              onNavigate={navigate}
+              onCompose={() => setComposer(true)}
+              streak={streakState.streak}
+              streakStatus={streakState.status}
+              hoursLeft={streakState.hoursLeft}
+              isDemo={state.isDemo}
+              onNotify={notify}
+              soundEnabled={state.soundEnabled}
+            />
 
             <ScrollPill onScrollBottom={handleScrollBottom} />
 
@@ -920,7 +920,7 @@ export function AppShell() {
               onNavigate={navigate}
               onCompose={() => setComposer(true)}
             />
-          </>
+          </div>
         )}
 
         <AnimatePresence>

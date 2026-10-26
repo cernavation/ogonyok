@@ -141,49 +141,54 @@ export function Sidebar({
   }
 
   return (
-    <aside className="sidebar h-screen sticky top-0 overflow-y-auto overflow-x-hidden select-none" aria-label="Боковая панель">
-      {/* Brand mark */}
-      <div
-        className="brand cursor-pointer group min-h-[40px] flex items-center gap-2.5 px-1 py-1"
-        onClick={() => onNavigate('home')}
-        role="button"
-        tabIndex={0}
-      >
-        <span
-          className="brand-flame flex items-center justify-center w-8 h-8 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] group-hover:scale-110 transition-transform duration-200"
-          aria-hidden="true"
+    <aside
+      className="sticky top-0 h-screen flex flex-col justify-between shrink-0 w-[275px] border-r border-[#2f3336] overflow-y-auto scrollbar-none z-30 select-none px-3 py-4"
+      aria-label="Боковая панель"
+    >
+      <div className="flex flex-col gap-1 w-full">
+        {/* Brand mark */}
+        <div
+          className="brand cursor-pointer group min-h-[40px] flex items-center gap-2.5 px-3 py-1 mb-1"
+          onClick={() => onNavigate('home')}
+          role="button"
+          tabIndex={0}
         >
-          <Flame size={20} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
-        </span>
-        <span className="font-bold tracking-tight text-[19px] text-[var(--text)]">Огонёк</span>
-      </div>
-
-      {/* Navigation — единый список без искусственных групп */}
-      <nav className="nav-list flex-1" aria-label="Разделы приложения">
-        <div className="flex flex-col gap-0.5">
-          {UNIFIED_NAV.map(renderNavItem)}
+          <span
+            className="brand-flame flex items-center justify-center w-8 h-8 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] group-hover:scale-110 transition-transform duration-200"
+            aria-hidden="true"
+          >
+            <Flame size={20} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+          </span>
+          <span className="font-bold tracking-tight text-[19px] text-[var(--text)]">Огонёк</span>
         </div>
-      </nav>
 
-      {/* Primary CTA — Flame Pill Button */}
-      <Tooltip content="Записать день" side="top" hotkey="N">
-        <button
-          type="button"
-          className="x-compose-btn"
-          onClick={onCompose}
-          aria-label="Записать день"
-        >
-          <Plus size={20} strokeWidth={2.5} className="compose-btn-icon-only" />
-          <span className="compose-btn-label">Записать</span>
-        </button>
-      </Tooltip>
+        {/* Navigation — единый список без искусственных групп */}
+        <nav className="nav-list flex-1 w-full" aria-label="Разделы приложения">
+          <div className="flex flex-col gap-0.5">
+            {UNIFIED_NAV.map(renderNavItem)}
+          </div>
+        </nav>
+
+        {/* Primary CTA — Flame Pill Button */}
+        <Tooltip content="Записать день" side="top" hotkey="N">
+          <button
+            type="button"
+            className="x-compose-btn my-3"
+            onClick={onCompose}
+            aria-label="Записать день"
+          >
+            <Plus size={20} strokeWidth={2.5} className="compose-btn-icon-only" />
+            <span className="compose-btn-label">Записать</span>
+          </button>
+        </Tooltip>
+      </div>
 
       {/* Profile block — карточка пользователя и меню выхода */}
       <div ref={menuRef} className="cursor-pointer relative z-50 w-full max-w-full overflow-visible mt-auto pt-2 shrink-0">
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className="absolute left-0 bottom-[calc(100%+8px)] z-50 w-full min-w-[240px] max-w-[280px] p-2 bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl backdrop-blur-md overflow-x-hidden"
+              className="absolute left-0 bottom-[calc(100%+8px)] z-50 w-full min-w-[240px] max-w-[280px] p-2 bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl backdrop-blur-md"
               role="menu"
               aria-label="Меню профиля"
               initial={{ opacity: 0, y: 10, scale: 0.96 }}
