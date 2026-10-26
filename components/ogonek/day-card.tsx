@@ -4,6 +4,7 @@ import {
   BookmarkPlus,
   Check,
   Flame,
+  Globe,
   Heart,
   Lock,
   MessageCircle,
@@ -30,6 +31,7 @@ import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { IconButton } from './ui'
+import { DayOptionsModal } from './day-options-modal'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
@@ -297,9 +299,47 @@ function DayCardComponent({
             </div>
 
             {/* Post body — ТЕКСТ КРУПНО (X.com standard) */}
-            <p className="text-[17px] leading-[24px] text-[var(--text)] font-normal mb-2">
-              {firstPride?.text || day.title}
-            </p>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <p className="text-[17px] leading-[24px] text-[var(--text)] font-normal flex-1">
+                {firstPride?.text || day.title}
+              </p>
+              {firstPride && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    const actualFirstIdx = (day.prides || []).indexOf(firstPride)
+                    const curVis = normalizeVisibility(firstPride.visibility ?? dayVisibility)
+                    const nextVis = curVis === 'public' ? 'private' : 'public'
+                    setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
+                    onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
+                  }}
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
+                    normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public'
+                      ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
+                      : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
+                  }`}
+                  title={
+                    normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public'
+                      ? '🌐 Публично (видят все) — нажми для переключения'
+                      : '🔒 Лично (видит только автор) — нажми для переключения'
+                  }
+                  aria-label="Видимость гордости"
+                >
+                  {normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public' ? (
+                    <>
+                      <Globe size={11} className="text-sky-400" />
+                      <span>Публично</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={11} className="text-zinc-400" />
+                      <span>Лично</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
 
             {/* Toggle «ещё N гордостей · M благодарностей» */}
             {(otherPrides.length > 0 || otherGratitudes.length > 0) && (
@@ -326,19 +366,55 @@ function DayCardComponent({
                         <span className="text-[13px] font-bold text-[var(--accent)] flex items-center gap-1">
                           <Flame size={13} /> Другие гордости дня:
                         </span>
-                        {otherPrides.map((p, pIdx) => (
-                          <div key={p.num || pIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-0.5">
-                            <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
-                              {p.num || pIdx + 2}
-                            </span>
-                            <span className="flex-1 break-words leading-relaxed">{p.text}</span>
-                            {typeof p.scale === 'number' && p.scale > 0 && (
-                              <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
-                                {p.scale}★
+                        {otherPrides.map((p, pIdx) => {
+                          const actualIndex = (day.prides || []).indexOf(p)
+                          const pVis = normalizeVisibility(p.visibility ?? dayVisibility)
+                          return (
+                            <div key={p.num || pIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-1">
+                              <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
+                                {p.num || pIdx + 2}
                               </span>
-                            )}
-                          </div>
-                        ))}
+                              <span className="flex-1 break-words leading-relaxed">{p.text}</span>
+                              {typeof p.scale === 'number' && p.scale > 0 && (
+                                <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
+                                  {p.scale}★
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  playClick(soundEnabled)
+                                  const nextVis = pVis === 'public' ? 'private' : 'public'
+                                  setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
+                                  onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
+                                }}
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
+                                  pVis === 'public'
+                                    ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
+                                    : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
+                                }`}
+                                title={
+                                  pVis === 'public'
+                                    ? '🌐 Публично (видят все) — нажми для переключения'
+                                    : '🔒 Лично (видит только автор) — нажми для переключения'
+                                }
+                                aria-label="Видимость гордости"
+                              >
+                                {pVis === 'public' ? (
+                                  <>
+                                    <Globe size={10} className="text-sky-400" />
+                                    <span>Публично</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Lock size={10} className="text-zinc-400" />
+                                    <span>Лично</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )
+                        })}
                       </div>
                     )}
 
@@ -474,124 +550,16 @@ function DayCardComponent({
       </article>
 
       {/* Меню «⋯» опций дня */}
-      {optionsModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setOptionsModalOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-4"
-            style={{ background: '#16181c', border: '1px solid #2f3336' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid #2f3336' }}>
-              <h3 className="font-bold text-[var(--text)] text-base">
-                Опции дня #{day.id}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setOptionsModalOpen(false)}
-                className="text-[var(--text-2)] hover:text-[var(--text)]"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <button
-                type="button"
-                onClick={handleAiEvaluateDay}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                <Sparkles size={16} className="text-amber-500" />
-                <span>Оценить с ИИ</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setOptionsModalOpen(false)
-                  onEdit?.(day)
-                }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                <Pencil size={16} className="text-[var(--accent)]" />
-                <span>Редактировать день</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setOptionsModalOpen(false)
-                  setShareModalOpen(true)
-                }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                <Share2 size={16} className="text-emerald-500" />
-                <span>Экспорт карточки (SVG / PNG)</span>
-              </button>
-            </div>
-
-            <div className="p-3 rounded-2xl flex flex-col gap-2" style={{ background: '#0d0e10', border: '1px solid #2f3336' }}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[var(--text-2)] flex items-center gap-1.5">
-                  <Shield size={13} className="text-[#FF5C00]" /> Приватность дня
-                </span>
-                <span
-                  className="text-xs font-bold"
-                  style={{ color: visibilityMeta(dayVisibility).color }}
-                >
-                  {visibilityMeta(dayVisibility).shortLabel}
-                </span>
-              </div>
-              <div className="pt-1">
-                <VisibilitySwitcher
-                  value={dayVisibility}
-                  onChange={(level) => {
-                    setDayVisibility(day.id, level)
-                    onNotify?.(`Приватность дня: ${visibilityMeta(level).shortLabel}`)
-                  }}
-                  soundEnabled={soundEnabled}
-                />
-              </div>
-              <button
-                type="button"
-                className="mt-1 text-xs text-[var(--text-3)] hover:text-[var(--text)] underline text-left"
-                onClick={() => {
-                  playClick(soundEnabled)
-                  setAllPridesVisibility(day.id, dayVisibility)
-                  onNotify?.('Приватность применена ко всем гордостям')
-                  setOptionsModalOpen(false)
-                }}
-              >
-                Применить ко всем гордостям дня
-              </button>
-              <button
-                type="button"
-                className="mt-1 text-xs text-rose-400 hover:text-rose-300 underline text-left"
-                onClick={async () => {
-                  playClick(soundEnabled)
-                  const { getSupabase } = await import('@/lib/ogonek/supabase-client')
-                  const supabase = getSupabase()
-                  if (supabase && state.auth?.activeAccountId) {
-                    await supabase
-                      .from('days')
-                      .update({ visibility: dayVisibility })
-                      .eq('user_id', state.auth.activeAccountId)
-                  }
-                  for (const d of state.days ?? []) {
-                    setDayVisibility(d.id, dayVisibility)
-                  }
-                  onNotify?.(`Приватность "${visibilityMeta(dayVisibility).shortLabel}" применена ко всем дням`)
-                  setOptionsModalOpen(false)
-                }}
-              >
-                Применить ко всем дням
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DayOptionsModal
+        isOpen={optionsModalOpen}
+        day={day}
+        onClose={() => setOptionsModalOpen(false)}
+        onEdit={onEdit}
+        onShare={() => setShareModalOpen(true)}
+        onAiEvaluate={handleAiEvaluateDay}
+        onNotify={onNotify}
+        soundEnabled={soundEnabled}
+      />
 
       {shareModalOpen && (
         <ShareCardModal

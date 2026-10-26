@@ -15,6 +15,7 @@ import {
   Heart,
   Images,
   Link2,
+  Lock,
   MapPin,
   Pencil,
   Search,
@@ -175,7 +176,6 @@ export function ProfileView({
               .from('days')
               .select('*')
               .eq('user_id', prof.id)
-              .eq('visibility', 'public')
               .order('day_number', { ascending: false })
               .limit(50)
 
@@ -188,14 +188,12 @@ export function ProfileView({
                   .select('*')
                   .eq('user_id', prof.id)
                   .in('day_client_id', dayClientIds)
-                  .eq('visibility', 'public')
                   .order('position', { ascending: true }),
                 supabase
                   .from('gratitudes')
                   .select('*')
                   .eq('user_id', prof.id)
                   .in('day_client_id', dayClientIds)
-                  .eq('visibility', 'public')
                   .order('position', { ascending: true }),
               ])
 
@@ -213,27 +211,58 @@ export function ProfileView({
                 gratsByDay.set(g.day_client_id, list)
               }
 
-              const mapped: Day[] = daysData.map((d: any) => ({
-                id: d.day_number || parseInt(d.client_id, 10) || 1,
-                dateISO: d.date_iso || d.created_at,
-                title: d.title || `День #${d.day_number || 1}`,
-                tags: Array.isArray(d.tags) ? d.tags : [],
-                photos: Array.isArray(d.photos) ? d.photos : [],
-                prides: (pridesByDay.get(d.client_id) || []).map((p: any) => ({
-                  num: p.num || '01',
-                  text: p.text || '',
-                  scale: typeof p.scale === 'number' ? p.scale : 8,
-                  overcome: p.overcome ?? 1,
-                })),
-                gratitudes: (gratsByDay.get(d.client_id) || []).map((g: any) => ({
-                  text: g.text || '',
-                  rating: g.rating ?? 9,
-                })),
-              }))
+              const mapped: Day[] = daysData.map((d: any) => {
+                const dayVis = d.visibility || 'public'
+                const rawPrides = pridesByDay.get(d.client_id) || []
+                return {
+                  id: d.day_number || parseInt(d.client_id, 10) || 1,
+                  dateISO: d.date_iso || d.created_at,
+                  title: d.title || `День #${d.day_number || 1}`,
+                  tags: Array.isArray(d.tags) ? d.tags : [],
+                  photos: Array.isArray(d.photos) ? d.photos : [],
+                  visibility: dayVis,
+                  prides: rawPrides.map((p: any) => ({
+                    num: p.num || '01',
+                    text: p.text || '',
+                    scale: typeof p.scale === 'number' ? p.scale : 8,
+                    overcome: p.overcome ?? 1,
+                    visibility: p.visibility || dayVis,
+                  })),
+                  gratitudes: (gratsByDay.get(d.client_id) || []).map((g: any) => ({
+                    text: g.text || '',
+                    rating: g.rating ?? 9,
+                  })),
+                }
+              })
 
               setForeignDays(mapped)
             } else {
-              setForeignDays([])
+              // Если в базе нет записей, но у пользователя есть стрик (доказательство работы / Proof of Work)
+              const streakTotal = prof.streak_count ?? prof.streak ?? 0
+              if (streakTotal > 0) {
+                const count = Math.min(streakTotal, 50)
+                const synthesized: Day[] = []
+                const now = new Date()
+                for (let i = 0; i < count; i++) {
+                  const dayNum = streakTotal - i
+                  const d = new Date(now)
+                  d.setDate(d.getDate() - i)
+                  synthesized.push({
+                    id: dayNum,
+                    dateISO: d.toISOString(),
+                    title: `День #${dayNum}`,
+                    tags: [],
+                    visibility: 'private',
+                    prides: [
+                      { num: '01', text: 'Скрытая гордость', scale: 8, overcome: 1, visibility: 'private' },
+                    ],
+                    gratitudes: [],
+                  })
+                }
+                setForeignDays(synthesized)
+              } else {
+                setForeignDays([])
+              }
             }
           }
         }
@@ -359,6 +388,7 @@ export function ProfileView({
   // Truncation & Chunking (Rule D)
   const [visibleCount, setVisibleCount] = useState(20)
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
+  const [timelineFilter, setTimelineFilter] = useState<'all' | 'public'>('all')
 
   const stats: ProfileStats = useMemo(
     () => computeProfileStats(days, followingCount),
@@ -369,9 +399,22 @@ export function ProfileView({
     return [...days].sort((a, b) => b.id - a.id)
   }, [days])
 
+  const filteredDays = useMemo(() => {
+    if (timelineFilter === 'public') {
+      return recentDays.filter((d) => {
+        const isDayPublic = (d.visibility ?? 'public') === 'public'
+        if (!isDayPublic) return false
+        return d.prides.some(
+          (p) => (p.visibility ?? d.visibility ?? 'public') === 'public' && p.text && p.text !== '—'
+        )
+      })
+    }
+    return recentDays
+  }, [recentDays, timelineFilter])
+
   const paginatedDays = useMemo(() => {
-    return recentDays.slice(0, visibleCount)
-  }, [recentDays, visibleCount])
+    return filteredDays.slice(0, visibleCount)
+  }, [filteredDays, visibleCount])
 
   // Collect all gratitudes across all days
   const allGratitudes = useMemo(() => {
@@ -842,18 +885,68 @@ export function ProfileView({
         {/* TAB 1: ЗАПИСИ */}
         {activeTab === 'days' && (
           <div className="flex flex-col gap-3">
+            {/* Сверху фильтры: Все дни / Только публичные */}
+            <div className="flex items-center justify-between gap-2 pt-1 pb-3 border-b border-[var(--border)]">
+              <div className="inline-flex items-center p-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)]" role="tablist" aria-label="Фильтр записей">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={timelineFilter === 'all'}
+                  onClick={() => {
+                    playClick(storeState.soundEnabled)
+                    setTimelineFilter('all')
+                  }}
+                  className={`px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                    timelineFilter === 'all'
+                      ? 'bg-[var(--text)] text-[var(--bg)] shadow-sm'
+                      : 'text-[var(--text-2)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  Все дни ({recentDays.length})
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={timelineFilter === 'public'}
+                  onClick={() => {
+                    playClick(storeState.soundEnabled)
+                    setTimelineFilter('public')
+                  }}
+                  className={`px-3.5 py-1 rounded-full text-xs font-bold transition-all ${
+                    timelineFilter === 'public'
+                      ? 'bg-[var(--text)] text-[var(--bg)] shadow-sm'
+                      : 'text-[var(--text-2)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  Только публичные
+                </button>
+              </div>
+
+              {!isOwnProfile && (
+                <span className="text-[12px] text-[var(--text-3)] hidden sm:flex items-center gap-1 font-medium">
+                  <Lock size={12} /> Стелс-хронология
+                </span>
+              )}
+            </div>
+
             {paginatedDays.length === 0 && foreignPosts.length === 0 && (
               <div className="py-16 text-center text-[var(--text-2)]">
                 <div className="w-12 h-12 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--text-3)]">
                   <FileText size={22} />
                 </div>
                 <p className="text-[16px] font-bold text-[var(--text)] mb-1">
-                  {isOwnProfile ? 'У вас пока нет записей' : 'Пока нет публичных записей'}
+                  {isOwnProfile
+                    ? 'У вас пока нет записей'
+                    : timelineFilter === 'public'
+                    ? 'Нет открытых записей'
+                    : 'Пока нет записей в летописи'}
                 </p>
                 <p className="text-[13px] text-[var(--text-2)] max-w-xs mx-auto">
                   {isOwnProfile
                     ? 'Заполните свой первый день силы на главной странице'
-                    : 'Когда пользователь опубликует дни или заметки, они появятся здесь'}
+                    : timelineFilter === 'public'
+                    ? 'Переключитесь на вкладку «Все дни», чтобы увидеть доказательства стрика 🔒'
+                    : 'Когда пользователь начнет вести летопись, дни появятся здесь'}
                 </p>
               </div>
             )}
@@ -887,64 +980,135 @@ export function ProfileView({
             {paginatedDays.map((day) => {
               const isExpanded = Boolean(expandedCards[day.id])
               const avg = dayAvgScale(day)
+              const isDayPublic = (day.visibility ?? 'public') === 'public'
+              const publicPrides = day.prides.filter(
+                (p) => isDayPublic && (p.visibility ?? day.visibility ?? 'public') === 'public' && p.text && p.text !== '—'
+              )
+              const allPridesHidden = !isOwnProfile && publicPrides.length === 0
 
               return (
                 <div
                   key={day.id}
                   className="border-b border-[var(--border)] py-4 transition-colors"
                 >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                  {/* Заголовок: День #N · {дата} */}
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]">
-                        День #{day.id}
-                      </span>
-                      <span className="text-[13px] text-[var(--text-2)]">
-                        {formatDayDate(day.dateISO)}
+                      <span className="px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]">
+                        День #{day.id} · {formatDayDate(day.dateISO)}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {avg !== null && (
+                      {avg !== null && (isOwnProfile || !allPridesHidden) && (
                         <span className="text-[13px] font-bold text-amber-500">
                           ★ {avg}
                         </span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => setSelectedDayModal(day)}
-                        className="min-h-[34px] px-2 py-1 text-[13px] text-[var(--text)] dark:text-[var(--accent)] font-bold hover:underline inline-flex items-center"
-                      >
-                        Подробнее →
-                      </button>
+                      {(isOwnProfile || !allPridesHidden) && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDayModal(day)}
+                          className="min-h-[34px] px-2 py-1 text-[13px] text-[var(--text)] dark:text-[var(--accent)] font-bold hover:underline inline-flex items-center"
+                        >
+                          Подробнее →
+                        </button>
+                      )}
                     </div>
                   </div>
 
-                  <p className="text-[16px] leading-[22px] text-[var(--text)] mb-2">
-                    {day.title}
-                  </p>
+                  {!isOwnProfile && allPridesHidden ? (
+                    /* Если все пункты скрыты: стильная плашка «🔒 Запись скрыта автором» с замком */
+                    <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text-2)] my-1">
+                      <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 flex-none">
+                        <Lock size={15} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[14px] font-semibold text-[var(--text)] flex items-center gap-1.5">
+                          🔒 Запись скрыта автором
+                        </span>
+                        <span className="text-[12px] text-[var(--text-3)]">
+                          Победы и рефлексия зафиксированы в летописи
+                        </span>
+                      </div>
+                    </div>
+                  ) : !isOwnProfile ? (
+                    /* Если часть пунктов публичная: отображаются ТОЛЬКО публичные пункты, а скрытые пункты выводятся как «🔒 Скрытая гордость» */
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      {day.title && isDayPublic && (
+                        <p className="text-[15px] font-medium text-[var(--text)] mb-1">
+                          {day.title}
+                        </p>
+                      )}
+                      <div className="flex flex-col gap-1.5 text-sm">
+                        {day.prides.slice(0, 5).map((p, idx) => {
+                          const isPridePublic = isDayPublic && (p.visibility ?? day.visibility ?? 'public') === 'public'
+                          if (isPridePublic) {
+                            return (
+                              <div key={idx} className="flex items-baseline gap-2 py-0.5">
+                                <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">
+                                  {idx + 1}.
+                                </span>
+                                <span className="text-[var(--text)] leading-relaxed">{p.text}</span>
+                                {typeof p.scale === 'number' && p.scale > 0 && (
+                                  <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded-full flex-none">
+                                    ★ {p.scale}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          }
+                          return (
+                            <div key={idx} className="flex items-center gap-2 py-0.5 text-zinc-500">
+                              <span className="text-zinc-500 text-xs font-bold flex-none">{idx + 1}.</span>
+                              <span className="text-xs font-medium italic flex items-center gap-1.5 bg-zinc-800/40 px-2 py-0.5 rounded-md border border-zinc-800 text-zinc-400">
+                                <Lock size={11} className="text-zinc-500" /> Скрытая гордость
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Свой профиль */
+                    <div>
+                      <p className="text-[16px] leading-[22px] text-[var(--text)] mb-2">
+                        {day.title}
+                      </p>
 
-                  {/* 4-line truncated text content */}
-                  <div className={isExpanded ? '' : 'line-clamp-4'}>
-                    <div className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-300">
-                      {day.prides.slice(0, 5).map((p, idx) => (
-                        <div key={idx} className="flex items-baseline gap-2">
-                          <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">{idx + 1}.</span>
-                          <span>{p.text}</span>
+                      <div className={isExpanded ? '' : 'line-clamp-4'}>
+                        <div className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-300">
+                          {day.prides.slice(0, 5).map((p, idx) => {
+                            const isPridePrivate = (p.visibility ?? day.visibility) === 'private'
+                            return (
+                              <div key={idx} className="flex items-baseline gap-2">
+                                <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">
+                                  {idx + 1}.
+                                </span>
+                                <span className="flex-1">{p.text}</span>
+                                {isPridePrivate && (
+                                  <span className="text-[10px] text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-0.5 flex-none" title="Личная гордость">
+                                    <Lock size={9} /> Лично
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
 
-                  {day.prides.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpandedCards((prev) => ({ ...prev, [day.id]: !isExpanded }))
-                      }
-                      className="mt-2 min-h-[34px] px-2.5 py-1 text-[13px] font-bold text-[var(--text)] dark:text-[var(--accent)] hover:underline inline-flex items-center rounded-lg hover:bg-white/5"
-                    >
-                      {isExpanded ? 'Свернуть' : 'Показать ещё…'}
-                    </button>
+                      {day.prides.length > 2 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedCards((prev) => ({ ...prev, [day.id]: !isExpanded }))
+                          }
+                          className="mt-2 min-h-[34px] px-2.5 py-1 text-[13px] font-bold text-[var(--text)] dark:text-[var(--accent)] hover:underline inline-flex items-center rounded-lg hover:bg-white/5"
+                        >
+                          {isExpanded ? 'Свернуть' : 'Показать ещё…'}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )
@@ -1149,20 +1313,32 @@ export function ProfileView({
                 Гордости дня (5)
               </h4>
               <div className="flex flex-col gap-2">
-                {selectedDayModal.prides.slice(0, 5).map((p, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex items-start justify-between gap-2 text-xs"
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="font-bold text-[var(--text)] dark:text-[var(--accent)] mt-0.5">{idx + 1}.</span>
-                      <span className="font-medium text-zinc-800 dark:text-zinc-200">{p.text}</span>
+                {selectedDayModal.prides.slice(0, 5).map((p, idx) => {
+                  const isPridePublic =
+                    (selectedDayModal.visibility ?? 'public') === 'public' &&
+                    (p.visibility ?? selectedDayModal.visibility ?? 'public') === 'public'
+                  const displayPrivate = !isOwnProfile && !isPridePublic
+                  return (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex items-start justify-between gap-2 text-xs"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="font-bold text-[var(--text)] dark:text-[var(--accent)] mt-0.5">{idx + 1}.</span>
+                        {displayPrivate ? (
+                          <span className="text-zinc-400 italic flex items-center gap-1.5">
+                            <Lock size={12} /> Скрытая гордость
+                          </span>
+                        ) : (
+                          <span className="font-medium text-zinc-800 dark:text-zinc-200">{p.text}</span>
+                        )}
+                      </div>
+                      {!displayPrivate && p.scale > 0 && (
+                        <span className="font-bold text-amber-500 flex-none">{p.scale}★</span>
+                      )}
                     </div>
-                    {p.scale > 0 && (
-                      <span className="font-bold text-amber-500 flex-none">{p.scale}★</span>
-                    )}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
 

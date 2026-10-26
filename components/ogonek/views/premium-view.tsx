@@ -166,7 +166,7 @@ export function PremiumView({
       </div>
 
       {/* 3 Tariff Cards */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 items-stretch">
         {/* TARIFF 1: БАЗОВЫЙ (0 MDL / Бесплатно навсегда) */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border transition-all relative ${

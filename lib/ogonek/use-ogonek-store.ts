@@ -193,6 +193,7 @@ import {
 } from './privacy'
 import {
   DEFAULT_STREAK_SETTINGS,
+  calculateStreak,
   sanitizeStreakSettings,
 } from './streak'
 import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
@@ -683,6 +684,51 @@ export function useOgonekStore() {
         ...prev,
         days: prev.days.map((d) => (d.id === updatedDay.id ? updatedDay : d)),
       }))
+    },
+    [updateStore]
+  )
+
+  /**
+   * УДАЛЕНИЕ ДНЯ:
+   * 1. Удаляет день из локального стейта и пересчитывает стрик.
+   * 2. Удаляет день и связанные записи из Supabase (public.days, public.prides, public.gratitudes).
+   */
+  const deleteDay = useCallback(
+    async (dayId: number) => {
+      updateStore((prev) => {
+        const nextDays = prev.days.filter((d) => d.id !== dayId)
+        const newStreak = calculateStreak(nextDays)
+        return {
+          ...prev,
+          days: nextDays,
+          profile: {
+            ...prev.profile,
+            streak: newStreak,
+            streak_count: newStreak,
+          },
+        }
+      })
+
+      try {
+        const supabase = getSupabase()
+        const uid = getSnapshot().auth?.activeAccountId
+        if (supabase && uid) {
+          const clientId = String(dayId)
+          await Promise.allSettled([
+            supabase.from('prides').delete().match({ user_id: uid, day_client_id: clientId }),
+            supabase.from('gratitudes').delete().match({ user_id: uid, day_client_id: clientId }),
+            supabase.from('days').delete().match({ user_id: uid, client_id: clientId }),
+            supabase.from('diary_days').delete().match({ user_id: uid, day_number: dayId }),
+          ])
+          const currentStreak = calculateStreak(getSnapshot().days)
+          await supabase
+            .from('profiles')
+            .update({ streak_count: currentStreak, updated_at: new Date().toISOString() })
+            .eq('id', uid)
+        }
+      } catch (err) {
+        console.error('[Ogonek] Error deleting day from Supabase:', err)
+      }
     },
     [updateStore]
   )
@@ -2854,19 +2900,32 @@ export function useOgonekStore() {
 
   /** Меняет приватность всего дня */
   const setDayVisibility = useCallback(
-    (dayId: number, level: VisibilityLevel) => {
+    async (dayId: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
       updateStore((prev) => ({
         ...prev,
         days: prev.days.map((d) => (d.id === dayId ? { ...d, visibility: next } : d)),
       }))
+
+      try {
+        const supabase = getSupabase()
+        const uid = getSnapshot().auth?.activeAccountId
+        if (supabase && uid) {
+          await supabase
+            .from('days')
+            .update({ visibility: next })
+            .match({ user_id: uid, client_id: String(dayId) })
+        }
+      } catch (err) {
+        console.error('[Ogonek] Error updating day visibility in Supabase:', err)
+      }
     },
     [updateStore]
   )
 
   /** Меняет приватность конкретной гордости дня */
   const setPrideVisibility = useCallback(
-    (dayId: number, index: number, level: VisibilityLevel) => {
+    async (dayId: number, index: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
       updateStore((prev) => ({
         ...prev,
@@ -2876,6 +2935,20 @@ export function useOgonekStore() {
           return { ...d, prides }
         }),
       }))
+
+      try {
+        const supabase = getSupabase()
+        const uid = getSnapshot().auth?.activeAccountId
+        if (supabase && uid) {
+          const clientId = `day:${dayId}:pride:${index}`
+          await supabase
+            .from('prides')
+            .update({ visibility: next })
+            .match({ user_id: uid, client_id: clientId })
+        }
+      } catch (err) {
+        console.error('[Ogonek] Error updating pride visibility in Supabase:', err)
+      }
     },
     [updateStore]
   )
@@ -2885,7 +2958,7 @@ export function useOgonekStore() {
    * и к самому дню, и ко всем его гордостям.
    */
   const setAllPridesVisibility = useCallback(
-    (dayId: number, level: VisibilityLevel) => {
+    async (dayId: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
       updateStore((prev) => ({
         ...prev,
@@ -2895,6 +2968,25 @@ export function useOgonekStore() {
             : d
         ),
       }))
+
+      try {
+        const supabase = getSupabase()
+        const uid = getSnapshot().auth?.activeAccountId
+        if (supabase && uid) {
+          await Promise.allSettled([
+            supabase
+              .from('days')
+              .update({ visibility: next })
+              .match({ user_id: uid, client_id: String(dayId) }),
+            supabase
+              .from('prides')
+              .update({ visibility: next })
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+          ])
+        }
+      } catch (err) {
+        console.error('[Ogonek] Error updating all prides visibility in Supabase:', err)
+      }
     },
     [updateStore]
   )
@@ -4589,6 +4681,7 @@ export function useOgonekStore() {
     addNewDay,
     updateDay,
     updateDayWithPayload,
+    deleteDay,
     saveMorningIntentions,
     setMorningFocusStep,
     toggleMorningFocusStep,

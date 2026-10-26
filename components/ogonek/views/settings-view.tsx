@@ -565,8 +565,8 @@ export function SettingsView({
         </div>
       </header>
 
-      {/* Main Settings Container */}
-      <div className="max-w-5xl mx-auto md:grid md:grid-cols-[320px_1fr] md:divide-x md:divide-[var(--border)]">
+      {/* Main Settings Container: аккуратная 2-колоночная вёрстка */}
+      <div className="w-full md:grid md:grid-cols-[280px_1fr] md:divide-x md:divide-[var(--border)]">
         {/* Left Column (Desktop) / Section List with Chevrons (Mobile) */}
         <div className="divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
           {SECTIONS.map((sec) => {

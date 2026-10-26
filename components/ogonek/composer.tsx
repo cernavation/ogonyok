@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
+import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -617,6 +617,7 @@ export function Composer({
             const val = currentValues[slot] || ''
             const isFilled = val.trim().length > 0
             const isActive = activeSlot === slot
+            const isItemPrivate = tab === 'pride' && (prideVis[slot] ?? dayVisibility) === 'private'
             return (
               <button
                 key={slot}
@@ -625,24 +626,66 @@ export function Composer({
                   playClick(soundEnabled)
                   setActiveSlot(slot)
                 }}
-                className={`w-8 h-8 rounded-full font-mono text-[13px] font-bold transition-all flex items-center justify-center min-h-[34px] min-w-[34px] ${
+                className={`relative w-8 h-8 rounded-full font-mono text-[13px] font-bold transition-all flex items-center justify-center min-h-[34px] min-w-[34px] ${
                   isActive
                     ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm ring-2 ring-[var(--accent)]/30'
                     : isFilled
                     ? 'bg-[var(--bg-elev)] text-[var(--text)] border border-[var(--accent)]'
                     : 'bg-[var(--bg-elev)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
                 }`}
-                title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'}`}
+                title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'}${isItemPrivate ? ' (🔒 лично)' : ''}`}
               >
-                {slot + 1}
+                <span>{slot + 1}</span>
+                {isItemPrivate && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 text-[8px]">
+                    🔒
+                  </span>
+                )}
               </button>
             )
           })}
         </div>
 
-        <span className="text-[13px] text-[var(--text-2)]">
-          {tab === 'pride' ? `Гордость #${activeSlot + 1}` : `Благодарность #${activeSlot + 1}`}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] text-[var(--text-2)] font-medium">
+            {tab === 'pride' ? `Гордость #${activeSlot + 1}` : `Благодарность #${activeSlot + 1}`}
+          </span>
+          {tab === 'pride' && (
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                const cur = prideVis[activeSlot] ?? dayVisibility
+                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
+                setPrideVis((prev) => ({ ...prev, [activeSlot]: next }))
+                onNotify?.(
+                  next === 'public'
+                    ? `Гордость #${activeSlot + 1} видна всем 🌐`
+                    : `Гордость #${activeSlot + 1} скрыта (только себе) 🔒`
+                )
+              }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+                (prideVis[activeSlot] ?? dayVisibility) === 'public'
+                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
+                  : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700'
+              }`}
+              title="Нажмите, чтобы изменить видимость этого пункта гордости"
+              aria-label="Видимость пункта гордости"
+            >
+              {(prideVis[activeSlot] ?? dayVisibility) === 'public' ? (
+                <>
+                  <Globe size={13} className="text-blue-400" />
+                  <span>🌐 Публично</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={13} className="text-zinc-400" />
+                  <span>🔒 Лично</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* 2. Большое поле 20px без рамки */}
@@ -717,20 +760,45 @@ export function Composer({
             </button>
           )}
 
-          {/* Приватность */}
+          {/* Приватность (для гордости — тумблер пункта; для других вкладок — дня) */}
           <button
             type="button"
             onClick={() => {
               playClick(soundEnabled)
-              const next = dayVisibility === 'public' ? 'private' : 'public'
-              setDayVisibility(next)
-              onNotify?.(next === 'public' ? 'Виден в общей ленте' : 'Личная запись (только себе)')
+              if (tab === 'pride') {
+                const cur = prideVis[activeSlot] ?? dayVisibility
+                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
+                setPrideVis((prev) => ({ ...prev, [activeSlot]: next }))
+                onNotify?.(
+                  next === 'public'
+                    ? `Гордость #${activeSlot + 1}: 🌐 Публично (видят все)`
+                    : `Гордость #${activeSlot + 1}: 🔒 Лично (видит только автор)`
+                )
+              } else {
+                const next = dayVisibility === 'public' ? 'private' : 'public'
+                setDayVisibility(next)
+                onNotify?.(next === 'public' ? 'Виден в общей ленте' : 'Личная запись (только себе)')
+              }
             }}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-            title={`Приватность: ${dayVisibility === 'public' ? 'Общая' : 'Личная'}`}
+            title={
+              tab === 'pride'
+                ? `Видимость гордости #${activeSlot + 1}: ${(prideVis[activeSlot] ?? dayVisibility) === 'public' ? '🌐 Публично' : '🔒 Лично'}`
+                : `Приватность дня: ${dayVisibility === 'public' ? 'Общая' : 'Личная'}`
+            }
             aria-label="Переключить приватность"
           >
-            {dayVisibility === 'public' ? <Shield size={18} /> : <Lock size={18} />}
+            {tab === 'pride' ? (
+              (prideVis[activeSlot] ?? dayVisibility) === 'public' ? (
+                <Globe size={18} className="text-blue-400" />
+              ) : (
+                <Lock size={18} className="text-zinc-400" />
+              )
+            ) : dayVisibility === 'public' ? (
+              <Shield size={18} />
+            ) : (
+              <Lock size={18} />
+            )}
           </button>
 
           {/* Фото / Медиа */}
