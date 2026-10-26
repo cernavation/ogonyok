@@ -431,7 +431,7 @@ export function EditProfileModal({
               value={draft.age ?? ''}
               min={1}
               max={120}
-              placeholder="Например, 16"
+              placeholder="Возраст"
               onChange={(e) => {
                 const val = e.target.value.trim()
                 applyPatch({ age: val ? parseInt(val, 10) : null })

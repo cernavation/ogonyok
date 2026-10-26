@@ -216,8 +216,25 @@ export type OgonekProfile = {
   age?: number | null
   /** Режим полной анонимности: скрыт из глобального поиска, в подписках/лентах как «Анонимный соратник» */
   isAnonymous?: boolean
+  /** Текущий тариф подписки: 'free' | 'premium' | 'ultra' */
+  subscription_tier?: 'free' | 'premium' | 'ultra'
   /** Настройки приватности */
   privacy?: { is_anonymous?: boolean; [key: string]: any }
+}
+
+/** Статусы сессии аудио/видео звонка */
+export type CallStatus = 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed'
+
+/** Сессия звонка в Supabase (таблица call_sessions) */
+export type CallSession = {
+  id: string
+  caller_id: string
+  receiver_id: string
+  status: CallStatus
+  is_video: boolean
+  duration_seconds?: number
+  created_at?: string
+  updated_at?: string
 }
 
 /** Запись в истории смен уровней сложности */

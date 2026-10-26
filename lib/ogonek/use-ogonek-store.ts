@@ -2,6 +2,24 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { getSupabase } from './supabase-client'
+import {
+  updateProfileInDb,
+  updateProfileLevel,
+  publishStoryToDb,
+  deleteStoryFromDb,
+  sendDirectMessageToDb,
+  updateDirectMessageReactions,
+  updateDirectMessagePin,
+  updateDirectMessageBody,
+  updateDirectMessageTranscript,
+  addEvidenceVaultItem,
+  toggleEvidenceVaultPin,
+  deleteEvidenceVaultItem,
+  getEvidenceVault,
+  toggleFriendshipFollow,
+  getFollowing,
+  type DirectMessageRecord,
+} from '../supabase/api.ts'
 
 export type CurrentUser = {
   id: string
@@ -55,7 +73,9 @@ import {
   DEFAULT_CHAT_FOLDERS,
   DEFAULT_CHAT_SETTINGS,
   MY_CHAT_ID,
+  emptyMessengerState,
   emptyThread,
+  getDirectThreadKey,
   isGroupThread,
   makeChatMessage,
   pickAutoReply,
@@ -199,6 +219,7 @@ function initSupabaseSessionSync() {
         let avatarImage = cachedState.profile.avatarImage
         let bannerImage = cachedState.profile.bannerImage
         let dbProfile: any = null
+        let userLevel = cachedState.profile.difficultyLevel || cachedState.profile.level || 1
 
         try {
           const res = await client
@@ -210,6 +231,7 @@ function initSupabaseSessionSync() {
           if (dbProfile) {
             if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
             if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+            userLevel = dbProfile.level || dbProfile.settings?.level || dbProfile.difficulty_level || userLevel
           }
         } catch {}
 
@@ -250,6 +272,8 @@ function initSupabaseSessionSync() {
             avatarImage,
             bannerImage,
             coverUrl: bannerImage,
+            level: userLevel,
+            difficultyLevel: userLevel,
           }),
           auth: {
             ...cachedState.auth,
@@ -306,6 +330,88 @@ function initSupabaseSessionSync() {
   }
 }
 
+/**
+ * САНИТИЗАЦИЯ СТЕЙТА МЕССЕНДЖЕРА ПРИ ЗАГРУЗКЕ:
+ * Если данные из localStorage повреждены, содержат undefined/null в ключах или не являются валидным объектом —
+ * автоматически очищает их или сбрасывает на emptyMessengerState().
+ */
+function ensureSanitizedMessengerState(state: OgonekStoreState): OgonekStoreState {
+  try {
+    let threads = state.chatThreads
+    let needsUpdate = false
+
+    if (!threads || typeof threads !== 'object' || Array.isArray(threads)) {
+      threads = {}
+      needsUpdate = true
+    } else {
+      const cleanThreads: ChatThreads = {}
+      for (const [key, t] of Object.entries(threads)) {
+        if (!key || key === 'undefined' || key === 'null' || !key.trim() || !t || typeof t !== 'object') {
+          needsUpdate = true
+          continue
+        }
+        const threadObj = t as any
+        cleanThreads[key.trim()] = {
+          ...threadObj,
+          messages: Array.isArray(threadObj.messages) ? threadObj.messages : [],
+          draft: typeof threadObj.draft === 'string' ? threadObj.draft : '',
+          muted: Boolean(threadObj.muted),
+          pinned: Boolean(threadObj.pinned),
+        }
+      }
+      threads = cleanThreads
+    }
+
+    let activeId = state.chatActiveFriendId
+    if (activeId === 'undefined' || activeId === 'null' || (typeof activeId === 'string' && !activeId.trim())) {
+      activeId = null
+      needsUpdate = true
+    }
+
+    const folders = Array.isArray(state.chatFolders) && state.chatFolders.length > 0
+      ? state.chatFolders
+      : DEFAULT_CHAT_FOLDERS
+
+    const activeFolderId = typeof state.chatActiveFolderId === 'string' && state.chatActiveFolderId.trim()
+      ? state.chatActiveFolderId
+      : 'all'
+
+    const tags = Array.isArray(state.chatTags) ? state.chatTags : []
+    const settings = state.chatSettings && typeof state.chatSettings === 'object'
+      ? { ...DEFAULT_CHAT_SETTINGS, ...state.chatSettings }
+      : { ...DEFAULT_CHAT_SETTINGS }
+
+    if (needsUpdate || !state.chatFolders || !state.chatSettings) {
+      const nextState: OgonekStoreState = {
+        ...state,
+        chatThreads: threads,
+        chatActiveFriendId: activeId,
+        chatFolders: folders,
+        chatActiveFolderId: activeFolderId,
+        chatTags: tags,
+        chatSettings: settings,
+      }
+      try {
+        saveStore(nextState)
+      } catch {}
+      return nextState
+    }
+
+    return state
+  } catch (err) {
+    console.error('[Ogonek] Error sanitizing messenger state, resetting to emptyMessengerState():', err)
+    const empty = emptyMessengerState()
+    const nextState: OgonekStoreState = {
+      ...state,
+      ...empty,
+    }
+    try {
+      saveStore(nextState)
+    } catch {}
+    return nextState
+  }
+}
+
 function getSnapshot(): OgonekStoreState {
   if (typeof window === 'undefined') {
     return DEFAULT_STORE_STATE
@@ -314,6 +420,7 @@ function getSnapshot(): OgonekStoreState {
     cachedState = loadStore()
     cachedState = migrateSplitDays(cachedState)
     cachedState = ensureDemoComments(cachedState)
+    cachedState = ensureSanitizedMessengerState(cachedState)
     isInitialized = true
     initSupabaseSessionSync()
   }
@@ -801,11 +908,15 @@ export function useOgonekStore() {
 
   const toggleEvidencePin = useCallback(
     (id: string) => {
+      let isNowPinned = false
       updateStore((prev) => {
-        const nextItems = prev.evidenceItems.map((item) =>
-          item.id === id ? { ...item, pinned: !item.pinned } : item
-        )
-        const isNowPinned = nextItems.find((i) => i.id === id)?.pinned
+        const nextItems = prev.evidenceItems.map((item) => {
+          if (item.id === id) {
+            isNowPinned = !item.pinned
+            return { ...item, pinned: !item.pinned }
+          }
+          return item
+        })
         const nextFavorites = isNowPinned
           ? Array.from(new Set([...prev.evidenceFavorites, id]))
           : prev.evidenceFavorites.filter((favId) => favId !== id)
@@ -816,23 +927,49 @@ export function useOgonekStore() {
           evidenceFavorites: nextFavorites,
         }
       })
+      toggleEvidenceVaultPin(id, isNowPinned).catch(() => {})
     },
     [updateStore]
   )
 
   const addEvidenceItem = useCallback(
     (newItem: Omit<EvidenceItem, 'id'>) => {
+      const id = `ev-${Date.now()}`
+      const itemWithId: EvidenceItem = {
+        ...newItem,
+        id,
+      }
       updateStore((prev) => {
-        const id = `ev-${Date.now()}`
-        const itemWithId: EvidenceItem = {
-          ...newItem,
-          id,
-        }
         return {
           ...prev,
           evidenceItems: [itemWithId, ...prev.evidenceItems],
         }
       })
+
+      const activeId = getSnapshot().auth?.activeAccountId
+      if (activeId && !activeId.startsWith('anon-') && !activeId.startsWith('acct-guest')) {
+        addEvidenceVaultItem(activeId, {
+          id,
+          client_id: id,
+          title: newItem.title,
+          description: newItem.description,
+          date: newItem.date,
+          category: newItem.category,
+          pinned: newItem.pinned,
+        }).catch((err) => console.warn('[Ogonek] Add evidence vault item error:', err))
+      }
+    },
+    [updateStore]
+  )
+
+  const deleteEvidenceItem = useCallback(
+    (id: string) => {
+      updateStore((prev) => ({
+        ...prev,
+        evidenceItems: prev.evidenceItems.filter((i) => i.id !== id),
+        evidenceFavorites: prev.evidenceFavorites.filter((favId) => favId !== id),
+      }))
+      deleteEvidenceVaultItem(id).catch(() => {})
     },
     [updateStore]
   )
@@ -1904,34 +2041,40 @@ export function useOgonekStore() {
         const activeId = prev.auth.activeAccountId
         if (activeId && !activeId.startsWith('anon-') && !activeId.startsWith('acct-guest')) {
           try {
-            const client = getSupabase()
-            if (client) {
-              const privacyPayload = {
-                ...(nextProfile.privacy ?? {}),
-                is_anonymous: Boolean(nextProfile.isAnonymous),
-              }
-              const payload: Record<string, any> = {
-                id: activeId,
-                display_name: nextProfile.displayName,
-                username: nextProfile.username,
-                bio: nextProfile.bio,
-                city: nextProfile.city,
-                avatar_image: nextProfile.avatarImage,
-                banner_image: nextProfile.bannerImage,
-                privacy: privacyPayload,
-                updated_at: new Date().toISOString(),
-              }
-              if (nextProfile.age !== undefined && nextProfile.age !== null) {
-                payload.age = nextProfile.age
-              }
-              const pQuery = (client.from('profiles') as any).upsert(
-                payload,
-                { onConflict: 'id' }
-              )
-              Promise.resolve(pQuery).catch((err: any) => {
-                console.warn('[Ogonek] Upsert profile error:', err)
-              })
+            const userLevel = nextProfile.difficultyLevel || nextProfile.level || 1
+            const privacyPayload = {
+              ...(nextProfile.privacy ?? {}),
+              is_anonymous: Boolean(nextProfile.isAnonymous),
             }
+            const payload: Record<string, any> = {
+              id: activeId,
+              display_name: nextProfile.displayName,
+              username: nextProfile.username,
+              bio: nextProfile.bio,
+              city: nextProfile.city,
+              website: nextProfile.website || '',
+              level: userLevel,
+              difficulty_level: userLevel,
+              avatar_image: nextProfile.avatarImage,
+              avatar_url: nextProfile.avatarImage,
+              banner_image: nextProfile.bannerImage,
+              cover_url: nextProfile.coverUrl || nextProfile.bannerImage,
+              banner_preset: nextProfile.bannerPreset,
+              verified: Boolean(nextProfile.verified),
+              is_anonymous: Boolean(nextProfile.isAnonymous),
+              privacy: privacyPayload,
+              settings: {
+                ...((nextProfile as any).settings ?? {}),
+                level: userLevel,
+              },
+              updated_at: new Date().toISOString(),
+            }
+            if (nextProfile.age !== undefined && nextProfile.age !== null) {
+              payload.age = nextProfile.age
+            }
+            updateProfileInDb(activeId, payload).catch((err: any) => {
+              console.warn('[Ogonek] Upsert profile error:', err)
+            })
           } catch {}
         }
         const accounts = activeId
@@ -1974,6 +2117,15 @@ export function useOgonekStore() {
           : list.filter((id) => id !== friendId)
         return { ...prev, followingIds: next }
       })
+
+      // Синхронизация подписки с Supabase (friendships и follows)
+      const currentUserId = getSnapshot().auth?.activeAccountId
+      if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+        toggleFriendshipFollow(currentUserId, friendId).catch((err) => {
+          console.warn('[Ogonek] toggleFriendshipFollow notice:', err)
+        })
+      }
+
       return willFollow
     },
     [updateStore]
@@ -2000,6 +2152,15 @@ export function useOgonekStore() {
           : list.filter((id) => id !== userId)
         return { ...prev, exploreFollowingIds: next }
       })
+
+      // Синхронизация подписки с Supabase (friendships и follows)
+      const currentUserId = getSnapshot().auth?.activeAccountId
+      if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+        toggleFriendshipFollow(currentUserId, userId).catch((err) => {
+          console.warn('[Ogonek] toggleFriendshipFollow notice:', err)
+        })
+      }
+
       return willFollow
     },
     [updateStore]
@@ -2259,6 +2420,13 @@ export function useOgonekStore() {
         ...prev,
         myStories: [story, ...(prev.myStories ?? [])].slice(0, 30),
       }))
+
+      const activeId = getSnapshot().auth?.activeAccountId
+      if (activeId && !activeId.startsWith('anon-') && !activeId.startsWith('acct-guest')) {
+        publishStoryToDb(activeId, story).catch((err) => {
+          console.warn('[Ogonek] Publish story to DB error:', err)
+        })
+      }
     },
     [updateStore]
   )
@@ -2271,6 +2439,7 @@ export function useOgonekStore() {
         ...prev,
         myStories: (prev.myStories ?? []).filter((s) => s.id !== id),
       }))
+      deleteStoryFromDb(id).catch(() => {})
     },
     [updateStore]
   )
@@ -2954,36 +3123,23 @@ export function useOgonekStore() {
       // Запись строки в таблицу public.direct_messages Supabase
       if (!isScheduled) {
         try {
-          const client = getSupabase()
-          if (client) {
-            client.auth.getSession().then(({ data: sessData }) => {
-              const currentUserId = sessData?.session?.user?.id || getSnapshot().auth?.activeAccountId
-              if (currentUserId && !currentUserId.startsWith('anon-')) {
-                Promise.resolve(
-                  client
-                    .from('direct_messages')
-                    .insert({
-                      user_id: currentUserId,
-                      client_id: message.id,
-                      thread_key: friendId,
-                      author_id: currentUserId,
-                      recipient_id: friendId,
-                      body: clean,
-                      attachment: attachment ?? null,
-                      reactions: [],
-                      is_read: false,
-                      is_system: Boolean(extra?.type === 'system'),
-                      sent_at: message.createdAtISO,
-                    })
-                )
-                  .then(({ error }: any) => {
-                    if (error) {
-                      console.warn('[Ogonek] Direct message insert error:', error.message)
-                    }
-                  })
-                  .catch((err: any) => console.warn('[Ogonek] Direct message insert error:', err))
-              }
-            }).catch(() => {})
+          const currentUserId = getSnapshot().auth?.activeAccountId
+          if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+            const symmetricThreadKey = getDirectThreadKey(currentUserId, friendId)
+            sendDirectMessageToDb({
+              userId: currentUserId,
+              authorId: currentUserId,
+              recipientId: friendId,
+              threadKey: symmetricThreadKey,
+              body: clean,
+              clientId: message.id,
+              attachment: attachment ?? null,
+              media: extra?.media ?? null,
+              replyTo: extra?.replyTo ?? null,
+              forwardFrom: extra?.forwardFrom ?? null,
+              poll: extra?.poll ?? null,
+              type: extra?.type ?? 'text',
+            }).catch((err) => console.warn('[Ogonek] Direct message insert error:', err))
           }
         } catch (e) {
           console.warn('[Ogonek] Direct message insert error:', e)
@@ -3029,6 +3185,12 @@ export function useOgonekStore() {
           },
         }
       })
+
+      if (success) {
+        updateDirectMessageBody(messageId, clean).catch((err) =>
+          console.warn('[Ogonek] Edit message DB error:', err)
+        )
+      }
       return success
     },
     [updateStore]
@@ -3087,6 +3249,10 @@ export function useOgonekStore() {
           },
         }
       })
+
+      updateDirectMessagePin(messageId, isPinned).catch((err) =>
+        console.warn('[Ogonek] Update pin DB error:', err)
+      )
       return isPinned
     },
     [updateStore]
@@ -3235,21 +3401,28 @@ export function useOgonekStore() {
         (r) => r.by === MY_CHAT_ID && r.emojiId === emojiId
       )
 
+      let nextReactions: any[] = []
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const t = threadOf(threads, friendId)
         const messages = t.messages.map((m) => {
           if (m.id !== messageId) return m
           const mine = m.reactions.some((r) => r.by === MY_CHAT_ID && r.emojiId === emojiId)
+          const updated = mine
+            ? m.reactions.filter((r) => !(r.by === MY_CHAT_ID && r.emojiId === emojiId))
+            : [...m.reactions, { emojiId, by: MY_CHAT_ID }]
+          nextReactions = updated
           return {
             ...m,
-            reactions: mine
-              ? m.reactions.filter((r) => !(r.by === MY_CHAT_ID && r.emojiId === emojiId))
-              : [...m.reactions, { emojiId, by: MY_CHAT_ID }],
+            reactions: updated,
           }
         })
         return { ...prev, chatThreads: { ...threads, [friendId]: { ...t, messages } } }
       })
+
+      updateDirectMessageReactions(messageId, nextReactions).catch((err) =>
+        console.warn('[Ogonek] Update reactions DB error:', err)
+      )
 
       return willBeActive
     },
@@ -3421,6 +3594,11 @@ export function useOgonekStore() {
           },
         }
       })
+
+      // Синхронизируем расшифровку с Supabase
+      updateDirectMessageTranscript(messageId, transcript).catch((err) =>
+        console.warn('[Ogonek] Sync transcript to Supabase error:', err)
+      )
     },
     [updateStore]
   )
@@ -3587,7 +3765,7 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Смена уровня сложности (1..5) с фиксацией в истории */
+  /** Смена уровня сложности (1..5) с фиксацией в истории и обновлением в Supabase */
   const setDifficultyLevel = useCallback(
     (newLevel: number, reason?: string) => {
       if (newLevel < 1 || newLevel > 5) return
@@ -3612,6 +3790,172 @@ export function useOgonekStore() {
             difficultyLevel: newLevel,
             levelChangedAtISO: nowISO,
             levelHistory: [entry, ...history],
+          },
+        }
+      })
+
+      // Реальный UPDATE в Supabase profiles
+      const activeId = getSnapshot().auth?.activeAccountId
+      if (activeId && !activeId.startsWith('anon-') && !activeId.startsWith('acct-guest')) {
+        updateProfileLevel(activeId, newLevel).catch((err) => {
+          console.warn('[Ogonek] Update difficulty level in Supabase error:', err)
+        })
+      }
+    },
+    [updateStore]
+  )
+
+  /** Получение сообщения из Realtime канала Supabase или загрузки диалога */
+  const receiveIncomingChatMessage = useCallback(
+    (msg: DirectMessageRecord) => {
+      if (!msg) return
+      const currentUserId = getSnapshot().auth?.activeAccountId
+
+      // Определяем автора и получателя
+      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
+      let peerId = isMine ? msg.recipient_id : msg.author_id
+
+      if (!peerId && msg.thread_key && currentUserId) {
+        // Если recipient_id пуст, извлекаем ID собеседника из симметричного thread_key
+        const parts = msg.thread_key.split('_')
+        peerId = parts.find((p) => p !== currentUserId) || parts[0]
+      }
+
+      if (!peerId) return
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, peerId)
+        const messages = Array.isArray(thread.messages) ? thread.messages : []
+        const exists = messages.some(
+          (m) => m && (m.id === msg.id || (msg.client_id && m.id === msg.client_id))
+        )
+        if (exists) return prev
+
+        const newMsg: ChatMessage = {
+          id: msg.client_id || msg.id,
+          authorId: isMine ? MY_CHAT_ID : msg.author_id,
+          text: msg.body,
+          createdAtISO: msg.sent_at || msg.created_at || new Date().toISOString(),
+          attachment: msg.attachment ?? null,
+          reactions: Array.isArray(msg.reactions) ? msg.reactions : [],
+          read: Boolean(msg.is_read),
+          system: Boolean(msg.is_system),
+          type: (msg.type as any) || 'text',
+          media: msg.media ?? null,
+          replyTo: msg.reply_to ?? null,
+          forwardFrom: msg.forward_from ?? null,
+          poll: msg.poll ?? null,
+          linkPreview: msg.link_preview ?? null,
+          status: 'sent',
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [peerId]: {
+              ...thread,
+              messages: [...messages, newMsg],
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Обновление существующего сообщения из Realtime канала Supabase (UPDATE: реакции, текст, закреп) */
+  const updateIncomingChatMessage = useCallback(
+    (msg: DirectMessageRecord) => {
+      if (!msg) return
+      const currentUserId = getSnapshot().auth?.activeAccountId
+
+      // Определяем собеседника
+      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
+      let peerId = isMine ? msg.recipient_id : msg.author_id
+      if (!peerId && msg.thread_key && currentUserId) {
+        const parts = msg.thread_key.split('_')
+        peerId = parts.find((p) => p !== currentUserId) || parts[0]
+      }
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        // Ищем тред: сначала по peerId, если нет — перебираем все треды
+        const targetThreadIds = peerId && threads[peerId] ? [peerId] : Object.keys(threads)
+        let matchedFriendId: string | null = null
+        let matchedMsgIndex = -1
+
+        for (const fId of targetThreadIds) {
+          const t = threads[fId]
+          if (!t || !Array.isArray(t.messages)) continue
+          const idx = t.messages.findIndex(
+            (m) => m && (m.id === msg.id || (msg.client_id && m.id === msg.client_id))
+          )
+          if (idx >= 0) {
+            matchedFriendId = fId
+            matchedMsgIndex = idx
+            break
+          }
+        }
+
+        if (!matchedFriendId || matchedMsgIndex < 0) return prev
+
+        const targetThread = threads[matchedFriendId]
+        const existingMsg = targetThread.messages[matchedMsgIndex]
+
+        const updatedMsg: ChatMessage = {
+          ...existingMsg,
+          text: typeof msg.body === 'string' ? msg.body : existingMsg.text,
+          reactions: Array.isArray(msg.reactions) ? msg.reactions : existingMsg.reactions,
+          editedAtISO: msg.is_edited ? (msg.updated_at || new Date().toISOString()) : existingMsg.editedAtISO,
+          pinned: typeof msg.is_pinned === 'boolean' ? msg.is_pinned : existingMsg.pinned,
+        }
+
+        const newMessages = [...targetThread.messages]
+        newMessages[matchedMsgIndex] = updatedMsg
+
+        let newPinnedId = targetThread.pinnedMessageId
+        if (msg.is_pinned === true) {
+          newPinnedId = updatedMsg.id
+        } else if (msg.is_pinned === false && targetThread.pinnedMessageId === updatedMsg.id) {
+          newPinnedId = null
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [matchedFriendId]: {
+              ...targetThread,
+              pinnedMessageId: newPinnedId,
+              messages: newMessages,
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Обновить метаданные собеседника (имя, никнейм, аватар) для отображения без сырых UUID */
+  const updateThreadPeerMeta = useCallback(
+    (friendId: string, meta: { name?: string; username?: string; avatarUrl?: string; initials?: string }) => {
+      if (!friendId || !meta) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              peerMeta: {
+                ...thread.peerMeta,
+                ...meta,
+              },
+            },
           },
         }
       })
@@ -3953,24 +4297,59 @@ export function useOgonekStore() {
       const nowISO = new Date().toISOString()
       const accountId = params.userId || `acct-${cleanNick}`
 
-      // Загружаем актуальные аватарку и баннер из базы данных Supabase
+      // Загружаем актуальные данные профиля (включая реальный level!) из базы данных Supabase
       let avatarImage = params.avatarUrl ?? null
       let bannerImage = params.bannerUrl ?? null
+      let dbLevel: number | null = null
+      let dbCity: string | null = null
+      let dbWebsite: string | null = null
+      let dbVerified: boolean | null = null
+      let dbBio: string | null = null
+      let dbAge: number | null = null
+      let dbIsAnon: boolean | null = null
+
       try {
         const client = getSupabase()
         if (client && params.userId) {
           const { data: dbProfile } = await client
             .from('profiles')
-            .select('avatar_image, banner_image, display_name, username')
+            .select('*')
             .eq('id', params.userId)
             .single()
           if (dbProfile) {
             if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
             if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+            dbLevel =
+              (typeof dbProfile.level === 'number' && dbProfile.level > 0 ? dbProfile.level : null) ??
+              (typeof dbProfile.settings?.level === 'number' && dbProfile.settings.level > 0 ? dbProfile.settings.level : null) ??
+              (typeof dbProfile.difficulty_level === 'number' && dbProfile.difficulty_level > 0 ? dbProfile.difficulty_level : null) ??
+              (dbProfile.level ? Number(dbProfile.level) : null) ??
+              (dbProfile.settings?.level ? Number(dbProfile.settings.level) : null) ??
+              (dbProfile.difficulty_level ? Number(dbProfile.difficulty_level) : null) ??
+              null
+            if (dbProfile.city) dbCity = dbProfile.city
+            if (dbProfile.website) dbWebsite = dbProfile.website
+            if (typeof dbProfile.verified === 'boolean') dbVerified = dbProfile.verified
+            if (dbProfile.bio) dbBio = dbProfile.bio
+            if (typeof dbProfile.age === 'number') dbAge = dbProfile.age
+            if (typeof dbProfile.is_anonymous === 'boolean') dbIsAnon = dbProfile.is_anonymous
           }
         }
       } catch (err) {
         console.warn('Could not fetch remote profile on applyUserSession:', err)
+      }
+
+      // Загружаем актуальные подписки из базы Supabase (friendships и follows)
+      let remoteFollowingIds: string[] = []
+      try {
+        if (params.userId) {
+          const followings = await getFollowing(params.userId)
+          if (Array.isArray(followings) && followings.length > 0) {
+            remoteFollowingIds = followings.map((f) => f.id).filter(Boolean)
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch following on applyUserSession:', err)
       }
 
       updateStore((prev) => {
@@ -4000,7 +4379,7 @@ export function useOgonekStore() {
             displayName,
             username: cleanNick,
             email,
-            verified: false,
+            verified: dbVerified ?? false,
             now: new Date(nowISO),
           })
           account.id = accountId
@@ -4012,6 +4391,7 @@ export function useOgonekStore() {
 
         const isOwner = cleanNick === 'cernavation'
         const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
+        const effectiveLevel = dbLevel ?? (existing ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1)
 
         return {
           ...prev,
@@ -4023,13 +4403,15 @@ export function useOgonekStore() {
             avatarImage: account.snapshot.avatarImage,
             bannerImage: account.snapshot.bannerImage,
             coverUrl: account.snapshot.bannerImage,
-            verified: false,
-            level: 1,
-            difficultyLevel: 1,
+            verified: dbVerified !== null ? dbVerified : (existing ? baseProfile.verified : false),
+            level: effectiveLevel,
+            difficultyLevel: effectiveLevel,
             monthlyGoal: existing ? baseProfile.monthlyGoal : '',
-            bio: account.snapshot.bio || '',
-            city: account.snapshot.city || '',
-            website: existing ? baseProfile.website : '',
+            bio: dbBio !== null ? dbBio : (account.snapshot.bio || ''),
+            city: dbCity !== null ? dbCity : (account.snapshot.city || ''),
+            website: dbWebsite !== null ? dbWebsite : (existing ? baseProfile.website : ''),
+            age: dbAge !== null ? dbAge : (existing ? baseProfile.age : null),
+            isAnonymous: dbIsAnon !== null ? dbIsAnon : (existing ? baseProfile.isAnonymous : false),
           }),
           // Для нового пользователя (не cernavation) лента чистая и готова к первому дню
           days: isOwner
@@ -4037,6 +4419,12 @@ export function useOgonekStore() {
             : prev.days.length > 0 && prev.auth.accounts.some((a) => a.id === accountId)
               ? prev.days
               : [],
+          followingIds: remoteFollowingIds.length > 0
+            ? Array.from(new Set([...(prev.followingIds ?? []), ...remoteFollowingIds]))
+            : prev.followingIds,
+          exploreFollowingIds: remoteFollowingIds.length > 0
+            ? Array.from(new Set([...(prev.exploreFollowingIds ?? []), ...remoteFollowingIds]))
+            : prev.exploreFollowingIds,
           auth: {
             ...prev.auth,
             accounts: [
@@ -4055,6 +4443,27 @@ export function useOgonekStore() {
           },
         }
       })
+
+      // Подгрузка Evidence Vault из Supabase
+      if (params.userId) {
+        try {
+          const vaultItems = await getEvidenceVault(params.userId)
+          if (vaultItems && vaultItems.length > 0) {
+            updateStore((prev) => ({
+              ...prev,
+              evidenceItems: vaultItems.map((v) => ({
+                id: v.client_id || v.id,
+                title: v.title,
+                description: v.description,
+                date: v.date,
+                category: v.category,
+                pinned: Boolean(v.pinned),
+              })),
+              evidenceFavorites: vaultItems.filter((v) => v.pinned).map((v) => v.client_id || v.id),
+            }))
+          }
+        } catch {}
+      }
 
       return { ok: true, accountId }
     },
@@ -4158,10 +4567,24 @@ export function useOgonekStore() {
     }))
   }, [updateStore])
 
+  /** Безопасный сброс кэша мессенджера при повреждении сохранённых данных */
+  const resetMessengerState = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('ogonek_messenger_state')
+      }
+    } catch {}
+    updateStore((prev) => ({
+      ...prev,
+      ...emptyMessengerState(),
+    }))
+  }, [updateStore])
+
   return {
     state,
     currentUser,
     isHydrated: typeof window !== 'undefined',
+    resetMessengerState,
     addDay,
     addNewDay,
     updateDay,
@@ -4178,6 +4601,7 @@ export function useOgonekStore() {
     clearComposerDraft,
     toggleEvidencePin,
     addEvidenceItem,
+    deleteEvidenceItem,
     setSoundEnabled,
     setPinEnabled,
     setTheme,
@@ -4258,6 +4682,9 @@ export function useOgonekStore() {
     setActiveChatFriend,
     startChatWithFriend,
     sendChatMessage,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    updateThreadPeerMeta,
     forwardToChat,
     toggleChatReaction,
     setChatDraft,

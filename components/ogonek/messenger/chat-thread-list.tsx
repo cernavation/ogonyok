@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react'
 
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import {
+  emptyThread,
   filterThreadsByFolder,
   isGroupThread,
   lastMessage,
@@ -32,6 +33,8 @@ type Props = {
   soundEnabled?: boolean
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export function ChatThreadList({
   threads,
   activeFriendId,
@@ -47,20 +50,21 @@ export function ChatThreadList({
   const [query, setQuery] = useState('')
   const [showArchived, setShowArchived] = useState(false)
 
-  const allIds = useMemo(() => Object.keys(threads), [threads])
-  const unreadTotal = useMemo(() => totalUnread(threads), [threads])
+  const allIds = useMemo(() => Object.keys(threads || {}), [threads])
+  const unreadTotal = useMemo(() => totalUnread(threads || {}), [threads])
 
   // Filter by folder first
   const folderFilteredIds = useMemo(() => {
-    return filterThreadsByFolder(threads, allIds, activeFolderId, folders)
+    return filterThreadsByFolder(threads || {}, allIds, activeFolderId, folders || [])
   }, [threads, allIds, activeFolderId, folders])
 
   // Split into active and archived
   const { activeIds, archivedIds } = useMemo(() => {
     const act: string[] = []
     const arc: string[] = []
+    const safe = threads || {}
     for (const id of folderFilteredIds) {
-      if (threads[id]?.archived) arc.push(id)
+      if (safe[id]?.archived) arc.push(id)
       else act.push(id)
     }
     return { activeIds: act, archivedIds: arc }
@@ -69,23 +73,33 @@ export function ChatThreadList({
   const targetIds = showArchived ? archivedIds : activeIds
 
   const rows = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return sortThreadIds(threads, targetIds)
+    const q = (query || '').trim().toLowerCase()
+    const safeThreads = threads || {}
+    const isUuid = (s: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+
+    return sortThreadIds(safeThreads, targetIds)
       .map((id) => {
-        const thread = threads[id]
+        if (!id) return null
+        const thread = safeThreads[id] ?? emptyThread()
         const isGroup = isGroupThread(thread, id)
         const friend = !isGroup ? getFriend(id) : null
-        const title = threadTitle(id, thread)
-        return { id, isGroup, friend, thread, title }
+        let title = threadTitle(id, thread)
+        let username = friend?.username || thread?.peerMeta?.username || null
+        if (username && isUuid(username)) username = null
+        if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
+        return { id, isGroup, friend, thread, title, username }
       })
-      .filter(({ friend, thread, title }) => {
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .filter(({ friend, thread, title, username }) => {
         if (!q) return true
         const last = lastMessage(thread)?.text ?? ''
         return (
-          title.toLowerCase().includes(q) ||
-          (friend?.username && friend.username.toLowerCase().includes(q)) ||
-          (thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
-          (friend?.city && friend.city.toLowerCase().includes(q)) ||
+          (title || '').toLowerCase().includes(q) ||
+          Boolean(username && username.toLowerCase().includes(q)) ||
+          Boolean(friend?.username && friend.username.toLowerCase().includes(q)) ||
+          Boolean(thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
+          Boolean(friend?.city && friend.city.toLowerCase().includes(q)) ||
           last.toLowerCase().includes(q)
         )
       })
@@ -171,8 +185,10 @@ export function ChatThreadList({
             const presence = friend ? presenceMeta(friend.presence) : null
             const preview = summarizeMessage(last)
             const isMine = last?.authorId === 'me'
-            const isMuted = thread.muted
-            const isPinned = thread.pinned
+            const isMuted = Boolean(thread?.muted)
+            const isPinned = Boolean(thread?.pinned)
+            const rawUsername = friend?.username || thread?.peerMeta?.username
+            const username = rawUsername && !UUID_REGEX.test(rawUsername) ? rawUsername : null
 
             return (
               <button
@@ -194,11 +210,11 @@ export function ChatThreadList({
                       className="flex h-12 w-12 items-center justify-center rounded-full text-xl shadow-md"
                       style={{
                         background:
-                          thread.groupMeta?.avatarColor ||
+                          thread?.groupMeta?.avatarColor ||
                           'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
                       }}
                     >
-                      {thread.groupMeta?.avatarEmoji || '👥'}
+                      {thread?.groupMeta?.avatarEmoji || '👥'}
                     </div>
                   ) : (
                     <ChatAvatar friendId={id} size={48} ringColor="var(--bg)" />
@@ -221,7 +237,7 @@ export function ChatThreadList({
                       )}
                     </span>
                     <span className="shrink-0 text-[11px] font-mono text-[var(--text-2)]">
-                      {last
+                      {last?.createdAtISO
                         ? new Date(last.createdAtISO).toLocaleTimeString('ru-RU', {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -229,6 +245,12 @@ export function ChatThreadList({
                         : ''}
                     </span>
                   </div>
+
+                  {username && (
+                    <div className="text-[11px] text-[var(--text-2)] truncate leading-none mb-1 font-medium">
+                      @{username.replace(/^@/, '')}
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between gap-2">
                     <div className="truncate text-xs text-[var(--text-2)] flex items-center gap-1">
@@ -245,14 +267,14 @@ export function ChatThreadList({
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {isMuted && <VolumeX size={13} className="text-[#71767b]" />}
-                      {isPinned && (
+                      {Boolean(thread?.muted) && <VolumeX size={13} className="text-[#71767b]" />}
+                      {Boolean(thread?.pinned) && (
                         <Pin size={12} className="rotate-45 text-[#ffad5a]" fill="currentColor" />
                       )}
                       {unread > 0 && (
                         <span
                           className={`flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                            isMuted
+                            thread?.muted
                               ? 'bg-[#2f3336] text-[#71767b]'
                               : 'bg-[#ff7a18] text-white shadow-sm'
                           }`}

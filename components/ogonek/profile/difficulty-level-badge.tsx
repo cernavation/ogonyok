@@ -51,8 +51,8 @@ export function DifficultyLevelBadge({
           ))}
         </div>
         {showNumber && (
-          <span className="text-[10px] font-extrabold text-[var(--text)]">
-            Ур. {safeLevel}
+          <span className="text-[11px] font-extrabold text-[var(--text)] tracking-tight">
+            Уровень {safeLevel}
           </span>
         )}
       </span>

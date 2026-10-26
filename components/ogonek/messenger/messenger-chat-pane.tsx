@@ -37,6 +37,7 @@ import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import {
   chatDayKey,
   formatChatDayLabel,
+  getDirectThreadKey,
   isGroupThread,
   QUICK_REPLIES,
   threadOf,
@@ -52,7 +53,15 @@ import type {
   ChatMessageReply,
   ChatPoll,
 } from '@/lib/ogonek/types'
-import { getProfile, type ProfileRecord } from '@/lib/supabase/api'
+import {
+  getProfile,
+  getDirectMessages,
+  markDirectMessagesAsRead,
+  subscribeToDirectMessages,
+  createCallSession,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
+import { getSupabase } from '@/lib/supabase/client'
 import { ChatAvatar } from './chat-avatar'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
@@ -61,6 +70,7 @@ import { ChatSelectionToolbar } from './chat-selection-toolbar'
 import { ForwardToChatModal } from './forward-to-chat-modal'
 import { ChatVoiceRecorder } from './chat-voice-recorder'
 import { ChatCallModal } from './chat-call-modal'
+import { CallErrorBoundary } from './call-error-boundary'
 import { ChatGifModal } from './chat-gif-modal'
 import { ChatPollCreatorModal } from './chat-poll-creator-modal'
 import { ChatScheduleModal } from './chat-schedule-modal'
@@ -78,6 +88,7 @@ const ChatEmojiPicker = dynamic(
 
 type Props = {
   friendId: string | null
+  currentUserId?: string | null
   onBack?: () => void
   onNavigateHome?: () => void
   onNotify: (message: string) => void
@@ -88,6 +99,7 @@ const PAGE_SIZE = 30
 
 export function MessengerChatPane({
   friendId,
+  currentUserId: currentUserIdProp,
   onBack,
   onNavigateHome,
   onNotify,
@@ -95,7 +107,10 @@ export function MessengerChatPane({
 }: Props) {
   const {
     state,
+    currentUser,
     sendChatMessage,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
     editChatMessage,
     deleteChatMessage,
     deleteChatMessages,
@@ -129,6 +144,7 @@ export function MessengerChatPane({
   // Модальные окна
   const [callModalOpen, setCallModalOpen] = useState(false)
   const [callIsVideo, setCallIsVideo] = useState(false)
+  const [activeCallSessionId, setActiveCallSessionId] = useState<string | null>(null)
   const [gifModalOpen, setGifModalOpen] = useState(false)
   const [pollModalOpen, setPollModalOpen] = useState(false)
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
@@ -151,28 +167,48 @@ export function MessengerChatPane({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const outgoingCallChannelRef = useRef<any>(null)
 
   const [peerProfile, setPeerProfile] = useState<ProfileRecord | null>(null)
+
+  const currentUserId = currentUserIdProp || state.auth?.activeAccountId || currentUser?.id || 'local-user'
+
+  const targetPeerId = useMemo(() => {
+    if (!friendId) return null
+    if (friendId.includes('_')) {
+      const parts = friendId.split('_')
+      return (currentUserId && parts.find((p) => p !== currentUserId)) || parts[0]
+    }
+    return friendId
+  }, [friendId, currentUserId])
 
   const thread = friendId ? threadOf(state.chatThreads ?? {}, friendId) : null
   const isGroup = friendId ? isGroupThread(thread ?? undefined, friendId) : false
   const isSaved = friendId === 'saved-messages'
-  const friend = friendId && !isGroup && !isSaved ? getFriend(friendId) : null
-  const title = isSaved
+  const friend = targetPeerId && !isGroup && !isSaved ? getFriend(targetPeerId) : null
+
+  const isUuid = (s?: string | null) =>
+    typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+
+  let title = isSaved
     ? 'Избранное'
     : friend
     ? friend.name
     : thread?.peerMeta?.name || peerProfile?.display_name || (peerProfile?.username ? `@${peerProfile.username}` : (friendId ? threadTitle(friendId, thread ?? undefined) : ''))
 
+  if (isUuid(title)) {
+    title = peerProfile?.username ? `@${peerProfile.username}` : 'Собеседник'
+  }
+
   useEffect(() => {
-    if (friendId && !friend && !isGroup && !isSaved) {
-      getProfile(friendId).then((p) => {
+    if (targetPeerId && !friend && !isGroup && !isSaved) {
+      getProfile(targetPeerId).then((p) => {
         if (p) setPeerProfile(p)
       })
     } else {
       setPeerProfile(null)
     }
-  }, [friendId, friend, isGroup, isSaved])
+  }, [targetPeerId, friend, isGroup, isSaved])
 
   // Активировать поле ввода сообщения при открытии чата
   useEffect(() => {
@@ -200,12 +236,93 @@ export function MessengerChatPane({
     return allMessages.find((m) => m.id === thread.pinnedMessageId) ?? null
   }, [allMessages, thread?.pinnedMessageId])
 
-  // Пометка прочитанным при открытии
+  // Загрузка сообщений из базы Supabase при открытии диалога
+  useEffect(() => {
+    if (!friendId || !currentUserId || isGroup || isSaved) return
+    let cancelled = false
+
+    getDirectMessages(currentUserId, friendId).then((dbMessages) => {
+      if (cancelled || !dbMessages || !Array.isArray(dbMessages)) return
+      for (const m of dbMessages) {
+        if (m) receiveIncomingChatMessage(m)
+      }
+    }).catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [friendId, currentUserId, isGroup, isSaved, receiveIncomingChatMessage, updateIncomingChatMessage])
+
+  // Пометка прочитанным при открытии (в локальном сторе и в Supabase)
   useEffect(() => {
     if (friendId) {
       markThreadRead(friendId)
+      if (currentUserId && !isGroup && !isSaved) {
+        markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
+      }
     }
-  }, [friendId, allMessages.length, markThreadRead])
+  }, [friendId, allMessages.length, markThreadRead, currentUserId, isGroup, isSaved])
+
+  // 1. Жизненный цикл Supabase Realtime подписки на сообщения диалога (СТРОГИЙ ПАТТЕРН)
+  useEffect(() => {
+    if (!friendId || !currentUserId || isGroup || isSaved) return
+
+    const supabase = getSupabase()
+    if (!supabase) return
+
+    const threadKey = getDirectThreadKey(currentUserId, friendId)
+    // Уникальный суффикс предотвращает коллизию при React StrictMode / fast remount
+    const channelName = `chat_${threadKey}_${Math.random().toString(36).slice(2, 8)}`
+
+    // 1. Создаем НОВЫЙ канал
+    const channel = supabase.channel(channelName)
+
+    // 2. СНАЧАЛА вешаем обработчик
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `thread_key=eq.${threadKey}`,
+      },
+      (payload) => {
+        // безопасно добавляем новое входящее сообщение
+        if (payload?.new) {
+          receiveIncomingChatMessage(payload.new as any)
+          markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
+        }
+      }
+    )
+
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'direct_messages',
+        filter: `thread_key=eq.${threadKey}`,
+      },
+      (payload) => {
+        // безопасно обновляем реакции, статус закрепа или текст сообщения
+        if (payload?.new) {
+          updateIncomingChatMessage(payload.new as any)
+        }
+      }
+    )
+
+    // 3. И ТОЛЬКО ПОТОМ вызываем subscribe()!
+    channel.subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        // подписка активна
+      }
+    })
+
+    // 4. ОБЯЗАТЕЛЬНЫЙ CLEANUP ПРИ СМЕНЕ ЧАТА ИЛИ РАЗМОНТИРОВАНИИ:
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [friendId, currentUserId, isGroup, isSaved, receiveIncomingChatMessage, updateIncomingChatMessage])
 
   // Автопрокрутка вниз при новом сообщении
   useEffect(() => {
@@ -252,13 +369,15 @@ export function MessengerChatPane({
   // Группировка сообщений по дням
   const groups = useMemo(() => {
     const result: Array<{ key: string; label: string; items: ChatMessage[] }> = []
-    for (const msg of messages) {
-      const key = chatDayKey(msg.createdAtISO)
+    for (const msg of (messages || [])) {
+      if (!msg) continue
+      const iso = msg.createdAtISO || new Date().toISOString()
+      const key = chatDayKey(iso) || 'today'
       const current = result[result.length - 1]
       if (current && current.key === key) {
         current.items.push(msg)
       } else {
-        result.push({ key, label: formatChatDayLabel(msg.createdAtISO), items: [msg] })
+        result.push({ key, label: formatChatDayLabel(iso) || 'Сегодня', items: [msg] })
       }
     }
     return result
@@ -290,12 +409,17 @@ export function MessengerChatPane({
         }
       : null
 
-    sendChatMessage(friendId, draft.trim(), attachment, {
-      replyTo: replyPayload,
-      media: mediaAttachment,
-      silent: options?.silent,
-      scheduledForISO: options?.scheduledForISO,
-    })
+    try {
+      sendChatMessage(friendId, draft.trim(), attachment, {
+        replyTo: replyPayload,
+        media: mediaAttachment,
+        silent: options?.silent,
+        scheduledForISO: options?.scheduledForISO,
+      })
+    } catch (err) {
+      console.warn('[Ogonek] Send message error:', err)
+      onNotify('Не удалось отправить сообщение')
+    }
 
     playSuccess(soundEnabled)
     setChatDraft(friendId, '')
@@ -327,14 +451,82 @@ export function MessengerChatPane({
     }
   }
 
-  const handleStartCall = (video: boolean) => {
+  const handleStartCall = async (video: boolean) => {
     playClick(soundEnabled)
     setCallIsVideo(video)
+
+    const peerId = targetPeerId || friendId
+    if (!peerId) {
+      setCallModalOpen(true)
+      return
+    }
+
+    const newSessionId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    setActiveCallSessionId(newSessionId)
+
+    // 1. Создаем подключение к персональному broadcast каналу получателя: user_calls_${receiverId}
+    const supabase = getSupabase()
+    if (supabase) {
+      const receiverChannel = supabase.channel(`user_calls_${peerId}`)
+      outgoingCallChannelRef.current = receiverChannel
+
+      const callerName =
+        currentUser?.displayName ||
+        state.profile.displayName ||
+        state.profile.username ||
+        'Соратник'
+      const callerAvatar = currentUser?.avatarImage || state.profile.avatarImage || null
+
+      receiverChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          receiverChannel.send({
+            type: 'broadcast',
+            event: 'incoming_call',
+            payload: {
+              sessionId: newSessionId,
+              callerId: currentUserId,
+              callerName,
+              callerAvatar,
+              isVideo: video,
+            },
+          })
+        }
+      })
+    }
+
+    // 2. Параллельно создаем запись в таблице call_sessions в Supabase для истории
+    createCallSession({
+      caller_id: currentUserId,
+      receiver_id: peerId,
+      is_video: video,
+    }).then((res) => {
+      if (res.session?.id) {
+        setActiveCallSessionId(res.session.id)
+      }
+    }).catch(() => {})
+
     setCallModalOpen(true)
   }
 
   const handleCallFinished = (sec: number, type: 'audio' | 'video') => {
     setCallModalOpen(false)
+
+    // Отправляем broadcast 'call_ended' на канал получателя если вызов был сброшен
+    if (outgoingCallChannelRef.current) {
+      try {
+        outgoingCallChannelRef.current.send({
+          type: 'broadcast',
+          event: 'call_ended',
+          payload: { sessionId: activeCallSessionId },
+        })
+      } catch {}
+      const supabase = getSupabase()
+      if (supabase) {
+        supabase.removeChannel(outgoingCallChannelRef.current)
+      }
+      outgoingCallChannelRef.current = null
+    }
+
     if (!friendId) return
     const m = Math.floor(sec / 60)
     const s = sec % 60
@@ -411,9 +603,11 @@ export function MessengerChatPane({
           </div>
         )}
         <div className="w-20 h-20 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center text-4xl shadow-lg mb-4">
-          🔥
+          💬
         </div>
-        <h2 className="text-2xl font-[800] text-[var(--text)] mb-2">Выберите чат</h2>
+        <h2 className="text-2xl sm:text-3xl font-[800] text-[var(--text)] mb-2 tracking-tight">
+          Выберите диалог или начните новый чат
+        </h2>
         <p className="text-sm text-[var(--text-2)] max-w-sm mb-6 leading-relaxed">
           Общайтесь с соратниками, делитесь карточками гордости, отправляйте голосовые и ставьте огоньки к победам.
         </p>
@@ -714,7 +908,7 @@ export function MessengerChatPane({
           {allMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-8 text-center my-auto">
               <ChatAvatar friendId={friendId} size={72} ringColor="var(--border)" />
-              <p className="text-lg font-bold text-[var(--text)] mt-3">{title}</p>
+              <p className="text-lg font-bold text-[var(--text)] mt-3">{title || 'Чат'}</p>
               <p className="text-xs text-[var(--text-2)] max-w-sm mt-1">
                 {isGroup ? thread?.groupMeta?.description : friend?.bio || 'Начало переписки в Огоньке.'}
               </p>
@@ -723,65 +917,70 @@ export function MessengerChatPane({
               </p>
             </div>
           ) : (
-            groups.map((group) => (
-              <div key={group.key} className="w-full flex flex-col space-y-1">
-                {/* Разделитель дня: отдельная центрированная строка на всю ширину */}
-                <div className="w-full flex justify-center my-4 sticky top-2 z-10 pointer-events-none select-none clear-both">
-                  <span className="inline-flex items-center justify-center rounded-full bg-[var(--bg-elev)]/90 px-4 py-1 text-[12px] font-bold text-[var(--text-2)] backdrop-blur-md border border-[var(--border)] shadow-sm pointer-events-auto">
-                    {group.label}
-                  </span>
-                </div>
+            (groups || []).map((group) => {
+              if (!group) return null
+              return (
+                <div key={group.key} className="w-full flex flex-col space-y-1">
+                  {/* Разделитель дня: отдельная центрированная строка на всю ширину */}
+                  <div className="w-full flex justify-center my-4 sticky top-2 z-10 pointer-events-none select-none clear-both">
+                    <span className="inline-flex items-center justify-center rounded-full bg-[var(--bg-elev)]/90 px-4 py-1 text-[12px] font-bold text-[var(--text-2)] backdrop-blur-md border border-[var(--border)] shadow-sm pointer-events-auto">
+                      {group.label}
+                    </span>
+                  </div>
 
-                {/* Сообщения дня */}
-                <div className="w-full flex flex-col space-y-1">
-                  {group.items.map((msg, idx) => {
-                    const prev = group.items[idx - 1]
-                    const next = group.items[idx + 1]
-                    const isFirstInGroup = !prev || prev.authorId !== msg.authorId
-                    const isLastInGroup = !next || next.authorId !== msg.authorId
+                  {/* Сообщения дня */}
+                  <div className="w-full flex flex-col space-y-1">
+                    {(group.items || []).map((msg, idx) => {
+                      if (!msg) return null
+                      const prev = group.items[idx - 1]
+                      const next = group.items[idx + 1]
+                      const isFirstInGroup = !prev || prev.authorId !== msg.authorId
+                      const isLastInGroup = !next || next.authorId !== msg.authorId
+                      const isMineMsg = msg.authorId === 'me' || (Boolean(currentUserId) && msg.authorId === currentUserId)
 
-                    return (
-                      <ChatMessageBubble
-                        key={msg.id}
-                        message={msg}
-                        isMine={msg.authorId === 'me'}
-                        resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
-                        customEmojis={state.customEmojis}
-                        onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
-                        onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
-                        onReply={(m) => setReplyingTo(m)}
-                        onEdit={(m) => {
-                          setEditingMessage(m)
-                          setChatDraft(friendId, m.text)
-                          textareaRef.current?.focus()
-                        }}
-                        onPin={(id) => togglePinChatMessage(friendId, id)}
-                        onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
-                        onJumpToReply={scrollToMessage}
-                        onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
-                        onTranscribe={(id) => transcribeVoiceMessage(friendId, id, 'Расшифровка голоса выполнена.')}
-                        onVotePoll={(id, idx) => voteInPoll(friendId, id, idx)}
-                        onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
-                        isSelectionMode={isSelectionMode}
-                        isSelected={selectedMessageIds.includes(msg.id)}
-                        onToggleSelect={(id) => {
-                          setSelectedMessageIds((ids) =>
-                            ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
-                          )
-                        }}
-                        isGroup={isGroup}
-                        showAuthorHeader={isGroup}
-                        isFirstInGroup={isFirstInGroup}
-                        isLastInGroup={isLastInGroup}
-                        searchQuery={searchQuery}
-                        soundEnabled={soundEnabled}
-                        onNotify={onNotify}
-                      />
-                    )
-                  })}
+                      return (
+                        <ChatMessageBubble
+                          key={msg.id}
+                          message={msg}
+                          isMine={isMineMsg}
+                          resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
+                          customEmojis={state.customEmojis}
+                          onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
+                          onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
+                          onReply={(m) => setReplyingTo(m)}
+                          onEdit={(m) => {
+                            setEditingMessage(m)
+                            setChatDraft(friendId, m.text)
+                            textareaRef.current?.focus()
+                          }}
+                          onPin={(id) => togglePinChatMessage(friendId, id)}
+                          onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
+                          onJumpToReply={scrollToMessage}
+                          onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
+                          onTranscribe={(id, transcript) => transcribeVoiceMessage(friendId, id, transcript)}
+                          onVotePoll={(id, pIdx) => voteInPoll(friendId, id, pIdx)}
+                          onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
+                          isSelectionMode={isSelectionMode}
+                          isSelected={selectedMessageIds.includes(msg.id)}
+                          onToggleSelect={(id) => {
+                            setSelectedMessageIds((ids) =>
+                              ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
+                            )
+                          }}
+                          isGroup={isGroup}
+                          showAuthorHeader={isGroup}
+                          isFirstInGroup={isFirstInGroup}
+                          isLastInGroup={isLastInGroup}
+                          searchQuery={searchQuery}
+                          soundEnabled={soundEnabled}
+                          onNotify={onNotify}
+                        />
+                      )
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </div>
@@ -1138,13 +1337,23 @@ export function MessengerChatPane({
 
       {/* Модальное окно аудио/видео звонка */}
       {callModalOpen && (
-        <ChatCallModal
-          friendId={friendId}
-          friendName={title}
-          isVideo={callIsVideo}
-          onEndCall={handleCallFinished}
-          soundEnabled={soundEnabled}
-        />
+        <CallErrorBoundary onReset={() => setCallModalOpen(false)}>
+          <ChatCallModal
+            isOpen={true}
+            sessionId={activeCallSessionId || undefined}
+            callerId={currentUserId}
+            receiverId={targetPeerId || friendId}
+            friendId={targetPeerId || friendId}
+            friendName={title}
+            friendUsername={peerProfile?.username || friend?.username}
+            friendAvatar={peerProfile?.avatar_url || friend?.avatarColor}
+            isVideo={callIsVideo}
+            isIncoming={false}
+            onClose={() => setCallModalOpen(false)}
+            onEndCall={handleCallFinished}
+            soundEnabled={soundEnabled}
+          />
+        </CallErrorBoundary>
       )}
 
       {/* Модальное окно поиска GIF */}

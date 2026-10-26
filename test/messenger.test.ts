@@ -18,7 +18,26 @@ import {
   CHAT_MESSAGE_LIMIT,
   MY_CHAT_ID,
 } from '../lib/ogonek/messenger.ts'
-import { getFriend } from '../lib/ogonek/friends.ts'
+import { getFriend, registerFriendProfile, type FriendProfile } from '../lib/ogonek/friends.ts'
+
+const testPeer: FriendProfile = {
+  id: 'peer-user-1',
+  name: 'Александр Смирнов',
+  username: 'asmirnov',
+  initials: 'АС',
+  avatarColor: '#1d9bf0',
+  bio: 'Тестовый профиль',
+  city: 'Кишинёв',
+  streak: 100,
+  together: 10,
+  mutual: 5,
+  verified: true,
+  lastActive: 'онлайн',
+  presence: 'online',
+}
+registerFriendProfile(testPeer)
+registerFriendProfile({ ...testPeer, id: 'peer-user-2', name: 'Мария', username: 'maria' })
+registerFriendProfile({ ...testPeer, id: 'peer-user-3', name: 'Анна', username: 'anna' })
 import { getStoryBackground } from '../lib/ogonek/stories.ts'
 import type { ChatThreadState, ChatThreads, Day, StorySlide } from '../lib/ogonek/types.ts'
 
@@ -87,8 +106,8 @@ describe('Messenger — карточки-вложения (ЭТАП 13)', () => 
   it('собирает карточку сторис с автором и номером кадра', () => {
     const card = buildStoryAttachment({
       storyId: 'story-9',
-      authorName: 'Михаил Волошин',
-      username: 'voloshin',
+      authorName: 'Александр Смирнов',
+      username: 'asmirnov',
       slide: SLIDE,
       slideIndex: 1,
       totalSlides: 3,
@@ -96,10 +115,10 @@ describe('Messenger — карточки-вложения (ЭТАП 13)', () => 
     })
     assert.equal(card.kind, 'story')
     assert.equal(card.storyId, 'story-9')
-    assert.equal(card.author, 'Михаил Волошин')
+    assert.equal(card.author, 'Александр Смирнов')
     assert.equal(card.emoji, '📍')
     assert.match(card.subtitle, /2\/3/)
-    assert.match(card.subtitle, /@voloshin/)
+    assert.match(card.subtitle, /@asmirnov/)
     assert.equal(attachmentKindLabel(card.kind), 'Сторис')
   })
 
@@ -129,7 +148,7 @@ describe('Messenger — сообщения, прочтение и сортиро
     assert.equal(msg.read, false)
     assert.deepEqual(msg.reactions, [])
 
-    const long = makeChatMessage({ authorId: 'fr-voloshin', text: 'x'.repeat(5000) })
+    const long = makeChatMessage({ authorId: 'peer-user-1', text: 'x'.repeat(5000) })
     assert.equal(long.text.length, CHAT_MESSAGE_LIMIT)
   })
 
@@ -137,9 +156,9 @@ describe('Messenger — сообщения, прочтение и сортиро
     const t = thread({
       readAtISO: '2026-10-12T10:00:00.000Z',
       messages: [
-        makeChatMessage({ authorId: 'fr-voloshin', text: 'a', createdAtISO: '2026-10-12T09:00:00.000Z' }),
+        makeChatMessage({ authorId: 'peer-user-1', text: 'a', createdAtISO: '2026-10-12T09:00:00.000Z' }),
         makeChatMessage({ authorId: MY_CHAT_ID, text: 'b', createdAtISO: '2026-10-12T11:00:00.000Z' }),
-        makeChatMessage({ authorId: 'fr-voloshin', text: 'c', createdAtISO: '2026-10-12T12:00:00.000Z' }),
+        makeChatMessage({ authorId: 'peer-user-1', text: 'c', createdAtISO: '2026-10-12T12:00:00.000Z' }),
       ],
     })
     assert.equal(unreadCount(t), 1)
@@ -148,13 +167,13 @@ describe('Messenger — сообщения, прочтение и сортиро
 
   it('суммирует непрочитанные по всем перепискам', () => {
     const threads: ChatThreads = {
-      'fr-voloshin': thread({
+      'peer-user-1': thread({
         readAtISO: '2026-10-12T10:00:00.000Z',
-        messages: [makeChatMessage({ authorId: 'fr-voloshin', text: 'hi', createdAtISO: '2026-10-12T12:00:00.000Z' })],
+        messages: [makeChatMessage({ authorId: 'peer-user-1', text: 'hi', createdAtISO: '2026-10-12T12:00:00.000Z' })],
       }),
-      'fr-sokolova': thread({
+      'peer-user-2': thread({
         readAtISO: null,
-        messages: [makeChatMessage({ authorId: 'fr-sokolova', text: 'hi', createdAtISO: '2026-10-12T12:00:00.000Z' })],
+        messages: [makeChatMessage({ authorId: 'peer-user-2', text: 'hi', createdAtISO: '2026-10-12T12:00:00.000Z' })],
       }),
     }
     assert.equal(totalUnread(threads), 2)
@@ -162,19 +181,19 @@ describe('Messenger — сообщения, прочтение и сортиро
 
   it('сортирует закреплённые вперёд, затем по свежести', () => {
     const threads: ChatThreads = {
-      'fr-sokolova': thread({
+      'peer-user-2': thread({
         pinned: true,
-        messages: [makeChatMessage({ authorId: 'fr-sokolova', text: 'old', createdAtISO: '2026-10-01T10:00:00.000Z' })],
+        messages: [makeChatMessage({ authorId: 'peer-user-2', text: 'old', createdAtISO: '2026-10-01T10:00:00.000Z' })],
       }),
-      'fr-voloshin': thread({
-        messages: [makeChatMessage({ authorId: 'fr-voloshin', text: 'new', createdAtISO: '2026-10-12T10:00:00.000Z' })],
+      'peer-user-1': thread({
+        messages: [makeChatMessage({ authorId: 'peer-user-1', text: 'new', createdAtISO: '2026-10-12T10:00:00.000Z' })],
       }),
-      'fr-kovaleva': thread({
-        messages: [makeChatMessage({ authorId: 'fr-kovaleva', text: 'mid', createdAtISO: '2026-10-05T10:00:00.000Z' })],
+      'peer-user-3': thread({
+        messages: [makeChatMessage({ authorId: 'peer-user-3', text: 'mid', createdAtISO: '2026-10-05T10:00:00.000Z' })],
       }),
     }
     const ids = Object.keys(threads)
-    assert.deepEqual(sortThreadIds(threads, ids), ['fr-sokolova', 'fr-voloshin', 'fr-kovaleva'])
+    assert.deepEqual(sortThreadIds(threads, ids), ['peer-user-2', 'peer-user-1', 'peer-user-3'])
   })
 
   it('делает читаемую выжимку последнего сообщения', () => {
@@ -191,7 +210,7 @@ describe('Messenger — сообщения, прочтение и сортиро
 })
 
 describe('Messenger — живой собеседник (автоответ)', () => {
-  const friend = getFriend('fr-voloshin')!
+  const friend = getFriend('peer-user-1')!
 
   it('отвечает дружелюбно на приветствие', () => {
     const reply = pickAutoReply(friend, 'Привет!', false)
@@ -220,9 +239,9 @@ describe('Messenger — живой собеседник (автоответ)', (
 describe('Messenger — валидация переписок из хранилища', () => {
   it('сохраняет корректные треды реальных друзей', () => {
     const cleaned = sanitizeChatThreads({
-      'fr-voloshin': {
+      'peer-user-1': {
         messages: [
-          { id: 'm1', authorId: 'fr-voloshin', text: 'Привет', createdAtISO: '2026-10-12T10:00:00.000Z' },
+          { id: 'm1', authorId: 'peer-user-1', text: 'Привет', createdAtISO: '2026-10-12T10:00:00.000Z' },
           { id: 'm2', authorId: 'me', text: 'Салют', createdAtISO: '2026-10-12T10:01:00.000Z' },
         ],
         readAtISO: '2026-10-12T10:05:00.000Z',
@@ -231,30 +250,30 @@ describe('Messenger — валидация переписок из хранил�
         draft: 'черновик',
       },
     })
-    assert.deepEqual(Object.keys(cleaned), ['fr-voloshin'])
-    assert.equal(cleaned['fr-voloshin'].messages.length, 2)
-    assert.equal(cleaned['fr-voloshin'].muted, true)
-    assert.equal(cleaned['fr-voloshin'].pinned, true)
-    assert.equal(cleaned['fr-voloshin'].draft, 'черновик')
+    assert.deepEqual(Object.keys(cleaned), ['peer-user-1'])
+    assert.equal(cleaned['peer-user-1'].messages.length, 2)
+    assert.equal(cleaned['peer-user-1'].muted, true)
+    assert.equal(cleaned['peer-user-1'].pinned, true)
+    assert.equal(cleaned['peer-user-1'].draft, 'черновик')
   })
 
   it('отбрасывает несуществующих друзей и пустые сообщения', () => {
     const cleaned = sanitizeChatThreads({
-      'fr-unknown': { messages: [{ id: 'x', authorId: 'me', text: 'нет такого друга' }] },
-      'fr-sokolova': {
+      'unknown-ghost': { messages: [{ id: 'x', authorId: 'me', text: 'нет такого друга' }] },
+      'peer-user-2': {
         messages: [
           { id: 'empty', authorId: 'me', text: '   ' },
           { id: 'ok', authorId: 'me', text: 'живое', createdAtISO: '2026-10-12T10:00:00.000Z' },
         ],
       },
     })
-    assert.deepEqual(Object.keys(cleaned), ['fr-sokolova'])
-    assert.equal(cleaned['fr-sokolova'].messages.length, 1)
-    assert.equal(cleaned['fr-sokolova'].messages[0].text, 'живое')
+    assert.deepEqual(Object.keys(cleaned), ['peer-user-2'])
+    assert.equal(cleaned['peer-user-2'].messages.length, 1)
+    assert.equal(cleaned['peer-user-2'].messages[0].text, 'живое')
   })
 
   it('возвращает фолбэк, когда во входе нет валидных данных', () => {
-    const fallback: ChatThreads = { 'fr-voloshin': thread() }
+    const fallback: ChatThreads = { 'peer-user-1': thread() }
     assert.deepEqual(sanitizeChatThreads(null, fallback), fallback)
     assert.deepEqual(sanitizeChatThreads({ garbage: 1 }, fallback), fallback)
   })

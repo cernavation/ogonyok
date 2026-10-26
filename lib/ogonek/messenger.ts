@@ -27,6 +27,7 @@ import {
   type ChatMessageForward,
   type ChatMessageMedia,
   type ChatMessageReply,
+  type ChatTag,
   type ChatThreadState,
   type ChatThreads,
   type Day,
@@ -136,6 +137,22 @@ export function formatChatAge(iso: string, now: Date = new Date()): string {
 }
 
 /* ────────────────────────────────────────────────────────────────────────
+   Симметричные ключи диалогов
+   ──────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Единая детерминированная функция получения ключа диалога между двумя пользователями.
+ * Сортирует ID участников по алфавиту, гарантируя, что оба участника
+ * читают и пишут в один и тот же thread_key (например, 'alexey_elon').
+ */
+export function getDirectThreadKey(userId1: string, userId2: string): string {
+  if (!userId1 && !userId2) return ''
+  if (!userId1) return userId2
+  if (!userId2) return userId1
+  return [userId1, userId2].sort().join('_')
+}
+
+/* ────────────────────────────────────────────────────────────────────────
    Работа с тредами
    ──────────────────────────────────────────────────────────────────────── */
 
@@ -152,49 +169,62 @@ export function emptyThread(): ChatThreadState {
   return { ...EMPTY_THREAD, messages: [] }
 }
 
-export function threadOf(threads: ChatThreads, friendId: string): ChatThreadState {
-  return threads[friendId] ?? emptyThread()
+export function threadOf(threads: ChatThreads | null | undefined, friendId: string | null | undefined): ChatThreadState {
+  if (!threads || !friendId) return emptyThread()
+  const found = threads[friendId]
+  if (!found) return emptyThread()
+  return {
+    ...found,
+    messages: Array.isArray(found.messages) ? found.messages : [],
+  }
 }
 
 /** Последнее (по времени) сообщение треда */
-export function lastMessage(thread: ChatThreadState | undefined): ChatMessage | null {
-  const list = thread?.messages ?? []
-  return list.length > 0 ? list[list.length - 1] : null
+export function lastMessage(thread: ChatThreadState | undefined | null): ChatMessage | null {
+  if (!thread) return null
+  const list = Array.isArray(thread.messages) ? thread.messages : []
+  return list.length > 0 ? list[list.length - 1] ?? null : null
 }
 
 /** Сколько сообщений собеседника я ещё не прочитал */
-export function unreadCount(thread: ChatThreadState | undefined): number {
+export function unreadCount(thread: ChatThreadState | undefined | null): number {
   if (!thread) return 0
   const since = thread.readAtISO ? new Date(thread.readAtISO).getTime() : 0
-  return thread.messages.filter(
-    (m) => m.authorId !== MY_CHAT_ID && new Date(m.createdAtISO).getTime() > since
+  const list = Array.isArray(thread.messages) ? thread.messages : []
+  return list.filter(
+    (m) => m && m.authorId !== MY_CHAT_ID && new Date(m.createdAtISO).getTime() > since
   ).length
 }
 
 /** Суммарное число непрочитанных по всем перепискам */
-export function totalUnread(threads: ChatThreads): number {
+export function totalUnread(threads: ChatThreads | undefined | null): number {
+  if (!threads || typeof threads !== 'object') return 0
   return Object.values(threads).reduce((sum, t) => sum + unreadCount(t), 0)
 }
 
 /** Время последней активности треда (для сортировки), 0 — пусто */
-export function lastActivityMs(thread: ChatThreadState | undefined): number {
+export function lastActivityMs(thread: ChatThreadState | undefined | null): number {
   const last = lastMessage(thread)
-  return last ? new Date(last.createdAtISO).getTime() : 0
+  if (!last || !last.createdAtISO) return 0
+  const t = new Date(last.createdAtISO).getTime()
+  return Number.isFinite(t) ? t : 0
 }
 
 /**
  * Сортирует id друзей по живому диалогу: закреплённые сверху, затем по
  * времени последнего сообщения (свежие — вперёд).
  */
-export function sortThreadIds(threads: ChatThreads, ids: string[]): string[] {
+export function sortThreadIds(threads: ChatThreads | undefined | null, ids: string[] | undefined | null): string[] {
+  if (!ids || !Array.isArray(ids)) return []
+  const safeThreads = threads || {}
   return [...ids].sort((a, b) => {
-    const pa = threads[a]?.pinned ? 1 : 0
-    const pb = threads[b]?.pinned ? 1 : 0
+    const pa = safeThreads[a]?.pinned ? 1 : 0
+    const pb = safeThreads[b]?.pinned ? 1 : 0
     if (pa !== pb) return pb - pa
-    const ta = lastActivityMs(threads[a])
-    const tb = lastActivityMs(threads[b])
+    const ta = lastActivityMs(safeThreads[a])
+    const tb = lastActivityMs(safeThreads[b])
     if (ta !== tb) return tb - ta
-    return a.localeCompare(b)
+    return (a || '').localeCompare(b || '')
   })
 }
 
@@ -223,68 +253,82 @@ export const DEFAULT_CHAT_SETTINGS = {
 }
 
 /** Проверка, является ли тред групповым чатом */
-export function isGroupThread(thread: ChatThreadState | undefined, id: string): boolean {
-  return Boolean(thread?.groupMeta || id.startsWith('group-'))
+export function isGroupThread(thread: ChatThreadState | undefined | null, id: string | undefined | null): boolean {
+  if (!id) return false
+  return Boolean(thread?.groupMeta || (typeof id === 'string' && id.startsWith('group-')))
 }
 
 /** Фильтрация тредов по папке или тегу */
 export function filterThreadsByFolder(
-  threads: ChatThreads,
-  ids: string[],
+  threads: ChatThreads | undefined | null,
+  ids: string[] | undefined | null,
   folderId: string = 'all',
   customFolders: ChatFolder[] = []
 ): string[] {
+  if (!ids || !Array.isArray(ids)) return []
+  const safeThreads = threads || {}
   if (folderId === 'archived') {
-    return ids.filter((id) => threads[id]?.archived)
+    return ids.filter((id) => safeThreads[id]?.archived)
   }
 
   // Для остальных папок архивированные чаты по умолчанию скрыты
-  const baseIds = ids.filter((id) => !threads[id]?.archived)
+  const baseIds = ids.filter((id) => !safeThreads[id]?.archived)
 
   if (folderId === 'all') return baseIds
   if (folderId === 'direct') {
-    return baseIds.filter((id) => !isGroupThread(threads[id], id))
+    return baseIds.filter((id) => !isGroupThread(safeThreads[id], id))
   }
   if (folderId === 'groups') {
-    return baseIds.filter((id) => isGroupThread(threads[id], id))
+    return baseIds.filter((id) => isGroupThread(safeThreads[id], id))
   }
   if (folderId === 'unread') {
-    return baseIds.filter((id) => unreadCount(threads[id]) > 0)
+    return baseIds.filter((id) => unreadCount(safeThreads[id]) > 0)
   }
   if (folderId === 'pinned') {
-    return baseIds.filter((id) => threads[id]?.pinned)
+    return baseIds.filter((id) => Boolean(safeThreads[id]?.pinned))
   }
   if (folderId.startsWith('tag:')) {
     const tagId = folderId.slice(4)
-    return baseIds.filter((id) => threads[id]?.tagIds?.includes(tagId))
+    return baseIds.filter((id) => (safeThreads[id]?.tagIds ?? []).includes(tagId))
   }
   // Кастомная папка
-  const allFolders = [...DEFAULT_CHAT_FOLDERS, ...customFolders]
+  const allFolders = [...DEFAULT_CHAT_FOLDERS, ...(customFolders || [])]
   const target = allFolders.find((f) => f.id === folderId)
   if (!target) return baseIds
-  return baseIds.filter((id) => target.chatIds?.includes(id) || target.rules?.tagIds?.some((t) => threads[id]?.tagIds?.includes(t)))
+  return baseIds.filter((id) => target.chatIds?.includes(id) || target.rules?.tagIds?.some((t) => (safeThreads[id]?.tagIds ?? []).includes(t)))
 }
 
 /** Подсчёт непрочитанных сообщений для папки */
 export function unreadCountForFolder(
-  threads: ChatThreads,
-  ids: string[],
+  threads: ChatThreads | undefined | null,
+  ids: string[] | undefined | null,
   folderId: string,
   customFolders: ChatFolder[] = []
 ): number {
-  const filtered = filterThreadsByFolder(threads, ids, folderId, customFolders)
-  return filtered.reduce((sum, id) => sum + unreadCount(threads[id]), 0)
+  const safeThreads = threads || {}
+  const filtered = filterThreadsByFolder(safeThreads, ids, folderId, customFolders)
+  return filtered.reduce((sum, id) => sum + unreadCount(safeThreads[id]), 0)
 }
 
-/** Заголовок треда для списка: имя друга, группы или id */
-export function threadTitle(friendOrId: FriendProfile | string, thread?: ChatThreadState): string {
+/** Заголовок треда для списка: имя друга, группы или id (БЕЗ сырых UUID в UI!) */
+export function threadTitle(friendOrId: FriendProfile | string | undefined | null, thread?: ChatThreadState | null): string {
   if (thread?.groupMeta?.title) return thread.groupMeta.title
-  if (thread?.peerMeta?.name) return thread.peerMeta.name
-  if (thread?.peerMeta?.username) return `@${thread.peerMeta.username}`
+  if (thread?.peerMeta?.name && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(thread.peerMeta.name)) {
+    return thread.peerMeta.name
+  }
+  if (thread?.peerMeta?.username && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(thread.peerMeta.username)) {
+    return `@${thread.peerMeta.username}`
+  }
+  if (!friendOrId) return 'Чат'
   if (typeof friendOrId === 'object' && 'name' in friendOrId) return friendOrId.name
   const f = getFriend(friendOrId)
   if (f) return f.name
-  return thread?.groupMeta?.title || friendOrId
+
+  const idStr = String(friendOrId).trim()
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idStr)
+  if (isUuid) return 'Собеседник'
+  if (idStr.includes('_') && idStr.length > 25) return 'Диалог'
+  return thread?.groupMeta?.title || idStr
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -746,7 +790,7 @@ function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
   }
 }
 
-function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): ChatMessage[] {
+function sanitizeChatMessages(value: unknown, _validFriendIds?: Set<string>): ChatMessage[] {
   if (!Array.isArray(value)) return []
   const result: ChatMessage[] = []
   const seen = new Set<string>()
@@ -764,17 +808,13 @@ function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): Chat
     seen.add(id)
 
     const rawAuthor = typeof m.authorId === 'string' ? m.authorId : ''
-    const authorId =
-      rawAuthor === MY_CHAT_ID || validFriendIds.has(rawAuthor) ? rawAuthor : MY_CHAT_ID
+    const authorId = rawAuthor || MY_CHAT_ID
 
     const reactions = Array.isArray(m.reactions)
       ? m.reactions
           .filter((r): r is NonNullable<typeof r> => !!r && typeof r === 'object')
           .map((r) => {
-            const by =
-              typeof r.by === 'string' && (r.by === MY_CHAT_ID || validFriendIds.has(r.by))
-                ? r.by
-                : MY_CHAT_ID
+            const by = typeof r.by === 'string' && r.by ? r.by : MY_CHAT_ID
             return { emojiId: typeof r.emojiId === 'string' ? r.emojiId.slice(0, 40) : '', by }
           })
           .filter((r) => r.emojiId)
@@ -804,24 +844,67 @@ function sanitizeChatMessages(value: unknown, validFriendIds: Set<string>): Chat
 }
 
 /**
+ * Полное пустое состояние мессенджера для безопасного сброса при повреждении кэша.
+ */
+export type MessengerState = {
+  chatThreads: ChatThreads
+  chatActiveFriendId: string | null
+  chatFolders: ChatFolder[]
+  chatActiveFolderId: string
+  chatTags: ChatTag[]
+  chatSettings: typeof DEFAULT_CHAT_SETTINGS
+}
+
+export function emptyMessengerState(): MessengerState {
+  return {
+    chatThreads: {},
+    chatActiveFriendId: null,
+    chatFolders: [...DEFAULT_CHAT_FOLDERS],
+    chatActiveFolderId: 'all',
+    chatTags: [],
+    chatSettings: { ...DEFAULT_CHAT_SETTINGS },
+  }
+}
+
+/**
+ * Валидирует id открытого диалога, отсекая undefined, null и пробелы.
+ */
+export function sanitizeChatActiveFriendId(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return null
+  return trimmed
+}
+
+/**
  * Валидирует переписки из локального хранилища. Отбрасывает «мёртвых»
- * собеседников (нет в социальной карте), пустые сообщения и битые вложения.
+ * собеседников, пустые сообщения, битые вложения и ключи со значениями 'undefined'/'null'.
  * Позволяет намеренно начатый (ещё пустой) диалог — тред сохраняется.
  */
 export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}): ChatThreads {
-  if (!value || typeof value !== 'object') return fallback
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return fallback
 
-  const validFriendIds = new Set(FRIEND_PROFILES.map((f) => f.id))
   const result: ChatThreads = {}
 
   for (const [friendId, rawThread] of Object.entries(value as Record<string, unknown>)) {
-    const isGroup = friendId.startsWith('group-') || Boolean((rawThread as any)?.groupMeta)
-    if (!validFriendIds.has(friendId) && !isGroup) continue
-    if (!rawThread || typeof rawThread !== 'object') continue
-    const t = rawThread as Partial<ChatThreadState>
+    if (
+      !friendId ||
+      typeof friendId !== 'string' ||
+      friendId === 'undefined' ||
+      friendId === 'null' ||
+      !friendId.trim()
+    ) {
+      continue
+    }
 
-    result[friendId] = {
-      messages: sanitizeChatMessages(t.messages, validFriendIds),
+    const cleanId = friendId.trim()
+    if (!rawThread || typeof rawThread !== 'object' || Array.isArray(rawThread)) continue
+    const t = rawThread as Partial<ChatThreadState>
+    const isGroup = cleanId.startsWith('group-') || Boolean((t as any)?.groupMeta)
+    if (!isGroup && !getFriend(cleanId) && cleanId.includes('unknown')) continue
+
+    result[cleanId] = {
+      messages: sanitizeChatMessages(t.messages),
       readAtISO: typeof t.readAtISO === 'string' && t.readAtISO ? t.readAtISO : null,
       muted: Boolean(t.muted),
       pinned: Boolean(t.pinned),

@@ -16,15 +16,28 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [progress, setProgress] = useState(0) // 0 to 1
   const [speed, setSpeed] = useState<1 | 1.5 | 2>(1)
+  const [hasRealAudio, setHasRealAudio] = useState(true)
+
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const duration = media.durationSec || 8
+  const duration = media.durationSec || 6
   const waveform = media.waveform?.length
     ? media.waveform
     : [30, 45, 60, 80, 55, 40, 70, 90, 85, 60, 40, 30, 50, 75, 95, 60, 40, 50, 65, 80, 50, 35, 45, 60]
 
+  // Синхронизация скорости с реальным audio элементом
   useEffect(() => {
-    if (isPlaying) {
+    if (audioRef.current) {
+      try {
+        audioRef.current.playbackRate = speed
+      } catch {}
+    }
+  }, [speed])
+
+  // Резервный таймер прогресса, если аудио не поддерживается или является моком
+  useEffect(() => {
+    if (!hasRealAudio && isPlaying) {
       const stepMs = 100
       const totalMs = (duration * 1000) / speed
       const stepInc = stepMs / totalMs
@@ -44,17 +57,102 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [isPlaying, duration, speed])
+  }, [hasRealAudio, isPlaying, duration, speed])
+
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return
+    const cur = audioRef.current.currentTime
+    const total = audioRef.current.duration || duration || 1
+    if (isFinite(total) && total > 0) {
+      setProgress(Math.min(1, Math.max(0, cur / total)))
+    }
+  }
+
+  const handleEnded = () => {
+    setIsPlaying(false)
+    setProgress(0)
+  }
+
+  const handleAudioError = () => {
+    // Если аудиофайл не может быть воспроизведен (например, mock-audio.webm), переключаемся на программную симуляцию
+    setHasRealAudio(false)
+  }
 
   const togglePlay = () => {
     playClick(soundEnabled)
-    if (progress >= 1) setProgress(0)
-    setIsPlaying((v) => !v)
+
+    if (isPlaying) {
+      if (audioRef.current && hasRealAudio) {
+        try {
+          audioRef.current.pause()
+        } catch {}
+      }
+      setIsPlaying(false)
+    } else {
+      if (progress >= 1) {
+        setProgress(0)
+        if (audioRef.current && hasRealAudio) {
+          try {
+            audioRef.current.currentTime = 0
+          } catch {}
+        }
+      }
+
+      if (audioRef.current && hasRealAudio && media.url && !media.url.endsWith('.webm') && media.url.startsWith('data:')) {
+        audioRef.current.playbackRate = speed
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+          })
+          .catch((err) => {
+            console.warn('[VoicePlayer] Real audio play prevented, falling back to simulated timer:', err)
+            setHasRealAudio(false)
+            setIsPlaying(true)
+          })
+      } else if (audioRef.current && hasRealAudio && media.url && !media.url.includes('mock')) {
+        audioRef.current.playbackRate = speed
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true)
+          })
+          .catch(() => {
+            setHasRealAudio(false)
+            setIsPlaying(true)
+          })
+      } else {
+        // Симуляция таймера
+        setHasRealAudio(false)
+        setIsPlaying(true)
+      }
+    }
   }
 
   const cycleSpeed = () => {
     playClick(soundEnabled)
-    setSpeed((s) => (s === 1 ? 1.5 : s === 1.5 ? 2 : 1))
+    const nextSpeed: 1 | 1.5 | 2 = speed === 1 ? 1.5 : speed === 1.5 ? 2 : 1
+    setSpeed(nextSpeed)
+    if (audioRef.current) {
+      try {
+        audioRef.current.playbackRate = nextSpeed
+      } catch {}
+    }
+  }
+
+  const handleSeek = (barFraction: number) => {
+    playClick(soundEnabled)
+    const targetFraction = Math.max(0, Math.min(1, barFraction))
+    setProgress(targetFraction)
+
+    if (audioRef.current && hasRealAudio) {
+      try {
+        const total = audioRef.current.duration || duration
+        if (isFinite(total) && total > 0) {
+          audioRef.current.currentTime = targetFraction * total
+        }
+      } catch {}
+    }
   }
 
   const formatTime = (secs: number) => {
@@ -64,11 +162,27 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
     return `${mins}:${rem.toString().padStart(2, '0')}`
   }
 
-  const currentTime = duration * progress
-  const displayTime = isPlaying ? formatTime(currentTime) : formatTime(duration)
+  const currentDuration = audioRef.current?.duration && isFinite(audioRef.current.duration)
+    ? audioRef.current.duration
+    : duration
+
+  const currentTime = currentDuration * progress
+  const displayTime = isPlaying ? formatTime(currentTime) : formatTime(currentDuration)
 
   return (
     <div className="flex items-center gap-3 py-1">
+      {/* Скрытый HTML5 аудио элемент для реального воспроизведения звука */}
+      {media.url && (
+        <audio
+          ref={audioRef}
+          src={media.url}
+          preload="metadata"
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleEnded}
+          onError={handleAudioError}
+        />
+      )}
+
       {/* Кнопка Play / Pause */}
       <button
         type="button"
@@ -80,10 +194,14 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
         }`}
         aria-label={isPlaying ? 'Пауза' : 'Слушать голосовое'}
       >
-        {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
+        {isPlaying ? (
+          <Pause size={18} fill="currentColor" />
+        ) : (
+          <Play size={18} fill="currentColor" className="ml-0.5" />
+        )}
       </button>
 
-      {/* Волна звука */}
+      {/* Интерактивная форма волны звука */}
       <div className="flex flex-1 flex-col gap-1">
         <div className="flex h-7 items-center gap-[2px]">
           {waveform.map((bar, idx) => {
@@ -95,19 +213,19 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
               <button
                 key={idx}
                 type="button"
-                onClick={() => setProgress(barFraction)}
-                className="flex-1 group py-2 focus:outline-none"
-                title={`Перемотать на ${formatTime(duration * barFraction)}`}
+                onClick={() => handleSeek(barFraction)}
+                className="flex-1 group py-2 focus:outline-none cursor-pointer"
+                title={`Перемотать на ${formatTime(currentDuration * barFraction)}`}
               >
                 <div
-                  className={`w-full rounded-full transition-colors ${
+                  className={`w-full rounded-full transition-all ${
                     isPlayed
                       ? isMine
-                        ? 'bg-white'
-                        : 'bg-[#ffad5a]'
+                        ? 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.4)]'
+                        : 'bg-[#ffad5a] shadow-[0_0_6px_rgba(255,173,90,0.5)]'
                       : isMine
-                      ? 'bg-white/35'
-                      : 'bg-white/20'
+                      ? 'bg-white/35 hover:bg-white/60'
+                      : 'bg-white/20 hover:bg-white/40'
                   }`}
                   style={{ height: `${heightPx}px` }}
                 />
@@ -121,7 +239,7 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
           <button
             type="button"
             onClick={cycleSpeed}
-            className={`rounded px-1 text-[10px] font-semibold transition-colors ${
+            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
               isMine
                 ? 'bg-white/20 text-white hover:bg-white/30'
                 : 'bg-white/10 text-[#ffad5a] hover:bg-white/20'

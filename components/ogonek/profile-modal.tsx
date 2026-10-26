@@ -7,6 +7,7 @@ import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { downloadBlob } from '@/lib/ogonek/card-export'
 import { getInitials } from '@/lib/ogonek/initials'
 import type { OgonekStoreState, ViewId } from '@/lib/ogonek/types'
+import { DifficultyLevelBadge } from './profile/difficulty-level-badge'
 
 interface ProfileModalProps {
   storeState: OgonekStoreState
@@ -37,7 +38,7 @@ const LEGENDARY_ACHIEVEMENTS = [
   {
     emoji: '♟️',
     title: 'Шахматный триумф',
-    subtitle: 'Победа над Волошиным',
+    subtitle: 'Победа над гроссмейстером',
     unlocked: true,
   },
 ] as const
@@ -171,7 +172,14 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
           )}
           <div className="profile-info">
             <h2 className="profile-name">{storeState.profile.displayName || 'Пользователь'}</h2>
-            <div className="profile-handle">@{storeState.profile.username || 'user'}</div>
+            <div className="flex items-center gap-2 mt-0.5">
+              <div className="profile-handle">@{storeState.profile.username || 'user'}</div>
+              <DifficultyLevelBadge
+                level={storeState.profile.difficultyLevel || storeState.profile.level || 1}
+                isInteractive={false}
+                showNumber={true}
+              />
+            </div>
             {storeState.profile.monthlyGoal && (
               <div
                 className="text-[11px] mt-1 px-2 py-0.5 rounded-full font-semibold inline-block"

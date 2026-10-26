@@ -213,3 +213,6 @@ export function ConnectionsModal({
     </ModalShell>
   )
 }
+
+export { FollowListModal } from './follow-list-modal'
+

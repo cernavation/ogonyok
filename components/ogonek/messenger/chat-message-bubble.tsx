@@ -191,15 +191,17 @@ export function ChatMessageBubble({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          audioBase64: message.media?.url?.startsWith('data:') ? message.media.url : undefined,
-          mockText: 'Держим огонь! Записал 5 побед и вечернюю летопись 🔥',
+          audioBase64: message.media?.url || undefined,
+          mimeType: 'audio/webm',
         }),
       })
       const data = await res.json()
       if (data?.transcript) {
         onTranscribe?.(message.id, data.transcript)
         setTranscriptOpen(true)
-        onNotify?.('Голосовое расшифровано')
+        onNotify?.('Голосовое расшифровано через Gemini AI')
+      } else {
+        onNotify?.('Не удалось расшифровать')
       }
     } catch {
       onNotify?.('Ошибка при расшифровке голосового')
@@ -556,21 +558,40 @@ export function ChatMessageBubble({
                       disabled={transcribing}
                       className="flex items-center gap-1 font-bold text-[var(--text)] dark:text-[var(--accent)] hover:opacity-80 transition-opacity"
                     >
-                      <Sparkles size={12} />
+                      <Sparkles size={12} className={transcribing ? 'animate-spin' : ''} />
                       {transcribing
-                        ? 'Расшифровываю...'
+                        ? 'Расшифровываю с Gemini...'
                         : message.transcript
                         ? transcriptOpen
                           ? 'Скрыть текст'
-                          : 'Текст речи'
-                        : 'Расшифровать'}
+                          : 'Текст речи (AI)'
+                        : 'Расшифровать (Gemini)'}
                     </button>
                   </div>
 
                   {/* Раскрывающийся текст расшифровки */}
-                  {transcriptOpen && message.transcript && (
-                    <div className="mt-1.5 p-2 rounded-lg bg-black/20 border border-white/10 text-xs italic leading-relaxed">
-                      «{message.transcript}»
+                  {(transcriptOpen || message.transcript) && message.transcript && (
+                    <div className="mt-2 p-2.5 rounded-xl bg-black/25 border border-white/10 text-xs leading-relaxed animate-in fade-in">
+                      <div className="flex items-center justify-between mb-1 text-[10px] text-white/50 font-medium tracking-wide">
+                        <span className="flex items-center gap-1">
+                          <Sparkles size={11} className="text-[var(--accent)]" />
+                          <span>Gemini AI Расшифровка</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (message.transcript) {
+                              navigator.clipboard.writeText(message.transcript)
+                              onNotify?.('Текст речи скопирован')
+                            }
+                          }}
+                          className="hover:text-white transition-colors"
+                          title="Скопировать расшифровку"
+                        >
+                          <Copy size={12} />
+                        </button>
+                      </div>
+                      <p className="italic text-white/90">«{message.transcript}»</p>
                     </div>
                   )}
                 </div>

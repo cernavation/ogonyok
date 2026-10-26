@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Archive,
   ArrowLeft,
@@ -25,6 +25,7 @@ import {
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import {
+  emptyThread,
   filterThreadsByFolder,
   formatThreadStamp,
   isGroupThread,
@@ -37,6 +38,8 @@ import {
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatTag, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
+import { getProfile } from '@/lib/supabase/api'
+import { getInitials } from '@/lib/ogonek/initials'
 
 type Props = {
   activeThreadId: string | null
@@ -47,6 +50,16 @@ type Props = {
   className?: string
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function getTargetUserId(id: string, currentUserId?: string | null): string {
+  if (id.includes('_')) {
+    const parts = id.split('_')
+    return (currentUserId && parts.find((p) => p !== currentUserId)) || parts[0]
+  }
+  return id
+}
+
 export function MessengerDialogList({
   activeThreadId,
   onSelectThread,
@@ -55,7 +68,7 @@ export function MessengerDialogList({
   soundEnabled = true,
   className = '',
 }: Props) {
-  const { state, setChatActiveFolderId } = useOgonekStore()
+  const { state, currentUser, setChatActiveFolderId, updateThreadPeerMeta } = useOgonekStore()
   const threads = state.chatThreads ?? {}
   const folders = state.chatFolders ?? []
   const activeFolderId = state.chatActiveFolderId ?? 'all'
@@ -64,32 +77,72 @@ export function MessengerDialogList({
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
 
-  const allThreadIds = useMemo(() => Object.keys(threads), [threads])
+  const allThreadIds = useMemo(() => Object.keys(threads || {}), [threads])
+  const currentUserId = state.auth?.activeAccountId || currentUser?.id || null
+
+  // Подтягивание имени и аватара собеседника из public.profiles Supabase для всех неизвестных ID (вместо сырых UUID)
+  useEffect(() => {
+    const isUuid = (s: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+
+    for (const id of allThreadIds) {
+      if (id === 'saved-messages' || id.startsWith('group-') || getFriend(id)) continue
+      const targetUserId = getTargetUserId(id, currentUserId)
+      const thread = threads[id]
+      if (thread?.peerMeta?.name && !isUuid(thread.peerMeta.name)) continue
+
+      if (isUuid(targetUserId)) {
+        getProfile(targetUserId).then((p) => {
+          if (p) {
+            updateThreadPeerMeta(id, {
+              name: p.display_name || p.username || 'Собеседник',
+              username: p.username || undefined,
+              avatarUrl: p.avatar_image || undefined,
+              initials: getInitials(p.display_name, p.username),
+            })
+          }
+        }).catch(() => {})
+      }
+    }
+  }, [allThreadIds, currentUserId, threads, updateThreadPeerMeta])
 
   // Фильтрация по выбранной папке/тегу
   const folderFilteredIds = useMemo(() => {
-    return filterThreadsByFolder(threads, allThreadIds, activeFolderId, folders)
+    return filterThreadsByFolder(threads || {}, allThreadIds || [], activeFolderId, folders || [])
   }, [threads, allThreadIds, activeFolderId, folders])
 
-  // Поиск и сортировка диалогов
+  // Поиск и сортировка диалогов (строго без сырых UUID!)
   const filteredThreads = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    return sortThreadIds(threads, folderFilteredIds)
+    const q = (searchQuery || '').trim().toLowerCase()
+    const safeThreads = threads || {}
+    const sorted = sortThreadIds(safeThreads, folderFilteredIds || [])
+    const isUuid = (s: string) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+
+    return (sorted || [])
       .map((id) => {
-        const thread = threads[id]
+        if (!id) return null
+        const thread = safeThreads[id] ?? emptyThread()
         const isGroup = isGroupThread(thread, id)
         const isSaved = id === 'saved-messages'
         const friend = !isGroup && !isSaved ? getFriend(id) : null
-        const title = isSaved ? 'Избранное' : threadTitle(id, thread)
-        return { id, isGroup, isSaved, friend, thread, title }
+
+        let title = isSaved ? 'Избранное' : threadTitle(id, thread)
+        let username = friend?.username || thread?.peerMeta?.username || null
+        if (username && isUuid(username)) username = null
+        if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
+
+        return { id, isGroup, isSaved, friend, thread, title, username }
       })
-      .filter(({ friend, thread, title }) => {
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .filter(({ friend, thread, title, username }) => {
         if (!q) return true
         const last = lastMessage(thread)?.text ?? ''
         return (
-          title.toLowerCase().includes(q) ||
-          (friend?.username && friend.username.toLowerCase().includes(q)) ||
-          (thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
+          (title || '').toLowerCase().includes(q) ||
+          Boolean(username && username.toLowerCase().includes(q)) ||
+          Boolean(friend?.username && friend.username.toLowerCase().includes(q)) ||
+          Boolean(thread?.peerMeta?.username && thread.peerMeta.username.toLowerCase().includes(q)) ||
           last.toLowerCase().includes(q)
         )
       })
@@ -327,14 +380,18 @@ export function MessengerDialogList({
             )}
           </div>
         ) : (
-          filteredThreads.map(({ id, isGroup, isSaved, friend, thread, title }) => {
+          (filteredThreads || []).map((item) => {
+            if (!item) return null
+            const { id, isGroup, isSaved, friend, thread, title } = item
             const last = lastMessage(thread)
             const unread = unreadCount(thread)
-            const hasDraft = Boolean(thread.draft && thread.draft.trim().length > 0)
-            const isMuted = thread.muted
-            const isPinned = thread.pinned
+            const hasDraft = Boolean(thread?.draft && thread.draft.trim().length > 0)
+            const isMuted = Boolean(thread?.muted)
+            const isPinned = Boolean(thread?.pinned)
             const isActive = activeThreadId === id
-            const timeStamp = last ? formatThreadStamp(last.createdAtISO) : ''
+            const timeStamp = last?.createdAtISO ? formatThreadStamp(last.createdAtISO) : ''
+            const rawUsername = friend?.username || thread?.peerMeta?.username
+            const username = rawUsername && !UUID_REGEX.test(rawUsername) ? rawUsername : null
 
             return (
               <button
@@ -364,11 +421,11 @@ export function MessengerDialogList({
                       className="w-[56px] h-[56px] rounded-full flex items-center justify-center text-2xl shadow-md"
                       style={{
                         background:
-                          thread.groupMeta?.avatarColor ||
+                          thread?.groupMeta?.avatarColor ||
                           'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
                       }}
                     >
-                      {thread.groupMeta?.avatarEmoji || '👥'}
+                      {thread?.groupMeta?.avatarEmoji || '👥'}
                     </div>
                   ) : (
                     <ChatAvatar friendId={id} size={56} ringColor="var(--bg)" />
@@ -400,6 +457,13 @@ export function MessengerDialogList({
                     )}
                   </div>
 
+                  {/* Никнейм собеседника: @username */}
+                  {username && (
+                    <div className="text-[12px] text-[var(--text-2)] truncate leading-none font-medium">
+                      @{username.replace(/^@/, '')}
+                    </div>
+                  )}
+
                   {/* Нижняя строка: Превью сообщения и значки статусов */}
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <div className="flex items-center gap-1.5 text-[14px] text-[var(--text-2)] truncate min-w-0">
@@ -411,7 +475,7 @@ export function MessengerDialogList({
                       {hasDraft ? (
                         <span className="truncate">
                           <span className="text-[#f4212e] font-semibold mr-1">Черновик:</span>
-                          <span className="text-[var(--text)]">{thread.draft}</span>
+                          <span className="text-[var(--text)]">{thread?.draft || ''}</span>
                         </span>
                       ) : last ? (
                         <span className="truncate flex items-center gap-1">

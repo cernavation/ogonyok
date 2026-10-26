@@ -1,11 +1,22 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { COMMUNITY_USERS, searchExplore } from '../lib/ogonek/explore-content.ts'
+import {
+  FRIEND_PROFILES,
+  INCOMING_FRIEND_REQUESTS,
+  OUTGOING_FRIEND_REQUESTS,
+  FRIEND_SUGGESTIONS,
+} from '../lib/ogonek/friends.ts'
 import { threadTitle } from '../lib/ogonek/messenger.ts'
 
 describe('Зачистка хардкодных людей и режим анонимности', () => {
-  it('в explore-content отсутствуют хардкодные люди (COMMUNITY_USERS пуст)', () => {
+  it('в explore-content и friends отсутствуют хардкодные боты', () => {
     assert.equal(COMMUNITY_USERS.length, 0, 'COMMUNITY_USERS должен быть пустым массивом')
+    assert.equal(FRIEND_PROFILES.length, 0, 'FRIEND_PROFILES должен быть пустым массивом')
+    assert.equal(INCOMING_FRIEND_REQUESTS.length, 0, 'INCOMING_FRIEND_REQUESTS должен быть пустым массивом')
+    assert.equal(OUTGOING_FRIEND_REQUESTS.length, 0, 'OUTGOING_FRIEND_REQUESTS должен быть пустым массивом')
+    assert.equal(FRIEND_SUGGESTIONS.length, 0, 'FRIEND_SUGGESTIONS должен быть пустым массивом')
+
     const res = searchExplore('Роман Гринёв')
     assert.equal(res.users.length, 0, 'Поиск не должен выдавать вымышленных людей')
     const resVoloshin = searchExplore('Волошин')

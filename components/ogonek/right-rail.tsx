@@ -28,7 +28,7 @@ export function RightRail({
   soundEnabled = true,
 }: Props) {
   return (
-    <aside className="right-rail flex flex-col gap-4 select-none" aria-label="Дополнительная информация">
+    <aside className="right-rail h-screen sticky top-0 overflow-y-auto overflow-x-hidden flex flex-col gap-4 select-none" aria-label="Дополнительная информация">
       {/* Блок 1: Поиск — пилюля с повышенным фоном (X.com pill search) */}
       <div className="x-search-bar" role="search">
         <div

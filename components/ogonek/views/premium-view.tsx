@@ -1,24 +1,26 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ArrowLeft,
   BadgeCheck,
   Check,
   Crown,
+  ExternalLink,
   Flame,
   HelpCircle,
   Image as ImageIcon,
-  Lock,
-  Search,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
   Smartphone,
   TrendingUp,
+  X,
   Zap,
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { OgonekProfile, ViewId } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { MobileHeader } from '../mobile-header'
 
 type Props = {
@@ -27,11 +29,10 @@ type Props = {
   onNotify: (msg: string) => void
   soundEnabled?: boolean
   verified?: boolean
+  subscriptionTier?: 'free' | 'premium' | 'ultra'
 }
 
 type BillingPeriod = 'monthly' | 'yearly'
-
-type TariffTier = 'basic' | 'premium' | 'ultra'
 
 export function PremiumView({
   onNavigate,
@@ -39,30 +40,50 @@ export function PremiumView({
   onNotify,
   soundEnabled = true,
   verified = false,
+  subscriptionTier,
 }: Props) {
+  const { state } = useOgonekStore()
   const [billing, setBilling] = useState<BillingPeriod>('monthly')
-  const [selectedTier, setSelectedTier] = useState<TariffTier | null>(verified ? 'premium' : null)
-  const [busyTier, setBusyTier] = useState<TariffTier | null>(null)
+  const [modalTier, setModalTier] = useState<'premium' | 'ultra' | null>(null)
 
-  const handleSelectTier = (tier: TariffTier) => {
-    playClick(soundEnabled)
-    setBusyTier(tier)
+  // Текущий тариф считывается из profile.subscription_tier ('free' | 'premium' | 'ultra')
+  const activeTier: 'free' | 'premium' | 'ultra' =
+    subscriptionTier ||
+    state.profile.subscription_tier ||
+    (verified ? 'premium' : 'free')
 
-    setTimeout(() => {
-      setSelectedTier(tier)
-      setBusyTier(null)
-      playSuccess(soundEnabled)
-
-      if (tier === 'premium') {
-        onUpdateProfile?.({ verified: true })
-        onNotify('Тариф «Премиум» активирован! Синяя галочка включена в профиле ✓')
-      } else if (tier === 'ultra') {
-        onUpdateProfile?.({ verified: true })
-        onNotify('Тариф «Ultra» активирован! Статус основателя и золотая галочка подключены ✓')
-      } else {
-        onNotify('Тариф «Базовый» активирован! Доступ ко всем устройствам подключен ✓')
+  // Закрытие модального окна по Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setModalTier(null)
       }
-    }, 400)
+    }
+    if (modalTier) {
+      window.addEventListener('keydown', handleKeyDown)
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [modalTier])
+
+  const handleSelectTier = (tier: 'free' | 'premium' | 'ultra') => {
+    playClick(soundEnabled)
+
+    if (tier === 'free') {
+      if (activeTier === 'free') return
+      onUpdateProfile?.({ subscription_tier: 'free' })
+      onNotify('Тариф «Базовый» активен')
+      playSuccess(soundEnabled)
+      return
+    }
+
+    // Для платных тарифов самовольное переключение запрещено!
+    // Открываем стильное модальное окно с обращением к @cernavation
+    setModalTier(tier)
+  }
+
+  const openTelegramSupport = () => {
+    playClick(soundEnabled)
+    window.open('https://t.me/cernavation', '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -146,10 +167,10 @@ export function PremiumView({
 
       {/* 3 Tariff Cards */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-        {/* TARIFF 1: БАЗОВЫЙ */}
+        {/* TARIFF 1: БАЗОВЫЙ (0 MDL / Бесплатно навсегда) */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border transition-all relative ${
-            selectedTier === 'basic'
+            activeTier === 'free'
               ? 'border-[var(--text)] ring-2 ring-[var(--text)]/20 shadow-xl'
               : 'border-[var(--border)] hover:border-[var(--border-strong)]'
           }`}
@@ -159,9 +180,9 @@ export function PremiumView({
               <span className="text-xs font-extrabold uppercase tracking-wider text-[var(--text-2)]">
                 Для дисциплины
               </span>
-              {selectedTier === 'basic' && (
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-[var(--text)]">
-                  Текущий
+              {activeTier === 'free' && (
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-[var(--text)] border border-[var(--border)]">
+                  Текущий план
                 </span>
               )}
             </div>
@@ -173,18 +194,18 @@ export function PremiumView({
               Необходимый набор для ежедневной летописи и дисциплины
             </p>
 
-            {/* Price */}
+            {/* Price: 0 MDL / Бесплатно навсегда */}
             <div className="my-5 pb-5 border-b border-[var(--border)]">
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
-                  {billing === 'monthly' ? '10 MDL' : '100 MDL'}
+                  0 MDL
                 </span>
-                <span className="text-xs text-[var(--text-2)] font-semibold">
-                  {billing === 'monthly' ? '/ месяц' : '/ год'}
+                <span className="text-xs text-[#00ba7c] font-bold">
+                  Бесплатно навсегда
                 </span>
               </div>
               <p className="text-[11px] text-[var(--text-3)] mt-1">
-                Около $0.5 в месяц · списание в MDL
+                Всегда доступен · без скрытых списаний
               </p>
             </div>
 
@@ -214,23 +235,23 @@ export function PremiumView({
           <div className="pt-6 mt-6">
             <button
               type="button"
-              disabled={busyTier === 'basic'}
-              onClick={() => handleSelectTier('basic')}
+              disabled={activeTier === 'free'}
+              onClick={() => handleSelectTier('free')}
               className={`w-full h-11 rounded-full text-[14px] font-bold transition-all flex items-center justify-center gap-1.5 ${
-                selectedTier === 'basic'
-                  ? 'bg-transparent border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)]'
+                activeTier === 'free'
+                  ? 'bg-transparent border border-[var(--border)] text-[var(--text-2)] cursor-default'
                   : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90 active:scale-95'
               }`}
             >
-              {selectedTier === 'basic' ? 'Текущий план' : 'Выбрать Базовый'}
+              {activeTier === 'free' ? 'Текущий план' : 'Перейти на Базовый'}
             </button>
           </div>
         </div>
 
-        {/* TARIFF 2: ПРЕМИУМ (ХИТ) */}
+        {/* TARIFF 2: ПРЕМИУМ (25 MDL / $1.5 в месяц) [ХИТ] */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border-2 transition-all relative shadow-2xl ${
-            selectedTier === 'premium'
+            activeTier === 'premium'
               ? 'border-[#1d9bf0] ring-4 ring-[#1d9bf0]/20'
               : 'border-[#1d9bf0]/70 hover:border-[#1d9bf0]'
           }`}
@@ -239,8 +260,8 @@ export function PremiumView({
           }}
         >
           {/* Top Badge: ХИТ */}
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#1d9bf0] text-white text-[11px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
-            <Sparkles size={11} /> Хит выбора
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#1d9bf0] text-white text-[11px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+            <Sparkles size={11} /> Хит
           </div>
 
           <div>
@@ -262,7 +283,7 @@ export function PremiumView({
               Официальная верификация и умный ИИ-анализ записей
             </p>
 
-            {/* Price */}
+            {/* Price: 25 MDL / $1.5 в месяц */}
             <div className="my-5 pb-5 border-b border-[var(--border)]">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
@@ -313,15 +334,14 @@ export function PremiumView({
           <div className="pt-6 mt-6">
             <button
               type="button"
-              disabled={busyTier === 'premium'}
               onClick={() => handleSelectTier('premium')}
               className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 shadow-lg active:scale-95 ${
-                selectedTier === 'premium'
+                activeTier === 'premium'
                   ? 'bg-[#1d9bf0] text-white ring-2 ring-[#1d9bf0]/50'
                   : 'bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white'
               }`}
             >
-              {selectedTier === 'premium' ? (
+              {activeTier === 'premium' ? (
                 <>
                   <Check size={16} strokeWidth={3} />
                   <span>Премиум подключён</span>
@@ -336,10 +356,10 @@ export function PremiumView({
           </div>
         </div>
 
-        {/* TARIFF 3: ULTRA */}
+        {/* TARIFF 3: ОСНОВАТЕЛЬ ULTRA (50 MDL / $3 в месяц) */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border transition-all relative ${
-            selectedTier === 'ultra'
+            activeTier === 'ultra'
               ? 'border-[#f5b942] ring-2 ring-[#f5b942]/30 shadow-xl'
               : 'border-[var(--border)] hover:border-[#f5b942]/60'
           }`}
@@ -359,14 +379,14 @@ export function PremiumView({
             </div>
 
             <h3 className="text-xl font-[800] text-[var(--text)] tracking-tight flex items-center gap-1.5">
-              Ultra
+              Основатель Ultra
               <Crown size={18} className="text-[#f5b942]" />
             </h3>
             <p className="text-xs text-[var(--text-2)] mt-1 min-h-[32px]">
               Золотая галочка основателя и неограниченная аналитика
             </p>
 
-            {/* Price */}
+            {/* Price: 50 MDL / $3 в месяц */}
             <div className="my-5 pb-5 border-b border-[var(--border)]">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
@@ -403,21 +423,26 @@ export function PremiumView({
                 </span>
                 <span>Evidence Vault с семантическим поиском</span>
               </li>
+              <li className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#f5b942]/20 text-[#f5b942] flex items-center justify-center flex-none mt-0.5">
+                  <Crown size={12} />
+                </span>
+                <span>Максимальный приоритет в рейтинге</span>
+              </li>
             </ul>
           </div>
 
           <div className="pt-6 mt-6">
             <button
               type="button"
-              disabled={busyTier === 'ultra'}
               onClick={() => handleSelectTier('ultra')}
               className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
-                selectedTier === 'ultra'
+                activeTier === 'ultra'
                   ? 'bg-[#f5b942] text-black ring-2 ring-[#f5b942]/50'
                   : 'bg-[var(--text)] text-[var(--bg)] hover:bg-[#f5b942] hover:text-black'
               }`}
             >
-              {selectedTier === 'ultra' ? (
+              {activeTier === 'ultra' ? (
                 <>
                   <Check size={16} strokeWidth={3} />
                   <span>Ultra подключён</span>
@@ -444,6 +469,96 @@ export function PremiumView({
           Отмена подписки в любой момент в 1 клик
         </span>
       </div>
+
+      {/* Модальное окно онлайн-оплаты в разработке */}
+      {modalTier && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setModalTier(null)
+            }
+          }}
+        >
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-left animate-in fade-in zoom-in-95 duration-150">
+            {/* Close X */}
+            <button
+              type="button"
+              onClick={() => setModalTier(null)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+              aria-label="Закрыть"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header Icon */}
+            <div className="w-12 h-12 rounded-2xl bg-[#1d9bf0]/10 text-[#1d9bf0] flex items-center justify-center mb-4">
+              {modalTier === 'ultra' ? (
+                <Crown size={24} className="text-[#f5b942]" />
+              ) : (
+                <Sparkles size={24} className="text-[#1d9bf0]" />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-black uppercase tracking-wider text-[var(--text-2)]">
+                Подключение тарифа
+              </span>
+              <span
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                  modalTier === 'ultra'
+                    ? 'bg-[#f5b942]/15 text-[#f5b942]'
+                    : 'bg-[#1d9bf0]/15 text-[#1d9bf0]'
+                }`}
+              >
+                {modalTier === 'ultra' ? '50 MDL / $3' : '25 MDL / $1.5'}
+              </span>
+            </div>
+
+            <h3 className="text-xl font-[800] text-[var(--text)] tracking-tight">
+              {modalTier === 'ultra' ? 'Основатель Ultra' : 'Премиум в Огоньке'}
+            </h3>
+
+            {/* Текст по ТЗ: Подключение онлайн-оплаты в разработке. Для активации обратитесь к @cernavation */}
+            <div className="mt-3 p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[14px] text-[var(--text)] leading-relaxed">
+              <p>
+                Подключение онлайн-оплаты в разработке. Для активации обратитесь к{' '}
+                <a
+                  href="https://t.me/cernavation"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-bold text-[#1d9bf0] hover:underline"
+                >
+                  @cernavation
+                </a>
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={openTelegramSupport}
+                className="w-full h-12 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+              >
+                <MessageCircle size={18} />
+                <span>Написать в Telegram (@cernavation)</span>
+                <ExternalLink size={14} className="opacity-70" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalTier(null)}
+                className="w-full h-10 rounded-full border border-[var(--border)] text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] font-semibold text-[13px] transition-colors"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Check, Pin, Plus, Search, X } from 'lucide-react'
+import { ArrowLeft, Check, Pin, Plus, Search, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -11,6 +11,7 @@ type Props = {
   onNavigate: (view: ViewId) => void
   onTogglePin?: (id: string) => void
   onAddEvidence?: (item: Omit<EvidenceItem, 'id'>) => void
+  onDeleteEvidence?: (id: string) => void
   onNotify?: (msg: string) => void
   soundEnabled?: boolean
 }
@@ -20,6 +21,7 @@ export function VaultView({
   onNavigate,
   onTogglePin,
   onAddEvidence,
+  onDeleteEvidence,
   onNotify,
   soundEnabled = true,
 }: Props) {
@@ -288,18 +290,35 @@ export function VaultView({
                       </span>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      if (onTogglePin) onTogglePin(item.id)
-                    }}
-                    title={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
-                    aria-label={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
-                    className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
-                  >
-                    <Pin size={15} fill={isPinned ? 'currentColor' : 'none'} className={isPinned ? 'text-[var(--accent)]' : ''} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        if (onTogglePin) onTogglePin(item.id)
+                      }}
+                      title={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
+                      aria-label={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
+                      className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
+                    >
+                      <Pin size={15} fill={isPinned ? 'currentColor' : 'none'} className={isPinned ? 'text-[var(--accent)]' : ''} />
+                    </button>
+                    {onDeleteEvidence && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playClick(soundEnabled)
+                          onDeleteEvidence(item.id)
+                          onNotify?.('Факт силы удалён')
+                        }}
+                        title="Удалить факт силы"
+                        aria-label="Удалить факт силы"
+                        className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <h2 className="text-[15px] font-bold text-[var(--text)] leading-snug">
                   {item.title}

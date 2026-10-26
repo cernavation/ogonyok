@@ -222,9 +222,8 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
 
 /** Валидирует список ID друзей, на которых подписан пользователь */
 export function sanitizeFollowingIds(value: unknown): string[] {
-  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return []
-  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  const clean = value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
   return Array.from(new Set(clean))
 }
 
@@ -233,47 +232,44 @@ export function sanitizeFollowingIds(value: unknown): string[] {
  * Валидирует список просмотренных сторис (id друзей) и личные кадры пользователя.
  */
 export function sanitizeViewedStoryIds(value: unknown): string[] {
-  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return []
-  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  const clean = value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
   return Array.from(new Set(clean))
 }
 
 /**
  * ЭТАП 11 — СИСТЕМА ДРУЗЕЙ.
- * Валидирует взаимных друзей, заявки и скрытые рекомендации. Все id
- * сверяются с социальной картой, чтобы в сторе не появлялись «мёртвые» ссылки.
+ * Валидирует взаимных друзей, заявки и скрытые рекомендации.
  */
 export function sanitizeFriendIds(value: unknown): string[] {
-  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return []
-  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  const clean = value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
   return Array.from(new Set(clean))
 }
 
 /** Валидирует список id заявок в друзья (входящих/исходящих) */
 export function sanitizeFriendRequestIds(value: unknown, fallback: string[]): string[] {
-  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return [...fallback]
-  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  const clean = value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
   return Array.from(new Set(clean))
 }
 
 /** Валидирует список скрытых пользователем рекомендаций */
 export function sanitizeDismissedSuggestions(value: unknown): string[] {
-  const valid = new Set(FRIEND_PROFILES.map((friend) => friend.id))
   if (!Array.isArray(value)) return []
-  const clean = value.filter((id): id is string => typeof id === 'string' && valid.has(id))
+  const clean = value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
   return Array.from(new Set(clean))
 }
 
 /**
  * ЭТАП 13 — МЕССЕНДЖЕР.
- * Валидирует id открытого диалога: принимает только реального друга.
+ * Валидирует id открытого диалога.
  */
 export function sanitizeChatActiveFriendId(value: unknown): string | null {
-  if (typeof value !== 'string' || !value) return null
-  return FRIEND_PROFILES.some((friend) => friend.id === value) ? value : null
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return null
+  return trimmed
 }
 
 /**
@@ -441,6 +437,7 @@ export const DEFAULT_PROFILE: OgonekProfile = {
   inLeaderboard: false,
   age: null,
   isAnonymous: false,
+  subscription_tier: 'free',
   privacy: {},
 }
 
@@ -482,6 +479,7 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : false,
     age: typeof p.age === 'number' && Number.isFinite(p.age) && p.age >= 1 && p.age <= 150 ? Math.round(p.age) : null,
     isAnonymous: typeof p.isAnonymous === 'boolean' ? p.isAnonymous : (typeof (p as any)?.is_anonymous === 'boolean' ? (p as any).is_anonymous : false),
+    subscription_tier: p.subscription_tier === 'premium' || p.subscription_tier === 'ultra' ? p.subscription_tier : 'free',
     privacy: typeof p.privacy === 'object' && p.privacy !== null ? p.privacy : {},
   }
 }
@@ -795,7 +793,7 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   incomingFriendRequests: isDemoEnv ? DEFAULT_INCOMING_FRIEND_REQUEST_IDS : [],
   outgoingFriendRequests: isDemoEnv ? DEFAULT_OUTGOING_FRIEND_REQUEST_IDS : [],
   dismissedSuggestions: [],
-  exploreFollowingIds: isDemoEnv ? ['gu-hana', 'gu-adeyemi', 'fr-voloshin'] : [],
+  exploreFollowingIds: isDemoEnv ? ['gu-hana', 'gu-adeyemi'] : [],
   exploreLikedPosts: [],
   exploreSavedPosts: isDemoEnv ? ['cp-6', 'cp-11'] : [],
   exploreRecentSearches: [],

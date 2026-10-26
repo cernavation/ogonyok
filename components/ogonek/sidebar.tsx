@@ -141,7 +141,7 @@ export function Sidebar({
   }
 
   return (
-    <aside className="sidebar select-none" aria-label="Боковая панель">
+    <aside className="sidebar h-screen sticky top-0 overflow-y-auto overflow-x-hidden select-none" aria-label="Боковая панель">
       {/* Brand mark */}
       <div
         className="brand cursor-pointer group min-h-[40px] flex items-center gap-2.5 px-1 py-1"

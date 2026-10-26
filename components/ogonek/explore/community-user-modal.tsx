@@ -26,6 +26,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ModalShell } from '../modal-shell'
 import type { ExploreCategoryId } from '@/lib/ogonek/explore-content'
 import { getInitials } from '@/lib/ogonek/initials'
+import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 
 type Props = {
   userId: string
@@ -181,7 +182,14 @@ export function CommunityUserModal({
               {isMe && <span className="xh-user__you">это ты</span>}
               {isAnon && isMe && <span className="xh-user__you">анонимно</span>}
             </p>
-            <p className="xh-user__handle">@{profile.username}</p>
+            <div className="flex items-center gap-2">
+              <p className="xh-user__handle">@{profile.username}</p>
+              <DifficultyLevelBadge
+                level={profile.level || profile.settings?.level || profile.difficulty_level || 1}
+                isInteractive={false}
+                showNumber={true}
+              />
+            </div>
             <div className="flex items-center gap-2 text-xs text-[var(--text-2)] mt-0.5">
               {profile.city && (
                 <span className="flex items-center gap-1">
@@ -204,7 +212,7 @@ export function CommunityUserModal({
           </div>
           <div className="xh-user__stat">
             <span className="xh-user__stat-value">
-              <Award size={16} /> {profile.level}
+              <Award size={16} /> {profile.level || profile.settings?.level || profile.difficulty_level || 1}
             </span>
             <span className="xh-user__stat-label">уровень</span>
           </div>

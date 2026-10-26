@@ -91,7 +91,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
   const friend = !isGroup ? getFriend(friendId) : null
   const title = threadTitle(friendId, thread)
 
-  const allMessages = thread.messages
+  const allMessages = Array.isArray(thread?.messages) ? thread.messages : []
   const totalMessagesCount = allMessages.length
 
   // Пейджинг: последние N сообщений

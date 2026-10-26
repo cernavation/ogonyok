@@ -850,7 +850,10 @@ function profileContentRow(state: OgonekStoreState, userId: string): ProfileRow 
     feed_density: state.feedDensity,
     privacy: state.privacy,
     streak_settings: state.streak,
-    settings: {},
+    settings: {
+      ...((state.profile as any).settings ?? {}),
+      level: state.profile.difficultyLevel || state.profile.level || 1,
+    },
   }
 }
 
@@ -1369,7 +1372,10 @@ function assembleMessage(row: MessageRow): ChatMessage {
 function assembleProfile(row: ProfileRow, fallback: OgonekProfile): OgonekProfile {
   const str = (value: unknown, fb: string): string =>
     typeof value === 'string' && value.trim() ? value : fb
+  const settings = (row.settings as any) || {}
+  const userLevel = (row as any).level || (row as any).difficulty_level || settings.level || fallback.difficultyLevel || fallback.level || 1
   return {
+    ...fallback,
     displayName: str(row.display_name, fallback.displayName),
     username: str(row.username, fallback.username).replace(/^@/, ''),
     bio: typeof row.bio === 'string' ? row.bio : fallback.bio,
@@ -1386,6 +1392,8 @@ function assembleProfile(row: ProfileRow, fallback: OgonekProfile): OgonekProfil
     monthlyGoal: typeof row.monthly_goal === 'string' ? row.monthly_goal : fallback.monthlyGoal,
     monthlyGoalUpdatedAtISO: str(row.monthly_goal_updated_at, fallback.monthlyGoalUpdatedAtISO),
     verified: typeof row.verified === 'boolean' ? row.verified : fallback.verified,
+    level: userLevel,
+    difficultyLevel: userLevel,
   }
 }
 

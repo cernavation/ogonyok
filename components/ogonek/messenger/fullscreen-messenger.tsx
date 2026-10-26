@@ -8,22 +8,43 @@ import { MessengerIconRail } from './messenger-icon-rail'
 import { MessengerDialogList } from './messenger-dialog-list'
 import { MessengerChatPane } from './messenger-chat-pane'
 import { NewChatModal } from './new-chat-modal'
+import { MessengerErrorBoundary } from './messenger-error-boundary'
 import { AppearanceProvider } from '../appearance-provider'
 import { TooltipProvider } from '../tooltip'
 import { Toast } from '../toast'
 
 type Props = {
   initialThreadId?: string
+  currentUserId?: string
 }
 
-export function FullscreenMessenger({ initialThreadId }: Props) {
+function sanitizeThreadId(id: unknown): string | null {
+  if (typeof id !== 'string') return null
+  const trimmed = id.trim()
+  if (!trimmed || trimmed === 'undefined' || trimmed === 'null') return null
+  return trimmed
+}
+
+export function FullscreenMessenger({ initialThreadId, currentUserId }: Props) {
   const router = useRouter()
-  const { state, setActiveChatFriend } = useOgonekStore()
+  const { state, currentUser, setActiveChatFriend } = useOgonekStore()
+
+  const cleanInitial = sanitizeThreadId(initialThreadId)
+  const cleanStore = sanitizeThreadId(state?.chatActiveFriendId)
+  const resolvedUserId = currentUserId || currentUser?.id || state.auth?.activeAccountId || 'local-user'
 
   // Track active thread id
   const [activeThreadId, setActiveId] = useState<string | null>(
-    initialThreadId || state.chatActiveFriendId || null
+    cleanInitial || cleanStore || null
   )
+
+  // На десктопе (>= 1024px) по умолчанию открываем первый диалог, чтобы сразу отображалось окно переписки и поле ввода
+  useEffect(() => {
+    if (!cleanInitial && !cleanStore && typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      const defaultId = Object.keys(state.chatThreads || {})[0] || null
+      setActiveId((curr) => curr || defaultId)
+    }
+  }, [cleanInitial, cleanStore, state.chatThreads])
 
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -110,99 +131,103 @@ export function FullscreenMessenger({ initialThreadId }: Props) {
   }, [isNewChatOpen, activeThreadId, handleBackToList, handleNavigateHome])
 
   return (
-    <TooltipProvider>
-      <AppearanceProvider
-        theme={state.theme}
-        accent={state.accent}
-        fontScale={state.fontScale}
-        feedDensity={state.feedDensity}
-      />
-      <div
-        className="fixed inset-0 w-[100vw] h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--text)] flex flex-row select-text z-40"
-        style={{
-          fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-        }}
-      >
-        {/* DESKTOP (>= 1024px): 3 columns via CSS responsive display */}
-        <div className="hidden lg:flex w-full h-full flex-row">
-          {/* Column 1: Icon Rail (88px) */}
-          <MessengerIconRail
-            activeSection="chats"
-            onNewChat={() => setIsNewChatOpen(true)}
-            onOpenProfile={() => {
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
-              }
-              router.push('/?view=profile')
-            }}
-            soundEnabled={state.soundEnabled}
-          />
-
-          {/* Column 2: Dialog List (360-420px) */}
-          <aside className="w-[360px] lg:w-[380px] xl:w-[420px] shrink-0 h-full border-r border-[var(--border)] overflow-hidden flex flex-col min-w-0">
-            <MessengerDialogList
-              activeThreadId={activeThreadId}
-              onSelectThread={handleSelectThread}
+    <MessengerErrorBoundary onNavigateHome={handleNavigateHome}>
+      <TooltipProvider>
+        <AppearanceProvider
+          theme={state.theme}
+          accent={state.accent}
+          fontScale={state.fontScale}
+          feedDensity={state.feedDensity}
+        />
+        <div
+          className="fixed inset-0 w-[100vw] h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--text)] flex flex-row select-text z-40"
+          style={{
+            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+          }}
+        >
+          {/* DESKTOP (>= 1024px): 3 columns via CSS responsive display */}
+          <div className="hidden lg:flex w-full h-full flex-row">
+            {/* Column 1: Icon Rail (88px) */}
+            <MessengerIconRail
+              activeSection="chats"
               onNewChat={() => setIsNewChatOpen(true)}
-              onNavigateHome={handleNavigateHome}
-              soundEnabled={state.soundEnabled}
-              className="w-full h-full"
-            />
-          </aside>
-
-          {/* Column 3: Chat Stream & Composer (Remaining space) */}
-          <main className="flex-1 h-full min-w-0 overflow-hidden bg-[var(--bg)]">
-            <MessengerChatPane
-              friendId={activeThreadId}
-              onBack={handleBackToList}
-              onNavigateHome={handleNavigateHome}
-              onNotify={notify}
+              onOpenProfile={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
+                }
+                router.push('/?view=profile')
+              }}
               soundEnabled={state.soundEnabled}
             />
-          </main>
-        </div>
 
-        {/* TABLET & MOBILE (< 1024px): Master-Detail views via CSS responsive display */}
-        <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
-          {!activeThreadId ? (
-            // View 1: Dialog List with single unified Header with Home and New Chat
-            <div className="w-full h-full flex flex-col relative min-w-0">
+            {/* Column 2: Dialog List (360-420px) */}
+            <aside className="w-[360px] lg:w-[380px] xl:w-[420px] shrink-0 h-full border-r border-[var(--border)] overflow-hidden flex flex-col min-w-0">
               <MessengerDialogList
-                activeThreadId={null}
+                activeThreadId={activeThreadId || null}
                 onSelectThread={handleSelectThread}
                 onNewChat={() => setIsNewChatOpen(true)}
                 onNavigateHome={handleNavigateHome}
-                soundEnabled={state.soundEnabled}
+                soundEnabled={state?.soundEnabled ?? true}
                 className="w-full h-full"
               />
-            </div>
-          ) : (
-            // View 2: Chat Pane
-            <div className="w-full h-full flex flex-col min-w-0">
+            </aside>
+
+            {/* Column 3: Chat Stream & Composer (Remaining space) */}
+            <main className="flex-1 h-full min-w-0 overflow-hidden bg-[var(--bg)]">
               <MessengerChatPane
-                friendId={activeThreadId}
+                friendId={activeThreadId || null}
+                currentUserId={resolvedUserId}
                 onBack={handleBackToList}
                 onNavigateHome={handleNavigateHome}
                 onNotify={notify}
-                soundEnabled={state.soundEnabled}
+                soundEnabled={state?.soundEnabled ?? true}
               />
-            </div>
+            </main>
+          </div>
+
+          {/* TABLET & MOBILE (< 1024px): Master-Detail views via CSS responsive display */}
+          <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
+            {!activeThreadId ? (
+              // View 1: Dialog List with single unified Header with Home and New Chat
+              <div className="w-full h-full flex flex-col relative min-w-0">
+                <MessengerDialogList
+                  activeThreadId={null}
+                  onSelectThread={handleSelectThread}
+                  onNewChat={() => setIsNewChatOpen(true)}
+                  onNavigateHome={handleNavigateHome}
+                  soundEnabled={state?.soundEnabled ?? true}
+                  className="w-full h-full"
+                />
+              </div>
+            ) : (
+              // View 2: Chat Pane
+              <div className="w-full h-full flex flex-col min-w-0">
+                <MessengerChatPane
+                  friendId={activeThreadId}
+                  currentUserId={resolvedUserId}
+                  onBack={handleBackToList}
+                  onNavigateHome={handleNavigateHome}
+                  onNotify={notify}
+                  soundEnabled={state?.soundEnabled ?? true}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Modal: New Chat / Group Wizard */}
+          {isNewChatOpen && (
+            <NewChatModal
+              onClose={() => setIsNewChatOpen(false)}
+              onOpenThread={handleSelectThread}
+              onNotify={notify}
+              soundEnabled={state?.soundEnabled ?? true}
+            />
           )}
+
+          {/* Global Toast */}
+          {toastMsg && <Toast message={toastMsg} />}
         </div>
-
-        {/* Modal: New Chat / Group Wizard */}
-        {isNewChatOpen && (
-          <NewChatModal
-            onClose={() => setIsNewChatOpen(false)}
-            onOpenThread={handleSelectThread}
-            onNotify={notify}
-            soundEnabled={state.soundEnabled}
-          />
-        )}
-
-        {/* Global Toast */}
-        {toastMsg && <Toast message={toastMsg} />}
-      </div>
-    </TooltipProvider>
+      </TooltipProvider>
+    </MessengerErrorBoundary>
   )
 }

@@ -1,34 +1,74 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getInitials } from '@/lib/ogonek/initials'
+import { getProfile } from '@/lib/supabase/api'
 
 type Props = {
-  friendId: string
+  friendId?: string
   size?: number
   /** Показывать ли точку онлайн-статуса */
   showPresence?: boolean
   /** Цвет рамки точки (под фон контейнера) */
   ringColor?: string
+  fallbackAvatar?: string | null
+  fallbackName?: string | null
 }
 
 /**
  * Аватар собеседника в мессенджере.
  * Поддерживает как друзей из социальной карты, так и реальных пользователей Supabase.
+ * Никогда не отображает сырой UUID пользователю.
  */
-export function ChatAvatar({ friendId, size = 44, showPresence = true, ringColor = '#0b0c0d' }: Props) {
+export function ChatAvatar({
+  friendId,
+  size = 44,
+  showPresence = true,
+  ringColor = '#0b0c0d',
+  fallbackAvatar,
+  fallbackName,
+}: Props) {
   const { state } = useOgonekStore()
-  const friend = getFriend(friendId)
-  const thread = friendId ? state.chatThreads?.[friendId] : undefined
+  const friend = friendId ? getFriend(friendId) : undefined
+  const thread = friendId ? state?.chatThreads?.[friendId] : undefined
   const peerMeta = thread?.peerMeta
 
-  if (!friend && !peerMeta && !friendId) return null
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(friendId || '')
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
+  const [profileInitials, setProfileInitials] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!fallbackAvatar && !friend && !peerMeta?.avatarUrl && friendId && isUuid) {
+      getProfile(friendId)
+        .then((p) => {
+          if (p?.avatar_image) setProfileAvatar(p.avatar_image)
+          if (p?.display_name || p?.username) {
+            setProfileInitials(getInitials(p.display_name, p.username))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [fallbackAvatar, friend, peerMeta, friendId, isUuid])
+
+  if (!friend && !peerMeta && !friendId && !fallbackAvatar && !fallbackName) return null
 
   const presence = friend ? presenceMeta(friend.presence) : { label: 'Офлайн', color: '#71767b' }
-  const name = friend?.name || peerMeta?.name || (peerMeta?.username ? `@${peerMeta.username}` : friendId)
-  const initials = friend?.initials || peerMeta?.initials || getInitials(peerMeta?.name || '', peerMeta?.username || friendId)
-  const avatarUrl = peerMeta?.avatarUrl
+  const name =
+    fallbackName ||
+    friend?.name ||
+    peerMeta?.name ||
+    (peerMeta?.username ? `@${peerMeta.username}` : (isUuid ? 'Собеседник' : (friendId || 'Собеседник')))
+
+  const initials =
+    (fallbackName ? getInitials(fallbackName) : '') ||
+    friend?.initials ||
+    peerMeta?.initials ||
+    profileInitials ||
+    (peerMeta?.name || peerMeta?.username ? getInitials(peerMeta?.name || '', peerMeta?.username) : 'ОГ')
+
+  const avatarUrl = fallbackAvatar || peerMeta?.avatarUrl || profileAvatar
 
   return (
     <span className="relative inline-flex flex-none" style={{ width: size, height: size }}>

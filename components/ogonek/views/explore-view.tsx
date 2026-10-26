@@ -17,20 +17,19 @@ import {
   type ExploreTag,
 } from '@/lib/ogonek/explore-content'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { searchProfiles, getRecentProfiles, type ProfileRecord } from '@/lib/supabase/api'
+import { searchProfiles, getRecentProfiles, toggleFriendshipFollow, type ProfileRecord } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 import type { Day, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
 import { MobileHeader } from '../mobile-header'
 import {
   CommunityAvatar,
-  CommunityUserModal,
   ExploreSearchBar,
 } from '../explore'
 
 type Props = {
   days: Day[]
-  onNavigate: (view: ViewId) => void
+  onNavigate: (view: ViewId, targetUserId?: string | null) => void
   onLightbox: (url: string) => void
   onNotify: (msg: string) => void
   onSelectDay?: (dayId: number) => void
@@ -64,7 +63,6 @@ export function ExploreView({
 
   const [query, setQuery] = useState('')
   const [activeTag, setActiveTag] = useState<string | null>(null)
-  const [openUserId, setOpenUserId] = useState<string | null>(null)
   const [dbProfiles, setDbProfiles] = useState<ProfileRecord[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -229,7 +227,7 @@ export function ExploreView({
           onCommit={addExploreSearch}
           onPickTag={handlePickTag}
           onPickCategory={() => {}}
-          onPickUser={(id) => setOpenUserId(id)}
+          onPickUser={(id) => onNavigate('profile', id)}
           onPickPost={() => {}}
           recentSearches={recentSearches}
           onRemoveRecent={removeExploreSearch}
@@ -360,7 +358,13 @@ export function ExploreView({
                         <button
                           type="button"
                           className="flex items-center gap-3 text-left min-w-0 flex-1"
-                          onClick={() => setOpenUserId(user.id)}
+                          onClick={() => {
+                            if (user.isMe) {
+                              onNavigate('profile', null)
+                            } else {
+                              onNavigate('profile', user.id)
+                            }
+                          }}
                         >
                           <CommunityAvatar user={user} size={42} ring={isFollowing} />
                           <div className="min-w-0">
@@ -381,9 +385,13 @@ export function ExploreView({
                         {!user.isMe && (
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               const now = toggleExploreFollow(user.id)
                               playClick(soundEnabled)
+                              const currentUid = state.auth.activeAccountId
+                              if (currentUid && user.id) {
+                                void toggleFriendshipFollow(currentUid, user.id)
+                              }
                               onNotify(
                                 now ? `Вы читаете @${user.username} ✓` : `Отписка от @${user.username}`
                               )
@@ -487,7 +495,13 @@ export function ExploreView({
                         <button
                           type="button"
                           className="flex items-center gap-3 text-left min-w-0 flex-1"
-                          onClick={() => setOpenUserId(user.id)}
+                          onClick={() => {
+                            if (user.isMe) {
+                              onNavigate('profile', null)
+                            } else {
+                              onNavigate('profile', user.id)
+                            }
+                          }}
                         >
                           <CommunityAvatar user={user} size={44} ring={isFollowing} />
                           <div className="min-w-0">
@@ -513,9 +527,13 @@ export function ExploreView({
                         {!user.isMe && (
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               const now = toggleExploreFollow(user.id)
                               playClick(soundEnabled)
+                              const currentUid = state.auth.activeAccountId
+                              if (currentUid && user.id) {
+                                void toggleFriendshipFollow(currentUid, user.id)
+                              }
                               onNotify(
                                 now ? `Вы читаете @${user.username} ✓` : `Отписка от @${user.username}`
                               )
@@ -538,17 +556,6 @@ export function ExploreView({
           </div>
         )}
       </div>
-
-      {openUserId && (
-        <CommunityUserModal
-          userId={openUserId}
-          onClose={() => setOpenUserId(null)}
-          onNotify={onNotify}
-          onOpenPost={() => {}}
-          onOpenCategory={() => {}}
-          soundEnabled={soundEnabled}
-        />
-      )}
     </div>
   )
 }

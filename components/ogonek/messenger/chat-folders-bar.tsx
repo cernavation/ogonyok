@@ -37,15 +37,16 @@ export function ChatFoldersBar({
     return [...DEFAULT_CHAT_FOLDERS, ...userCustom]
   }, [folders])
 
-  const chatIds = useMemo(() => Object.keys(threads), [threads])
+  const chatIds = useMemo(() => Object.keys(threads || {}), [threads])
 
   return (
     <div className="relative border-b border-[var(--border)] bg-[var(--bg-elev)]">
       <div className="flex items-center justify-between px-2 gap-2">
         <div className="flex flex-1 items-center gap-2 overflow-x-auto no-scrollbar py-2 scroll-smooth min-w-0" role="tablist" aria-label="Папки чатов">
-          {allFolders.map((f) => {
+          {(allFolders || []).map((f) => {
+            if (!f) return null
             const isActive = activeFolderId === f.id
-            const count = unreadCountForFolder(threads, chatIds, f.id, folders)
+            const count = unreadCountForFolder(threads || {}, chatIds, f.id, folders || [])
             return (
               <button
                 key={f.id}

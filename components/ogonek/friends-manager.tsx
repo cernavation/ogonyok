@@ -14,18 +14,20 @@ import {
   X,
 } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { buildInviteUrl } from '@/lib/ogonek/profile-share'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
   getFriend,
-  getFriendSuggestions,
+  registerFriendProfile,
   getIncomingRequestMeta,
   getOutgoingRequestMeta,
   presenceMeta,
   presenceRank,
 } from '@/lib/ogonek/friends'
+import { getRecentProfiles, toggleFriendshipFollow } from '@/lib/supabase/api'
+import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { FriendDetailModal } from './friend-detail-modal'
 
@@ -177,22 +179,66 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
     [outgoing, query]
   )
 
-  const suggestions = useMemo(
-    () =>
-      getFriendSuggestions({
-        friendIds,
-        followingIds,
-        requestIds: [...incoming, ...outgoing],
-        dismissedIds: dismissed,
-      })
-        .map((s) => {
-          const friend = getFriend(s.friendId)
-          return friend ? { ...s, friend } : null
-        })
-        .filter((s): s is NonNullable<typeof s> => s !== null)
-        .filter((s) => matches(s.friend, query)),
-    [friendIds, followingIds, incoming, outgoing, dismissed, query]
-  )
+  const [dbUsers, setDbUsers] = useState<FriendProfile[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadRealUsers = async () => {
+      try {
+        const list = await getRecentProfiles(40, profile.username)
+        if (!cancelled && Array.isArray(list)) {
+          const mapped: FriendProfile[] = list.map((p) => {
+            const fp: FriendProfile = {
+              id: p.id,
+              name: p.display_name || `@${p.username}`,
+              username: p.username,
+              initials: getInitials(p.display_name, p.username),
+              avatarColor: p.avatar_color || '#FF5C00',
+              bio: p.bio || '',
+              city: p.city || '',
+              streak: p.streak_count ?? p.streak ?? 0,
+              together: 0,
+              mutual: 0,
+              verified: Boolean(p.verified),
+              lastActive: 'недавно',
+              presence: 'online',
+            }
+            registerFriendProfile(fp)
+            return fp
+          })
+          setDbUsers(mapped)
+        }
+      } catch {
+        if (!cancelled) setDbUsers([])
+      }
+    }
+    loadRealUsers()
+    return () => {
+      cancelled = true
+    }
+  }, [profile.username])
+
+  const suggestions = useMemo(() => {
+    const exclude = new Set<string>([
+      ...friendIds,
+      ...followingIds,
+      ...incoming,
+      ...outgoing,
+      ...dismissed,
+      profile.username,
+    ])
+    // Только реальные пользователи из базы Supabase. Если других пользователей нет — список пуст!
+    return dbUsers
+      .filter((u) => !exclude.has(u.id) && !exclude.has(u.username))
+      .filter((u) => matches(u, query))
+      .map((friend) => ({
+        friendId: friend.id,
+        reason: friend.city ? `Живёт в ${friend.city} · держит огонь` : 'Участник сообщества Огонёк',
+        matchPercent: 80,
+        source: 'interest' as const,
+        friend,
+      }))
+  }, [dbUsers, friendIds, followingIds, incoming, outgoing, dismissed, profile.username, query])
 
   const openFriend = (id: string) => {
     playClick(soundEnabled)
@@ -218,6 +264,10 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
   const handleFollow = (friend: FriendProfile) => {
     playClick(soundEnabled)
     const now = toggleFollow(friend.id)
+    const currentUid = state.auth.activeAccountId
+    if (currentUid && friend.id) {
+      void toggleFriendshipFollow(currentUid, friend.id)
+    }
     onNotify(now ? `Ты подписался на @${friend.username} ✓` : `Ты отписался от @${friend.username}`)
   }
 
@@ -225,6 +275,10 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
     playClick(soundEnabled)
     addFriend(friend.id)
     playSuccess(soundEnabled)
+    const currentUid = state.auth.activeAccountId
+    if (currentUid && friend.id) {
+      void toggleFriendshipFollow(currentUid, friend.id)
+    }
     onNotify(`@${friend.username} теперь в друзьях ✓`)
   }
 

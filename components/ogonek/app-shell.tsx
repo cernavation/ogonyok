@@ -31,7 +31,15 @@ import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
 import { PremiumView } from './views/premium-view'
 import { GuestLanding } from './landing/guest-landing'
-import { ChatWindow, FullscreenMessenger } from './messenger'
+import { ChatWindow } from './messenger/chat-window'
+import { FullscreenMessenger } from './messenger/fullscreen-messenger'
+import { ChatCallModal } from './messenger/chat-call-modal'
+import { CallErrorBoundary } from './messenger/call-error-boundary'
+import { ChatAvatar } from './messenger/chat-avatar'
+import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
+import { getSupabase } from '@/lib/supabase/client'
+import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
+import { Phone, PhoneOff, Video } from 'lucide-react'
 
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
@@ -40,6 +48,7 @@ const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
+  const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null)
   const [composer, setComposer] = useState(false)
   const [editingDay, setEditingDay] = useState<Day | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
@@ -50,6 +59,22 @@ export function AppShell() {
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
+
+  // Аудио и видео звонки: глобальный стейт
+  const [incomingCall, setIncomingCall] = useState<{
+    sessionId: string
+    callerId: string
+    callerName: string
+    callerAvatar?: string | null
+    isVideo: boolean
+  } | null>(null)
+  const [activeGlobalCall, setActiveGlobalCall] = useState<{
+    sessionId: string
+    callerId: string
+    callerName: string
+    callerAvatar?: string | null
+    isVideo: boolean
+  } | null>(null)
 
   const {
     state,
@@ -66,6 +91,7 @@ export function AppShell() {
     clearComposerDraft,
     toggleEvidencePin,
     addEvidenceItem,
+    deleteEvidenceItem,
     setSoundEnabled,
     setTheme,
     setAccent,
@@ -105,6 +131,184 @@ export function AppShell() {
   useEffect(() => {
     void provisionDemoAccountSecrets()
   }, [provisionDemoAccountSecrets])
+
+  // Прямой Realtime Broadcast канал входящих звонков: user_calls_${currentUser.id}
+  useEffect(() => {
+    const supabase = getSupabase()
+    const myId = currentUser?.id || state.auth?.activeAccountId
+    if (!supabase || !myId) return
+
+    // 1. Подключаемся к персональному каналу звонков пользователя
+    const channelName = `user_calls_${myId}`
+    const channel = supabase.channel(channelName)
+
+    channel
+      .on('broadcast', { event: 'incoming_call' }, (event) => {
+        const payload = event?.payload
+        if (payload && payload.callerId !== myId) {
+          setIncomingCall({
+            sessionId: payload.sessionId,
+            callerId: payload.callerId,
+            callerName: payload.callerName || 'Соратник',
+            callerAvatar: payload.callerAvatar || null,
+            isVideo: Boolean(payload.isVideo),
+          })
+          if (state.soundEnabled) {
+            playIncomingRingtone()
+          }
+        }
+      })
+      .on('broadcast', { event: 'call_ended' }, () => {
+        stopCallSounds()
+        setIncomingCall(null)
+      })
+      // 2. Двойная страховка через postgres_changes в call_sessions
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `receiver_id=eq.${myId}`,
+        },
+        async (payload) => {
+          const session = payload.new as CallSessionRecord
+          if (session && session.status === 'ringing') {
+            const profile = await getProfile(session.caller_id)
+            setIncomingCall((curr) => {
+              if (curr && curr.sessionId === session.id) return curr
+              if (state.soundEnabled) {
+                playIncomingRingtone()
+              }
+              return {
+                sessionId: session.id,
+                callerId: session.caller_id,
+                callerName: profile?.display_name || profile?.username || 'Соратник',
+                callerAvatar: profile?.avatar_url || null,
+                isVideo: Boolean(session.is_video),
+              }
+            })
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'call_sessions',
+          filter: `receiver_id=eq.${myId}`,
+        },
+        (payload) => {
+          const session = payload.new as CallSessionRecord
+          if (session && (session.status === 'rejected' || session.status === 'ended')) {
+            setIncomingCall((curr) => {
+              if (curr && curr.sessionId === session.id) {
+                stopCallSounds()
+                playEndCallSound()
+                return null
+              }
+              return curr
+            })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      stopCallSounds()
+      supabase.removeChannel(channel)
+    }
+  }, [currentUser?.id, state.auth?.activeAccountId, state.soundEnabled])
+
+  const handleAcceptIncomingCall = async () => {
+    stopCallSounds()
+    if (!incomingCall) return
+    const accepted = incomingCall
+    setIncomingCall(null)
+    setActiveGlobalCall(accepted)
+
+    const supabase = getSupabase()
+    if (supabase && accepted.sessionId) {
+      // 1. Отправляем broadcast call_accepted в единую комнату звонка call_room_${sessionId}
+      const roomChannel = supabase.channel(`call_room_${accepted.sessionId}`)
+      roomChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          roomChannel.send({
+            type: 'broadcast',
+            event: 'call_accepted',
+            payload: { sessionId: accepted.sessionId },
+          })
+        }
+      })
+
+      // 2. Также отправляем call_accepted на персональный канал звонящего
+      const callerChannel = supabase.channel(`user_calls_${accepted.callerId}`)
+      callerChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          callerChannel.send({
+            type: 'broadcast',
+            event: 'call_accepted',
+            payload: { sessionId: accepted.sessionId },
+          })
+          setTimeout(() => {
+            supabase.removeChannel(callerChannel)
+          }, 1000)
+        }
+      })
+    }
+
+    if (accepted.sessionId) {
+      await updateCallSessionStatus(accepted.sessionId, 'accepted')
+    }
+  }
+
+  const handleRejectIncomingCall = async () => {
+    stopCallSounds()
+    playEndCallSound()
+
+    if (incomingCall) {
+      const callData = incomingCall
+      setIncomingCall(null)
+
+      const supabase = getSupabase()
+      if (supabase && callData.sessionId) {
+        // 1. Отправляем broadcast call_ended в единую комнату звонка call_room_${sessionId}
+        const roomChannel = supabase.channel(`call_room_${callData.sessionId}`)
+        roomChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            roomChannel.send({
+              type: 'broadcast',
+              event: 'call_ended',
+              payload: { sessionId: callData.sessionId },
+            })
+          }
+        })
+
+        // 2. Отправляем broadcast call_ended звонящему в его канал user_calls_${callData.callerId}
+        if (callData.callerId) {
+          const callerChannel = supabase.channel(`user_calls_${callData.callerId}`)
+          callerChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              callerChannel.send({
+                type: 'broadcast',
+                event: 'call_ended',
+                payload: { sessionId: callData.sessionId },
+              })
+              setTimeout(() => {
+                supabase.removeChannel(callerChannel)
+              }, 500)
+            }
+          })
+        }
+      }
+
+      // 3. Переводим статус в Supabase в 'rejected'
+      if (callData.sessionId) {
+        await updateCallSessionStatus(callData.sessionId, 'rejected')
+      }
+    }
+  }
 
   const openAuth = useCallback((mode: 'signin' | 'register') => {
     setAuthModal(mode)
@@ -185,11 +389,15 @@ export function AppShell() {
     notify('Журнал разблокирован')
   }, [notify])
 
-  const navigate = useCallback((next: ViewId) => {
+  const navigate = useCallback((next: ViewId, targetUserId?: string | null) => {
     playClick(state.soundEnabled)
     setView(next)
+    setViewProfileUserId(next === 'profile' ? (targetUserId || null) : null)
     if (typeof window !== 'undefined') {
-      const url = next === 'home' ? '/' : `/?view=${next}`
+      let url = next === 'home' ? '/' : `/?view=${next}`
+      if (next === 'profile' && targetUserId) {
+        url += `&userId=${encodeURIComponent(targetUserId)}`
+      }
       window.history.pushState(null, '', url)
     }
     window.scrollTo(0, 0)
@@ -214,6 +422,7 @@ export function AppShell() {
 
       const params = new URLSearchParams(window.location.search)
       const v = params.get('view') as ViewId | null
+      const u = params.get('userId') || params.get('user') || params.get('u')
       const validViews: ViewId[] = [
         'home',
         'explore',
@@ -228,6 +437,11 @@ export function AppShell() {
       ]
       if (v && validViews.includes(v)) {
         setView(v)
+        if (v === 'profile') {
+          setViewProfileUserId(u || null)
+        } else {
+          setViewProfileUserId(null)
+        }
       }
     }
 
@@ -472,11 +686,18 @@ export function AppShell() {
           soundEnabled={state.soundEnabled}
         />
       ),
-      messages: (
+      messages: !currentUser ? (
+        <div className="w-full h-full min-h-[460px] flex flex-col items-center justify-center p-8 bg-[var(--bg)] text-center select-none">
+          <div className="w-10 h-10 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin mb-3 shadow-lg" />
+          <p className="text-sm font-medium text-[var(--text-2)]">Загрузка мессенджера...</p>
+        </div>
+      ) : (
         <MessagesView
           onNavigate={navigate}
           onNotify={notify}
           soundEnabled={state.soundEnabled}
+          currentUserId={currentUser.id}
+          currentUser={currentUser}
         />
       ),
       vault: (
@@ -485,6 +706,7 @@ export function AppShell() {
           onNavigate={navigate}
           onTogglePin={toggleEvidencePin}
           onAddEvidence={addEvidenceItem}
+          onDeleteEvidence={deleteEvidenceItem}
           onNotify={notify}
           soundEnabled={state.soundEnabled}
         />
@@ -496,6 +718,7 @@ export function AppShell() {
           onNotify={notify}
           soundEnabled={state.soundEnabled}
           verified={state.profile.verified}
+          subscriptionTier={state.profile.subscription_tier}
         />
       ),
       analytics: (
@@ -526,6 +749,7 @@ export function AppShell() {
       profile: (
         <ProfileView
           storeState={state}
+          targetUserId={viewProfileUserId}
           onNavigate={navigate}
           onUpdateProfile={updateProfile}
           onResetProfile={resetProfile}
@@ -565,6 +789,7 @@ export function AppShell() {
       state,
       streakState,
       navigate,
+      viewProfileUserId,
       notify,
       saveMorningIntentions,
       markMorningFocusStepDone,
@@ -591,8 +816,16 @@ export function AppShell() {
     ]
   )
 
-  // Если пользователь не вошёл (currentUser === null) — показываем экран авторизации AuthForm
+  // Если пользователь не вошёл (currentUser === null) — показываем экран авторизации AuthForm, кроме прямого перехода в чаты
   if (!currentUser) {
+    if (view === 'messages') {
+      return (
+        <FullscreenMessenger
+          initialThreadId={state.chatActiveFriendId || undefined}
+          currentUserId={state.auth?.activeAccountId || 'local-user'}
+        />
+      )
+    }
     return (
       <TooltipProvider>
         <AppearanceProvider
@@ -637,7 +870,10 @@ export function AppShell() {
       />
       <main className="app-shell" data-locked={locked ? 'true' : undefined}>
         {view === 'messages' ? (
-          <FullscreenMessenger initialThreadId={state.chatActiveFriendId || undefined} />
+          <FullscreenMessenger
+            initialThreadId={state.chatActiveFriendId || undefined}
+            currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
+          />
         ) : (
           <>
             <Sidebar
@@ -786,6 +1022,92 @@ export function AppShell() {
             />
           )}
         </AnimatePresence>
+
+        {/* Модалка входящего звонка (на любом экране приложения) */}
+        <AnimatePresence>
+          {incomingCall && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 select-none"
+            >
+              <div className="bg-[var(--bg)] border-2 border-[var(--accent)]/50 rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-[0_0_50px_rgba(255,107,53,0.3)] flex flex-col items-center text-center relative animate-in fade-in zoom-in-95">
+                {/* Верхняя плашка */}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] text-xs font-bold tracking-wide uppercase mb-5 border border-[var(--accent)]/20">
+                  {incomingCall.isVideo ? <Video size={13} /> : <Phone size={13} />}
+                  <span>{incomingCall.isVideo ? 'Входящий видеовызов' : 'Входящий аудиовызов'}</span>
+                </div>
+
+                {/* Аватар с крупной неоновой пульсацией */}
+                <div className="relative mb-5 flex items-center justify-center">
+                  <div className="absolute inset-[-14px] rounded-full border-2 border-[var(--accent)] animate-ping opacity-40" />
+                  <div className="absolute inset-[-6px] rounded-full bg-[var(--accent)]/20 animate-pulse" />
+                  <ChatAvatar
+                    friendId={incomingCall.callerId}
+                    size={96}
+                    ringColor="var(--accent)"
+                    fallbackAvatar={incomingCall.callerAvatar}
+                    fallbackName={incomingCall.callerName}
+                  />
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-[900] text-[var(--text)] tracking-tight">
+                  {incomingCall.callerName}
+                </h3>
+                <p className="text-xs text-[var(--text-2)] mt-1.5 font-medium">
+                  {incomingCall.isVideo ? 'Входящий видеозвонок...' : 'Входящий аудиозвонок...'}
+                </p>
+
+                {/* Кнопки Отклонить (красная) и Принять (зеленая) */}
+                <div className="mt-7 flex items-center justify-center gap-6 w-full">
+                  <button
+                    type="button"
+                    onClick={handleRejectIncomingCall}
+                    className="w-16 h-16 rounded-full bg-[#f4212e] hover:bg-[#dc1e29] text-white flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"
+                    aria-label="Отклонить"
+                    title="Отклонить вызов"
+                  >
+                    <PhoneOff size={28} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAcceptIncomingCall}
+                    className="w-16 h-16 rounded-full bg-[#00ba7c] hover:bg-[#00a36d] text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all animate-bounce"
+                    aria-label="Принять"
+                    title="Принять вызов"
+                  >
+                    <Phone size={28} />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Активное окно звонка после принятия вызова на уровне Shell с локальным ErrorBoundary */}
+        {activeGlobalCall && (
+          <CallErrorBoundary onReset={() => setActiveGlobalCall(null)}>
+            <ChatCallModal
+              isOpen={true}
+              sessionId={activeGlobalCall.sessionId}
+              callerId={activeGlobalCall.callerId}
+              receiverId={currentUser?.id || state.auth?.activeAccountId || undefined}
+              friendId={activeGlobalCall.callerId}
+              friendName={activeGlobalCall.callerName}
+              callerName={activeGlobalCall.callerName}
+              callerAvatar={activeGlobalCall.callerAvatar}
+              friendAvatar={activeGlobalCall.callerAvatar}
+              isVideo={activeGlobalCall.isVideo}
+              isIncoming={true}
+              initialConnected={true}
+              onClose={() => setActiveGlobalCall(null)}
+              onEndCall={() => setActiveGlobalCall(null)}
+              soundEnabled={state.soundEnabled}
+            />
+          </CallErrorBoundary>
+        )}
 
         <Toast message={toast} />
       </main>

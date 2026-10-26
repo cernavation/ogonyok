@@ -2,20 +2,23 @@
 
 import { AnimatePresence } from 'framer-motion'
 import { Check, Eye, Plus, RefreshCw, Sparkles } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { FRIEND_PROFILES, getFriend } from '@/lib/ogonek/friends'
 import { playClick } from '@/lib/ogonek/sound'
 import {
   buildFriendStories,
+  formatStoryAge,
   friendStoryToViewable,
   myStoriesToViewable,
   type StoryTemplateContext,
   type ViewableStory,
 } from '@/lib/ogonek/stories'
+import { buildFriendDigest } from '@/lib/ogonek/story-digest'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { calculateStreak } from '@/lib/ogonek/streak'
 import { getInitials } from '@/lib/ogonek/initials'
+import { getActiveStories, subscribeToStories, type StoryRecord } from '@/lib/supabase/api'
 import { StoryComposerModal } from './story-composer-modal'
 import { StoryViewerModal } from './story-viewer-modal'
 
@@ -57,9 +60,150 @@ export function StoriesBar({
   const myAvatarSrc = usePhotoUrl(profile.avatarImage)
   const followingIds = state.followingIds ?? []
   const viewedStoryIds = state.viewedStoryIds ?? []
-  const myStories = state.myStories ?? []
+  const currentUserId = state.auth?.activeAccountId ?? null
+
+  const [remoteStories, setRemoteStories] = useState<StoryRecord[]>([])
+
+  // Загрузка активных сторис (< 20 часов) из базы Supabase + Realtime подписка
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const list = await getActiveStories()
+        if (!cancelled) {
+          setRemoteStories(list)
+        }
+      } catch {}
+    }
+
+    load()
+    const unsubscribe = subscribeToStories(() => {
+      load()
+    })
+
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [])
+
+  // Активные личные сторис (< 20 часов)
+  const activeMyStories = useMemo(() => {
+    const twentyHoursAgo = Date.now() - 20 * 60 * 60 * 1000
+    const localActive = (state.myStories ?? []).filter((s) => {
+      const ts = new Date(s.createdAtISO).getTime()
+      return !Number.isNaN(ts) && ts >= twentyHoursAgo
+    })
+
+    // Дополняем серверными личными сторис (если зашли с другого устройства)
+    if (currentUserId) {
+      const remoteMine = remoteStories.filter((s) => s.user_id === currentUserId)
+      for (const r of remoteMine) {
+        const id = r.client_id || r.id
+        if (!localActive.some((l) => l.id === id)) {
+          localActive.push({
+            id,
+            emoji: r.emoji,
+            kicker: r.kicker,
+            headline: r.headline,
+            detail: r.detail,
+            from: r.from_color,
+            to: r.to_color,
+            accent: r.accent,
+            photo: r.photo ?? null,
+            backgroundId: r.background_id ?? undefined,
+            sourceDayId: r.source_day_id ?? null,
+            sourcePrideIndex: r.source_pride_index ?? null,
+            visibility: (r.visibility as any) || 'public',
+            createdAtISO: r.created_at,
+          })
+        }
+      }
+    }
+
+    return localActive
+  }, [state.myStories, remoteStories, currentUserId])
+
+  const myStories = activeMyStories
 
   const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === '1'
+
+  // Превращаем удалённые активные сторис других пользователей в ViewableStory
+  const remoteViewables = useMemo(() => {
+    const twentyHoursAgo = Date.now() - 20 * 60 * 60 * 1000
+    const now = Date.now()
+
+    // Исключаем свои сторис и просроченные (> 20 часов)
+    const others = remoteStories.filter((s) => {
+      if (currentUserId && s.user_id === currentUserId) return false
+      const createdTs = new Date(s.created_at).getTime()
+      const expiresTs = s.expires_at ? new Date(s.expires_at).getTime() : createdTs + 20 * 60 * 60 * 1000
+      return createdTs >= twentyHoursAgo && expiresTs > now
+    })
+
+    const byUser = new Map<string, StoryRecord[]>()
+    for (const s of others) {
+      const list = byUser.get(s.user_id) || []
+      list.push(s)
+      byUser.set(s.user_id, list)
+    }
+
+    const result: ViewableStory[] = []
+    for (const [userId, stories] of byUser.entries()) {
+      const author = stories[0].author
+      const name = author?.display_name || author?.username || 'Соратник'
+      const username = author?.username || 'user'
+      const initials = getInitials(name, username)
+      const avatarColor = author?.avatar_color || '#FF5C00'
+      const verified = Boolean(author?.verified)
+
+      // Сортировка по времени
+      const sorted = [...stories].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      )
+
+      result.push({
+        id: `remote-story-${userId}`,
+        kind: 'friend',
+        friendId: userId,
+        name,
+        username,
+        initials,
+        avatarColor,
+        verified,
+        postedLabel: formatStoryAge(sorted[sorted.length - 1].created_at),
+        slides: sorted.map((s) => ({
+          id: s.id,
+          emoji: s.emoji || '🔥',
+          kicker: s.kicker || '',
+          headline: s.headline || '',
+          detail: s.detail || '',
+          from: s.from_color || '#2a1206',
+          to: s.to_color || '#7a2f0c',
+          accent: s.accent || '#ffa600',
+          photo: s.photo ?? null,
+        })),
+        digest: buildFriendDigest({
+          id: userId,
+          name,
+          username,
+          initials,
+          avatarColor,
+          bio: author?.bio || '',
+          city: author?.city || '',
+          streak: author?.streak_count ?? author?.streak ?? 0,
+          together: 0,
+          mutual: 0,
+          verified,
+          lastActive: 'недавно',
+          presence: 'online',
+        }),
+      })
+    }
+
+    return result
+  }, [remoteStories, currentUserId])
+
   // В обычном режиме показываем только реальные подписки; демо-персонажи только при NEXT_PUBLIC_DEMO_MODE=1
   const friendStories = useMemo(() => {
     if (followingIds.length > 0) {
@@ -88,7 +232,7 @@ export function StoriesBar({
     [myStories, profile, state.days]
   )
 
-  // Друзья: непросмотренные — вперёд (как в Instagram)
+  // Друзья: реальные сторис из Supabase + демо-подписки. Непросмотренные — вперёд (как в Instagram)
   const friendViewables = useMemo(() => {
     const list = friendStories
       .map((story) => {
@@ -96,13 +240,32 @@ export function StoriesBar({
         return friend ? friendStoryToViewable(friend, story) : null
       })
       .filter((v): v is ViewableStory => v !== null)
-    return list.sort((a, b) => {
+
+    // Объединяем реальные сторис из Supabase и локальные, дедуплицируя по friendId
+    const seenFriends = new Set<string>()
+    const combined: ViewableStory[] = []
+
+    for (const rv of remoteViewables) {
+      if (rv.friendId && !seenFriends.has(rv.friendId)) {
+        seenFriends.add(rv.friendId)
+        combined.push(rv)
+      }
+    }
+
+    for (const lv of list) {
+      if (lv.friendId && !seenFriends.has(lv.friendId)) {
+        seenFriends.add(lv.friendId)
+        combined.push(lv)
+      }
+    }
+
+    return combined.sort((a, b) => {
       const av = a.friendId ? viewedStoryIds.includes(a.friendId) : false
       const bv = b.friendId ? viewedStoryIds.includes(b.friendId) : false
       if (av === bv) return 0
       return av ? 1 : -1
     })
-  }, [friendStories, viewedStoryIds])
+  }, [friendStories, remoteViewables, viewedStoryIds])
 
   const viewables = useMemo(
     () => (myViewable ? [myViewable, ...friendViewables] : friendViewables),

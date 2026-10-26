@@ -7,18 +7,24 @@ import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { isGroupThread, sortThreadIds, totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekStore, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
 import { getSupabase } from '@/lib/supabase/client'
-import { ChatThreadList, ChatWindow, NewChatModal } from '../messenger'
+import { subscribeToDirectMessages } from '@/lib/supabase/api'
+import { ChatThreadList } from '../messenger/chat-thread-list'
+import { ChatWindow } from '../messenger/chat-window'
+import { NewChatModal } from '../messenger/new-chat-modal'
+import { MessengerErrorBoundary } from '../messenger/messenger-error-boundary'
 import { MobileHeader } from '../mobile-header'
 
 type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (message: string) => void
   soundEnabled?: boolean
+  currentUserId?: string | null
+  currentUser?: CurrentUser
 }
 
-const SUGGESTED_IDS = ['fr-voloshin', 'fr-sokolova', 'fr-kovaleva', 'fr-grinev', 'fr-petrov']
+const SUGGESTED_IDS = ['fr-sokolova', 'fr-kovaleva', 'fr-grinev', 'fr-petrov']
 
 /**
  * РАЗДЕЛ «ЧАТЫ / СООБЩЕНИЯ» — ТОЧНАЯ КОПИЯ UX TELEGRAM WEB.
@@ -26,12 +32,19 @@ const SUGGESTED_IDS = ['fr-voloshin', 'fr-sokolova', 'fr-kovaleva', 'fr-grinev',
  * справа — переписка с реакциями, ответами, пересылкой, голосовыми сообщениями,
  * стикерами, вложениями, карточками гордости и закреплёнными сообщениями.
  */
-export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Props) {
+export function MessagesView({
+  onNavigate,
+  onNotify,
+  soundEnabled = true,
+  currentUserId,
+  currentUser,
+}: Props) {
   const {
     state,
     markAllThreadsRead,
     setActiveChatFriend,
     startChatWithFriend,
+    receiveIncomingChatMessage,
     setChatFolder,
     deleteChatFolder,
     setChatActiveFolderId,
@@ -39,11 +52,16 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
 
   const [newChatOpen, setNewChatOpen] = useState(false)
 
-  const threads = state.chatThreads ?? {}
-  const threadIds = useMemo(() => Object.keys(threads), [threads])
-  const activeFriendId = state.chatActiveFriendId
-  const folders = state.chatFolders ?? []
-  const activeFolderId = state.chatActiveFolderId ?? 'all'
+  const threads = state?.chatThreads ?? {}
+  const threadIds = useMemo(() => Object.keys(threads || {}), [threads])
+  const activeFriendId =
+    typeof state?.chatActiveFriendId === 'string' &&
+    state.chatActiveFriendId !== 'undefined' &&
+    state.chatActiveFriendId !== 'null'
+      ? state.chatActiveFriendId
+      : null
+  const folders = state?.chatFolders ?? []
+  const activeFolderId = state?.chatActiveFolderId ?? 'all'
 
   const unreadTotal = useMemo(() => totalUnread(threads), [threads])
   const onlineCount = useMemo(
@@ -53,29 +71,20 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
 
   // Supabase Realtime подписка на входящие сообщения
   useEffect(() => {
-    const client = getSupabase()
-    if (!client) return
-
-    const channel = client
-      .channel('ogonek-realtime-messages')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages' },
-        (payload) => {
-          if (payload.new) {
-            // Уведомление о новом сообщении
-            onNotify('Новое сообщение в чате 💬')
-          }
-        }
-      )
-      .subscribe()
+    const unsubscribe = subscribeToDirectMessages((msg) => {
+      if (msg) {
+        receiveIncomingChatMessage(msg as any)
+        onNotify('Новое сообщение в чате 💬')
+      }
+    })
 
     return () => {
-      client.removeChannel(channel)
+      unsubscribe()
     }
-  }, [onNotify])
+  }, [receiveIncomingChatMessage, onNotify])
 
   const openThread = (friendId: string) => {
+    if (!friendId || friendId === 'undefined' || friendId === 'null') return
     playClick(soundEnabled)
     setActiveChatFriend(friendId)
     if (typeof window !== 'undefined') {
@@ -84,6 +93,7 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
   }
 
   const startWith = (friendId: string) => {
+    if (!friendId || friendId === 'undefined' || friendId === 'null') return
     playClick(soundEnabled)
     startChatWithFriend(friendId)
     if (typeof window !== 'undefined') {
@@ -95,62 +105,73 @@ export function MessagesView({ onNavigate, onNotify, soundEnabled = true }: Prop
     Boolean(activeFriendId) &&
     (Boolean(getFriend(activeFriendId!)) || isGroupThread(threads[activeFriendId!], activeFriendId!))
 
-  return (
-    <div className="view-messages">
-      <MobileHeader title="Чаты" />
-
-      <header className="view-header">
-        <button
-          type="button"
-          className="back-button"
-          onClick={() => onNavigate('home')}
-          aria-label="Вернуться на главную"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h1>Чаты</h1>
-          <p className="view-subtitle">
-            Мессенджер Огонька в стиле Telegram Web · группы, папки, голосовые и карточки в один клик
-          </p>
-        </div>
-        <button
-          type="button"
-          className="msgr__new inline-flex items-center gap-1.5 px-4 py-2 min-h-[36px] rounded-full text-[13px] font-bold bg-[var(--text)] text-[var(--bg)] hover:opacity-90 transition-opacity"
-          onClick={() => {
-            playClick(soundEnabled)
-            setNewChatOpen(true)
-          }}
-        >
-          <MessageSquarePlus size={16} /> Написать
-        </button>
-      </header>
-
-      <div className="messages-content flex-1 min-h-0 w-full flex flex-col">
-        <ChatThreadList
-          threads={threads}
-          activeFriendId={activeFriendId}
-          onSelect={openThread}
-          onMarkAllRead={() => {
-            markAllThreadsRead()
-            onNotify('Все переписки прочитаны ✓')
-          }}
-          folders={folders}
-          activeFolderId={activeFolderId}
-          onSelectFolder={setChatActiveFolderId}
-          onSaveCustomFolder={setChatFolder}
-          onDeleteCustomFolder={deleteChatFolder}
-          soundEnabled={soundEnabled}
-        />
+  if (!currentUserId && !currentUser && !state?.auth?.signedIn) {
+    return (
+      <div className="view-messages flex-1 flex flex-col items-center justify-center p-8 bg-[var(--bg)] text-center select-none">
+        <div className="w-10 h-10 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin mb-3 shadow-lg" />
+        <p className="text-sm font-medium text-[var(--text-2)]">Загрузка мессенджера...</p>
       </div>
+    )
+  }
 
-      {newChatOpen && (
-        <NewChatModal
-          onClose={() => setNewChatOpen(false)}
-          onNotify={onNotify}
-          soundEnabled={soundEnabled}
-        />
-      )}
-    </div>
+  return (
+    <MessengerErrorBoundary onNavigateHome={() => onNavigate('home')}>
+      <div className="view-messages">
+        <MobileHeader title="Чаты" />
+
+        <header className="view-header">
+          <button
+            type="button"
+            className="back-button"
+            onClick={() => onNavigate('home')}
+            aria-label="Вернуться на главную"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h1>Чаты</h1>
+            <p className="view-subtitle">
+              Мессенджер Огонька в стиле Telegram Web · группы, папки, голосовые и карточки в один клик
+            </p>
+          </div>
+          <button
+            type="button"
+            className="msgr__new inline-flex items-center gap-1.5 px-4 py-2 min-h-[36px] rounded-full text-[13px] font-bold bg-[var(--text)] text-[var(--bg)] hover:opacity-90 transition-opacity"
+            onClick={() => {
+              playClick(soundEnabled)
+              setNewChatOpen(true)
+            }}
+          >
+            <MessageSquarePlus size={16} /> Написать
+          </button>
+        </header>
+
+        <div className="messages-content flex-1 min-h-0 w-full flex flex-col">
+          <ChatThreadList
+            threads={threads}
+            activeFriendId={activeFriendId}
+            onSelect={openThread}
+            onMarkAllRead={() => {
+              markAllThreadsRead()
+              onNotify('Все переписки прочитаны ✓')
+            }}
+            folders={folders}
+            activeFolderId={activeFolderId}
+            onSelectFolder={setChatActiveFolderId}
+            onSaveCustomFolder={setChatFolder}
+            onDeleteCustomFolder={deleteChatFolder}
+            soundEnabled={soundEnabled}
+          />
+        </div>
+
+        {newChatOpen && (
+          <NewChatModal
+            onClose={() => setNewChatOpen(false)}
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+          />
+        )}
+      </div>
+    </MessengerErrorBoundary>
   )
 }
