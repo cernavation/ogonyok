@@ -182,6 +182,7 @@ export type DayRow = RowWithClientId & {
 }
 
 export type PrideRow = RowWithClientId & {
+  day_id?: string
   day_client_id: string
   position: number
   num: string
@@ -873,6 +874,7 @@ function dayRowFrom(day: Day): DayRow {
 function prideRowsFrom(day: Day): PrideRow[] {
   return day.prides.map((pride, index) => ({
     client_id: `day:${day.id}:pride:${index}`,
+    day_id: String(day.id),
     day_client_id: String(day.id),
     position: index,
     num: sanitizePostgresString(pride.num),
@@ -1073,8 +1075,8 @@ export function buildRemoteDataset(state: OgonekStoreState, userId: string): Rem
 /** onConflict-ключ для каждой таблицы (совпадает с unique-ограничениями схемы) */
 export const ON_CONFLICT: Record<SupabaseTable, string> = {
   profiles: 'id',
-  days: 'user_id,client_id',
-  prides: 'user_id,client_id',
+  days: 'user_id,date_iso',
+  prides: 'day_id,position',
   gratitudes: 'user_id,client_id',
   achievements_verifications: 'user_id,client_id',
   stories: 'user_id,client_id',

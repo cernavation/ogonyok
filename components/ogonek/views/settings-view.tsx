@@ -135,7 +135,7 @@ export function SettingsView({
   onImportState,
   onUpdateProfile,
 }: Props) {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('appearance')
+  const [activeSection, setActiveSection] = useState<SettingsSection | null>('appearance')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleExport = () => {
@@ -565,75 +565,69 @@ export function SettingsView({
         </div>
       </header>
 
-      {/* Main Settings Container: аккуратная 2-колоночная вёрстка */}
-      <div className="w-full md:grid md:grid-cols-[280px_1fr] md:divide-x md:divide-[var(--border)]">
-        {/* Left Column (Desktop) / Section List with Chevrons (Mobile) */}
-        <div className="divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
-          {SECTIONS.map((sec) => {
-            const Icon = sec.icon
-            const isSelected = activeSection === sec.id
+      {/* Main Settings Container: вертикальная вёрстка в колонку (X.com standard внутри 600px) */}
+      <div className="w-full divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
+        {SECTIONS.map((sec) => {
+          const Icon = sec.icon
+          const isSelected = activeSection === sec.id
 
-            return (
-              <div key={sec.id} className="flex flex-col">
-                <button
-                  type="button"
-                  role="tab"
-                  onClick={() => {
-                    playClick(state.soundEnabled)
-                    setActiveSection(sec.id)
-                  }}
-                  className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors ${
-                    isSelected
-                      ? 'bg-[var(--bg-elev)] border-l-4 border-l-[var(--accent)] text-[var(--text)]'
-                      : 'hover:bg-[var(--bg-hover)] text-[var(--text-2)]'
-                  }`}
-                  aria-label={sec.label}
-                  aria-selected={isSelected}
-                  aria-current={isSelected ? 'true' : undefined}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center flex-none transition-colors ${
-                        isSelected
-                          ? 'bg-[var(--accent)] text-[var(--accent-text)]'
-                          : 'bg-[var(--bg-elev)] text-[var(--text-2)]'
-                      }`}
-                    >
-                      <Icon size={17} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[15px] font-bold text-[var(--text)] leading-tight">
-                        {sec.label}
-                      </p>
-                      <p className="text-[13px] text-[var(--text-2)] truncate mt-0.5">
-                        {sec.hint}
-                      </p>
-                    </div>
+          return (
+            <div key={sec.id} className="flex flex-col">
+              <button
+                type="button"
+                role="tab"
+                onClick={() => {
+                  playClick(state.soundEnabled)
+                  setActiveSection(isSelected ? null : sec.id)
+                }}
+                className={`w-full px-4 py-3.5 flex items-center justify-between text-left transition-colors ${
+                  isSelected
+                    ? 'bg-[var(--bg-elev)] border-l-4 border-l-[var(--accent)] text-[var(--text)]'
+                    : 'hover:bg-[var(--bg-hover)] text-[var(--text-2)]'
+                }`}
+                aria-label={sec.label}
+                aria-selected={isSelected}
+                aria-expanded={isSelected}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-9 h-9 rounded-full flex items-center justify-center flex-none transition-colors ${
+                      isSelected
+                        ? 'bg-[var(--accent)] text-[var(--accent-text)]'
+                        : 'bg-[var(--bg-elev)] text-[var(--text-2)]'
+                    }`}
+                  >
+                    <Icon size={17} />
                   </div>
-
-                  <div className="flex items-center gap-1 flex-none text-[var(--text-3)] ml-2">
-                    <span className="hidden md:block">
-                      <ChevronRight size={17} />
-                    </span>
-                    <span className="md:hidden">
-                      {isSelected ? <ChevronDown size={17} /> : <ChevronRight size={17} />}
-                    </span>
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-bold text-[var(--text)] leading-tight">
+                      {sec.label}
+                    </p>
+                    <p className="text-[13px] text-[var(--text-2)] truncate mt-0.5">
+                      {sec.hint}
+                    </p>
                   </div>
-                </button>
+                </div>
 
-                {/* Mobile accordion expansion */}
-                <div className={`md:hidden ${isSelected ? 'block border-b border-[var(--border)] bg-[var(--bg)]' : 'hidden'}`}>
+                <div className="flex items-center gap-1 flex-none text-[var(--text-3)] ml-2">
+                  <ChevronDown
+                    size={17}
+                    className={`transition-transform duration-200 ${
+                      isSelected ? 'rotate-180 text-[var(--accent)]' : ''
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Vertical section expansion in full 600px width */}
+              {isSelected && (
+                <div className="border-t border-[var(--border)] bg-[var(--bg)] animate-in fade-in duration-200">
                   {renderSectionContent(sec.id)}
                 </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Right Column (Desktop only pane) */}
-        <div className="hidden md:block min-h-[500px]">
-          {renderSectionContent(activeSection)}
-        </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

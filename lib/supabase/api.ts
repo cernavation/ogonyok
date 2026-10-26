@@ -597,7 +597,6 @@ export async function getUserPosts(userId: string): Promise<PostRecord[]> {
       .select('*, author:profiles!posts_user_id_fkey(*)')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(50)
     if (error || !data) return []
     return data as PostRecord[]
   } catch {

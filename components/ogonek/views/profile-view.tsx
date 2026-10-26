@@ -177,7 +177,6 @@ export function ProfileView({
               .select('*')
               .eq('user_id', prof.id)
               .order('day_number', { ascending: false })
-              .limit(50)
 
             if (cancelled) return
             if (daysData && daysData.length > 0) {
@@ -240,7 +239,7 @@ export function ProfileView({
               // Если в базе нет записей, но у пользователя есть стрик (доказательство работы / Proof of Work)
               const streakTotal = prof.streak_count ?? prof.streak ?? 0
               if (streakTotal > 0) {
-                const count = Math.min(streakTotal, 50)
+                const count = streakTotal
                 const synthesized: Day[] = []
                 const now = new Date()
                 for (let i = 0; i < count; i++) {
@@ -385,8 +384,8 @@ export function ProfileView({
 
   const days = effectiveDays
 
-  // Truncation & Chunking (Rule D)
-  const [visibleCount, setVisibleCount] = useState(20)
+  // Truncation & Chunking: показ по 30 дней без искусственного потолка в 50 записей
+  const [visibleCount, setVisibleCount] = useState(30)
   const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'public'>('all')
 
@@ -902,7 +901,7 @@ export function ProfileView({
                       : 'text-[var(--text-2)] hover:text-[var(--text)]'
                   }`}
                 >
-                  Все дни ({recentDays.length})
+                  Все дни ({days.length})
                 </button>
                 <button
                   type="button"
@@ -1114,14 +1113,14 @@ export function ProfileView({
               )
             })}
 
-            {/* Chunking: Показать ещё 20 записей */}
-            {recentDays.length > visibleCount && (
+            {/* Chunking: Показать ещё 30 записей */}
+            {filteredDays.length > visibleCount && (
               <div className="pt-2 text-center">
                 <Button
                   variant="outline"
-                  onClick={() => setVisibleCount((prev) => prev + 20)}
+                  onClick={() => setVisibleCount((prev) => prev + 30)}
                 >
-                  Показать ещё 20 записей (осталось {recentDays.length - visibleCount})
+                  Показать ещё 30 записей (осталось {filteredDays.length - visibleCount})
                 </Button>
               </div>
             )}
@@ -1154,9 +1153,9 @@ export function ProfileView({
               <div className="pt-2 text-center">
                 <Button
                   variant="outline"
-                  onClick={() => setVisibleCount((prev) => prev + 20)}
+                  onClick={() => setVisibleCount((prev) => prev + 30)}
                 >
-                  Показать ещё 20 благодарностей
+                  Показать ещё 30 благодарностей
                 </Button>
               </div>
             )}

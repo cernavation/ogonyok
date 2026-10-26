@@ -303,42 +303,45 @@ function DayCardComponent({
               <p className="text-[17px] leading-[24px] text-[var(--text)] font-normal flex-1">
                 {firstPride?.text || day.title}
               </p>
-              {firstPride && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    const actualFirstIdx = (day.prides || []).indexOf(firstPride)
-                    const curVis = normalizeVisibility(firstPride.visibility ?? dayVisibility)
-                    const nextVis = curVis === 'public' ? 'private' : 'public'
-                    setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
-                    onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
-                  }}
-                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
-                    normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public'
-                      ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
-                      : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
-                  }`}
-                  title={
-                    normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public'
-                      ? '🌐 Публично (видят все) — нажми для переключения'
-                      : '🔒 Лично (видит только автор) — нажми для переключения'
-                  }
-                  aria-label="Видимость гордости"
-                >
-                  {normalizeVisibility(firstPride.visibility ?? dayVisibility) === 'public' ? (
-                    <>
-                      <Globe size={11} className="text-sky-400" />
-                      <span>Публично</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock size={11} className="text-zinc-400" />
-                      <span>Лично</span>
-                    </>
-                  )}
-                </button>
-              )}
+              {firstPride && (() => {
+                const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
+                const isPub = effectiveVisibility === 'public'
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      const actualFirstIdx = (day.prides || []).indexOf(firstPride)
+                      const nextVis = isPub ? 'private' : 'public'
+                      setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
+                      onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
+                    }}
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
+                      isPub
+                        ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
+                        : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
+                    }`}
+                    title={
+                      isPub
+                        ? '🌐 Публично (видят все) — нажми для переключения'
+                        : '🔒 Лично (видит только автор) — нажми для переключения'
+                    }
+                    aria-label="Видимость гордости"
+                  >
+                    {isPub ? (
+                      <>
+                        <Globe size={11} className="text-sky-400" />
+                        <span>Публично</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={11} className="text-zinc-400" />
+                        <span>Лично</span>
+                      </>
+                    )}
+                  </button>
+                )
+              })()}
             </div>
 
             {/* Toggle «ещё N гордостей · M благодарностей» */}
@@ -368,7 +371,8 @@ function DayCardComponent({
                         </span>
                         {otherPrides.map((p, pIdx) => {
                           const actualIndex = (day.prides || []).indexOf(p)
-                          const pVis = normalizeVisibility(p.visibility ?? dayVisibility)
+                          const effectiveVisibility = day.visibility === 'private' ? 'private' : (p.visibility || day.visibility || 'public')
+                          const isPub = effectiveVisibility === 'public'
                           return (
                             <div key={p.num || pIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-1">
                               <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
@@ -384,23 +388,23 @@ function DayCardComponent({
                                 type="button"
                                 onClick={() => {
                                   playClick(soundEnabled)
-                                  const nextVis = pVis === 'public' ? 'private' : 'public'
+                                  const nextVis = isPub ? 'private' : 'public'
                                   setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
                                   onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
                                 }}
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
-                                  pVis === 'public'
+                                  isPub
                                     ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
                                     : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
                                 }`}
                                 title={
-                                  pVis === 'public'
+                                  isPub
                                     ? '🌐 Публично (видят все) — нажми для переключения'
                                     : '🔒 Лично (видит только автор) — нажми для переключения'
                                 }
                                 aria-label="Видимость гордости"
                               >
-                                {pVis === 'public' ? (
+                                {isPub ? (
                                   <>
                                     <Globe size={10} className="text-sky-400" />
                                     <span>Публично</span>

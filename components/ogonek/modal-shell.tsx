@@ -65,10 +65,15 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
 
   return (
     <motion.div
-      className="modal-backdrop overflow-x-hidden w-full max-w-full"
+      className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
+        }
+      }}
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
@@ -85,6 +90,8 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
         initial={{ y: 25, scale: 0.98 }}
         animate={{ y: 0, scale: 1 }}
         exit={{ y: 25, scale: 0.98 }}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
       >
         {!hideHeader && (
           <header>

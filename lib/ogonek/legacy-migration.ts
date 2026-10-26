@@ -99,6 +99,7 @@ export function mapPridesToSupabaseRows(d: any, userId: string) {
 
     return {
       user_id: userId,
+      day_id: dayClientId,
       day_client_id: dayClientId,
       client_id: prideClientId,
       position: pIdx,
@@ -188,18 +189,18 @@ export async function executeDaysMigration(params: {
     while (!success && attempt < 3) {
       attempt++
       try {
-        // 1. Upsert в public.days
+        // 1. Upsert в public.days с разрешением конфликта по user_id,date_iso
         const { error: daysErr } = await supabase
           .from('days')
-          .upsert(daysRows, { onConflict: 'user_id,client_id' })
+          .upsert(daysRows, { onConflict: 'user_id,date_iso' })
 
         if (daysErr) throw new Error(daysErr.message)
 
-        // 2. Upsert в public.prides (если есть)
+        // 2. Upsert в public.prides с разрешением конфликта по day_id,position
         if (pridesRows.length > 0) {
           const { error: pridesErr } = await supabase
             .from('prides')
-            .upsert(pridesRows, { onConflict: 'user_id,client_id' })
+            .upsert(pridesRows, { onConflict: 'day_id,position' })
 
           if (pridesErr) throw new Error(pridesErr.message)
         }

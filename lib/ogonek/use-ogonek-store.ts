@@ -666,8 +666,15 @@ export function useOgonekStore() {
 
         return {
           ...prev,
-          // Строго по убыванию даты: свежие дни (в т.ч. 12 октября) всегда сверху
-          days: [newDay, ...prev.days].sort(
+          // Строго по убыванию даты и без дублирования по id или дате
+          days: [
+            newDay,
+            ...prev.days.filter(
+              (d) =>
+                d.id !== newDay.id &&
+                (!newDay.dateISO || !d.dateISO || d.dateISO.slice(0, 10) !== newDay.dateISO.slice(0, 10))
+            ),
+          ].sort(
             (a, b) =>
               new Date(b.dateISO!).getTime() - new Date(a.dateISO!).getTime()
           ),
@@ -2898,26 +2905,36 @@ export function useOgonekStore() {
      ЭТАП 9 — ПРИВАТНОСТЬ ДНЯ И ГОРДОСТЕЙ
      ══════════════════════════════════════════════════════════════════════ */
 
-  /** Меняет приватность всего дня */
+  /** Меняет приватность всего дня и синхронно обновляет приватность всех пунктов гордостей */
   const setDayVisibility = useCallback(
     async (dayId: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
       updateStore((prev) => ({
         ...prev,
-        days: prev.days.map((d) => (d.id === dayId ? { ...d, visibility: next } : d)),
+        days: prev.days.map((d) =>
+          d.id === dayId
+            ? { ...d, visibility: next, prides: d.prides.map((p) => ({ ...p, visibility: next })) }
+            : d
+        ),
       }))
 
       try {
         const supabase = getSupabase()
         const uid = getSnapshot().auth?.activeAccountId
         if (supabase && uid) {
-          await supabase
-            .from('days')
-            .update({ visibility: next })
-            .match({ user_id: uid, client_id: String(dayId) })
+          await Promise.allSettled([
+            supabase
+              .from('days')
+              .update({ visibility: next })
+              .match({ user_id: uid, client_id: String(dayId) }),
+            supabase
+              .from('prides')
+              .update({ visibility: next })
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+          ])
         }
       } catch (err) {
-        console.error('[Ogonek] Error updating day visibility in Supabase:', err)
+        console.error('[Ogonek] Error updating day and prides visibility in Supabase:', err)
       }
     },
     [updateStore]

@@ -887,38 +887,21 @@ export function AppShell() {
               streak={streakState.streak}
             />
 
-            {/* Центральная колонка: адаптивная ширина (max-w-[600px] для ленты, max-w-[920px] для premium/settings/intentions) */}
-            {view === 'premium' || view === 'settings' || view === 'intentions' ? (
-              <section
-                className="w-full max-w-[920px] min-h-screen border-r border-[#2f3336] shrink-0"
-                aria-label="Основное содержимое"
+            {/* Центральная колонка: монолитная сетка X.com 600px */}
+            <section
+              className="w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"
+              aria-label="Основное содержимое"
+            >
+              <motion.div
+                key={view}
+                className="view w-full"
+                initial={{ opacity: 0.95 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.04 }}
               >
-                <motion.div
-                  key={view}
-                  className="view w-full"
-                  initial={{ opacity: 0.95 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.04 }}
-                >
-                  {content[view]}
-                </motion.div>
-              </section>
-            ) : (
-              <section
-                className="w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"
-                aria-label="Основное содержимое"
-              >
-                <motion.div
-                  key={view}
-                  className="view w-full"
-                  initial={{ opacity: 0.95 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.04 }}
-                >
-                  {content[view]}
-                </motion.div>
-              </section>
-            )}
+                {content[view]}
+              </motion.div>
+            </section>
 
             <RightRail
               onNavigate={navigate}
