@@ -1,14 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
 
 export function isSupabaseConfigured(): boolean {
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || SUPABASE_ANON_KEY
   return (
     Boolean(SUPABASE_URL) &&
-    Boolean(SUPABASE_ANON_KEY) &&
+    Boolean(supabaseKey) &&
     !SUPABASE_URL.includes('your-project-ref') &&
-    !SUPABASE_ANON_KEY.includes('your-anon-key')
+    !supabaseKey.includes('your-anon-key')
   )
 }
 
@@ -31,8 +32,9 @@ export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured()) {
     return null
   }
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || SUPABASE_ANON_KEY
   if (!browserClient) {
-    browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    browserClient = createClient(SUPABASE_URL, supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,

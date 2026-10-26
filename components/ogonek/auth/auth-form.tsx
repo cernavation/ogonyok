@@ -744,7 +744,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
 
       {/* Диагностическая строка Supabase конфигурации */}
       <div className="mt-4 pt-3 border-t border-[var(--border)]/40 text-center font-mono text-[11px] text-[#71767b] break-all select-all">
-        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT_SET'} | Ref: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'OK' : 'MISSING'}
+        URL: {process.env.NEXT_PUBLIC_SUPABASE_URL || 'NOT_SET'} | Ref: {(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ? 'OK' : 'MISSING'}
       </div>
     </div>
   )
