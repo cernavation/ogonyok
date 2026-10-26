@@ -23,3 +23,8 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 .vercel
+
+# Lockfiles to ignore
+pnpm-lock.yaml
+pnpm-workspace.yaml
+
