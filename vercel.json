@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/cron/deliver-scheduled",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "headers": [
