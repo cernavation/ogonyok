@@ -72,12 +72,21 @@ export function HomeView({
   userId,
   currentUsername,
 }: Props) {
-  const { state, currentUser } = useOgonekStore()
+  const { state, currentUser, loadDaysFromCloud } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUsername || currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
   const avatarImage = currentUser?.avatarImage || state.profile.avatarImage
   const isOwner = (username || '').toLowerCase() === 'cernavation'
+
+  // Автозагрузка дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
+  useEffect(() => {
+    if (isOwner && (!days || days.length === 0)) {
+      const targetUid = userId || currentUser?.id || state.auth.activeAccountId
+      loadDaysFromCloud?.(targetUid)
+    }
+  }, [isOwner, days?.length, userId, currentUser?.id, state.auth.activeAccountId, loadDaysFromCloud])
+
   const [filter, setFilter] = useState<string>('Мои гордости')
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)

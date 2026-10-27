@@ -532,6 +532,46 @@ function ensureDemoComments(state: OgonekStoreState): OgonekStoreState {
   return nextState
 }
 
+/**
+ * Преобразование карточки дня из базы Supabase в модель Day стора
+ */
+export function mapCloudDayToDay(row: any): Day {
+  const dayId = Number(row.client_id || row.day_number || row.id)
+  const prides: PrideEntry[] = Array.isArray(row.prides)
+    ? [...row.prides]
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((p: any) => ({
+          num: String(p.num || '01'),
+          text: p.text || '',
+          scale: Number(p.scale ?? 0),
+          overcome: (Number(p.overcome) || 0) as OvercomeLevel,
+          visibility: (p.visibility || row.visibility || 'public') as VisibilityLevel,
+        }))
+    : []
+
+  const gratitudes: (string | GratitudeEntry)[] = Array.isArray(row.gratitudes)
+    ? [...row.gratitudes]
+        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .map((g: any) => ({
+          num: g.num ? String(g.num) : undefined,
+          text: g.text || '',
+          rating: Number(g.rating ?? 10),
+        }))
+    : []
+
+  return {
+    id: isNaN(dayId) ? 1 : dayId,
+    title: row.title || `День #${dayId}`,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    photos: Array.isArray(row.photos) ? row.photos : [],
+    dateISO: row.date_iso || new Date().toISOString(),
+    status: row.status === 'missed' ? 'missed' : 'normal',
+    visibility: (row.visibility || 'public') as VisibilityLevel,
+    prides,
+    gratitudes,
+  }
+}
+
 const listeners = new Set<() => void>()
 
 function subscribe(callback: () => void): () => void {
@@ -4574,7 +4614,70 @@ export function useOgonekStore() {
         } catch {}
       }
 
+      // Автозагрузка всех дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
+      if (cleanNick === 'cernavation') {
+        const uid = params.userId || account.id
+        const supabase = getSupabase()
+        if (supabase && uid) {
+          const currentDays = getSnapshot().days
+          if (!currentDays || currentDays.length === 0) {
+            try {
+              const { data: cloudDays, error: daysErr } = await supabase
+                .from('days')
+                .select('*, prides(*), gratitudes(*)')
+                .eq('user_id', uid)
+                .order('date_iso', { ascending: false })
+
+              if (!daysErr && Array.isArray(cloudDays) && cloudDays.length > 0) {
+                const mappedDays = cloudDays.map(mapCloudDayToDay)
+                updateStore((prev) => {
+                  if (!prev.days || prev.days.length === 0) {
+                    return { ...prev, days: mappedDays }
+                  }
+                  return prev
+                })
+              }
+            } catch (err) {
+              console.warn('[Ogonek] Auto-load cloud days error:', err)
+            }
+          }
+        }
+      }
+
       return { ok: true, accountId }
+    },
+    [updateStore]
+  )
+
+  /** Ручная или фоновая загрузка всех дней пользователя из Supabase в стор */
+  const loadDaysFromCloud = useCallback(
+    async (overrideUserId?: string) => {
+      const snap = getSnapshot()
+      const uid = overrideUserId || snap.auth.activeAccountId || snap.profile?.id
+      const username = (snap.profile?.username || '').toLowerCase()
+      if (username !== 'cernavation' && !overrideUserId) return { ok: false, count: 0 }
+      const supabase = getSupabase()
+      if (!supabase || !uid) return { ok: false, count: 0 }
+
+      try {
+        const { data: cloudDays, error } = await supabase
+          .from('days')
+          .select('*, prides(*), gratitudes(*)')
+          .eq('user_id', uid)
+          .order('date_iso', { ascending: false })
+
+        if (!error && Array.isArray(cloudDays) && cloudDays.length > 0) {
+          const mapped = cloudDays.map(mapCloudDayToDay)
+          updateStore((prev) => ({
+            ...prev,
+            days: mapped,
+          }))
+          return { ok: true, count: mapped.length }
+        }
+        return { ok: false, count: 0, error: error?.message }
+      } catch (err: any) {
+        return { ok: false, count: 0, error: err?.message }
+      }
     },
     [updateStore]
   )
@@ -4848,6 +4951,7 @@ export function useOgonekStore() {
     switchAccount,
     signOut,
     removeAccount,
+    loadDaysFromCloud,
     provisionDemoAccountSecrets,
   }
 }
