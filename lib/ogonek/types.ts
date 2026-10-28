@@ -80,6 +80,7 @@ export type Day = {
   prides: PrideEntry[]
   gratitudes: (string | GratitudeEntry)[]
   photos?: string[]
+  media_url?: string | null
   dateISO?: string
   status?: DayStatus
   /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */

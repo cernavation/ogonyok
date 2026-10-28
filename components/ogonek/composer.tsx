@@ -4,7 +4,7 @@ import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
-import { savePhoto } from '@/lib/ogonek/photos'
+import { savePhoto, resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
@@ -80,6 +80,24 @@ const COMPOSER_PROMPT_SPHERES: PromptSphere[] = [
   },
 ]
 
+function getDayPhotoCandidate(day: Day | null | undefined): string | null {
+  if (!day) return null
+  if (day.media_url) return day.media_url
+  if ((day as any).mediaUrl) return (day as any).mediaUrl
+  if ((day as any).item?.media_url) return (day as any).item.media_url
+  if (Array.isArray(day.photos) && day.photos.length > 0 && day.photos[0]) {
+    return day.photos[0]
+  }
+  if (Array.isArray(day.prides)) {
+    for (const p of day.prides) {
+      if ((p as any).media_url) return (p as any).media_url
+      if ((p as any).mediaUrl) return (p as any).mediaUrl
+      if (Array.isArray((p as any).photos) && (p as any).photos.length > 0) return (p as any).photos[0]
+    }
+  }
+  return null
+}
+
 type Props = {
   initialDraft?: ComposerDraft | null
   editingDay?: Day | null
@@ -149,13 +167,32 @@ export function Composer({
     }
     return initialDraft?.gratitudes || ['', '', '', '', '', '']
   })
+  const candidatePhoto = getDayPhotoCandidate(editingDay)
   const [preview, setPreview] = useState<string | null>(() => {
-    if (editingDay && editingDay.photos && editingDay.photos.length > 0) {
-      return editingDay.photos[0]
+    if (
+      candidatePhoto &&
+      (candidatePhoto.startsWith('http') || candidatePhoto.startsWith('data:') || candidatePhoto.startsWith('blob:'))
+    ) {
+      return candidatePhoto
     }
     return initialDraft?.photo || null
   })
   const [photoId, setPhotoId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (candidatePhoto) {
+      let cancelled = false
+      resolvePhotoUrl(candidatePhoto).then((resolved) => {
+        if (!cancelled && resolved) {
+          setPreview(resolved)
+          previewRef.current = resolved
+        }
+      })
+      return () => {
+        cancelled = true
+      }
+    }
+  }, [candidatePhoto])
   const [isEvaluating, setIsEvaluating] = useState(false)
   const [evaluations, setEvaluations] = useState<Record<number, PrideEvaluation>>(() => {
     if (editingDay && Array.isArray(editingDay.prides)) {
@@ -548,18 +585,35 @@ export function Composer({
 
   const isCurrentTabAllPrivate = useMemo(() => {
     const visMap = tab === 'pride' ? prideVis : gratitudeVis
-    return [0, 1, 2, 3, 4].every((slot) => (visMap[slot] ?? dayVisibility) === 'private')
+    return [0, 1, 2, 3, 4].every((slot) => (visMap[slot] || dayVisibility || 'public') === 'private')
   }, [tab, prideVis, gratitudeVis, dayVisibility])
 
-  const handleToggleAllVisibility = () => {
+  const currentSlotVis: VisibilityLevel =
+    (tab === 'pride' ? prideVis[activeSlot] : gratitudeVis[activeSlot]) || dayVisibility || 'public'
+
+  const handleSetCurrentItemVis = (level: VisibilityLevel) => {
     playClick(soundEnabled)
-    const nextLevel: VisibilityLevel = isCurrentTabAllPrivate ? 'public' : 'private'
+    if (tab === 'pride') {
+      setPrideVis((prev) => ({ ...prev, [activeSlot]: level }))
+    } else {
+      setGratitudeVis((prev) => ({ ...prev, [activeSlot]: level }))
+    }
+    onNotify?.(
+      level === 'public'
+        ? `${tab === 'pride' ? 'Гордость' : 'Благодарность'} #${activeSlot + 1} видна всем 🌐`
+        : `${tab === 'pride' ? 'Гордость' : 'Благодарность'} #${activeSlot + 1} скрыта (только себе) 🔒`
+    )
+  }
+
+  const handleApplyToAll = () => {
+    playClick(soundEnabled)
+    const targetLevel: VisibilityLevel = currentSlotVis === 'private' ? 'private' : 'public'
     const updated: Record<number, VisibilityLevel> = {
-      0: nextLevel,
-      1: nextLevel,
-      2: nextLevel,
-      3: nextLevel,
-      4: nextLevel,
+      0: targetLevel,
+      1: targetLevel,
+      2: targetLevel,
+      3: targetLevel,
+      4: targetLevel,
     }
     if (tab === 'pride') {
       setPrideVis((prev) => ({ ...prev, ...updated }))
@@ -567,11 +621,13 @@ export function Composer({
       setGratitudeVis((prev) => ({ ...prev, ...updated }))
     }
     onNotify?.(
-      nextLevel === 'private'
+      targetLevel === 'private'
         ? `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь личные 🔒`
         : `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь публичные 🌐`
     )
   }
+
+  const handleToggleAllVisibility = handleApplyToAll
 
   const storyDayLabel = (() => {
     const iso = editingDay?.dateISO || dateISO
@@ -671,8 +727,9 @@ export function Composer({
             const val = currentValues[slot] || ''
             const isFilled = val.trim().length > 0
             const isActive = activeSlot === slot
-            const isItemPrivate =
-              (tab === 'pride' ? prideVis[slot] : gratitudeVis[slot]) ?? dayVisibility === 'private'
+            const slotVis: VisibilityLevel =
+              (tab === 'pride' ? prideVis[slot] : gratitudeVis[slot]) || dayVisibility || 'public'
+            const isItemPrivate = slotVis === 'private'
             return (
               <button
                 key={slot}
@@ -702,77 +759,44 @@ export function Composer({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[13px] text-[var(--text-2)] font-medium">
-            {tab === 'pride' ? `Гордость #${activeSlot + 1}` : `Благодарность #${activeSlot + 1}`}
-          </span>
-          {/* Тумблер видимости конкретного пункта (Гордость / Благодарность) */}
-          <button
-            type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              if (tab === 'pride') {
-                const cur = prideVis[activeSlot] ?? dayVisibility
-                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
-                setPrideVis((prev) => ({ ...prev, [activeSlot]: next }))
-                onNotify?.(
-                  next === 'public'
-                    ? `Гордость #${activeSlot + 1} видна всем 🌐`
-                    : `Гордость #${activeSlot + 1} скрыта (только себе) 🔒`
-                )
-              } else {
-                const cur = gratitudeVis[activeSlot] ?? dayVisibility
-                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
-                setGratitudeVis((prev) => ({ ...prev, [activeSlot]: next }))
-                onNotify?.(
-                  next === 'public'
-                    ? `Благодарность #${activeSlot + 1} видна всем 🌐`
-                    : `Благодарность #${activeSlot + 1} скрыта (только себе) 🔒`
-                )
-              }
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
-              (tab === 'pride'
-                ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
-                : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public')
-                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
-                : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700'
-            }`}
-            title={`Нажмите, чтобы изменить видимость этого пункта ${tab === 'pride' ? 'гордости' : 'благодарности'}`}
-            aria-label="Видимость пункта"
-          >
-            {(tab === 'pride'
-              ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
-              : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public') ? (
-              <>
-                <Globe size={13} className="text-blue-400" />
-                <span>🌐 Публично</span>
-              </>
-            ) : (
-              <>
-                <Lock size={13} className="text-zinc-400" />
-                <span>🔒 Лично</span>
-              </>
-            )}
-          </button>
+          {/* Пилюля выбора: [ 🌐 Публично | 🔒 Лично ] (компактный размер h-8 px-3 text-xs rounded-full) */}
+          <div className="inline-flex items-center h-8 p-0.5 rounded-full bg-[#16181c] border border-[#2f3336]">
+            <button
+              type="button"
+              onClick={() => handleSetCurrentItemVis('public')}
+              className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
+                currentSlotVis === 'public'
+                  ? 'bg-blue-500/20 text-[#1d9bf0] font-semibold shadow-sm'
+                  : 'text-[#71767b] hover:text-[#e7e9ea]'
+              }`}
+              title="Сделать этот пункт публичным"
+            >
+              <Globe size={13} />
+              <span>Публично</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSetCurrentItemVis('private')}
+              className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
+                currentSlotVis === 'private'
+                  ? 'bg-zinc-800 text-zinc-200 font-semibold shadow-sm'
+                  : 'text-[#71767b] hover:text-[#e7e9ea]'
+              }`}
+              title="Сделать этот пункт личным"
+            >
+              <Lock size={13} />
+              <span>Лично</span>
+            </button>
+          </div>
 
-          {/* Быстрая смена видимости для всех 5 пунктов в 1 клик */}
+          {/* Рядом компактная кнопка-ссылка: Применить ко всем */}
           <button
             type="button"
-            onClick={handleToggleAllVisibility}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--bg-elev)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg-hover)] transition-all"
-            title={isCurrentTabAllPrivate ? 'Сделать все 5 пунктов публичными' : 'Сделать все 5 пунктов личными'}
+            onClick={handleApplyToAll}
+            className="text-[11px] text-[#71767b] hover:text-[#1d9bf0] transition-colors whitespace-nowrap px-1 py-1"
+            title={`Применить "${currentSlotVis === 'private' ? 'Лично' : 'Публично'}" ко всем 5 пунктам`}
           >
-            {isCurrentTabAllPrivate ? (
-              <>
-                <Globe size={13} className="text-blue-400" />
-                <span>🌐 Сделать все публичными</span>
-              </>
-            ) : (
-              <>
-                <Lock size={13} className="text-zinc-400" />
-                <span>🔒 Сделать все личными</span>
-              </>
-            )}
+            Применить ко всем
           </button>
         </div>
       </div>
@@ -801,8 +825,12 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative max-h-[300px] w-full flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden my-2 border border-[#2f3336]">
-          <img src={preview} alt="Фото" className="max-h-[300px] w-auto object-contain" />
+        <div className="relative w-full max-h-[350px] my-3 rounded-2xl overflow-hidden bg-black/50 border border-[#2f3336] flex items-center justify-center">
+          <img
+            src={preview}
+            className="max-h-[350px] w-auto object-contain rounded-xl"
+            alt="Фото дня"
+          />
           <button
             type="button"
             onClick={() => {
@@ -810,10 +838,10 @@ export function Composer({
               setPhotoId(null)
               previewRef.current = null
             }}
-            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black transition-colors min-h-[32px] min-w-[32px] z-10"
+            className="absolute top-3 right-3 bg-black/70 hover:bg-black p-2 rounded-full text-white transition-colors z-10"
             aria-label="Удалить фото"
           >
-            <X size={15} />
+            ✕
           </button>
         </div>
       )}
@@ -852,39 +880,16 @@ export function Composer({
           {/* Приватность пункта */}
           <button
             type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              if (tab === 'pride') {
-                const cur = prideVis[activeSlot] ?? dayVisibility
-                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
-                setPrideVis((prev) => ({ ...prev, [activeSlot]: next }))
-                onNotify?.(
-                  next === 'public'
-                    ? `Гордость #${activeSlot + 1}: 🌐 Публично (видят все)`
-                    : `Гордость #${activeSlot + 1}: 🔒 Лично (видит только автор)`
-                )
-              } else {
-                const cur = gratitudeVis[activeSlot] ?? dayVisibility
-                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
-                setGratitudeVis((prev) => ({ ...prev, [activeSlot]: next }))
-                onNotify?.(
-                  next === 'public'
-                    ? `Благодарность #${activeSlot + 1}: 🌐 Публично (видят все)`
-                    : `Благодарность #${activeSlot + 1}: 🔒 Лично (видит только автор)`
-                )
-              }
-            }}
+            onClick={() => handleSetCurrentItemVis(currentSlotVis === 'public' ? 'private' : 'public')}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
             title={
-              tab === 'pride'
-                ? `Видимость гордости #${activeSlot + 1}: ${(prideVis[activeSlot] ?? dayVisibility) === 'public' ? '🌐 Публично' : '🔒 Лично'}`
-                : `Видимость благодарности #${activeSlot + 1}: ${(gratitudeVis[activeSlot] ?? dayVisibility) === 'public' ? '🌐 Публично' : '🔒 Лично'}`
+              currentSlotVis === 'public'
+                ? `Видимость пункта: 🌐 Публично (клик для смены на Лично)`
+                : `Видимость пункта: 🔒 Лично (клик для смены на Публично)`
             }
             aria-label="Переключить приватность"
           >
-            {(tab === 'pride'
-              ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
-              : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public') ? (
+            {currentSlotVis === 'public' ? (
               <Globe size={18} className="text-blue-400" />
             ) : (
               <Lock size={18} className="text-zinc-400" />

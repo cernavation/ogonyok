@@ -616,7 +616,7 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       day_number: day.id,
       title: (day.title || `День #${day.id}`).slice(0, 300),
       tags: Array.isArray(day.tags) ? day.tags : [],
-      photos: Array.isArray(day.photos) ? day.photos : [],
+      photos: Array.isArray(day.photos) && day.photos.length > 0 ? day.photos : (day.media_url ? [day.media_url] : []),
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
       visibility: day.visibility || 'public',
@@ -1085,8 +1085,9 @@ export function useOgonekStore() {
           prides: updatedPrides,
           gratitudes: updatedGratitudes,
           photos: payload.photo
-            ? [payload.photo, ...(targetDay.photos || []).filter((p) => p !== payload.photo)]
-            : targetDay.photos,
+            ? [payload.photo]
+            : [],
+          media_url: payload.photo || null,
           visibility: payload.visibility
             ? normalizeVisibility(payload.visibility)
             : targetDay.visibility,

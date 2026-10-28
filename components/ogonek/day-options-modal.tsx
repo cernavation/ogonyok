@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import {
   Sparkles,
   Pencil,
@@ -48,6 +49,31 @@ export function DayOptionsModal({
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  const photoCandidate =
+    (day as any)?.media_url ||
+    (day as any)?.mediaUrl ||
+    (day as any)?.item?.media_url ||
+    (Array.isArray(day?.photos) && day.photos.length > 0 ? day.photos[0] : null) ||
+    (Array.isArray(day?.prides)
+      ? (day.prides.find((p: any) => p?.media_url || p?.photos?.[0]) as any)?.media_url ||
+        (day.prides.find((p: any) => p?.photos?.[0]) as any)?.photos?.[0]
+      : null)
+
+  useEffect(() => {
+    if (photoCandidate) {
+      let cancelled = false
+      resolvePhotoUrl(photoCandidate).then((url) => {
+        if (!cancelled && url) setPhotoUrl(url)
+      })
+      return () => {
+        cancelled = true
+      }
+    } else {
+      setPhotoUrl(null)
+    }
+  }, [photoCandidate])
 
   if (!isOpen) return null
 
@@ -94,6 +120,16 @@ export function DayOptionsModal({
               <X size={18} />
             </button>
           </div>
+
+          {photoUrl && (
+            <div className="relative w-full max-h-[350px] my-1 rounded-2xl overflow-hidden bg-black/50 border border-[#2f3336] flex items-center justify-center">
+              <img
+                src={photoUrl}
+                className="max-h-[350px] w-auto object-contain rounded-xl"
+                alt="Фото дня"
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             {onAiEvaluate && (

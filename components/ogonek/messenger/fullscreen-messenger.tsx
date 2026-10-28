@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Home, Menu, PenSquare, X } from 'lucide-react'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { MessengerIconRail } from './messenger-icon-rail'
+import { Sidebar } from '../sidebar'
+import { CURRENT_DAY } from '@/lib/ogonek/data'
+import type { ViewId } from '@/lib/ogonek/types'
 import { MessengerDialogList } from './messenger-dialog-list'
 import { MessengerChatPane } from './messenger-chat-pane'
 import { NewChatModal } from './new-chat-modal'
@@ -16,6 +18,11 @@ import { Toast } from '../toast'
 type Props = {
   initialThreadId?: string
   currentUserId?: string
+  onNavigate?: (view: ViewId) => void
+  onCompose?: () => void
+  onOpenProfile?: () => void
+  onOpenAuth?: (mode: 'signin' | 'register') => void
+  onFocusIntentions?: () => void
 }
 
 function sanitizeThreadId(id: unknown): string | null {
@@ -25,7 +32,15 @@ function sanitizeThreadId(id: unknown): string | null {
   return trimmed
 }
 
-export function FullscreenMessenger({ initialThreadId, currentUserId }: Props) {
+export function FullscreenMessenger({
+  initialThreadId,
+  currentUserId,
+  onNavigate,
+  onCompose,
+  onOpenProfile,
+  onOpenAuth,
+  onFocusIntentions,
+}: Props) {
   const router = useRouter()
   const { state, currentUser, setActiveChatFriend } = useOgonekStore()
 
@@ -147,17 +162,51 @@ export function FullscreenMessenger({ initialThreadId, currentUserId }: Props) {
         >
           {/* DESKTOP (>= 1024px): 3 columns via CSS responsive display */}
           <div className="hidden lg:flex w-full h-full flex-row">
-            {/* Column 1: Icon Rail (88px) */}
-            <MessengerIconRail
-              activeSection="chats"
-              onNewChat={() => setIsNewChatOpen(true)}
-              onOpenProfile={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
+            {/* Column 1: Unified Collapsible Sidebar (68px) */}
+            <Sidebar
+              view="messages"
+              onNavigate={(v) => {
+                if (onNavigate) {
+                  onNavigate(v)
+                } else {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: v }))
+                  }
+                  router.push(v === 'home' ? '/' : `/?view=${v}`)
                 }
-                router.push('/?view=profile')
               }}
-              soundEnabled={state.soundEnabled}
+              onFocusIntentions={() => {
+                if (onFocusIntentions) {
+                  onFocusIntentions()
+                } else {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'intentions' }))
+                  }
+                  router.push('/?view=intentions')
+                }
+              }}
+              onCompose={() => {
+                if (onCompose) {
+                  onCompose()
+                } else {
+                  window.dispatchEvent(new CustomEvent('ogonek:compose'))
+                }
+              }}
+              onOpenProfile={() => {
+                if (onOpenProfile) {
+                  onOpenProfile()
+                } else {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
+                  }
+                  router.push('/?view=profile')
+                }
+              }}
+              onOpenAuth={onOpenAuth || (() => {})}
+              onNotify={notify}
+              streak={CURRENT_DAY}
+              className="w-[68px] items-center px-2 shrink-0 border-r border-[#2f3336]"
+              isCollapsed={true}
             />
 
             {/* Column 2: Dialog List (360-420px) */}

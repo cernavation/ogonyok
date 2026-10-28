@@ -823,6 +823,11 @@ export function AppShell() {
         <FullscreenMessenger
           initialThreadId={state.chatActiveFriendId || undefined}
           currentUserId={state.auth?.activeAccountId || 'local-user'}
+          onNavigate={navigate}
+          onCompose={() => setComposer(true)}
+          onOpenProfile={() => navigate('profile')}
+          onOpenAuth={openAuth}
+          onFocusIntentions={handleFocusIntentions}
         />
       )
     }
@@ -873,6 +878,11 @@ export function AppShell() {
           <FullscreenMessenger
             initialThreadId={state.chatActiveFriendId || undefined}
             currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
+            onNavigate={navigate}
+            onCompose={() => setComposer(true)}
+            onOpenProfile={() => navigate('profile')}
+            onOpenAuth={openAuth}
+            onFocusIntentions={handleFocusIntentions}
           />
         ) : (
           <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen px-4 lg:px-8">
