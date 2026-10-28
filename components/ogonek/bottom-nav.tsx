@@ -56,11 +56,11 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
               onClick={() => onNavigate(id)}
             >
               {id === 'home' && active ? (
-                <svg viewBox="0 0 24 24" width={22} height={22} className="shrink-0 text-current" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width={22} height={22} className="shrink-0 fill-current" aria-hidden="true">
                   <path
-                    d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
-                    fill="currentColor"
-                    stroke="none"
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.65v5.5a2.5 2.5 0 0 1-2.5 2.5H15v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6H6.5A2.5 2.5 0 0 1 4 19.5V14a8 8 0 0 1 2.34-5.65L12 2.69z"
                   />
                 </svg>
               ) : (

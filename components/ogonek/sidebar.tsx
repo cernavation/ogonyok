@@ -72,12 +72,8 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
     switch (id) {
       case 'home':
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" aria-hidden="true">
-            <path
-              d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
-              fill="currentColor"
-              stroke="none"
-            />
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.65v5.5a2.5 2.5 0 0 1-2.5 2.5H15v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6H6.5A2.5 2.5 0 0 1 4 19.5V14a8 8 0 0 1 2.34-5.65L12 2.69z" />
           </svg>
         )
       case 'explore':
@@ -116,17 +112,8 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
         )
       case 'leaderboard':
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" fill="currentColor" aria-hidden="true">
-            {/* Cup body */}
-            <path d="M6 2h12v8a6 6 0 0 1-12 0V2z" />
-            {/* Left handle */}
-            <path d="M6 4H3a3 3 0 0 0 3 6V4z" />
-            {/* Right handle */}
-            <path d="M18 4h3a3 3 0 0 1-3 6V4z" />
-            {/* Stem */}
-            <rect x="11" y="16" width="2" height="4" />
-            {/* Base */}
-            <rect x="8" y="20" width="8" height="2" rx="1" />
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
+            <path d="M5 3h14v2h2a2 2 0 0 1 2 2v2a5 5 0 0 1-5 5h-.09A6 6 0 0 1 13 17.91V20h4v2H7v-2h4v-2.09A6 6 0 0 1 6.09 14H6a5 5 0 0 1-5-5V7a2 2 0 0 1 2-2h2V3zm-2 4v2a3 3 0 0 0 3 3h.24A6.04 6.04 0 0 1 5.1 7H3zm18 0h-2.1a6.04 6.04 0 0 1-1.14 5H18a3 3 0 0 0 3-3V7z" />
           </svg>
         )
       case 'intentions':
@@ -139,12 +126,8 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
         return <Settings size={24} strokeWidth={2.8} className="stroke-[2.8px] text-current shrink-0" fill="none" />
       default:
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" aria-hidden="true">
-            <path
-              d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
-              fill="currentColor"
-              stroke="none"
-            />
+          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.65v5.5a2.5 2.5 0 0 1-2.5 2.5H15v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6H6.5A2.5 2.5 0 0 1 4 19.5V14a8 8 0 0 1 2.34-5.65L12 2.69z" />
           </svg>
         )
     }
@@ -242,7 +225,7 @@ export function Sidebar({
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center rounded-full mx-auto'
               : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3.5 xl:pl-3 xl:pr-4 py-0 xl:py-2.5 justify-center xl:justify-start rounded-full hover:bg-[var(--bg-hover)] mx-auto xl:mx-0'
-          } ${isActive ? 'active font-bold text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
+          } ${isActive ? 'active text-[var(--text)] fill-[var(--text)] font-bold' : 'text-[var(--muted)] hover:text-[var(--text)] font-medium'}`}
           onClick={handleClick}
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
@@ -250,7 +233,15 @@ export function Sidebar({
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
             <NavIcon id={id} isActive={isActive} size={24} />
           </div>
-          <span className={isCollapsed ? 'hidden' : 'hidden xl:inline text-[16px] leading-tight font-medium'}>
+          <span
+            className={
+              isCollapsed
+                ? 'hidden'
+                : `hidden xl:inline text-[16px] leading-tight ${
+                    isActive ? 'font-bold text-[var(--text)]' : 'font-medium text-[var(--muted)] group-hover:text-[var(--text)]'
+                  }`
+            }
+          >
             {label}
           </span>
           {id === 'messages' && unread > 0 && (

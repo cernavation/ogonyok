@@ -901,8 +901,8 @@ export function AppShell() {
             onFocusIntentions={handleFocusIntentions}
           />
         ) : (
-          <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen overflow-x-hidden">
-            <div className="flex flex-row w-full overflow-x-hidden">
+          <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
+            <div className="flex flex-row w-full max-w-[1265px] justify-center">
               <Sidebar
                 className="hidden md:flex w-[72px] xl:w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
                 view={view}
@@ -917,7 +917,7 @@ export function AppShell() {
 
               {/* Центральная колонка */}
               <section
-                className="w-full md:max-w-[620px] md:shrink-0 min-h-screen border-r border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
+                className="w-full max-w-[600px] md:w-[600px] shrink-0 min-h-screen border-r border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
                 aria-label="Основное содержимое"
               >
                 {view === 'home' && (
@@ -939,19 +939,19 @@ export function AppShell() {
                   {content[view]}
                 </motion.div>
               </section>
-            </div>
 
-            <RightRail
-              className="w-[360px] shrink-0 sticky top-0 h-screen pl-6 hidden xl:block"
-              onNavigate={navigate}
-              onCompose={() => setComposer(true)}
-              streak={streakState.streak}
-              streakStatus={streakState.status}
-              hoursLeft={streakState.hoursLeft}
-              isDemo={state.isDemo}
-              onNotify={notify}
-              soundEnabled={state.soundEnabled}
-            />
+              <RightRail
+                className="w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block"
+                onNavigate={navigate}
+                onCompose={() => setComposer(true)}
+                streak={streakState.streak}
+                streakStatus={streakState.status}
+                hoursLeft={streakState.hoursLeft}
+                isDemo={state.isDemo}
+                onNotify={notify}
+                soundEnabled={state.soundEnabled}
+              />
+            </div>
 
             <ScrollPill onScrollBottom={handleScrollBottom} />
 

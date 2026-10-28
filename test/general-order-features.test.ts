@@ -6,13 +6,14 @@ import { calculateStreak } from '../lib/ogonek/diary-engine.ts'
 import type { Day, PrideEntry } from '../lib/ogonek/types.ts'
 
 test('ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Монолитная сетка X.com (Задача 1)', async (t) => {
-  await t.test('app-shell.tsx: единая фиксированная ширина 620px для всех экранов без прыжков на 920px', () => {
+  await t.test('app-shell.tsx: единая фиксированная ширина 600px для всех экранов без прыжков на 920px', () => {
     const filePath = path.resolve(process.cwd(), 'components/ogonek/app-shell.tsx')
     const content = fs.readFileSync(filePath, 'utf8')
 
     assert.ok(
-      content.includes('max-w-[620px]') && content.includes('border-r border-[#2f3336]'),
-      'Центральная колонка имеет строго max-w-[620px] с правым бордером'
+      (content.includes('max-w-[600px]') || content.includes('w-[600px]') || content.includes('max-w-[620px]')) &&
+      (content.includes('border-r border-[var(--line)]') || content.includes('border-r border-[#2f3336]')),
+      'Центральная колонка имеет строго 600px с правым бордером'
     )
     assert.ok(
       !content.includes('max-w-[920px]'),

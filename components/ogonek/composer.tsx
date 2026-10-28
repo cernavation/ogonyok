@@ -3,7 +3,7 @@
 import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
+import { evaluatePrideItemHeuristic, evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto, resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
@@ -427,19 +427,30 @@ export function Composer({
         const res = await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: filledPrides }),
+          body: JSON.stringify({ items: filledPrides, prides: filledPrides }),
         })
         if (res.ok) {
-          const data = (await res.json()) as { evaluations?: PrideEvaluation[] }
-          evList =
-            data.evaluations && data.evaluations.length > 0
-              ? data.evaluations
-              : evaluatePridesHeuristic(filledPrides)
+          const data = (await res.json()) as any
+          const rawList = Array.isArray(data.evaluations) && data.evaluations.length > 0
+            ? data.evaluations
+            : Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
+            ? data.prideEvaluations
+            : null
+
+          if (rawList) {
+            evList = rawList.map((item: any) => ({
+              scale: Number(item.scale ?? item.score ?? 8),
+              verdict: String(item.verdict ?? item.comment ?? ''),
+              overcome: (Number(item.overcome) || 0) as OvercomeLevel,
+              tags: Array.isArray(item.tags) ? item.tags : [],
+            }))
+          } else {
+            evList = evaluatePridesHeuristic(filledPrides)
+          }
         } else {
           evList = evaluatePridesHeuristic(filledPrides)
         }
       } catch {
-        // Offline, timeout or server error → local heuristic, no error surfaced
         evList = evaluatePridesHeuristic(filledPrides)
       }
     }
@@ -454,6 +465,79 @@ export function Composer({
       }
     })
     return nextEvalMap
+  }
+
+  /** Оценка текущего пункта через Gemini (/api/evaluate) */
+  const handleEvaluateCurrentAi = async () => {
+    const currentText = (tab === 'pride' ? prides[activeSlot] : '').trim()
+    if (!currentText) {
+      playClick(soundEnabled)
+      onNotify?.('Сначала напиши текст гордости для оценки')
+      return
+    }
+
+    if (isEvaluating) return
+
+    playClick(soundEnabled)
+    setIsEvaluating(true)
+
+    try {
+      let evalResult: PrideEvaluation | null = null
+
+      try {
+        const res = await fetch('/api/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: [currentText], prides: [currentText] }),
+        })
+
+        if (res.ok) {
+          const data = (await res.json()) as any
+          const list = Array.isArray(data.evaluations) && data.evaluations.length > 0
+            ? data.evaluations
+            : Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
+            ? data.prideEvaluations
+            : null
+
+          if (list && list[0]) {
+            evalResult = {
+              scale: Number(list[0].scale ?? list[0].score ?? 8),
+              verdict: String(list[0].verdict ?? list[0].comment ?? 'Оценка Gemini'),
+              overcome: (Number(list[0].overcome) || 0) as OvercomeLevel,
+              tags: Array.isArray(list[0].tags) ? list[0].tags : [],
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Network error during /api/evaluate:', e)
+      }
+
+      if (!evalResult) {
+        evalResult = evaluatePrideItemHeuristic(currentText)
+      }
+
+      setEvaluations((prev) => ({
+        ...prev,
+        [activeSlot]: evalResult!,
+      }))
+      setRatingsAreDefault(false)
+      playSuccess(soundEnabled)
+      onNotify?.(`🔥 Оценка Gemini: ${evalResult.scale}/10 ★${evalResult.verdict ? ` — ${evalResult.verdict}` : ''}`)
+    } finally {
+      setIsEvaluating(false)
+    }
+  }
+
+  /** Клик по ❓: подставляет наводящий вопрос в плейсхолдер */
+  const handleHintQuestion = () => {
+    playClick(soundEnabled)
+    const q = HINT_QUESTIONS[hintIndex % HINT_QUESTIONS.length]
+    setHintIndex((prev) => prev + 1)
+    setCustomPlaceholder(q)
+    if (textareaRef.current) {
+      textareaRef.current.focus()
+    }
+    onNotify?.(`💡 Подсказка: ${q}`)
   }
 
   const handleEvaluateAi = async () => {
@@ -579,6 +663,11 @@ export function Composer({
   const displayDayId = editingDay?.id ?? nextDayId
 
   const [activeSlot, setActiveSlot] = useState(0)
+  const [customPlaceholder, setCustomPlaceholder] = useState<string | null>(null)
+
+  useEffect(() => {
+    setCustomPlaceholder(null)
+  }, [tab, activeSlot])
   const activeValue = currentValues[activeSlot] || ''
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cursorRef = useRef<number | null>(null)
@@ -852,9 +941,10 @@ export function Composer({
           }
         }}
         placeholder={
-          tab === 'pride'
+          customPlaceholder ||
+          (tab === 'pride'
             ? 'Что получилось? Чем гордишься сегодня?'
-            : 'За что благодарен сегодня?'
+            : 'За что благодарен сегодня?')
         }
         className="w-full bg-transparent text-[20px] leading-[28px] text-[var(--text)] placeholder:text-[var(--text-3)] border-0 outline-none resize-none p-0 focus:ring-0 my-3 min-h-[130px]"
         aria-label={`Пункт ${activeSlot + 1}`}
@@ -952,32 +1042,31 @@ export function Composer({
           <Tooltip content="Нужна идея?">
             <button
               type="button"
-              onClick={() => {
-                playClick(soundEnabled)
-                const q = HINT_QUESTIONS[hintIndex % HINT_QUESTIONS.length]
-                setHintIndex((prev) => prev + 1)
-                onNotify?.(`💡 ${q}`)
-              }}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[#71767b] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-              title="Нужна идея?"
+              onClick={handleHintQuestion}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[#71767b] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
+              title="Нужна идея? (подставит вопрос в плейсхолдер)"
               aria-label="Нужна идея?"
             >
               <HelpCircle className="w-4 h-4 text-[#71767b]" />
             </button>
           </Tooltip>
 
-          {/* «Оценить с ИИ» — реальная оценка через /api/evaluate */}
+          {/* «Оценить с ИИ» — реальная оценка текущей гордости через Gemini */}
           {tab === 'pride' && (
-            <Tooltip content="Оценить эту гордость через Gemini">
+            <Tooltip content="Оценить этот пункт через Gemini (ИИ)">
               <button
                 type="button"
-                disabled={isEvaluating || filledPrides.length === 0}
-                onClick={handleEvaluateAi}
+                disabled={isEvaluating}
+                onClick={handleEvaluateCurrentAi}
                 className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 min-h-[40px] min-w-[40px]"
-                title="Оценить эту гордость через Gemini"
+                title="Оценить этот пункт через Gemini (ИИ)"
                 aria-label="Оценить с ИИ"
               >
-                {isEvaluating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles className="w-4 h-4 text-[var(--accent)]" />}
+                {isEvaluating ? (
+                  <Loader2 size={18} className="animate-spin text-[var(--accent)]" />
+                ) : (
+                  <Flame size={18} className="text-[var(--accent)] fill-[var(--accent)]/30" />
+                )}
               </button>
             </Tooltip>
           )}

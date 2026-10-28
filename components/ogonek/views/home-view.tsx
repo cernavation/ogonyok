@@ -161,7 +161,7 @@ export function HomeView({
   }
 
   return (
-    <div className="view-home w-full max-w-[620px] min-h-screen border-r border-[var(--line)] shrink-0">
+    <div className="view-home w-full min-h-screen shrink-0">
       {/* Sticky glassy feed header */}
       <header className="feed-header">
         {/* Title row */}

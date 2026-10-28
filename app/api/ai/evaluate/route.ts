@@ -22,7 +22,60 @@ function checkDailyRateLimit(identifier: string): { allowed: boolean; remaining:
   return { allowed: true, remaining: 15 - current.count }
 }
 
+function buildHeuristicResult(
+  rawPrides: string[] = [],
+  rawGratitudes: string[] = [],
+  items: string[] = [],
+  remaining: number = 15
+) {
+  const prideEvals = evaluatePridesHeuristic(rawPrides.length > 0 ? rawPrides : items)
+  const mappedPrides = prideEvals.map((e, i) => ({
+    num: i + 1,
+    score: e.scale,
+    scale: e.scale,
+    comment: e.verdict,
+    verdict: e.verdict,
+    overcome: e.overcome,
+    tags: e.tags,
+  }))
+
+  const mappedGratitudes = rawGratitudes.map((g, i) => {
+    const score = g.length > 30 ? 10 : 9
+    return {
+      num: i + 1,
+      score,
+      scale: score,
+      comment: 'Глубокая осознанность и благодарность, укрепляющая внутреннюю опору.',
+      verdict: 'Глубокая осознанность и благодарность, укрепляющая внутреннюю опору.',
+      overcome: 0,
+      tags: ['#Осознанность', '#Благодарность'],
+    }
+  })
+
+  const allScores = [...mappedPrides.map((p) => p.score), ...mappedGratitudes.map((g) => g.score)]
+  const avg = allScores.length > 0 ? Number((allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1)) : 9.5
+  const mentorWord =
+    'Каждая зафиксированная победа и искренняя благодарность сегодня — это твой кирпич в фундамент непоколебимой дисциплины. Ты удержал планку стрика и сделал шаг вперед!'
+
+  return {
+    success: true,
+    source: 'heuristic',
+    remainingToday: remaining,
+    prideEvaluations: mappedPrides,
+    gratitudeEvaluations: mappedGratitudes,
+    evaluations: mappedPrides,
+    averageScore: avg,
+    mentorWord,
+    daySummary: mentorWord,
+  }
+}
+
 export async function POST(request: Request) {
+  let fallbackPrides: string[] = []
+  let fallbackGratitudes: string[] = []
+  let fallbackItems: string[] = []
+  let fallbackRemaining = 15
+
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
     const body = (await request.json().catch(() => ({}))) as {
@@ -65,6 +118,11 @@ export async function POST(request: Request) {
       ? body.items.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
       : []
 
+    fallbackPrides = rawPrides
+    fallbackGratitudes = rawGratitudes
+    fallbackItems = items
+    fallbackRemaining = remaining
+
     if (items.length === 0) {
       return NextResponse.json(
         {
@@ -78,45 +136,8 @@ export async function POST(request: Request) {
     const apiKey = process.env.GEMINI_API_KEY
     const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 
-    // Хевристический генератор для надёжного фолбэка
-    const generateHeuristicResult = () => {
-      const prideEvals = evaluatePridesHeuristic(rawPrides.length > 0 ? rawPrides : items)
-      const mappedPrides = prideEvals.map((e, i) => ({
-        num: i + 1,
-        score: e.scale,
-        comment: e.verdict,
-        overcome: e.overcome,
-        tags: e.tags,
-      }))
-
-      const mappedGratitudes = rawGratitudes.map((g, i) => {
-        const score = g.length > 30 ? 10 : 9
-        return {
-          num: i + 1,
-          score,
-          comment: 'Глубокая осознанность и благодарность, укрепляющая внутреннюю опору.',
-          overcome: 0,
-          tags: ['#Осознанность', '#Благодарность'],
-        }
-      })
-
-      const allScores = [...mappedPrides.map((p) => p.score), ...mappedGratitudes.map((g) => g.score)]
-      const avg = allScores.length > 0 ? Number((allScores.reduce((a, b) => a + b, 0) / allScores.length).toFixed(1)) : 9.5
-      const mentorWord =
-        'Каждая зафиксированная победа и искренняя благодарность сегодня — это твой кирпич в фундамент непоколебимой дисциплины. Ты удержал планку стрика и сделал шаг вперед!'
-
-      return {
-        success: true,
-        source: 'heuristic',
-        remainingToday: remaining,
-        prideEvaluations: mappedPrides,
-        gratitudeEvaluations: mappedGratitudes,
-        evaluations: mappedPrides,
-        averageScore: avg,
-        mentorWord,
-        daySummary: mentorWord,
-      }
-    }
+    const generateHeuristicResult = () =>
+      buildHeuristicResult(rawPrides, rawGratitudes, items, remaining)
 
     if (!apiKey || !apiKey.startsWith('AIzaSy')) {
       return NextResponse.json(generateHeuristicResult())
@@ -193,11 +214,25 @@ ${rawGratitudes.map((g, i) => `${i + 1}. ${g}`).join('\n')}
 
     const parsed = JSON.parse(cleaned)
 
-    const prideEvals = Array.isArray(parsed.prideEvaluations)
-      ? parsed.prideEvaluations
-      : Array.isArray(parsed.evaluations)
-      ? parsed.evaluations
-      : []
+    const prideEvals = (
+      Array.isArray(parsed.prideEvaluations)
+        ? parsed.prideEvaluations
+        : Array.isArray(parsed.evaluations)
+        ? parsed.evaluations
+        : []
+    ).map((p: any, i: number) => {
+      const score = Number(p.score ?? p.scale ?? 8)
+      const comment = String(p.comment ?? p.verdict ?? '')
+      return {
+        num: p.num ?? i + 1,
+        score,
+        scale: score,
+        comment,
+        verdict: comment,
+        overcome: Number(p.overcome) || 0,
+        tags: Array.isArray(p.tags) ? p.tags : [],
+      }
+    })
 
     const gratitudeEvals = Array.isArray(parsed.gratitudeEvaluations)
       ? parsed.gratitudeEvaluations
@@ -252,15 +287,6 @@ ${rawGratitudes.map((g, i) => `${i + 1}. ${g}`).join('\n')}
     })
   } catch (err) {
     console.warn('AI evaluate fallback to calibrated heuristic:', err)
-    return NextResponse.json({
-      success: true,
-      source: 'heuristic_fallback',
-      averageScore: 9.6,
-      mentorWord: 'Сегодня ты проявил характер и удержал планку дисциплины. Огонёк горит!',
-      daySummary: 'Сегодня ты проявил характер и удержал планку дисциплины. Огонёк горит!',
-      evaluations: [],
-      prideEvaluations: [],
-      gratitudeEvaluations: [],
-    })
+    return NextResponse.json(buildHeuristicResult(fallbackPrides, fallbackGratitudes, fallbackItems, fallbackRemaining))
   }
 }
