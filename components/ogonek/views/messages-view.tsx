@@ -14,7 +14,6 @@ import { ChatThreadList } from '../messenger/chat-thread-list'
 import { ChatWindow } from '../messenger/chat-window'
 import { NewChatModal } from '../messenger/new-chat-modal'
 import { MessengerErrorBoundary } from '../messenger/messenger-error-boundary'
-import { MobileHeader } from '../mobile-header'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -117,8 +116,6 @@ export function MessagesView({
   return (
     <MessengerErrorBoundary onNavigateHome={() => onNavigate('home')}>
       <div className="view-messages">
-        <MobileHeader title="Чаты" />
-
         <header className="view-header">
           <button
             type="button"

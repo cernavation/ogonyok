@@ -598,7 +598,7 @@ export function MessengerChatPane({
               aria-label="Назад в ленту"
             >
               <ArrowLeft size={16} />
-              <span>← Назад в ленту</span>
+              <span>Назад в ленту</span>
             </button>
           </div>
         )}

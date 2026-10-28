@@ -5,16 +5,22 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ViewId } from '@/lib/ogonek/types'
 
 type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (msg: string) => void
+  streak?: number
+  streakStatus?: StreakStatus
+  hoursLeft?: number | null
 }
 
-export function MobileTopBar({ onNavigate, onNotify }: Props) {
+export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
   const { state, currentUser, signOut } = useOgonekStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  useBodyScrollLock(drawerOpen)
 
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUser?.username || state.profile.username || 'user'
@@ -24,7 +30,7 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
   return (
     <>
       {/* Sticky top bar */}
-      <header className="sticky top-0 h-[53px] bg-black/85 backdrop-blur-md border-b border-[#2f3336] flex items-center justify-between px-4 z-40 md:hidden select-none shrink-0">
+      <header className="sticky top-0 h-[53px] bg-[var(--surface)]/90 backdrop-blur-md border-b border-[var(--line)] flex items-center justify-between px-4 z-40 md:hidden select-none shrink-0 mobile-header">
         {/* Left: mini avatar — opens side drawer */}
         <button
           type="button"
@@ -36,7 +42,7 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
             <img
               src={avatarImage}
               alt={displayName}
-              className="w-8 h-8 rounded-full object-cover border border-[#2f3336]"
+              className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
             />
           ) : (
             <div
@@ -60,18 +66,31 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
           <span className="w-7 h-7 rounded-full bg-[var(--accent,#FF6A1A)]/10 flex items-center justify-center">
             <Flame size={16} className="text-[var(--accent,#FF6A1A)] fill-[var(--accent,#FF6A1A)]/20" />
           </span>
-          <span className="font-bold text-[17px] tracking-tight text-white">Огонёк</span>
+          <span className="font-bold text-[17px] tracking-tight text-[var(--text)]">Огонёк</span>
         </button>
 
-        {/* Right: Settings icon */}
-        <button
-          type="button"
-          className="w-9 h-9 rounded-full flex items-center justify-center text-[#71767b] active:text-white transition-colors"
-          aria-label="Настройки"
-          onClick={() => onNavigate('settings')}
-        >
-          <Settings size={20} strokeWidth={1.8} />
-        </button>
+        {/* Right: Streak badge + Settings icon */}
+        <div className="flex items-center gap-1.5">
+          {streak != null && streak > 0 && (
+            <button
+              type="button"
+              onClick={() => onNavigate('leaderboard')}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--surface-subtle,#1d1f23)] border border-[var(--border)] active:scale-95 transition-transform"
+              aria-label={`Текущий стрик: ${streak} дней`}
+            >
+              <Flame size={14} className="text-[#ff6b35] fill-[#ff6b35]" />
+              <span className="text-[12px] font-bold text-[var(--text)]">{streak}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors"
+            aria-label="Настройки"
+            onClick={() => onNavigate('settings')}
+          >
+            <Settings size={20} strokeWidth={1.8} />
+          </button>
+        </div>
       </header>
 
       {/* Side drawer backdrop */}
@@ -87,7 +106,7 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
               aria-hidden="true"
             />
             <motion.aside
-              className="fixed top-0 left-0 bottom-0 w-[280px] bg-[var(--bg,#000)] border-r border-[#2f3336] z-[61] flex flex-col p-5 gap-4 md:hidden"
+              className="fixed top-0 left-0 bottom-0 w-[280px] bg-[var(--surface)] border-r border-[var(--line)] z-[61] flex flex-col p-5 gap-4 md:hidden shadow-2xl"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -97,12 +116,12 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
               aria-label="Меню профиля"
             >
               {/* User info */}
-              <div className="flex items-center gap-3 pt-8 pb-4 border-b border-[#2f3336]">
+              <div className="flex items-center gap-3 pt-8 pb-4 border-b border-[var(--line)]">
                 {avatarImage ? (
                   <img
                     src={avatarImage}
                     alt={displayName}
-                    className="w-12 h-12 rounded-full object-cover border border-[#2f3336]"
+                    className="w-12 h-12 rounded-full object-cover border border-[var(--border)]"
                   />
                 ) : (
                   <div
@@ -115,8 +134,8 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-[14px] font-bold text-white truncate">{displayName}</p>
-                  <p className="text-[12px] text-[#71767b] font-mono truncate">@{username}</p>
+                  <p className="text-[14px] font-bold text-[var(--text)] truncate">{displayName}</p>
+                  <p className="text-[12px] text-[var(--text-3)] font-mono truncate">@{username}</p>
                 </div>
               </div>
 
@@ -134,7 +153,7 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
                   <button
                     key={id}
                     type="button"
-                    className="w-full text-left px-3 py-3 rounded-xl text-[15px] text-white hover:bg-[#181818] active:bg-[#181818] transition-colors"
+                    className="w-full text-left px-3 py-3 rounded-xl text-[15px] text-[var(--text)] hover:bg-[var(--bg-hover)] active:bg-[var(--bg-hover)] transition-colors"
                     onClick={() => {
                       onNavigate(id)
                       setDrawerOpen(false)
@@ -148,7 +167,7 @@ export function MobileTopBar({ onNavigate, onNotify }: Props) {
               {/* Sign out */}
               <button
                 type="button"
-                className="w-full text-left px-3 py-3 rounded-xl text-[15px] text-rose-400 hover:bg-rose-500/10 transition-colors mt-auto"
+                className="w-full text-left px-3 py-3 rounded-xl text-[15px] text-rose-500 hover:bg-rose-500/10 transition-colors mt-auto font-medium"
                 onClick={() => {
                   setDrawerOpen(false)
                   signOut()

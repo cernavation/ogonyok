@@ -224,8 +224,8 @@ export function ShareProfileModal({
                   }}
                   className="flex items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-semibold transition-colors"
                   style={{
-                    borderColor: active ? theme.accent : '#2f3336',
-                    color: active ? theme.accent : '#e7e9ea',
+                    borderColor: active ? theme.accent : 'var(--line)',
+                    color: active ? theme.accent : 'var(--text)',
                     background: active ? `${theme.accent}1f` : 'transparent',
                   }}
                 >
@@ -243,34 +243,34 @@ export function ShareProfileModal({
 
         {/* Stats strip */}
         <div className="grid grid-cols-3 gap-2">
-          <div className="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2">
-            <div className="text-[18px] font-black text-[#e7e9ea]">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-subtle,#16181c)] px-3 py-2">
+            <div className="text-[18px] font-black text-[var(--text)]">
               {stats.streakDays}+
             </div>
-            <div className="text-[11px] text-[#71767b]">дней стрика</div>
+            <div className="text-[11px] text-[var(--muted)]">дней стрика</div>
           </div>
-          <div className="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2">
-            <div className="text-[18px] font-black text-[#e7e9ea]">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-subtle,#16181c)] px-3 py-2">
+            <div className="text-[18px] font-black text-[var(--text)]">
               ★ {stats.avgAiScore.toFixed(1)}
             </div>
-            <div className="text-[11px] text-[#71767b]">балл ИИ</div>
+            <div className="text-[11px] text-[var(--muted)]">балл ИИ</div>
           </div>
-          <div className="rounded-xl border border-[#2f3336] bg-[#16181c] px-3 py-2">
-            <div className="text-[18px] font-black text-[#e7e9ea]">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-subtle,#16181c)] px-3 py-2">
+            <div className="text-[18px] font-black text-[var(--text)]">
               {stats.totalPrides.toLocaleString('ru-RU')}
             </div>
-            <div className="text-[11px] text-[#71767b]">гордостей</div>
+            <div className="text-[11px] text-[var(--muted)]">гордостей</div>
           </div>
         </div>
 
         {/* Link row */}
-        <div className="flex items-center gap-2 rounded-xl border border-[#2f3336] bg-[#0e1013] px-3 py-2">
+        <div className="flex items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-subtle,#0e1013)] px-3 py-2">
           <LinkIcon size={15} className="text-[#1d9bf0] flex-none" />
-          <span className="flex-1 min-w-0 truncate text-[13px] text-[#71767b]">{shareUrl}</span>
+          <span className="flex-1 min-w-0 truncate text-[13px] text-[var(--muted)]">{shareUrl}</span>
           <button
             type="button"
             onClick={handleCopyLink}
-            className="flex-none rounded-full px-3 py-1 text-[13px] font-bold text-[#1d9bf0] hover:bg-white/[0.06] transition-colors"
+            className="flex-none rounded-full px-3 py-1 text-[13px] font-bold text-[#1d9bf0] hover:bg-[var(--bg-hover)] transition-colors"
           >
             {flash === 'link' ? 'Скопировано ✓' : 'Копировать'}
           </button>

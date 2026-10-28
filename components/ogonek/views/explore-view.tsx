@@ -28,7 +28,6 @@ import {
 import { getInitials } from '@/lib/ogonek/initials'
 import type { Day, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
-import { MobileHeader } from '../mobile-header'
 import {
   CommunityAvatar,
   ExploreSearchBar,
@@ -259,8 +258,6 @@ export function ExploreView({
 
   return (
     <div className="view-explore min-h-screen pb-24 text-[var(--text)]">
-      <MobileHeader title="Поиск" onOpenProfile={() => onNavigate('profile')} />
-
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
         <button
@@ -530,7 +527,13 @@ export function ExploreView({
                 )}
               </div>
 
-              {communityUsers.length === 0 && !loading ? (
+              {loading && communityUsers.length === 0 ? (
+                <div className="p-8 text-center rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-[var(--border)] mx-auto mb-2" />
+                  <div className="h-4 w-32 bg-[var(--border)] rounded mx-auto mb-2" />
+                  <div className="h-3 w-48 bg-[var(--border)] rounded mx-auto" />
+                </div>
+              ) : communityUsers.length === 0 ? (
                 <div className="p-8 text-center rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)]">
                   <Users size={28} className="mx-auto text-[var(--text-3)] mb-2" />
                   <p className="font-bold text-[15px] text-[var(--text)]">Пока нет других участников</p>

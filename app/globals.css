@@ -1660,7 +1660,7 @@ kbd {
   }
   .feed-header {
     position: sticky;
-    top: 48px;
+    top: 53px;
     z-index: 3;
     border-bottom: 0;
   }
@@ -1673,7 +1673,7 @@ kbd {
     border-bottom: 1px solid var(--line);
   }
   .view-header {
-    top: 48px;
+    top: 53px;
   }
   .feed-content,
   .explore-content,
@@ -4626,7 +4626,7 @@ kbd {
   border-radius: 50%;
   background: #FF5C00;
   color: #fff;
-  border: 2px solid #000;
+  border: 2px solid var(--bg);
   display: grid;
   place-items: center;
   z-index: 2;
@@ -4640,7 +4640,7 @@ kbd {
   border-radius: 50%;
   background: var(--blue);
   color: #fff;
-  border: 2px solid #000;
+  border: 2px solid var(--bg);
   font-size: 13px;
   font-weight: 900;
   display: grid;
@@ -4655,7 +4655,7 @@ kbd {
   height: 12px;
   border-radius: 50%;
   background: var(--pink);
-  border: 2px solid #000;
+  border: 2px solid var(--bg);
   z-index: 2;
 }
 

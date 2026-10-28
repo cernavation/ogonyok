@@ -488,7 +488,14 @@ export function ProfileView({
     days.forEach((d) => dayMap.set(d.id, d))
 
     const hasRealDays = days.length > 0
-    const maxDayId = hasRealDays ? Math.max(...days.map((d) => d.id)) : 0
+    const maxDayId = hasRealDays
+      ? Math.max(
+          ...days.map((d) => {
+            const n = typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace(/\D/g, ''), 10)
+            return Number.isFinite(n) ? n : 0
+          })
+        )
+      : 0
 
     for (let i = totalDays - 1; i >= 0; i--) {
       const dayId = maxDayId > 0 ? maxDayId - i : i + 1
@@ -925,7 +932,7 @@ export function ProfileView({
                   playClick(soundEnabled)
                   setActiveTab(t.id)
                 }}
-                className={`flex-1 py-3.5 text-center text-[15px] font-bold border-b-2 transition-colors min-h-[44px] ${
+                className={`flex-1 py-3.5 px-1 sm:px-2 text-center text-[13px] sm:text-[15px] font-bold border-b-2 transition-colors min-h-[44px] truncate ${
                   active
                     ? 'border-[var(--accent)] text-[var(--text)]'
                     : 'border-transparent text-[var(--text-2)] hover:bg-[var(--bg-hover)]'
@@ -1212,23 +1219,23 @@ export function ProfileView({
         {activeTab === 'gratitudes' && (
           <div className="flex flex-col gap-2.5">
             {paginatedGratitudes.length === 0 ? (
-              <div className="p-8 text-center rounded-2xl border border-[#2f3336] bg-[#16181c] text-[#71767b] text-sm">
+              <div className="p-8 text-center rounded-2xl border border-[var(--line)] bg-[var(--surface-subtle,#16181c)] text-[var(--muted)] text-sm">
                 Пока нет сохранённых благодарностей
               </div>
             ) : (
               paginatedGratitudes.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3.5 rounded-2xl border border-[#2f3336] bg-[#16181c] flex items-start gap-3"
+                  className="p-3.5 rounded-2xl border border-[var(--line)] bg-[var(--surface-subtle,#16181c)] flex items-start gap-3"
                 >
                   <div className="w-7 h-7 rounded-full bg-[#f91880]/10 text-[#f91880] flex items-center justify-center flex-none mt-0.5">
                     <Heart size={14} className="fill-[#f91880] text-[#f91880]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#e7e9ea]">
+                    <p className="text-sm font-medium text-[var(--text)]">
                       {item.text}
                     </p>
-                    <p className="text-xs text-[#71767b] mt-1">
+                    <p className="text-xs text-[var(--muted)] mt-1">
                       День #{item.dayId} · {formatDayDate(item.dateISO)}
                     </p>
                   </div>
@@ -1240,7 +1247,7 @@ export function ProfileView({
               <div className="pt-2 text-center">
                 <Button
                   variant="outline"
-                  className="border-[#2f3336] bg-[#16181c] text-[#e7e9ea] hover:bg-[#181818]"
+                  className="border-[var(--line)] bg-[var(--surface-subtle,#16181c)] text-[var(--text)] hover:bg-[var(--bg-hover)]"
                   onClick={() => setVisibleCount((prev) => prev + 30)}
                 >
                   Показать ещё 30 благодарностей
@@ -1439,10 +1446,10 @@ export function ProfileView({
                 {selectedDayModal.gratitudes.slice(0, 5).map((g, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-xl bg-[#16181c] border border-[#2f3336] flex items-start gap-2 text-xs"
+                    className="p-2.5 rounded-xl bg-[var(--surface-subtle,#16181c)] border border-[var(--line)] flex items-start gap-2 text-xs"
                   >
                     <span className="font-bold text-[#f91880] mt-0.5">{idx + 1}.</span>
-                    <span className="font-medium text-[#e7e9ea]">
+                    <span className="font-medium text-[var(--text)]">
                       {typeof g === 'string' ? g : (g?.text || '')}
                     </span>
                   </div>

@@ -72,26 +72,25 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
     switch (id) {
       case 'home':
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" aria-hidden="true">
             <path
-              d="M12 3L2 12h3v8h5v-5h4v5h5v-8h3L12 3z M10 14h4v6h-4z"
-              fillRule="evenodd"
-              fill="white"
+              d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
+              fill="currentColor"
               stroke="none"
             />
           </svg>
         )
       case 'explore':
-        return <Search size={24} strokeWidth={2.8} className="stroke-[2.8px] text-white shrink-0" />
+        return <Search size={24} strokeWidth={2.8} className="stroke-[2.8px] text-current shrink-0" />
       case 'messages':
-        return <MessageCircle size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
+        return <MessageCircle size={24} strokeWidth={2} className="fill-current stroke-current text-current shrink-0" />
       case 'profile':
-        return <User size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
+        return <User size={24} strokeWidth={2} className="fill-current stroke-current text-current shrink-0" />
       case 'vault':
-        return <Zap size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
+        return <Zap size={24} strokeWidth={2} className="fill-current stroke-current text-current shrink-0" />
       case 'premium':
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="text-white shrink-0" fill="none">
+          <svg viewBox="0 0 24 24" width={24} height={24} className="text-current shrink-0" fill="none">
             <mask id="sidebar-badge-check-mask">
               <path
                 d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"
@@ -106,18 +105,18 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
                 strokeLinejoin="round"
               />
             </mask>
-            <rect width="24" height="24" fill="white" mask="url(#sidebar-badge-check-mask)" />
+            <rect width="24" height="24" fill="currentColor" mask="url(#sidebar-badge-check-mask)" />
           </svg>
         )
       case 'analytics':
         return (
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
-            <BarChart3 size={18} strokeWidth={2.5} className="text-black shrink-0" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--text)] flex items-center justify-center shrink-0">
+            <BarChart3 size={18} strokeWidth={2.5} className="text-[var(--bg)] shrink-0" />
           </div>
         )
       case 'leaderboard':
         return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0" fill="white" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" fill="currentColor" aria-hidden="true">
             {/* Cup body */}
             <path d="M6 2h12v8a6 6 0 0 1-12 0V2z" />
             {/* Left handle */}
@@ -132,41 +131,49 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
         )
       case 'intentions':
         return (
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
-            <Target size={18} strokeWidth={2.5} className="text-black shrink-0" />
+          <div className="w-8 h-8 rounded-lg bg-[var(--text)] flex items-center justify-center shrink-0">
+            <Target size={18} strokeWidth={2.5} className="text-[var(--bg)] shrink-0" />
           </div>
         )
       case 'settings':
-        return <Settings size={24} strokeWidth={2.8} className="stroke-[2.8px] text-white shrink-0" fill="none" />
+        return <Settings size={24} strokeWidth={2.8} className="stroke-[2.8px] text-current shrink-0" fill="none" />
       default:
-        return <Home size={24} className="fill-white stroke-none text-white shrink-0" />
+        return (
+          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0 text-current" aria-hidden="true">
+            <path
+              d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
+              fill="currentColor"
+              stroke="none"
+            />
+          </svg>
+        )
     }
   }
 
-  // Неактивные пункты: контурные stroke-[2px] text-[#71767b] hover:text-white
+  // Неактивные пункты: контурные stroke-[2px] text-[var(--muted)] hover:text-[var(--text)]
   switch (id) {
     case 'home':
-      return <Home size={24} className="stroke-2 stroke-current fill-none text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Home size={24} className="stroke-2 stroke-current fill-none text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'explore':
-      return <Search size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Search size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'messages':
-      return <MessageCircle size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <MessageCircle size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'profile':
-      return <User size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <User size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'vault':
-      return <Zap size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Zap size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'premium':
-      return <BadgeCheck size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <BadgeCheck size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'analytics':
-      return <BarChart3 size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <BarChart3 size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'leaderboard':
-      return <Trophy size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Trophy size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'intentions':
-      return <Target size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Target size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'settings':
-      return <Settings size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Settings size={24} strokeWidth={2} className="stroke-2 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     default:
-      return <Home size={24} className="stroke-2 stroke-current fill-none text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Home size={24} className="stroke-2 stroke-current fill-none text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
   }
 }
 
@@ -234,8 +241,8 @@ export function Sidebar({
           className={`nav-item group relative flex items-center transition-colors ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center rounded-full mx-auto'
-              : 'w-full gap-4 pl-3 pr-4 py-3 rounded-full hover:bg-[#181818]'
-          } ${isActive ? 'active font-bold text-white' : 'text-[#71767b] hover:text-white'}`}
+              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3.5 xl:pl-3 xl:pr-4 py-0 xl:py-2.5 justify-center xl:justify-start rounded-full hover:bg-[var(--bg-hover)] mx-auto xl:mx-0'
+          } ${isActive ? 'active font-bold text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'}`}
           onClick={handleClick}
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
@@ -243,7 +250,7 @@ export function Sidebar({
           <div className="w-6 h-6 flex items-center justify-center shrink-0">
             <NavIcon id={id} isActive={isActive} size={24} />
           </div>
-          <span className={isCollapsed ? 'hidden' : 'inline text-[16px] leading-tight font-medium'}>
+          <span className={isCollapsed ? 'hidden' : 'hidden xl:inline text-[16px] leading-tight font-medium'}>
             {label}
           </span>
           {id === 'messages' && unread > 0 && (
@@ -265,18 +272,20 @@ export function Sidebar({
 
   return (
     <aside
-      className={`${
-        isCollapsed ? 'w-[72px] px-[11px] items-center' : 'w-[275px] px-3'
-      } shrink-0 sticky top-0 h-screen border-r border-[#2f3336] hidden md:flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-4 ${className || ''}`}
+      className={`sidebar ${
+        isCollapsed
+          ? 'w-[72px] px-[11px] items-center'
+          : 'w-[72px] xl:w-[275px] px-[11px] xl:px-3 items-center xl:items-stretch'
+      } shrink-0 sticky top-0 h-screen border-r border-[var(--line)] hidden md:flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-2.5 xl:py-4 ${className || ''}`}
       aria-label="Боковая панель"
     >
-      <div className="flex flex-col gap-1 w-full items-center">
+      <div className="flex flex-col gap-1 w-full items-center xl:items-stretch">
         {/* Brand mark */}
         <div
           className={`brand cursor-pointer group min-h-[40px] flex items-center ${
             isCollapsed
-              ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto rounded-full hover:bg-[#181818] transition-colors'
-              : 'gap-2.5 pl-1 pr-3 py-1 mb-1 w-full rounded-full hover:bg-[#181818]/60 transition-colors'
+              ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto rounded-full hover:bg-[var(--bg-hover)] transition-colors'
+              : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 rounded-full hover:bg-[var(--bg-hover)] transition-colors gap-2.5 mx-auto xl:mx-0'
           }`}
           onClick={() => onNavigate('home')}
           role="button"
@@ -290,7 +299,7 @@ export function Sidebar({
             <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
           </span>
           {!isCollapsed && (
-            <span className="font-bold tracking-tight text-[19px] text-[var(--text)]">Огонёк</span>
+            <span className="font-bold tracking-tight text-[19px] text-[var(--text)] hidden xl:inline">Огонёк</span>
           )}
         </div>
 
@@ -307,14 +316,14 @@ export function Sidebar({
             type="button"
             className={`x-compose-btn ${
               isCollapsed
-                ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-3 min-h-[50px] min-w-[50px]'
-                : 'my-3 w-full'
+                ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
+                : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
             }`}
             onClick={onCompose}
             aria-label="Записать день"
           >
-            <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only" />
-            {!isCollapsed && <span className="compose-btn-label">Записать</span>}
+            <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden" />
+            {!isCollapsed && <span className="compose-btn-label hidden xl:inline">Записать</span>}
           </button>
         </Tooltip>
       </div>
@@ -388,10 +397,10 @@ export function Sidebar({
 
         <button
           type="button"
-          className={`cursor-pointer relative z-50 flex items-center rounded-full hover:bg-[var(--surface2)] transition-colors text-left border-0 bg-transparent ${
+          className={`profile-mini cursor-pointer relative z-50 flex items-center rounded-full hover:bg-[var(--surface2)] transition-colors text-left border-0 bg-transparent ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
-              : 'w-full gap-3 pl-1 pr-3 py-2 rounded-2xl'
+              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3 xl:pl-1 xl:pr-3 xl:py-2 justify-center xl:justify-start rounded-2xl mx-auto xl:mx-0'
           }`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-haspopup="menu"
@@ -417,7 +426,7 @@ export function Sidebar({
 
           {!isCollapsed && (
             <>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 hidden xl:block">
                 <p className="text-[14px] font-bold text-[var(--text)] truncate leading-tight">
                   {displayName}
                 </p>
@@ -426,7 +435,7 @@ export function Sidebar({
                 </p>
               </div>
 
-              <MoreHorizontal size={18} className="text-[var(--text-3)] shrink-0" />
+              <MoreHorizontal size={18} className="text-[var(--text-3)] shrink-0 hidden xl:block" />
             </>
           )}
         </button>

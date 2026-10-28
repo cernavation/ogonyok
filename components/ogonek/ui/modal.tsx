@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 
 export type ModalProps = {
   isOpen: boolean
@@ -24,6 +25,7 @@ export function Modal({
   maxWidth = '600px',
   showClose = true,
 }: ModalProps) {
+  useBodyScrollLock(isOpen)
   useEffect(() => {
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {

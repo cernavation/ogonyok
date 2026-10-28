@@ -16,6 +16,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ViewId } from '@/lib/ogonek/types'
 
@@ -46,6 +47,7 @@ const SECTIONS: SheetItem[] = [
  * Настройки больше не теряются. Каждый пункт реально переключает вид.
  */
 export function MobileNavSheet({ view, onNavigate, onCompose, onClose }: Props) {
+  useBodyScrollLock(true)
   const { state, signOut } = useOgonekStore()
   const profile = state.profile
 
@@ -124,7 +126,17 @@ export function MobileNavSheet({ view, onNavigate, onCompose, onClose }: Props) 
                 onClick={() => go(id)}
               >
                 <span className="mobile-sheet__item-icon" aria-hidden="true">
-                  <Icon size={18} />
+                  {id === 'home' && active ? (
+                    <svg viewBox="0 0 24 24" width={18} height={18} className="shrink-0 text-current" aria-hidden="true">
+                      <path
+                        d="M12 2.1L1 12h3v9h6v-5a2 2 0 0 1 4 0v5h6v-9h3L12 2.1z"
+                        fill="currentColor"
+                        stroke="none"
+                      />
+                    </svg>
+                  ) : (
+                    <Icon size={18} />
+                  )}
                 </span>
                 <span className="mobile-sheet__item-text">
                   <b>{label}</b>

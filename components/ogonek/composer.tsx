@@ -797,14 +797,14 @@ export function Composer({
 
         <div className="flex items-center gap-2">
           {/* Пилюля выбора: [ 🌐 Публично | 🔒 Лично ] (компактный размер h-8 px-3 text-xs rounded-full) */}
-          <div className="inline-flex items-center h-8 p-0.5 rounded-full bg-[#16181c] border border-[#2f3336]">
+          <div className="inline-flex items-center h-8 p-0.5 rounded-full bg-[var(--surface-subtle,#16181c)] border border-[var(--line)]">
             <button
               type="button"
               onClick={() => handleSetCurrentItemVis('public')}
               className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
                 currentSlotVis === 'public'
                   ? 'bg-blue-500/20 text-[#1d9bf0] font-semibold shadow-sm'
-                  : 'text-[#71767b] hover:text-[#e7e9ea]'
+                  : 'text-[var(--muted)] hover:text-[var(--text)]'
               }`}
               title="Сделать этот пункт публичным"
             >
@@ -816,8 +816,8 @@ export function Composer({
               onClick={() => handleSetCurrentItemVis('private')}
               className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
                 currentSlotVis === 'private'
-                  ? 'bg-zinc-800 text-zinc-200 font-semibold shadow-sm'
-                  : 'text-[#71767b] hover:text-[#e7e9ea]'
+                  ? 'bg-[var(--bg-hover)] text-[var(--text)] font-semibold shadow-sm'
+                  : 'text-[var(--muted)] hover:text-[var(--text)]'
               }`}
               title="Сделать этот пункт личным"
             >
@@ -862,7 +862,7 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative w-full max-h-[350px] my-3 rounded-2xl overflow-hidden bg-black/50 border border-[#2f3336] flex items-center justify-center">
+        <div className="relative w-full max-h-[350px] my-3 rounded-2xl overflow-hidden bg-black/50 border border-[var(--line)] flex items-center justify-center">
           <img
             src={preview}
             className="max-h-[350px] w-auto object-contain rounded-xl"

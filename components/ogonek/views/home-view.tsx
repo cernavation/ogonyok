@@ -14,7 +14,6 @@ import { Button } from '../ui'
 import { DayCard } from '../day-card'
 import { EveningReview } from '../evening-review'
 import { FocusHistoryModal } from '../focus-history-modal'
-import { MobileHeader } from '../mobile-header'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
@@ -162,17 +161,7 @@ export function HomeView({
   }
 
   return (
-    <div className="view-home w-full max-w-[620px] min-h-screen border-r border-[#2f3336] shrink-0">
-      <MobileHeader
-        title="Главная"
-        streak={state.days.length || streak}
-        streakStatus={streakStatus}
-        hoursLeft={hoursLeft}
-        userInitials={initials}
-        userName={displayName}
-        onOpenProfile={onOpenProfile}
-      />
-
+    <div className="view-home w-full max-w-[620px] min-h-screen border-r border-[var(--line)] shrink-0">
       {/* Sticky glassy feed header */}
       <header className="feed-header">
         {/* Title row */}

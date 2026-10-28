@@ -449,6 +449,7 @@ export function AppShell() {
         'settings',
         'intentions',
         'landing',
+        'premium',
       ]
       if (v && validViews.includes(v)) {
         setView(v)
@@ -903,7 +904,7 @@ export function AppShell() {
           <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen overflow-x-hidden">
             <div className="flex flex-row w-full overflow-x-hidden">
               <Sidebar
-                className="hidden md:flex w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
+                className="hidden md:flex w-[72px] xl:w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
                 view={view}
                 onNavigate={navigate}
                 onFocusIntentions={handleFocusIntentions}
@@ -916,13 +917,18 @@ export function AppShell() {
 
               {/* Центральная колонка */}
               <section
-                className="w-full md:max-w-[620px] md:shrink-0 min-h-screen border-r border-[#2f3336] md:border-r md:border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
+                className="w-full md:max-w-[620px] md:shrink-0 min-h-screen border-r border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
                 aria-label="Основное содержимое"
               >
-                <MobileTopBar
-                  onNavigate={navigate}
-                  onNotify={notify}
-                />
+                {view === 'home' && (
+                  <MobileTopBar
+                    onNavigate={navigate}
+                    onNotify={notify}
+                    streak={streakState.streak}
+                    streakStatus={streakState.status}
+                    hoursLeft={streakState.hoursLeft}
+                  />
+                )}
                 <motion.div
                   key={view}
                   className="view w-full"

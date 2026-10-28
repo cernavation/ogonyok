@@ -67,12 +67,12 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
       </header>
 
       {active.length === 0 ? (
-        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center my-2">
+        <div className="p-4 rounded-xl bg-[var(--surface2)] border border-[var(--line)] text-center my-2">
           <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
           </div>
-          <p className="text-xs font-semibold text-white mb-1">У тебя пока нет соратников</p>
-          <p className="text-[11px] text-white/50 mb-3 leading-snug">
+          <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет соратников</p>
+          <p className="text-[11px] text-[var(--muted)] mb-3 leading-snug">
             Пригласи друзей вести дневник вместе, делиться гордостями и держать огонь.
           </p>
 
@@ -89,7 +89,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
             <button
               type="button"
               onClick={() => onNavigate('explore')}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 text-xs font-medium transition-all"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--line)] text-[var(--text)] text-xs font-medium border border-[var(--line)] transition-all"
             >
               <Search size={14} /> <span>Найти людей по нику</span>
             </button>

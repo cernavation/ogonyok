@@ -48,9 +48,12 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
 
   // Честный расчет стрика текущего пользователя (с гарантией не менее 720 для автора летописи)
   const myStreak = Math.max(
-    state.profile.streak_count || 0,
-    state.profile.streak || 0,
-    state.days.reduce((max, d) => Math.max(max, d.id || 0), 0),
+    Number(state.profile.streak_count) || 0,
+    Number(state.profile.streak) || 0,
+    state.days.reduce((max, d) => {
+      const parsedNum = typeof d.id === 'number' ? d.id : parseInt(String(d.id).replace(/\D/g, ''), 10)
+      return Number.isFinite(parsedNum) ? Math.max(max, parsedNum) : max
+    }, 0),
     state.days.length,
     720
   )
@@ -264,16 +267,16 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
             return (
               <div
                 key={user.user_id || idx}
-                className="flex items-center justify-between py-3.5 px-2 border-b border-[var(--border)] hover:bg-[var(--bg-hover)] transition-colors gap-3"
+                className="flex items-center justify-between py-3.5 px-2 border-b border-[var(--border)] hover:bg-[var(--bg-hover)] transition-colors gap-2 sm:gap-3"
               >
                 {/* Left: Rank + Avatar + Name + @Handle */}
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-[14px] font-mono font-bold text-[var(--text-2)] w-7 text-center flex-none">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <span className="text-[14px] font-mono font-bold text-[var(--text-2)] w-6 sm:w-7 text-center flex-none">
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                   </span>
 
                   <div
-                    className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-[14px] shadow-sm overflow-hidden"
+                    className="avatar w-9 h-9 sm:w-10 sm:h-10 rounded-full flex-none flex items-center justify-center font-bold text-[13px] sm:text-[14px] shadow-sm overflow-hidden"
                     style={{
                       background: isMe ? 'var(--accent)' : isAnonForOther ? '#27272a' : 'var(--surface2)',
                       color: isMe ? 'var(--accent-text)' : isAnonForOther ? '#a1a1aa' : 'var(--text)',
@@ -286,16 +289,16 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                     )}
                   </div>
 
-                  <div className="min-w-0 truncate">
-                    <div className="flex items-center gap-1.5 flex-wrap truncate">
-                      <span className="text-[15px] font-bold text-[var(--text)] truncate">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[14px] sm:text-[15px] font-bold text-[var(--text)] truncate max-w-[140px] sm:max-w-none">
                         {displayName}
                       </span>
                       {isAnonForOther && (
                         <Lock size={13} className="text-zinc-500 flex-none" />
                       )}
                       {isMe && (
-                        <span className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)] flex-none">
+                        <span className="text-[11px] sm:text-[12px] px-2 py-0.2 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)] flex-none">
                           Ты
                         </span>
                       )}
@@ -305,16 +308,16 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                         </span>
                       )}
                     </div>
-                    <p className="text-[13px] text-[var(--text-2)] truncate">
+                    <p className="text-[12px] sm:text-[13px] text-[var(--text-2)] truncate">
                       @{handle}
                     </p>
                   </div>
                 </div>
 
                 {/* Right: Число + Уровень + Пилюля «Подписаться» */}
-                <div className="flex items-center gap-2.5 flex-none">
-                  <div className="text-right flex flex-col items-end gap-1">
-                    <span className="text-[14px] font-bold text-[var(--text)] block leading-tight">
+                <div className="flex items-center gap-1.5 sm:gap-2.5 flex-none">
+                  <div className="text-right flex flex-col items-end gap-0.5 sm:gap-1">
+                    <span className="text-[13px] sm:text-[14px] font-bold text-[var(--text)] block leading-tight whitespace-nowrap">
                       🔥 {user.streak} дн.
                     </span>
                     <DifficultyLevelBadge
@@ -328,7 +331,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
 
                   {!isMe && (
                     isAnonForOther ? (
-                      <span className="min-h-[34px] px-3 py-1.5 rounded-full text-[12px] font-medium text-zinc-500 flex items-center gap-1 border border-zinc-800">
+                      <span className="min-h-[30px] sm:min-h-[34px] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-[12px] font-medium text-zinc-500 flex items-center gap-1 border border-zinc-800">
                         <Lock size={12} /> Аноним
                       </span>
                     ) : (
@@ -339,7 +342,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                           toggleExploreFollow(user.user_id)
                           onNotify?.(isFollowing ? `Отписка от @${user.username}` : `Вы подписались на @${user.username}`)
                         }}
-                        className={`min-h-[34px] px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${
+                        className={`min-h-[30px] sm:min-h-[34px] px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-full text-[12px] sm:text-[13px] font-bold transition-colors whitespace-nowrap ${
                           isFollowing
                             ? 'border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)]'
                             : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90 shadow-sm'

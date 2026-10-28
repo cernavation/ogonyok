@@ -19,9 +19,9 @@ import {
   Zap,
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import type { OgonekProfile, ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { MobileHeader } from '../mobile-header'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -45,6 +45,7 @@ export function PremiumView({
   const { state } = useOgonekStore()
   const [billing, setBilling] = useState<BillingPeriod>('monthly')
   const [modalTier, setModalTier] = useState<'premium' | 'ultra' | null>(null)
+  useBodyScrollLock(Boolean(modalTier))
 
   // Текущий тариф считывается из profile.subscription_tier ('free' | 'premium' | 'ultra')
   const activeTier: 'free' | 'premium' | 'ultra' =
@@ -88,8 +89,6 @@ export function PremiumView({
 
   return (
     <div className="view-premium min-h-screen pb-24 text-[var(--text)]">
-      <MobileHeader title="Премиум" onOpenProfile={() => onNavigate('profile')} />
-
       {/* Sticky Top Header */}
       <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
         <button

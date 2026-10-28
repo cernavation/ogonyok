@@ -215,7 +215,7 @@ export function CommentsThread({
                   ? p === 'support'
                     ? 'border-[#ff6b35] bg-[#ff6b35]/15 text-[#ffad5a]'
                     : 'border-[#1d9bf0] bg-[#1d9bf0]/15 text-[#5cb8f5]'
-                  : 'border-[#2f3336] text-[#71767b] hover:text-[#e7e9ea] hover:border-[#4a4f54]'
+                  : 'border-[var(--line)] text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--line-strong,#4a4f54)]'
               }`}
             >
               <span aria-hidden="true">{meta.initials}</span>
@@ -238,27 +238,27 @@ export function CommentsThread({
           <CommentAvatar persona={node.persona} initials={node.initials} size={compact ? 26 : 30} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[13px] font-bold text-[#e7e9ea] tracking-[-0.01em]">
+              <span className="text-[13px] font-bold text-[var(--text)] tracking-[-0.01em]">
                 {node.author}
               </span>
               {node.persona === 'support' && (
-                <span className="text-[10px] px-1.5 py-[1px] rounded-full font-bold bg-[#2b1d16] text-[#ffad5a]">
+                <span className="text-[10px] px-1.5 py-[1px] rounded-full font-bold bg-[#ff6b35]/15 text-[#ffad5a]">
                   поддержка
                 </span>
               )}
               <Tooltip content={formatCommentStamp(node.createdAt)} side="top">
-                <span className="text-[11px] text-[#71767b]">
+                <span className="text-[11px] text-[var(--muted)]">
                   · {formatRelativeTime(node.createdAt)}
                 </span>
               </Tooltip>
             </div>
 
-            <p className="text-[14px] leading-[20px] text-[#e7e9ea] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
+            <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
               {node.text}
             </p>
 
             {node.template && (
-              <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[#71767b] border border-[#2f3336] rounded-full px-2 py-[1px]">
+              <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[var(--muted)] border border-[var(--line)] rounded-full px-2 py-[1px]">
                 <Sparkles size={10} /> шаблон
               </span>
             )}
@@ -348,7 +348,7 @@ export function CommentsThread({
                         }
                       }}
                       placeholder="Ответь тёплым словом…"
-                      className="w-full resize-none rounded-lg border border-[#2f3336] bg-[#0b0c0d] px-2.5 py-2 text-[13px] text-[#e7e9ea] outline-none focus:border-[#1d9bf0] transition-colors"
+                      className="w-full resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#1d9bf0] transition-colors"
                     />
                     <div className="flex items-center justify-between gap-2 mt-1.5">
                       <button
@@ -357,7 +357,7 @@ export function CommentsThread({
                           setReplyToId(null)
                           setReplyDraft('')
                         }}
-                        className="text-[12px] text-[#71767b] hover:text-[#e7e9ea] transition-colors"
+                        className="text-[12px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
                       >
                         Отмена
                       </button>
@@ -438,11 +438,11 @@ export function CommentsThread({
           >
             <div
               id={`${uid}-comments`}
-              className="mt-2 rounded-2xl border border-[#2f3336] bg-[#0d0e0f] p-3"
+              className="mt-2 rounded-2xl border border-[var(--line)] bg-[var(--surface-subtle,#0d0e0f)] p-3"
             >
               {/* Быстрые шаблоны поддержки */}
               <div className="mb-2.5">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#71767b] mb-1.5">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] mb-1.5">
                   Быстрая поддержка
                 </span>
                 <div className="flex flex-wrap gap-1.5">
@@ -453,7 +453,7 @@ export function CommentsThread({
                       whileTap={reduce ? undefined : { scale: 0.94 }}
                       onClick={() => postTemplate(template)}
                       title={`Отправить: ${template.text}`}
-                      className="cmt-chip inline-flex items-center gap-1 rounded-full border border-[#2f3336] bg-[#16181c] px-2.5 py-1 text-[12px] font-medium text-[#e7e9ea] hover:border-[#ff6b35]/60 hover:bg-[#ff6b35]/10 hover:text-[#ffad5a] transition-colors duration-150"
+                      className="cmt-chip inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-[12px] font-medium text-[var(--text)] hover:border-[#ff6b35]/60 hover:bg-[#ff6b35]/10 hover:text-[#ffad5a] transition-colors duration-150"
                     >
                       <span aria-hidden="true">{template.emoji}</span>
                       <span>{template.text}</span>
@@ -463,10 +463,10 @@ export function CommentsThread({
               </div>
 
               {/* Композер */}
-              <div className="rounded-xl border border-[#2f3336] bg-[#16181c] p-2">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2">
                 <div className="flex items-center justify-between gap-2 mb-1.5">
                   {renderPersonaSwitch('sm')}
-                  <span className="text-[10px] text-[#71767b]">
+                  <span className="text-[10px] text-[var(--muted)]">
                     {draft.length}/{MAX_COMMENT_LENGTH}
                   </span>
                 </div>
@@ -487,7 +487,7 @@ export function CommentsThread({
                         ? 'Скажи себе тёплое слово об этой гордости…'
                         : 'Поддержи себя за этот день…'
                     }
-                    className="flex-1 resize-none rounded-lg border border-[#2f3336] bg-[#0b0c0d] px-2.5 py-2 text-[13px] text-[#e7e9ea] outline-none focus:border-[#ff6b35] transition-colors"
+                    className="flex-1 resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#ff6b35] transition-colors"
                   />
                   <Tooltip content="Отправить (Enter)" side="top">
                     <button

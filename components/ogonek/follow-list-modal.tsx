@@ -167,25 +167,19 @@ export function FollowListModal({
       aria-labelledby="follow-modal-title"
     >
       <div
-        className="w-full max-w-[520px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all"
-        style={{
-          backgroundColor: '#16181c',
-          border: '1px solid #2f3336',
-          color: '#e7e9ea',
-        }}
+        className="w-full max-w-[520px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all bg-[var(--surface)] border border-[var(--line)] text-[var(--text)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка модалки */}
         <div
-          className="flex items-center justify-between px-4 py-3 shrink-0"
-          style={{ borderBottom: '1px solid #2f3336' }}
+          className="flex items-center justify-between px-4 py-3 shrink-0 border-b border-[var(--line)]"
         >
           <div className="min-w-0 pr-3">
-            <h2 id="follow-modal-title" className="text-[17px] font-bold text-white truncate">
+            <h2 id="follow-modal-title" className="text-[17px] font-bold text-[var(--text)] truncate">
               {profileDisplayName || (profileUsername ? `@${profileUsername}` : 'Профиль')}
             </h2>
             {profileUsername && (
-              <p className="text-[13px] text-[#71767b] truncate">@{profileUsername}</p>
+              <p className="text-[13px] text-[var(--muted)] truncate">@{profileUsername}</p>
             )}
           </div>
           <button
@@ -194,7 +188,7 @@ export function FollowListModal({
               playClick(soundEnabled)
               onClose()
             }}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-[#71767b] hover:text-white hover:bg-white/10 transition-colors shrink-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors shrink-0"
             aria-label="Закрыть"
           >
             <X size={18} />
@@ -203,8 +197,7 @@ export function FollowListModal({
 
         {/* Две вкладки X.com: "Читаемые" (Following) и "Читатели" (Followers) */}
         <div
-          className="flex items-center shrink-0"
-          style={{ borderBottom: '1px solid #2f3336' }}
+          className="flex items-center shrink-0 border-b border-[var(--line)]"
           role="tablist"
         >
           <button
@@ -214,8 +207,8 @@ export function FollowListModal({
             onClick={() => handleTabChange('following')}
             className={`flex-1 py-3 text-center text-[15px] font-bold transition-colors relative min-h-[44px] ${
               tab === 'following'
-                ? 'text-white'
-                : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/5'
+                ? 'text-[var(--text)]'
+                : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]'
             }`}
           >
             <span>В читаемых</span>
@@ -266,7 +259,7 @@ export function FollowListModal({
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-[#2f3336]">
+            <div className="divide-y divide-[var(--line)]">
               {activeList.map((user) => {
                 const isMe = currentUserId === user.id
                 const isFollowed = Boolean(myFollowingMap[user.id])
@@ -282,7 +275,7 @@ export function FollowListModal({
                       playClick(soundEnabled)
                       onOpenProfile?.(user.id)
                     }}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors cursor-pointer"
+                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
                   >
                     {/* Аватар + Имя + @username + Стрик */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -291,11 +284,11 @@ export function FollowListModal({
                         <img
                           src={avatarSrc}
                           alt={user.display_name || user.username}
-                          className="w-11 h-11 rounded-full object-cover shrink-0 border border-[#2f3336]"
+                          className="w-11 h-11 rounded-full object-cover shrink-0 border border-[var(--line)]"
                         />
                       ) : (
                         <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 border border-[#2f3336]"
+                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 border border-[var(--line)]"
                           style={{
                             background: user.avatar_color || '#ff5c00',
                           }}
@@ -306,7 +299,7 @@ export function FollowListModal({
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-[15px] text-white hover:underline truncate">
+                          <span className="font-bold text-[15px] text-[var(--text)] hover:underline truncate">
                             {user.display_name || `@${user.username}`}
                           </span>
                           {user.verified && (
@@ -319,7 +312,7 @@ export function FollowListModal({
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 text-[13px] text-[#71767b] flex-wrap">
+                        <div className="flex items-center gap-2 text-[13px] text-[var(--muted)] flex-wrap">
                           <span>@{user.username}</span>
                           {streak > 0 && (
                             <span className="inline-flex items-center gap-0.5 text-orange-400 font-semibold">
@@ -334,7 +327,7 @@ export function FollowListModal({
                     {/* Кнопка "Читать / Читаю" */}
                     <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
                       {isMe ? (
-                        <span className="px-3 py-1 rounded-full text-xs font-semibold text-[#71767b] bg-white/5 border border-[#2f3336]">
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold text-[var(--muted)] bg-[var(--surface-subtle,#16181c)] border border-[var(--line)]">
                           Это вы
                         </span>
                       ) : (
@@ -344,8 +337,8 @@ export function FollowListModal({
                           onClick={(e) => handleToggleFollow(e, user)}
                           className={`px-4 py-1.5 rounded-full text-[14px] font-bold transition-all min-h-[32px] select-none ${
                             isFollowed
-                              ? 'border border-[#536471] text-white hover:border-red-500 hover:text-red-500 hover:bg-red-500/10'
-                              : 'bg-white text-black hover:bg-white/90'
+                              ? 'border border-[var(--line)] text-[var(--text)] hover:border-red-500 hover:text-red-500 hover:bg-red-500/10'
+                              : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90'
                           } ${isPending ? 'opacity-60 cursor-wait' : 'cursor-pointer'}`}
                         >
                           {isPending ? (

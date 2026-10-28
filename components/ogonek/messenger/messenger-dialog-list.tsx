@@ -190,7 +190,7 @@ export function MessengerDialogList({
               title="Назад в ленту"
             >
               <ArrowLeft size={15} />
-              <span>← Назад в ленту</span>
+              <span>Назад в ленту</span>
             </button>
           )}
           <h1 className="text-[19px] sm:text-[20px] font-[800] text-[var(--text)] tracking-tight shrink-0">Чаты</h1>
