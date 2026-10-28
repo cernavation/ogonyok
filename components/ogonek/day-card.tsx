@@ -110,13 +110,26 @@ function DayCardComponent({
 
   const dayVisibility = normalizeVisibility(day.visibility)
 
+  const displayName = state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
+  const username = state.profile?.username || currentUser?.username || 'cernavation'
+  const initials = getInitials(displayName, username)
+
+  const isAuthor =
+    !username ||
+    username.toLowerCase() === 'cernavation' ||
+    username.toLowerCase() === 'alex_cerna' ||
+    displayName.toLowerCase().includes('cerna') ||
+    displayName.toLowerCase().includes('церна') ||
+    displayName.toLowerCase().includes('черняк')
+
   const rawAvatar =
     currentUser?.avatarImage ||
     (currentUser as any)?.avatar_image ||
     (currentUser as any)?.avatar_url ||
     state.profile.avatarImage ||
     (state.profile as any)?.avatar ||
-    (state.profile as any)?.avatar_url
+    (state.profile as any)?.avatar_url ||
+    (isAuthor ? '/author-avatar.png' : null)
 
   const myAvatarSrc = usePhotoUrl(rawAvatar)
   const effectiveAvatarSrc =
@@ -125,13 +138,10 @@ function DayCardComponent({
     (rawAvatar.startsWith('http://') ||
       rawAvatar.startsWith('https://') ||
       rawAvatar.startsWith('data:') ||
-      rawAvatar.startsWith('blob:'))
+      rawAvatar.startsWith('blob:') ||
+      rawAvatar.startsWith('/'))
       ? rawAvatar
       : null)
-
-  const displayName = state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
-  const username = state.profile?.username || currentUser?.username || 'cernavation'
-  const initials = getInitials(displayName, username)
 
   const firstPride = useMemo(() => {
     return day.prides?.find((p) => p.text && p.text !== '—')

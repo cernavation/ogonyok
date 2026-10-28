@@ -362,7 +362,13 @@ export function ProfileView({
   }, [isOwnProfile, storeState?.days, foreignDays])
 
   const bannerPreset = getBannerPreset(displayProfile.bannerPreset)
-  const avatarSrc = usePhotoUrl(displayProfile.avatarImage)
+  const isAuthorUser =
+    isOwnProfile ||
+    (displayProfile.username || '').toLowerCase() === 'cernavation' ||
+    (displayProfile.username || '').toLowerCase() === 'alex_cerna' ||
+    (displayProfile.displayName || '').toLowerCase().includes('cerna') ||
+    (displayProfile.displayName || '').toLowerCase().includes('церна')
+  const avatarSrc = usePhotoUrl(displayProfile.avatarImage || (isAuthorUser ? '/author-avatar.png' : null))
   const coverSrc = usePhotoUrl(displayProfile.coverUrl || displayProfile.bannerImage)
   const followingIds = storeState.followingIds ?? []
 
@@ -1370,14 +1376,14 @@ export function ProfileView({
           onClick={() => setSelectedDayModal(null)}
         >
           <div
-            className="w-full max-w-lg rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col gap-4"
+            className="w-full max-w-lg rounded-2xl bg-[var(--card-bg)] border border-[var(--line)] p-6 shadow-2xl max-h-[85vh] overflow-y-auto flex flex-col gap-4 text-[var(--text)]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-start justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-[var(--line)]">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-xl font-black text-[var(--text)]">
                     День #{selectedDayModal.id}
                   </h3>
                   {dayAvgScale(selectedDayModal) !== null && (
@@ -1386,7 +1392,7 @@ export function ProfileView({
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                <p className="text-xs text-[var(--muted)] mt-0.5">
                   {formatDayDate(selectedDayModal.dateISO)} · {selectedDayModal.title}
                 </p>
               </div>
@@ -1394,7 +1400,7 @@ export function ProfileView({
               <button
                 type="button"
                 onClick={() => setSelectedDayModal(null)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                className="p-1 rounded-lg text-[var(--muted)] hover:text-[var(--text)]"
               >
                 <X size={18} />
               </button>
@@ -1415,16 +1421,16 @@ export function ProfileView({
                   return (
                     <div
                       key={idx}
-                      className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex items-start justify-between gap-2 text-xs"
+                      className="p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--line)] flex items-start justify-between gap-2 text-xs"
                     >
                       <div className="flex items-start gap-2">
                         <span className="font-bold text-[var(--text)] dark:text-[var(--accent)] mt-0.5">{idx + 1}.</span>
                         {displayPrivate ? (
-                          <span className="text-zinc-400 italic flex items-center gap-1.5">
+                          <span className="text-[var(--muted)] italic flex items-center gap-1.5">
                             <Lock size={12} /> Скрытая гордость
                           </span>
                         ) : (
-                          <span className="font-medium text-zinc-800 dark:text-zinc-200">{p.text}</span>
+                          <span className="font-medium text-[var(--text)]">{p.text}</span>
                         )}
                       </div>
                       {!displayPrivate && p.scale > 0 && (

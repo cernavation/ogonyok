@@ -92,7 +92,8 @@ export async function resolvePhotoUrl(photoIdOrUrl: string): Promise<string> {
     photoIdOrUrl.startsWith('http://') ||
     photoIdOrUrl.startsWith('https://') ||
     photoIdOrUrl.startsWith('blob:') ||
-    photoIdOrUrl.startsWith('data:')
+    photoIdOrUrl.startsWith('data:') ||
+    photoIdOrUrl.startsWith('/')
   ) {
     return photoIdOrUrl
   }

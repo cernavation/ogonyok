@@ -14,7 +14,8 @@ export function usePhotoUrl(source: string | null | undefined): string | null {
       source.startsWith('http://') ||
       source.startsWith('https://') ||
       source.startsWith('blob:') ||
-      source.startsWith('data:')
+      source.startsWith('data:') ||
+      source.startsWith('/')
     ) {
       return source
     }

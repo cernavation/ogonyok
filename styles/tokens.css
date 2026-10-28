@@ -11,6 +11,8 @@ body[data-theme='x-black'] {
   --bg-elev: #16181C;
   --surface: #16181C;
   --surface2: #1E2124;
+  --card-bg: #16181C;
+  --surface-subtle: #16181C;
   --bg-hover: rgba(231, 233, 234, 0.08);
   --bg-hover-post: rgba(255, 255, 255, 0.03);
   --border: #2F3336;
@@ -41,6 +43,8 @@ body[data-theme='apple-light'] {
   --bg-elev: #F7F9F9;
   --surface: #F7F9F9;
   --surface2: #EFF3F4;
+  --card-bg: #FFFFFF;
+  --surface-subtle: #F7F9F9;
   --bg-hover: rgba(15, 20, 25, 0.06);
   --bg-hover-post: rgba(0, 0, 0, 0.02);
   --border: #EFF3F4;
@@ -68,6 +72,8 @@ body[data-theme='dim'] {
   --bg-elev: #1E2732;
   --surface: #1E2732;
   --surface2: #22303C;
+  --card-bg: #1E2732;
+  --surface-subtle: #1E2732;
   --bg-hover: rgba(231, 233, 234, 0.08);
   --bg-hover-post: rgba(255, 255, 255, 0.03);
   --border: #38444D;

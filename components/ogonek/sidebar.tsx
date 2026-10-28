@@ -220,7 +220,17 @@ export function Sidebar({
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
-  const avatarImage = currentUser?.avatarImage || state.profile.avatarImage
+  const isAuthor =
+    !username ||
+    username.toLowerCase() === 'cernavation' ||
+    username.toLowerCase() === 'alex_cerna' ||
+    displayName.toLowerCase().includes('cerna') ||
+    displayName.toLowerCase().includes('церна') ||
+    displayName.toLowerCase().includes('черняк')
+  const avatarImage =
+    currentUser?.avatarImage ||
+    state.profile.avatarImage ||
+    (isAuthor ? '/author-avatar.png' : null)
 
   const handleSignOut = () => {
     setIsMenuOpen(false)
