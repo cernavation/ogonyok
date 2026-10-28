@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect, useRef, type ReactNode } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 
 type Props = {
   title: string
@@ -15,6 +16,7 @@ type Props = {
 }
 
 export function ModalShell({ title, onClose, children, closeOnEscape = true, hideHeader = false }: Props) {
+  useBodyScrollLock(true)
   const modalRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose

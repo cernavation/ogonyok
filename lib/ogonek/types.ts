@@ -60,6 +60,7 @@ export type GratitudeEntry = {
   num?: string
   text: string
   rating?: number // 1..10
+  visibility?: VisibilityLevel
 }
 
 export function getGratitudeText(g: string | GratitudeEntry): string {
@@ -270,6 +271,8 @@ export type ComposerPayload = {
   visibility?: VisibilityLevel
   /** Приватность каждой гордости по индексу (после удаления пустых) */
   prideVisibilities?: Record<number, VisibilityLevel>
+  /** Приватность каждой благодарности по индексу (после удаления пустых) */
+  gratitudeVisibilities?: Record<number, VisibilityLevel>
 }
 
 export type ComposerDraft = {
@@ -283,6 +286,8 @@ export type ComposerDraft = {
   visibility?: VisibilityLevel
   /** Черновик приватности гордостей по индексу */
   prideVisibilities?: Record<number, VisibilityLevel>
+  /** Черновик приватности благодарностей по индексу */
+  gratitudeVisibilities?: Record<number, VisibilityLevel>
 }
 
 /* ────────────────────────────────────────────────────────────────────────

@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { buildStoryAttachment } from '@/lib/ogonek/messenger'
 import { BUILTIN_EMOJIS } from '@/lib/ogonek/reactions'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -114,6 +115,7 @@ export function StoryViewerModal({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  useBodyScrollLock(true)
   const safeStories = Array.isArray(stories) ? stories : []
   const [storyIndex, setStoryIndex] = useState(() =>
     Math.min(Math.max(startIndex, 0), Math.max(safeStories.length - 1, 0))
@@ -481,8 +483,14 @@ export function StoryViewerModal({
                 </span>
               )}
             </span>
-            <span className="story-viewer__meta">
-              @{story.username} · {story.postedLabel}
+            <span className="story-viewer__meta flex items-center gap-1.5">
+              <span>@{story.username}</span>
+              <span>·</span>
+              <span>{story.postedLabel}</span>
+              <span>·</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/15 text-[11px] font-mono font-medium text-white/90">
+                {Math.max(1, Math.ceil((1 - progress / 100) * (SLIDE_DURATION_MS / 1000)))}с
+              </span>
             </span>
           </span>
           <button
@@ -512,8 +520,25 @@ export function StoryViewerModal({
             {slide.kicker}
           </span>
           <span className="story-viewer__emoji">{slide.emoji}</span>
-          <span className="story-viewer__headline">{slide.headline}</span>
-          <span className="story-viewer__detail">{slide.detail}</span>
+          <span
+            className="story-viewer__headline select-text"
+            style={{
+              fontSize:
+                (slide.headline?.length ?? 0) > 100
+                  ? 'clamp(17px, 3.4vw, 21px)'
+                  : (slide.headline?.length ?? 0) > 50
+                  ? 'clamp(20px, 3.8vw, 25px)'
+                  : 'clamp(24px, 4.2vw, 30px)',
+              lineHeight: 1.3,
+            }}
+          >
+            {slide.headline}
+          </span>
+          {slide.detail && (
+            <span className="story-viewer__detail select-text">
+              {slide.detail}
+            </span>
+          )}
           {digest && (
             <button
               type="button"

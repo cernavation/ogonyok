@@ -2,6 +2,7 @@
 
 import { Award, Calendar, Download, Flame, Heart, Settings, ShieldCheck, Sparkles, X, Zap } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { downloadBlob } from '@/lib/ogonek/card-export'
@@ -44,6 +45,7 @@ const LEGENDARY_ACHIEVEMENTS = [
 ] as const
 
 export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalProps) {
+  useBodyScrollLock(true)
   const titleId = useId()
   const modalRef = useRef<HTMLDivElement>(null)
 

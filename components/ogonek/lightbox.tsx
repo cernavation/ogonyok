@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { useEffect } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 
 type Props = {
   src: string | null
@@ -10,6 +11,7 @@ type Props = {
 }
 
 export function Lightbox({ src, onClose }: Props) {
+  useBodyScrollLock(Boolean(src))
   useEffect(() => {
     if (!src) return
 

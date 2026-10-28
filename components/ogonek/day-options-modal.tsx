@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import {
   Sparkles,
   Pencil,
@@ -37,6 +38,7 @@ export function DayOptionsModal({
   onNotify,
   soundEnabled = true,
 }: DayOptionsModalProps) {
+  useBodyScrollLock(isOpen)
   const {
     state,
     setDayVisibility,

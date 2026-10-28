@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, Copy, Download, Pause, Play, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { downloadBlob } from '@/lib/ogonek/card-export'
 import {
   buildProfileShareUrl,
@@ -31,6 +32,7 @@ export function ProfileStoryModal({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  useBodyScrollLock(true)
   const safeStart = Math.min(Math.max(startIndex, 0), Math.max(stories.length - 1, 0))
   const [index, setIndex] = useState(safeStart)
   const [progress, setProgress] = useState(0)

@@ -206,6 +206,19 @@ export function Composer({
     return initialDraft?.prideVisibilities ?? {}
   })
 
+  /** Приватность каждой благодарности по её индексу в форме (0..5) */
+  const [gratitudeVis, setGratitudeVis] = useState<Record<number, VisibilityLevel>>(() => {
+    if (editingDay && Array.isArray(editingDay.gratitudes)) {
+      const map: Record<number, VisibilityLevel> = {}
+      editingDay.gratitudes.forEach((g, idx) => {
+        const vis = typeof g === 'object' && g.visibility ? g.visibility : editingDay.visibility
+        map[idx] = normalizeVisibility(vis)
+      })
+      return map
+    }
+    return initialDraft?.gratitudeVisibilities ?? {}
+  })
+
   /** Индекс гордости, для которой открыт мастер публикации в Сторис */
   const [storyModalIndex, setStoryModalIndex] = useState<number | null>(null)
 
@@ -255,6 +268,7 @@ export function Composer({
         lastSavedISO: new Date().toISOString(),
         visibility: dayVisibility,
         prideVisibilities: prideVis,
+        gratitudeVisibilities: gratitudeVis,
       }
 
       // 1. Синхронное резервное сохранение
@@ -268,7 +282,7 @@ export function Composer({
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis])
+  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -413,6 +427,14 @@ export function Composer({
       visIdx++
     })
 
+    const gratitudeVisibilities: Record<number, VisibilityLevel> = {}
+    let gVisIdx = 0
+    gratitudes.forEach((g, origIdx) => {
+      if (g.trim().length === 0) return
+      gratitudeVisibilities[gVisIdx] = normalizeVisibility(gratitudeVis[origIdx] ?? dayVisibility)
+      gVisIdx++
+    })
+
     return {
       prides: filledPrides,
       gratitudes: filledGratitudes,
@@ -420,6 +442,7 @@ export function Composer({
       ratings,
       visibility: dayVisibility,
       prideVisibilities,
+      gratitudeVisibilities,
     }
   }
 
@@ -435,6 +458,7 @@ export function Composer({
       lastSavedISO: new Date().toISOString(),
       visibility: dayVisibility,
       prideVisibilities: prideVis,
+      gratitudeVisibilities: gratitudeVis,
     })
     onClose()
   }
@@ -514,6 +538,41 @@ export function Composer({
     }
   })
 
+  const handleSwitchTab = (nextTab: Mode) => {
+    playClick(soundEnabled)
+    setTab(nextTab)
+    const targetList = nextTab === 'gratitude' ? gratitudes : prides
+    const firstEmptyIdx = targetList.slice(0, 5).findIndex((item) => !item || item.trim().length === 0)
+    setActiveSlot(firstEmptyIdx >= 0 ? firstEmptyIdx : 0)
+  }
+
+  const isCurrentTabAllPrivate = useMemo(() => {
+    const visMap = tab === 'pride' ? prideVis : gratitudeVis
+    return [0, 1, 2, 3, 4].every((slot) => (visMap[slot] ?? dayVisibility) === 'private')
+  }, [tab, prideVis, gratitudeVis, dayVisibility])
+
+  const handleToggleAllVisibility = () => {
+    playClick(soundEnabled)
+    const nextLevel: VisibilityLevel = isCurrentTabAllPrivate ? 'public' : 'private'
+    const updated: Record<number, VisibilityLevel> = {
+      0: nextLevel,
+      1: nextLevel,
+      2: nextLevel,
+      3: nextLevel,
+      4: nextLevel,
+    }
+    if (tab === 'pride') {
+      setPrideVis((prev) => ({ ...prev, ...updated }))
+    } else {
+      setGratitudeVis((prev) => ({ ...prev, ...updated }))
+    }
+    onNotify?.(
+      nextLevel === 'private'
+        ? `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь личные 🔒`
+        : `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь публичные 🌐`
+    )
+  }
+
   const storyDayLabel = (() => {
     const iso = editingDay?.dateISO || dateISO
     if (!iso) return undefined
@@ -549,10 +608,7 @@ export function Composer({
               type="button"
               role="tab"
               aria-selected={tab === 'pride'}
-              onClick={() => {
-                playClick(soundEnabled)
-                setTab('pride')
-              }}
+              onClick={() => handleSwitchTab('pride')}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
                 tab === 'pride'
                   ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm'
@@ -565,10 +621,7 @@ export function Composer({
               type="button"
               role="tab"
               aria-selected={tab === 'gratitude'}
-              onClick={() => {
-                playClick(soundEnabled)
-                setTab('gratitude')
-              }}
+              onClick={() => handleSwitchTab('gratitude')}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
                 tab === 'gratitude'
                   ? 'bg-rose-600 text-white shadow-sm'
@@ -618,7 +671,8 @@ export function Composer({
             const val = currentValues[slot] || ''
             const isFilled = val.trim().length > 0
             const isActive = activeSlot === slot
-            const isItemPrivate = tab === 'pride' && (prideVis[slot] ?? dayVisibility) === 'private'
+            const isItemPrivate =
+              (tab === 'pride' ? prideVis[slot] : gratitudeVis[slot]) ?? dayVisibility === 'private'
             return (
               <button
                 key={slot}
@@ -651,11 +705,12 @@ export function Composer({
           <span className="text-[13px] text-[var(--text-2)] font-medium">
             {tab === 'pride' ? `Гордость #${activeSlot + 1}` : `Благодарность #${activeSlot + 1}`}
           </span>
-          {tab === 'pride' && (
-            <button
-              type="button"
-              onClick={() => {
-                playClick(soundEnabled)
+          {/* Тумблер видимости конкретного пункта (Гордость / Благодарность) */}
+          <button
+            type="button"
+            onClick={() => {
+              playClick(soundEnabled)
+              if (tab === 'pride') {
                 const cur = prideVis[activeSlot] ?? dayVisibility
                 const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
                 setPrideVis((prev) => ({ ...prev, [activeSlot]: next }))
@@ -664,28 +719,61 @@ export function Composer({
                     ? `Гордость #${activeSlot + 1} видна всем 🌐`
                     : `Гордость #${activeSlot + 1} скрыта (только себе) 🔒`
                 )
-              }}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
-                (prideVis[activeSlot] ?? dayVisibility) === 'public'
-                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
-                  : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700'
-              }`}
-              title="Нажмите, чтобы изменить видимость этого пункта гордости"
-              aria-label="Видимость пункта гордости"
-            >
-              {(prideVis[activeSlot] ?? dayVisibility) === 'public' ? (
-                <>
-                  <Globe size={13} className="text-blue-400" />
-                  <span>🌐 Публично</span>
-                </>
-              ) : (
-                <>
-                  <Lock size={13} className="text-zinc-400" />
-                  <span>🔒 Лично</span>
-                </>
-              )}
-            </button>
-          )}
+              } else {
+                const cur = gratitudeVis[activeSlot] ?? dayVisibility
+                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
+                setGratitudeVis((prev) => ({ ...prev, [activeSlot]: next }))
+                onNotify?.(
+                  next === 'public'
+                    ? `Благодарность #${activeSlot + 1} видна всем 🌐`
+                    : `Благодарность #${activeSlot + 1} скрыта (только себе) 🔒`
+                )
+              }
+            }}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all ${
+              (tab === 'pride'
+                ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
+                : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public')
+                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30 hover:bg-blue-500/20'
+                : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700'
+            }`}
+            title={`Нажмите, чтобы изменить видимость этого пункта ${tab === 'pride' ? 'гордости' : 'благодарности'}`}
+            aria-label="Видимость пункта"
+          >
+            {(tab === 'pride'
+              ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
+              : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public') ? (
+              <>
+                <Globe size={13} className="text-blue-400" />
+                <span>🌐 Публично</span>
+              </>
+            ) : (
+              <>
+                <Lock size={13} className="text-zinc-400" />
+                <span>🔒 Лично</span>
+              </>
+            )}
+          </button>
+
+          {/* Быстрая смена видимости для всех 5 пунктов в 1 клик */}
+          <button
+            type="button"
+            onClick={handleToggleAllVisibility}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--bg-elev)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)] hover:bg-[var(--bg-hover)] transition-all"
+            title={isCurrentTabAllPrivate ? 'Сделать все 5 пунктов публичными' : 'Сделать все 5 пунктов личными'}
+          >
+            {isCurrentTabAllPrivate ? (
+              <>
+                <Globe size={13} className="text-blue-400" />
+                <span>🌐 Сделать все публичными</span>
+              </>
+            ) : (
+              <>
+                <Lock size={13} className="text-zinc-400" />
+                <span>🔒 Сделать все личными</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -713,8 +801,8 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative mb-3 rounded-2xl overflow-hidden border border-[var(--border)] max-h-[160px]">
-          <img src={preview} alt="Фото" className="w-full h-full object-cover" />
+        <div className="relative max-h-[300px] w-full flex items-center justify-center bg-black/40 rounded-2xl overflow-hidden my-2 border border-[#2f3336]">
+          <img src={preview} alt="Фото" className="max-h-[300px] w-auto object-contain" />
           <button
             type="button"
             onClick={() => {
@@ -722,10 +810,10 @@ export function Composer({
               setPhotoId(null)
               previewRef.current = null
             }}
-            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black min-h-[32px] min-w-[32px]"
+            className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center hover:bg-black transition-colors min-h-[32px] min-w-[32px] z-10"
             aria-label="Удалить фото"
           >
-            <X size={14} />
+            <X size={15} />
           </button>
         </div>
       )}
@@ -761,7 +849,7 @@ export function Composer({
             </button>
           )}
 
-          {/* Приватность (для гордости — тумблер пункта; для других вкладок — дня) */}
+          {/* Приватность пункта */}
           <button
             type="button"
             onClick={() => {
@@ -776,29 +864,30 @@ export function Composer({
                     : `Гордость #${activeSlot + 1}: 🔒 Лично (видит только автор)`
                 )
               } else {
-                const next = dayVisibility === 'public' ? 'private' : 'public'
-                setDayVisibility(next)
-                onNotify?.(next === 'public' ? 'Виден в общей ленте' : 'Личная запись (только себе)')
+                const cur = gratitudeVis[activeSlot] ?? dayVisibility
+                const next: VisibilityLevel = cur === 'public' ? 'private' : 'public'
+                setGratitudeVis((prev) => ({ ...prev, [activeSlot]: next }))
+                onNotify?.(
+                  next === 'public'
+                    ? `Благодарность #${activeSlot + 1}: 🌐 Публично (видят все)`
+                    : `Благодарность #${activeSlot + 1}: 🔒 Лично (видит только автор)`
+                )
               }
             }}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
             title={
               tab === 'pride'
                 ? `Видимость гордости #${activeSlot + 1}: ${(prideVis[activeSlot] ?? dayVisibility) === 'public' ? '🌐 Публично' : '🔒 Лично'}`
-                : `Приватность дня: ${dayVisibility === 'public' ? 'Общая' : 'Личная'}`
+                : `Видимость благодарности #${activeSlot + 1}: ${(gratitudeVis[activeSlot] ?? dayVisibility) === 'public' ? '🌐 Публично' : '🔒 Лично'}`
             }
             aria-label="Переключить приватность"
           >
-            {tab === 'pride' ? (
-              (prideVis[activeSlot] ?? dayVisibility) === 'public' ? (
-                <Globe size={18} className="text-blue-400" />
-              ) : (
-                <Lock size={18} className="text-zinc-400" />
-              )
-            ) : dayVisibility === 'public' ? (
-              <Shield size={18} />
+            {(tab === 'pride'
+              ? (prideVis[activeSlot] ?? dayVisibility) === 'public'
+              : (gratitudeVis[activeSlot] ?? dayVisibility) === 'public') ? (
+              <Globe size={18} className="text-blue-400" />
             ) : (
-              <Lock size={18} />
+              <Lock size={18} className="text-zinc-400" />
             )}
           </button>
 

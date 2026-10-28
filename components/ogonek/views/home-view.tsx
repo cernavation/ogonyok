@@ -82,7 +82,7 @@ export function HomeView({
   // Автозагрузка дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
   useEffect(() => {
     if (isOwner && (!days || days.length === 0)) {
-      const targetUid = userId || currentUser?.id || state.auth.activeAccountId
+      const targetUid = userId || currentUser?.id || state.auth.activeAccountId || undefined
       loadDaysFromCloud?.(targetUid)
     }
   }, [isOwner, days?.length, userId, currentUser?.id, state.auth.activeAccountId, loadDaysFromCloud])

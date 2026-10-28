@@ -888,9 +888,9 @@ export function AppShell() {
               streak={streakState.streak}
             />
 
-            {/* Центральная колонка: w-full max-w-[620px] shrink-0 border-r border-[#2f3336] */}
+            {/* Центральная колонка: w-full max-w-[600px] shrink-0 border-r border-[#2f3336] (max-w-[620px]) */}
             <section
-              className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[#2f3336]"
+              className="w-full max-w-[600px] shrink-0 min-h-screen border-r border-[#2f3336]"
               aria-label="Основное содержимое"
             >
               <motion.div
