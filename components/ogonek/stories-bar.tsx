@@ -18,9 +18,18 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { calculateStreak } from '@/lib/ogonek/streak'
 import { getInitials } from '@/lib/ogonek/initials'
+import dynamic from 'next/dynamic'
 import { getActiveStories, subscribeToStories, type StoryRecord } from '@/lib/supabase/api'
-import { StoryComposerModal } from './story-composer-modal'
-import { StoryViewerModal } from './story-viewer-modal'
+
+// Динамические импорты модалок историй (Zero Lag)
+const StoryComposerModal = dynamic(
+  () => import('./story-composer-modal').then((m) => m.StoryComposerModal),
+  { ssr: false }
+)
+const StoryViewerModal = dynamic(
+  () => import('./story-viewer-modal').then((m) => m.StoryViewerModal),
+  { ssr: false }
+)
 
 type Props = {
   /** 'feed' — горизонтальная лента вверху главной; 'rail' — карточка справа */

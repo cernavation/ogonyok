@@ -11,11 +11,19 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import dynamic from 'next/dynamic'
 import { ModalShell } from './modal-shell'
-import { PublishPrideStoryModal } from './publish-pride-story-modal'
-import { EvaluationCeremonyModal } from './evaluation-ceremony-modal'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
+
+const PublishPrideStoryModal = dynamic(
+  () => import('./publish-pride-story-modal').then((m) => m.PublishPrideStoryModal),
+  { ssr: false }
+)
+const EvaluationCeremonyModal = dynamic(
+  () => import('./evaluation-ceremony-modal').then((m) => m.EvaluationCeremonyModal),
+  { ssr: false }
+)
 
 type PromptSphere = {
   id: string

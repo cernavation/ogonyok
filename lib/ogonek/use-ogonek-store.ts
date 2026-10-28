@@ -835,25 +835,135 @@ export type AuthResult = {
   error?: string
 }
 
+// ── МЕМОИЗИРОВАННЫЙ КЭШ СЕССИИ (ZERO LAG) ──────────────────────────────
+let memoizedCurrentUser: CurrentUser = null
+let memoizedActiveAccountId: string | null = null
+let memoizedSignedIn: boolean = false
+let memoizedAccountsRef: any = null
+let memoizedProfileRef: any = null
+
+export function getMemoizedCurrentUser(state: OgonekStoreState): CurrentUser {
+  if (!state.auth?.signedIn || !state.auth?.activeAccountId) {
+    memoizedCurrentUser = null
+    memoizedActiveAccountId = null
+    memoizedSignedIn = false
+    memoizedAccountsRef = null
+    memoizedProfileRef = null
+    return null
+  }
+
+  if (
+    memoizedCurrentUser &&
+    memoizedActiveAccountId === state.auth.activeAccountId &&
+    memoizedSignedIn === state.auth.signedIn &&
+    memoizedAccountsRef === state.auth.accounts &&
+    memoizedProfileRef === state.profile
+  ) {
+    return memoizedCurrentUser
+  }
+
+  const active = state.auth.accounts?.find((a) => a.id === state.auth.activeAccountId)
+  if (!active) {
+    memoizedCurrentUser = null
+    return null
+  }
+
+  const username = active.snapshot?.username || state.profile?.username
+  const displayName = active.snapshot?.displayName || state.profile?.displayName
+  if (!username && !displayName) {
+    memoizedCurrentUser = null
+    return null
+  }
+
+  memoizedCurrentUser = {
+    id: active.id,
+    username: username || 'user',
+    displayName: displayName || username || 'Пользователь',
+    avatarImage: active.snapshot?.avatarImage ?? state.profile?.avatarImage ?? null,
+    avatarColor: active.snapshot?.avatarColor ?? state.profile?.avatarColor ?? '#ff6b35',
+    bio: active.snapshot?.bio ?? state.profile?.bio ?? '',
+    city: active.snapshot?.city ?? state.profile?.city ?? '',
+  }
+  memoizedActiveAccountId = state.auth.activeAccountId
+  memoizedSignedIn = state.auth.signedIn
+  memoizedAccountsRef = state.auth.accounts
+  memoizedProfileRef = state.profile
+
+  return memoizedCurrentUser
+}
+
+let memoizedSessionAvatar: string | null = null
+let memoizedSessionAvatarRaw: string | null = null
+
+/** Быстрое синхронное чтение аватара из стабильного кэша */
+export function getCachedProfileAvatar(): string | null {
+  const current = getSnapshot()
+  const raw = current.profile?.avatarImage || null
+  if (raw === memoizedSessionAvatarRaw && memoizedSessionAvatar !== null) {
+    return memoizedSessionAvatar
+  }
+  memoizedSessionAvatarRaw = raw
+  memoizedSessionAvatar = raw
+  return raw
+}
+
+/** Быстрое синхронное чтение профиля из стабильного кэша */
+export function getCachedProfile(): OgonekStoreState['profile'] {
+  return getSnapshot().profile
+}
+
+/**
+ * Селектор стора, возвращающий примитив или стабильный объект.
+ * Предотвращает лишние ре-рендеры дерева компонентов при нерелевантных обновлениях.
+ */
+export function useOgonekSelector<T>(selector: (state: OgonekStoreState) => T): T {
+  return useSyncExternalStore(
+    subscribe,
+    () => selector(getSnapshot()),
+    () => selector(getServerSnapshot())
+  )
+}
+
+/** Примитивный селектор: общее количество дней */
+export function useDayCount(): number {
+  return useOgonekSelector((s) => s.days?.length || 0)
+}
+
+/** Примитивный селектор: текущий стрик */
+export function useProfileStreak(): number {
+  return useOgonekSelector((s) => Number(s.profile?.streak_count || s.profile?.streak || 0))
+}
+
+/** Примитивный селектор: никнейм автора */
+export function useProfileUsername(): string {
+  return useOgonekSelector((s) => s.profile?.username || 'user')
+}
+
+/** Примитивный селектор: отображаемое имя автора */
+export function useProfileDisplayName(): string {
+  return useOgonekSelector((s) => s.profile?.displayName || 'Пользователь')
+}
+
+/** Примитивный селектор: стабильная ссылка на аватар профиля */
+export function useProfileAvatar(): string | null {
+  return useOgonekSelector((s) => s.profile?.avatarImage || null)
+}
+
+/** Примитивный селектор: статус авторизации */
+export function useIsSignedIn(): boolean {
+  return useOgonekSelector((s) => Boolean(s.auth?.signedIn))
+}
+
+/** Примитивный селектор: ID активного аккаунта */
+export function useActiveAccountId(): string | null {
+  return useOgonekSelector((s) => s.auth?.activeAccountId || null)
+}
+
 export function useOgonekStore() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
   const currentUser: CurrentUser = useMemo(() => {
-    if (!state.auth.signedIn || !state.auth.activeAccountId) return null
-    const active = state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)
-    if (!active) return null
-    const username = active.snapshot?.username || state.profile.username
-    const displayName = active.snapshot?.displayName || state.profile.displayName
-    if (!username && !displayName) return null
-    return {
-      id: active.id,
-      username: username || 'user',
-      displayName: displayName || username || 'Пользователь',
-      avatarImage: active.snapshot?.avatarImage ?? state.profile.avatarImage ?? null,
-      avatarColor: active.snapshot?.avatarColor ?? state.profile.avatarColor ?? '#ff6b35',
-      bio: active.snapshot?.bio ?? state.profile.bio ?? '',
-      city: active.snapshot?.city ?? state.profile.city ?? '',
-    }
+    return getMemoizedCurrentUser(state)
   }, [state.auth.signedIn, state.auth.activeAccountId, state.auth.accounts, state.profile])
 
   const updateStore = useCallback((updater: (prev: OgonekStoreState) => OgonekStoreState) => {

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion'
 import { BookmarkPlus, Flame, Forward, Heart, Send, Sparkles, Loader2, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react'
-import { useId, useState } from 'react'
+import { useId, useState, memo } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   getGratitudeText,
@@ -70,7 +70,7 @@ function PrideStars({ rating }: { rating: number | null | undefined }) {
   )
 }
 
-export function DayEntries({
+function DayEntriesComponent({
   prides,
   gratitudes,
   dayId,
@@ -461,3 +461,8 @@ export function DayEntries({
     </>
   )
 }
+
+import { areDayEntriesPropsEqual } from '@/lib/ogonek/feed-memo'
+export { areDayEntriesPropsEqual }
+
+export const DayEntries = memo(DayEntriesComponent, areDayEntriesPropsEqual)

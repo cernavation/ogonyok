@@ -10,10 +10,9 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { AppearanceProvider } from './appearance-provider'
-import { AuthModal, AuthScreen } from './auth'
+import { AuthScreen } from './auth'
 import { BottomNav } from './bottom-nav'
 import { MobileTopBar } from './mobile-top-bar'
-import { Composer } from './composer'
 import { RightRail } from './right-rail'
 import { AppLockScreen } from './security'
 import { Sidebar } from './sidebar'
@@ -35,7 +34,6 @@ import { PremiumView } from './views/premium-view'
 import { GuestLanding } from './landing/guest-landing'
 import { ChatWindow } from './messenger/chat-window'
 import { FullscreenMessenger } from './messenger/fullscreen-messenger'
-import { ChatCallModal } from './messenger/chat-call-modal'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
 import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
@@ -43,6 +41,10 @@ import { getSupabase } from '@/lib/supabase/client'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { Phone, PhoneOff, Video } from 'lucide-react'
 
+// Динамические импорты тяжелых модальных окон (Zero Initial Lag, 120 FPS сплиттинг)
+const Composer = dynamic(() => import('./composer').then((m) => m.Composer), { ssr: false })
+const AuthModal = dynamic(() => import('./auth').then((m) => m.AuthModal), { ssr: false })
+const ChatCallModal = dynamic(() => import('./messenger/chat-call-modal').then((m) => m.ChatCallModal), { ssr: false })
 const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.HotkeysModal), { ssr: false })
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })

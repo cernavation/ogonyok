@@ -10,14 +10,19 @@ import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
+import dynamic from 'next/dynamic'
 import { Button } from '../ui'
 import { DayCard } from '../day-card'
 import { EveningReview } from '../evening-review'
-import { FocusHistoryModal } from '../focus-history-modal'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
+
+const FocusHistoryModal = dynamic(
+  () => import('../focus-history-modal').then((m) => m.FocusHistoryModal),
+  { ssr: false }
+)
 
 const CHUNK_SIZE = 20
 

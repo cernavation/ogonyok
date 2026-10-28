@@ -32,12 +32,16 @@ import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { IconButton } from './ui'
-import { DayOptionsModal } from './day-options-modal'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
+
+const DayOptionsModal = dynamic(
+  () => import('./day-options-modal').then((m) => m.DayOptionsModal),
+  { ssr: false }
+)
 
 const ForwardToChatModal = dynamic(
   () => import('./messenger').then((m) => m.ForwardToChatModal),
@@ -650,4 +654,7 @@ function DayCardComponent({
   )
 }
 
-export const DayCard = memo(DayCardComponent)
+import { areDayCardPropsEqual } from '@/lib/ogonek/feed-memo'
+export { areDayCardPropsEqual }
+
+export const DayCard = memo(DayCardComponent, areDayCardPropsEqual)
