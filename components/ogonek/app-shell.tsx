@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic'
 import { AppearanceProvider } from './appearance-provider'
 import { AuthModal, AuthScreen } from './auth'
 import { BottomNav } from './bottom-nav'
+import { MobileTopBar } from './mobile-top-bar'
 import { Composer } from './composer'
 import { RightRail } from './right-rail'
 import { AppLockScreen } from './security'
@@ -887,7 +888,7 @@ export function AppShell() {
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
       />
-      <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)]" data-locked={locked ? 'true' : undefined}>
+      <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-hidden" data-locked={locked ? 'true' : undefined}>
         {view === 'messages' ? (
           <FullscreenMessenger
             initialThreadId={state.chatActiveFriendId || undefined}
@@ -899,10 +900,10 @@ export function AppShell() {
             onFocusIntentions={handleFocusIntentions}
           />
         ) : (
-          <div className="w-full max-w-[1380px] flex justify-between min-h-screen">
-            <div className="flex flex-row shrink-0">
+          <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen overflow-x-hidden">
+            <div className="flex flex-row w-full overflow-x-hidden">
               <Sidebar
-                className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
+                className="hidden md:flex w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
                 view={view}
                 onNavigate={navigate}
                 onFocusIntentions={handleFocusIntentions}
@@ -913,11 +914,15 @@ export function AppShell() {
                 streak={streakState.streak}
               />
 
-              {/* Центральная колонка: w-full max-w-[620px] shrink-0 border-r border-[#2f3336] */}
+              {/* Центральная колонка */}
               <section
-                className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[var(--line)]"
+                className="w-full md:max-w-[620px] md:shrink-0 min-h-screen border-r border-[#2f3336] md:border-r md:border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
                 aria-label="Основное содержимое"
               >
+                <MobileTopBar
+                  onNavigate={navigate}
+                  onNotify={notify}
+                />
                 <motion.div
                   key={view}
                   className="view w-full"

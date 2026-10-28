@@ -1582,7 +1582,7 @@ kbd {
 }
 
 /* Планшет 768px (iPad Portrait) — правая колонка скрыта, левое меню узкое (иконки) */
-@media (max-width: 1000px) and (min-width: 701px) {
+@media (max-width: 1000px) and (min-width: 768px) {
   .app-shell {
     grid-template-columns: 82px minmax(0, 1fr) !important;
   }
@@ -1591,7 +1591,7 @@ kbd {
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 767px) {
   button,
   [role="button"],
   input[type="button"],

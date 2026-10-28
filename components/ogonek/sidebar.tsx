@@ -267,7 +267,7 @@ export function Sidebar({
     <aside
       className={`${
         isCollapsed ? 'w-[72px] px-[11px] items-center' : 'w-[275px] px-3'
-      } shrink-0 sticky top-0 h-screen border-r border-[#2f3336] flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-4 ${className || ''}`}
+      } shrink-0 sticky top-0 h-screen border-r border-[#2f3336] hidden md:flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-4 ${className || ''}`}
       aria-label="Боковая панель"
     >
       <div className="flex flex-col gap-1 w-full items-center">
