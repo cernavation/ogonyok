@@ -235,7 +235,7 @@ export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Do
   root.style.setProperty('--accent-contrast', details.contrast)
   root.style.setProperty('--accent-text', details.contrast)
   root.style.setProperty('--orange', details.color)
-  root.style.setProperty('--blue', details.color)
+  root.style.setProperty('--blue', '#1D9BF0')
 
   // Подсказываем браузеру схему
   const scheme = getThemePreset(settings.theme).scheme

@@ -205,7 +205,7 @@ export function FullscreenMessenger({
               onOpenAuth={onOpenAuth || (() => {})}
               onNotify={notify}
               streak={CURRENT_DAY}
-              className="w-[68px] items-center px-2 shrink-0 border-r border-[#2f3336]"
+              className="w-[72px] pl-3 pr-2 shrink-0 border-r border-[#2f3336]"
               isCollapsed={true}
             />
 

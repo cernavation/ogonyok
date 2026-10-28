@@ -77,13 +77,9 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
           </svg>
         )
       case 'explore':
-        return (
-          <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
-            <path fillRule="evenodd" clipRule="evenodd" d="M10.25 3.75a6.5 6.5 0 104.964 10.697l5.27 5.272a1 1 0 101.414-1.414l-5.272-5.27A6.5 6.5 0 0010.25 3.75zm-4.5 6.5a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z" />
-          </svg>
-        )
+        return <Search size={24} strokeWidth={2.8} className="text-white shrink-0" />
       case 'messages':
-        return <MessageCircle size={size} strokeWidth={2.4} className="fill-current text-white shrink-0" />
+        return <MessageCircle size={size} strokeWidth={2.4} className="fill-white text-white shrink-0" />
       case 'profile':
         return (
           <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
@@ -91,19 +87,49 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
           </svg>
         )
       case 'vault':
-        return <Zap size={size} strokeWidth={2.2} className="fill-current text-white shrink-0" />
+        return <Zap size={size} strokeWidth={2.4} className="fill-white text-white shrink-0" />
       case 'premium':
-        return <BadgeCheck size={size} strokeWidth={2.2} className="fill-current text-white shrink-0" />
+        return (
+          <svg viewBox="0 0 24 24" width={size} height={size} className="text-white shrink-0">
+            <mask id="badge-check-cutout">
+              <path
+                d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"
+                fill="white"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+                fill="none"
+                stroke="black"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </mask>
+            <rect width="24" height="24" fill="white" mask="url(#badge-check-cutout)" />
+          </svg>
+        )
       case 'analytics':
-        return <BarChart3 size={size} strokeWidth={2.5} className="fill-current text-white shrink-0" />
+        return (
+          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
+            <BarChart3 className="text-black w-4 h-4 shrink-0" strokeWidth={2.5} />
+          </div>
+        )
       case 'leaderboard':
-        return <Trophy size={size} strokeWidth={2.2} className="fill-current text-white shrink-0" />
+        return (
+          <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
+            <path d="M19 4h-2V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1H5a3 3 0 0 0-3 3v1a4 4 0 0 0 4 4h.42A7.002 7.002 0 0 0 11 16.9V19H8a1 1 0 0 0-1 1v2h10v-2a1 1 0 0 0-1-1h-3v-2.1a7.002 7.002 0 0 0 4.58-3.9H18a4 4 0 0 0 4-4V7a3 3 0 0 0-3-3zM4 8V7a1 1 0 0 1 1-1h2v3a2 2 0 0 1-2-2h-1zm16 0a2 2 0 0 1-2 2V6h2a1 1 0 0 1 1 1v1z" />
+          </svg>
+        )
       case 'intentions':
-        return <Target size={size} strokeWidth={2.5} className="fill-current text-white shrink-0" />
+        return (
+          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
+            <Target className="text-black w-4 h-4 shrink-0" strokeWidth={2.5} />
+          </div>
+        )
       case 'settings':
-        return <Settings size={size} strokeWidth={2.5} className="fill-current text-white shrink-0" />
+        return <Settings size={size} strokeWidth={2.8} className="text-white shrink-0" fill="none" />
       default:
-        return <Home size={size} strokeWidth={2.5} className="fill-current text-white shrink-0" />
+        return <Home size={size} strokeWidth={2.5} className="fill-white text-white shrink-0" />
     }
   }
 
@@ -228,7 +254,7 @@ export function Sidebar({
   return (
     <aside
       className={`${
-        isCollapsed ? 'w-[68px] items-center px-2' : 'w-[275px] px-3'
+        isCollapsed ? 'w-[72px] pl-3 pr-2 items-center' : 'w-[275px] px-3'
       } shrink-0 sticky top-0 h-screen border-r border-[#2f3336] flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-4 ${className || ''}`}
       aria-label="Боковая панель"
     >
@@ -246,10 +272,10 @@ export function Sidebar({
           title="Огонёк"
         >
           <span
-            className="brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] group-hover:scale-110 transition-transform duration-200"
+            className="brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] group-hover:scale-110 transition-transform duration-200"
             aria-hidden="true"
           >
-            <Flame size={22} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+            <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
           </span>
           {!isCollapsed && (
             <span className="font-bold tracking-tight text-[19px] text-[var(--text)]">Огонёк</span>

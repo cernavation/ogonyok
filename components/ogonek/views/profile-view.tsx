@@ -796,7 +796,7 @@ export function ProfileView({
               {displayProfile.displayName || (displayProfile.username ? `@${displayProfile.username}` : 'Пользователь')}
             </h2>
             {displayProfile.verified && (
-              <span className="w-4 h-4 rounded-full bg-[var(--accent)] text-[var(--accent-text)] inline-flex items-center justify-center flex-none" title="Верифицированный профиль">
+              <span className="w-4 h-4 rounded-full bg-[#1d9bf0] text-white inline-flex items-center justify-center flex-none" title="Верифицированный профиль">
                 <Check size={10} strokeWidth={3} />
               </span>
             )}

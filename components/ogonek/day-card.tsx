@@ -26,6 +26,7 @@ import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
 import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { getInitials } from '@/lib/ogonek/initials'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -79,6 +80,7 @@ function DayCardComponent({
 }: Props) {
   const {
     state,
+    currentUser,
     ratePride,
     toggleReaction,
     setDayVisibility,
@@ -103,7 +105,29 @@ function DayCardComponent({
   const reduce = useReducedMotion()
 
   const dayVisibility = normalizeVisibility(day.visibility)
-  const myAvatarSrc = usePhotoUrl(state.profile.avatarImage)
+
+  const rawAvatar =
+    currentUser?.avatarImage ||
+    (currentUser as any)?.avatar_image ||
+    (currentUser as any)?.avatar_url ||
+    state.profile.avatarImage ||
+    (state.profile as any)?.avatar ||
+    (state.profile as any)?.avatar_url
+
+  const myAvatarSrc = usePhotoUrl(rawAvatar)
+  const effectiveAvatarSrc =
+    myAvatarSrc ||
+    (rawAvatar &&
+    (rawAvatar.startsWith('http://') ||
+      rawAvatar.startsWith('https://') ||
+      rawAvatar.startsWith('data:') ||
+      rawAvatar.startsWith('blob:'))
+      ? rawAvatar
+      : null)
+
+  const displayName = state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
+  const username = state.profile?.username || currentUser?.username || 'cernavation'
+  const initials = getInitials(displayName, username)
 
   const firstPride = useMemo(() => {
     return day.prides?.find((p) => p.text && p.text !== '—')
@@ -238,15 +262,23 @@ function DayCardComponent({
         <div className="flex gap-3">
           {/* Avatar with gradient ring */}
           <div className="flex-none pt-0.5">
-            <div
-              className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none text-white shadow-sm"
-              style={{
-                background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-              }}
-              aria-hidden="true"
-            >
-              AC
-            </div>
+            {effectiveAvatarSrc ? (
+              <img
+                src={effectiveAvatarSrc}
+                alt={displayName}
+                className="w-10 h-10 rounded-full object-cover shadow-sm border border-[var(--border)]"
+              />
+            ) : (
+              <div
+                className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none text-white shadow-sm"
+                style={{
+                  background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
+                }}
+                aria-hidden="true"
+              >
+                {initials}
+              </div>
+            )}
           </div>
 
           {/* Content */}
@@ -255,15 +287,15 @@ function DayCardComponent({
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                 <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
-                  {state.profile?.displayName || 'Alexei Cerna'}
+                  {displayName}
                 </span>
                 <span
                   className="inline-flex items-center justify-center rounded-full text-white flex-none"
-                  style={{ background: 'var(--accent)', width: 15, height: 15 }}
+                  style={{ background: '#1d9bf0', width: 16, height: 16 }}
                   title="Верифицирован"
                   aria-label="Верифицирован"
                 >
-                  <Check size={9} strokeWidth={3} />
+                  <Check size={10} strokeWidth={3} />
                 </span>
                 {dayVisibility !== 'public' && (
                   <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--text-2)] flex-none" aria-label="Приватность">
@@ -271,7 +303,7 @@ function DayCardComponent({
                   </span>
                 )}
                 <span className="text-[13px] text-[var(--text-2)]">
-                  @{state.profile?.username || 'cernavation'} · {dateStr}
+                  @{username} · {dateStr}
                 </span>
                 {averageScore !== null && (
                   <span

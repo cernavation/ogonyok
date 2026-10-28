@@ -5898,7 +5898,7 @@ kbd {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: var(--blue);
+  background: #1d9bf0;
   color: #fff;
   font-size: 13px;
   font-weight: 900;

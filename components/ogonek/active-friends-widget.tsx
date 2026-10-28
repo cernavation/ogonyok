@@ -80,7 +80,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[#c2410c] text-white text-xs font-bold hover:bg-[#9a3412] transition-all shadow-sm"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold hover:opacity-90 transition-all shadow-sm active:scale-95"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}</span>

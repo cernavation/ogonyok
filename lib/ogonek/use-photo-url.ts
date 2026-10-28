@@ -8,7 +8,18 @@ import { resolvePhotoUrl, revokePhotoUrl } from './photos'
  * в отображаемый src. Для blob: URL корректно освобождает память.
  */
 export function usePhotoUrl(source: string | null | undefined): string | null {
-  const [url, setUrl] = useState<string | null>(null)
+  const [url, setUrl] = useState<string | null>(() => {
+    if (!source) return null
+    if (
+      source.startsWith('http://') ||
+      source.startsWith('https://') ||
+      source.startsWith('blob:') ||
+      source.startsWith('data:')
+    ) {
+      return source
+    }
+    return null
+  })
 
   useEffect(() => {
     let cancelled = false
