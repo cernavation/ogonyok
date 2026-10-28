@@ -502,6 +502,8 @@ export type FriendStory = {
 export type MyStory = {
   id: string
   createdAtISO: string
+  expires_at?: string
+  expiresAtISO?: string
   emoji: string
   kicker: string
   headline: string

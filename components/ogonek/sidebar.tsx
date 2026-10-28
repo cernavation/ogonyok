@@ -64,34 +64,26 @@ const UNIFIED_NAV: NavItemDef[] = [
 
 /**
  * Компонент иконки навигации в стиле X.com:
- * Активный: залитая (Solid Fill) иконка `fill-current text-white`
+ * Активный: залитая (Solid Fill) иконка `fill-white stroke-none` или жирный контур `stroke-[2.8px]`
  * Неактивный: контурная `stroke-[2px] text-[#71767b] group-hover:text-white`
  */
 function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; size?: number }) {
   if (isActive) {
     switch (id) {
       case 'home':
-        return (
-          <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
-            <path d="M12 1.696L.622 8.807l1.06 1.696L3 9.679V20a2 2 0 002 2h5v-6h4v6h5a2 2 0 002-2V9.68l1.318.823 1.06-1.696L12 1.696z" />
-          </svg>
-        )
+        return <Home size={24} className="fill-white stroke-none text-white shrink-0" />
       case 'explore':
-        return <Search size={24} strokeWidth={2.8} className="text-white shrink-0" />
+        return <Search size={24} strokeWidth={2.8} className="stroke-[2.8px] text-white shrink-0" />
       case 'messages':
-        return <MessageCircle size={size} strokeWidth={2.4} className="fill-white text-white shrink-0" />
+        return <MessageCircle size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
       case 'profile':
-        return (
-          <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
-            <path d="M12 11.5a4.5 4.5 0 100-9 4.5 4.5 0 000 9zm-7.5 9.5a7.5 7.5 0 0115 0H4.5z" />
-          </svg>
-        )
+        return <User size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
       case 'vault':
-        return <Zap size={size} strokeWidth={2.4} className="fill-white text-white shrink-0" />
+        return <Zap size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
       case 'premium':
         return (
-          <svg viewBox="0 0 24 24" width={size} height={size} className="text-white shrink-0">
-            <mask id="badge-check-cutout">
+          <svg viewBox="0 0 24 24" width={24} height={24} className="text-white shrink-0" fill="none">
+            <mask id="sidebar-badge-check-mask">
               <path
                 d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"
                 fill="white"
@@ -105,58 +97,54 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
                 strokeLinejoin="round"
               />
             </mask>
-            <rect width="24" height="24" fill="white" mask="url(#badge-check-cutout)" />
+            <rect width="24" height="24" fill="white" mask="url(#sidebar-badge-check-mask)" />
           </svg>
         )
       case 'analytics':
         return (
-          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
-            <BarChart3 className="text-black w-4 h-4 shrink-0" strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
+            <BarChart3 size={18} strokeWidth={2.5} className="text-black shrink-0" />
           </div>
         )
       case 'leaderboard':
-        return (
-          <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" className="fill-current text-white shrink-0">
-            <path d="M19 4h-2V3a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v1H5a3 3 0 0 0-3 3v1a4 4 0 0 0 4 4h.42A7.002 7.002 0 0 0 11 16.9V19H8a1 1 0 0 0-1 1v2h10v-2a1 1 0 0 0-1-1h-3v-2.1a7.002 7.002 0 0 0 4.58-3.9H18a4 4 0 0 0 4-4V7a3 3 0 0 0-3-3zM4 8V7a1 1 0 0 1 1-1h2v3a2 2 0 0 1-2-2h-1zm16 0a2 2 0 0 1-2 2V6h2a1 1 0 0 1 1 1v1z" />
-          </svg>
-        )
+        return <Trophy size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
       case 'intentions':
         return (
-          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
-            <Target className="text-black w-4 h-4 shrink-0" strokeWidth={2.5} />
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">
+            <Target size={18} strokeWidth={2.5} className="text-black shrink-0" />
           </div>
         )
       case 'settings':
-        return <Settings size={size} strokeWidth={2.8} className="text-white shrink-0" fill="none" />
+        return <Settings size={24} strokeWidth={2.8} className="stroke-[2.8px] text-white shrink-0" fill="none" />
       default:
-        return <Home size={size} strokeWidth={2.5} className="fill-white text-white shrink-0" />
+        return <Home size={24} className="fill-white stroke-none text-white shrink-0" />
     }
   }
 
   // Неактивные пункты: контурные stroke-[2px] text-[#71767b] hover:text-white
   switch (id) {
     case 'home':
-      return <Home size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Home size={24} className="stroke-2 stroke-current fill-none text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'explore':
-      return <Search size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Search size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'messages':
-      return <MessageCircle size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <MessageCircle size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'profile':
-      return <User size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <User size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'vault':
-      return <Zap size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Zap size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'premium':
-      return <BadgeCheck size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <BadgeCheck size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'analytics':
-      return <BarChart3 size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <BarChart3 size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'leaderboard':
-      return <Trophy size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Trophy size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'intentions':
-      return <Target size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Target size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     case 'settings':
-      return <Settings size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Settings size={24} strokeWidth={2} className="stroke-2 text-[#71767b] group-hover:text-white transition-colors shrink-0" />
     default:
-      return <Home size={size} strokeWidth={2} className="stroke-[2px] text-[#71767b] group-hover:text-white transition-colors shrink-0" />
+      return <Home size={24} className="stroke-2 stroke-current fill-none text-[#71767b] group-hover:text-white transition-colors shrink-0" />
   }
 }
 
@@ -224,13 +212,15 @@ export function Sidebar({
           className={`nav-item group relative flex items-center transition-colors ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center rounded-full mx-auto'
-              : 'w-full gap-4 px-4 py-3 rounded-full hover:bg-[#181818]'
+              : 'w-full gap-4 pl-3 pr-4 py-3 rounded-full hover:bg-[#181818]'
           } ${isActive ? 'active font-bold text-white' : 'text-[#71767b] hover:text-white'}`}
           onClick={handleClick}
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
         >
-          <NavIcon id={id} isActive={isActive} size={24} />
+          <div className="w-6 h-6 flex items-center justify-center shrink-0">
+            <NavIcon id={id} isActive={isActive} size={24} />
+          </div>
           <span className={isCollapsed ? 'hidden' : 'inline text-[16px] leading-tight font-medium'}>
             {label}
           </span>
@@ -254,7 +244,7 @@ export function Sidebar({
   return (
     <aside
       className={`${
-        isCollapsed ? 'w-[72px] pl-3 pr-2 items-center' : 'w-[275px] px-3'
+        isCollapsed ? 'w-[72px] px-[11px] items-center' : 'w-[275px] px-3'
       } shrink-0 sticky top-0 h-screen border-r border-[#2f3336] flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-4 ${className || ''}`}
       aria-label="Боковая панель"
     >
@@ -264,7 +254,7 @@ export function Sidebar({
           className={`brand cursor-pointer group min-h-[40px] flex items-center ${
             isCollapsed
               ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto rounded-full hover:bg-[#181818] transition-colors'
-              : 'gap-2.5 px-3 py-1 mb-1 w-full'
+              : 'gap-2.5 pl-1 pr-3 py-1 mb-1 w-full rounded-full hover:bg-[#181818]/60 transition-colors'
           }`}
           onClick={() => onNavigate('home')}
           role="button"
@@ -272,7 +262,7 @@ export function Sidebar({
           title="Огонёк"
         >
           <span
-            className="brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] group-hover:scale-110 transition-transform duration-200"
+            className="brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] group-hover:scale-110 transition-transform duration-200 shrink-0"
             aria-hidden="true"
           >
             <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
@@ -379,7 +369,7 @@ export function Sidebar({
           className={`cursor-pointer relative z-50 flex items-center rounded-full hover:bg-[var(--surface2)] transition-colors text-left border-0 bg-transparent ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
-              : 'w-full gap-3 p-2 rounded-2xl'
+              : 'w-full gap-3 pl-1 pr-3 py-2 rounded-2xl'
           }`}
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-haspopup="menu"

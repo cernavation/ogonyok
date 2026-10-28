@@ -1,7 +1,8 @@
 'use client'
 
-import { Check, Sparkles, Trash2, Upload } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Check, Clock, Sparkles, Trash2, Upload } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   STORY_TEMPLATES,
@@ -12,6 +13,7 @@ import {
 } from '@/lib/ogonek/stories'
 import type { MyStory } from '@/lib/ogonek/types'
 import { ModalShell } from './modal-shell'
+import { getInitials } from '@/lib/ogonek/initials'
 
 type Props = {
   context: StoryTemplateContext
@@ -26,7 +28,11 @@ type Props = {
   soundEnabled?: boolean
 }
 
-import { getInitials } from '@/lib/ogonek/initials'
+const LIFETIME_OPTIONS: Array<{ hours: 12 | 24 | 48; label: string }> = [
+  { hours: 12, label: '12 часов' },
+  { hours: 24, label: '24 часа' },
+  { hours: 48, label: '48 часов' },
+]
 
 export function StoryComposerModal({
   context,
@@ -40,26 +46,43 @@ export function StoryComposerModal({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  useBodyScrollLock(true)
+
   const [templateId, setTemplateId] = useState(STORY_TEMPLATES[0].id)
-  const [headline, setHeadline] = useState('')
-  const [detail, setDetail] = useState('')
+  const [content, setContent] = useState('')
+  const [lifetimeHours, setLifetimeHours] = useState<12 | 24 | 48>(24)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const template = useMemo(() => getStoryTemplate(templateId), [templateId])
 
   // При смене шаблона подставляем живые значения из контекста
   useEffect(() => {
     const seeded = createMyStory(templateId, context)
-    setHeadline(seeded.headline)
-    setDetail(seeded.detail)
+    const initialText = seeded.headline + (seeded.detail ? `\n${seeded.detail}` : '')
+    setContent(initialText.slice(0, 280))
   }, [templateId, context])
+
+  // Авто-высота textarea
+  const handleTextChange = (val: string) => {
+    setContent(val)
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 220)}px`
+    }
+  }
 
   const handlePublish = () => {
     playSuccess(soundEnabled)
     const base = createMyStory(templateId, context)
+    const trimmed = content.trim().slice(0, 280) || base.headline
+    const expiresAt = new Date(Date.now() + lifetimeHours * 3600 * 1000).toISOString()
+
     const story: MyStory = {
       ...base,
-      headline: headline.trim().slice(0, 120) || base.headline,
-      detail: detail.trim().slice(0, 200) || base.detail,
+      headline: trimmed,
+      detail: '',
+      expires_at: expiresAt,
+      expiresAtISO: expiresAt,
     }
     onPublish(story)
     onNotify('История опубликована — друзья увидят яркий кружок ✨')
@@ -106,13 +129,18 @@ export function StoryComposerModal({
               </span>
             </div>
 
-            <div className="story-composer__card-body">
-              <span className="story-composer__kicker" style={{ color: template.accent }}>
+            <div className="story-composer__card-body flex flex-col justify-center items-center text-center px-4 py-6">
+              <span className="story-composer__kicker text-xs font-bold tracking-wider uppercase mb-1" style={{ color: template.accent }}>
                 {template.kicker}
               </span>
-              <span className="story-composer__emoji">{template.emoji}</span>
-              <span className="story-composer__headline">{headline || 'Твой кадр'}</span>
-              <span className="story-composer__detail">{detail}</span>
+              <span className="story-composer__emoji text-4xl mb-3">{template.emoji}</span>
+              <p className="text-lg sm:text-xl font-semibold leading-relaxed break-words max-w-full text-white text-center">
+                {content || 'Твой кадр'}
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 text-[11px] text-white/90 font-mono">
+                <Clock size={11} className="text-white/70" />
+                <span>{lifetimeHours}ч</span>
+              </div>
             </div>
           </div>
         </div>
@@ -143,29 +171,53 @@ export function StoryComposerModal({
           </div>
 
           <label className="story-composer__field">
-            <span>Заголовок</span>
-            <input
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-              maxLength={120}
-              placeholder="О чём твой кадр?"
-            />
-          </label>
-
-          <label className="story-composer__field">
-            <span>Подпись</span>
+            <div className="flex items-center justify-between">
+              <span>Текст истории</span>
+              <span className="text-xs text-[var(--text-3)] font-mono">{content.length}/280</span>
+            </div>
             <textarea
-              value={detail}
-              onChange={(e) => setDetail(e.target.value)}
-              maxLength={200}
-              rows={2}
-              placeholder="Пара слов поддержки себе"
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => handleTextChange(e.target.value)}
+              maxLength={280}
+              rows={4}
+              placeholder="О чём твой кадр? (до 280 символов)"
+              className="w-full resize-none rounded-xl p-3 bg-[var(--surface2)] border border-[var(--border)] text-[var(--text)] text-[15px] focus:outline-none focus:border-[var(--accent)] transition-colors leading-relaxed"
             />
           </label>
 
-          <button type="button" className="x-primary-btn story-composer__publish" onClick={handlePublish}>
+          {/* Выбор времени жизни сторис */}
+          <div className="flex flex-col gap-1.5">
+            <span className="story-composer__label flex items-center gap-1.5">
+              <Clock size={13} /> Время жизни сторис
+            </span>
+            <div className="flex items-center gap-2">
+              {LIFETIME_OPTIONS.map((opt) => {
+                const isSelected = lifetimeHours === opt.hours
+                return (
+                  <button
+                    key={opt.hours}
+                    type="button"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setLifetimeHours(opt.hours)
+                    }}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                      isSelected
+                        ? 'bg-white text-black shadow-md font-bold'
+                        : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          <button type="button" className="x-primary-btn story-composer__publish mt-2" onClick={handlePublish}>
             <Upload size={16} />
-            Опубликовать историю
+            Опубликовать историю ({lifetimeHours}ч)
           </button>
 
           {myStories.length > 0 && (

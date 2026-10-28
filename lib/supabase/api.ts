@@ -232,7 +232,7 @@ export async function getProfileFollowers(profileUserId: string): Promise<Profil
         .from('friendships')
         .select('user_id')
         .eq('friend_id', targetId)
-        .in('status', ['following', 'friend'])
+        .in('status', ['accepted', 'following', 'friend'])
 
       if (!errFriend && Array.isArray(byFriend) && byFriend.length > 0) {
         followerIds = byFriend.map((r: any) => r.user_id).filter(Boolean)
@@ -245,7 +245,7 @@ export async function getProfileFollowers(profileUserId: string): Promise<Profil
         .from('friendships')
         .select('user_id')
         .eq('addressee_id', targetId)
-        .in('status', ['following', 'friend'])
+        .in('status', ['accepted', 'following', 'friend'])
 
       if (!errAddressee && Array.isArray(byAddressee)) {
         followerIds = byAddressee.map((r: any) => r.user_id).filter(Boolean)
@@ -303,7 +303,7 @@ export async function getProfileFollowing(profileUserId: string): Promise<Profil
       .from('friendships')
       .select('*')
       .eq('user_id', targetId)
-      .in('status', ['following', 'friend'])
+      .in('status', ['accepted', 'following', 'friend'])
 
     let followingIds: string[] = []
     if (!error && Array.isArray(data) && data.length > 0) {
@@ -363,30 +363,52 @@ export function getDirectThreadKey(userId1: string, userId2: string): string {
 
 /**
  * Подписаться на пользователя (сохранение в friendships и follows)
+ * Условие: user_id = currentUserId, friend_id = targetUserId, status = 'accepted'
  */
 export async function followUser(followerId: string, followingId: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'База данных не подключена' }
   try {
     const now = new Date().toISOString()
-    await supabase.from('friendships').upsert(
+    const { error: insErr } = await supabase.from('friendships').upsert(
       {
         user_id: followerId,
+        friend_id: followingId,
         addressee_id: followingId,
-        status: 'following',
+        status: 'accepted',
         updated_at: now,
         client_updated_at: now,
       },
-      { onConflict: 'user_id,addressee_id' }
+      { onConflict: 'user_id,friend_id' }
     )
-    await supabase.from('follows').upsert(
-      {
-        follower_id: followerId,
-        following_id: followingId,
-        status: 'accepted',
-      },
-      { onConflict: 'follower_id,following_id' }
-    )
+
+    if (insErr) {
+      try {
+        await supabase.from('friendships').upsert(
+          {
+            user_id: followerId,
+            friend_id: followingId,
+            addressee_id: followingId,
+            status: 'accepted',
+            updated_at: now,
+            client_updated_at: now,
+          },
+          { onConflict: 'user_id,addressee_id' }
+        )
+      } catch {}
+    }
+
+    try {
+      await supabase.from('follows').upsert(
+        {
+          follower_id: followerId,
+          following_id: followingId,
+          status: 'accepted',
+        },
+        { onConflict: 'follower_id,following_id' }
+      )
+    } catch {}
+
     return { ok: true }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка подписки' }
@@ -404,12 +426,16 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
       .from('friendships')
       .delete()
       .eq('user_id', followerId)
-      .eq('addressee_id', followingId)
-    await supabase
-      .from('follows')
-      .delete()
-      .eq('follower_id', followerId)
-      .eq('following_id', followingId)
+      .or(`friend_id.eq.${followingId},addressee_id.eq.${followingId}`)
+
+    try {
+      await supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', followerId)
+        .eq('following_id', followingId)
+    } catch {}
+
     return { ok: true }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка отписки' }
@@ -420,15 +446,7 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
  * Проверить, подписан ли пользователь
  */
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
-  const supabase = getSupabase()
-  if (!supabase) return false
-  const { data } = await supabase
-    .from('follows')
-    .select('id')
-    .eq('follower_id', followerId)
-    .eq('following_id', followingId)
-    .single()
-  return Boolean(data)
+  return checkFriendshipFollow(followerId, followingId)
 }
 
 /**
@@ -446,62 +464,14 @@ export async function toggleFriendshipFollow(
 
   try {
     // 1. Проверяем, подписан ли уже в friendships
-    const { data: existing } = await supabase
-      .from('friendships')
-      .select('id, status')
-      .eq('user_id', currentUserId)
-      .eq('addressee_id', targetUserId)
-      .maybeSingle()
-
-    const isCurrentlyFollowing = existing && (existing.status === 'following' || existing.status === 'friend')
+    const isCurrentlyFollowing = await checkFriendshipFollow(currentUserId, targetUserId)
 
     if (isCurrentlyFollowing) {
-      // Удаляем подписку из friendships
-      await supabase
-        .from('friendships')
-        .delete()
-        .eq('user_id', currentUserId)
-        .eq('addressee_id', targetUserId)
-
-      // И из таблицы follows
-      try {
-        await supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', currentUserId)
-          .eq('following_id', targetUserId)
-      } catch {}
-
-      return { ok: true, following: false }
+      const res = await unfollowUser(currentUserId, targetUserId)
+      return { ok: res.ok, following: false, error: res.error }
     } else {
-      // Создаем подписку со статусом following в friendships
-      const now = new Date().toISOString()
-      const { error: insErr } = await supabase
-        .from('friendships')
-        .upsert({
-          user_id: currentUserId,
-          addressee_id: targetUserId,
-          status: 'following',
-          updated_at: now,
-          client_updated_at: now,
-        }, { onConflict: 'user_id,addressee_id' })
-
-      if (insErr) {
-        console.warn('friendships upsert notice:', insErr.message)
-      }
-
-      // И в таблицу follows
-      try {
-        await supabase
-          .from('follows')
-          .upsert({
-            follower_id: currentUserId,
-            following_id: targetUserId,
-            status: 'accepted',
-          }, { onConflict: 'follower_id,following_id' })
-      } catch {}
-
-      return { ok: true, following: true }
+      const res = await followUser(currentUserId, targetUserId)
+      return { ok: res.ok, following: true, error: res.error }
     }
   } catch (err: any) {
     return { ok: false, following: false, error: err?.message || 'Ошибка обновления подписки' }
@@ -515,14 +485,25 @@ export async function checkFriendshipFollow(currentUserId: string, targetUserId:
   const supabase = getSupabase()
   if (!supabase || !currentUserId || !targetUserId) return false
   try {
-    const { data } = await supabase
+    const { data: byFriend } = await supabase
+      .from('friendships')
+      .select('status')
+      .eq('user_id', currentUserId)
+      .eq('friend_id', targetUserId)
+      .maybeSingle()
+
+    if (byFriend && (byFriend.status === 'accepted' || byFriend.status === 'following' || byFriend.status === 'friend')) {
+      return true
+    }
+
+    const { data: byAddressee } = await supabase
       .from('friendships')
       .select('status')
       .eq('user_id', currentUserId)
       .eq('addressee_id', targetUserId)
       .maybeSingle()
 
-    if (data && (data.status === 'following' || data.status === 'friend')) {
+    if (byAddressee && (byAddressee.status === 'accepted' || byAddressee.status === 'following' || byAddressee.status === 'friend')) {
       return true
     }
 
@@ -1257,6 +1238,9 @@ export async function publishStoryToDb(
     sourcePrideIndex?: number | null
     visibility?: string
     createdAtISO?: string
+    expires_at?: string
+    expiresAtISO?: string
+    expiresHours?: number
   }
 ): Promise<{ ok: boolean; story?: StoryRecord; error?: string }> {
   const supabase = getSupabase()
@@ -1264,8 +1248,13 @@ export async function publishStoryToDb(
 
   try {
     const createdAt = story.createdAtISO || new Date().toISOString()
-    // Строго 20 часов от момента создания
-    const expiresAt = new Date(new Date(createdAt).getTime() + 20 * 60 * 60 * 1000).toISOString()
+    // Время жизни: из story.expires_at / story.expiresAtISO, либо по часам, по умолчанию 24 часа
+    const expiresAt =
+      story.expires_at ||
+      story.expiresAtISO ||
+      (story.expiresHours
+        ? new Date(new Date(createdAt).getTime() + story.expiresHours * 60 * 60 * 1000).toISOString()
+        : new Date(new Date(createdAt).getTime() + 24 * 60 * 60 * 1000).toISOString())
     const storyId = story.id || story.client_id || `story-${Date.now()}`
 
     const payload = {

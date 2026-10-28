@@ -17,7 +17,14 @@ import {
   type ExploreTag,
 } from '@/lib/ogonek/explore-content'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { searchProfiles, getRecentProfiles, toggleFriendshipFollow, type ProfileRecord } from '@/lib/supabase/api'
+import {
+  searchProfiles,
+  getRecentProfiles,
+  followUser,
+  unfollowUser,
+  getProfileFollowing,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 import type { Day, ViewId } from '@/lib/ogonek/types'
 import { DayCard } from '../day-card'
@@ -68,6 +75,64 @@ export function ExploreView({
 
   const recentSearches = state.exploreRecentSearches ?? []
   const followingIds = state.exploreFollowingIds ?? []
+
+  // Синхронизация подписок из Supabase при монтировании (чтобы F5 не сбрасывал статус)
+  useEffect(() => {
+    const currentUid = state.auth?.activeAccountId
+    if (!currentUid) return
+    let cancelled = false
+
+    getProfileFollowing(currentUid)
+      .then((remoteFollowing) => {
+        if (cancelled || !Array.isArray(remoteFollowing)) return
+        for (const u of remoteFollowing) {
+          if (!followingIds.includes(u.id)) {
+            toggleExploreFollow(u.id)
+          }
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [state.auth?.activeAccountId])
+
+  const handleToggleFollow = async (targetUser: { id: string; username: string }) => {
+    playClick(soundEnabled)
+    const isCurrentlyFollowing = followingIds.includes(targetUser.id)
+    // Немедленно переключаем локальное состояние (кнопка мгновенно становится "Читаю")
+    toggleExploreFollow(targetUser.id)
+
+    const currentUid = state.auth?.activeAccountId
+    if (currentUid && targetUser.id) {
+      try {
+        if (!isCurrentlyFollowing) {
+          // Немедленно отправляем upsert в таблицу friendships
+          const res = await followUser(currentUid, targetUser.id)
+          if (res.ok) {
+            onNotify(`Вы читаете @${targetUser.username} ✓`)
+          } else {
+            toggleExploreFollow(targetUser.id)
+            onNotify(res.error || 'Не удалось сохранить подписку')
+          }
+        } else {
+          const res = await unfollowUser(currentUid, targetUser.id)
+          if (res.ok) {
+            onNotify(`Отписка от @${targetUser.username}`)
+          } else {
+            toggleExploreFollow(targetUser.id)
+            onNotify(res.error || 'Не удалось отписаться')
+          }
+        }
+      } catch {
+        toggleExploreFollow(targetUser.id)
+        onNotify('Ошибка соединения с базой')
+      }
+    } else {
+      onNotify(isCurrentlyFollowing ? `Отписка от @${targetUser.username}` : `Вы читаете @${targetUser.username} ✓`)
+    }
+  }
 
   // Извлечение РЕАЛЬНЫХ тегов из опубликованных дней
   const realTags: ExploreTag[] = useMemo(() => {
@@ -385,24 +450,14 @@ export function ExploreView({
                         {!user.isMe && (
                           <button
                             type="button"
-                            onClick={async () => {
-                              const now = toggleExploreFollow(user.id)
-                              playClick(soundEnabled)
-                              const currentUid = state.auth.activeAccountId
-                              if (currentUid && user.id) {
-                                void toggleFriendshipFollow(currentUid, user.id)
-                              }
-                              onNotify(
-                                now ? `Вы читаете @${user.username} ✓` : `Отписка от @${user.username}`
-                              )
-                            }}
-                            className={`min-h-[34px] px-4 rounded-full text-xs font-bold transition-all flex items-center gap-1 flex-none ${
+                            onClick={() => handleToggleFollow(user)}
+                            className={`min-h-[34px] px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 flex-none select-none ${
                               isFollowing
-                                ? 'bg-transparent border border-[var(--border)] text-[var(--text)] hover:border-rose-500 hover:text-rose-500'
-                                : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90'
+                                ? 'border border-[#536471] text-white hover:border-red-500 hover:text-red-500 hover:bg-red-500/10'
+                                : 'bg-white text-black hover:bg-white/90'
                             }`}
                           >
-                            {isFollowing ? 'Читаю' : <><Plus size={13} /> Читать</>}
+                            {isFollowing ? 'Читаю' : 'Читать'}
                           </button>
                         )}
                       </li>
@@ -527,24 +582,14 @@ export function ExploreView({
                         {!user.isMe && (
                           <button
                             type="button"
-                            onClick={async () => {
-                              const now = toggleExploreFollow(user.id)
-                              playClick(soundEnabled)
-                              const currentUid = state.auth.activeAccountId
-                              if (currentUid && user.id) {
-                                void toggleFriendshipFollow(currentUid, user.id)
-                              }
-                              onNotify(
-                                now ? `Вы читаете @${user.username} ✓` : `Отписка от @${user.username}`
-                              )
-                            }}
-                            className={`min-h-[36px] px-4 rounded-full text-xs font-bold transition-all flex items-center gap-1 flex-none ${
+                            onClick={() => handleToggleFollow(user)}
+                            className={`min-h-[36px] px-4 rounded-full text-xs font-bold transition-all flex items-center justify-center gap-1 flex-none select-none ${
                               isFollowing
-                                ? 'bg-transparent border border-[var(--border)] text-[var(--text)] hover:border-rose-500 hover:text-rose-500'
-                                : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90 active:scale-95'
+                                ? 'border border-[#536471] text-white hover:border-red-500 hover:text-red-500 hover:bg-red-500/10'
+                                : 'bg-white text-black hover:bg-white/90 active:scale-95'
                             }`}
                           >
-                            {isFollowing ? 'Читаю' : <><Plus size={13} /> Читать</>}
+                            {isFollowing ? 'Читаю' : 'Читать'}
                           </button>
                         )}
                       </li>

@@ -521,21 +521,21 @@ export function StoryViewerModal({
           </span>
           <span className="story-viewer__emoji">{slide.emoji}</span>
           <span
-            className="story-viewer__headline select-text"
+            className="story-viewer__headline select-text text-lg sm:text-xl font-semibold leading-relaxed break-words"
             style={{
               fontSize:
                 (slide.headline?.length ?? 0) > 100
-                  ? 'clamp(17px, 3.4vw, 21px)'
+                  ? 'clamp(16px, 3.2vw, 19px)'
                   : (slide.headline?.length ?? 0) > 50
-                  ? 'clamp(20px, 3.8vw, 25px)'
-                  : 'clamp(24px, 4.2vw, 30px)',
-              lineHeight: 1.3,
+                  ? 'clamp(18px, 3.6vw, 22px)'
+                  : 'clamp(20px, 4vw, 26px)',
+              lineHeight: 1.4,
             }}
           >
             {slide.headline}
           </span>
           {slide.detail && (
-            <span className="story-viewer__detail select-text">
+            <span className="story-viewer__detail select-text text-sm sm:text-base font-normal leading-relaxed break-words opacity-90 mt-1">
               {slide.detail}
             </span>
           )}

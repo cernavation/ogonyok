@@ -10,6 +10,7 @@ import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, Visibili
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { ModalShell } from './modal-shell'
 import { PublishPrideStoryModal } from './publish-pride-story-modal'
 import { Tooltip } from './tooltip'
@@ -136,6 +137,8 @@ export function Composer({
   soundEnabled = true,
   onNotify,
 }: Props) {
+  useBodyScrollLock(true)
+
   const initialDraft = useMemo(() => {
     return passedInitialDraft || (editingDay ? null : getCachedComposerDraft())
   }, [passedInitialDraft, editingDay])

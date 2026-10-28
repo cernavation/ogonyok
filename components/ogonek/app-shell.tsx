@@ -17,6 +17,7 @@ import { RightRail } from './right-rail'
 import { AppLockScreen } from './security'
 import { Sidebar } from './sidebar'
 import { ScrollPill } from './scroll-pill'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { Toast } from './toast'
 import { TooltipProvider } from './tooltip'
 import { SupabaseSyncBootstrap } from './supabase-sync-bootstrap'
@@ -114,6 +115,19 @@ export function AppShell() {
   const pendingScrollRef = useRef(false)
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null)
   const reduce = useReducedMotion()
+
+  useBodyScrollLock(
+    Boolean(
+      composer ||
+      authModal ||
+      profileModal ||
+      hotkeysModal ||
+      lightbox ||
+      onboardingOpen ||
+      activeGlobalCall ||
+      incomingCall
+    )
+  )
 
   const notify = useCallback((message: string) => {
     setToast(message)
@@ -885,34 +899,36 @@ export function AppShell() {
             onFocusIntentions={handleFocusIntentions}
           />
         ) : (
-          <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen px-4 lg:px-8">
-            <Sidebar
-              className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336]"
-              view={view}
-              onNavigate={navigate}
-              onFocusIntentions={handleFocusIntentions}
-              onCompose={() => setComposer(true)}
-              onOpenProfile={() => navigate('profile')}
-              onOpenAuth={openAuth}
-              onNotify={notify}
-              streak={streakState.streak}
-            />
+          <div className="w-full max-w-[1380px] flex justify-between min-h-screen">
+            <div className="flex flex-row shrink-0">
+              <Sidebar
+                className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336]"
+                view={view}
+                onNavigate={navigate}
+                onFocusIntentions={handleFocusIntentions}
+                onCompose={() => setComposer(true)}
+                onOpenProfile={() => navigate('profile')}
+                onOpenAuth={openAuth}
+                onNotify={notify}
+                streak={streakState.streak}
+              />
 
-            {/* Центральная колонка: w-full max-w-[600px] shrink-0 border-r border-[#2f3336] (max-w-[620px]) */}
-            <section
-              className="w-full max-w-[600px] shrink-0 min-h-screen border-r border-[#2f3336]"
-              aria-label="Основное содержимое"
-            >
-              <motion.div
-                key={view}
-                className="view w-full"
-                initial={{ opacity: 0.95 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.04 }}
+              {/* Центральная колонка: w-full max-w-[620px] shrink-0 border-r border-[#2f3336] */}
+              <section
+                className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[#2f3336]"
+                aria-label="Основное содержимое"
               >
-                {content[view]}
-              </motion.div>
-            </section>
+                <motion.div
+                  key={view}
+                  className="view w-full"
+                  initial={{ opacity: 0.95 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.04 }}
+                >
+                  {content[view]}
+                </motion.div>
+              </section>
+            </div>
 
             <RightRail
               className="w-[360px] shrink-0 sticky top-0 h-screen pl-6 hidden xl:block"

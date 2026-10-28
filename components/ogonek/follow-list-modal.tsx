@@ -4,6 +4,8 @@ import React, { useEffect, useState, useTransition } from 'react'
 import { X, Flame, Check, Loader2 } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import {
   getProfileFollowers,
   getProfileFollowing,
@@ -37,6 +39,10 @@ export function FollowListModal({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  useBodyScrollLock(true)
+
+  const { state, toggleExploreFollow } = useOgonekStore()
+
   const [tab, setTab] = useState<FollowTabId>(initialTab)
   const [followers, setFollowers] = useState<ProfileRecord[]>([])
   const [following, setFollowing] = useState<ProfileRecord[]>([])
@@ -68,7 +74,8 @@ export function FollowListModal({
 
           const statusEntries = await Promise.all(
             allUserIds.map(async (targetId) => {
-              const isFollowed = await checkFriendshipFollow(currentUserId, targetId)
+              const inStore = state.exploreFollowingIds?.includes(targetId)
+              const isFollowed = inStore || (await checkFriendshipFollow(currentUserId, targetId))
               return [targetId, isFollowed] as const
             })
           )
@@ -88,7 +95,7 @@ export function FollowListModal({
     return () => {
       cancelled = true
     }
-  }, [profileUserId, currentUserId])
+  }, [profileUserId, currentUserId, state.exploreFollowingIds])
 
   // Закрытие по ESC
   useEffect(() => {
@@ -120,9 +127,10 @@ export function FollowListModal({
     const currentlyFollowed = Boolean(myFollowingMap[user.id])
     const nextStatus = !currentlyFollowed
 
-    // Оптимистичное обновление
+    // Оптимистичное обновление локального состояния модалки и глобального хранилища
     setMyFollowingMap((prev) => ({ ...prev, [user.id]: nextStatus }))
     setPendingFollowIds((prev) => ({ ...prev, [user.id]: true }))
+    toggleExploreFollow(user.id)
 
     try {
       const res = await toggleFriendshipFollow(currentUserId, user.id)
@@ -136,10 +144,12 @@ export function FollowListModal({
       } else {
         // Откат в случае ошибки
         setMyFollowingMap((prev) => ({ ...prev, [user.id]: currentlyFollowed }))
+        toggleExploreFollow(user.id)
         onNotify(res.error || 'Не удалось обновить подписку')
       }
     } catch {
       setMyFollowingMap((prev) => ({ ...prev, [user.id]: currentlyFollowed }))
+      toggleExploreFollow(user.id)
       onNotify('Ошибка соединения')
     } finally {
       setPendingFollowIds((prev) => ({ ...prev, [user.id]: false }))

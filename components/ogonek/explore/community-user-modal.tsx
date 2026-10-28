@@ -12,6 +12,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { buildInviteUrl } from '@/lib/ogonek/profile-share'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
@@ -76,6 +77,8 @@ export function CommunityUserModal({
   onOpenCategory,
   soundEnabled = true,
 }: Props) {
+  useBodyScrollLock(true)
+
   const { state, toggleExploreFollow } = useOgonekStore()
 
   const [profile, setProfile] = useState<ProfileRecord | null>(null)
@@ -108,19 +111,38 @@ export function CommunityUserModal({
   const handleRead = async () => {
     if (!profile) return
     playClick(soundEnabled)
-    const nowReading = toggleExploreFollow(userId)
+    const nextReading = !isReading
+    toggleExploreFollow(userId)
+
     if (currentUserId) {
-      if (nowReading) {
-        setFollowBusy(true)
-        await followUser(currentUserId, userId)
-        setFollowBusy(false)
-      } else {
-        setFollowBusy(true)
-        await unfollowUser(currentUserId, userId)
+      setFollowBusy(true)
+      try {
+        if (nextReading) {
+          const res = await followUser(currentUserId, userId)
+          if (!res.ok) {
+            toggleExploreFollow(userId)
+            onNotify('Не удалось сохранить подписку')
+          } else {
+            onNotify(`Вы читаете @${profile.username} ✓`)
+          }
+        } else {
+          const res = await unfollowUser(currentUserId, userId)
+          if (!res.ok) {
+            toggleExploreFollow(userId)
+            onNotify('Не удалось обновить подписку')
+          } else {
+            onNotify(`Отписка от @${profile.username}`)
+          }
+        }
+      } catch {
+        toggleExploreFollow(userId)
+        onNotify('Ошибка соединения')
+      } finally {
         setFollowBusy(false)
       }
+    } else {
+      onNotify(nextReading ? `Вы читаете @${profile.username} ✓` : `Отписка от @${profile.username}`)
     }
-    onNotify(nowReading ? `Ты читаешь @${profile.username} ✓` : `Отписка от @${profile.username}`)
   }
 
   const handleInvite = async () => {
@@ -257,15 +279,21 @@ export function CommunityUserModal({
           </div>
         )}
 
-        <div className="xh-user__actions">
+        <div className="xh-user__actions flex items-center gap-3 mt-4">
           <button
             type="button"
-            className={`xh-btn ${isReading ? 'xh-btn--ghost' : 'xh-btn--primary'}`}
+            className={`min-h-[40px] px-6 rounded-full text-[14px] font-bold transition-all flex items-center justify-center gap-2 select-none ${
+              isMe
+                ? 'opacity-60 cursor-default bg-white/5 border border-[#2f3336] text-[#71767b]'
+                : isReading
+                ? 'border border-[#536471] text-white hover:border-red-500 hover:text-red-500 hover:bg-red-500/10'
+                : 'bg-white text-black hover:bg-white/90'
+            }`}
             onClick={handleRead}
             disabled={isMe || followBusy}
           >
-            {isReading ? <UserCheck size={15} /> : <UserPlus size={15} />}
-            {isMe ? 'Это ты' : isReading ? 'Ты читаешь' : 'Читать'}
+            {isReading ? <UserCheck size={16} /> : <UserPlus size={16} />}
+            {isMe ? 'Это вы' : isReading ? 'Читаю' : 'Читать'}
           </button>
 
           <button type="button" className="xh-btn xh-btn--ghost" onClick={handleInvite}>
