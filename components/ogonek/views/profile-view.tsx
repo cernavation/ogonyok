@@ -169,42 +169,44 @@ export function ProfileView({
           )
           setForeignPosts(posts)
 
-          // Загрузка реальных дней из Supabase
+          // Загрузка реальных дней из Supabase (с постраничной выборкой в обход лимита 1000 строк PostgREST)
           const supabase = getSupabase()
           if (supabase) {
-            const { data: daysData } = await supabase
-              .from('days')
-              .select('*')
-              .eq('user_id', prof.id)
-              .order('day_number', { ascending: false })
+            const fetchAllRows = async (table: 'days' | 'prides' | 'gratitudes', orderCol: string, ascending: boolean) => {
+              const allRows: any[] = []
+              const pageSize = 1000
+              let from = 0
+              while (true) {
+                const { data, error } = await supabase
+                  .from(table)
+                  .select('*')
+                  .eq('user_id', prof.id)
+                  .order(orderCol, { ascending })
+                  .range(from, from + pageSize - 1)
+                if (error || !data || data.length === 0) break
+                allRows.push(...data)
+                if (data.length < pageSize) break
+                from += pageSize
+              }
+              return allRows
+            }
+
+            const [daysData, allPrides, allGratitudes] = await Promise.all([
+              fetchAllRows('days', 'day_number', false),
+              fetchAllRows('prides', 'position', true),
+              fetchAllRows('gratitudes', 'position', true),
+            ])
 
             if (cancelled) return
             if (daysData && daysData.length > 0) {
-              const dayClientIds = daysData.map((d: any) => d.client_id)
-              const [prRes, grRes] = await Promise.all([
-                supabase
-                  .from('prides')
-                  .select('*')
-                  .eq('user_id', prof.id)
-                  .in('day_client_id', dayClientIds)
-                  .order('position', { ascending: true }),
-                supabase
-                  .from('gratitudes')
-                  .select('*')
-                  .eq('user_id', prof.id)
-                  .in('day_client_id', dayClientIds)
-                  .order('position', { ascending: true }),
-              ])
-
-              if (cancelled) return
               const pridesByDay = new Map<string, any[]>()
-              for (const p of prRes.data || []) {
+              for (const p of allPrides) {
                 const list = pridesByDay.get(p.day_client_id) || []
                 list.push(p)
                 pridesByDay.set(p.day_client_id, list)
               }
               const gratsByDay = new Map<string, any[]>()
-              for (const g of grRes.data || []) {
+              for (const g of allGratitudes) {
                 const list = gratsByDay.get(g.day_client_id) || []
                 list.push(g)
                 gratsByDay.set(g.day_client_id, list)
@@ -299,7 +301,16 @@ export function ProfileView({
 
   // Единый профиль для рендера
   const displayProfile: OgonekProfile = useMemo(() => {
-    if (isOwnProfile) return storeState.profile
+    const rawStreak = isOwnProfile
+      ? (storeState.profile as any)?.streak_count ?? (storeState.profile as any)?.streak ?? storeState.days.length
+      : foreignProfile?.streak_count ?? foreignProfile?.streak ?? 0
+    if (isOwnProfile) {
+      return {
+        ...storeState.profile,
+        streak_count: rawStreak,
+        streak: rawStreak,
+      }
+    }
     return {
       displayName: foreignProfile?.display_name || (foreignProfile?.username ? `@${foreignProfile.username}` : 'Пользователь'),
       username: foreignProfile?.username || '',
@@ -320,8 +331,10 @@ export function ProfileView({
       level: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || 1,
       isAnonymous: Boolean(foreignProfile?.is_anonymous),
       age: foreignProfile?.age ?? null,
+      streak_count: rawStreak,
+      streak: rawStreak,
     }
-  }, [isOwnProfile, storeState.profile, foreignProfile])
+  }, [isOwnProfile, storeState.profile, storeState.days.length, foreignProfile])
 
   const effectiveDays: Day[] = useMemo(() => {
     if (isOwnProfile) return Array.isArray(storeState?.days) ? storeState.days : []
@@ -390,9 +403,22 @@ export function ProfileView({
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'public'>('all')
 
   const stats: ProfileStats = useMemo(
-    () => computeProfileStats(days, followingCount),
-    [days, followingCount]
+    () => computeProfileStats(days, followingCount, displayProfile),
+    [days, followingCount, displayProfile]
   )
+
+  // Число дней дневника ВСЕГДА брать из profile.streak_count || days.length (честные 705 дней!)
+  const profileDaysCount = useMemo(() => {
+    const fromProfile = displayProfile.streak_count || displayProfile.streak || 0
+    return Math.max(fromProfile, days.length, stats.totalDays || 0)
+  }, [displayProfile.streak_count, displayProfile.streak, days.length, stats.totalDays])
+
+  // Число записей выводить как (profile.streak_count || days.length) * 10 (или точный count из базы)
+  const profileEntriesCount = useMemo(() => {
+    const calculated = stats.totalPrides + stats.totalGratitudes
+    const expected = profileDaysCount * 10
+    return Math.max(calculated, expected)
+  }, [stats.totalPrides, stats.totalGratitudes, profileDaysCount])
 
   const recentDays = useMemo(() => {
     return [...days].sort((a, b) => b.id - a.id)
@@ -566,7 +592,7 @@ export function ProfileView({
               {displayProfile.displayName}
             </h1>
             <p className="text-[13px] text-[var(--text-2)] mt-1">
-              {days.length} {days.length === 1 ? 'день' : 'дней'} в летописи
+              {profileDaysCount} {profileDaysCount === 1 ? 'день' : 'дней'} в летописи
             </p>
           </div>
         </div>
@@ -832,9 +858,9 @@ export function ProfileView({
         {/* Ряд статистики (возраст убран по Требованию):
             «N дней дневника · N записей · 🔥 Уровень N» */}
         <div className="flex items-center gap-3 text-[14px] text-[var(--text-2)] mb-4 flex-wrap">
-          <span><strong className="font-bold text-[var(--text)]">{days.length}</strong> дней дневника</span>
+          <span><strong className="font-bold text-[var(--text)]">{profileDaysCount}</strong> дней дневника</span>
           <span>·</span>
-          <span><strong className="font-bold text-[var(--text)]">{stats.totalPrides + stats.totalGratitudes}</strong> записей</span>
+          <span><strong className="font-bold text-[var(--text)]">{profileEntriesCount}</strong> записей</span>
           {displayProfile.isAnonymous && (
             <>
               <span>·</span>

@@ -220,6 +220,9 @@ export type OgonekProfile = {
   subscription_tier?: 'free' | 'premium' | 'ultra'
   /** Настройки приватности */
   privacy?: { is_anonymous?: boolean; [key: string]: any }
+  /** Число дней стрика / летописи */
+  streak_count?: number
+  streak?: number
 }
 
 /** Статусы сессии аудио/видео звонка */
