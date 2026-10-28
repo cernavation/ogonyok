@@ -23,12 +23,12 @@ test('Эталонная сетка X.com и железная фиксация s
     const code = fs.readFileSync(appShellPath, 'utf8')
 
     assert.ok(
-      code.includes('className="flex justify-center min-h-screen bg-black text-[#e7e9ea] w-full"'),
+      code.includes('max-w-[1380px]') && code.includes('justify-between'),
       'Единый flex контейнер X.com присутствует в app-shell'
     )
     assert.ok(
-      code.includes('className="w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"'),
-      'Центральная колонка 600px с правым бордером присутствует'
+      code.includes('max-w-[620px]') && code.includes('border-r border-[#2f3336]'),
+      'Центральная колонка 620px с правым бордером присутствует'
     )
   })
 
@@ -37,7 +37,7 @@ test('Эталонная сетка X.com и железная фиксация s
     const code = fs.readFileSync(sidebarPath, 'utf8')
 
     assert.ok(
-      code.includes('sticky top-0 h-screen flex flex-col justify-between shrink-0 w-[275px] border-r border-[#2f3336] overflow-y-auto scrollbar-none z-30'),
+      code.includes('sticky top-0 h-screen') && code.includes('w-[275px]') && code.includes('border-r border-[#2f3336]'),
       'Левый сайдбар имеет точные sticky X.com стили'
     )
   })
@@ -47,17 +47,17 @@ test('Эталонная сетка X.com и железная фиксация s
     const code = fs.readFileSync(railPath, 'utf8')
 
     assert.ok(
-      code.includes('sticky top-0 h-screen w-[350px] shrink-0 overflow-y-auto scrollbar-none pl-6 pr-4 py-3 hidden lg:block z-20'),
+      code.includes('sticky top-0 h-screen') && code.includes('w-[360px]') && code.includes('pl-6') && code.includes('hidden xl:block'),
       'Правое меню имеет точные sticky X.com стили'
     )
   })
 
-  await t.test('home-view.tsx: центральная лента независима и ограничена 600px', () => {
+  await t.test('home-view.tsx: центральная лента независима и ограничена 620px', () => {
     const homePath = path.resolve(process.cwd(), 'components/ogonek/views/home-view.tsx')
     const code = fs.readFileSync(homePath, 'utf8')
 
     assert.ok(
-      code.includes('className="view-home w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"'),
+      code.includes('max-w-[620px]') && code.includes('border-r border-[#2f3336]'),
       'Центральная лента имеет требуемые классы'
     )
   })

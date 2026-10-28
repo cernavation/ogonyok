@@ -85,8 +85,8 @@ export function calculateStreak(
     if (!day || typeof day !== 'object') continue
 
     // 1. Если это запись базы Supabase с полем closed_at
-    if ('closed_at' in day && day.closed_at) {
-      closedCount += 1
+    if ('closed_at' in day) {
+      if (day.closed_at) closedCount += 1
       continue
     }
 
@@ -94,11 +94,11 @@ export function calculateStreak(
     if (day.status !== 'missed') {
       const hasPrides = Array.isArray(day.prides) && day.prides.length > 0 && day.prides.some((p: any) => {
         const text = typeof p === 'string' ? p : p?.text
-        return text && text !== '—'
+        return text && text.trim().length > 0
       })
       const hasGratitudes = Array.isArray(day.gratitudes) && day.gratitudes.length > 0 && day.gratitudes.some((g: any) => {
         const text = typeof g === 'string' ? g : g?.text
-        return text && text !== '—'
+        return text && text.trim().length > 0
       })
       if (hasPrides || hasGratitudes || day.closed_at || day.completed) {
         closedCount += 1

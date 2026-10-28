@@ -31,7 +31,7 @@ export function RightRail({
 }: Props) {
   return (
     <aside
-      className={`w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block overflow-y-auto scrollbar-none pr-4 py-3 z-20 select-none flex flex-col gap-4 ${className || ''}`}
+      className={`w-[360px] shrink-0 sticky top-0 h-screen pl-6 hidden xl:block overflow-y-auto scrollbar-none pr-4 py-3 z-20 select-none flex flex-col gap-4 ${className || ''}`}
       aria-label="Дополнительная информация"
     >
       {/* Блок 1: Поиск — пилюля с повышенным фоном (X.com pill search) */}

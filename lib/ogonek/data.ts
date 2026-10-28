@@ -1,10 +1,10 @@
 import type { Day, EvidenceItem, PrideEntry } from './types'
 
-export const CURRENT_DAY = 720
+export const CURRENT_DAY = 705
 
 export const STATS = {
-  streak: 720,
-  prides: 720,
+  streak: 705,
+  prides: 705,
   gratitudes: 663,
   entries: '3590+',
 } as const

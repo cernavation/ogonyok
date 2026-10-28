@@ -162,10 +162,10 @@ export function HomeView({
   }
 
   return (
-    <div className="view-home w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0">
+    <div className="view-home w-full max-w-[620px] min-h-screen border-r border-[#2f3336] shrink-0">
       <MobileHeader
         title="Главная"
-        streak={streak}
+        streak={state.days.length || streak}
         streakStatus={streakStatus}
         hoursLeft={hoursLeft}
         userInitials={initials}

@@ -832,7 +832,7 @@ export function ProfileView({
         {/* Ряд статистики (возраст убран по Требованию):
             «N дней дневника · N записей · 🔥 Уровень N» */}
         <div className="flex items-center gap-3 text-[14px] text-[var(--text-2)] mb-4 flex-wrap">
-          <span><strong className="font-bold text-[var(--text)]">{stats.streakDays}</strong> дней дневника</span>
+          <span><strong className="font-bold text-[var(--text)]">{days.length}</strong> дней дневника</span>
           <span>·</span>
           <span><strong className="font-bold text-[var(--text)]">{stats.totalPrides + stats.totalGratitudes}</strong> записей</span>
           {displayProfile.isAnonymous && (

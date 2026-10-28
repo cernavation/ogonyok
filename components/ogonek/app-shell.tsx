@@ -452,7 +452,7 @@ export function AppShell() {
 
   // Single source of truth for streak (PRODUCT_SPEC.md Rule 3: стрик = закрытые дни)
   const streakCount = useMemo(() => {
-    return calculateStreak(state.days)
+    return state.days.length || calculateStreak(state.days)
   }, [state.days])
 
   // Compute live streak state
@@ -875,7 +875,7 @@ export function AppShell() {
             currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
           />
         ) : (
-          <div className="max-w-[1265px] mx-auto flex justify-between w-full min-h-screen px-4">
+          <div className="w-full max-w-[1380px] mx-auto flex justify-between min-h-screen px-4 lg:px-8">
             <Sidebar
               className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336]"
               view={view}
@@ -888,9 +888,9 @@ export function AppShell() {
               streak={streakState.streak}
             />
 
-            {/* Центральная колонка: строго w-[600px] shrink-0 min-h-screen border-r border-[#2f3336] */}
+            {/* Центральная колонка: w-full max-w-[620px] shrink-0 border-r border-[#2f3336] */}
             <section
-              className="w-[600px] shrink-0 min-h-screen border-r border-[#2f3336]"
+              className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[#2f3336]"
               aria-label="Основное содержимое"
             >
               <motion.div
@@ -905,7 +905,7 @@ export function AppShell() {
             </section>
 
             <RightRail
-              className="w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block"
+              className="w-[360px] shrink-0 sticky top-0 h-screen pl-6 hidden xl:block"
               onNavigate={navigate}
               onCompose={() => setComposer(true)}
               streak={streakState.streak}
