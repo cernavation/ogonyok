@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Check, Plus, Tag, Trash2, X } from 'lucide-react'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { playClick } from '@/lib/ogonek/sound'
@@ -51,8 +52,14 @@ export function ChatTagsModal({ friendId, onClose, soundEnabled = true }: Props)
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-5 shadow-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-5 shadow-2xl flex flex-col max-h-[85vh]"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
             <Tag size={20} className="text-[var(--accent)]" />
@@ -174,7 +181,7 @@ export function ChatTagsModal({ friendId, onClose, soundEnabled = true }: Props)
             </button>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

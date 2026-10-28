@@ -213,7 +213,7 @@ function DayCardComponent({
   if (day.status === 'missed') {
     return (
       <article
-        className="border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-4"
+        className="border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150"
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">
@@ -256,7 +256,7 @@ function DayCardComponent({
   return (
     <>
       <article
-        className="border-b border-[var(--line)] px-4 py-4"
+        className="border-b border-[var(--line)] px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150 cursor-pointer"
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">

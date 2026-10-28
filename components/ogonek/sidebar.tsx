@@ -21,6 +21,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import { getInitials } from '@/lib/ogonek/initials'
 import { totalUnread } from '@/lib/ogonek/messenger'
+import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from './tooltip'
@@ -230,6 +231,7 @@ export function Sidebar({
   const renderNavItem = ({ id, label }: NavItemDef) => {
     const isActive = view === id
     const handleClick = () => {
+      playClick(state.soundEnabled)
       if (id === 'intentions') {
         onFocusIntentions()
       } else {
@@ -241,10 +243,10 @@ export function Sidebar({
       <Tooltip key={id} content={label} side="right">
         <button
           type="button"
-          className={`nav-item group relative flex items-center transition-colors ${
+          className={`nav-item group relative flex items-center hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
             isCollapsed
-              ? 'w-[50px] h-[50px] p-0 justify-center rounded-full mx-auto'
-              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3.5 xl:pl-3 xl:pr-4 py-0 xl:py-2.5 justify-center xl:justify-start rounded-full hover:bg-[var(--bg-hover)] mx-auto xl:mx-0'
+              ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
+              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3.5 xl:pl-3 xl:pr-4 py-0 xl:py-2.5 justify-center xl:justify-start mx-auto xl:mx-0'
           } ${isActive ? 'active text-[var(--text)] fill-[var(--text)] font-bold' : 'text-[var(--muted)] hover:text-[var(--text)] font-medium'}`}
           onClick={handleClick}
           aria-label={label}
@@ -293,12 +295,15 @@ export function Sidebar({
       <div className="flex flex-col gap-1 w-full items-center xl:items-stretch">
         {/* Brand mark */}
         <div
-          className={`brand cursor-pointer group min-h-[40px] flex items-center ${
+          className={`brand cursor-pointer group min-h-[40px] flex items-center hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
             isCollapsed
-              ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto rounded-full hover:bg-[var(--bg-hover)] transition-colors'
-              : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 rounded-full hover:bg-[var(--bg-hover)] transition-colors gap-2.5 mx-auto xl:mx-0'
+              ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto'
+              : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 gap-2.5 mx-auto xl:mx-0'
           }`}
-          onClick={() => onNavigate('home')}
+          onClick={() => {
+            playClick(state.soundEnabled)
+            onNavigate('home')
+          }}
           role="button"
           tabIndex={0}
           title="Огонёк"
@@ -325,12 +330,15 @@ export function Sidebar({
         <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
           <button
             type="button"
-            className={`x-compose-btn ${
+            className={`x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
               isCollapsed
                 ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
                 : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
             }`}
-            onClick={onCompose}
+            onClick={() => {
+              playClick(state.soundEnabled)
+              onCompose()
+            }}
             aria-label="Записать день"
           >
             <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden" />
@@ -372,8 +380,9 @@ export function Sidebar({
 
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-xl hover:bg-[var(--surface2)] transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left"
                 onClick={() => {
+                  playClick(state.soundEnabled)
                   setIsMenuOpen(false)
                   if (onOpenProfile) onOpenProfile()
                   else onNavigate('profile')
@@ -384,8 +393,9 @@ export function Sidebar({
 
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-xl hover:bg-[var(--surface2)] transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left"
                 onClick={() => {
+                  playClick(state.soundEnabled)
                   setIsMenuOpen(false)
                   onNavigate('settings')
                 }}
@@ -397,8 +407,11 @@ export function Sidebar({
 
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] font-semibold text-rose-500 rounded-xl hover:bg-rose-500/10 transition-colors text-left"
-                onClick={handleSignOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] font-semibold text-rose-500 rounded-full hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-150 text-left"
+                onClick={() => {
+                  playClick(state.soundEnabled)
+                  handleSignOut()
+                }}
               >
                 <LogOut size={16} /> Выйти
               </button>
@@ -408,12 +421,15 @@ export function Sidebar({
 
         <button
           type="button"
-          className={`profile-mini cursor-pointer relative z-50 flex items-center rounded-full hover:bg-[var(--surface2)] transition-colors text-left border-0 bg-transparent ${
+          className={`profile-mini cursor-pointer relative z-50 flex items-center rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left border-0 bg-transparent ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
               : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3 xl:pl-1 xl:pr-3 xl:py-2 justify-center xl:justify-start rounded-full mx-auto xl:mx-0'
           }`}
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => {
+            playClick(state.soundEnabled)
+            setIsMenuOpen(!isMenuOpen)
+          }}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
           title={displayName}

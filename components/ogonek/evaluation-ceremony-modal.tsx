@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { Check, Flame, Heart, Loader2, Sparkles, Star, Trophy, X } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -256,9 +257,15 @@ export function EvaluationCeremonyModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 select-none overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none overflow-y-auto"
     >
-      <div className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col gap-5 relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col gap-5 relative overflow-hidden"
+      >
         {/* Glow эффект на фоне */}
         <div className="absolute -top-24 -left-24 w-60 h-60 bg-[var(--accent)]/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-60 h-60 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -428,7 +435,7 @@ export function EvaluationCeremonyModal({
             </button>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

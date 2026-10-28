@@ -119,7 +119,8 @@ export function ReactionBar({
           <Tooltip key={emoji.id} content={emoji.label} side="top">
             <motion.button
               type="button"
-              whileTap={reduce ? undefined : { scale: 0.8 }}
+              whileTap={reduce ? undefined : { scale: 1.25 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               onClick={() => handleToggle(emoji.id, emoji.char, emoji.label)}
               aria-pressed={active}
               aria-label={

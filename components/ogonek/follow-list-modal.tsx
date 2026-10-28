@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState, useTransition } from 'react'
+import { motion } from 'framer-motion'
 import { X, Flame, Check, Loader2 } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
@@ -166,7 +167,11 @@ export function FollowListModal({
       aria-modal="true"
       aria-labelledby="follow-modal-title"
     >
-      <div
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
         className="w-full max-w-[520px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all bg-[var(--surface)] border border-[var(--line)] text-[var(--text)]"
         onClick={(e) => e.stopPropagation()}
       >
@@ -357,7 +362,7 @@ export function FollowListModal({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

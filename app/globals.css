@@ -173,10 +173,10 @@ main.main-content {
   align-items: center;
   gap: 18px;
   padding: 13px 16px;
-  border-radius: 999px;
+  border-radius: 9999px;
   font-size: 17px;
   text-align: left;
-  transition: 0.2s;
+  transition: all 0.15s ease-out;
   width: 100%;
   background: none;
   border: 0;
@@ -185,8 +185,12 @@ main.main-content {
 
 .nav-item:hover,
 .nav-item.active {
-  background: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
+}
+
+.nav-item:active {
+  transform: scale(0.98);
 }
 
 .nav-item.active {
@@ -1274,12 +1278,13 @@ main.main-content {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 20;
-  background: #000b;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.75);
   display: grid;
   place-items: center;
   padding: 20px;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .modal {

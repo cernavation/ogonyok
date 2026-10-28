@@ -1,6 +1,7 @@
 'use client'
 
 import React, { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react'
+import { motion } from 'framer-motion'
 import { Tooltip } from '../tooltip'
 
 export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -75,11 +76,13 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         className={`group inline-flex items-center gap-1.5 select-none transition-colors duration-150 cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${textColor} ${className}`}
         {...props}
       >
-        <span
+        <motion.span
+          whileTap={{ scale: 1.25 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 15 }}
           className={`flex items-center justify-center rounded-full transition-colors duration-150 ${circleSize} ${colorVariants.hoverBg}`}
         >
           {icon}
-        </span>
+        </motion.span>
         {count !== undefined && count !== null && (
           <span className="text-[13px] font-normal leading-none pr-1">
             {count}

@@ -27,13 +27,41 @@ function getAudioContext(): AudioContext | null {
 }
 
 /**
+ * Проверка тумблера «Звуковые эффекты» из настроек.
+ * Если передан явный флаг — используем его.
+ * Иначе читаем актуальное состояние из localStorage (ogonek.v2).
+ */
+export function isSoundEnabled(override?: boolean): boolean {
+  if (typeof override === 'boolean') {
+    return override
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ogonek.v2')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (typeof parsed?.soundEnabled === 'boolean') {
+          return parsed.soundEnabled
+        }
+      }
+    } catch {
+      // Игнорируем ошибки парсинга
+    }
+  }
+
+  return true
+}
+
+/**
  * Еле слышный, благородный ультра-короткий щелчок
  * Длительность ~15ms, 1200Hz с мягким экспоненциальным спадом.
+ * При выключенном звуке — абсолютная тишина.
  */
-export function playClick(soundEnabled = true): void {
-  triggerHaptic('light')
+export function playClick(soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
 
-  if (!soundEnabled) return
+  triggerHaptic('light')
 
   try {
     const ctx = getAudioContext()
@@ -64,11 +92,12 @@ export function playClick(soundEnabled = true): void {
 /**
  * Приятный, глубокий двухтоновый звук триумфа при публикации дня в Composer.
  * Перелив тонов D5 (587.33Hz) -> A5 (880Hz) с бархатным затуханием.
+ * При выключенном звуке — абсолютная тишина.
  */
-export function playSuccess(soundEnabled = true): void {
-  triggerHaptic('success')
+export function playSuccess(soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
 
-  if (!soundEnabled) return
+  triggerHaptic('success')
 
   try {
     const ctx = getAudioContext()

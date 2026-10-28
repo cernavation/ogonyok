@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import {
@@ -99,11 +100,15 @@ export function DayOptionsModal({
     <>
       {/* Главное меню опций дня */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
         onClick={onClose}
       >
-        <div
-          className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-4 animate-in fade-in zoom-in-95"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.15 }}
+          className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-4"
           style={{ background: '#16181c', border: '1px solid #2f3336' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -249,17 +254,21 @@ export function DayOptionsModal({
               Применить ко всем дням
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Стильная модалка подтверждения удаления */}
       {confirmDeleteOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
           onClick={() => !isDeleting && setConfirmDeleteOpen(false)}
         >
-          <div
-            className="w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col gap-4 border border-[#2f3336] bg-[#16181c] animate-in fade-in zoom-in-95 text-center items-center"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col gap-4 border border-[#2f3336] bg-[#16181c] text-center items-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center">
@@ -294,7 +303,7 @@ export function DayOptionsModal({
                 <span>{isDeleting ? 'Удаление…' : 'Удалить'}</span>
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </>

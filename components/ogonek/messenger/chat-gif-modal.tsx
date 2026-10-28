@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Search, Sparkles, X } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
 
@@ -50,8 +51,14 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
   }, [query])
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-lg rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-4 shadow-2xl flex flex-col h-[520px] max-h-[85vh] animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="relative w-full max-w-lg rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-4 shadow-2xl flex flex-col h-[520px] max-h-[85vh]"
+      >
         {/* Шапка модалки */}
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
@@ -124,7 +131,7 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

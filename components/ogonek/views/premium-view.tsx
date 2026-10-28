@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   BadgeCheck,
@@ -475,7 +476,13 @@ export function PremiumView({
             }
           }}
         >
-          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-left animate-in fade-in zoom-in-95 duration-150">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="bg-[var(--bg)] border border-[var(--border)] rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl relative text-left"
+          >
             {/* Close X */}
             <button
               type="button"
@@ -549,7 +556,7 @@ export function PremiumView({
                 Закрыть
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

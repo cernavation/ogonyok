@@ -39,7 +39,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(91,112,131,0.4)] backdrop-blur-sm animate-in fade-in duration-150 p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 p-0 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -47,10 +47,10 @@ export function Modal({
       aria-modal="true"
     >
       <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 20, opacity: 0 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
         style={{ maxWidth }}
         className="w-full max-h-[92vh] flex flex-col rounded-t-[20px] sm:rounded-2xl border-0 sm:border border-[var(--border)] bg-[var(--bg)] shadow-2xl text-[var(--text)] overflow-hidden"
       >

@@ -1,6 +1,7 @@
 'use client'
 
 import { Folder, Plus, Trash2, X } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { useState } from 'react'
 
 import { FRIEND_PROFILES } from '@/lib/ogonek/friends'
@@ -74,8 +75,12 @@ export function ChatFolderModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in">
-      <div
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
         className="relative flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#16181c] shadow-2xl text-[#e7e9ea]"
         role="dialog"
         aria-modal="true"
@@ -256,7 +261,7 @@ export function ChatFolderModal({
             </>
           )}
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

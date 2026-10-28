@@ -3,6 +3,7 @@
 import { Home, MessageCircle, Plus, Search } from 'lucide-react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { totalUnread } from '@/lib/ogonek/messenger'
+import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 
@@ -49,11 +50,14 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
             <button
               key={id}
               type="button"
-              className="flex-1 flex flex-col items-center justify-center h-full relative text-[var(--text)]"
+              className="flex-1 flex flex-col items-center justify-center h-full relative text-[var(--text)] active:scale-[0.98] transition-all duration-150"
               style={{ color: active ? 'var(--text)' : 'var(--muted)' }}
               aria-label={label}
               aria-current={active ? 'page' : undefined}
-              onClick={() => onNavigate(id)}
+              onClick={() => {
+                playClick(state.soundEnabled)
+                onNavigate(id)
+              }}
             >
               {id === 'home' && active ? (
                 <svg viewBox="0 0 24 24" width={24} height={24} className="w-6 h-6 shrink-0 fill-current" aria-hidden="true">
@@ -93,10 +97,13 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
         {/* Profile icon — circular avatar */}
         <button
           type="button"
-          className="flex-1 flex flex-col items-center justify-center h-full"
+          className="flex-1 flex flex-col items-center justify-center h-full active:scale-[0.98] transition-all duration-150"
           aria-label="Профиль"
           aria-current={activeId === 'profile' ? 'page' : undefined}
-          onClick={() => onNavigate('profile')}
+          onClick={() => {
+            playClick(state.soundEnabled)
+            onNavigate('profile')
+          }}
         >
           {avatarImage ? (
             <img
@@ -128,7 +135,10 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
           type="button"
           className="fixed bottom-16 right-4 z-[51] w-14 h-14 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform md:hidden"
           aria-label="Записать день"
-          onClick={onCompose}
+          onClick={() => {
+            playClick(state.soundEnabled)
+            onCompose()
+          }}
         >
           <Plus size={26} strokeWidth={2.5} />
         </button>

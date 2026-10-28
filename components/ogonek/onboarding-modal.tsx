@@ -171,12 +171,18 @@ export function OnboardingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Онбординг Огонька"
     >
-      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="w-full max-w-lg rounded-3xl bg-white dark:bg-[#121215] border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden flex flex-col"
+      >
         {/* Header with step dots */}
         <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80">
           <div className="flex items-center gap-2">
@@ -468,7 +474,7 @@ export function OnboardingModal({
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

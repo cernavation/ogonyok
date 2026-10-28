@@ -71,6 +71,7 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
@@ -89,9 +90,10 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
         ref={modalRef}
         tabIndex={-1}
         className="modal outline-none overflow-x-hidden w-full max-w-full"
-        initial={{ y: 25, scale: 0.98 }}
-        animate={{ y: 0, scale: 1 }}
-        exit={{ y: 25, scale: 0.98 }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
       >

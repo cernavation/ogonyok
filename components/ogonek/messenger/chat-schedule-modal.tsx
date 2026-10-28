@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { motion } from 'framer-motion'
 import { Calendar, Clock, VolumeX, X } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
 
@@ -56,8 +57,14 @@ export function ChatScheduleModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-5 shadow-2xl flex flex-col animate-in fade-in zoom-in-95">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="relative w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] p-5 shadow-2xl flex flex-col"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
           <div className="flex items-center gap-2">
             <span className="text-xl">⏰</span>
@@ -170,7 +177,7 @@ export function ChatScheduleModal({
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
     </div>
   )
 }

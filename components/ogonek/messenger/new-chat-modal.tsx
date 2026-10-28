@@ -208,7 +208,7 @@ export function NewChatModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in select-none"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in select-none"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -216,8 +216,12 @@ export function NewChatModal({
       aria-modal="true"
       aria-label="Новый чат или группа"
     >
-      <div
-        className="w-full sm:max-w-[480px] bg-[var(--bg-elev)] border border-[var(--border)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[82vh] overflow-hidden text-[var(--text)] transition-all animate-in slide-in-from-bottom sm:zoom-in-95"
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.15 }}
+        className="w-full sm:max-w-[480px] bg-[var(--bg-elev)] border border-[var(--border)] rounded-t-[28px] sm:rounded-[24px] shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[82vh] overflow-hidden text-[var(--text)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка модалки */}
@@ -583,7 +587,7 @@ export function NewChatModal({
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>,
     document.body
   )
