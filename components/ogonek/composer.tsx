@@ -13,6 +13,7 @@ import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { ModalShell } from './modal-shell'
 import { PublishPrideStoryModal } from './publish-pride-story-modal'
+import { EvaluationCeremonyModal } from './evaluation-ceremony-modal'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
 
@@ -226,12 +227,13 @@ export function Composer({
   // ── ЭТАП 9: приватность дня и каждой гордости отдельно ──────────────────
   const { postMyStory, state: storeState } = useOgonekStore()
   const myAvatarSrc = usePhotoUrl(storeState.profile.avatarImage)
+  const defaultVis: VisibilityLevel = storeState.privacy?.defaultDayVisibility || 'public'
 
   /** Приватность всего дня */
   const [dayVisibility, setDayVisibility] = useState<VisibilityLevel>(() => {
     if (editingDay?.visibility) return normalizeVisibility(editingDay.visibility)
     if (initialDraft?.visibility) return normalizeVisibility(initialDraft.visibility)
-    return 'public'
+    return defaultVis
   })
 
   /** Приватность каждой гордости по её индексу в форме (0..5) */
@@ -243,7 +245,14 @@ export function Composer({
       })
       return map
     }
-    return initialDraft?.prideVisibilities ?? {}
+    if (initialDraft?.prideVisibilities) return initialDraft.prideVisibilities
+    if (defaultVis === 'private') {
+      return { 0: 'private', 1: 'private', 2: 'private', 3: 'private', 4: 'private' }
+    }
+    if (defaultVis === 'friends') {
+      return { 0: 'friends', 1: 'friends', 2: 'friends', 3: 'friends', 4: 'friends' }
+    }
+    return {}
   })
 
   /** Приватность каждой благодарности по её индексу в форме (0..5) */
@@ -256,8 +265,18 @@ export function Composer({
       })
       return map
     }
-    return initialDraft?.gratitudeVisibilities ?? {}
+    if (initialDraft?.gratitudeVisibilities) return initialDraft.gratitudeVisibilities
+    if (defaultVis === 'private') {
+      return { 0: 'private', 1: 'private', 2: 'private', 3: 'private', 4: 'private' }
+    }
+    if (defaultVis === 'friends') {
+      return { 0: 'friends', 1: 'friends', 2: 'friends', 3: 'friends', 4: 'friends' }
+    }
+    return {}
   })
+
+  /** Модалка торжественной ИИ-оценки дня */
+  const [showCeremonyModal, setShowCeremonyModal] = useState(false)
 
   /** Индекс гордости, для которой открыт мастер публикации в Сторис */
   const [storyModalIndex, setStoryModalIndex] = useState<number | null>(null)
@@ -507,30 +526,33 @@ export function Composer({
     const publishEnabled = editingDay ? totalFilled > 0 : canPublish
     if (!publishEnabled || isPublishing || isEvaluating) return
 
-    // Auto AI evaluation: if prides are unrated or still hold default scores,
-    // evaluate silently in the background, then save the day with real scores.
-    if (filledPrides.length > 0 && ratingsAreDefault) {
-      setIsPublishing(true)
-      try {
-        const evMap = await computeEvaluations()
-        setEvaluations(evMap)
-        setRatingsAreDefault(false)
-        playSuccess(soundEnabled)
-        onSaved(buildPayload(evMap), editingDay?.id, editingDay ? undefined : dateISO)
-        if (!editingDay) {
-          try {
-            localStorage.removeItem('ogonek.draft.composer')
-          } catch {}
-          onClearDraft?.()
-        }
-      } finally {
-        setIsPublishing(false)
-      }
+    // Интерактивная AI-церемония торжественной оценки дня
+    if (filledPrides.length > 0) {
+      setShowCeremonyModal(true)
       return
     }
 
     playSuccess(soundEnabled)
     onSaved(buildPayload(), editingDay?.id, editingDay ? undefined : dateISO)
+    if (!editingDay) {
+      try {
+        localStorage.removeItem('ogonek.draft.composer')
+      } catch {}
+      onClearDraft?.()
+    }
+  }
+
+  const handleCeremonyComplete = (
+    evalMap: Record<number, PrideEvaluation>,
+    mentorWord: string,
+    avgScore: number
+  ) => {
+    setShowCeremonyModal(false)
+    setEvaluations(evalMap)
+    setRatingsAreDefault(false)
+    playSuccess(soundEnabled)
+    const payload = buildPayload(evalMap)
+    onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
     if (!editingDay) {
       try {
         localStorage.removeItem('ogonek.draft.composer')
@@ -978,6 +1000,21 @@ export function Composer({
             onClose={() => setStoryModalIndex(null)}
             onNotify={(msg) => onNotify?.(msg)}
             soundEnabled={soundEnabled}
+          />,
+          document.body
+        )}
+
+      {showCeremonyModal &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <EvaluationCeremonyModal
+            isOpen={showCeremonyModal}
+            prides={filledPrides}
+            gratitudes={filledGratitudes}
+            dayNumber={displayDayId ?? 1}
+            soundEnabled={soundEnabled}
+            onClose={() => setShowCeremonyModal(false)}
+            onAccept={handleCeremonyComplete}
           />,
           document.body
         )}

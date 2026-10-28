@@ -62,6 +62,14 @@ export function getFriend(id: string): FriendProfile | undefined {
   return profileCache.get(id) || profileCache.get(id.toLowerCase()) || FRIEND_PROFILES.find((friend) => friend.id === id || friend.username.toLowerCase() === id.toLowerCase())
 }
 
+/**
+ * Проверить, является ли пользователь взаимным соратником
+ */
+export function isMutualFriend(targetUserId: string, friendIds: string[] = []): boolean {
+  if (!targetUserId) return false
+  return friendIds.includes(targetUserId)
+}
+
 /* ────────────────────────────────────────────────────────────────────────
    ОНЛАЙН-СТАТУС
    ──────────────────────────────────────────────────────────────────────── */

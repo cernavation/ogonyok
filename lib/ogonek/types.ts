@@ -1019,6 +1019,8 @@ export type PrivacySettings = {
   searchableByUsername: boolean
   /** Скрыть пользователя из публичных таблиц лидеров */
   hideFromLeaderboards: boolean
+  /** Приватность записей по умолчанию ('private' | 'friends' | 'public') */
+  defaultDayVisibility?: VisibilityLevel
   /** Когда настройки менялись в последний раз (ISO) */
   updatedAtISO: string
 }

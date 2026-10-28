@@ -20,6 +20,7 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   showDifficultyLevelPublicly: true,
   searchableByUsername: true,
   hideFromLeaderboards: false,
+  defaultDayVisibility: 'public',
   updatedAtISO: '2026-10-01T00:00:00.000Z',
 }
 
@@ -129,6 +130,10 @@ export function sanitizePrivacySettings(value: unknown): PrivacySettings {
     showDifficultyLevelPublicly: bool(v.showDifficultyLevelPublicly, DEFAULT_PRIVACY.showDifficultyLevelPublicly ?? true),
     searchableByUsername: bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
     hideFromLeaderboards: bool(v.hideFromLeaderboards, DEFAULT_PRIVACY.hideFromLeaderboards),
+    defaultDayVisibility:
+      v.defaultDayVisibility === 'private' || v.defaultDayVisibility === 'friends'
+        ? v.defaultDayVisibility
+        : 'public',
     updatedAtISO:
       typeof v.updatedAtISO === 'string' && v.updatedAtISO
         ? v.updatedAtISO

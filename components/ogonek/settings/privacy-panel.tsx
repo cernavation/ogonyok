@@ -253,6 +253,43 @@ export function PrivacyPanel({ onNotify }: Props) {
         </div>
       </div>
 
+      {/* ── Приватность записей по умолчанию ───────────────────────────── */}
+      <div className="privacy-group">
+        <b className="privacy-group__label">
+          <Lock size={14} /> Приватность записей по умолчанию
+        </b>
+        <p className="text-xs text-[var(--text-2)] mb-2.5">
+          Новые дни и гордости автоматически предзаполняются выбранным значением
+        </p>
+
+        <div className="segmented privacy-policy__seg" role="radiogroup" aria-label="Приватность записей по умолчанию">
+          {[
+            { id: 'private' as const, label: '🔒 Только я (Лично)' },
+            { id: 'friends' as const, label: '👥 Для соратников' },
+            { id: 'public' as const, label: '🌐 Публично' },
+          ].map((opt) => {
+            const currentVis = privacy.defaultDayVisibility || 'public'
+            const active = currentVis === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                className={active ? 'selected' : ''}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ defaultDayVisibility: opt.id })
+                  onNotify(`Приватность по умолчанию: ${opt.label}`)
+                }}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* ── Политика взаимодействия ──────────────────────────────────────── */}
       <div className="privacy-group">
         <b className="privacy-group__label">

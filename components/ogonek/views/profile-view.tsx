@@ -52,10 +52,12 @@ import {
   getFriendshipCounts,
   checkFriendshipFollow,
   toggleFriendshipFollow,
+  getMutualFriendsCount,
   getUserPosts,
   type ProfileRecord,
   type PostRecord,
 } from '@/lib/supabase/api'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { registerFriendProfile } from '@/lib/ogonek/friends'
 import { EditProfileModal } from '../edit-profile-modal'
 import { FriendsManager } from '../friends-manager'
@@ -122,7 +124,10 @@ export function ProfileView({
   const [foreignPosts, setForeignPosts] = useState<PostRecord[]>([])
   const [foreignCounts, setForeignCounts] = useState<{ followingCount: number; followersCount: number }>({ followingCount: 0, followersCount: 0 })
   const [isFollowingUser, setIsFollowingUser] = useState(false)
+  const [targetFollowsMe, setTargetFollowsMe] = useState(false)
+  const [mutualFriendsCount, setMutualFriendsCount] = useState(0)
   const [loadingForeign, setLoadingForeign] = useState(false)
+  const { ensureMutualFriendshipChat } = useOgonekStore()
 
   // Загрузка чужого профиля из базы Supabase (Требование 2)
   useEffect(() => {
@@ -154,9 +159,11 @@ export function ProfileView({
           })
 
           const currentUid = storeState.auth.activeAccountId
-          const [counts, followingStatus, posts] = await Promise.all([
+          const [counts, followingStatus, targetFollowsMeStatus, mutualCount, posts] = await Promise.all([
             getFriendshipCounts(prof.id),
             currentUid ? checkFriendshipFollow(currentUid, prof.id) : Promise.resolve(false),
+            currentUid ? checkFriendshipFollow(prof.id, currentUid) : Promise.resolve(false),
+            currentUid ? getMutualFriendsCount(currentUid, prof.id) : Promise.resolve(0),
             getUserPosts(prof.id),
           ])
 
@@ -167,6 +174,8 @@ export function ProfileView({
             (storeState.followingIds ?? []).includes(prof.id) ||
             (storeState.exploreFollowingIds ?? []).includes(prof.id)
           )
+          setTargetFollowsMe(targetFollowsMeStatus)
+          setMutualFriendsCount(mutualCount)
           setForeignPosts(posts)
 
           // Загрузка реальных дней из Supabase (с постраничной выборкой в обход лимита 1000 строк PostgREST)
@@ -296,8 +305,19 @@ export function ProfileView({
     if (currentUid) {
       await toggleFriendshipFollow(currentUid, targetId)
     }
-    onNotify(nowFollowing ? `Вы читаете @${foreignProfile?.username || ''} ✓` : `Отписка от @${foreignProfile?.username || ''}`)
+
+    if (nowFollowing && targetFollowsMe) {
+      ensureMutualFriendshipChat(targetId, {
+        name: foreignProfile?.display_name || foreignProfile?.username,
+        username: foreignProfile?.username,
+      })
+      onNotify(`Вы и @${foreignProfile?.username || ''} теперь взаимные соратники! 🤝`)
+    } else {
+      onNotify(nowFollowing ? `Вы читаете @${foreignProfile?.username || ''} ✓` : `Отписка от @${foreignProfile?.username || ''}`)
+    }
   }
+
+  const isMutualFriend = !isOwnProfile && isFollowingUser && targetFollowsMe
 
   // Единый профиль для рендера
   const displayProfile: OgonekProfile = useMemo(() => {
@@ -800,6 +820,11 @@ export function ProfileView({
                 <Check size={10} strokeWidth={3} />
               </span>
             )}
+            {isMutualFriend && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 flex-none shadow-sm">
+                🤝 Соратник
+              </span>
+            )}
           </div>
           {displayProfile.username && (
             <p className="text-[15px] text-[var(--text-2)]">@{displayProfile.username}</p>
@@ -853,6 +878,14 @@ export function ProfileView({
             <strong className="font-bold text-[var(--text)]">{followersCount}</strong>{' '}
             <span className="text-[var(--text-2)]">Читателей</span>
           </button>
+          {!isOwnProfile && (
+            <>
+              <span className="text-[var(--text-3)] select-none">·</span>
+              <span className="inline-flex items-center gap-1 text-[14px] text-[var(--text-2)]">
+                <strong className="font-bold text-[var(--text)]">{mutualFriendsCount}</strong> {mutualFriendsCount === 1 ? 'общий друг' : mutualFriendsCount >= 2 && mutualFriendsCount <= 4 ? 'общих друга' : 'общих друзей'}
+              </span>
+            </>
+          )}
         </div>
 
         {/* Ряд статистики (возраст убран по Требованию):
@@ -1105,6 +1138,23 @@ export function ProfileView({
                         <div className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-300">
                           {day.prides.slice(0, 5).map((p, idx) => {
                             const isPridePrivate = (p.visibility ?? day.visibility) === 'private'
+                            const isPrideFriendsOnly = (p.visibility ?? day.visibility) === 'friends'
+                            const canViewFriends = isOwnProfile || isMutualFriend
+
+                            if (isPrideFriendsOnly && !canViewFriends) {
+                              return (
+                                <div key={idx} className="flex items-baseline gap-2 text-zinc-500">
+                                  <span className="text-zinc-500 text-xs font-bold flex-none">
+                                    {idx + 1}.
+                                  </span>
+                                  <span className="flex-1 italic text-xs">Запись доступна только соратникам</span>
+                                  <span className="text-[10px] text-amber-500/80 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-0.5 flex-none" title="Для соратников">
+                                    <Users size={9} /> Для соратников
+                                  </span>
+                                </div>
+                              )
+                            }
+
                             return (
                               <div key={idx} className="flex items-baseline gap-2">
                                 <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">
@@ -1114,6 +1164,11 @@ export function ProfileView({
                                 {isPridePrivate && (
                                   <span className="text-[10px] text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-0.5 flex-none" title="Личная гордость">
                                     <Lock size={9} /> Лично
+                                  </span>
+                                )}
+                                {isPrideFriendsOnly && canViewFriends && (
+                                  <span className="text-[10px] text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-0.5 flex-none" title="Для соратников">
+                                    <Users size={9} /> Соратники
                                   </span>
                                 )}
                               </div>

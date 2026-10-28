@@ -17,6 +17,7 @@ import {
   deleteEvidenceVaultItem,
   getEvidenceVault,
   toggleFriendshipFollow,
+  checkFriendshipFollow,
   getFollowing,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
@@ -2523,9 +2524,69 @@ export function useOgonekStore() {
         toggleFriendshipFollow(currentUserId, userId).catch((err) => {
           console.warn('[Ogonek] toggleFriendshipFollow notice:', err)
         })
+
+        if (willFollow) {
+          checkFriendshipFollow(userId, currentUserId)
+            .then((theyFollowMe: boolean) => {
+              if (theyFollowMe) {
+                ensureMutualFriendshipChat(userId)
+              }
+            })
+            .catch(() => {})
+        }
       }
 
       return willFollow
+    },
+    [updateStore]
+  )
+
+  /**
+   * Взаимные соратники: гарантирует создание ветки чата с приветственным сообщением
+   */
+  const ensureMutualFriendshipChat = useCallback(
+    (
+      friendId: string,
+      peerMeta?: { name?: string; username?: string; avatarUrl?: string; initials?: string }
+    ) => {
+      if (!friendId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const existing = threads[friendId]
+        const alreadyHasGreeting = existing?.messages?.some((m) =>
+          m.text?.includes('Вы стали соратниками!')
+        )
+
+        if (alreadyHasGreeting) return prev
+
+        const greetingMsg = makeChatMessage({
+          authorId: friendId,
+          text: 'Вы стали соратниками! 🤝 Теперь вам взаимно доступны личные записи и прямой диалог.',
+        })
+
+        const nextThread = existing
+          ? {
+              ...existing,
+              peerMeta: peerMeta || existing.peerMeta,
+              messages: [...existing.messages, greetingMsg],
+            }
+          : {
+              ...emptyThread(),
+              peerMeta: peerMeta || undefined,
+              messages: [greetingMsg],
+            }
+
+        const nextFriends = Array.from(new Set([...(prev.friendIds ?? []), friendId]))
+
+        return {
+          ...prev,
+          friendIds: nextFriends,
+          chatThreads: {
+            ...threads,
+            [friendId]: nextThread,
+          },
+        }
+      })
     },
     [updateStore]
   )
@@ -5140,6 +5201,7 @@ export function useOgonekStore() {
     resetProfile,
     toggleFollow,
     toggleExploreFollow,
+    ensureMutualFriendshipChat,
     toggleExplorePostLike,
     toggleExplorePostSave,
     addExploreSearch,

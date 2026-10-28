@@ -522,6 +522,45 @@ export async function checkFriendshipFollow(currentUserId: string, targetUserId:
 }
 
 /**
+ * Проверить статус взаимной дружбы (соратники):
+ * User A подписан на User B И User B подписан на User A
+ */
+export async function checkMutualFriendship(userIdA: string, userIdB: string): Promise<boolean> {
+  if (!userIdA || !userIdB || userIdA === userIdB) return false
+  try {
+    const [aFollowsB, bFollowsA] = await Promise.all([
+      checkFriendshipFollow(userIdA, userIdB),
+      checkFriendshipFollow(userIdB, userIdA),
+    ])
+    return Boolean(aFollowsB && bFollowsA)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Получить количество общих друзей (общих подписок) между двумя пользователями
+ */
+export async function getMutualFriendsCount(userIdA: string, userIdB: string): Promise<number> {
+  const supabase = getSupabase()
+  if (!supabase || !userIdA || !userIdB || userIdA === userIdB) return 0
+  try {
+    const [followingA, followingB] = await Promise.all([
+      getFollowing(userIdA),
+      getFollowing(userIdB),
+    ])
+    const setA = new Set(followingA.map((u: ProfileRecord) => u.id))
+    let count = 0
+    for (const u of followingB) {
+      if (setA.has(u.id)) count++
+    }
+    return count
+  } catch {
+    return 0
+  }
+}
+
+/**
  * Получить счётчики подписчиков и подписок из friendships
  */
 export async function getFriendshipCounts(userId: string): Promise<{ followingCount: number; followersCount: number }> {
