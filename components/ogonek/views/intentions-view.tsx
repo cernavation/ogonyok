@@ -76,7 +76,7 @@ export function IntentionsView({
   return (
     <div className="view-intentions min-h-screen pb-20">
       {/* Sticky Header */}
-      <header className="flex items-center gap-4 px-4 py-3 sticky top-0 z-20 border-b border-[var(--border)] bg-[var(--bg)]/90 backdrop-blur-md">
+      <header className="flex items-center gap-4 px-4 py-3 sticky top-0 z-20 border-b border-[var(--line)] bg-[var(--bg)]/90 backdrop-blur-md">
         <button
           type="button"
           onClick={() => onNavigate('home')}
@@ -86,10 +86,10 @@ export function IntentionsView({
           <ArrowLeft size={19} />
         </button>
         <div>
-          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
             Утренние намерения
           </h1>
-          <p className="text-[12px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             {Object.keys(morningIntentions).length} записей
           </p>
         </div>
@@ -99,7 +99,7 @@ export function IntentionsView({
         {/* Огонёк фокуса — счётчик выполнения обещаний */}
         {stats.hasHistory && (
           <section
-            className="px-4 py-4 border-b border-[var(--border)] flex items-center gap-4"
+            className="px-4 py-4 border-b border-[var(--line)] flex items-center gap-4"
             aria-label="Огонёк фокуса"
           >
             <FocusFlame stats={stats} />
@@ -116,7 +116,7 @@ export function IntentionsView({
         )}
 
         {/* Today's intentions card */}
-        <section className="px-4 py-4 border-b border-[var(--border)]" aria-labelledby="today-focus-title">
+        <section className="px-4 py-4 border-b border-[var(--line)]" aria-labelledby="today-focus-title">
           <div className="flex items-center gap-2 mb-3">
             <Target size={17} className="text-[var(--accent)] flex-none" aria-hidden="true" />
             <h2

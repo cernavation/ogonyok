@@ -259,7 +259,7 @@ export function ExploreView({
   return (
     <div className="view-explore min-h-screen pb-24 text-[var(--text)]">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <button
           type="button"
           className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -269,10 +269,10 @@ export function ExploreView({
           <ArrowLeft size={19} />
         </button>
         <div>
-          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
             Поиск и участники
           </h1>
-          <p className="text-[13px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             Реальные пользователи Огонька и теги летописи
           </p>
         </div>
@@ -359,7 +359,7 @@ export function ExploreView({
         {/* Search Results Mode */}
         {hasQuery && (
           <div className="flex flex-col gap-5">
-            <div className="flex items-center justify-between text-xs text-[var(--text-2)] pb-2 border-b border-[var(--border)]">
+            <div className="flex items-center justify-between text-xs text-[var(--muted)] pb-2 border-b border-[var(--line)]">
               <span>
                 Результаты поиска по запросу «<b>{query.trim()}</b>»: найдено <b>{totalFound}</b>
               </span>
@@ -373,9 +373,9 @@ export function ExploreView({
             </div>
 
             {totalFound === 0 && !loading && (
-              <div className="p-8 text-center rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)]">
+              <div className="p-8 text-center rounded-2xl bg-[var(--bg-elev)] border border-[var(--line)]">
                 <p className="font-bold text-[15px] text-[var(--text)]">Участники не найдены</p>
-                <p className="text-xs text-[var(--text-2)] mt-1">
+                <p className="text-[13px] text-[var(--muted)] font-normal mt-1">
                   По запросу «{query.trim()}» участников не найдено.
                 </p>
               </div>
@@ -393,10 +393,10 @@ export function ExploreView({
                       key={t.tag}
                       type="button"
                       onClick={() => handlePickTag(t.tag)}
-                      className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--bg-elev)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text)] flex items-center gap-1.5"
+                      className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--bg-elev)] border border-[var(--line)] hover:border-[var(--accent)] text-[var(--text)] flex items-center gap-1.5"
                     >
                       <span>{t.tag}</span>
-                      <span className="text-[10px] text-[var(--text-2)]">({t.count})</span>
+                      <span className="text-[10px] text-[var(--muted)] font-normal">({t.count})</span>
                     </button>
                   ))}
                 </div>
@@ -409,7 +409,7 @@ export function ExploreView({
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-2)] flex items-center gap-1.5">
                   <Users size={13} /> Пользователи ({communityUsers.length})
                 </span>
-                <ul className="flex flex-col divide-y divide-[var(--border)] bg-[var(--bg-elev)] rounded-2xl border border-[var(--border)] overflow-hidden">
+                <ul className="flex flex-col divide-y divide-[var(--line)] bg-[var(--bg-elev)] rounded-2xl border border-[var(--line)] overflow-hidden">
                   {communityUsers.map((user) => {
                     const isFollowing = followingIds.includes(user.id)
                     return (
@@ -438,7 +438,7 @@ export function ExploreView({
                                 </span>
                               )}
                             </p>
-                            <p className="text-xs text-[var(--text-2)] truncate">
+                            <p className="text-[13px] text-[var(--muted)] font-normal truncate">
                               @{user.username} {user.city ? `· ${user.city}` : ''} {user.streak > 0 ? `· 🔥 ${user.streak}` : ''}
                             </p>
                           </div>

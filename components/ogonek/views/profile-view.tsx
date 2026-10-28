@@ -604,7 +604,7 @@ export function ProfileView({
   return (
     <div className="min-h-screen pb-24">
       {/* Top Header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -615,10 +615,10 @@ export function ProfileView({
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-[17px] font-bold text-[var(--text)] leading-none">
+            <h1 className="text-xl font-bold tracking-tight text-[var(--text)] leading-none truncate">
               {displayProfile.displayName}
             </h1>
-            <p className="text-[13px] text-[var(--text-2)] mt-1">
+            <p className="text-[13px] text-[var(--muted)] font-normal mt-1">
               {profileDaysCount} {profileDaysCount === 1 ? 'день' : 'дней'} в летописи
             </p>
           </div>
@@ -773,7 +773,7 @@ export function ProfileView({
                     playClick(soundEnabled)
                     setEditOpen(true)
                   }}
-                  className="px-4 py-1.5 rounded-full border border-[var(--border)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
+                  className="px-4 py-1.5 rounded-full border border-[var(--line)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
                 >
                   Изменить
                 </button>
@@ -783,7 +783,7 @@ export function ProfileView({
                     playClick(soundEnabled)
                     setShareOpen(true)
                   }}
-                  className="px-4 py-1.5 rounded-full border border-[var(--border)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
+                  className="px-4 py-1.5 rounded-full border border-[var(--line)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
                 >
                   Поделиться
                 </button>
@@ -795,7 +795,7 @@ export function ProfileView({
                   onClick={handleToggleFollowUser}
                   className={`px-5 py-1.5 rounded-full text-[14px] font-bold transition-all min-h-[36px] ${
                     isFollowingUser
-                      ? 'border border-[var(--border)] text-[var(--text)] hover:border-red-500/50 hover:text-red-500 hover:bg-red-500/10'
+                      ? 'border border-[var(--line)] text-[var(--text)] hover:border-red-500/50 hover:text-red-500 hover:bg-red-500/10'
                       : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90 shadow-sm'
                   }`}
                 >
@@ -807,7 +807,7 @@ export function ProfileView({
                     playClick(soundEnabled)
                     setShareOpen(true)
                   }}
-                  className="px-4 py-1.5 rounded-full border border-[var(--border)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
+                  className="px-4 py-1.5 rounded-full border border-[var(--line)] text-[14px] font-bold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[36px]"
                 >
                   Поделиться
                 </button>
@@ -834,7 +834,7 @@ export function ProfileView({
             )}
           </div>
           {displayProfile.username && (
-            <p className="text-[15px] text-[var(--text-2)]">@{displayProfile.username}</p>
+            <p className="text-[13px] text-[var(--muted)] font-normal">@{displayProfile.username}</p>
           )}
         </div>
 

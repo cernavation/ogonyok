@@ -166,7 +166,7 @@ export function HomeView({
       <header className="feed-header">
         {/* Title row */}
         <div className="feed-title">
-          <h1>Главная</h1>
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Главная</h1>
           <Tooltip content="Настройки ленты" side="left">
             <button
               type="button"
@@ -209,7 +209,7 @@ export function HomeView({
       {/* Inline composer — X.com canonical layout */}
       {onCompose && (
         <div
-          className="flex gap-3 px-4 pt-3 pb-3 border-b border-[var(--border)] cursor-pointer hover:bg-[var(--bg-hover-post)] transition-colors duration-150"
+          className="flex gap-3 px-4 pt-3 pb-3 border-b border-[var(--line)] cursor-pointer hover:bg-[var(--bg-hover-post)] transition-colors duration-150"
           onClick={onCompose}
           role="region"
           aria-label="Создать запись дня"
@@ -219,14 +219,11 @@ export function HomeView({
             <img
               src={avatarImage}
               alt={displayName}
-              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--border)] mt-0.5"
+              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--line)] mt-0.5"
             />
           ) : (
             <div
-              className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none text-white shadow-sm mt-0.5"
-              style={{
-                background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-              }}
+              className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)] mt-0.5"
               aria-hidden="true"
             >
               {initials}
@@ -236,7 +233,7 @@ export function HomeView({
             <div className="py-2 text-[var(--text-2)] text-[18px] font-normal select-none">
               Чем гордишься сегодня?
             </div>
-            <div className="flex items-center justify-between pt-2 border-t border-[var(--border-subtle)] mt-1">
+            <div className="flex items-center justify-between pt-2 border-t border-[var(--line)] mt-1">
               <div className="flex items-center gap-1 -ml-2 text-[var(--accent)]" aria-label="Инструменты записи">
                 <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
                   <ImageIcon size={18} />

@@ -149,7 +149,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
   return (
     <div className="min-h-screen pb-36 sm:pb-32">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <button
           type="button"
           className="w-10 h-10 min-w-[40px] flex-none -ml-1 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -159,11 +159,11 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-[19px] font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
             <Trophy className="w-5 h-5 text-[var(--accent)]" />
             Рейтинги сообщества
           </h1>
-          <p className="text-[13px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             Серверный расчёт · Длина дневника, гордости, средний балл и благодарности
           </p>
         </div>
@@ -188,7 +188,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
         )}
 
         {/* Tabs: Друзья / Все */}
-        <div className="flex rounded-full bg-[var(--bg-elev)] p-1 border border-[var(--border)] gap-2" role="tablist">
+        <div className="flex rounded-full bg-[var(--bg-elev)] p-1 border border-[var(--line)] gap-2" role="tablist">
           <button
             type="button"
             role="tab"
@@ -241,7 +241,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                 className={`min-h-[36px] sm:min-h-[34px] px-4 py-1.5 rounded-full text-[13px] font-bold transition-all duration-150 ${
                   period === f.id
                     ? 'bg-[var(--text)] text-[var(--bg)] font-extrabold shadow-sm'
-                    : 'bg-[var(--bg-elev)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)]'
+                    : 'bg-[var(--bg-elev)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--line)]'
                 }`}
               >
                 {f.label}
@@ -249,13 +249,13 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
             ))}
           </div>
 
-          <span className="text-[13px] text-[var(--text-2)]">
+          <span className="text-[13px] text-[var(--muted)] font-normal">
             {currentList.length} участников
           </span>
         </div>
 
         {/* Строки таблицы лидеров */}
-        <div className="flex flex-col border-t border-[var(--border)] pb-36 sm:pb-32">
+        <div className="flex flex-col border-t border-[var(--line)] pb-36 sm:pb-32">
           {currentList.map((user, idx) => {
             const rank = idx + 1
             const isMe = user.is_me
@@ -267,16 +267,16 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
             return (
               <div
                 key={user.user_id || idx}
-                className="flex items-center justify-between py-3.5 px-2 border-b border-[var(--border)] hover:bg-[var(--bg-hover)] transition-colors gap-2 sm:gap-3"
+                className="flex items-center justify-between py-3.5 px-2 border-b border-[var(--line)] hover:bg-[var(--bg-hover)] transition-colors gap-2 sm:gap-3"
               >
                 {/* Left: Rank + Avatar + Name + @Handle */}
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-                  <span className="text-[14px] font-mono font-bold text-[var(--text-2)] w-6 sm:w-7 text-center flex-none">
+                  <span className="text-[13px] font-mono font-normal text-[var(--muted)] w-6 sm:w-7 text-center flex-none">
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                   </span>
 
                   <div
-                    className="avatar w-9 h-9 sm:w-10 sm:h-10 rounded-full flex-none flex items-center justify-center font-bold text-[13px] sm:text-[14px] shadow-sm overflow-hidden"
+                    className="avatar w-9 h-9 sm:w-10 sm:h-10 rounded-full flex-none flex items-center justify-center font-bold text-[13px] sm:text-[14px] border border-[var(--line)] overflow-hidden"
                     style={{
                       background: isMe ? 'var(--accent)' : isAnonForOther ? '#27272a' : 'var(--surface2)',
                       color: isMe ? 'var(--accent-text)' : isAnonForOther ? '#a1a1aa' : 'var(--text)',

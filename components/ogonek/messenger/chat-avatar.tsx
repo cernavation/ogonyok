@@ -77,15 +77,14 @@ export function ChatAvatar({
         <img
           src={avatarUrl}
           alt={name}
-          className="rounded-full object-cover shrink-0"
+          className="rounded-full object-cover shrink-0 border border-[var(--line)]"
           style={{ width: size, height: size }}
         />
       ) : (
         <span
-          className="grid h-full w-full place-items-center rounded-full font-bold text-white shrink-0"
+          className="grid h-full w-full place-items-center rounded-full font-bold select-none shrink-0 border border-[var(--line)] bg-[var(--surface2)] text-[var(--text)]"
           style={{
-            background: friend?.avatarColor || 'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
-            textShadow: '0 1px 2px #000',
+            background: friend?.avatarColor || undefined,
             fontSize: Math.round(size * 0.36),
           }}
           aria-hidden="true"

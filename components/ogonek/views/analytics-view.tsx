@@ -109,7 +109,7 @@ export function AnalyticsView({
   return (
     <div className="min-h-screen pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3.5 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <button
           type="button"
           className="w-10 h-10 -ml-1 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -119,10 +119,10 @@ export function AnalyticsView({
           <ArrowLeft size={20} />
         </button>
         <div>
-          <h1 className="text-[19px] font-bold text-[var(--text)] tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
             Статистика & Стрик
           </h1>
-          <p className="text-[13px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             Качество и динамика твоих побед
           </p>
         </div>
@@ -143,7 +143,7 @@ export function AnalyticsView({
         </div>
 
         {/* 2. Один график (тонкие линии/столбики акцентом и серым) */}
-        <div className="p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] flex flex-col gap-3">
+        <div className="p-5 rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] flex flex-col gap-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[16px] font-bold text-[var(--text)] flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-[var(--accent)]" />

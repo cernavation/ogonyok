@@ -413,16 +413,14 @@ export function MessengerDialogList({
                 {/* Аватар 56px */}
                 <div className="relative shrink-0 w-[56px] h-[56px]">
                   {isSaved ? (
-                    <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-[#c2410c] to-[#9a3412] flex items-center justify-center text-2xl shadow-md text-white">
+                    <div className="w-[56px] h-[56px] rounded-full bg-[var(--accent)] border border-[var(--line)] flex items-center justify-center text-2xl text-white">
                       ⭐️
                     </div>
                   ) : isGroup ? (
                     <div
-                      className="w-[56px] h-[56px] rounded-full flex items-center justify-center text-2xl shadow-md"
+                      className="w-[56px] h-[56px] rounded-full flex items-center justify-center text-2xl border border-[var(--line)] bg-[var(--surface2)]"
                       style={{
-                        background:
-                          thread?.groupMeta?.avatarColor ||
-                          'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                        background: thread?.groupMeta?.avatarColor || undefined,
                       }}
                     >
                       {thread?.groupMeta?.avatarEmoji || '👥'}

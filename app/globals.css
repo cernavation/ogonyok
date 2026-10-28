@@ -379,7 +379,7 @@ main.main-content {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #000e;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
 }
@@ -392,9 +392,11 @@ main.main-content {
 }
 
 .feed-title h1 {
-  font-size: 21px;
+  font-size: 20px;
+  font-weight: 700;
   margin: 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
+  color: var(--text);
 }
 
 .feed-title button {
@@ -466,7 +468,7 @@ main.main-content {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #000e;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line);
   display: flex;
@@ -477,8 +479,10 @@ main.main-content {
 
 .view-header h1 {
   font-size: 20px;
+  font-weight: 700;
   margin: 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.025em;
+  color: var(--text);
 }
 
 .view-subtitle {
@@ -1282,10 +1286,10 @@ main.main-content {
   width: min(100%, 580px);
   max-height: 90vh;
   overflow: auto;
-  background: #0b0c0d;
-  border: 1px solid #42464a;
-  border-radius: 18px;
-  box-shadow: 0 18px 70px #000;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
   padding: 23px;
 }
 
@@ -1784,7 +1788,7 @@ kbd {
   }
   .modal {
     max-height: 88vh;
-    border-radius: 18px 18px 10px 10px;
+    border-radius: 16px;
     padding: 18px;
   }
 }
@@ -1886,14 +1890,14 @@ kbd {
 .profile-avatar-large {
   width: 60px;
   height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--orange), #ffa600);
-  color: #fff;
+  border-radius: 9999px;
+  background: var(--surface2);
+  color: var(--text);
   font-size: 20px;
   font-weight: 700;
   display: grid;
   place-items: center;
-  border: 2px solid var(--line);
+  border: 1px solid var(--line);
 }
 
 .profile-name {
@@ -2059,14 +2063,14 @@ kbd {
   flex-direction: column;
   gap: 10px;
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 16px;
   padding: 14px;
   background: rgba(255, 255, 255, 0.02);
 }
 
 .epm-section--goal {
   border-color: rgba(255, 107, 53, 0.35);
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.08), rgba(255, 166, 0, 0.02));
+  background: var(--accent-soft);
 }
 
 .epm-section-head {
@@ -2690,13 +2694,12 @@ kbd {
   font-size: 14px;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #ff6b35, #ff975c);
+  background: var(--accent);
   border: 0;
-  border-radius: 999px;
+  border-radius: 9999px;
   padding: 11px 20px;
   cursor: pointer;
   transition: filter 0.15s ease, transform 0.12s ease, opacity 0.15s ease;
-  box-shadow: 0 6px 18px rgba(255, 107, 53, 0.22);
 }
 
 .ach-primary-btn:hover:not(:disabled) {
@@ -4257,7 +4260,7 @@ kbd {
 .ach-sub-steps li.is-active span {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(135deg, #ff6b35, #ff975c);
+  background: var(--accent);
 }
 
 .ach-sub-steps li.is-done span {
@@ -5638,10 +5641,10 @@ kbd {
 }
 .story-viewer__cta {
   height: 46px;
-  border-radius: 14px;
+  border-radius: 9999px;
   border: none;
-  background: linear-gradient(135deg, #ff6b35, #ffa600);
-  color: #10100e;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
   font-size: 14px;
   font-weight: 800;
   display: inline-flex;
@@ -5672,7 +5675,7 @@ kbd {
   gap: 11px;
   height: 50px;
   padding: 0 16px;
-  border-radius: 14px;
+  border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
@@ -5692,8 +5695,8 @@ kbd {
 }
 .story-viewer__share-btn--primary {
   border-color: transparent;
-  background: linear-gradient(135deg, #ff6b35, #ffa600);
-  color: #10100e;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
 }
 .story-viewer__share-hint {
   display: flex;
@@ -6590,7 +6593,9 @@ kbd {
   position: relative;
   display: inline-flex;
   flex: none;
-  border-radius: 50%;
+  border-radius: 9999px;
+  border: 1px solid var(--line);
+  overflow: hidden;
 }
 .xh-avatar.is-ring {
   box-shadow: 0 0 0 2px #000, 0 0 0 4px rgba(255, 107, 53, 0.75);

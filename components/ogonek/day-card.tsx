@@ -256,24 +256,21 @@ function DayCardComponent({
   return (
     <>
       <article
-        className="border-b border-[var(--border)] px-4 py-4"
+        className="border-b border-[var(--line)] px-4 py-4"
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">
-          {/* Avatar with gradient ring */}
+          {/* Avatar with unified line border */}
           <div className="flex-none pt-0.5">
             {effectiveAvatarSrc ? (
               <img
                 src={effectiveAvatarSrc}
                 alt={displayName}
-                className="w-10 h-10 rounded-full object-cover shadow-sm border border-[var(--border)]"
+                className="w-10 h-10 rounded-full object-cover border border-[var(--line)]"
               />
             ) : (
               <div
-                className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none text-white shadow-sm"
-                style={{
-                  background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-                }}
+                className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]"
                 aria-hidden="true"
               >
                 {initials}
@@ -298,11 +295,11 @@ function DayCardComponent({
                   <Check size={10} strokeWidth={3} />
                 </span>
                 {dayVisibility !== 'public' && (
-                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--text-2)] flex-none" aria-label="Приватность">
+                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
                     <Lock size={13} />
                   </span>
                 )}
-                <span className="text-[13px] text-[var(--text-2)]">
+                <span className="text-[13px] text-[var(--muted)] font-normal">
                   @{username} · {dateStr}
                 </span>
                 {averageScore !== null && (
@@ -330,9 +327,9 @@ function DayCardComponent({
               </div>
             </div>
 
-            {/* Post body — ТЕКСТ КРУПНО (X.com standard) */}
+            {/* Post body — ТЕКСТ ПОСТОВ: text-[15px] leading-6 font-normal text-[var(--text)] */}
             <div className="flex items-start justify-between gap-2 mb-2">
-              <p className="text-[17px] leading-[24px] text-[var(--text)] font-normal flex-1">
+              <p className="text-[15px] leading-6 font-normal text-[var(--text)] flex-1">
                 {firstPride?.text || day.title}
               </p>
               {firstPride && (() => {
@@ -386,7 +383,7 @@ function DayCardComponent({
                       playClick(soundEnabled)
                       setExpandedDetails(true)
                     }}
-                    className="text-[13px] font-medium text-[var(--text-2)] hover:text-[var(--text)] hover:underline flex items-center gap-1.5 py-1 min-h-[32px] transition-colors"
+                    className="text-[13px] font-normal text-[var(--muted)] hover:text-[var(--text)] hover:underline flex items-center gap-1.5 py-1 min-h-[32px] transition-colors"
                   >
                     <span>
                       {otherPrides.length > 0 && `ещё ${otherPrides.length} гордост${otherPrides.length === 1 ? 'ь' : otherPrides.length < 5 ? 'и' : 'ей'}`}
@@ -395,7 +392,7 @@ function DayCardComponent({
                     </span>
                   </button>
                 ) : (
-                  <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border-subtle)]">
+                  <div className="flex flex-col gap-2 pt-2 border-t border-[var(--line)]">
                     {otherPrides.length > 0 && (
                       <div className="flex flex-col gap-1.5">
                         <span className="text-[13px] font-bold text-[var(--accent)] flex items-center gap-1">
@@ -406,11 +403,11 @@ function DayCardComponent({
                           const effectiveVisibility = day.visibility === 'private' ? 'private' : (p.visibility || day.visibility || 'public')
                           const isPub = effectiveVisibility === 'public'
                           return (
-                            <div key={p.num || pIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-1">
-                              <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
+                            <div key={p.num || pIdx} className="flex items-start gap-2 text-[15px] leading-6 font-normal text-[var(--text)] py-1">
+                              <span className="font-mono text-[var(--muted)] text-[13px] font-normal w-4 text-right flex-none pt-0.5">
                                 {p.num || pIdx + 2}
                               </span>
-                              <span className="flex-1 break-words leading-relaxed">{p.text}</span>
+                              <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{p.text}</span>
                               {typeof p.scale === 'number' && p.scale > 0 && (
                                 <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
                                   {p.scale}★
@@ -462,11 +459,11 @@ function DayCardComponent({
                         {otherGratitudes.map((g, gIdx) => {
                           const text = typeof g === 'string' ? g : g.text
                           return (
-                            <div key={gIdx} className="flex items-start gap-2 text-[14px] text-[var(--text)] py-0.5">
-                              <span className="font-mono text-[var(--text-2)] text-[13px] w-4 text-right flex-none pt-0.5">
+                            <div key={gIdx} className="flex items-start gap-2 text-[15px] leading-6 font-normal text-[var(--text)] py-0.5">
+                              <span className="font-mono text-[var(--muted)] text-[13px] font-normal w-4 text-right flex-none pt-0.5">
                                 {gIdx + 1}
                               </span>
-                              <span className="flex-1 break-words leading-relaxed">{text}</span>
+                              <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{text}</span>
                             </div>
                           )
                         })}
@@ -491,7 +488,7 @@ function DayCardComponent({
             {/* Photos */}
             {photoUrls.length > 0 && (
               <div
-                className={`mt-3 overflow-hidden rounded-2xl border border-[var(--border)] ${
+                className={`mt-3 overflow-hidden rounded-2xl border border-[var(--line)] ${
                   photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
                 }`}
               >
@@ -516,7 +513,7 @@ function DayCardComponent({
 
             {/* 5 канонических IconButton в футере поста (X.com standard: Ответить, В копилку, Огонёк, Поделиться, Ещё) */}
             <div
-              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--border)] max-w-[460px]"
+              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--line)] max-w-[460px]"
               role="group"
               aria-label="Действия с публикацией"
             >

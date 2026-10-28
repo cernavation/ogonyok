@@ -90,7 +90,7 @@ export function PremiumView({
   return (
     <div className="view-premium min-h-screen pb-24 text-[var(--text)]">
       {/* Sticky Top Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <button
           type="button"
           className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -100,11 +100,11 @@ export function PremiumView({
           <ArrowLeft size={19} />
         </button>
         <div>
-          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
             Премиум в Огоньке
             <BadgeCheck size={18} className="text-[#1d9bf0]" />
           </h1>
-          <p className="text-[13px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             Расширенные возможности, верификация и синхронизация
           </p>
         </div>
@@ -125,7 +125,7 @@ export function PremiumView({
         </p>
 
         {/* Billing Switcher (Ежемесячно / Ежегодно) */}
-        <div className="mt-6 inline-flex p-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] relative" role="radiogroup" aria-label="Период оплаты">
+        <div className="mt-6 inline-flex p-1 rounded-full bg-[var(--bg-elev)] border border-[var(--line)] relative" role="radiogroup" aria-label="Период оплаты">
           <button
             type="button"
             role="radio"
@@ -168,10 +168,10 @@ export function PremiumView({
       <div className="flex flex-col gap-6 p-4 items-stretch w-full">
         {/* TARIFF 1: БАЗОВЫЙ (0 MDL / Бесплатно навсегда) */}
         <div
-          className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border transition-all relative ${
+          className={`flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[var(--bg-elev)] border transition-all relative ${
             activeTier === 'free'
-              ? 'border-[var(--text)] ring-2 ring-[var(--text)]/20 shadow-xl'
-              : 'border-[var(--border)] hover:border-[var(--border-strong)]'
+              ? 'border-[var(--text)] ring-2 ring-[var(--text)]/20'
+              : 'border-[var(--line)] hover:border-[var(--border-strong)]'
           }`}
         >
           <div>
@@ -180,7 +180,7 @@ export function PremiumView({
                 Для дисциплины
               </span>
               {activeTier === 'free' && (
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-[var(--text)] border border-[var(--border)]">
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-[var(--text)] border border-[var(--line)]">
                   Текущий план
                 </span>
               )}
@@ -194,7 +194,7 @@ export function PremiumView({
             </p>
 
             {/* Price: 0 MDL / Бесплатно навсегда */}
-            <div className="my-5 pb-5 border-b border-[var(--border)]">
+            <div className="my-5 pb-5 border-b border-[var(--line)]">
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
                   0 MDL
@@ -211,19 +211,19 @@ export function PremiumView({
             {/* Features */}
             <ul className="flex flex-col gap-3 text-[13px] text-[var(--text)]">
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
+                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
                   <Smartphone size={12} strokeWidth={2.5} />
                 </span>
                 <span>Доступ ко всем устройствам (Web, PWA на iPhone)</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
+                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
                   <Flame size={12} strokeWidth={2.5} className="text-[#ff6b35]" />
                 </span>
                 <span>Безлимитный стрик летописи</span>
               </li>
               <li className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--border)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
+                <span className="w-5 h-5 rounded-full bg-[var(--bg)] border border-[var(--line)] flex items-center justify-center flex-none mt-0.5 text-[var(--text)]">
                   <Check size={12} strokeWidth={3} />
                 </span>
                 <span>Утренний фокус и таймеры</span>
@@ -238,7 +238,7 @@ export function PremiumView({
               onClick={() => handleSelectTier('free')}
               className={`w-full h-11 rounded-full text-[14px] font-bold transition-all flex items-center justify-center gap-1.5 ${
                 activeTier === 'free'
-                  ? 'bg-transparent border border-[var(--border)] text-[var(--text-2)] cursor-default'
+                  ? 'bg-transparent border border-[var(--line)] text-[var(--text-2)] cursor-default'
                   : 'bg-[var(--text)] text-[var(--bg)] hover:opacity-90 active:scale-95'
               }`}
             >
@@ -249,17 +249,14 @@ export function PremiumView({
 
         {/* TARIFF 2: ПРЕМИУМ (25 MDL / $1.5 в месяц) [ХИТ] */}
         <div
-          className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border-2 transition-all relative shadow-2xl ${
+          className={`flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[var(--bg-elev)] border transition-all relative ${
             activeTier === 'premium'
-              ? 'border-[#1d9bf0] ring-4 ring-[#1d9bf0]/20'
+              ? 'border-[#1d9bf0] ring-2 ring-[#1d9bf0]/20'
               : 'border-[#1d9bf0]/70 hover:border-[#1d9bf0]'
           }`}
-          style={{
-            background: 'linear-gradient(180deg, rgba(29, 155, 240, 0.08) 0%, var(--bg-elev) 30%)',
-          }}
         >
           {/* Top Badge: ХИТ */}
-          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#1d9bf0] text-white text-[11px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1">
+          <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#1d9bf0] text-white text-[11px] font-black uppercase tracking-wider flex items-center gap-1">
             <Sparkles size={11} /> Хит
           </div>
 
@@ -283,7 +280,7 @@ export function PremiumView({
             </p>
 
             {/* Price: 25 MDL / $1.5 в месяц */}
-            <div className="my-5 pb-5 border-b border-[var(--border)]">
+            <div className="my-5 pb-5 border-b border-[var(--line)]">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
                   {billing === 'monthly' ? '25 MDL' : '240 MDL'}
@@ -334,7 +331,7 @@ export function PremiumView({
             <button
               type="button"
               onClick={() => handleSelectTier('premium')}
-              className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 shadow-lg active:scale-95 ${
+              className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
                 activeTier === 'premium'
                   ? 'bg-[#1d9bf0] text-white ring-2 ring-[#1d9bf0]/50'
                   : 'bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white'
@@ -357,14 +354,11 @@ export function PremiumView({
 
         {/* TARIFF 3: ОСНОВАТЕЛЬ ULTRA (50 MDL / $3 в месяц) */}
         <div
-          className={`flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-[var(--bg-elev)] border transition-all relative ${
+          className={`flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[var(--bg-elev)] border transition-all relative ${
             activeTier === 'ultra'
-              ? 'border-[#f5b942] ring-2 ring-[#f5b942]/30 shadow-xl'
-              : 'border-[var(--border)] hover:border-[#f5b942]/60'
+              ? 'border-[#f5b942] ring-2 ring-[#f5b942]/30'
+              : 'border-[var(--line)] hover:border-[#f5b942]/60'
           }`}
-          style={{
-            background: 'linear-gradient(180deg, rgba(245, 185, 66, 0.05) 0%, var(--bg-elev) 30%)',
-          }}
         >
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
@@ -386,7 +380,7 @@ export function PremiumView({
             </p>
 
             {/* Price: 50 MDL / $3 в месяц */}
-            <div className="my-5 pb-5 border-b border-[var(--border)]">
+            <div className="my-5 pb-5 border-b border-[var(--line)]">
               <div className="flex items-baseline gap-1">
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
                   {billing === 'monthly' ? '50 MDL' : '480 MDL'}

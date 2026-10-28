@@ -207,11 +207,9 @@ export function ChatThreadList({
                 <div className="relative shrink-0">
                   {isGroup ? (
                     <div
-                      className="flex h-12 w-12 items-center justify-center rounded-full text-xl shadow-md"
+                      className="flex h-12 w-12 items-center justify-center rounded-full text-xl border border-[var(--line)] bg-[var(--surface2)]"
                       style={{
-                        background:
-                          thread?.groupMeta?.avatarColor ||
-                          'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                        background: thread?.groupMeta?.avatarColor || undefined,
                       }}
                     >
                       {thread?.groupMeta?.avatarEmoji || '👥'}

@@ -126,8 +126,8 @@ export function MessagesView({
             <ArrowLeft size={20} />
           </button>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1>Чаты</h1>
-            <p className="view-subtitle">
+            <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Чаты</h1>
+            <p className="view-subtitle text-[13px] text-[var(--muted)] font-normal">
               Мессенджер Огонька в стиле Telegram Web · группы, папки, голосовые и карточки в один клик
             </p>
           </div>

@@ -546,7 +546,7 @@ export function SettingsView({
   return (
     <div className="min-h-screen pb-24">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--border)]">
+      <header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-[var(--bg)]/90 backdrop-blur-md border-b border-[var(--line)]">
         <button
           type="button"
           className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
@@ -556,10 +556,10 @@ export function SettingsView({
           <ArrowLeft size={19} />
         </button>
         <div>
-          <h1 className="text-[19px] font-extrabold text-[var(--text)] tracking-[-0.02em] leading-tight">
+          <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
             Настройки
           </h1>
-          <p className="text-[13px] text-[var(--text-2)]">
+          <p className="text-[13px] text-[var(--muted)] font-normal">
             Персонализация дневника и системы
           </p>
         </div>

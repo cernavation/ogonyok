@@ -42,11 +42,11 @@ export function Avatar({
       onClick={onClick}
     >
       <div
-        className="relative flex items-center justify-center overflow-hidden rounded-full font-bold text-white select-none shadow-sm"
+        className="relative flex items-center justify-center overflow-hidden rounded-full font-bold select-none border border-[var(--line)] bg-[var(--surface2)] text-[var(--text)]"
         style={{
           width: innerSize,
           height: innerSize,
-          background: avatarColor || 'linear-gradient(135deg, #27272A 0%, #18181B 100%)',
+          background: avatarColor || undefined,
           fontSize: Math.round(innerSize * 0.4),
         }}
       >

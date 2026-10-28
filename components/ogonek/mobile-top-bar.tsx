@@ -42,14 +42,11 @@ export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
             <img
               src={avatarImage}
               alt={displayName}
-              className="w-8 h-8 rounded-full object-cover border border-[var(--border)]"
+              className="w-8 h-8 rounded-full object-cover border border-[var(--line)]"
             />
           ) : (
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-              style={{
-                background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-              }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]"
             >
               {initials.charAt(0)}
             </div>
@@ -121,14 +118,11 @@ export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
                   <img
                     src={avatarImage}
                     alt={displayName}
-                    className="w-12 h-12 rounded-full object-cover border border-[var(--border)]"
+                    className="w-12 h-12 rounded-full object-cover border border-[var(--line)]"
                   />
                 ) : (
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                    style={{
-                      background: 'linear-gradient(135deg, #FF6A1A 0%, #FF8533 50%, #2F3336 100%)',
-                    }}
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]"
                   >
                     {initials}
                   </div>

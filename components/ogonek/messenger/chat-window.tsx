@@ -305,11 +305,9 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
 
           {isGroup ? (
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg shadow"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg border border-[var(--line)] bg-[var(--surface2)]"
               style={{
-                background:
-                  thread.groupMeta?.avatarColor ||
-                  'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                background: thread.groupMeta?.avatarColor || undefined,
               }}
             >
               {thread.groupMeta?.avatarEmoji || '👥'}
@@ -519,11 +517,9 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
           <div className="mcw__intro flex flex-col items-center justify-center p-8 text-center my-auto">
             {isGroup ? (
               <div
-                className="flex h-16 w-16 items-center justify-center rounded-full text-3xl shadow-lg mb-3"
+                className="flex h-16 w-16 items-center justify-center rounded-full text-3xl mb-3 border border-[var(--line)] bg-[var(--surface2)]"
                 style={{
-                  background:
-                    thread.groupMeta?.avatarColor ||
-                    'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                  background: thread.groupMeta?.avatarColor || undefined,
                 }}
               >
                 {thread.groupMeta?.avatarEmoji || '👥'}

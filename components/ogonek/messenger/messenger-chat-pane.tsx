@@ -666,16 +666,14 @@ export function MessengerChatPane({
           {/* Аватар 44px */}
           <div className="relative shrink-0 w-[40px] h-[40px] sm:w-[44px] sm:h-[44px]">
             {isSaved ? (
-              <div className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-full bg-gradient-to-br from-[#ff7a18] to-[#ff5200] flex items-center justify-center text-lg sm:text-xl shadow text-white">
+              <div className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-full bg-[var(--accent)] border border-[var(--line)] flex items-center justify-center text-lg sm:text-xl text-white">
                 ⭐️
               </div>
             ) : isGroup ? (
               <div
-                className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-full flex items-center justify-center text-lg sm:text-xl shadow"
+                className="w-[40px] h-[40px] sm:w-[44px] sm:h-[44px] rounded-full flex items-center justify-center text-lg sm:text-xl border border-[var(--line)] bg-[var(--surface2)]"
                 style={{
-                  background:
-                    thread?.groupMeta?.avatarColor ||
-                    'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
+                  background: thread?.groupMeta?.avatarColor || undefined,
                 }}
               >
                 {thread?.groupMeta?.avatarEmoji || '👥'}
