@@ -104,7 +104,8 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
             type="button"
             className="icon-button"
             onClick={onClose}
-            aria-label="Закрыть окно экспорта"
+            aria-label="Закрыть"
+            title="Закрыть"
           >
             <X size={20} />
           </button>

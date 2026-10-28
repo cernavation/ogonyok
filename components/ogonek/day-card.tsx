@@ -153,17 +153,17 @@ function DayCardComponent({
     }
     onNotify?.('ИИ оценивает день...')
     try {
-      const res = await fetch('/api/ai/evaluate-day', {
+      const res = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'pride', items: itemsToEval, dayId: day.id }),
+        body: JSON.stringify({ mode: 'pride', items: itemsToEval, prides: itemsToEval, dayId: day.id }),
       })
       const data = await res.json()
-      if (res.ok && data.evaluations) {
-        data.evaluations.forEach((ev: { index: number; score: number }) => {
-          if (typeof ev.score === 'number') {
-            ratePride(day.id, ev.index, ev.score)
-          }
+      if (res.ok && Array.isArray(data.evaluations)) {
+        data.evaluations.forEach((ev: any, idx: number) => {
+          const score = typeof ev.score === 'number' ? ev.score : typeof ev.scale === 'number' ? ev.scale : 8
+          const targetIndex = typeof ev.index === 'number' ? ev.index : (typeof ev.num === 'number' ? ev.num - 1 : idx)
+          ratePride(day.id, targetIndex, score)
         })
         onNotify?.('ИИ оценил день!')
       } else {

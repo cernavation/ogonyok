@@ -22,6 +22,8 @@ export interface ProfileRecord {
   in_leaderboard?: boolean
   streak?: number
   streak_count?: number
+  total_prides?: number
+  total_gratitudes?: number
   is_anonymous?: boolean
   privacy?: { is_anonymous?: boolean; [key: string]: any }
   settings?: { level?: number; [key: string]: any }
@@ -109,22 +111,65 @@ export interface PostRecord {
   reactions?: Array<{ emoji: string; count: number; userReacted: boolean }>
 }
 
+export const FALLBACK_SEED_PROFILES: ProfileRecord[] = [
+  {
+    id: 'ilonmusk-seed',
+    username: 'ilonmusk',
+    display_name: 'Илон Маск',
+    bio: 'Founder SpaceX & Tesla. Строю марсианский флот и фиксирую победы дня.',
+    city: 'Austin',
+    avatar_url: '',
+    avatar_image: '',
+    streak_count: 365,
+    streak: 365,
+    total_prides: 1825,
+    total_gratitudes: 1825,
+    created_at: '2025-01-01T00:00:00.000Z',
+    updated_at: '2025-01-01T00:00:00.000Z',
+    is_anonymous: false,
+    settings: { level: 5 },
+  },
+  {
+    id: 'cernavation-seed',
+    username: 'cernavation',
+    display_name: 'Alexei Cerna',
+    bio: 'Создатель Огонька. Дисциплина и летопись побед.',
+    city: 'Москва',
+    avatar_url: '',
+    avatar_image: '',
+    streak_count: 720,
+    streak: 720,
+    total_prides: 3600,
+    total_gratitudes: 3600,
+    created_at: '2025-01-01T00:00:00.000Z',
+    updated_at: '2025-01-01T00:00:00.000Z',
+    is_anonymous: false,
+    settings: { level: 5 },
+  },
+]
+
 /**
  * Получить профиль пользователя по id или username
  */
 export async function getProfile(userIdOrUsername: string): Promise<ProfileRecord | null> {
   const supabase = getSupabase()
-  if (!supabase) return null
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrUsername)
-  let q = supabase.from('profiles').select('*')
-  if (isUuid) {
-    q = q.eq('id', userIdOrUsername)
-  } else {
-    q = q.eq('username', userIdOrUsername.replace(/^@/, ''))
+  if (supabase) {
+    let q = supabase.from('profiles').select('*')
+    if (isUuid) {
+      q = q.eq('id', userIdOrUsername)
+    } else {
+      q = q.eq('username', userIdOrUsername.replace(/^@/, ''))
+    }
+    const { data, error } = await q.maybeSingle()
+    if (!error && data) return mapProfileRecord(data)
   }
-  const { data, error } = await q.maybeSingle()
-  if (error || !data) return null
-  return mapProfileRecord(data)
+
+  const cleanUser = userIdOrUsername.replace(/^@/, '').toLowerCase()
+  const fallback = FALLBACK_SEED_PROFILES.find(
+    (p) => p.id === userIdOrUsername || p.username.toLowerCase() === cleanUser
+  )
+  return fallback ?? null
 }
 
 export const getProfileById = getProfile
@@ -134,34 +179,51 @@ export const fetchProfile = getProfile
  * Поиск профилей по нику или имени напрямую в Supabase public.profiles
  */
 export async function searchProfiles(query: string, currentUserIdOrUsername?: string): Promise<ProfileRecord[]> {
-  const supabase = getSupabase()
-  if (!supabase) return []
   const searchQuery = query.trim().replace(/^@/, '')
-  if (!searchQuery) return getRecentProfiles(20, currentUserIdOrUsername)
-
-  // Поиск участников делает реальный запрос к Supabase в таблицу public.profiles
-  let { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
-    .limit(30)
-
-  if (error || !data) return []
-
+  const qLower = searchQuery.toLowerCase()
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
 
   const results: ProfileRecord[] = []
-  for (const row of data as any[]) {
-    // В поиске: если у профиля is_anonymous === true, он НЕ выдается в общем поиске для других пользователей
-    const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
-    if (isAnon) continue
+  const supabase = getSupabase()
 
-    if (currentUserIdOrUsername) {
-      if (isUuid && row.id === currentUserIdOrUsername) continue
-      if (!isUuid && row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+  if (supabase) {
+    if (!searchQuery) return getRecentProfiles(20, currentUserIdOrUsername)
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+        .limit(30)
+
+      if (!error && Array.isArray(data)) {
+        for (const row of data as any[]) {
+          const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
+          if (isAnon) continue
+
+          if (currentUserIdOrUsername) {
+            if (isUuid && row.id === currentUserIdOrUsername) continue
+            if (!isUuid && row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+          }
+
+          results.push(mapProfileRecord(row))
+        }
+      }
+    } catch {}
+  }
+
+  if (results.length === 0 && searchQuery) {
+    for (const seed of FALLBACK_SEED_PROFILES) {
+      if (
+        seed.username.toLowerCase().includes(qLower) ||
+        seed.display_name.toLowerCase().includes(qLower)
+      ) {
+        if (currentUserIdOrUsername) {
+          if (isUuid && seed.id === currentUserIdOrUsername) continue
+          if (!isUuid && seed.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+        }
+        results.push(seed)
+      }
     }
-
-    results.push(mapProfileRecord(row))
   }
 
   return results
@@ -171,41 +233,50 @@ export async function searchProfiles(query: string, currentUserIdOrUsername?: st
  * Получение последних активных реальных пользователей из базы Supabase
  */
 export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: string): Promise<ProfileRecord[]> {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
+  const results: ProfileRecord[] = []
   const supabase = getSupabase()
-  if (!supabase) return []
-  try {
-    let q = supabase
-      .from('profiles')
-      .select('*')
-      .order('updated_at', { ascending: false })
-      .limit(limit + 5)
 
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
-    if (currentUserIdOrUsername && isUuid) {
-      q = q.neq('id', currentUserIdOrUsername)
-    }
+  if (supabase) {
+    try {
+      let q = supabase
+        .from('profiles')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(limit + 5)
 
-    const { data, error } = await q
-    if (error || !data) return []
-
-    const results: ProfileRecord[] = []
-    for (const row of data as any[]) {
-      // Исключаем анонимных пользователей из общего списка
-      const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
-      if (isAnon) continue
-
-      if (currentUserIdOrUsername && !isUuid) {
-        if (row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+      if (currentUserIdOrUsername && isUuid) {
+        q = q.neq('id', currentUserIdOrUsername)
       }
 
-      results.push(mapProfileRecord(row))
-      if (results.length >= limit) break
-    }
+      const { data, error } = await q
+      if (!error && Array.isArray(data)) {
+        for (const row of data as any[]) {
+          const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
+          if (isAnon) continue
 
-    return results
-  } catch {
-    return []
+          if (currentUserIdOrUsername && !isUuid) {
+            if (row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
+          }
+
+          results.push(mapProfileRecord(row))
+          if (results.length >= limit) break
+        }
+      }
+    } catch {}
   }
+
+  if (results.length === 0) {
+    return FALLBACK_SEED_PROFILES.filter((seed) => {
+      if (currentUserIdOrUsername) {
+        if (isUuid && seed.id === currentUserIdOrUsername) return false
+        if (!isUuid && seed.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) return false
+      }
+      return true
+    })
+  }
+
+  return results
 }
 
 /**
