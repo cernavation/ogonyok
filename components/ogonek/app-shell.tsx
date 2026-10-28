@@ -887,7 +887,7 @@ export function AppShell() {
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
       />
-      <main className="w-full min-h-screen bg-black text-[#e7e9ea]" data-locked={locked ? 'true' : undefined}>
+      <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)]" data-locked={locked ? 'true' : undefined}>
         {view === 'messages' ? (
           <FullscreenMessenger
             initialThreadId={state.chatActiveFriendId || undefined}
@@ -902,7 +902,7 @@ export function AppShell() {
           <div className="w-full max-w-[1380px] flex justify-between min-h-screen">
             <div className="flex flex-row shrink-0">
               <Sidebar
-                className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336]"
+                className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
                 view={view}
                 onNavigate={navigate}
                 onFocusIntentions={handleFocusIntentions}
@@ -915,7 +915,7 @@ export function AppShell() {
 
               {/* Центральная колонка: w-full max-w-[620px] shrink-0 border-r border-[#2f3336] */}
               <section
-                className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[#2f3336]"
+                className="w-full max-w-[620px] shrink-0 min-h-screen border-r border-[var(--line)]"
                 aria-label="Основное содержимое"
               >
                 <motion.div

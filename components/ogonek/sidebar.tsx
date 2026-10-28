@@ -71,7 +71,16 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
   if (isActive) {
     switch (id) {
       case 'home':
-        return <Home size={24} className="fill-white stroke-none text-white shrink-0" />
+        return (
+          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0" aria-hidden="true">
+            <path
+              d="M12 3L2 12h3v8h5v-5h4v5h5v-8h3L12 3z M10 14h4v6h-4z"
+              fillRule="evenodd"
+              fill="white"
+              stroke="none"
+            />
+          </svg>
+        )
       case 'explore':
         return <Search size={24} strokeWidth={2.8} className="stroke-[2.8px] text-white shrink-0" />
       case 'messages':
@@ -107,7 +116,20 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
           </div>
         )
       case 'leaderboard':
-        return <Trophy size={24} strokeWidth={2} className="fill-white stroke-white text-white shrink-0" />
+        return (
+          <svg viewBox="0 0 24 24" width={24} height={24} className="shrink-0" fill="white" aria-hidden="true">
+            {/* Cup body */}
+            <path d="M6 2h12v8a6 6 0 0 1-12 0V2z" />
+            {/* Left handle */}
+            <path d="M6 4H3a3 3 0 0 0 3 6V4z" />
+            {/* Right handle */}
+            <path d="M18 4h3a3 3 0 0 1-3 6V4z" />
+            {/* Stem */}
+            <rect x="11" y="16" width="2" height="4" />
+            {/* Base */}
+            <rect x="8" y="20" width="8" height="2" rx="1" />
+          </svg>
+        )
       case 'intentions':
         return (
           <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shrink-0">

@@ -90,10 +90,10 @@ const TOGGLES: {
   {
     key: 'hideFromLeaderboards',
     icon: Trophy,
-    onLabel: 'Скрыт из таблиц лидеров',
-    onHint: 'Ты не появляешься в публичных рейтингах',
-    offLabel: 'Участвую в лидерах',
-    offHint: 'Стрик участвует в таблицах лидеров',
+    onLabel: 'Участвую в рейтинге',
+    onHint: 'Твой стрик отображается в таблице лидеров',
+    offLabel: 'Скрыт из рейтинга',
+    offHint: 'Ты не появляешься в публичных рейтингах',
     privateWhen: true,
   },
 ]
@@ -350,27 +350,28 @@ export function PrivacyPanel({ onNotify }: Props) {
         {TOGGLES.map((toggle) => {
           const Icon = toggle.icon
           const raw = privacy[toggle.key]
-          // Для «hideFromLeaderboards» включённое значение = приватно
+          // For hideFromLeaderboards: visual ON = participating (raw=false), visual OFF = hidden (raw=true)
+          const visualOn = toggle.key === 'hideFromLeaderboards' ? !raw : raw
           const privateState = toggle.privateWhen ? raw : !raw
           return (
             <div className="setting-row privacy-toggle-row" key={toggle.key}>
               <div>
                 <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon size={15} /> {raw ? toggle.onLabel : toggle.offLabel}
+                  <Icon size={15} /> {visualOn ? toggle.onLabel : toggle.offLabel}
                   {privateState && (
                     <span className="privacy-private-pill">
                       <Lock size={10} /> приватно
                     </span>
                   )}
                 </b>
-                <small>{raw ? toggle.onHint : toggle.offHint}</small>
+                <small>{visualOn ? toggle.onHint : toggle.offHint}</small>
               </div>
               <button
                 type="button"
-                className={`switch ${raw ? 'on' : ''}`}
+                className={`switch ${visualOn ? 'on' : ''}`}
                 onClick={() => handleToggle(toggle)}
-                aria-pressed={raw}
-                aria-label={raw ? toggle.onLabel : toggle.offLabel}
+                aria-pressed={visualOn}
+                aria-label={visualOn ? toggle.onLabel : toggle.offLabel}
               >
                 <i />
               </button>

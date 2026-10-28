@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
+import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -80,6 +80,17 @@ const COMPOSER_PROMPT_SPHERES: PromptSphere[] = [
       'За какой опыт преодоления благодарен сегодня?',
     ],
   },
+]
+
+const HINT_QUESTIONS = [
+  'Что нового узнал?',
+  'Какой барьер преодолел?',
+  'Чем гордишься больше всего сегодня?',
+  'Что сделал вопреки лени или страху?',
+  'Какое маленькое достижение заметил?',
+  'Что продвинул в работе или проекте?',
+  'Кому помог или с кем тепло общался?',
+  'Что преодолел, чтобы заняться здоровьем?',
 ]
 
 function getDayPhotoCandidate(day: Day | null | undefined): string | null {
@@ -284,6 +295,7 @@ export function Composer({
   // ЭТАП 22 — панель быстрых умных подсказок
   const [promptSphereId, setPromptSphereId] = useState<string>('sport')
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
+  const [hintIndex, setHintIndex] = useState(0)
 
   // Date picker for new days (editable by user)
   const [dateISO, setDateISO] = useState<string>(() => {
@@ -936,35 +948,38 @@ export function Composer({
             />
           </label>
 
-          {/* «Нужна идея?» */}
-          <button
-            type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              const sphere = COMPOSER_PROMPT_SPHERES[Math.floor(Math.random() * COMPOSER_PROMPT_SPHERES.length)]
-              const question = sphere.questions[Math.floor(Math.random() * sphere.questions.length)]
-              handleActiveChange(question)
-              onNotify?.(`💡 Подсказка: ${question}`)
-            }}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-            title="Нужна идея?"
-            aria-label="Нужна идея?"
-          >
-            <Sparkles size={18} />
-          </button>
-
-          {/* «Оценить с ИИ» */}
-          {tab === 'pride' && (
+          {/* «Нужна идея?» — циклично меняет плейсхолдер */}
+          <Tooltip content="Нужна идея?">
             <button
               type="button"
-              disabled={isEvaluating}
-              onClick={handleEvaluateAi}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 min-h-[40px] min-w-[40px]"
-              title="Оценить с ИИ"
-              aria-label="Оценить с ИИ"
+              onClick={() => {
+                playClick(soundEnabled)
+                const q = HINT_QUESTIONS[hintIndex % HINT_QUESTIONS.length]
+                setHintIndex((prev) => prev + 1)
+                onNotify?.(`💡 ${q}`)
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[#71767b] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
+              title="Нужна идея?"
+              aria-label="Нужна идея?"
             >
-              {isEvaluating ? <Loader2 size={18} className="animate-spin" /> : <Flame size={18} />}
+              <HelpCircle className="w-4 h-4 text-[#71767b]" />
             </button>
+          </Tooltip>
+
+          {/* «Оценить с ИИ» — реальная оценка через /api/evaluate */}
+          {tab === 'pride' && (
+            <Tooltip content="Оценить эту гордость через Gemini">
+              <button
+                type="button"
+                disabled={isEvaluating || filledPrides.length === 0}
+                onClick={handleEvaluateAi}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 min-h-[40px] min-w-[40px]"
+                title="Оценить эту гордость через Gemini"
+                aria-label="Оценить с ИИ"
+              >
+                {isEvaluating ? <Loader2 size={18} className="animate-spin" /> : <Sparkles className="w-4 h-4 text-[var(--accent)]" />}
+              </button>
+            </Tooltip>
           )}
         </div>
 
