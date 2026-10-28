@@ -36,6 +36,7 @@ type Props = {
   /** Всплывающее уведомление (тост) для обратной связи действий аккаунта */
   onNotify: (message: string) => void
   streak?: number
+  className?: string
 }
 
 interface NavItemDef {
@@ -71,6 +72,7 @@ export function Sidebar({
   onOpenProfile,
   onNotify,
   streak = CURRENT_DAY,
+  className,
 }: Props) {
   const { state, signOut, currentUser } = useOgonekStore()
   const unread = totalUnread(state.chatThreads ?? {})
@@ -142,7 +144,7 @@ export function Sidebar({
 
   return (
     <aside
-      className="sticky top-0 h-screen flex flex-col justify-between shrink-0 w-[275px] border-r border-[#2f3336] overflow-y-auto scrollbar-none z-30 select-none px-3 py-4"
+      className={`w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336] flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none px-3 py-4 ${className || ''}`}
       aria-label="Боковая панель"
     >
       <div className="flex flex-col gap-1 w-full">

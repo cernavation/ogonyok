@@ -875,8 +875,9 @@ export function AppShell() {
             currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
           />
         ) : (
-          <div className="flex justify-center min-h-screen bg-black text-[#e7e9ea] w-full">
+          <div className="max-w-[1265px] mx-auto flex justify-between w-full min-h-screen px-4">
             <Sidebar
+              className="w-[275px] shrink-0 sticky top-0 h-screen border-r border-[#2f3336]"
               view={view}
               onNavigate={navigate}
               onFocusIntentions={handleFocusIntentions}
@@ -887,9 +888,9 @@ export function AppShell() {
               streak={streakState.streak}
             />
 
-            {/* Центральная колонка: монолитная сетка X.com 600px */}
+            {/* Центральная колонка: строго w-[600px] shrink-0 min-h-screen border-r border-[#2f3336] */}
             <section
-              className="w-full max-w-[600px] min-h-screen border-r border-[#2f3336] shrink-0"
+              className="w-[600px] shrink-0 min-h-screen border-r border-[#2f3336]"
               aria-label="Основное содержимое"
             >
               <motion.div
@@ -904,6 +905,7 @@ export function AppShell() {
             </section>
 
             <RightRail
+              className="w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block"
               onNavigate={navigate}
               onCompose={() => setComposer(true)}
               streak={streakState.streak}

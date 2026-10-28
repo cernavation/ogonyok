@@ -1130,29 +1130,36 @@ export function ProfileView({
         {/* TAB 2: БЛАГОДАРНОСТИ */}
         {activeTab === 'gratitudes' && (
           <div className="flex flex-col gap-2.5">
-            {paginatedGratitudes.map((item, idx) => (
-              <div
-                key={idx}
-                className="p-3.5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 flex items-start gap-3"
-              >
-                <div className="w-7 h-7 rounded-full bg-rose-500/10 text-rose-500 flex items-center justify-center flex-none mt-0.5">
-                  <Heart size={14} className="fill-current" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                    {item.text}
-                  </p>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    День #{item.dayId} · {formatDayDate(item.dateISO)}
-                  </p>
-                </div>
+            {paginatedGratitudes.length === 0 ? (
+              <div className="p-8 text-center rounded-2xl border border-[#2f3336] bg-[#16181c] text-[#71767b] text-sm">
+                Пока нет сохранённых благодарностей
               </div>
-            ))}
+            ) : (
+              paginatedGratitudes.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-2xl border border-[#2f3336] bg-[#16181c] flex items-start gap-3"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#f91880]/10 text-[#f91880] flex items-center justify-center flex-none mt-0.5">
+                    <Heart size={14} className="fill-[#f91880] text-[#f91880]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[#e7e9ea]">
+                      {item.text}
+                    </p>
+                    <p className="text-xs text-[#71767b] mt-1">
+                      День #{item.dayId} · {formatDayDate(item.dateISO)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
 
             {allGratitudes.length > visibleCount && (
               <div className="pt-2 text-center">
                 <Button
                   variant="outline"
+                  className="border-[#2f3336] bg-[#16181c] text-[#e7e9ea] hover:bg-[#181818]"
                   onClick={() => setVisibleCount((prev) => prev + 30)}
                 >
                   Показать ещё 30 благодарностей
@@ -1343,18 +1350,18 @@ export function ProfileView({
 
             {/* 5 Благодарностей */}
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-rose-500 mb-2 flex items-center gap-1.5">
-                <Heart size={14} className="fill-current" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[#f91880] mb-2 flex items-center gap-1.5">
+                <Heart size={14} className="fill-[#f91880] text-[#f91880]" />
                 Благодарности дня (5)
               </h4>
               <div className="flex flex-col gap-2">
                 {selectedDayModal.gratitudes.slice(0, 5).map((g, idx) => (
                   <div
                     key={idx}
-                    className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border border-zinc-200 dark:border-zinc-800 flex items-start gap-2 text-xs"
+                    className="p-2.5 rounded-xl bg-[#16181c] border border-[#2f3336] flex items-start gap-2 text-xs"
                   >
-                    <span className="font-bold text-rose-500 mt-0.5">{idx + 1}.</span>
-                    <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                    <span className="font-bold text-[#f91880] mt-0.5">{idx + 1}.</span>
+                    <span className="font-medium text-[#e7e9ea]">
                       {typeof g === 'string' ? g : (g?.text || '')}
                     </span>
                   </div>

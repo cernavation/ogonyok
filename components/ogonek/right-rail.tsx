@@ -17,6 +17,7 @@ type Props = {
   isDemo?: boolean
   onNotify?: (message: string) => void
   soundEnabled?: boolean
+  className?: string
 }
 
 export function RightRail({
@@ -26,10 +27,11 @@ export function RightRail({
   hoursLeft,
   onNotify,
   soundEnabled = true,
+  className,
 }: Props) {
   return (
     <aside
-      className="sticky top-0 h-screen w-[350px] shrink-0 overflow-y-auto scrollbar-none pl-6 pr-4 py-3 hidden lg:block z-20 select-none flex flex-col gap-4"
+      className={`w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block overflow-y-auto scrollbar-none pr-4 py-3 z-20 select-none flex flex-col gap-4 ${className || ''}`}
       aria-label="Дополнительная информация"
     >
       {/* Блок 1: Поиск — пилюля с повышенным фоном (X.com pill search) */}
