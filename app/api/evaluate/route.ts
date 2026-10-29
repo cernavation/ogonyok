@@ -5,23 +5,24 @@ import { getServerSupabase } from '@/lib/supabase/server'
 import { extractAndParseJson, AI_GENERATION_CONFIG } from '@/lib/ogonek/ai-eval-parser'
 
 const MODEL_CANDIDATES = [
+  'gemini-2.0-flash-exp',
+  'gemini-2.0-flash',
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-002',
-  'gemini-1.5-pro',
+  'gemini-pro',
 ]
 
-// Приоритетная матрица моделей (v1 — стабильный быстрый продакшн, v1beta — превью)
+// Приоритетная матрица моделей (Gemini 2.0 Flash на первом месте)
 const FAST_CANDIDATE_MATRIX: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = [
+  { model: 'gemini-2.0-flash-exp', apiVersion: 'v1beta' },
+  { model: 'gemini-2.0-flash', apiVersion: 'v1beta' },
+  { model: 'gemini-2.0-flash', apiVersion: 'v1' },
   { model: 'gemini-1.5-flash-latest', apiVersion: 'v1' },
   { model: 'gemini-1.5-flash', apiVersion: 'v1' },
   { model: 'gemini-1.5-flash-latest', apiVersion: 'v1beta' },
   { model: 'gemini-1.5-flash', apiVersion: 'v1beta' },
-  { model: 'gemini-2.0-flash', apiVersion: 'v1beta' },
-  { model: 'gemini-1.5-flash-002', apiVersion: 'v1' },
+  { model: 'gemini-pro', apiVersion: 'v1' },
   { model: 'gemini-1.5-pro', apiVersion: 'v1' },
-  { model: 'gemini-1.5-pro', apiVersion: 'v1beta' },
 ]
 
 export async function POST(request: Request) {
@@ -167,8 +168,8 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
 
     // Быстрый прямой REST fallback (если SDK не вернул текст)
     if (!responseText) {
-      for (const ver of ['v1', 'v1beta'] as const) {
-        for (const mod of ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash']) {
+      for (const ver of ['v1beta', 'v1'] as const) {
+        for (const mod of ['gemini-2.0-flash-exp', 'gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro']) {
           try {
             const restUrl = `https://generativelanguage.googleapis.com/${ver}/models/${mod}:generateContent?key=${apiKey}`
             const res = await fetch(restUrl, {

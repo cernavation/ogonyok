@@ -66,9 +66,9 @@ async function runTest() {
 
     console.log('📊 РЕЗУЛЬТАТЫ СИМУЛЯЦИИ РОУТА /api/evaluate:')
     console.log(`   • Статус HTTP: 200 OK`)
-    console.log(`   • Модель: gemini-1.5-flash-002 (API: v1)`)
+    console.log(`   • Модель: gemini-2.0-flash-exp (API: v1beta)`)
     console.log(`   • Итоговый балл: ${sampleAIResponse.score}/10 ★ (индивидуальный, не шаблонный)`)
-    console.log(`   • Вердикт: "${sampleAIResponse.verdict}"`)
+    console.log(`   • Вердикт ментора: "${sampleAIResponse.verdict}"`)
     console.log(`   • Разбор: "${sampleAIResponse.breakdown}"`)
     console.log('\nОценки по пунктам:')
     sampleAIResponse.prideEvaluations.forEach((p) => {
@@ -83,13 +83,15 @@ async function runTest() {
   console.log('📡 Выполняем адаптивный запрос к моделям Gemini (v1 / v1beta)...')
 
   const candidateModels = [
-    { model: 'gemini-1.5-flash-002', ver: 'v1' },
-    { model: 'gemini-1.5-flash', ver: 'v1' },
-    { model: 'gemini-1.5-flash-latest', ver: 'v1' },
     { model: 'gemini-2.0-flash-exp', ver: 'v1beta' },
-    { model: 'gemini-1.5-flash-002', ver: 'v1beta' },
+    { model: 'gemini-2.0-flash', ver: 'v1beta' },
+    { model: 'gemini-2.0-flash', ver: 'v1' },
+    { model: 'gemini-1.5-flash-latest', ver: 'v1' },
+    { model: 'gemini-1.5-flash', ver: 'v1' },
+    { model: 'gemini-1.5-flash-latest', ver: 'v1beta' },
     { model: 'gemini-1.5-flash', ver: 'v1beta' },
-    { model: 'gemini-1.5-pro-002', ver: 'v1' },
+    { model: 'gemini-pro', ver: 'v1' },
+    { model: 'gemini-1.5-pro', ver: 'v1' },
   ]
 
   let succeeded = false

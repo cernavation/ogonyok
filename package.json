@@ -23,6 +23,7 @@
     "visual-diff": "node scripts/visual-diff.mjs",
     "security-check": "node scripts/security-check.mjs",
     "gemini:diagnose": "node scripts/diagnose-gemini.mjs",
+    "gemini:models": "node scripts/list-gemini-models.mjs",
     "gemini:test": "node scripts/test-evaluate.mjs",
     "setup": "node scripts/setup.mjs",
     "check-google": "node scripts/check-google.mjs",
