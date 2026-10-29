@@ -13,14 +13,20 @@ export async function POST(request: Request) {
     )
   }
 
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey || apiKey.trim() === '') {
+  const rawKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ||
+    ''
+  const apiKey = rawKey.trim().replace(/^["']|["']$/g, '')
+
+  if (!apiKey) {
     return NextResponse.json(
       {
         success: false,
-        error: 'GEMINI_API_KEY не настроен на сервере. Укажите действительный API ключ Google Gemini.',
+        error: 'Ключ GEMINI_API_KEY не задан в Environment Variables',
       },
-      { status: 500 }
+      { status: 400 }
     )
   }
 
@@ -197,13 +203,21 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
     })
   } catch (err: any) {
     console.error('[Gemini API evaluation failure]:', err)
-    // ЧЕСТНЫЙ СТАТУС 500 И РЕАЛЬНЫЙ ТЕКСТ ОШИБКИ. ЗАПРЕЩЕНО ВОЗВРАЩАТЬ 8.0!
+    const rawMsg = String(err?.message || '')
+    let userError = rawMsg || 'Ошибка вызова Google Gemini API'
+    let status = 500
+
+    if (rawMsg.includes('API_KEY_INVALID') || rawMsg.includes('API key not valid')) {
+      userError = 'API_KEY_INVALID: Неверный ключ Gemini API. Проверьте ключ в настройках Vercel.'
+      status = 400
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: err?.message || 'Ошибка вызова Google Gemini API',
+        error: userError,
       },
-      { status: 500 }
+      { status }
     )
   }
 }

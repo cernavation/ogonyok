@@ -529,7 +529,18 @@ export function Composer({
       onNotify?.(`⚡ Оценка Gemini: ${evalResult.scale}/10 ★ — ${evalResult.verdict}`)
     } catch (err: any) {
       console.error('Gemini evaluation error in Composer:', err)
-      onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
+      const msg = String(err?.message || '')
+      if (
+        msg.includes('API_KEY_INVALID') ||
+        msg.includes('API key not valid') ||
+        msg.includes('Неверный ключ')
+      ) {
+        onNotify?.('Неверный ключ Gemini API. Проверьте ключ в настройках Vercel.')
+      } else if (msg.includes('не задан в Environment Variables')) {
+        onNotify?.('Ключ GEMINI_API_KEY не задан в Environment Variables')
+      } else {
+        onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
+      }
     } finally {
       setIsEvaluating(false)
     }

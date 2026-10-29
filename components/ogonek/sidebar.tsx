@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   BadgeCheck,
-  BarChart3,
+  BarChart2,
   Flame,
   Home,
   LogOut,
@@ -163,19 +163,15 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
 
     case 'explore':
       return (
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className={`w-6 h-6 shrink-0 ${strokeClass}`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={isActive ? 2.8 : 2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
+        <Search
+          size={24}
+          strokeWidth={isActive ? 3 : 2}
+          className={`w-6 h-6 shrink-0 fill-none ${
+            isActive
+              ? 'text-[var(--text)] stroke-current'
+              : 'text-[var(--muted)] group-hover:text-[var(--text)] transition-colors'
+          }`}
+        />
       )
 
     case 'profile':
@@ -212,29 +208,64 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
       )
 
     case 'premium':
+      if (isActive) {
+        return (
+          <svg viewBox="0 0 24 24" width={24} height={24} className="w-6 h-6 text-current shrink-0" fill="none">
+            <mask id="sidebar-badge-check-mask">
+              <path
+                d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"
+                fill="white"
+              />
+              <path
+                d="m9 12 2 2 4-4"
+                fill="none"
+                stroke="black"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </mask>
+            <rect width="24" height="24" fill="currentColor" mask="url(#sidebar-badge-check-mask)" />
+          </svg>
+        )
+      }
       return (
         <BadgeCheck
           size={24}
-          strokeWidth={isActive ? 2.5 : 2}
-          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          strokeWidth={2}
+          className="w-6 h-6 shrink-0 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors"
         />
       )
 
     case 'analytics':
+      if (isActive) {
+        return (
+          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
+            <BarChart2 className="w-4 h-4 text-black fill-none stroke-black" strokeWidth={2.5} />
+          </div>
+        )
+      }
       return (
-        <BarChart3
+        <BarChart2
           size={24}
-          strokeWidth={isActive ? 2.8 : 2}
-          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          strokeWidth={2}
+          className="w-6 h-6 shrink-0 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors"
         />
       )
 
     case 'intentions':
+      if (isActive) {
+        return (
+          <div className="w-7 h-7 rounded-lg bg-white flex items-center justify-center shrink-0 shadow-sm">
+            <Target className="w-4 h-4 text-black fill-none stroke-black" strokeWidth={2.5} />
+          </div>
+        )
+      }
       return (
         <Target
           size={24}
-          strokeWidth={isActive ? 2.8 : 2}
-          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          strokeWidth={2}
+          className="w-6 h-6 shrink-0 text-[var(--muted)] group-hover:text-[var(--text)] transition-colors"
         />
       )
 
@@ -243,7 +274,11 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
         <Settings
           size={24}
           strokeWidth={isActive ? 2.8 : 2}
-          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          className={`w-6 h-6 shrink-0 fill-none ${
+            isActive
+              ? 'text-[var(--text)] stroke-current'
+              : 'text-[var(--muted)] group-hover:text-[var(--text)] transition-colors'
+          }`}
         />
       )
 
@@ -339,7 +374,7 @@ export function Sidebar({
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
         >
-          <div className="w-6 h-6 flex items-center justify-center shrink-0">
+          <div className="w-6 h-6 flex items-center justify-center shrink-0 overflow-visible">
             <NavIcon id={id} isActive={isActive} size={24} />
           </div>
           <span
