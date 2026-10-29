@@ -4,11 +4,50 @@ import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 import { getServerSupabase } from '@/lib/supabase/server'
 
 const MODEL_CANDIDATES = [
-  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash-002',
   'gemini-1.5-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-2.0-flash-exp',
   'gemini-2.0-flash',
   'gemini-1.5-pro',
+  'gemini-1.5-pro-002',
 ]
+
+// Кэш обнаруженных через ListModels моделей (TTL: 1 час)
+let cachedDiscovered: { models: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }>; timestamp: number } | null = null
+
+async function discoverSupportedModels(key: string): Promise<Array<{ model: string; apiVersion: 'v1' | 'v1beta' }>> {
+  if (cachedDiscovered && Date.now() - cachedDiscovered.timestamp < 3600_000) {
+    return cachedDiscovered.models
+  }
+
+  const discovered: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = []
+  for (const apiVer of ['v1', 'v1beta'] as const) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/${apiVer}/models?key=${key}`
+      const res = await fetch(url, { signal: AbortSignal.timeout(3500) })
+      if (res.ok) {
+        const data = await res.json()
+        if (Array.isArray(data.models)) {
+          const valid = data.models
+            .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
+            .map((m: any) => ({
+              model: String(m.name).replace(/^models\//, ''),
+              apiVersion: apiVer,
+            }))
+          discovered.push(...valid)
+        }
+      }
+    } catch {
+      // Игнорируем ошибки ListModels — каскадный фоллбек сработает штатно
+    }
+  }
+
+  if (discovered.length > 0) {
+    cachedDiscovered = { models: discovered, timestamp: Date.now() }
+  }
+  return discovered
+}
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
@@ -97,20 +136,71 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
 
 Оцени записи и верни JSON.`
 
+    // 1. Попытка динамического обнаружения доступных моделей через ListModels
+    const liveModels = await discoverSupportedModels(apiKey)
+
+    // 2. Формирование матрицы кандидатов с параметрами apiVersion: 'v1' и 'v1beta'
+    const candidateMatrix: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = []
+
+    if (liveModels.length > 0) {
+      const priorityOrder = [
+        'gemini-1.5-flash-002',
+        'gemini-1.5-flash',
+        'gemini-2.0-flash-exp',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash-8b',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro-002',
+        'gemini-1.5-pro',
+      ]
+      const sortedLive = [...liveModels].sort((a, b) => {
+        const aIdx = priorityOrder.indexOf(a.model)
+        const bIdx = priorityOrder.indexOf(b.model)
+        const aScore = aIdx >= 0 ? aIdx : 100
+        const bScore = bIdx >= 0 ? bIdx : 100
+        return aScore - bScore
+      })
+      candidateMatrix.push(...sortedLive)
+    }
+
+    // Фоллбек-матрица (проверяет сначала стабильную v1, затем v1beta)
+    const baseFallback = [
+      'gemini-1.5-flash-002',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-2.0-flash-exp',
+      'gemini-2.0-flash',
+      'gemini-1.5-pro-002',
+      'gemini-1.5-pro',
+    ]
+
+    for (const mod of baseFallback) {
+      for (const ver of ['v1', 'v1beta'] as const) {
+        if (!candidateMatrix.some((c) => c.model === mod && c.apiVersion === ver)) {
+          candidateMatrix.push({ model: mod, apiVersion: ver })
+        }
+      }
+    }
+
     const genAI = new GoogleGenerativeAI(apiKey)
     let responseText = ''
     let lastError: any = null
-    let usedModel = MODEL_CANDIDATES[0]
+    let usedModel = candidateMatrix[0].model
+    let usedApiVersion: 'v1' | 'v1beta' = candidateMatrix[0].apiVersion
 
-    for (const modelCandidate of MODEL_CANDIDATES) {
+    for (const { model: modelCandidate, apiVersion: apiVer } of candidateMatrix) {
       try {
-        const model = genAI.getGenerativeModel({
-          model: modelCandidate,
-          generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.3,
+        const model = genAI.getGenerativeModel(
+          {
+            model: modelCandidate,
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.3,
+            },
           },
-        })
+          { apiVersion: apiVer }
+        )
 
         const result = await model.generateContent({
           contents: [
@@ -122,6 +212,7 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
         if (text) {
           responseText = text
           usedModel = modelCandidate
+          usedApiVersion = apiVer
           break
         }
       } catch (candidateErr: any) {
@@ -132,14 +223,48 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
           errMsg.toLowerCase().includes('not found') ||
           candidateErr?.status === 404
         if (isNotFound) {
-          console.warn(`[Gemini API] Candidate "${modelCandidate}" returned 404 (not found). Retrying next candidate...`)
+          console.warn(`[Gemini API] Candidate "${modelCandidate}" (${apiVer}) returned 404 (not found). Retrying next...`)
           continue
         }
         if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid')) {
           throw candidateErr
         }
-        console.warn(`[Gemini API] Candidate "${modelCandidate}" failed (${errMsg}). Trying next candidate...`)
+        console.warn(`[Gemini API] Candidate "${modelCandidate}" (${apiVer}) failed: ${errMsg}. Retrying next...`)
         continue
+      }
+    }
+
+    // Дополнительный прямой REST fallback (если SDK не смог вернуть текст)
+    if (!responseText) {
+      for (const ver of ['v1', 'v1beta'] as const) {
+        for (const mod of ['gemini-1.5-flash-002', 'gemini-1.5-flash', 'gemini-2.0-flash-exp']) {
+          try {
+            const restUrl = `https://generativelanguage.googleapis.com/${ver}/models/${mod}:generateContent?key=${apiKey}`
+            const res = await fetch(restUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
+                generationConfig: {
+                  responseMimeType: 'application/json',
+                  temperature: 0.3,
+                },
+              }),
+              signal: AbortSignal.timeout(10000),
+            })
+            if (res.ok) {
+              const data = await res.json()
+              const candText = data?.candidates?.[0]?.content?.parts?.[0]?.text
+              if (candText) {
+                responseText = candText
+                usedModel = mod
+                usedApiVersion = ver
+                break
+              }
+            }
+          } catch {}
+        }
+        if (responseText) break
       }
     }
 
@@ -229,6 +354,7 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
       success: true,
       source: 'gemini',
       model: usedModel,
+      apiVersion: usedApiVersion,
       score: finalScore,
       breakdown,
       verdict,
