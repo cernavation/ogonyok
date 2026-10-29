@@ -64,120 +64,197 @@ const UNIFIED_NAV: NavItemDef[] = [
 ]
 
 /**
- * Компонент иконки навигации в стиле X.com:
- * Активный: залитая (Solid Fill) иконка `fill-white stroke-none` или жирный контур `stroke-[2.8px]`
- * Неактивный: контурная `stroke-[2px] text-[#71767b] group-hover:text-white`
+ * ЕДИНЫЕ ИДЕНТИЧНЫЕ SVG-ИКОНКИ БЕЗ ПОДМЕНЫ КОМПОНЕНТОВ:
+ * Каждый пункт навигации использует строго один и тот же геометрический контур!
+ * - messages: СТРОГО MessageCircle (fill="none" stroke="currentColor" strokeWidth="2" в неактивном, fill="currentColor" stroke="none" в активном).
+ * - home: один и тот же контур дома Lucide, в активном — заливка с прозрачным дверным проёмом (evenodd).
+ * - leaderboard: кубок залит целиком (чаша, ножка и основание).
  */
 function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; size?: number }) {
-  if (isActive) {
-    switch (id) {
-      case 'home':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path fillRule="evenodd" clipRule="evenodd" d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.65v5.5a2.5 2.5 0 0 1-2.5 2.5H15v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6H6.5A2.5 2.5 0 0 1 4 19.5V14a8 8 0 0 1 2.34-5.65L12 2.69z" />
-          </svg>
-        )
-      case 'explore':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.532.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-          </svg>
-        )
-      case 'messages':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 4.444 8-4.444V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463l-7.525 4.18c-.148.083-.313.124-.475.124-.162 0-.327-.041-.475-.124L4 10.463V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z" />
-          </svg>
-        )
-      case 'profile':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M12 11.813A4.912 4.912 0 0 1 7.094 6.9 4.912 4.912 0 0 1 12 1.987 4.912 4.912 0 0 1 16.906 6.9 4.912 4.912 0 0 1 12 11.813zm0-7.826a2.913 2.913 0 1 0 0 5.826 2.913 2.913 0 0 0 0-5.826zm9 17.513h-2c0-3.859-3.141-7-7-7s-7 3.141-7 7H3c0-4.962 4.037-9 9-9s9 4.038 9 9z" />
-          </svg>
-        )
-      case 'vault':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-        )
-      case 'premium':
-        return (
-          <svg viewBox="0 0 24 24" width={24} height={24} className="w-6 h-6 text-current shrink-0" fill="none">
-            <mask id="sidebar-badge-check-mask">
+  const strokeClass = isActive
+    ? 'text-[var(--text)] fill-current'
+    : 'text-[var(--muted)] group-hover:text-[var(--text)] transition-colors'
+
+  switch (id) {
+    case 'home':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        >
+          {isActive ? (
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              fill="currentColor"
+              d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8H15z"
+            />
+          ) : (
+            <>
               <path
-                d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z"
-                fill="white"
-              />
-              <path
-                d="m9 12 2 2 4-4"
+                d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
                 fill="none"
-                stroke="black"
-                strokeWidth="2.5"
+                stroke="currentColor"
+                strokeWidth={2}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-            </mask>
-            <rect width="24" height="24" fill="currentColor" mask="url(#sidebar-badge-check-mask)" />
-          </svg>
-        )
-      case 'analytics':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M3 21h18v-2H3v2zm3-4h3V9H6v8zm5 0h3V3h-3v14zm5 0h3v-6h-3v6z" />
-          </svg>
-        )
-      case 'leaderboard':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M5 3h14v2h2a2 2 0 0 1 2 2v2a5 5 0 0 1-5 5h-.09A6 6 0 0 1 13 17.91V20h4v2H7v-2h4v-2.09A6 6 0 0 1 6.09 14H6a5 5 0 0 1-5-5V7a2 2 0 0 1 2-2h2V3zm-2 4v2a3 3 0 0 0 3 3h.24A6.04 6.04 0 0 1 5.1 7H3zm18 0h-2.1a6.04 6.04 0 0 1-1.14 5H18a3 3 0 0 0 3-3V7z" />
-          </svg>
-        )
-      case 'intentions':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
-          </svg>
-        )
-      case 'settings':
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54A.484.484 0 0 0 14 2h-4c-.25 0-.46.18-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.63 8.47c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-          </svg>
-        )
-      default:
-        return (
-          <svg viewBox="0 0 24 24" aria-hidden="true" className="w-6 h-6 fill-current">
-            <path fillRule="evenodd" clipRule="evenodd" d="M12 2.69l5.66 5.66a8 8 0 0 1 2.34 5.65v5.5a2.5 2.5 0 0 1-2.5 2.5H15v-6a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v6H6.5A2.5 2.5 0 0 1 4 19.5V14a8 8 0 0 1 2.34-5.65L12 2.69z" />
-          </svg>
-        )
-    }
-  }
+              <path
+                d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </>
+          )}
+        </svg>
+      )
 
-  // Неактивные пункты: строгий размер 24x24px, stroke-[2px] text-[var(--muted)] hover:text-[var(--text)]
-  switch (id) {
-    case 'home':
-      return <Home size={24} className="w-6 h-6 stroke-[2px] stroke-current fill-none text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
-    case 'explore':
-      return <Search size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
     case 'messages':
-      return <MessageCircle size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
-    case 'profile':
-      return <User size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
-    case 'vault':
-      return <Zap size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
-    case 'premium':
-      return <BadgeCheck size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
-    case 'analytics':
-      return <BarChart3 size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          fill={isActive ? 'currentColor' : 'none'}
+          stroke={isActive ? 'none' : 'currentColor'}
+          strokeWidth={isActive ? 0 : 2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" />
+        </svg>
+      )
+
     case 'leaderboard':
-      return <Trophy size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        >
+          {isActive ? (
+            <>
+              {/* Чаша залита целиком */}
+              <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" fill="currentColor" stroke="none" />
+              {/* Ножка и основание залиты целиком */}
+              <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2h10v-2a2 2 0 0 0-2-2 1 1 0 0 1-1-1v-2.34z" fill="currentColor" stroke="none" />
+              {/* Нижняя опора кубка */}
+              <path d="M4 22h16" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" />
+              {/* Ручки кубка */}
+              <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+            </>
+          ) : (
+            <>
+              <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M17.916 10H19.5A2.5 2.5 0 0 0 22 7.5V5a1 1 0 0 0-1-1h-3" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M6.084 10H4.5A2.5 2.5 0 0 1 2 7.5V5a1 1 0 0 1 1-1h3" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 14.66V17a1 1 0 0 1-1 1 2 2 0 0 0-2 2v2" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M14 14.66V17a1 1 0 0 0 1 1 2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M4 22h16" stroke="currentColor" strokeWidth={2} strokeLinecap="round" />
+            </>
+          )}
+        </svg>
+      )
+
+    case 'explore':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={isActive ? 2.8 : 2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      )
+
+    case 'profile':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          fill={isActive ? 'currentColor' : 'none'}
+          stroke={isActive ? 'none' : 'currentColor'}
+          strokeWidth={isActive ? 0 : 2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      )
+
+    case 'vault':
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+          fill={isActive ? 'currentColor' : 'none'}
+          stroke="currentColor"
+          strokeWidth={isActive ? 1 : 2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+        </svg>
+      )
+
+    case 'premium':
+      return (
+        <BadgeCheck
+          size={24}
+          strokeWidth={isActive ? 2.5 : 2}
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        />
+      )
+
+    case 'analytics':
+      return (
+        <BarChart3
+          size={24}
+          strokeWidth={isActive ? 2.8 : 2}
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        />
+      )
+
     case 'intentions':
-      return <Target size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
+      return (
+        <Target
+          size={24}
+          strokeWidth={isActive ? 2.8 : 2}
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        />
+      )
+
     case 'settings':
-      return <Settings size={24} strokeWidth={2} className="w-6 h-6 stroke-[2px] text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
+      return (
+        <Settings
+          size={24}
+          strokeWidth={isActive ? 2.8 : 2}
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        />
+      )
+
     default:
-      return <Home size={24} className="w-6 h-6 stroke-[2px] stroke-current fill-none text-[var(--muted)] group-hover:text-[var(--text)] transition-colors shrink-0" />
+      return (
+        <Home
+          size={24}
+          strokeWidth={isActive ? 2.5 : 2}
+          className={`w-6 h-6 shrink-0 ${strokeClass}`}
+        />
+      )
   }
 }
 

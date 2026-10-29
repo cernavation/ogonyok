@@ -12,12 +12,13 @@ import {
   Trash2,
   AlertTriangle,
   X,
+  Loader2,
 } from 'lucide-react'
 import { VisibilitySwitcher } from './visibility-switcher'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day, VisibilityLevel } from '@/lib/ogonek/types'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 
 export type DayOptionsModalProps = {
   isOpen: boolean
@@ -46,11 +47,79 @@ export function DayOptionsModal({
     setDayVisibility,
     setAllPridesVisibility,
     deleteDay,
+    updateDay,
   } = useOgonekStore()
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isEvaluating, setIsEvaluating] = useState(false)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  const handleAiEvaluate = async () => {
+    playClick(soundEnabled)
+    setIsEvaluating(true)
+    onNotify?.('⚡ Gemini анализирует масштаб побед...')
+
+    const prides = (day.prides || [])
+      .map((p) => p.text)
+      .filter((t): t is string => Boolean(t && t !== '—'))
+    const gratitudes = (day.gratitudes || [])
+      .map((g) => (typeof g === 'string' ? g : g.text))
+      .filter((t): t is string => Boolean(t && t !== '—'))
+
+    if (prides.length === 0 && gratitudes.length === 0) {
+      setIsEvaluating(false)
+      onNotify?.('Нет записей для оценки в этом дне')
+      return
+    }
+
+    const startTime = Date.now()
+
+    try {
+      const res = await fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prides, gratitudes, dayId: day.id }),
+      })
+
+      const elapsed = Date.now() - startTime
+      if (elapsed < 1600) {
+        await new Promise((r) => setTimeout(r, 1600 - elapsed))
+      }
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || `Ошибка сервера (${res.status})`)
+      }
+
+      const score = typeof data.score === 'number' ? data.score : 8
+      const updatedDay: Day = {
+        ...day,
+        prides: (day.prides || []).map((p, idx) => {
+          const itemScore = data.prideEvaluations?.[idx]?.score ?? score
+          return { ...p, scale: Math.max(1, Math.min(10, Math.round(itemScore))) }
+        }),
+        aiScore: score,
+        aiVerdict: data.verdict,
+        aiBreakdown: data.breakdown,
+      }
+
+      updateDay(updatedDay)
+      await syncDayToSupabase(updatedDay).catch((err) => {
+        console.warn('Supabase syncDayToSupabase background error:', err)
+      })
+
+      onNotify?.(`⚡ Gemini оценил день #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
+      onAiEvaluate?.(updatedDay)
+      onClose()
+    } catch (err: any) {
+      console.error('Gemini evaluation error:', err)
+      onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
+    } finally {
+      setIsEvaluating(false)
+    }
+  }
 
   const photoCandidate =
     (day as any)?.media_url ||
@@ -137,14 +206,15 @@ export function DayOptionsModal({
           )}
 
           <div className="flex flex-col gap-1.5">
-            {onAiEvaluate && (
+            {isEvaluating ? (
+              <div className="flex items-center gap-3 w-full p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <Loader2 size={16} className="animate-spin text-amber-500 shrink-0" />
+                <span className="text-sm font-medium">⚡ Gemini анализирует масштаб побед...</span>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => {
-                  playClick(soundEnabled)
-                  onClose()
-                  onAiEvaluate(day)
-                }}
+                onClick={handleAiEvaluate}
                 className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               >
                 <Sparkles size={16} className="text-amber-500" />

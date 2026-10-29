@@ -891,7 +891,7 @@ export function AppShell() {
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
       />
-      <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-hidden" data-locked={locked ? 'true' : undefined}>
+      <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-clip" data-locked={locked ? 'true' : undefined}>
         {view === 'messages' ? (
           <FullscreenMessenger
             initialThreadId={state.chatActiveFriendId || undefined}
@@ -906,7 +906,7 @@ export function AppShell() {
           <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
             <div className="flex flex-row w-full max-w-[1265px] justify-center">
               <Sidebar
-                className="hidden md:flex w-[72px] xl:w-[275px] shrink-0 sticky top-0 h-screen border-r border-[var(--line)]"
+                className="hidden md:flex w-[72px] xl:w-[275px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none border-r border-[var(--line)]"
                 view={view}
                 onNavigate={navigate}
                 onFocusIntentions={handleFocusIntentions}
@@ -943,7 +943,7 @@ export function AppShell() {
               </section>
 
               <RightRail
-                className="w-[350px] shrink-0 sticky top-0 h-screen pl-6 hidden lg:block"
+                className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block"
                 onNavigate={navigate}
                 onCompose={() => setComposer(true)}
                 streak={streakState.streak}

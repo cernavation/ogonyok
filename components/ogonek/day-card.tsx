@@ -29,7 +29,7 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { getInitials } from '@/lib/ogonek/initials'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
 import { IconButton } from './ui'
 import { DayEntries } from './day-entries'
@@ -91,6 +91,7 @@ function DayCardComponent({
     setPrideVisibility,
     setAllPridesVisibility,
     postMyStory,
+    updateDay,
   } = useOgonekStore()
 
   const target = dayTarget(day.id)
@@ -160,31 +161,58 @@ function DayCardComponent({
 
   const handleAiEvaluateDay = async () => {
     setOptionsModalOpen(false)
-    const itemsToEval = (day.prides || []).map((p) => p.text).filter((t) => t && t !== '—')
-    if (itemsToEval.length === 0) {
+    const prides = (day.prides || [])
+      .map((p) => p.text)
+      .filter((t): t is string => Boolean(t && t !== '—'))
+    const gratitudes = (day.gratitudes || [])
+      .map((g) => (typeof g === 'string' ? g : g.text))
+      .filter((t): t is string => Boolean(t && t !== '—'))
+
+    if (prides.length === 0 && gratitudes.length === 0) {
       onNotify?.('Нет записей для оценки')
       return
     }
-    onNotify?.('ИИ оценивает день...')
+
+    onNotify?.('⚡ Gemini анализирует масштаб побед...')
+    const startTime = Date.now()
     try {
       const res = await fetch('/api/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'pride', items: itemsToEval, prides: itemsToEval, dayId: day.id }),
+        body: JSON.stringify({ prides, gratitudes, dayId: day.id }),
       })
-      const data = await res.json()
-      if (res.ok && Array.isArray(data.evaluations)) {
-        data.evaluations.forEach((ev: any, idx: number) => {
-          const score = typeof ev.score === 'number' ? ev.score : typeof ev.scale === 'number' ? ev.scale : 8
-          const targetIndex = typeof ev.index === 'number' ? ev.index : (typeof ev.num === 'number' ? ev.num - 1 : idx)
-          ratePride(day.id, targetIndex, score)
-        })
-        onNotify?.('ИИ оценил день!')
-      } else {
-        onNotify?.('Оценка сохранена')
+
+      const elapsed = Date.now() - startTime
+      if (elapsed < 1600) {
+        await new Promise((r) => setTimeout(r, 1600 - elapsed))
       }
-    } catch {
-      onNotify?.('Оценка сохранена')
+
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || `Ошибка сервера (${res.status})`)
+      }
+
+      const score = typeof data.score === 'number' ? data.score : 8
+      const updatedDay: Day = {
+        ...day,
+        prides: (day.prides || []).map((p, idx) => {
+          const itemScore = data.prideEvaluations?.[idx]?.score ?? score
+          return { ...p, scale: Math.max(1, Math.min(10, Math.round(itemScore))) }
+        }),
+        aiScore: score,
+        aiVerdict: data.verdict,
+        aiBreakdown: data.breakdown,
+      }
+
+      updateDay(updatedDay)
+      await syncDayToSupabase(updatedDay).catch((err) => {
+        console.warn('Supabase syncDayToSupabase error:', err)
+      })
+
+      onNotify?.(`⚡ Gemini оценил день #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
+    } catch (err: any) {
+      console.error('Gemini evaluation error:', err)
+      onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
     }
   }
 

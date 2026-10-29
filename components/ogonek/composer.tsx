@@ -3,7 +3,7 @@
 import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { evaluatePrideItemHeuristic, evaluatePridesHeuristic, type PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
+import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto, resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
@@ -420,62 +420,55 @@ export function Composer({
   const canDraft = totalFilled > 0
 
   /**
-   * Requests evaluations from /api/evaluate (Gemini).
-   * Never throws: on offline / missing key / any error it silently falls back
-   * to the local heuristic, so the caller can always save the day.
+   * Оценка гордостей дня через Gemini (/api/evaluate).
    */
   const computeEvaluations = async (): Promise<Record<number, PrideEvaluation>> => {
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
+    const nextEvalMap: Record<number, PrideEvaluation> = { ...evaluations }
 
-    let evList: PrideEvaluation[]
-    if (!isOnline) {
-      evList = evaluatePridesHeuristic(filledPrides)
-    } else {
+    if (isOnline && filledPrides.length > 0) {
       try {
         const res = await fetch('/api/evaluate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: filledPrides, prides: filledPrides }),
+          body: JSON.stringify({ prides: filledPrides, gratitudes: filledGratitudes }),
         })
         if (res.ok) {
           const data = (await res.json()) as any
-          const rawList = Array.isArray(data.evaluations) && data.evaluations.length > 0
-            ? data.evaluations
-            : Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
+          const list = Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
             ? data.prideEvaluations
+            : Array.isArray(data.evaluations) && data.evaluations.length > 0
+            ? data.evaluations
             : null
 
-          if (rawList) {
-            evList = rawList.map((item: any) => ({
-              scale: Number(item.scale ?? item.score ?? 8),
-              verdict: String(item.verdict ?? item.comment ?? ''),
-              overcome: (Number(item.overcome) || 0) as OvercomeLevel,
-              tags: Array.isArray(item.tags) ? item.tags : [],
-            }))
-          } else {
-            evList = evaluatePridesHeuristic(filledPrides)
+          if (list) {
+            let filledIdx = 0
+            prides.forEach((p, origIdx) => {
+              if (p.trim().length > 0 && list[filledIdx]) {
+                const item = list[filledIdx]
+                const sc = typeof item.score === 'number' ? item.score : (typeof item.scale === 'number' ? item.scale : 8)
+                if (!nextEvalMap[origIdx]) {
+                  nextEvalMap[origIdx] = {
+                    scale: Math.max(1, Math.min(10, Math.round(sc))),
+                    verdict: String(item.verdict || item.comment || data.verdict || ''),
+                    overcome: (Number(item.overcome) || 0) as OvercomeLevel,
+                    tags: Array.isArray(item.tags) ? item.tags : ['#Дисциплина'],
+                  }
+                }
+                filledIdx++
+              }
+            })
           }
-        } else {
-          evList = evaluatePridesHeuristic(filledPrides)
         }
-      } catch {
-        evList = evaluatePridesHeuristic(filledPrides)
+      } catch (err) {
+        console.warn('Network error during computeEvaluations:', err)
       }
     }
 
-    // Map evaluations back to original pride indices (for display)
-    const nextEvalMap: Record<number, PrideEvaluation> = {}
-    let filledIdx = 0
-    prides.forEach((p, origIdx) => {
-      if (p.trim().length > 0 && evList[filledIdx]) {
-        nextEvalMap[origIdx] = evList[filledIdx]
-        filledIdx++
-      }
-    })
     return nextEvalMap
   }
 
-  /** Оценка текущего пункта через Gemini (/api/evaluate) */
+  /** Оценка текущего пункта через реальный Gemini API (/api/evaluate) */
   const handleEvaluateCurrentAi = async () => {
     const currentText = (tab === 'pride' ? prides[activeSlot] : '').trim()
     if (!currentText) {
@@ -488,49 +481,55 @@ export function Composer({
 
     playClick(soundEnabled)
     setIsEvaluating(true)
+    onNotify?.('⚡ Gemini анализирует масштаб побед...')
+    const startTime = Date.now()
 
     try {
-      let evalResult: PrideEvaluation | null = null
+      const res = await fetch('/api/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prides: [currentText],
+          gratitudes: filledGratitudes,
+        }),
+      })
 
-      try {
-        const res = await fetch('/api/evaluate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: [currentText], prides: [currentText] }),
-        })
-
-        if (res.ok) {
-          const data = (await res.json()) as any
-          const list = Array.isArray(data.evaluations) && data.evaluations.length > 0
-            ? data.evaluations
-            : Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
-            ? data.prideEvaluations
-            : null
-
-          if (list && list[0]) {
-            evalResult = {
-              scale: Number(list[0].scale ?? list[0].score ?? 8),
-              verdict: String(list[0].verdict ?? list[0].comment ?? 'Оценка Gemini'),
-              overcome: (Number(list[0].overcome) || 0) as OvercomeLevel,
-              tags: Array.isArray(list[0].tags) ? list[0].tags : [],
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('Network error during /api/evaluate:', e)
+      const elapsed = Date.now() - startTime
+      if (elapsed < 1600) {
+        await new Promise((r) => setTimeout(r, 1600 - elapsed))
       }
 
-      if (!evalResult) {
-        evalResult = evaluatePrideItemHeuristic(currentText)
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || `Ошибка сервера (${res.status})`)
+      }
+
+      const rawScore = typeof data.score === 'number' ? data.score : 8
+      const itemScore = data.prideEvaluations?.[0]?.score ?? rawScore
+      const itemVerdict = data.prideEvaluations?.[0]?.comment || data.verdict || 'Оценка Gemini'
+      const itemOvercome = (Number(data.prideEvaluations?.[0]?.overcome) || 1) as OvercomeLevel
+      const itemTags = Array.isArray(data.prideEvaluations?.[0]?.tags) && data.prideEvaluations[0].tags.length > 0
+        ? data.prideEvaluations[0].tags
+        : ['#Дисциплина']
+
+      const evalResult: PrideEvaluation = {
+        scale: Math.max(1, Math.min(10, Math.round(itemScore))),
+        verdict: itemVerdict,
+        overcome: itemOvercome,
+        tags: itemTags,
       }
 
       setEvaluations((prev) => ({
         ...prev,
-        [activeSlot]: evalResult!,
+        [activeSlot]: evalResult,
       }))
       setRatingsAreDefault(false)
       playSuccess(soundEnabled)
-      onNotify?.(`🔥 Оценка Gemini: ${evalResult.scale}/10 ★${evalResult.verdict ? ` — ${evalResult.verdict}` : ''}`)
+      onNotify?.(`⚡ Оценка Gemini: ${evalResult.scale}/10 ★ — ${evalResult.verdict}`)
+    } catch (err: any) {
+      console.error('Gemini evaluation error in Composer:', err)
+      onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
     } finally {
       setIsEvaluating(false)
     }
@@ -978,6 +977,14 @@ export function Composer({
           >
             ✕
           </button>
+        </div>
+      )}
+
+      {/* Индикатор ожидания оценки Gemini */}
+      {isEvaluating && (
+        <div className="mb-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-center gap-2 animate-pulse">
+          <Loader2 size={14} className="animate-spin text-amber-500 shrink-0" />
+          <span>⚡ Gemini анализирует масштаб побед...</span>
         </div>
       )}
 

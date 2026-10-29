@@ -85,6 +85,9 @@ export type Day = {
   status?: DayStatus
   /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */
   visibility?: VisibilityLevel
+  aiScore?: number
+  aiVerdict?: string
+  aiBreakdown?: string
 }
 
 /** Пользовательский смайлик/эмодзи, созданный в конструкторе реакций */
