@@ -83,4 +83,30 @@ describe('Pride Heuristic Evaluator', () => {
     assert.ok(lbCode.includes('ilonmusk'), 'Содержит ilonmusk')
     assert.ok(lbCode.includes('showNumber={true}'), 'Показывает номер уровня в бейдже')
   })
+
+  it('содержит строгие параметры generationConfig: application/json, temperature: 0.4, maxOutputTokens: 600', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const routeCode = fs.readFileSync(path.resolve(process.cwd(), 'app/api/evaluate/route.ts'), 'utf8')
+    assert.ok(routeCode.includes("responseMimeType: 'application/json'"), 'Задан responseMimeType application/json')
+    assert.ok(routeCode.includes('temperature: 0.4'), 'Задан temperature 0.4')
+    assert.ok(routeCode.includes('maxOutputTokens: 600'), 'Задан maxOutputTokens 600 для ответа за 2-4 секунды')
+  })
+
+  it('extractAndParseJson корректно извлекает JSON при наличии префикса "Calibrated..." или markdown', async () => {
+    const { extractAndParseJson } = await import('../lib/ogonek/ai-eval-parser.ts')
+    
+    // 1. Обычный валидный JSON
+    const res1 = extractAndParseJson('{"score": 8.5, "verdict": "Отлично"}')
+    assert.equal(res1.score, 8.5)
+
+    // 2. Ошибка из скриншота: префикс Calibrated...
+    const res2 = extractAndParseJson('Calibrated Mentor analysis:\n{"score": 9.0, "verdict": "Прорыв дня"}')
+    assert.equal(res2.score, 9.0)
+    assert.equal(res2.verdict, 'Прорыв дня')
+
+    // 3. Markdown обёртка ```json ... ```
+    const res3 = extractAndParseJson('```json\n{"score": 7.5, "verdict": "Хорошая работа"}\n```')
+    assert.equal(res3.score, 7.5)
+  })
 })

@@ -126,10 +126,11 @@ async function runTest() {
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             responseMimeType: 'application/json',
-            temperature: 0.3,
+            temperature: 0.4,
+            maxOutputTokens: 600,
           },
         }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(6000),
       })
 
       if (!res.ok) {
@@ -141,8 +142,19 @@ async function runTest() {
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text
       if (!rawText) continue
 
-      const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim()
-      const parsed = JSON.parse(cleaned)
+      let parsed
+      try {
+        const withoutFences = rawText.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim()
+        const firstBrace = withoutFences.indexOf('{')
+        const lastBrace = withoutFences.lastIndexOf('}')
+        const jsonStr = (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace)
+          ? withoutFences.slice(firstBrace, lastBrace + 1)
+          : withoutFences
+        parsed = JSON.parse(jsonStr)
+      } catch (e) {
+        console.log(`⚠️ Ошибка парсинга ${model} (${ver}):`, e.message)
+        continue
+      }
 
       console.log('\n═════════════════════════════════════════════════════════════════')
       console.log(`🎉 УСПЕШНЫЙ ОТВЕТ 200 OK ОТ МОДЕЛИ: ${model} (${ver})!`)

@@ -2,52 +2,27 @@ import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { extractAndParseJson, AI_GENERATION_CONFIG } from '@/lib/ogonek/ai-eval-parser'
 
 const MODEL_CANDIDATES = [
-  'gemini-1.5-flash-002',
-  'gemini-1.5-flash',
   'gemini-1.5-flash-latest',
-  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
   'gemini-2.0-flash',
+  'gemini-1.5-flash-002',
   'gemini-1.5-pro',
-  'gemini-1.5-pro-002',
 ]
 
-// Кэш обнаруженных через ListModels моделей (TTL: 1 час)
-let cachedDiscovered: { models: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }>; timestamp: number } | null = null
-
-async function discoverSupportedModels(key: string): Promise<Array<{ model: string; apiVersion: 'v1' | 'v1beta' }>> {
-  if (cachedDiscovered && Date.now() - cachedDiscovered.timestamp < 3600_000) {
-    return cachedDiscovered.models
-  }
-
-  const discovered: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = []
-  for (const apiVer of ['v1', 'v1beta'] as const) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/${apiVer}/models?key=${key}`
-      const res = await fetch(url, { signal: AbortSignal.timeout(3500) })
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data.models)) {
-          const valid = data.models
-            .filter((m: any) => Array.isArray(m.supportedGenerationMethods) && m.supportedGenerationMethods.includes('generateContent'))
-            .map((m: any) => ({
-              model: String(m.name).replace(/^models\//, ''),
-              apiVersion: apiVer,
-            }))
-          discovered.push(...valid)
-        }
-      }
-    } catch {
-      // Игнорируем ошибки ListModels — каскадный фоллбек сработает штатно
-    }
-  }
-
-  if (discovered.length > 0) {
-    cachedDiscovered = { models: discovered, timestamp: Date.now() }
-  }
-  return discovered
-}
+// Приоритетная матрица моделей (v1 — стабильный быстрый продакшн, v1beta — превью)
+const FAST_CANDIDATE_MATRIX: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = [
+  { model: 'gemini-1.5-flash-latest', apiVersion: 'v1' },
+  { model: 'gemini-1.5-flash', apiVersion: 'v1' },
+  { model: 'gemini-1.5-flash-latest', apiVersion: 'v1beta' },
+  { model: 'gemini-1.5-flash', apiVersion: 'v1beta' },
+  { model: 'gemini-2.0-flash', apiVersion: 'v1beta' },
+  { model: 'gemini-1.5-flash-002', apiVersion: 'v1' },
+  { model: 'gemini-1.5-pro', apiVersion: 'v1' },
+  { model: 'gemini-1.5-pro', apiVersion: 'v1beta' },
+]
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
@@ -103,21 +78,23 @@ export async function POST(request: Request) {
   }
 
   try {
-    const systemPrompt = `Ты — калиброванный Ментор системы личных побед "Огонёк".
+    const systemPrompt = `Ты — Ментор системы личных побед "Огонёк".
 Твоя задача — объективно, строго и вдохновляюще оценить масштаб побед (гордостей) и глубину благодарностей за день.
 Шкала баллов: от 1.0 до 10.0 (10.0 — исключительный триумф/прорыв через экстремальное сопротивление, 8-9 — сверхусилие и характер, 6-7 — хорошая продуктивная работа, 4-5 — рутинные базовые действия, 1-3 — минимум усилий).
 
-Ты ОБЯЗАН вернуть строго валидный JSON следующей структуры:
+ВНИМАНИЕ: Верни ИСКЛЮЧИТЕЛЬНО валидный JSON-объект без префиксов, вводных слов, пояснений, слова "Calibrated" и markdown-разметки. Ответ должен начинаться строго с символа '{'.
+
+Формат JSON:
 {
-  "score": <число с плавающей точкой от 1.0 до 10.0>,
-  "breakdown": "<детальный разбор масштаба побед, преодоления и благодарностей>",
-  "verdict": "<хлёсткий, честный и глубокий вердикт ментора в 1-2 предложениях>",
+  "score": <число от 1.0 до 10.0>,
+  "breakdown": "<краткий объективный разбор масштаба и преодоления в 1-2 предложениях>",
+  "verdict": "<хлёсткий мотивирующий вердикт ментора в 1 предложении>",
   "prideEvaluations": [
     {
       "num": 1,
       "score": <число от 1.0 до 10.0>,
       "comment": "<лаконичный комментарий>",
-      "overcome": <число от 0 до 3: 0=рутина, 1=усилие, 2=барьер, 3=сверхусилие>,
+      "overcome": <0|1|2|3>,
       "tags": ["#Дисциплина"]
     }
   ],
@@ -136,70 +113,24 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
 
 Оцени записи и верни JSON.`
 
-    // 1. Попытка динамического обнаружения доступных моделей через ListModels
-    const liveModels = await discoverSupportedModels(apiKey)
-
-    // 2. Формирование матрицы кандидатов с параметрами apiVersion: 'v1' и 'v1beta'
-    const candidateMatrix: Array<{ model: string; apiVersion: 'v1' | 'v1beta' }> = []
-
-    if (liveModels.length > 0) {
-      const priorityOrder = [
-        'gemini-1.5-flash-002',
-        'gemini-1.5-flash',
-        'gemini-2.0-flash-exp',
-        'gemini-2.0-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-1.5-flash-8b',
-        'gemini-2.5-flash',
-        'gemini-1.5-pro-002',
-        'gemini-1.5-pro',
-      ]
-      const sortedLive = [...liveModels].sort((a, b) => {
-        const aIdx = priorityOrder.indexOf(a.model)
-        const bIdx = priorityOrder.indexOf(b.model)
-        const aScore = aIdx >= 0 ? aIdx : 100
-        const bScore = bIdx >= 0 ? bIdx : 100
-        return aScore - bScore
-      })
-      candidateMatrix.push(...sortedLive)
-    }
-
-    // Фоллбек-матрица (проверяет сначала стабильную v1, затем v1beta)
-    const baseFallback = [
-      'gemini-1.5-flash-002',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-2.0-flash-exp',
-      'gemini-2.0-flash',
-      'gemini-1.5-pro-002',
-      'gemini-1.5-pro',
-    ]
-
-    for (const mod of baseFallback) {
-      for (const ver of ['v1', 'v1beta'] as const) {
-        if (!candidateMatrix.some((c) => c.model === mod && c.apiVersion === ver)) {
-          candidateMatrix.push({ model: mod, apiVersion: ver })
-        }
-      }
-    }
-
     const genAI = new GoogleGenerativeAI(apiKey)
     let responseText = ''
     let lastError: any = null
-    let usedModel = candidateMatrix[0].model
-    let usedApiVersion: 'v1' | 'v1beta' = candidateMatrix[0].apiVersion
+    let usedModel = FAST_CANDIDATE_MATRIX[0].model
+    let usedApiVersion: 'v1' | 'v1beta' = FAST_CANDIDATE_MATRIX[0].apiVersion
 
-    for (const { model: modelCandidate, apiVersion: apiVer } of candidateMatrix) {
+    for (const { model: modelCandidate, apiVersion: apiVer } of FAST_CANDIDATE_MATRIX) {
       try {
         const model = genAI.getGenerativeModel(
           {
             model: modelCandidate,
             generationConfig: {
-              responseMimeType: 'application/json',
-              temperature: 0.3,
+              responseMimeType: 'application/json', // ГАРАНТИРУЕТ чистый JSON без слов "Calibrated"
+              temperature: 0.4,
+              maxOutputTokens: 600, // Ограничение длины: ответ возвращается за 2-4 секунды!
             },
           },
-          { apiVersion: apiVer }
+          { apiVersion: apiVer, timeout: 6000 }
         )
 
         const result = await model.generateContent({
@@ -234,10 +165,10 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
       }
     }
 
-    // Дополнительный прямой REST fallback (если SDK не смог вернуть текст)
+    // Быстрый прямой REST fallback (если SDK не вернул текст)
     if (!responseText) {
       for (const ver of ['v1', 'v1beta'] as const) {
-        for (const mod of ['gemini-1.5-flash-002', 'gemini-1.5-flash', 'gemini-2.0-flash-exp']) {
+        for (const mod of ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-2.0-flash']) {
           try {
             const restUrl = `https://generativelanguage.googleapis.com/${ver}/models/${mod}:generateContent?key=${apiKey}`
             const res = await fetch(restUrl, {
@@ -247,10 +178,11 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
                 contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] }],
                 generationConfig: {
                   responseMimeType: 'application/json',
-                  temperature: 0.3,
+                  temperature: 0.4,
+                  maxOutputTokens: 600,
                 },
               }),
-              signal: AbortSignal.timeout(10000),
+              signal: AbortSignal.timeout(4000),
             })
             if (res.ok) {
               const data = await res.json()
@@ -276,12 +208,8 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
       )
     }
 
-    const cleaned = responseText
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim()
-
-    const parsed = JSON.parse(cleaned)
+    // Защищённый парсинг JSON с удалением любых посторонних префиксов и "Calibrated..."
+    const parsed = extractAndParseJson(responseText)
 
     const rawScore = Number(parsed.score)
     let finalScore: number
@@ -326,8 +254,8 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
       }
     )
 
-    const breakdown = String(parsed.breakdown || parsed.verdict || 'Анализ завершён успешно.')
-    const verdict = String(parsed.verdict || parsed.mentorWord || 'Отличный день и осознанная работа над собой!')
+    const breakdown = String(parsed.breakdown || parsed.verdict || 'Анализ побед дня проведён объективно.')
+    const verdict = String(parsed.verdict || parsed.mentorWord || 'День сильного характера и дисциплины.')
 
     // Сохранение в Supabase при наличии dayId и userId
     if (body.dayId && body.userId) {
