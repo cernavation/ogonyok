@@ -88,6 +88,9 @@ export type Day = {
   aiScore?: number
   aiVerdict?: string
   aiBreakdown?: string
+  user_id?: string
+  userId?: string
+  author?: any
 }
 
 /** Пользовательский смайлик/эмодзи, созданный в конструкторе реакций */

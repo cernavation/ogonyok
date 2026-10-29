@@ -56,4 +56,31 @@ describe('Pride Heuristic Evaluator', () => {
     assert.ok(batch[1].tags.includes('Спорт'))
     assert.equal(batch[2].overcome, 3)
   })
+
+  it('содержит эталонный список кандидатов Gemini моделей для каскадного фоллбека', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const routeCode = fs.readFileSync(path.resolve(process.cwd(), 'app/api/evaluate/route.ts'), 'utf8')
+    assert.ok(routeCode.includes('gemini-1.5-flash-latest'), 'Содержит gemini-1.5-flash-latest')
+    assert.ok(routeCode.includes('gemini-1.5-flash'), 'Содержит gemini-1.5-flash')
+    assert.ok(routeCode.includes('gemini-2.0-flash'), 'Содержит gemini-2.0-flash')
+    assert.ok(routeCode.includes('gemini-1.5-pro'), 'Содержит gemini-1.5-pro')
+    assert.ok(routeCode.includes('MODEL_CANDIDATES'), 'Объявлен MODEL_CANDIDATES')
+    assert.ok(routeCode.includes('404') && routeCode.includes('not found'), 'Обрабатывает ошибку 404/not found для перехода к следующему кандидату')
+  })
+
+  it('проверяет изоляцию ленты Друзья и чистку рейтинга @cernavation / @ilonmusk', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const homeCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/views/home-view.tsx'), 'utf8')
+    assert.ok(homeCode.includes("filter === 'Мои гордости'"), 'Фильтрует по вкладке Мои гордости')
+    assert.ok(homeCode.includes("filter === 'Друзья'"), 'Фильтрует по вкладке Друзья')
+    assert.ok(homeCode.includes('followingIds.includes'), 'Проверяет наличие в followingIds')
+    assert.ok(homeCode.includes('Скопировать приглашение'), 'Содержит кнопку Скопировать приглашение')
+
+    const lbCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/views/leaderboard-view.tsx'), 'utf8')
+    assert.ok(lbCode.includes('cernavation'), 'Содержит cernavation')
+    assert.ok(lbCode.includes('ilonmusk'), 'Содержит ilonmusk')
+    assert.ok(lbCode.includes('showNumber={true}'), 'Показывает номер уровня в бейдже')
+  })
 })

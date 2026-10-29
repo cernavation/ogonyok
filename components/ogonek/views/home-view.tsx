@@ -1,6 +1,6 @@
 'use client'
 
-import { Flame, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile } from 'lucide-react'
+import { Check, Copy, Flame, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile, Users } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
@@ -94,7 +94,25 @@ export function HomeView({
   const [filter, setFilter] = useState<string>('Мои гордости')
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const currentUserId = currentUser?.id || state.auth.activeAccountId || userId
+  const followingIds = useMemo(() => {
+    return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
+  }, [state.followingIds, state.exploreFollowingIds])
+
+  const handleCopyInvite = () => {
+    playClick(soundEnabled)
+    const refUser = username || 'cernavation'
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${refUser}` : 'https://ogonek.app'
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(url)
+    }
+    setCopied(true)
+    onNotify('Ссылка-приглашение скопирована в буфер обмена!')
+    setTimeout(() => setCopied(false), 2500)
+  }
 
   const todayKey = useMemo(() => {
     return new Date().toISOString().split('T')[0]
@@ -113,16 +131,32 @@ export function HomeView({
 
   const filteredDays = useMemo(() => {
     if (filter === 'Мои гордости') {
-      return days
+      return days.filter((d) => {
+        const uid = d.user_id || (d as any).userId
+        if (uid) {
+          return (
+            uid === currentUserId ||
+            (currentUser?.id && uid === currentUser.id) ||
+            (state.auth.activeAccountId && uid === state.auth.activeAccountId)
+          )
+        }
+        return true
+      })
     }
-    if (filter === 'Друзья') {
-      return days
-    }
-    if (filter === 'Подписки') {
-      return days
+    if (filter === 'Друзья' || filter === 'Подписки') {
+      return days.filter((d) => {
+        const uid = d.user_id || (d as any).userId
+        if (!uid) return false
+        const isMine =
+          (currentUserId && uid === currentUserId) ||
+          (currentUser?.id && uid === currentUser.id) ||
+          (state.auth.activeAccountId && uid === state.auth.activeAccountId)
+        if (isMine) return false
+        return followingIds.includes(uid)
+      })
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter])
+  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
@@ -372,21 +406,30 @@ export function HomeView({
               </div>
             )}
           </>
+        ) : filter === 'Друзья' || filter === 'Подписки' ? (
+          <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mb-1" aria-hidden="true">
+              <Users size={24} className="text-[#ff6b35]" />
+            </span>
+            <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
+              Здесь будут победы ваших соратников. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!
+            </p>
+            <button
+              type="button"
+              onClick={handleCopyInvite}
+              className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text)] text-[var(--bg)] font-bold text-sm hover:opacity-90 active:scale-95 transition-all shadow-sm cursor-pointer"
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+              <span>{copied ? 'Ссылка скопирована!' : 'Скопировать приглашение'}</span>
+            </button>
+          </div>
         ) : (
           <div className="empty-state p-8 text-center" role="status">
             <p className="empty-state__title font-bold text-sm text-[var(--text)] mb-1">
-              {filter === 'Друзья'
-                ? 'В ленте друзей пока пусто'
-                : filter === 'Подписки'
-                ? 'У вас пока нет подписок'
-                : 'Ничего не найдено'}
+              Ничего не найдено
             </p>
             <p className="empty-state__desc text-xs text-[var(--text-2)]">
-              {filter === 'Друзья'
-                ? 'Подпишитесь на соратников в разделе «Поиск», чтобы видеть их огонь и гордости.'
-                : filter === 'Подписки'
-                ? 'Здесь будут отображаться записи людей, на которых вы подписались.'
-                : `Записей с тегом «${filter}» пока нет. Нажмите «+», чтобы создать запись.`}
+              {`Записей с тегом «${filter}» пока нет. Нажмите «+», чтобы создать запись.`}
             </p>
           </div>
         )}

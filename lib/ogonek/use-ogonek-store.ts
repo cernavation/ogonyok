@@ -581,6 +581,8 @@ export function mapCloudDayToDay(row: any): Day {
     dateISO: row.date_iso || new Date().toISOString(),
     status: row.status === 'missed' ? 'missed' : 'normal',
     visibility: (row.visibility || 'public') as VisibilityLevel,
+    user_id: row.user_id,
+    userId: row.user_id,
     prides,
     gratitudes,
   }
@@ -1032,6 +1034,7 @@ export function useOgonekStore() {
           ),
         }))
 
+        const currentUid = prev.auth?.activeAccountId || (prev.profile as any)?.id || prev.profile?.username
         const newDay: Day = {
           id: newId,
           title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
@@ -1042,6 +1045,8 @@ export function useOgonekStore() {
           dateISO: computedDate,
           status: 'normal',
           visibility: normalizeVisibility(payload.visibility),
+          user_id: currentUid,
+          userId: currentUid,
         }
 
         createdDay = newDay
@@ -4982,7 +4987,7 @@ export function useOgonekStore() {
 
         const isOwner = cleanNick === 'cernavation'
         const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
-        const effectiveLevel = dbLevel ?? (existing ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1)
+        const effectiveLevel = isOwner ? 5 : (dbLevel ?? (existing ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1))
 
         return {
           ...prev,

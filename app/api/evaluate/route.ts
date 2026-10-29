@@ -3,6 +3,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 import { getServerSupabase } from '@/lib/supabase/server'
 
+const MODEL_CANDIDATES = [
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-pro',
+]
+
 export async function POST(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('evaluate', ip, 60, 60_000)
@@ -57,15 +64,6 @@ export async function POST(request: Request) {
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.3,
-      },
-    })
-
     const systemPrompt = `Ты — калиброванный Ментор системы личных побед "Огонёк".
 Твоя задача — объективно, строго и вдохновляюще оценить масштаб побед (гордостей) и глубину благодарностей за день.
 Шкала баллов: от 1.0 до 10.0 (10.0 — исключительный триумф/прорыв через экстремальное сопротивление, 8-9 — сверхусилие и характер, 6-7 — хорошая продуктивная работа, 4-5 — рутинные базовые действия, 1-3 — минимум усилий).
@@ -99,14 +97,54 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
 
 Оцени записи и верни JSON.`
 
-    const result = await model.generateContent({
-      contents: [
-        { role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] },
-      ],
-    })
+    const genAI = new GoogleGenerativeAI(apiKey)
+    let responseText = ''
+    let lastError: any = null
+    let usedModel = MODEL_CANDIDATES[0]
 
-    const responseText = result.response.text()
+    for (const modelCandidate of MODEL_CANDIDATES) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelCandidate,
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.3,
+          },
+        })
+
+        const result = await model.generateContent({
+          contents: [
+            { role: 'user', parts: [{ text: systemPrompt + '\n\n' + userPrompt }] },
+          ],
+        })
+
+        const text = result.response.text()
+        if (text) {
+          responseText = text
+          usedModel = modelCandidate
+          break
+        }
+      } catch (candidateErr: any) {
+        lastError = candidateErr
+        const errMsg = String(candidateErr?.message || '')
+        const isNotFound =
+          errMsg.includes('404') ||
+          errMsg.toLowerCase().includes('not found') ||
+          candidateErr?.status === 404
+        if (isNotFound) {
+          console.warn(`[Gemini API] Candidate "${modelCandidate}" returned 404 (not found). Retrying next candidate...`)
+          continue
+        }
+        if (errMsg.includes('API_KEY_INVALID') || errMsg.includes('API key not valid')) {
+          throw candidateErr
+        }
+        console.warn(`[Gemini API] Candidate "${modelCandidate}" failed (${errMsg}). Trying next candidate...`)
+        continue
+      }
+    }
+
     if (!responseText) {
+      if (lastError) throw lastError
       return NextResponse.json(
         { success: false, error: 'Пустой ответ от Gemini API' },
         { status: 500 }
@@ -190,7 +228,7 @@ ${rawGratitudes.length > 0 ? `\nБлагодарности:\n${rawGratitudes.map
     return NextResponse.json({
       success: true,
       source: 'gemini',
-      model: 'gemini-1.5-flash',
+      model: usedModel,
       score: finalScore,
       breakdown,
       verdict,

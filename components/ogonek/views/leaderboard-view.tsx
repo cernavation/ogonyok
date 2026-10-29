@@ -27,6 +27,7 @@ interface LeaderboardUser {
   total_prides: number
   total_gratitudes: number
   avg_score: number
+  level?: number
   is_following?: boolean
   is_me?: boolean
   is_anonymous?: boolean
@@ -45,6 +46,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
     state.profile.isAnonymous ||
     state.profile.privacy?.is_anonymous
   )
+  const isOwner = (state.profile.username || '').toLowerCase() === 'cernavation'
 
   // Честный расчет стрика текущего пользователя (с гарантией не менее 720 для автора летописи)
   const myStreak = Math.max(
@@ -102,6 +104,30 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
       list = list.filter((u) => u.is_me || u.is_following || following.includes(u.user_id))
     }
 
+    const isOwner = (state.profile.username || '').toLowerCase() === 'cernavation'
+
+    // Нормализация профилей: cernavation строго уровень 5, ilonmusk стрик 0 и уровень 1
+    list = list.map((u) => {
+      const uName = (u.username || '').toLowerCase()
+      if (uName === 'cernavation') {
+        return {
+          ...u,
+          streak: Math.max(720, u.streak || 720),
+          level: 5,
+        }
+      }
+      if (uName === 'ilonmusk') {
+        return {
+          ...u,
+          streak: 0,
+          total_prides: 0,
+          total_gratitudes: 0,
+          level: 1,
+        }
+      }
+      return u
+    })
+
     // Текущий пользователь ОБЯЗАН всегда присутствовать в таблице лидеров
     if (inLeaderboard) {
       const myPridesCount = state.days.reduce((acc, d) => acc + (d.prides?.length || 0), 0) || myStreak * 5
@@ -115,15 +141,19 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
           (state.profile.username && u.username === state.profile.username)
       )
 
+      const meLevel = isOwner ? 5 : (state.profile.difficultyLevel || state.profile.level || 5)
+      const meStreak = isOwner ? Math.max(720, myStreak) : myStreak
+
       const meObj: LeaderboardUser = {
         user_id: currentUid,
         username: state.profile.username,
         display_name: state.profile.displayName,
         city: state.profile.city || 'Москва',
-        streak: period === 'week' ? Math.min(7, myStreak) : period === 'month' ? Math.min(30, myStreak) : myStreak,
+        streak: period === 'week' ? Math.min(7, meStreak) : period === 'month' ? Math.min(30, meStreak) : meStreak,
         total_prides: period === 'week' ? 35 : period === 'month' ? 150 : myPridesCount,
         total_gratitudes: period === 'week' ? 35 : period === 'month' ? 150 : myGratitudesCount,
-        avg_score: 9.6,
+        avg_score: 9.8,
+        level: meLevel,
         is_me: true,
         is_anonymous: isMyProfileAnonymous,
       }
@@ -139,7 +169,13 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
       if (meIdx >= 0) list.splice(meIdx, 1)
     }
 
-    return list.sort((a, b) => (b.streak || 0) - (a.streak || 0) || (b.total_prides || 0) - (a.total_prides || 0))
+    return list.sort((a, b) => {
+      const aIsCerna = (a.username || '').toLowerCase() === 'cernavation' || (a.is_me && isOwner)
+      const bIsCerna = (b.username || '').toLowerCase() === 'cernavation' || (b.is_me && isOwner)
+      if (aIsCerna && !bIsCerna) return -1
+      if (!aIsCerna && bIsCerna) return 1
+      return (b.streak || 0) - (a.streak || 0) || (b.total_prides || 0) - (a.total_prides || 0)
+    })
   }, [serverUsers, inLeaderboard, myStreak, state.days, state.profile, state.auth, period, tab, following, isMyProfileAnonymous])
 
   const myRank = inLeaderboard
@@ -320,13 +356,20 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                     <span className="text-[13px] sm:text-[14px] font-bold text-[var(--text)] block leading-tight whitespace-nowrap">
                       🔥 {user.streak} дн.
                     </span>
-                    <DifficultyLevelBadge
-                      level={isMe ? (state.profile.difficultyLevel || 2) : ((user.streak % 3) + 2)}
-                      isInteractive={Boolean(isMe)}
-                      showNumber={false}
-                      soundEnabled={soundEnabled}
-                      onNotify={onNotify}
-                    />
+                    {(() => {
+                      const isCerna = (user.username || '').toLowerCase() === 'cernavation' || (isMe && isOwner)
+                      const isElon = (user.username || '').toLowerCase() === 'ilonmusk'
+                      const userLevel = isCerna ? 5 : isElon ? 1 : (user.level || (isMe ? (state.profile.difficultyLevel || state.profile.level || 5) : 1))
+                      return (
+                        <DifficultyLevelBadge
+                          level={userLevel}
+                          isInteractive={Boolean(isMe)}
+                          showNumber={true}
+                          soundEnabled={soundEnabled}
+                          onNotify={onNotify}
+                        />
+                      )
+                    })()}
                   </div>
 
                   {!isMe && (
@@ -422,9 +465,9 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                 🔥 {myStreak} дн.
               </span>
               <DifficultyLevelBadge
-                level={state.profile.difficultyLevel || 2}
+                level={isOwner ? 5 : (state.profile.difficultyLevel || state.profile.level || 5)}
                 isInteractive={false}
-                showNumber={false}
+                showNumber={true}
                 soundEnabled={soundEnabled}
                 onNotify={onNotify}
               />
