@@ -379,7 +379,7 @@ function DayCardComponent({
                 </span>
                 {averageScore !== null && (
                   <span
-                    className="inline-flex items-center gap-0.5 text-[13px] font-bold text-amber-500"
+                    className="inline-flex items-center gap-0.5 text-[13px] text-amber-400 font-bold bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full"
                     title={`Балл дня: ${Number(day.score ?? averageScore).toFixed(1)}/10`}
                   >
                     ★ {Number(day.score ?? averageScore).toFixed(1)}
@@ -409,7 +409,7 @@ function DayCardComponent({
               </p>
               <div className="flex items-center gap-2 flex-none">
                 {firstPride && ((typeof firstPride.score === 'number' && firstPride.score > 0) || (typeof firstPride.scale === 'number' && firstPride.scale > 0)) && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-bold shrink-0 bg-black/40 border border-[#2f3336] text-[#e7e9ea]">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
                     {Number(firstPride.score ?? firstPride.scale).toFixed(1)}★
                   </span>
                 )}
@@ -491,8 +491,8 @@ function DayCardComponent({
                               </span>
                               <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{p.text}</span>
                               {((typeof p.score === 'number' && p.score > 0) || (typeof p.scale === 'number' && p.scale > 0)) && (
-                                <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
-                                  {typeof p.score === 'number' ? p.score.toFixed(1) : p.scale}★
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
+                                  {Number(p.score ?? p.scale).toFixed(1)}★
                                 </span>
                               )}
                               <button

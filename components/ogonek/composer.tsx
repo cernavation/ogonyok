@@ -999,34 +999,33 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative w-full my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336] flex flex-col">
-          <div className="relative w-full max-h-[260px] flex items-center justify-center overflow-hidden bg-black/40">
+        <div className="relative w-full my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336]">
+          <div className="relative w-full min-h-[220px] max-h-[320px] flex items-center justify-center overflow-hidden bg-black/40">
             <img
               src={preview}
-              className="max-h-[260px] w-auto object-contain rounded-xl"
+              className="max-h-[320px] w-full object-cover rounded-xl"
               alt="Фото дня"
             />
+            {/* Аккуратный парящий крестик (✕) */}
             <button
               type="button"
               onClick={handleRemovePhoto}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-black text-white border border-white/20 transition z-10"
+              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-black/70 hover:bg-black text-white/80 hover:text-white border border-white/20 backdrop-blur-md flex items-center justify-center transition z-20"
               aria-label="Удалить фото"
             >
               ✕
             </button>
-          </div>
 
-          {/* Стеклянный оверлей селектора привязки */}
-          <div className="p-3 bg-zinc-950/85 backdrop-blur-md border-t border-[#2f3336] flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-[#71767b] font-medium">К чему относится это фото?</span>
-              <span className="text-[10px] text-zinc-500 font-mono">мультивыбор</span>
-            </div>
+            {/* Мягкий градиент затемнения снизу фото */}
+            <div className="absolute inset-x-0 bottom-0 pt-14 pb-3 px-3 bg-gradient-to-t from-black via-black/85 to-transparent z-10 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#71767b] font-medium">К чему относится это фото?</span>
+                <span className="text-[10px] text-zinc-400 font-mono">мультивыбор</span>
+              </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-              {/* Ряд Гордостей: оранжевые круглые кнопки 1 2 3 4 5 */}
+              {/* Строка 1: Гордости */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-amber-500 font-bold flex items-center gap-1 min-w-[70px] flex-none">
+                <span className="text-[11px] font-bold text-[#ff6b35] flex items-center gap-1 w-24 shrink-0">
                   🔥 Гордости:
                 </span>
                 <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к гордостям">
@@ -1037,10 +1036,10 @@ export function Composer({
                         key={num}
                         type="button"
                         onClick={() => handleToggleTarget('pride', num)}
-                        className={`w-7 h-7 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center min-h-[28px] min-w-[28px] ${
+                        className={`w-6 h-6 rounded-full text-xs flex items-center justify-center transition ${
                           active
-                            ? 'bg-amber-500 text-black shadow-[0_0_8px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/50 scale-105'
-                            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700/60'
+                            ? 'bg-[#ff6b35] text-white font-bold ring-2 ring-[#ff6b35]/40'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/10'
                         }`}
                         title={`Привязать к Гордости #${num}`}
                         aria-pressed={active}
@@ -1052,10 +1051,10 @@ export function Composer({
                 </div>
               </div>
 
-              {/* Ряд Благодарностей: розовые круглые кнопки 1 2 3 4 5 */}
+              {/* Строка 2: Благодарности */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-rose-500 font-bold flex items-center gap-1 min-w-[95px] flex-none">
-                  ❤️ Благодарности:
+                <span className="text-[11px] font-bold text-[#f91880] flex items-center gap-1 w-24 shrink-0">
+                  ❤️ Благ-сти:
                 </span>
                 <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к благодарностям">
                   {[1, 2, 3, 4, 5].map((num) => {
@@ -1065,10 +1064,10 @@ export function Composer({
                         key={num}
                         type="button"
                         onClick={() => handleToggleTarget('gratitude', num)}
-                        className={`w-7 h-7 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center min-h-[28px] min-w-[28px] ${
+                        className={`w-6 h-6 rounded-full text-xs flex items-center justify-center transition ${
                           active
-                            ? 'bg-rose-500 text-white shadow-[0_0_8px_rgba(244,63,94,0.5)] ring-2 ring-rose-400/50 scale-105'
-                            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700/60'
+                            ? 'bg-[#f91880] text-white font-bold ring-2 ring-[#f91880]/40'
+                            : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/10'
                         }`}
                         title={`Привязать к Благодарности #${num}`}
                         aria-pressed={active}
