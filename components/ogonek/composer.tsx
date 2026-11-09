@@ -4,7 +4,7 @@ import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
-import { savePhoto, resolvePhotoUrl } from '@/lib/ogonek/photos'
+import { savePhoto, resolvePhotoUrl, uploadDayPhotoToStorage } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
@@ -90,15 +90,20 @@ const COMPOSER_PROMPT_SPHERES: PromptSphere[] = [
   },
 ]
 
-const HINT_QUESTIONS = [
-  'Что нового узнал?',
-  'Какой барьер преодолел?',
-  'Чем гордишься больше всего сегодня?',
-  'Что сделал вопреки лени или страху?',
-  'Какое маленькое достижение заметил?',
-  'Что продвинул в работе или проекте?',
-  'Кому помог или с кем тепло общался?',
-  'Что преодолел, чтобы заняться здоровьем?',
+const PRIDE_HINT_QUESTIONS = [
+  'Какой барьер или лень сегодня преодолел?',
+  'Какую главную победу зафиксировал в делах или спорте?',
+  'Что сделал вопреки усталости или страху?',
+  'Какое важное решение или действие продвинуло к цели?',
+  'Чем больше всего гордишься перед собой за сегодня?',
+]
+
+const GRATITUDE_HINT_QUESTIONS = [
+  'Кому из близких, друзей или коллег ты благодарен сегодня?',
+  'За какую поддержку, тепло или заботу говоришь спасибо?',
+  'Какое приятное событие или урок дня вызвало благодарность?',
+  'За что благодарен своему телу, здоровью и силам?',
+  'За какую возможность или случай в жизни признателен сегодня?',
 ]
 
 function getDayPhotoCandidate(day: Day | null | undefined): string | null {
@@ -191,6 +196,8 @@ export function Composer({
     return initialDraft?.gratitudes || ['', '', '', '', '', '']
   })
   const candidatePhoto = getDayPhotoCandidate(editingDay)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [preview, setPreview] = useState<string | null>(() => {
     if (
       candidatePhoto &&
@@ -372,16 +379,28 @@ export function Composer({
       const url = URL.createObjectURL(file)
       previewRef.current = url
       setPreview(url)
+      setSelectedFile(file)
 
       try {
         const id = await savePhoto(file)
         setPhotoId(id)
-        // Update preview with the saved photo id so it persists
-        setPreview(id)
-        previewRef.current = id
       } catch {
         // Fallback to transient blob url
       }
+    }
+  }
+
+  const handleRemovePhoto = () => {
+    playClick(soundEnabled)
+    if (previewRef.current && previewRef.current.startsWith('blob:')) {
+      URL.revokeObjectURL(previewRef.current)
+    }
+    setPreview(null)
+    previewRef.current = null
+    setPhotoId(null)
+    setSelectedFile(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
     }
   }
 
@@ -420,7 +439,7 @@ export function Composer({
   const canDraft = totalFilled > 0
 
   /**
-   * Оценка гордостей дня через Gemini (/api/evaluate).
+   * Оценка гордостей дня через ИИ (/api/evaluate).
    */
   const computeEvaluations = async (): Promise<Record<number, PrideEvaluation>> => {
     const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
@@ -468,88 +487,11 @@ export function Composer({
     return nextEvalMap
   }
 
-  /** Оценка текущего пункта через реальный Gemini API (/api/evaluate) */
-  const handleEvaluateCurrentAi = async () => {
-    const currentText = (tab === 'pride' ? prides[activeSlot] : '').trim()
-    if (!currentText) {
-      playClick(soundEnabled)
-      onNotify?.('Сначала напиши текст гордости для оценки')
-      return
-    }
-
-    if (isEvaluating) return
-
-    playClick(soundEnabled)
-    setIsEvaluating(true)
-    onNotify?.('⚡ Gemini анализирует масштаб побед...')
-    const startTime = Date.now()
-
-    try {
-      const res = await fetch('/api/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prides: [currentText],
-          gratitudes: filledGratitudes,
-        }),
-      })
-
-      const elapsed = Date.now() - startTime
-      if (elapsed < 1600) {
-        await new Promise((r) => setTimeout(r, 1600 - elapsed))
-      }
-
-      const data = await res.json().catch(() => ({}))
-
-      if (!res.ok || data.success === false) {
-        throw new Error(data.error || `Ошибка сервера (${res.status})`)
-      }
-
-      const rawScore = typeof data.score === 'number' ? data.score : 8
-      const itemScore = data.prideEvaluations?.[0]?.score ?? rawScore
-      const itemVerdict = data.prideEvaluations?.[0]?.comment || data.verdict || 'Оценка Gemini'
-      const itemOvercome = (Number(data.prideEvaluations?.[0]?.overcome) || 1) as OvercomeLevel
-      const itemTags = Array.isArray(data.prideEvaluations?.[0]?.tags) && data.prideEvaluations[0].tags.length > 0
-        ? data.prideEvaluations[0].tags
-        : ['#Дисциплина']
-
-      const evalResult: PrideEvaluation = {
-        scale: Math.max(1, Math.min(10, Math.round(itemScore))),
-        verdict: itemVerdict,
-        overcome: itemOvercome,
-        tags: itemTags,
-      }
-
-      setEvaluations((prev) => ({
-        ...prev,
-        [activeSlot]: evalResult,
-      }))
-      setRatingsAreDefault(false)
-      playSuccess(soundEnabled)
-      onNotify?.(`⚡ Оценка Gemini: ${evalResult.scale}/10 ★ — ${evalResult.verdict}`)
-    } catch (err: any) {
-      console.error('Gemini evaluation error in Composer:', err)
-      const msg = String(err?.message || '')
-      if (
-        msg.includes('API_KEY_INVALID') ||
-        msg.includes('API key not valid') ||
-        msg.includes('Неверный ключ')
-      ) {
-        onNotify?.('Неверный ключ Gemini API. Проверьте ключ в настройках Vercel.')
-      } else if (msg.includes('не задан в Environment Variables')) {
-        onNotify?.('Ключ GEMINI_API_KEY не задан в Environment Variables')
-      } else {
-        onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
-      }
-    } finally {
-      setIsEvaluating(false)
-    }
-  }
-
-  /** Клик по ❓: подставляет наводящий вопрос в плейсхолдер */
+  /** Клик по ❓: подставляет наводящий контекстный вопрос в плейсхолдер */
   const handleHintQuestion = () => {
     playClick(soundEnabled)
-    const q = HINT_QUESTIONS[hintIndex % HINT_QUESTIONS.length]
+    const questions = tab === 'pride' ? PRIDE_HINT_QUESTIONS : GRATITUDE_HINT_QUESTIONS
+    const q = questions[hintIndex % questions.length]
     setHintIndex((prev) => prev + 1)
     setCustomPlaceholder(q)
     if (textareaRef.current) {
@@ -574,10 +516,24 @@ export function Composer({
     }
   }
 
+  const uploadPhotoIfSelected = async (): Promise<string | null> => {
+    if (!selectedFile) return photoId || preview
+    try {
+      const res = await uploadDayPhotoToStorage(selectedFile, selectedFile.name)
+      if (res.ok && res.url) {
+        return res.url
+      }
+    } catch (err) {
+      console.warn('Storage upload error:', err)
+    }
+    return photoId || preview
+  }
+
   const buildPayload = (
     evalMap: Record<number, PrideEvaluation> = evaluations,
     exactScore?: number,
-    verdict?: string
+    verdict?: string,
+    photoUrlOverride?: string | null
   ): ComposerPayload => {
     // Ratings must be keyed by the compacted index (payload.prides has blanks removed)
     const ratings: Record<number, { scale: number; score?: number; overcome: OvercomeLevel; comment?: string }> = {}
@@ -624,7 +580,7 @@ export function Composer({
     return {
       prides: filledPrides,
       gratitudes: filledGratitudes,
-      photo: photoId || preview,
+      photo: photoUrlOverride !== undefined ? photoUrlOverride : (photoId || preview),
       ratings,
       score: computedScore,
       aiScore: computedScore,
@@ -662,17 +618,23 @@ export function Composer({
       return
     }
 
-    playSuccess(soundEnabled)
-    onSaved(buildPayload(), editingDay?.id, editingDay ? undefined : dateISO)
-    if (!editingDay) {
-      try {
-        localStorage.removeItem('ogonek.draft.composer')
-      } catch {}
-      onClearDraft?.()
+    setIsPublishing(true)
+    try {
+      const finalPhotoUrl = await uploadPhotoIfSelected()
+      playSuccess(soundEnabled)
+      onSaved(buildPayload(evaluations, undefined, undefined, finalPhotoUrl), editingDay?.id, editingDay ? undefined : dateISO)
+      if (!editingDay) {
+        try {
+          localStorage.removeItem('ogonek.draft.composer')
+        } catch {}
+        onClearDraft?.()
+      }
+    } finally {
+      setIsPublishing(false)
     }
   }
 
-  const handleCeremonyComplete = (
+  const handleCeremonyComplete = async (
     evalMap: Record<number, PrideEvaluation>,
     mentorWord: string,
     avgScore: number
@@ -681,13 +643,20 @@ export function Composer({
     setEvaluations(evalMap)
     setRatingsAreDefault(false)
     playSuccess(soundEnabled)
-    const payload = buildPayload(evalMap, avgScore, mentorWord)
-    onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
-    if (!editingDay) {
-      try {
-        localStorage.removeItem('ogonek.draft.composer')
-      } catch {}
-      onClearDraft?.()
+
+    setIsPublishing(true)
+    try {
+      const finalPhotoUrl = await uploadPhotoIfSelected()
+      const payload = buildPayload(evalMap, avgScore, mentorWord, finalPhotoUrl)
+      onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      if (!editingDay) {
+        try {
+          localStorage.removeItem('ogonek.draft.composer')
+        } catch {}
+        onClearDraft?.()
+      }
+    } finally {
+      setIsPublishing(false)
     }
   }
 
@@ -986,20 +955,16 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative w-full max-h-[350px] my-3 rounded-2xl overflow-hidden bg-black/50 border border-[var(--line)] flex items-center justify-center">
+        <div className="relative w-full max-h-[260px] my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336] flex items-center justify-center">
           <img
             src={preview}
-            className="max-h-[350px] w-auto object-contain rounded-xl"
+            className="max-h-[260px] w-auto object-contain rounded-xl"
             alt="Фото дня"
           />
           <button
             type="button"
-            onClick={() => {
-              setPreview(null)
-              setPhotoId(null)
-              previewRef.current = null
-            }}
-            className="absolute top-3 right-3 bg-black/70 hover:bg-black p-2 rounded-full text-white transition-colors z-10"
+            onClick={handleRemovePhoto}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-black text-white border border-white/20 transition z-10"
             aria-label="Удалить фото"
           >
             ✕
@@ -1007,72 +972,18 @@ export function Composer({
         </div>
       )}
 
-      {/* Индикатор ожидания оценки Gemini */}
-      {isEvaluating && (
-        <div className="mb-2 px-3.5 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium flex items-center gap-2 animate-pulse">
-          <Loader2 size={14} className="animate-spin text-amber-500 shrink-0" />
-          <span>⚡ Gemini анализирует масштаб побед...</span>
-        </div>
-      )}
-
-      {/* 3. Под полем ряд иконок (оценка, приватность, эмодзи, «Нужна идея?», «Оценить с ИИ»), справа счётчик */}
+      {/* 3. Под полем ряд иконок: СТРОГО 2 ДЕЙСТВИЯ (Фото дня и Подсказка ❓), справа счётчик */}
       <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5" role="group" aria-label="Инструменты записи">
-          {/* Оценка */}
-          {tab === 'pride' && (
-            <button
-              type="button"
-              onClick={() => {
-                playClick(soundEnabled)
-                const currentRating = evaluations[activeSlot]?.scale ?? 8
-                const nextRating = currentRating >= 10 ? 6 : currentRating + 1
-                setEvaluations((prev) => ({
-                  ...prev,
-                  [activeSlot]: {
-                    scale: nextRating,
-                    overcome: 1,
-                    tags: [],
-                    verdict: 'Оценка пользователя',
-                  },
-                }))
-                setRatingsAreDefault(false)
-                onNotify?.(`Оценка гордости #${activeSlot + 1}: ${nextRating}/10 ★`)
-              }}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-amber-500 hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-              title={`Оценка: ${evaluations[activeSlot]?.scale ?? 8}/10`}
-              aria-label="Задать оценку"
-            >
-              <Star size={18} className="fill-amber-400" />
-            </button>
-          )}
-
-          {/* Приватность пункта */}
-          <button
-            type="button"
-            onClick={() => handleSetCurrentItemVis(currentSlotVis === 'public' ? 'private' : 'public')}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-            title={
-              currentSlotVis === 'public'
-                ? `Видимость пункта: 🌐 Публично (клик для смены на Лично)`
-                : `Видимость пункта: 🔒 Лично (клик для смены на Публично)`
-            }
-            aria-label="Переключить приватность"
-          >
-            {currentSlotVis === 'public' ? (
-              <Globe size={18} className="text-blue-400" />
-            ) : (
-              <Lock size={18} className="text-zinc-400" />
-            )}
-          </button>
-
           {/* Фото / Медиа */}
           <label
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer min-h-[40px] min-w-[40px]"
-            title="Прикрепить фото"
-            aria-label="Прикрепить фото"
+            title="Прикрепить фото дня"
+            aria-label="Прикрепить фото дня"
           >
             <ImagePlus size={18} />
             <input
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               onChange={handleFileChange}
@@ -1080,38 +991,18 @@ export function Composer({
             />
           </label>
 
-          {/* «Нужна идея?» — циклично меняет плейсхолдер */}
+          {/* «Нужна идея?» — контекстная подсказка */}
           <Tooltip content="Нужна идея?">
             <button
               type="button"
               onClick={handleHintQuestion}
               className="w-10 h-10 rounded-full flex items-center justify-center text-[#71767b] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-              title="Нужна идея? (подставит вопрос в плейсхолдер)"
+              title="Нужна идея? (подставит контекстный вопрос в плейсхолдер)"
               aria-label="Нужна идея?"
             >
               <HelpCircle className="w-4 h-4 text-[#71767b]" />
             </button>
           </Tooltip>
-
-          {/* «Оценить с ИИ» — реальная оценка текущей гордости через Gemini */}
-          {tab === 'pride' && (
-            <Tooltip content="Оценить этот пункт через Gemini (ИИ)">
-              <button
-                type="button"
-                disabled={isEvaluating}
-                onClick={handleEvaluateCurrentAi}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-40 min-h-[40px] min-w-[40px]"
-                title="Оценить этот пункт через Gemini (ИИ)"
-                aria-label="Оценить с ИИ"
-              >
-                {isEvaluating ? (
-                  <Loader2 size={18} className="animate-spin text-[var(--accent)]" />
-                ) : (
-                  <Flame size={18} className="text-[var(--accent)] fill-[var(--accent)]/30" />
-                )}
-              </button>
-            </Tooltip>
-          )}
         </div>
 
         {/* Справа счётчик */}
@@ -1161,6 +1052,7 @@ export function Composer({
             soundEnabled={soundEnabled}
             onClose={() => setShowCeremonyModal(false)}
             onAccept={handleCeremonyComplete}
+            onNotify={onNotify}
           />,
           document.body
         )}

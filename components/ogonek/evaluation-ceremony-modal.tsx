@@ -31,6 +31,7 @@ type Props = {
     mentorWord: string,
     averageScore: number
   ) => void
+  onNotify?: (msg: string) => void
 }
 
 export function EvaluationCeremonyModal({
@@ -41,6 +42,7 @@ export function EvaluationCeremonyModal({
   soundEnabled = true,
   onClose,
   onAccept,
+  onNotify,
 }: Props) {
   useBodyScrollLock(isOpen)
 
@@ -233,6 +235,7 @@ export function EvaluationCeremonyModal({
       }
     })
 
+    onNotify?.('✅ Запись успешно сохранена в облако Supabase')
     onAccept(evalMap, mentorWord, averageScore)
   }
 
@@ -262,14 +265,16 @@ export function EvaluationCeremonyModal({
             <span>AI-Церемония Оценки · День #{dayNumber}</span>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
-            aria-label="Закрыть"
-          >
-            <X size={18} />
-          </button>
+          {!isFinished && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+              aria-label="Закрыть"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Заголовок */}
@@ -282,15 +287,21 @@ export function EvaluationCeremonyModal({
           </p>
         </div>
 
-        {/* Лоадер при анализе нейросетью */}
+        {/* Лоадер при анализе нейросетью: пульсирующий огонь со светящимися волнами */}
         {isLoading && (
-          <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
-            <Loader2 size={36} className="text-[var(--accent)] animate-spin" />
-            <p className="text-sm font-semibold text-zinc-300">
-              DeepSeek AI оценивает масштаб побед дня...
+          <div className="py-14 flex flex-col items-center justify-center gap-4 text-center relative z-10">
+            <div className="relative flex items-center justify-center w-24 h-24">
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-amber-500/20 to-orange-500/30 animate-ping opacity-75 duration-1000" />
+              <div className="absolute -inset-2 rounded-full bg-orange-500/20 blur-xl animate-pulse" />
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-tr from-amber-600 to-orange-500 flex items-center justify-center shadow-[0_0_25px_rgba(255,92,0,0.6)]">
+                <Flame size={32} className="text-white fill-white animate-bounce" />
+              </div>
+            </div>
+            <p className="text-base font-bold text-white tracking-wide mt-2">
+              ⚡ ИИ анализирует масштаб побед...
             </p>
-            <span className="text-xs text-zinc-500">
-              Модель deepseek-chat · Калиброванная шкала 1–10★
+            <span className="text-xs text-zinc-400">
+              Калибровка побед и преодолений по шкале 1–10★
             </span>
           </div>
         )}

@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 import { getServerSupabase } from '@/lib/supabase/server'
 
+function isGibberish(text: string): boolean {
+  const clean = text.trim().toLowerCase()
+  if (clean.length < 3) return true
+  if (/^(.)\1+$/.test(clean)) return true
+  if (/^(тест|test|123|1234|12345|asdf|qwerty|йцукен|ыва|ывавыа|фыва|лол|кек|проверка)+$/i.test(clean)) return true
+  const cyrillicConsonants = clean.match(/[бвгджзйклмнпрстфхцчшщ]/g)
+  const cyrillicVowels = clean.match(/[аеёиоуыэюя]/g)
+  if (clean.length >= 6 && cyrillicConsonants && (!cyrillicVowels || cyrillicVowels.length === 0)) return true
+  return false
+}
+
 export async function POST(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('evaluate', ip, 60, 60_000)
@@ -51,31 +62,34 @@ export async function POST(request: Request) {
   }
 
   try {
-    const systemPrompt = `Ты — требовательный, но вдохновляющий ментор личной силы и спортивной дисциплины системы побед "Огонёк".
-Твоя задача — объективно оценить СТРОГО гордости (победы и преодоления дня).
-Каждая гордость получает:
-- num: порядковый номер (1, 2, 3...)
-- score: число с плавающей точкой от 1.0 до 10.0 (например 8.8 или 9.5; 10.0 — исключительный триумф/прорыв через экстремальное сопротивление, 8.0-9.5 — сверхусилие и характер, 6.0-7.9 — хорошая продуктивная работа, 4.0-5.9 — рутинные базовые действия, 1.0-3.9 — минимум усилий).
-- comment: уникальный лаконичный персональный разбор в 1 предложение конкретно по этому действию (без шаблонных повторов!).
-- overcome: уровень преодоления барьера (число 0, 1, 2 или 3).
-- tags: массив из 1-2 тегов (например, ["#Дисциплина", "#Спорт"]).
+    const systemPrompt = `Ты — бескомпромиссный, объективный и вдохновляющий ментор личной силы системы побед "Огонёк".
+Твоя задача — строго дифференцированно оценить каждую гордость дня по реальному масштабу, преодолённым барьерам и воле.
 
-ВНИМАНИЕ: БЛАГОДАРНОСТИ НЕ ОЦЕНИВАЮТСЯ ЦИФРАМИ И ЗВЁЗДАМИ! Запрещено выставлять баллы и звёзды благодарностям!
-Тексты благодарностей используй ИСКЛЮЧИТЕЛЬНО для составления душевного, глубокого и точного напутствия ментора (поле verdict).
+КРИТЕРИИ ОЦЕНКИ КАЖДОЙ ГОРДОСТИ (ОТ 1.0 ДО 10.0★):
+- 1.0 - 2.0★: Бессмысленный текст, спам, опечатки, заглушки (например: "ывавыа", "тест", "123", "asdf", бессвязные буквы). Оценка СТРОГО 1.0-2.0! Комментарий — бескомпромиссная критика бессмысленного ввода.
+- 3.0 - 4.9★: Минимальное или тривиальное действие без преодоления сопротивления.
+- 5.0 - 7.0★: Обычные бытовые дела, базовая гигиена, рутина (уборка, вовремя проснулся, приготовил еду, помыл посуду).
+- 7.1 - 8.9★: Преодоление лени, спорт, интенсивная тренировка, сложные переговоры, разработка, интеллектуальный труд, волевое сверхусилие.
+- 9.0 - 10.0★: Исключительный триумф, марафон, закрытие ключевой сделки, прорыв сквозь кризис или сильный страх.
+
+СТРОГИЕ ПРАВИЛА:
+1. Запрещены одинаковые шаблонные баллы (например всем ставить 8.8)! Оценивай каждый пункт индивидуально.
+2. Запрещены одинаковые шаблонные фразы ("Отличная концентрация", "Фиксация победы"). Пиши уникальный, живой, точный разбор (1 короткое предложение ровно по сути написанного).
+3. БЛАГОДАРНОСТИ НЕ ОЦЕНИВАЮТСЯ ЦИФРАМИ И ЗВЁЗДАМИ! Запрещено выставлять баллы благодарностям. Тексты благодарностей используй исключительно для составления душевного и точного напутствия ментора (verdict).
 
 Верни строгий JSON со следующими полями:
 {
   "prideEvaluations": [
     {
       "num": 1,
-      "score": 8.8,
-      "comment": "краткий персональный комментарий к этому конкретному пункту",
-      "overcome": 2,
-      "tags": ["#Дисциплина"]
+      "score": <число с плавающей точкой от 1.0 до 10.0, например 5.5, 8.5 или 1.5>,
+      "comment": "<уникальный лаконичный разбор конкретно этого действия>",
+      "overcome": <0, 1, 2 или 3>,
+      "tags": ["#Тег"]
     }
   ],
-  "breakdown": "общий краткий разбор масштаба побед дня в 1-2 предложениях",
-  "verdict": "сильное душевное мотивационное напутствие ментора в 1-2 предложениях, объединяющее преодоления и благодарности дня"
+  "breakdown": "<краткий честный разбор дня в 1-2 предложениях>",
+  "verdict": "<сильное душевное напутствие ментора в 1-2 предложениях, объединяющее преодоления и благодарности дня>"
 }`
 
     const response = await fetch('https://api.deepseek.com/chat/completions', {
@@ -98,7 +112,7 @@ export async function POST(request: Request) {
         ],
         response_format: { type: 'json_object' },
         temperature: 0.5,
-        max_tokens: 700,
+        max_tokens: 800,
       }),
     })
 
@@ -124,29 +138,35 @@ export async function POST(request: Request) {
 
     const parsed = JSON.parse(content)
 
-    // Обработка персональных оценок каждой гордости
+    // Обработка персональных дифференцированных оценок каждой гордости
     const prideEvaluations = prides.map((p, i) => {
       const parsedItem = Array.isArray(parsed.prideEvaluations) ? parsed.prideEvaluations[i] : null
+      const gibberish = isGibberish(p)
+
       let itemScore: number
-      if (typeof parsedItem?.score === 'number' && !isNaN(parsedItem.score)) {
+      if (gibberish) {
+        itemScore = typeof parsedItem?.score === 'number' && parsedItem.score <= 2.5
+          ? Number(parsedItem.score.toFixed(1))
+          : 1.5
+      } else if (typeof parsedItem?.score === 'number' && !isNaN(parsedItem.score)) {
         itemScore = Number(Math.max(1.0, Math.min(10.0, parsedItem.score)).toFixed(1))
-      } else if (typeof parsed.score === 'number' && !isNaN(parsed.score)) {
-        itemScore = Number(Math.max(1.0, Math.min(10.0, parsed.score)).toFixed(1))
       } else {
-        itemScore = 8.8
+        itemScore = 7.0
       }
 
-      const comment = String(
-        parsedItem?.comment ||
-        (i === 0 && parsed.breakdown ? parsed.breakdown : '') ||
-        'Преодоление барьера и фиксация победы.'
-      )
+      let comment = String(parsedItem?.comment || '')
+      if (gibberish && (!comment || comment.toLowerCase().includes('отличн') || comment.toLowerCase().includes('побед'))) {
+        comment = 'Бессмысленный ввод не является победой — опиши реальное преодоление.'
+      } else if (!comment) {
+        comment = 'Действие зафиксировано в летописи дня.'
+      }
+
       const overcome = typeof parsedItem?.overcome === 'number'
         ? Math.max(0, Math.min(3, parsedItem.overcome))
-        : (itemScore >= 8.5 ? 2 : 1)
+        : (gibberish ? 0 : (itemScore >= 8.5 ? 2 : 1))
       const tags = Array.isArray(parsedItem?.tags) && parsedItem.tags.length > 0
         ? parsedItem.tags
-        : ['#Дисциплина']
+        : [gibberish ? '#Внимание' : '#Дисциплина']
 
       return {
         num: i + 1,
@@ -166,8 +186,8 @@ export async function POST(request: Request) {
       ? Number((prideScoresSum / prideEvaluations.length).toFixed(1))
       : 8.8
 
-    const breakdown = String(parsed.breakdown || '')
-    const verdict = String(parsed.verdict || 'День сильного характера и дисциплины.')
+    const breakdown = String(parsed.breakdown || 'Анализ побед и преодолений проведён.')
+    const verdict = String(parsed.verdict || 'День осознанной работы и укрепления характера.')
 
     // БЛАГОДАРНОСТИ БЕЗ ЧИСЛОВЫХ ОЦЕНОК И ЗВЁЗД!
     const gratitudeEvaluations: any[] = []
@@ -201,7 +221,7 @@ export async function POST(request: Request) {
       breakdown,
       verdict,
       prideEvaluations,
-      gratitudeEvaluations,
+      gratitudeEvaluations: [],
       evaluations: prideEvaluations,
       averageScore: finalScore,
       mentorWord: verdict,

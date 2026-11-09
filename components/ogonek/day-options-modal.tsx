@@ -18,7 +18,9 @@ import { VisibilitySwitcher } from './visibility-switcher'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day, VisibilityLevel } from '@/lib/ogonek/types'
+import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
+import { EvaluationCeremonyModal } from './evaluation-ceremony-modal'
 
 export type DayOptionsModalProps = {
   isOpen: boolean
@@ -52,89 +54,55 @@ export function DayOptionsModal({
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isEvaluating, setIsEvaluating] = useState(false)
+  const [showCeremony, setShowCeremony] = useState(false)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
 
-  const handleAiEvaluate = async () => {
+  const handleOpenAiCeremony = () => {
     playClick(soundEnabled)
-    setIsEvaluating(true)
-    onNotify?.('⚡ Gemini анализирует масштаб побед...')
-
     const prides = (day.prides || [])
       .map((p) => p.text)
       .filter((t): t is string => Boolean(t && t !== '—'))
-    const gratitudes = (day.gratitudes || [])
-      .map((g) => (typeof g === 'string' ? g : g.text))
-      .filter((t): t is string => Boolean(t && t !== '—'))
 
-    if (prides.length === 0 && gratitudes.length === 0) {
-      setIsEvaluating(false)
-      onNotify?.('Нет записей для оценки в этом дне')
+    if (prides.length === 0) {
+      onNotify?.('Нет записей гордостей для оценки в этом дне')
       return
     }
 
-    const startTime = Date.now()
+    setShowCeremony(true)
+  }
 
-    try {
-      const res = await fetch('/api/evaluate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prides, gratitudes, dayId: day.id }),
-      })
-
-      const elapsed = Date.now() - startTime
-      if (elapsed < 1600) {
-        await new Promise((r) => setTimeout(r, 1600 - elapsed))
+  const handleCeremonyAccept = async (
+    evalMap: Record<number, PrideEvaluation>,
+    mentorWord: string,
+    averageScore: number
+  ) => {
+    const updatedPrides = (day.prides || []).map((p, idx) => {
+      const ev = evalMap[idx]
+      const itemScore = ev ? (typeof ev.score === 'number' ? ev.score : ev.scale) : (p.score ?? averageScore)
+      return {
+        ...p,
+        score: itemScore,
+        scale: Math.max(1, Math.min(10, Math.round(itemScore))),
       }
+    })
 
-      const data = await res.json().catch(() => ({}))
-
-      if (!res.ok || data.success === false) {
-        throw new Error(data.error || `Ошибка сервера (${res.status})`)
-      }
-
-      const score = typeof data.score === 'number' ? Number(data.score.toFixed(1)) : 8.8
-      const updatedDay: Day = {
-        ...day,
-        score,
-        aiScore: score,
-        aiVerdict: data.verdict,
-        aiBreakdown: data.breakdown,
-        prides: (day.prides || []).map((p, idx) => {
-          const itemScore = typeof data.prideEvaluations?.[idx]?.score === 'number'
-            ? Number(data.prideEvaluations[idx].score.toFixed(1))
-            : score
-          return {
-            ...p,
-            score: itemScore,
-            scale: Math.max(1, Math.min(10, Math.round(itemScore))),
-          }
-        }),
-      }
-
-      updateDay(updatedDay)
-      await syncDayToSupabase(updatedDay).catch((err) => {
-        console.warn('Supabase syncDayToSupabase background error:', err)
-      })
-
-      onNotify?.(`⚡ Оценка дня #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
-      onAiEvaluate?.(updatedDay)
-      onClose()
-    } catch (err: any) {
-      console.error('Evaluation error:', err)
-      const msg = String(err?.message || '')
-      if (
-        msg.includes('DEEPSEEK_API_KEY') ||
-        msg.includes('API key') ||
-        msg.includes('Неверный ключ')
-      ) {
-        onNotify?.('Ключ DEEPSEEK_API_KEY не задан или недействителен в настройках Vercel.')
-      } else {
-        onNotify?.(`❌ Ошибка оценки: ${err.message || 'Не удалось оценить'}`)
-      }
-    } finally {
-      setIsEvaluating(false)
+    const updatedDay: Day = {
+      ...day,
+      score: averageScore,
+      aiScore: averageScore,
+      aiVerdict: mentorWord,
+      prides: updatedPrides,
     }
+
+    updateDay(updatedDay)
+    await syncDayToSupabase(updatedDay).catch((err) => {
+      console.warn('Supabase syncDayToSupabase background error:', err)
+    })
+
+    onNotify?.('✅ Запись успешно сохранена в облако Supabase')
+    onAiEvaluate?.(updatedDay)
+    setShowCeremony(false)
+    onClose()
   }
 
   const photoCandidate =
@@ -162,6 +130,24 @@ export function DayOptionsModal({
   }, [photoCandidate])
 
   if (!isOpen) return null
+
+  if (showCeremony) {
+    return (
+      <EvaluationCeremonyModal
+        isOpen={true}
+        prides={(day.prides || []).map((p) => p.text).filter((t): t is string => Boolean(t && t !== '—'))}
+        gratitudes={(day.gratitudes || []).map((g) => (typeof g === 'string' ? g : g.text)).filter((t): t is string => Boolean(t && t !== '—'))}
+        dayNumber={day.id}
+        soundEnabled={soundEnabled}
+        onClose={() => {
+          setShowCeremony(false)
+          onClose()
+        }}
+        onAccept={handleCeremonyAccept}
+        onNotify={onNotify}
+      />
+    )
+  }
 
   const dayVisibility = normalizeVisibility(day.visibility)
 
@@ -222,21 +208,14 @@ export function DayOptionsModal({
           )}
 
           <div className="flex flex-col gap-1.5">
-            {isEvaluating ? (
-              <div className="flex items-center gap-3 w-full p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                <Loader2 size={16} className="animate-spin text-amber-500 shrink-0" />
-                <span className="text-sm font-medium">⚡ Gemini анализирует масштаб побед...</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleAiEvaluate}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                <Sparkles size={16} className="text-amber-500" />
-                <span>Оценить с ИИ</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleOpenAiCeremony}
+              className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+            >
+              <Sparkles size={16} className="text-amber-500" />
+              <span>Оценить с ИИ</span>
+            </button>
 
             {onEdit && (
               <button

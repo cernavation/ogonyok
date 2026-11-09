@@ -1057,6 +1057,7 @@ export function useOgonekStore() {
           prides: newPrideEntries,
           gratitudes: newGratitudeEntries,
           photos: payload.photo ? [payload.photo] : undefined,
+          media_url: payload.photo || null,
           dateISO: computedDate,
           status: 'normal',
           visibility: normalizeVisibility(payload.visibility),
