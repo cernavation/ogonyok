@@ -81,13 +81,27 @@ describe('Pride Heuristic Evaluator', () => {
     assert.ok(lbCode.includes('showNumber={true}'), 'Показывает номер уровня в бейдже')
   })
 
-  it('содержит строгие параметры DeepSeek: json_object format, temperature: 0.5, max_tokens: 500', async () => {
+  it('содержит строгие параметры DeepSeek: json_object format, temperature: 0.5, оценка только для гордостей', async () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const routeCode = fs.readFileSync(path.resolve(process.cwd(), 'app/api/evaluate/route.ts'), 'utf8')
     assert.ok(routeCode.includes("json_object"), 'Задан response_format json_object')
     assert.ok(routeCode.includes('temperature: 0.5'), 'Задан temperature 0.5')
-    assert.ok(routeCode.includes('max_tokens: 500'), 'Задан max_tokens 500')
+    assert.ok(routeCode.includes('prideEvaluations'), 'Формирует prideEvaluations')
+    assert.ok(routeCode.includes('gratitudeEvaluations') && (routeCode.includes('gratitudeEvaluations: []') || routeCode.includes('gratitudeEvaluations: any[] = []')), 'Благодарности не получают звёзд и оценок (пустой массив)')
+    assert.ok(routeCode.includes('prideScoresSum / prideEvaluations.length') || routeCode.includes('prideScoresSum / prides.length'), 'Вычисляет средний балл как среднее арифметическое гордостей')
+  })
+
+  it('сохраняет точный десятичный балл (float 8.8) в карточке дня и летописи', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const cardCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/day-card.tsx'), 'utf8')
+    assert.ok(cardCode.includes('Number(day.score ?? averageScore).toFixed(1)'), 'Отображает точный балл дня с десятыми')
+    assert.ok(cardCode.includes('day.score'), 'Учитывает точный балл дня day.score')
+
+    const ceremonyCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/evaluation-ceremony-modal.tsx'), 'utf8')
+    assert.ok(ceremonyCode.includes('averageScore.toFixed(1)'), 'В церемонии выводится точный балл с десятыми')
+    assert.ok(!ceremonyCode.includes("type === 'gratitude'"), 'Благодарности исключены из оцениваемых карточек церемонии')
   })
 
   it('extractAndParseJson корректно извлекает JSON при наличии префикса "Calibrated..." или markdown', async () => {

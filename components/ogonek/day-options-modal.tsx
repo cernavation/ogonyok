@@ -93,16 +93,23 @@ export function DayOptionsModal({
         throw new Error(data.error || `Ошибка сервера (${res.status})`)
       }
 
-      const score = typeof data.score === 'number' ? data.score : 8
+      const score = typeof data.score === 'number' ? Number(data.score.toFixed(1)) : 8.8
       const updatedDay: Day = {
         ...day,
-        prides: (day.prides || []).map((p, idx) => {
-          const itemScore = data.prideEvaluations?.[idx]?.score ?? score
-          return { ...p, scale: Math.max(1, Math.min(10, Math.round(itemScore))) }
-        }),
+        score,
         aiScore: score,
         aiVerdict: data.verdict,
         aiBreakdown: data.breakdown,
+        prides: (day.prides || []).map((p, idx) => {
+          const itemScore = typeof data.prideEvaluations?.[idx]?.score === 'number'
+            ? Number(data.prideEvaluations[idx].score.toFixed(1))
+            : score
+          return {
+            ...p,
+            score: itemScore,
+            scale: Math.max(1, Math.min(10, Math.round(itemScore))),
+          }
+        }),
       }
 
       updateDay(updatedDay)
@@ -110,22 +117,20 @@ export function DayOptionsModal({
         console.warn('Supabase syncDayToSupabase background error:', err)
       })
 
-      onNotify?.(`⚡ Gemini оценил день #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
+      onNotify?.(`⚡ Оценка дня #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
       onAiEvaluate?.(updatedDay)
       onClose()
     } catch (err: any) {
-      console.error('Gemini evaluation error:', err)
+      console.error('Evaluation error:', err)
       const msg = String(err?.message || '')
       if (
-        msg.includes('API_KEY_INVALID') ||
-        msg.includes('API key not valid') ||
+        msg.includes('DEEPSEEK_API_KEY') ||
+        msg.includes('API key') ||
         msg.includes('Неверный ключ')
       ) {
-        onNotify?.('Неверный ключ Gemini API. Проверьте ключ в настройках Vercel.')
-      } else if (msg.includes('не задан в Environment Variables')) {
-        onNotify?.('Ключ GEMINI_API_KEY не задан в Environment Variables')
+        onNotify?.('Ключ DEEPSEEK_API_KEY не задан или недействителен в настройках Vercel.')
       } else {
-        onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
+        onNotify?.(`❌ Ошибка оценки: ${err.message || 'Не удалось оценить'}`)
       }
     } finally {
       setIsEvaluating(false)

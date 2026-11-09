@@ -2,6 +2,7 @@ import type { OvercomeLevel } from './types'
 
 export interface PrideEvaluation {
   scale: number
+  score?: number
   overcome: OvercomeLevel
   tags: string[]
   verdict: string

@@ -51,6 +51,7 @@ export type PrideEntry = {
   num: string
   text: string
   scale: number // 1..10
+  score?: number // точный float балл (например 8.8)
   overcome: OvercomeLevel // 0..3
   /** Приватность конкретной гордости (ЭТАП 9). Отсутствует → как у дня */
   visibility?: VisibilityLevel
@@ -86,6 +87,7 @@ export type Day = {
   /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */
   visibility?: VisibilityLevel
   aiScore?: number
+  score?: number // точный float балл дня (например 8.8)
   aiVerdict?: string
   aiBreakdown?: string
   user_id?: string
@@ -273,7 +275,11 @@ export type ComposerPayload = {
   prides: string[]
   gratitudes: string[]
   photo: string | null
-  ratings?: Record<number, { scale: number; overcome: OvercomeLevel }>
+  ratings?: Record<number, { scale: number; score?: number; overcome: OvercomeLevel; comment?: string }>
+  score?: number
+  aiScore?: number
+  aiVerdict?: string
+  aiBreakdown?: string
   /** Приватность всего дня (ЭТАП 9) */
   visibility?: VisibilityLevel
   /** Приватность каждой гордости по индексу (после удаления пустых) */

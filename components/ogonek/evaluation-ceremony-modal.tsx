@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { Check, Flame, Heart, Loader2, Sparkles, Star, Trophy, X } from 'lucide-react'
+import { Check, Flame, Loader2, Sparkles, X } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -16,7 +16,7 @@ type ItemEvaluation = {
   comment?: string
   overcome?: number
   tags?: string[]
-  type: 'pride' | 'gratitude'
+  type: 'pride'
 }
 
 type Props = {
@@ -49,7 +49,7 @@ export function EvaluationCeremonyModal({
   const [animatedScores, setAnimatedScores] = useState<Record<number, number>>({})
   const [activeItemIndex, setActiveItemIndex] = useState(0)
   const [isFinished, setIsFinished] = useState(false)
-  const [averageScore, setAverageScore] = useState(9.6)
+  const [averageScore, setAverageScore] = useState(8.8)
   const [mentorWord, setMentorWord] = useState(
     'Сегодня ты удержал планку дисциплины и проявил характер. Каждая победа над собой укрепляет огонь внутри!'
   )
@@ -92,48 +92,33 @@ export function EvaluationCeremonyModal({
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         const rawPrideEvals = Array.isArray(data?.prideEvaluations) ? data.prideEvaluations : []
-        const rawGratEvals = Array.isArray(data?.gratitudeEvaluations) ? data.gratitudeEvaluations : []
 
-        const evaluatedItems: ItemEvaluation[] = []
-
-        validPrides.forEach((text, i) => {
+        // Оцениваются СТРОГО гордости (пункты 1–5). Благодарности без звёзд и чисел!
+        const evaluatedItems: ItemEvaluation[] = validPrides.map((text, i) => {
           const ev = rawPrideEvals[i]
-          evaluatedItems.push({
+          const sc = typeof ev?.score === 'number' && !isNaN(ev.score)
+            ? Number(ev.score.toFixed(1))
+            : (typeof data?.score === 'number' ? Number(data.score.toFixed(1)) : 8.8)
+          return {
             num: i + 1,
             text,
-            score: typeof ev?.score === 'number' ? Math.max(1, Math.min(10, ev.score)) : 9,
-            comment: ev?.comment || 'Отличная концентрация и преодоление.',
+            score: sc,
+            comment: ev?.comment || 'Отличная концентрация, преодоление и фиксация победы.',
             overcome: typeof ev?.overcome === 'number' ? ev.overcome : 1,
             tags: Array.isArray(ev?.tags) ? ev.tags : ['#Дисциплина'],
             type: 'pride',
-          })
+          }
         })
 
-        validGratitudes.forEach((text, i) => {
-          const ev = rawGratEvals[i]
-          evaluatedItems.push({
-            num: validPrides.length + i + 1,
-            text,
-            score: typeof ev?.score === 'number' ? Math.max(1, Math.min(10, ev.score)) : 10,
-            comment: ev?.comment || 'Глубокая искренняя благодарность.',
-            overcome: 0,
-            tags: ['#Осознанность'],
-            type: 'gratitude',
-          })
-        })
-
-        const avg =
-          typeof data?.averageScore === 'number'
-            ? data.averageScore
-            : evaluatedItems.length > 0
-            ? Number(
-                (
-                  evaluatedItems.reduce((acc, it) => acc + it.score, 0) / evaluatedItems.length
-                ).toFixed(1)
-              )
-            : 9.6
+        const prideScoresSum = evaluatedItems.reduce((acc, it) => acc + it.score, 0)
+        const avg = typeof data?.score === 'number' && !isNaN(data.score)
+          ? Number(data.score.toFixed(1))
+          : evaluatedItems.length > 0
+          ? Number((prideScoresSum / evaluatedItems.length).toFixed(1))
+          : 8.8
 
         const mentor =
+          data?.verdict ||
           data?.mentorWord ||
           data?.daySummary ||
           'Сегодня ты проявил характер и удержал планку дисциплины. Каждое преодоление укрепляет твой стрик и внутренний огонь. Продолжай движение вперед!'
@@ -143,7 +128,7 @@ export function EvaluationCeremonyModal({
         setMentorWord(mentor)
         setIsLoading(false)
 
-        // Запуск поочередной анимации заполнения шкал (4-6 секунд)
+        // Запуск поочередной анимации заполнения шкал
         startSequentialAnimation(evaluatedItems)
       })
       .catch((err) => {
@@ -152,13 +137,14 @@ export function EvaluationCeremonyModal({
         const fallbackItems: ItemEvaluation[] = validPrides.map((text, i) => ({
           num: i + 1,
           text,
-          score: 9,
+          score: 8.8,
           comment: 'Преодоление барьера и фиксация победы.',
           overcome: 1,
           tags: ['#Характер'],
           type: 'pride',
         }))
         setItems(fallbackItems)
+        setAverageScore(8.8)
         setIsLoading(false)
         startSequentialAnimation(fallbackItems)
       })
@@ -178,14 +164,14 @@ export function EvaluationCeremonyModal({
         const steps = 10
         for (let s = 1; s <= steps; s++) {
           const subTimer = setTimeout(() => {
-            const currentVal = Math.round((item.score / steps) * s)
+            const currentVal = Number(((item.score / steps) * s).toFixed(1))
             setAnimatedScores((prev) => ({ ...prev, [index]: currentVal }))
           }, (stepDuration / steps) * s)
           animationTimersRef.current.push(subTimer)
         }
 
         // Если получен наивысший балл 10★ — праздничные частицы конфетти
-        if (item.score === 10) {
+        if (item.score >= 9.8) {
           const confettiTimer = setTimeout(() => {
             playSuccess(soundEnabled)
             try {
@@ -237,16 +223,15 @@ export function EvaluationCeremonyModal({
   const handleAccept = () => {
     playSuccess(soundEnabled)
     const evalMap: Record<number, PrideEvaluation> = {}
-    items
-      .filter((it) => it.type === 'pride')
-      .forEach((p, idx) => {
-        evalMap[idx] = {
-          scale: p.score,
-          overcome: (p.overcome as OvercomeLevel) || 1,
-          tags: p.tags || ['#Дисциплина'],
-          verdict: p.comment || 'Оценено ИИ',
-        }
-      })
+    items.forEach((p, idx) => {
+      evalMap[idx] = {
+        scale: Math.max(1, Math.min(10, Math.round(p.score))),
+        score: p.score,
+        overcome: (p.overcome as OvercomeLevel) || 1,
+        tags: p.tags || ['#Дисциплина'],
+        verdict: p.comment || 'Оценено ИИ',
+      }
+    })
 
     onAccept(evalMap, mentorWord, averageScore)
   }
@@ -293,7 +278,7 @@ export function EvaluationCeremonyModal({
             <span>Калибровка Ментора Огонька</span>
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Анализ глубины преодоления, дисциплины и благодарностей
+            Персональная оценка масштаба побед и преодолений
           </p>
         </div>
 
@@ -302,21 +287,21 @@ export function EvaluationCeremonyModal({
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-center">
             <Loader2 size={36} className="text-[var(--accent)] animate-spin" />
             <p className="text-sm font-semibold text-zinc-300">
-              Google Gemini оценивает масштаб побед дня...
+              DeepSeek AI оценивает масштаб побед дня...
             </p>
             <span className="text-xs text-zinc-500">
-              Модель gemini-1.5-flash · Калиброванная шкала 1–10★
+              Модель deepseek-chat · Калиброванная шкала 1–10★
             </span>
           </div>
         )}
 
-        {/* Список пунктов с последовательным заполнением шкал */}
+        {/* Список пунктов гордостей с анимацией (строго гордости, без благодарностей) */}
         {!isLoading && items.length > 0 && (
           <div className="flex flex-col gap-2.5 max-h-[360px] overflow-y-auto no-scrollbar pr-1 relative z-10">
             {items.map((item, idx) => {
               const currentScore = animatedScores[idx] ?? 0
               const isActive = activeItemIndex === idx && !isFinished
-              const isTen = item.score === 10
+              const isTen = item.score >= 9.8
 
               return (
                 <div
@@ -329,8 +314,8 @@ export function EvaluationCeremonyModal({
                 >
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-mono font-bold text-zinc-500 flex-none">
-                        {item.type === 'pride' ? `🔥 ${idx + 1}` : `❤️`}
+                      <span className="text-xs font-mono font-bold text-zinc-400 flex-none bg-zinc-800/80 px-1.5 py-0.5 rounded">
+                        🔥 {item.num}
                       </span>
                       <span className="text-xs sm:text-[13px] font-medium text-zinc-200 truncate">
                         {item.text}
@@ -346,7 +331,7 @@ export function EvaluationCeremonyModal({
                             : 'text-[var(--accent)]'
                         }`}
                       >
-                        {currentScore}★
+                        ★ {currentScore.toFixed(1)}
                       </span>
                     </div>
                   </div>
@@ -357,13 +342,13 @@ export function EvaluationCeremonyModal({
                       className={`h-full rounded-full transition-all duration-200 ${
                         isTen ? 'bg-gradient-to-r from-amber-500 to-yellow-300 shadow-[0_0_10px_#fbbf24]' : 'bg-[var(--accent)]'
                       }`}
-                      style={{ width: `${(currentScore / 10) * 100}%` }}
+                      style={{ width: `${Math.min(100, (currentScore / 10) * 100)}%` }}
                     />
                   </div>
 
-                  {/* Комментарий от Gemini */}
+                  {/* Персональный комментарий ментора конкретно к этой гордости */}
                   {currentScore > 0 && item.comment && (
-                    <p className="text-[11px] text-zinc-400 mt-1.5 leading-snug line-clamp-1 italic">
+                    <p className="text-[11px] text-zinc-300 mt-1.5 leading-snug line-clamp-2 italic">
                       «{item.comment}»
                     </p>
                   )}
@@ -373,15 +358,14 @@ export function EvaluationCeremonyModal({
           </div>
         )}
 
-        {/* Результат: средний балл дня + Слово Ментора */}
+        {/* Результат: крупный золотой бейдж + Слово Ментора Огонька */}
         {isFinished && (
           <div className="flex flex-col gap-3 p-4 rounded-2xl bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 relative z-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xs text-zinc-400 block font-medium">Средний балл дня:</span>
-                <span className="text-2xl font-black text-amber-400 flex items-center gap-1.5">
-                  <Star size={20} className="fill-amber-400 text-amber-400" />
-                  ⭐ {averageScore}
+                <span className="text-xs text-zinc-400 block font-medium">Итоговый балл дня:</span>
+                <span className="text-2xl font-black text-amber-400 inline-flex items-center gap-1 mt-0.5 px-3 py-1 rounded-xl bg-amber-500/15 border border-amber-500/30">
+                  ⭐ {averageScore.toFixed(1)}
                 </span>
               </div>
               <div className="text-right">
@@ -392,11 +376,11 @@ export function EvaluationCeremonyModal({
             </div>
 
             {/* Слово Ментора Огонька */}
-            <div className="pt-2 border-t border-zinc-800">
+            <div className="pt-2.5 border-t border-zinc-800">
               <span className="text-xs font-bold text-white flex items-center gap-1.5 mb-1">
                 <Flame size={14} className="text-[var(--accent)]" /> Слово Ментора Огонька:
               </span>
-              <p className="text-xs sm:text-[13px] text-zinc-300 leading-relaxed italic">
+              <p className="text-xs sm:text-[13px] text-zinc-200 leading-relaxed italic">
                 «{mentorWord}»
               </p>
             </div>

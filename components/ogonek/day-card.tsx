@@ -173,7 +173,7 @@ function DayCardComponent({
       return
     }
 
-    onNotify?.('⚡ Gemini анализирует масштаб побед...')
+    onNotify?.('⚡ Ментор анализирует масштаб побед...')
     const startTime = Date.now()
     try {
       const res = await fetch('/api/evaluate', {
@@ -192,16 +192,23 @@ function DayCardComponent({
         throw new Error(data.error || `Ошибка сервера (${res.status})`)
       }
 
-      const score = typeof data.score === 'number' ? data.score : 8
+      const score = typeof data.score === 'number' ? Number(data.score.toFixed(1)) : 8.8
       const updatedDay: Day = {
         ...day,
-        prides: (day.prides || []).map((p, idx) => {
-          const itemScore = data.prideEvaluations?.[idx]?.score ?? score
-          return { ...p, scale: Math.max(1, Math.min(10, Math.round(itemScore))) }
-        }),
+        score,
         aiScore: score,
         aiVerdict: data.verdict,
         aiBreakdown: data.breakdown,
+        prides: (day.prides || []).map((p, idx) => {
+          const itemScore = typeof data.prideEvaluations?.[idx]?.score === 'number'
+            ? Number(data.prideEvaluations[idx].score.toFixed(1))
+            : score
+          return {
+            ...p,
+            score: itemScore,
+            scale: Math.max(1, Math.min(10, Math.round(itemScore))),
+          }
+        }),
       }
 
       updateDay(updatedDay)
@@ -209,20 +216,18 @@ function DayCardComponent({
         console.warn('Supabase syncDayToSupabase error:', err)
       })
 
-      onNotify?.(`⚡ Gemini оценил день #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
+      onNotify?.(`⚡ Оценка дня #${day.id}: ${score.toFixed(1)}/10 ★ — ${data.verdict || 'Отличный результат!'}`)
     } catch (err: any) {
-      console.error('Gemini evaluation error:', err)
+      console.error('DeepSeek evaluation error:', err)
       const msg = String(err?.message || '')
       if (
-        msg.includes('API_KEY_INVALID') ||
-        msg.includes('API key not valid') ||
+        msg.includes('DEEPSEEK_API_KEY') ||
+        msg.includes('API key') ||
         msg.includes('Неверный ключ')
       ) {
-        onNotify?.('Неверный ключ Gemini API. Проверьте ключ в настройках Vercel.')
-      } else if (msg.includes('не задан в Environment Variables')) {
-        onNotify?.('Ключ GEMINI_API_KEY не задан в Environment Variables')
+        onNotify?.('Ключ DEEPSEEK_API_KEY не задан или недействителен в настройках Vercel.')
       } else {
-        onNotify?.(`❌ Ошибка Gemini: ${err.message || 'Не удалось оценить'}`)
+        onNotify?.(`❌ Ошибка оценки: ${err.message || 'Не удалось оценить'}`)
       }
     }
   }
@@ -294,13 +299,22 @@ function DayCardComponent({
   }
 
   const averageScore = useMemo(() => {
+    if (typeof day.score === 'number' && !isNaN(day.score) && day.score > 0) {
+      return Number(day.score.toFixed(1))
+    }
+    if (typeof day.aiScore === 'number' && !isNaN(day.aiScore) && day.aiScore > 0) {
+      return Number(day.aiScore.toFixed(1))
+    }
     const valid = (day.prides || []).filter(
-      (p) => typeof p.scale === 'number' && !isNaN(p.scale) && p.scale > 0 && p.text !== '—'
+      (p) => {
+        const sc = typeof p.score === 'number' ? p.score : p.scale
+        return typeof sc === 'number' && !isNaN(sc) && sc > 0 && p.text !== '—'
+      }
     )
     if (valid.length === 0) return null
-    const sum = valid.reduce((acc, p) => acc + p.scale, 0)
-    return Math.round((sum / valid.length) * 10) / 10
-  }, [day.prides])
+    const sum = valid.reduce((acc, p) => acc + (typeof p.score === 'number' ? p.score : p.scale), 0)
+    return Number((sum / valid.length).toFixed(1))
+  }, [day.score, day.aiScore, day.prides])
 
   const dateStr = day.dateISO
     ? new Date(day.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
@@ -358,9 +372,9 @@ function DayCardComponent({
                 {averageScore !== null && (
                   <span
                     className="inline-flex items-center gap-0.5 text-[13px] font-bold text-amber-500"
-                    title={`Средний балл дня: ${averageScore.toFixed(1)}/10`}
+                    title={`Балл дня: ${Number(day.score ?? averageScore).toFixed(1)}/10`}
                   >
-                    ★ {averageScore.toFixed(1)}
+                    ★ {Number(day.score ?? averageScore).toFixed(1)}
                   </span>
                 )}
                 <span
@@ -461,9 +475,9 @@ function DayCardComponent({
                                 {p.num || pIdx + 2}
                               </span>
                               <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{p.text}</span>
-                              {typeof p.scale === 'number' && p.scale > 0 && (
+                              {((typeof p.score === 'number' && p.score > 0) || (typeof p.scale === 'number' && p.scale > 0)) && (
                                 <span className="text-[12px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded-full flex-none">
-                                  {p.scale}★
+                                  {typeof p.score === 'number' ? p.score.toFixed(1) : p.scale}★
                                 </span>
                               )}
                               <button

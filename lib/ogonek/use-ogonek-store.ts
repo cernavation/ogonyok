@@ -1015,24 +1015,39 @@ export function useOgonekStore() {
           computedDate = nextDate.toISOString()
         }
 
-        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => ({
-          num: String(idx + 1).padStart(2, '0'),
-          text,
-          scale: 8,
-          overcome: 1,
-          visibility: normalizeVisibility(
-            payload.prideVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
-          ),
-        }))
+        const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => {
+          const r = payload.ratings?.[idx]
+          const sc = typeof r?.score === 'number' ? r.score : (r?.scale ?? 8)
+          return {
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            scale: Math.max(1, Math.min(10, Math.round(sc))),
+            score: sc,
+            overcome: r?.overcome ?? 1,
+            visibility: normalizeVisibility(
+              payload.prideVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
+            ),
+          }
+        })
 
         const newGratitudeEntries: (string | GratitudeEntry)[] = payload.gratitudes.map((text, idx) => ({
           num: String(idx + 1).padStart(2, '0'),
           text,
-          rating: 10,
           visibility: normalizeVisibility(
             payload.gratitudeVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
           ),
         }))
+
+        // Расчёт или передача точного балла дня (например 8.8)
+        let exactDayScore = payload.score ?? payload.aiScore
+        if (typeof exactDayScore !== 'number' || isNaN(exactDayScore)) {
+          const validScores = newPrideEntries
+            .map((p) => p.score ?? p.scale)
+            .filter((s): s is number => typeof s === 'number' && !isNaN(s) && s > 0)
+          if (validScores.length > 0) {
+            exactDayScore = Number((validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1))
+          }
+        }
 
         const currentUid = prev.auth?.activeAccountId || (prev.profile as any)?.id || prev.profile?.username
         const newDay: Day = {
@@ -1045,6 +1060,10 @@ export function useOgonekStore() {
           dateISO: computedDate,
           status: 'normal',
           visibility: normalizeVisibility(payload.visibility),
+          score: exactDayScore,
+          aiScore: exactDayScore,
+          aiVerdict: payload.aiVerdict,
+          aiBreakdown: payload.aiBreakdown,
           user_id: currentUid,
           userId: currentUid,
         }
@@ -1156,11 +1175,18 @@ export function useOgonekStore() {
           const customRating = payload.ratings?.[idx]
           const heuristic = evaluatePrideItemHeuristic(text)
 
-          const scale =
-            customRating?.scale ??
-            (existingPride && typeof existingPride.scale === 'number' && existingPride.scale > 0
-              ? existingPride.scale
-              : heuristic.scale)
+          const sc =
+            typeof customRating?.score === 'number'
+              ? customRating.score
+              : (typeof customRating?.scale === 'number'
+                  ? customRating.scale
+                  : (existingPride && typeof existingPride.score === 'number'
+                      ? existingPride.score
+                      : (existingPride && typeof existingPride.scale === 'number' && existingPride.scale > 0
+                          ? existingPride.scale
+                          : heuristic.scale)))
+
+          const scale = Math.max(1, Math.min(10, Math.round(sc)))
 
           const overcome =
             customRating?.overcome ??
@@ -1172,6 +1198,7 @@ export function useOgonekStore() {
             num: String(idx + 1).padStart(2, '0'),
             text,
             scale,
+            score: sc,
             overcome,
             visibility: normalizeVisibility(
               payload.prideVisibilities?.[idx] ??
@@ -1188,18 +1215,31 @@ export function useOgonekStore() {
           return {
             num: String(idx + 1).padStart(2, '0'),
             text,
-            rating: typeof existingGrat === 'object' && typeof existingGrat?.rating === 'number' ? existingGrat.rating : 10,
             visibility: normalizeVisibility(
               payload.gratitudeVisibilities?.[idx] ?? prevVis ?? payload.visibility ?? DEFAULT_VISIBILITY
             ),
           }
         })
 
+        let exactDayScore = payload.score ?? payload.aiScore ?? targetDay.score ?? targetDay.aiScore
+        if (typeof exactDayScore !== 'number' || isNaN(exactDayScore)) {
+          const validScores = updatedPrides
+            .map((p) => p.score ?? p.scale)
+            .filter((s): s is number => typeof s === 'number' && !isNaN(s) && s > 0)
+          if (validScores.length > 0) {
+            exactDayScore = Number((validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(1))
+          }
+        }
+
         const updatedDay: Day = {
           ...targetDay,
           title: updatedPrides[0]?.text || payload.gratitudes[0] || targetDay.title,
           prides: updatedPrides,
           gratitudes: updatedGratitudes,
+          score: exactDayScore,
+          aiScore: exactDayScore,
+          aiVerdict: payload.aiVerdict ?? targetDay.aiVerdict,
+          aiBreakdown: payload.aiBreakdown ?? targetDay.aiBreakdown,
           photos: payload.photo
             ? [payload.photo]
             : [],

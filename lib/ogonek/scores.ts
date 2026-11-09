@@ -10,14 +10,21 @@ import type { Day, PrideEntry } from './types'
  * Возвращает null, если нет ни одной оценённой записи.
  */
 export function computeDayScore(day: Partial<Day> | null | undefined): number | null {
-  if (!day || !Array.isArray(day.prides)) return null
+  if (!day) return null
+  if (typeof day.score === 'number' && !isNaN(day.score) && day.score > 0) {
+    return Number(day.score.toFixed(1))
+  }
+  if (typeof day.aiScore === 'number' && !isNaN(day.aiScore) && day.aiScore > 0) {
+    return Number(day.aiScore.toFixed(1))
+  }
+  if (!Array.isArray(day.prides)) return null
 
   const valid = day.prides.filter(
-    (p): p is PrideEntry & { scale: number } =>
+    (p): p is PrideEntry =>
       Boolean(p) &&
-      typeof p.scale === 'number' &&
-      !isNaN(p.scale) &&
-      p.scale > 0 &&
+      typeof (p.score ?? p.scale) === 'number' &&
+      !isNaN(p.score ?? p.scale) &&
+      (p.score ?? p.scale) > 0 &&
       typeof p.text === 'string' &&
       p.text.trim().length > 0 &&
       p.text.trim() !== '—'
@@ -25,7 +32,7 @@ export function computeDayScore(day: Partial<Day> | null | undefined): number | 
 
   if (valid.length === 0) return null
 
-  const sum = valid.reduce((acc, p) => acc + p.scale, 0)
+  const sum = valid.reduce((acc, p) => acc + (p.score ?? p.scale), 0)
   return Math.round((sum / valid.length) * 10) / 10
 }
 

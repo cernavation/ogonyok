@@ -575,18 +575,23 @@ export function Composer({
   }
 
   const buildPayload = (
-    evalMap: Record<number, PrideEvaluation> = evaluations
+    evalMap: Record<number, PrideEvaluation> = evaluations,
+    exactScore?: number,
+    verdict?: string
   ): ComposerPayload => {
     // Ratings must be keyed by the compacted index (payload.prides has blanks removed)
-    const ratings: Record<number, { scale: number; overcome: OvercomeLevel }> = {}
+    const ratings: Record<number, { scale: number; score?: number; overcome: OvercomeLevel; comment?: string }> = {}
     let filledIdx = 0
     prides.forEach((p, origIdx) => {
       if (p.trim().length === 0) return
       const ev = evalMap[origIdx]
       if (ev) {
+        const sc = typeof ev.score === 'number' ? ev.score : ev.scale
         ratings[filledIdx] = {
-          scale: ev.scale,
+          scale: Math.max(1, Math.min(10, Math.round(sc))),
+          score: sc,
           overcome: (Math.min(3, Math.max(0, ev.overcome)) as OvercomeLevel) || 0,
+          comment: ev.verdict,
         }
       }
       filledIdx++
@@ -608,11 +613,22 @@ export function Composer({
       gVisIdx++
     })
 
+    // Вычисляем точный средний балл (например 8.8) если не передан
+    const prideScores = Object.values(ratings)
+      .map((r) => r.score ?? r.scale)
+      .filter((s): s is number => typeof s === 'number' && !isNaN(s) && s > 0)
+    const computedScore = typeof exactScore === 'number' && !isNaN(exactScore)
+      ? exactScore
+      : (prideScores.length > 0 ? Number((prideScores.reduce((a, b) => a + b, 0) / prideScores.length).toFixed(1)) : undefined)
+
     return {
       prides: filledPrides,
       gratitudes: filledGratitudes,
       photo: photoId || preview,
       ratings,
+      score: computedScore,
+      aiScore: computedScore,
+      aiVerdict: verdict,
       visibility: dayVisibility,
       prideVisibilities,
       gratitudeVisibilities,
@@ -665,7 +681,7 @@ export function Composer({
     setEvaluations(evalMap)
     setRatingsAreDefault(false)
     playSuccess(soundEnabled)
-    const payload = buildPayload(evalMap)
+    const payload = buildPayload(evalMap, avgScore, mentorWord)
     onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
     if (!editingDay) {
       try {
