@@ -57,18 +57,13 @@ describe('Pride Heuristic Evaluator', () => {
     assert.equal(batch[2].overcome, 3)
   })
 
-  it('содержит эталонный список кандидатов Gemini моделей для каскадного фоллбека', async () => {
+  it('содержит официальный эндпоинт DeepSeek API и модель deepseek-chat', async () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const routeCode = fs.readFileSync(path.resolve(process.cwd(), 'app/api/evaluate/route.ts'), 'utf8')
-    assert.ok(routeCode.includes('gemini-2.0-flash-exp'), 'Содержит gemini-2.0-flash-exp')
-    assert.ok(routeCode.includes('gemini-2.0-flash'), 'Содержит gemini-2.0-flash')
-    assert.ok(routeCode.includes('gemini-1.5-flash-latest'), 'Содержит gemini-1.5-flash-latest')
-    assert.ok(routeCode.includes('gemini-1.5-flash'), 'Содержит gemini-1.5-flash')
-    assert.ok(routeCode.includes('gemini-pro'), 'Содержит gemini-pro')
-    assert.ok(routeCode.includes('gemini-1.5-pro'), 'Содержит gemini-1.5-pro')
-    assert.ok(routeCode.includes('MODEL_CANDIDATES'), 'Объявлен MODEL_CANDIDATES')
-    assert.ok(routeCode.includes('404') && routeCode.includes('not found'), 'Обрабатывает ошибку 404/not found для перехода к следующему кандидату')
+    assert.ok(routeCode.includes('https://api.deepseek.com/chat/completions'), 'Использует эндпоинт https://api.deepseek.com/chat/completions')
+    assert.ok(routeCode.includes('deepseek-chat'), 'Указана модель deepseek-chat')
+    assert.ok(routeCode.includes('DEEPSEEK_API_KEY'), 'Использует ключ DEEPSEEK_API_KEY')
   })
 
   it('проверяет изоляцию ленты Друзья и чистку рейтинга @cernavation / @ilonmusk', async () => {
@@ -86,13 +81,13 @@ describe('Pride Heuristic Evaluator', () => {
     assert.ok(lbCode.includes('showNumber={true}'), 'Показывает номер уровня в бейдже')
   })
 
-  it('содержит строгие параметры generationConfig: application/json, temperature: 0.4, maxOutputTokens: 600', async () => {
+  it('содержит строгие параметры DeepSeek: json_object format, temperature: 0.5, max_tokens: 500', async () => {
     const fs = await import('node:fs')
     const path = await import('node:path')
     const routeCode = fs.readFileSync(path.resolve(process.cwd(), 'app/api/evaluate/route.ts'), 'utf8')
-    assert.ok(routeCode.includes("responseMimeType: 'application/json'"), 'Задан responseMimeType application/json')
-    assert.ok(routeCode.includes('temperature: 0.4'), 'Задан temperature 0.4')
-    assert.ok(routeCode.includes('maxOutputTokens: 600'), 'Задан maxOutputTokens 600 для ответа за 2-4 секунды')
+    assert.ok(routeCode.includes("json_object"), 'Задан response_format json_object')
+    assert.ok(routeCode.includes('temperature: 0.5'), 'Задан temperature 0.5')
+    assert.ok(routeCode.includes('max_tokens: 500'), 'Задан max_tokens 500')
   })
 
   it('extractAndParseJson корректно извлекает JSON при наличии префикса "Calibrated..." или markdown', async () => {
