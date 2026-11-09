@@ -89,7 +89,7 @@ export const EVIDENCE_CATEGORIES = [
 
 export const FEED_TABS = [
   'Мои гордости',
-  'Друзья',
+  'Соратники',
   'Подписки',
 ] as const
 

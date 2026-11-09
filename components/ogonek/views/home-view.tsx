@@ -18,6 +18,7 @@ import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
+import { getFeed } from '@/lib/ogonek/social'
 
 const FocusHistoryModal = dynamic(
   () => import('../focus-history-modal').then((m) => m.FocusHistoryModal),
@@ -92,6 +93,8 @@ export function HomeView({
   }, [isOwner, days?.length, userId, currentUser?.id, state.auth.activeAccountId, loadDaysFromCloud])
 
   const [filter, setFilter] = useState<string>('Мои гордости')
+  const [serverFeedDays, setServerFeedDays] = useState<Day[] | null>(null)
+  const [feedLoading, setFeedLoading] = useState(false)
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -102,10 +105,80 @@ export function HomeView({
     return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
   }, [state.followingIds, state.exploreFollowingIds])
 
+  // Load server-side social feed when Comrades / Subscriptions tab is selected
+  useEffect(() => {
+    let cancelled = false
+    const isFriends = filter === 'Соратники' || filter === 'Друзья'
+    const isFollowing = filter === 'Подписки'
+
+    if (!isFriends && !isFollowing) {
+      setServerFeedDays(null)
+      return
+    }
+
+    setFeedLoading(true)
+    const scope = isFriends ? 'friends' : 'following'
+    getFeed({ scope, limit: 30 })
+      .then((feedItems) => {
+        if (cancelled) return
+        if (Array.isArray(feedItems)) {
+          const mapped: Day[] = feedItems.map((it: any) => ({
+            id: it.day_id || it.id,
+            day_number: it.day_number || 1,
+            dayNumber: it.day_number || 1,
+            day_date: it.day_date || new Date().toISOString().split('T')[0],
+            date: it.day_date || new Date().toISOString().split('T')[0],
+            title: it.title || `День ${it.day_number || 1}`,
+            tags: Array.isArray(it.tags) ? it.tags : [],
+            user_id: it.user_id,
+            userId: it.user_id,
+            author: {
+              id: it.user_id,
+              username: it.author_username || 'user',
+              displayName: it.author_display_name || it.author_username || 'Соратник',
+              avatarUrl: it.author_avatar_url || undefined,
+              streak: it.author_streak ?? 0,
+            },
+            prides: Array.isArray(it.prides)
+              ? it.prides.map((p: any, idx: number) => ({
+                  id: p.id || `p-${idx}`,
+                  text: typeof p === 'string' ? p : p.text || '',
+                  category: p.category || 'other',
+                  tags: p.tags || [],
+                  evidence: p.evidence || [],
+                }))
+              : [],
+            gratitudes: Array.isArray(it.gratitudes)
+              ? it.gratitudes.map((g: any, idx: number) => ({
+                  id: g.id || `g-${idx}`,
+                  text: typeof g === 'string' ? g : g.text || '',
+                  category: g.category || 'other',
+                }))
+              : [],
+            reactions: Array.isArray(it.reactions) ? it.reactions : [],
+            commentsCount: it.comments_count || 0,
+            visibility: (it.visibility as any) || 'public',
+            created_at: it.created_at || new Date().toISOString(),
+          }))
+          setServerFeedDays(mapped)
+        }
+      })
+      .catch((err) => {
+        console.warn('[HomeView] getFeed error:', err)
+      })
+      .finally(() => {
+        if (!cancelled) setFeedLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [filter])
+
   const handleCopyInvite = () => {
     playClick(soundEnabled)
     const refUser = username || 'cernavation'
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${refUser}` : 'https://ogonek.app'
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/invite/${refUser}` : `https://ogonek.app/invite/${refUser}`
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url)
     }
@@ -143,7 +216,10 @@ export function HomeView({
         return true
       })
     }
-    if (filter === 'Друзья' || filter === 'Подписки') {
+    if (filter === 'Соратники' || filter === 'Друзья' || filter === 'Подписки') {
+      if (serverFeedDays !== null) {
+        return serverFeedDays
+      }
       return days.filter((d) => {
         const uid = d.user_id || (d as any).userId
         if (!uid) return false
@@ -156,7 +232,7 @@ export function HomeView({
       })
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds])
+  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds, serverFeedDays])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)

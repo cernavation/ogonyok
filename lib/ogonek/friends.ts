@@ -40,6 +40,8 @@ export type FriendProfile = {
 
 export const FRIEND_PROFILES: FriendProfile[] = []
 
+import { getCachedProfile } from './social.ts'
+
 /** Динамический кэш загруженных реальных пользователей из Supabase */
 const profileCache = new Map<string, FriendProfile>()
 
@@ -63,7 +65,33 @@ export const DEFAULT_FRIEND_IDS: string[] = []
 
 export function getFriend(id: string): FriendProfile | undefined {
   if (!id) return undefined
-  return profileCache.get(id) || profileCache.get(id.toLowerCase()) || FRIEND_PROFILES.find((friend) => friend.id === id || friend.username.toLowerCase() === id.toLowerCase())
+  const direct = profileCache.get(id) || profileCache.get(id.toLowerCase())
+  if (direct) return direct
+
+  const fromSocial = getCachedProfile(id)
+  if (fromSocial) {
+    const friend: FriendProfile = {
+      id: fromSocial.id,
+      name: fromSocial.display_name,
+      username: fromSocial.username,
+      initials: fromSocial.display_name.slice(0, 2).toUpperCase(),
+      avatarColor: 'linear-gradient(135deg, #f97316, #ea580c)',
+      bio: fromSocial.bio || '',
+      city: fromSocial.city || '',
+      streak: fromSocial.streak,
+      together: 0,
+      mutual: 0,
+      verified: fromSocial.subscription_tier === 'ultra' || fromSocial.is_founder,
+      lastActive: 'сегодня',
+      presence: 'offline',
+      subscription_tier: fromSocial.subscription_tier,
+      is_founder: fromSocial.is_founder,
+    }
+    profileCache.set(fromSocial.id, friend)
+    return friend
+  }
+
+  return FRIEND_PROFILES.find((friend) => friend.id === id || friend.username.toLowerCase() === id.toLowerCase())
 }
 
 /**

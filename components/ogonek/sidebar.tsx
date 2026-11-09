@@ -15,6 +15,7 @@ import {
   Target,
   Trophy,
   User,
+  Users,
   Zap,
 } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -24,6 +25,7 @@ import { totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { getSocialCounts } from '@/lib/ogonek/social'
 import { Tooltip } from './tooltip'
 
 type Props = {
@@ -48,11 +50,12 @@ interface NavItemDef {
 
 /**
  * ЕДИНЫЙ КАНОНИЧЕСКИЙ СПИСОК X.COM:
- * Главная, Поиск, Чаты, Профиль, Evidence Vault, Статистика, Рейтинг, Намерения, Настройки.
+ * Главная, Поиск, Соратники, Чаты, Профиль, Evidence Vault, Статистика, Рейтинг, Намерения, Настройки.
  */
 const UNIFIED_NAV: NavItemDef[] = [
   { id: 'home', label: 'Главная' },
   { id: 'explore', label: 'Поиск' },
+  { id: 'comrades', label: 'Соратники' },
   { id: 'messages', label: 'Чаты' },
   { id: 'profile', label: 'Профиль' },
   { id: 'vault', label: 'Evidence Vault' },
@@ -166,6 +169,19 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
         <Search
           size={24}
           strokeWidth={isActive ? 3 : 2}
+          className={`w-6 h-6 shrink-0 fill-none ${
+            isActive
+              ? 'text-[var(--text)] stroke-current'
+              : 'text-[var(--muted)] group-hover:text-[var(--text)] transition-colors'
+          }`}
+        />
+      )
+
+    case 'comrades':
+      return (
+        <Users
+          size={24}
+          strokeWidth={isActive ? 2.5 : 2}
           className={`w-6 h-6 shrink-0 fill-none ${
             isActive
               ? 'text-[var(--text)] stroke-current'
@@ -306,10 +322,20 @@ export function Sidebar({
 }: Props) {
   const { state, signOut, currentUser } = useOgonekStore()
   const unread = totalUnread(state.chatThreads ?? {})
+  const [socialCounts, setSocialCounts] = useState({ incomingRequests: 0 })
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const isCollapsed = Boolean(propIsCollapsed ?? (view === 'messages'))
+
+  useEffect(() => {
+    const uid = currentUser?.id || state.auth?.activeAccountId
+    if (uid) {
+      getSocialCounts(uid).then((counts) => {
+        setSocialCounts({ incomingRequests: counts.incomingRequests })
+      }).catch(() => null)
+    }
+  }, [currentUser?.id, state.auth?.activeAccountId])
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -398,6 +424,18 @@ export function Sidebar({
               aria-label={`${unread} непрочитанных`}
             >
               {unread > 99 ? '99+' : unread}
+            </span>
+          )}
+          {id === 'comrades' && socialCounts.incomingRequests > 0 && (
+            <span
+              className={
+                isCollapsed
+                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
+                  : 'nav-item__badge'
+              }
+              aria-label={`${socialCounts.incomingRequests} входящих заявок`}
+            >
+              {socialCounts.incomingRequests > 99 ? '99+' : socialCounts.incomingRequests}
             </span>
           )}
         </button>

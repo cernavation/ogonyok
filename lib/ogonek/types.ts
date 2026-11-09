@@ -2,6 +2,7 @@ export type ViewId =
   | 'home'
   | 'explore'
   | 'messages'
+  | 'comrades'
   | 'vault'
   | 'premium'
   | 'analytics'

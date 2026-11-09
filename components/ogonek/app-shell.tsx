@@ -24,6 +24,7 @@ import { SupabaseSyncBootstrap } from './supabase-sync-bootstrap'
 import { AnalyticsView } from './views/analytics-view'
 import { ExploreView } from './views/explore-view'
 import { HomeView } from './views/home-view'
+import { ComradesView } from './views/comrades-view'
 import { IntentionsView } from './views/intentions-view'
 import { MessagesView } from './views/messages-view'
 import { ProfileView } from './views/profile-view'
@@ -725,6 +726,19 @@ export function AppShell() {
           onTogglePin={toggleEvidencePin}
           onAddEvidence={addEvidenceItem}
           onDeleteEvidence={deleteEvidenceItem}
+          onNotify={notify}
+          soundEnabled={state.soundEnabled}
+        />
+      ),
+      comrades: (
+        <ComradesView
+          onNavigate={navigate}
+          onOpenChat={(_friendId) => {
+            navigate('messages')
+          }}
+          onOpenProfile={(targetUid) => {
+            navigate('profile', targetUid)
+          }}
           onNotify={notify}
           soundEnabled={state.soundEnabled}
         />

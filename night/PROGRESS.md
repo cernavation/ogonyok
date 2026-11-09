@@ -1,8 +1,8 @@
 # Прогресс ночной смены
 
 - **Текущая ветка**: `night-shift`
-- **Текущий этап**: Завершён Этап 05 (Лимиты, квоты и защита от злоупотреблений). Готов к переходу на Этап 06.
-- **Статус**: Этапы 00, 01, 02, 03, 04, 05 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=507 pass, build exit 0, rate-limiting & concurrency race condition pass).
+- **Текущий этап**: Завершён Этап 06 (Полный пересмотр системы соратников). Готов к переходу на Этап 07.
+- **Статус**: Этапы 00, 01, 02, 03, 04, 05, 06 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=519 pass, build exit 0, social QA pass, Playwright screenshots desktop & mobile).
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)
@@ -11,8 +11,8 @@
 - [x] **Этап 03: Гигиена и безопасность фронтенда** — единый браузерный синглтон lib/supabase/browser.ts (один WebSocket, домен ogonek.app с fallback на ogonek.local), защита от XSS в chat-message-bubble.tsx и общая утилита safe-url.ts, next.config.mjs (удаление ignoreBuildErrors, оптимизация картинок, строгие CSP/безопасные заголовки без ошибок в консоли), аудит секретов, .env.example, lib/server/env.ts, scripts/pre-commit-secrets-check.mjs, Zod-валидация всех 18 API-роутов, удаление дубля @google/generative-ai
 - [x] **Этап 04: Система тарифов и серверный энфорсмент** — спецификация night/TIERS_SPEC.md, единый источник лимитов permissions.ts (Базовый, Премиум, Основатель Ultra), серверная функция getEffectiveTier / effective_tier, миграция 040_tier_enforcement.sql (billing_events, DB-триггер check_entry_char_limit на 1000/3000/5000 символов), webhook /api/billing/webhook (HMAC-SHA256, 503 при отсутствии секрета, идемпотентность по event_id), ссылки оплаты https://memernity.com/checkout, динамическая надпись «Продлить», бейджи [⚡ ULTRA FOUNDER] / [★ PREMIUM] и строгая верификация только ultra/is_founder, звезды ленты (Самооценка автора vs Оценено ИИ), Gate компонент и useEntitlement хук, тесты scripts/qa/test-tier-enforcement.mjs, матрица night/evidence/04/tier_matrix.md
 - [x] **Этап 05: Лимиты и защита от злоупотреблений** — миграция 050_limits.sql (rate_limits, usage_counters, ai_cache, check_rate_limit, consume_quota с блокировкой строк от race condition), замена rate-limit.ts на единый хелпер с 429 Retry-After на всех 18 маршрутах, JWT аутентификация getAuthenticatedUser(request), серверные квоты consumeServerQuota(userId, feature), защита регистрации /api/auth/signup (3/сутки на IP, 10/сутки на /24 подсеть, honeypot, тайминг формы >= 3с, защита от гомоглифов и зарезервированных ников, Cloudflare Turnstile), ИИ-кэширование по SHA-256 хэшу и сохранение квот при сбое, 42 unit-проверки в limits-and-abuse.test.ts, скрипт scripts/qa/test-stage05-limits.mjs (28 тестов, включая 20 параллельных запросов -> ровно 1 успех), Playwright скриншоты десктоп и мобильный в night/evidence/05/
-- [ ] **Этап 06**: ...
-- [ ] **Этап 06**: ...
+- [x] **Этап 06: Полностью переписать систему соратников** — миграция 060_social.sql (симметричный unique index least/greatest, CHECK requester<>addressee, follows, blocks, reports, notifications с RLS, 11 RPC security definer), полнотекстовый серверный поиск search_profiles с дебаунсом 300мс и ранжированием по точным совпадениям/префиксам/именам/городам, раздел «Соратники» отдельным пунктом в Sidebar/BottomNav с бейджем входящих заявок, 5 вкладок (Соратники, Заявки, Найти, Подписки, Группы), пустое состояние с 3 действиями и QR-модалкой, публичный роут /invite/[username] (OG теги, 404 с CTA регистрации, автоотправка заявки через sessionStorage после создания аккаунта), публичный роут /u/[username], серверная лента getFeed(scope) с изоляцией по RLS, зачистка лимита 40 профилей, 12 unit-тестов в social-system.test.ts, 51 тест в test-stage06-social.mjs, Playwright скриншоты в night/evidence/06/
+- [ ] **Этап 07**: ...
 - [ ] **Этап 07**: ...
 - [ ] **Этап 08**: ...
 - [ ] **Этап 09**: ...

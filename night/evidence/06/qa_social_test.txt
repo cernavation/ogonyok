@@ -1,0 +1,68 @@
+==============================================================================
+STAGE 06 QA VERIFICATION: COMRADES (SOCIAL GRAPH), BLOCKING, INVITES & FEED
+==============================================================================
+
+--- Suite 1: Migration 060_social.sql & SQL_ORDER.md ---
+  [PASS] 060_social.sql file exists on disk
+  [PASS] Symmetric unique index least/greatest on friendships pair
+  [PASS] CHECK constraint requester_id <> addressee_id (no self-friending)
+  [PASS] blocks table defined with primary key (blocker_id, blocked_id)
+  [PASS] reports table defined for moderation and abuse handling
+  [PASS] notifications table defined for social activity
+  [PASS] RLS enabled on public.friendships
+  [PASS] RLS enabled on public.follows
+  [PASS] RLS enabled on public.blocks
+  [PASS] RLS enabled on public.reports
+  [PASS] RLS enabled on public.notifications
+  [PASS] RPC public.send_friend_request security definer exists
+  [PASS] RPC public.respond_friend_request security definer exists
+  [PASS] RPC public.remove_friend security definer exists
+  [PASS] RPC public.cancel_friend_request security definer exists
+  [PASS] RPC public.block_user security definer exists
+  [PASS] RPC public.unblock_user security definer exists
+  [PASS] RPC public.report_target security definer exists
+  [PASS] RPC public.toggle_follow security definer exists
+  [PASS] RPC public.search_profiles security definer exists
+  [PASS] RPC public.get_feed security definer exists
+  [PASS] RPC public.get_social_counts security definer exists
+  [PASS] 060_social.sql registered in night/SQL_ORDER.md
+
+--- Suite 2: Search Ranking & Multi-Word Query Matching ---
+  [PASS] Exact username ranks highest (score: 100) (rank=100)
+  [PASS] Prefix username ranks second (score: 80) (rank=80)
+  [PASS] Multi-word display name matches (score: 60) (rank=60)
+  [PASS] City match ranks lower (score: 20) (rank=20)
+  [PASS] Unmatched user scores 0 (rank=0)
+  [PASS] Strict ordering: Exact > Prefix > City
+
+--- Suite 3: Social Graph State Transitions & Block Isolation ---
+  [PASS] Self-friend request throws error
+  [PASS] A sends request to B -> status pending
+  [PASS] A and B are not yet comrades
+  [PASS] B accepts request -> status accepted
+  [PASS] A and B are now mutual comrades
+  [PASS] Comrade B can see post with visibility "friends"
+  [PASS] Stranger C CANNOT see post with visibility "friends"
+  [PASS] After block: friendship between A and B is terminated
+  [PASS] After block: B can no longer see A's posts
+  [PASS] Blocked user cannot send friend request
+  [PASS] After unblock: block restriction removed
+
+--- Suite 4: Public /invite and /u Pages HTTP Contracts ---
+  [PASS] GET /invite/cernavation returns status 200 (status=200)
+  [PASS] /invite/cernavation renders inviter page or card
+  [PASS] GET /invite/nonexistent_phantom_user_99999 returns status 200
+  [PASS] Non-existent invite page shows "Пользователь не найден"
+  [PASS] Non-existent invite page contains CTA button to register
+  [PASS] GET /u/cernavation returns status 200
+
+--- Suite 5: Terminology & Comrades Empty State ---
+  [PASS] Card 1: «Найти по нику» present
+  [PASS] Card 2: «Скопировать ссылку-приглашение» present
+  [PASS] Card 3: «Показать QR-код» present
+  [PASS] Explanation of comrade permissions present
+  [PASS] All 5 tabs present in Comrades view
+
+==============================================================================
+STAGE 06 QA TEST SUMMARY: TOTAL 51 | PASSED: 51 | FAILED: 0
+==============================================================================

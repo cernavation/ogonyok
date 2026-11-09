@@ -87,7 +87,7 @@ const PROFILE_TABS: { id: ProfileTabId; label: string; icon: LucideIcon }[] = [
   { id: 'days', label: 'Записи', icon: Calendar },
   { id: 'gratitudes', label: 'Благодарности', icon: Heart },
   { id: 'calendar', label: 'Календарь', icon: Flame },
-  { id: 'friends', label: 'Друзья', icon: Users },
+  { id: 'friends', label: 'Соратники', icon: Users },
 ]
 
 function formatDayDate(iso?: string): string {
@@ -926,7 +926,7 @@ export function ProfileView({
             <>
               <span className="text-[var(--text-3)] select-none">·</span>
               <span className="inline-flex items-center gap-1 text-[14px] text-[var(--text-2)]">
-                <strong className="font-bold text-[var(--text)]">{mutualFriendsCount}</strong> {mutualFriendsCount === 1 ? 'общий друг' : mutualFriendsCount >= 2 && mutualFriendsCount <= 4 ? 'общих друга' : 'общих друзей'}
+                <strong className="font-bold text-[var(--text)]">{mutualFriendsCount}</strong> {mutualFriendsCount === 1 ? 'общий соратник' : mutualFriendsCount >= 2 && mutualFriendsCount <= 4 ? 'общих соратника' : 'общих соратников'}
               </span>
             </>
           )}

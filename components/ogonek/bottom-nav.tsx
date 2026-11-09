@@ -1,15 +1,18 @@
 'use client'
 
-import { Home, MessageCircle, Plus, Search } from 'lucide-react'
+import { Home, MessageCircle, Plus, Search, Users } from 'lucide-react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { getSocialCounts } from '@/lib/ogonek/social'
+import { useEffect, useState } from 'react'
 
 const ITEMS = [
   { id: 'home' as ViewId, icon: Home, label: 'Главная' },
   { id: 'explore' as ViewId, icon: Search, label: 'Поиск' },
+  { id: 'comrades' as ViewId, icon: Users, label: 'Соратники' },
   { id: 'messages' as ViewId, icon: MessageCircle, label: 'Чаты' },
 ] as const
 
@@ -22,6 +25,16 @@ type Props = {
 export function BottomNav({ view, onNavigate, onCompose }: Props) {
   const { state, currentUser } = useOgonekStore()
   const unread = totalUnread(state.chatThreads ?? {})
+  const [socialCounts, setSocialCounts] = useState({ incomingRequests: 0 })
+
+  useEffect(() => {
+    const uid = currentUser?.id || state.auth?.activeAccountId
+    if (uid) {
+      getSocialCounts(uid).then((counts) => {
+        setSocialCounts({ incomingRequests: counts.incomingRequests })
+      }).catch(() => null)
+    }
+  }, [currentUser?.id, state.auth?.activeAccountId])
 
   // Determine active state: profile/vault/intentions/analytics/leaderboard/settings/premium map to closest or none
   const activeId: ViewId =
@@ -88,6 +101,14 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
                   aria-label={`${unread} непрочитанных`}
                 >
                   {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+              {id === 'comrades' && socialCounts.incomingRequests > 0 && (
+                <span
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center"
+                  aria-label={`${socialCounts.incomingRequests} входящих заявок`}
+                >
+                  {socialCounts.incomingRequests > 9 ? '9+' : socialCounts.incomingRequests}
                 </span>
               )}
             </button>

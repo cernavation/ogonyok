@@ -26,6 +26,7 @@ import {
   validateUsername,
   getSupabase,
 } from '@/lib/supabase/browser'
+import { sendFriendRequest } from '@/lib/ogonek/social'
 
 export type AuthMode = 'signin' | 'register'
 
@@ -129,6 +130,19 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     playSuccess(sound)
     onNotify?.(message)
     onAuthenticated?.(accountId)
+
+    if (typeof window !== 'undefined') {
+      try {
+        const pendingTarget = sessionStorage.getItem('ogonek_pending_invite_user_id')
+        if (pendingTarget && pendingTarget !== accountId) {
+          sendFriendRequest(pendingTarget)
+            .then(() => onNotify?.('Заявка в соратники успешно отправлена!'))
+            .catch((err) => console.warn('[Invite Auto-Friend]', err))
+          sessionStorage.removeItem('ogonek_pending_invite_user_id')
+          sessionStorage.removeItem('ogonek_pending_invite_username')
+        }
+      } catch {}
+    }
   }
 
   const handleGuest = () => {
