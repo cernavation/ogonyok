@@ -2,7 +2,8 @@
 
 - **Текущая ветка**: `night-shift`
 - **Текущий этап**: Завершён Этап 00 (Подготовка). Готов к переходу на Этап 01.
-- **Статус**: Готов к коммиту этапа 00.
+- **Статус**: Этап 00 закоммичен и отправлен в `night-shift`.
+- **Текущий коммит**: `59d02e6` (`stage-00: night shift setup, protocol, decisions, baseline evidence, shot tool, two-users harness`)
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)

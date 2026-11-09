@@ -6,7 +6,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-home.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Поиск",
@@ -15,7 +43,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-explore.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Чаты",
@@ -24,7 +80,22 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-messages.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
   },
   {
     "target": "Evidence Vault",
@@ -33,7 +104,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-vault.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Статистика",
@@ -42,7 +141,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-analytics.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Рейтинг",
@@ -51,7 +178,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-leaderboard.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Профиль",
@@ -60,7 +215,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-profile.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Настройки",
@@ -69,7 +252,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-settings.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Намерения",
@@ -78,7 +289,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-intentions.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Открытое окно «Записать»",
@@ -87,7 +326,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-composer.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Онбординг (гайд и выбор уровня)",
@@ -96,7 +363,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-onboarding.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Окно регистрации аккаунта",
@@ -105,7 +400,53 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-auth-register.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Просмотр сторис",
@@ -114,7 +455,53 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-story-viewer.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Открытый чат с сообщениями",
@@ -123,7 +510,22 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-chat-open.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
   },
   {
     "target": "Открытое меню «⋯» у поста",
@@ -132,7 +534,35 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-post-menu.png",
-    "issues": []
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
   },
   {
     "target": "Развёрнутое поле «Утренний фокус»",
@@ -141,6 +571,2732 @@
     "viewport": "desktop",
     "theme": "x-black",
     "screenshot": "desktop-x-black-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-home.png",
     "issues": []
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-explore.png",
+    "issues": []
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-messages.png",
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-vault.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-analytics.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-leaderboard.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-profile.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-settings.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-intentions.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-composer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-onboarding.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-auth-register.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-story-viewer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-chat-open.png",
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-post-menu.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "apple-light",
+    "screenshot": "desktop-apple-light-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-home.png",
+    "issues": []
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-explore.png",
+    "issues": []
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-messages.png",
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-vault.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-analytics.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-leaderboard.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-profile.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-settings.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-intentions.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-composer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-onboarding.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-auth-register.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-story-viewer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-chat-open.png",
+    "issues": [
+      {
+        "type": "small_touch_target",
+        "severity": "warning",
+        "selector": "button.flex.items-center.gap-1.5",
+        "text": "Назад в ленту",
+        "title": "Зона нажатия меньше 32px (136×31px)",
+        "details": "Кнопка <button.flex.items-center.gap-1.5> имеет габариты 136×31px (стандарт ≥ 32px)",
+        "rect": {
+          "x": 84,
+          "y": 16,
+          "w": 136,
+          "h": 31
+        }
+      }
+    ]
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-post-menu.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "desktop",
+    "theme": "dim",
+    "screenshot": "desktop-dim-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-home.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-explore.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-messages.png",
+    "issues": []
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-vault.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-analytics.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-leaderboard.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-profile.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-settings.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-intentions.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-composer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-onboarding.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-auth-register.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-story-viewer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-chat-open.png",
+    "issues": []
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-post-menu.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "x-black",
+    "screenshot": "mobile-x-black-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-home.png",
+    "issues": []
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-explore.png",
+    "issues": []
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-messages.png",
+    "issues": []
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-vault.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-analytics.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-leaderboard.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-profile.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-settings.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-intentions.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-composer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-onboarding.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-auth-register.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-story-viewer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-xs.text-[var(--text-3)].-mt-2",
+        "contrastRatio": "3.88:1",
+        "text": "Шаг 1 из 3 — Аккаунт",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Шаг 1 из 3 — Аккаунт\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "p.text-[11px].text-[var(--text-3)].px-1",
+        "contrastRatio": "3.88:1",
+        "text": "От 3 до 20 символов: латиница, цифры и _",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"От 3 до 20 символов: латиница, цифры и _\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.flex.items-center.gap-1.5",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-chat-open.png",
+    "issues": []
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-post-menu.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "apple-light",
+    "screenshot": "mobile-apple-light-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Никнейм",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Никнейм\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "span.absolute.left-3.5.text-[var(--text-3)]",
+        "contrastRatio": "3.88:1",
+        "text": "@",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"@\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "label.text-[13px].font-bold.text-[var(--text-2)]",
+        "contrastRatio": "3.88:1",
+        "text": "Пароль",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"Пароль\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      },
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.88:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.88:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(22,24,28) имеет контрастность 3.88:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Главная",
+    "targetId": "home",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-home.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Поиск",
+    "targetId": "explore",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-explore.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Чаты",
+    "targetId": "messages",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-messages.png",
+    "issues": []
+  },
+  {
+    "target": "Evidence Vault",
+    "targetId": "vault",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-vault.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Статистика",
+    "targetId": "analytics",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-analytics.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Рейтинг",
+    "targetId": "leaderboard",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-leaderboard.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Профиль",
+    "targetId": "profile",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-profile.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Настройки",
+    "targetId": "settings",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-settings.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Намерения",
+    "targetId": "intentions",
+    "isState": false,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-intentions.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытое окно «Записать»",
+    "targetId": "composer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-composer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Онбординг (гайд и выбор уровня)",
+    "targetId": "onboarding",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-onboarding.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Окно регистрации аккаунта",
+    "targetId": "auth-register",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-auth-register.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Просмотр сторис",
+    "targetId": "story-viewer",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-story-viewer.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Открытый чат с сообщениями",
+    "targetId": "chat-open",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-chat-open.png",
+    "issues": []
+  },
+  {
+    "target": "Открытое меню «⋯» у поста",
+    "targetId": "post-menu",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-post-menu.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
+  },
+  {
+    "target": "Развёрнутое поле «Утренний фокус»",
+    "targetId": "quick-focus-expanded",
+    "isState": true,
+    "viewport": "mobile",
+    "theme": "dim",
+    "screenshot": "mobile-dim-state-quick-focus-expanded.png",
+    "issues": [
+      {
+        "type": "low_contrast",
+        "severity": "warning",
+        "selector": "div.mt-4.pt-3.border-t",
+        "contrastRatio": "3.29:1",
+        "text": "URL: https://jryhluhgjricjbkimsfa.supabase.co",
+        "title": "Низкий контраст текста (3.29:1 < 4.5:1)",
+        "details": "Текст \"URL: https://jryhluhgjricjbkimsfa.supabase.co\" цвета rgb(113, 118, 123) на фоне rgb(30,39,50) имеет контрастность 3.29:1 (норма ≥ 4.5:1)"
+      }
+    ]
   }
 ]
