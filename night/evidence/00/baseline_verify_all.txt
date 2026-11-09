@@ -1035,3 +1035,579 @@ Route (app)
   • Обход экрана "Намерения"... [Всего кнопок: 22 | Живых: 8 | DeadOk: 14 | Мёртвых: 0] ✅
 
 ▶ Окружение: Desktop Standard (1440×900) | Тема: Dim (twilight)
+  • Обход экрана "Главная"... [Всего кнопок: 29 | Живых: 12 | DeadOk: 17 | Мёртвых: 0] ✅
+  • Обход экрана "Поиск"... [Всего кнопок: 24 | Живых: 11 | DeadOk: 13 | Мёртвых: 0] ✅
+  • Обход экрана "Чаты"... [Всего кнопок: 18 | Живых: 3 | DeadOk: 15 | Мёртвых: 0] ✅
+  • Обход экрана "Evidence Vault"... [Всего кнопок: 27 | Живых: 14 | DeadOk: 13 | Мёртвых: 0] ✅
+  • Обход экрана "Статистика"... [Всего кнопок: 24 | Живых: 7 | DeadOk: 17 | Мёртвых: 0] ✅
+  • Обход экрана "Рейтинг"... [Всего кнопок: 26 | Живых: 11 | DeadOk: 15 | Мёртвых: 0] ✅
+  • Обход экрана "Профиль"... [Всего кнопок: 35 | Живых: 16 | DeadOk: 19 | Мёртвых: 0] ✅
+  • Обход экрана "Настройки"... [Всего кнопок: 39 | Живых: 25 | DeadOk: 14 | Мёртвых: 0] ✅
+  • Обход экрана "Намерения"... [Всего кнопок: 22 | Живых: 8 | DeadOk: 14 | Мёртвых: 0] ✅
+
+▶ Окружение: Mobile Standard (390×844) | Тема: Dark (x-black)
+  • Обход экрана "Главная"... [Всего кнопок: 17 | Живых: 5 | DeadOk: 12 | Мёртвых: 0] ✅
+  • Обход экрана "Поиск"... [Всего кнопок: 10 | Живых: 5 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Чаты"... [Всего кнопок: 4 | Живых: 2 | DeadOk: 2 | Мёртвых: 0] ✅
+  • Обход экрана "Evidence Vault"... [Всего кнопок: 13 | Живых: 8 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Статистика"... [Всего кнопок: 10 | Живых: 1 | DeadOk: 9 | Мёртвых: 0] ✅
+  • Обход экрана "Рейтинг"... [Всего кнопок: 11 | Живых: 5 | DeadOk: 6 | Мёртвых: 0] ✅
+  • Обход экрана "Профиль"... [Всего кнопок: 21 | Живых: 10 | DeadOk: 11 | Мёртвых: 0] ✅
+  • Обход экрана "Настройки"... [Всего кнопок: 24 | Живых: 19 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Намерения"... [Всего кнопок: 8 | Живых: 2 | DeadOk: 6 | Мёртвых: 0] ✅
+
+▶ Окружение: Mobile Standard (390×844) | Тема: Light (apple-light)
+  • Обход экрана "Главная"... [Всего кнопок: 17 | Живых: 5 | DeadOk: 12 | Мёртвых: 0] ✅
+  • Обход экрана "Поиск"... [Всего кнопок: 10 | Живых: 5 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Чаты"... [Всего кнопок: 4 | Живых: 2 | DeadOk: 2 | Мёртвых: 0] ✅
+  • Обход экрана "Evidence Vault"... [Всего кнопок: 13 | Живых: 8 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Статистика"... [Всего кнопок: 10 | Живых: 1 | DeadOk: 9 | Мёртвых: 0] ✅
+  • Обход экрана "Рейтинг"... [Всего кнопок: 11 | Живых: 5 | DeadOk: 6 | Мёртвых: 0] ✅
+  • Обход экрана "Профиль"... [Всего кнопок: 21 | Живых: 10 | DeadOk: 11 | Мёртвых: 0] ✅
+  • Обход экрана "Настройки"... [Всего кнопок: 24 | Живых: 19 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Намерения"... [Всего кнопок: 8 | Живых: 2 | DeadOk: 6 | Мёртвых: 0] ✅
+
+▶ Окружение: Mobile Standard (390×844) | Тема: Dim (twilight)
+  • Обход экрана "Главная"... [Всего кнопок: 17 | Живых: 5 | DeadOk: 12 | Мёртвых: 0] ✅
+  • Обход экрана "Поиск"... [Всего кнопок: 10 | Живых: 5 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Чаты"... [Всего кнопок: 4 | Живых: 2 | DeadOk: 2 | Мёртвых: 0] ✅
+  • Обход экрана "Evidence Vault"... [Всего кнопок: 13 | Живых: 8 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Статистика"... [Всего кнопок: 10 | Живых: 1 | DeadOk: 9 | Мёртвых: 0] ✅
+  • Обход экрана "Рейтинг"... [Всего кнопок: 11 | Живых: 5 | DeadOk: 6 | Мёртвых: 0] ✅
+  • Обход экрана "Профиль"... [Всего кнопок: 21 | Живых: 10 | DeadOk: 11 | Мёртвых: 0] ✅
+  • Обход экрана "Настройки"... [Всего кнопок: 24 | Живых: 19 | DeadOk: 5 | Мёртвых: 0] ✅
+  • Обход экрана "Намерения"... [Всего кнопок: 8 | Живых: 2 | DeadOk: 6 | Мёртвых: 0] ✅
+
+═════════════════════════════════════════════════════════════════
+✅ UI-Crawl завершён за 62.6с. Генерация отчёта...
+
+✅ Отчёт обхода успешно сохранён в /Users/user/Desktop/ogonyok-ai-clone/crawl/BASELINE.md
+═════════════════════════════════════════════════════════════════
+
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 7a. UI-Explore (Chromium)
+Команда: node scripts/ui-explore.mjs --browser=chromium
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+🧭 ЗАПУСК UI-EXPLORE SUITE [Движок: CHROMIUM] (полный обход)
+Цель: http://localhost:3000
+Папка отчётов: /Users/user/Desktop/ogonyok-ai-clone/explore
+═════════════════════════════════════════════════════════════════
+
+
+▶ [chromium] Mobile Small (360×780) (mobile-360) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Диалог чата" (chat-thread)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Mobile Standard (390×844) (mobile-390) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Диалог чата" (chat-thread)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Mobile Pro Max (430×932) (mobile-430) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Диалог чата" (chat-thread)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Tablet Portrait (768×1024) (tablet-768) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Диалог чата" (chat-thread)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] iPad Air (820×1180) (tablet-820) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Диалог чата" (chat-thread)... 📸 скриншот сохранён | Навигация: СВОБОДНО ✅
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Tablet Landscape (1024×768) (tablet-1024) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Диалог чата" (chat-thread)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Compact Laptop (1280×800) (desktop-1280) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Диалог чата" (chat-thread)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Desktop Standard (1440×900) (desktop-1440) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Диалог чата" (chat-thread)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+▶ [chromium] Full HD Large (1920×1080) (desktop-1920) | Тема: Dark (x-black)
+  • Состояние "Главная" (home)... 📸 скриншот сохранён ✅
+  • Состояние "Поиск" (explore)... 📸 скриншот сохранён ✅
+  • Состояние "Чаты" (messages)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Диалог чата" (chat-thread)... ⚠️ НАЙДЕНА ЛОВУШКА (Рейка иконок не содержит рабочей кнопки «Домой»)
+  • Состояние "Evidence Vault" (vault)... 📸 скриншот сохранён ✅
+  • Состояние "Статистика" (analytics)... 📸 скриншот сохранён ✅
+  • Состояние "Рейтинг" (leaderboard)... 📸 скриншот сохранён ✅
+  • Состояние "Профиль" (profile)... 📸 скриншот сохранён ✅
+  • Состояние "Настройки" (settings)... 📸 скриншот сохранён ✅
+  • Состояние "Намерения" (intentions)... 📸 скриншот сохранён ✅
+  • Состояние "Гайд" (guide)... 📸 скриншот сохранён ✅
+  • Состояние "Онбординг" (onboarding)... 📸 скриншот сохранён ✅
+  • Состояние "Записать" (composer)... 📸 скриншот сохранён ✅
+  • Состояние "Вход" (auth)... 📸 скриншот сохранён ✅
+  • Состояние "Лендинг для гостя" (landing)... 📸 скриншот сохранён ✅
+
+📄 Итоговый отчёт записан в /Users/user/Desktop/ogonyok-ai-clone/explore/BASELINE.md
+ИТОГ UI-EXPLORE: ⚠️ НАЙДЕНО 8 ПРОБЛЕМ
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 7b. UI-Explore (WebKit: iOS/Safari)
+Команда: node scripts/ui-explore.mjs --browser=webkit --viewport=mobile-390,desktop-1440 --outdir=explore-webkit
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+🧭 ЗАПУСК UI-EXPLORE SUITE [Движок: WEBKIT] (полный обход)
+Цель: http://localhost:3000
+Папка отчётов: /Users/user/Desktop/ogonyok-ai-clone/explore-webkit
+═════════════════════════════════════════════════════════════════
+
+Fatal explore error: browserType.launch: Executable doesn't exist at /Users/user/Library/Caches/ms-playwright/webkit-2370/pw_run.sh
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at launchBrowser (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:80:25)
+    at runUiExplore (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:144:25)
+    at /Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:389:3 {
+  log: [],
+  name: 'Error'
+}
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 7c. UI-Explore (Firefox: Gecko)
+Команда: node scripts/ui-explore.mjs --browser=firefox --viewport=desktop-1440 --outdir=explore-firefox
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+🧭 ЗАПУСК UI-EXPLORE SUITE [Движок: FIREFOX] (полный обход)
+Цель: http://localhost:3000
+Папка отчётов: /Users/user/Desktop/ogonyok-ai-clone/explore-firefox
+═════════════════════════════════════════════════════════════════
+
+Fatal explore error: browserType.launch: Executable doesn't exist at /Users/user/Library/Caches/ms-playwright/firefox-1555/firefox/Nightly.app/Contents/MacOS/firefox
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at launchBrowser (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:83:26)
+    at runUiExplore (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:144:25)
+    at /Users/user/Desktop/ogonyok-ai-clone/scripts/ui-explore.mjs:389:3 {
+  log: [],
+  name: 'Error'
+}
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 8. UI-Matrix (Темы × Акценты × Устройства)
+Команда: node scripts/ui-matrix.mjs
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+🎨 ЗАПУСК UI-MATRIX SUITE [Движок: CHROMIUM] (полная матрица)
+Цель: http://localhost:3000
+Папка матрицы: /Users/user/Desktop/ogonyok-ai-clone/matrix
+═════════════════════════════════════════════════════════════════
+
+Fatal matrix error: browserType.launch: Executable doesn't exist at /Users/user/Library/Caches/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-mac-arm64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at launchBrowser (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-matrix.mjs:77:25)
+    at runUiMatrix (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-matrix.mjs:133:25)
+    at /Users/user/Desktop/ogonyok-ai-clone/scripts/ui-matrix.mjs:355:3 {
+  log: [],
+  name: 'Error'
+}
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 9. Chat E2E Suite (test:chat)
+Команда: node scripts/chat-e2e.mjs
+═════════════════════════════════════════════════════════════════
+🚀 Запуск Chat E2E Suite для «Огонька»...
+
+1. User A открывает чат с Михаилом Волошиным (/chats/fr-voloshin)...
+2. Проверка цитирования (Reply)...
+3. Редактирование сообщения...
+4. Реакция 🔥 по двойному клику на пузырь...
+5. Вложение карточки / медиафайла (+)...
+6. Голосовое сообщение (MediaRecorder + Waveform)...
+7. Закрепление сообщения в чате...
+8. Удаление сообщения...
+9. WebRTC Аудиозвонок...
+10. Проверка бейджа уровня сложности (🔥 Уровень N)...
+
+📄 Отчёт успешно записан в /Users/user/Desktop/ogonyok-ai-clone/CHAT_TESTS.md
+
+# Отчёт E2E тестирования мессенджера (CHAT_TESTS.md)
+
+Дата прогона: **2026-11-09T21:01:58.529Z**  
+Окружение: **Next.js 16 + Turbopack (Playwright 2-User Context)**  
+Итог: **10 успешно**, **0 предупреждений**, **0 ошибок**
+
+## Сводная таблица тестов
+
+| # | Тестовый сценарий | Статус | Время | Примечание |
+|---|-------------------|:------:|:-----:|------------|
+| #1 | Отправка текстового сообщения | **✅ PASS** | 2445ms | Сообщение успешно отправлено и отобразилось в ленте переписки |
+| #2 | Цитирование и ответ (Reply) | **✅ PASS** | 1190ms | Ответ с плашкой цитирования успешно добавлен в ленту |
+| #3 | Редактирование своего сообщения | **✅ PASS** | 871ms | Редактирование в реальном времени проверено |
+| #4 | Реакция 🔥 двойным кликом | **✅ PASS** | 8ms | Огонёк выставлен, счётчик реакций отображается на пузыре |
+| #5 | Вложение карточек и файлов (+) | **✅ PASS** | 3ms | Модальное окно вложений гордостей, сторис и документов открывается |
+| #6 | Голосовое сообщение (MediaRecorder + Waveform) | **✅ PASS** | 864ms | Запись стартует, эмулированный аудиопоток передан в аудиоплеер с волной |
+| #7 | Закрепление диалога и сообщений | **✅ PASS** | 389ms | Диалог закрепляется сверху, плашка закрепления отображается |
+| #8 | Удаление сообщения (у себя / у всех) | **✅ PASS** | 2ms | Опции удаления для себя и для всех отработаны |
+| #9 | WebRTC 1:1 Аудио/Видеозвонок | **✅ PASS** | 3591ms | Модальное окно вызова открылось, WebRTC таймер и медиапотоки инициализированы |
+| #10 | Бейдж уровня сложности и поповер правил | **✅ PASS** | 4019ms | Бейдж «🔥 Уровень N» открывает поповер с 30-дневным кулдауном и историей |
+
+## Проверенные интеграции:
+1. **Полноэкранный 3-колоночный лейаут (X.com)**: рейка 88px, список диалогов 400px, поток 820px по центру.
+2. **Ядро Telegram+**: отправка, ответ, редакция, реакции 🔥 двойным кликом, удаление.
+3. **WebRTC Звонки**: аудио/видеовызовы, локальный и удалённый поток, таймер соединения.
+4. **Уровень сложности**: компактный бейдж «🔥 Уровень N» (1..5) рядом со стриком, поповер с 30-дневным кулдауном.
+
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 10. Непрерывный ввод и стабильность фокуса (test:typing)
+Команда: node scripts/ui-typing.mjs
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+⌨️  ЗАПУСК UI TYPING & FOCUS STABILITY SUITE («ОГОНЁК»)
+Цель: http://localhost:3000
+═════════════════════════════════════════════════════════════════
+
+
+▶ Движок: CHROMIUM
+  📱 Вьюпорт: Desktop Standard (1440×900) (1440×900)
+    ❌ [FAIL] Composer: Гордость (посимвольный ввод, эмодзи, 2000 симв) (15807ms)
+       -> error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+  - waiting for locator('div[role="dialog"] textarea, textarea') to be visible
+
+    ❌ [FAIL] Composer: Благодарность (переключение вкладки и ввод) (16345ms)
+       -> error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+  - waiting for locator('div[role="dialog"] textarea, textarea') to be visible
+
+    ❌ [FAIL] Поиск: строка запроса в Explore (15154ms)
+       -> not-found: Селектор input[type="search"], input[placeholder*="Поиск"], input[placeholder*="поиск"] не найден или невидим
+    ✅ [PASS] Чаты: поле ввода сообщения в диалоге (4182ms)
+    ❌ [FAIL] Evidence Vault: поиск и ввод данных улики (15529ms)
+       -> not-found: Селектор input[placeholder*="доказательствам"], input[placeholder*="Поиск"], input[placeholder*="поиск"], input[type="search"] не найден или невидим
+    ❌ [FAIL] Намерения / Фокус: утренний фокус дня (10572ms)
+       -> text-lost: На символе 'С' (#0) ожидалось включение 'С', но в поле: ''
+    ❌ [FAIL] Редактирование профиля: имя и bio (14376ms)
+       -> not-found: Кнопка "Редактировать профиль" не найдена
+    ❌ [FAIL] Настройки: кастомный акцент / ник (15794ms)
+       -> not-found: Селектор input[placeholder*="#FF5C00"]:visible не найден или невидим
+    ✅ [PASS] Окно входа/регистрации: логин и пароль (10959ms)
+  📱 Вьюпорт: Mobile Standard (390×844) (390×844)
+    ❌ [FAIL] Composer: Гордость (посимвольный ввод, эмодзи, 2000 симв) (15566ms)
+       -> error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+  - waiting for locator('div[role="dialog"] textarea, textarea') to be visible
+
+    ❌ [FAIL] Composer: Благодарность (переключение вкладки и ввод) (15409ms)
+       -> error: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+  - waiting for locator('div[role="dialog"] textarea, textarea') to be visible
+
+    ❌ [FAIL] Поиск: строка запроса в Explore (15451ms)
+       -> not-found: Селектор input[type="search"], input[placeholder*="Поиск"], input[placeholder*="поиск"] не найден или невидим
+    ❌ [FAIL] Чаты: поле ввода сообщения в диалоге (16308ms)
+       -> not-found: Селектор textarea[placeholder*="сообщени"], input[placeholder*="сообщени"], textarea[placeholder*="Сообщени"] не найден или невидим
+    ❌ [FAIL] Evidence Vault: поиск и ввод данных улики (14838ms)
+       -> not-found: Селектор input[placeholder*="доказательствам"], input[placeholder*="Поиск"], input[placeholder*="поиск"], input[type="search"] не найден или невидим
+    ❌ [FAIL] Намерения / Фокус: утренний фокус дня (12059ms)
+       -> text-lost: На символе 'С' (#0) ожидалось включение 'С', но в поле: ''
+    ❌ [FAIL] Редактирование профиля: имя и bio (15095ms)
+       -> not-found: Кнопка "Редактировать профиль" не найдена
+    ❌ [FAIL] Настройки: кастомный акцент / ник (15684ms)
+       -> not-found: Селектор input[placeholder*="#FF5C00"]:visible не найден или невидим
+    ✅ [PASS] Окно входа/регистрации: логин и пароль (11640ms)
+
+▶ Движок: WEBKIT
+Критическая ошибка test:typing: browserType.launch: Executable doesn't exist at /Users/user/Library/Caches/ms-playwright/webkit-2370/pw_run.sh
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+    at launchBrowser (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-typing.mjs:106:25)
+    at runTypingSuite (/Users/user/Desktop/ogonyok-ai-clone/scripts/ui-typing.mjs:255:27) {
+  log: [],
+  name: 'Error'
+}
+
+═════════════════════════════════════════════════════════════════
+▶ [ШАГ] 11. Визуальный регрессионный дифф (visual-diff)
+Команда: node scripts/visual-diff.mjs
+═════════════════════════════════════════════════════════════════
+═════════════════════════════════════════════════════════════════
+👁️  ЗАПУСК VISUAL DIFF SUITE (Сравнение с baseline/)
+База: /Users/user/Desktop/ogonyok-ai-clone/baseline
+Текущие: /Users/user/Desktop/ogonyok-ai-clone/explore
+═════════════════════════════════════════════════════════════════
+
+
+Сравнено экранов: 135
+Нарушений порога (>0.5% для защищённых экранов): 53
+  ❌ desktop-1280/states/analytics.png: 35.48% diff (разрешено до 6%)
+  ✅ desktop-1280/states/auth.png: 15.01% diff (разрешено до 70%)
+  ❌ desktop-1280/states/chat-thread.png: 21.93% diff (разрешено до 6%)
+  ✅ desktop-1280/states/composer.png: 39.03% diff (разрешено до 70%)
+  ❌ desktop-1280/states/explore.png: 35.54% diff (разрешено до 6%)
+  ✅ desktop-1280/states/guide.png: 24.89% diff (разрешено до 70%)
+  ❌ desktop-1280/states/home.png: 39.01% diff (разрешено до 6%)
+  ❌ desktop-1280/states/intentions.png: 36.03% diff (разрешено до 6%)
+  ✅ desktop-1280/states/landing.png: 22.27% diff (разрешено до 70%)
+  ✅ desktop-1280/states/leaderboard.png: 32.17% diff (разрешено до 70%)
+  ❌ desktop-1280/states/messages.png: 6.3% diff (разрешено до 6%)
+  ✅ desktop-1280/states/onboarding.png: 25.04% diff (разрешено до 70%)
+  ✅ desktop-1280/states/profile.png: 39.91% diff (разрешено до 70%)
+  ✅ desktop-1280/states/settings.png: 31.43% diff (разрешено до 70%)
+  ✅ desktop-1280/states/vault.png: 32.21% diff (разрешено до 70%)
+  ❌ desktop-1440/states/analytics.png: 30.8% diff (разрешено до 6%)
+  ✅ desktop-1440/states/auth.png: 35.9% diff (разрешено до 70%)
+  ❌ desktop-1440/states/chat-thread.png: 17.83% diff (разрешено до 6%)
+  ✅ desktop-1440/states/composer.png: 35.91% diff (разрешено до 70%)
+  ❌ desktop-1440/states/explore.png: 33.04% diff (разрешено до 6%)
+  ✅ desktop-1440/states/guide.png: 22.96% diff (разрешено до 70%)
+  ❌ desktop-1440/states/home.png: 35.95% diff (разрешено до 6%)
+  ❌ desktop-1440/states/intentions.png: 32.69% diff (разрешено до 6%)
+  ✅ desktop-1440/states/landing.png: 22.21% diff (разрешено до 70%)
+  ✅ desktop-1440/states/leaderboard.png: 28.35% diff (разрешено до 70%)
+  ✅ desktop-1440/states/messages.png: 5.12% diff (разрешено до 6%)
+  ✅ desktop-1440/states/onboarding.png: 22.98% diff (разрешено до 70%)
+  ✅ desktop-1440/states/profile.png: 37.76% diff (разрешено до 70%)
+  ✅ desktop-1440/states/settings.png: 29.62% diff (разрешено до 70%)
+  ✅ desktop-1440/states/vault.png: 29.54% diff (разрешено до 70%)
+  ❌ desktop-1920/states/analytics.png: 21.76% diff (разрешено до 6%)
+  ✅ desktop-1920/states/auth.png: 11.8% diff (разрешено до 70%)
+  ❌ desktop-1920/states/chat-thread.png: 11.65% diff (разрешено до 6%)
+  ✅ desktop-1920/states/composer.png: 11.02% diff (разрешено до 70%)
+  ❌ desktop-1920/states/explore.png: 23.74% diff (разрешено до 6%)
+  ✅ desktop-1920/states/guide.png: 16.97% diff (разрешено до 70%)
+  ❌ desktop-1920/states/home.png: 25.82% diff (разрешено до 6%)
+  ❌ desktop-1920/states/intentions.png: 23.53% diff (разрешено до 6%)
+  ✅ desktop-1920/states/landing.png: 17.74% diff (разрешено до 70%)
+  ✅ desktop-1920/states/leaderboard.png: 23.75% diff (разрешено до 70%)
+  ✅ desktop-1920/states/messages.png: 3.3% diff (разрешено до 6%)
+  ✅ desktop-1920/states/onboarding.png: 17% diff (разрешено до 70%)
+  ✅ desktop-1920/states/profile.png: 27.28% diff (разрешено до 70%)
+  ✅ desktop-1920/states/settings.png: 22% diff (разрешено до 70%)
+  ✅ desktop-1920/states/vault.png: 21.89% diff (разрешено до 70%)
+  ❌ mobile-360/states/analytics.png: 22.9% diff (лимит 6%)
+  ✅ mobile-360/states/auth.png: 37.42% diff (разрешено до 70%)
+  ❌ mobile-360/states/chat-thread.png: 39.35% diff (лимит 6%)
+  ✅ mobile-360/states/composer.png: 23.26% diff (разрешено до 70%)
+  ❌ mobile-360/states/explore.png: 36.12% diff (лимит 6%)
+  ✅ mobile-360/states/guide.png: 37.31% diff (разрешено до 70%)
+  ❌ mobile-360/states/home.png: 37.53% diff (лимит 6%)
+  ❌ mobile-360/states/intentions.png: 70.38% diff (лимит 6%)
+  ✅ mobile-360/states/landing.png: 56.6% diff (разрешено до 70%)
+  ✅ mobile-360/states/leaderboard.png: 56.07% diff (разрешено до 70%)
+  ❌ mobile-360/states/messages.png: 12.5% diff (лимит 6%)
+  ✅ mobile-360/states/onboarding.png: 62.63% diff (разрешено до 70%)
+  ❌ mobile-360/states/profile.png: 72.11% diff (разрешено до 70%)
+  ✅ mobile-360/states/settings.png: 45.72% diff (разрешено до 70%)
+  ✅ mobile-360/states/vault.png: 63.88% diff (разрешено до 70%)
+  ❌ mobile-390/states/analytics.png: 25.04% diff (лимит 6%)
+  ✅ mobile-390/states/auth.png: 25.8% diff (разрешено до 70%)
+  ❌ mobile-390/states/chat-thread.png: 36.01% diff (лимит 6%)
+  ✅ mobile-390/states/composer.png: 23.03% diff (разрешено до 70%)
+  ❌ mobile-390/states/explore.png: 35.18% diff (лимит 6%)
+  ✅ mobile-390/states/guide.png: 55.4% diff (разрешено до 70%)
+  ❌ mobile-390/states/home.png: 37.9% diff (лимит 6%)
+  ❌ mobile-390/states/intentions.png: 65.59% diff (лимит 6%)
+  ✅ mobile-390/states/landing.png: 54.92% diff (разрешено до 70%)
+  ✅ mobile-390/states/leaderboard.png: 47.96% diff (разрешено до 70%)
+  ❌ mobile-390/states/messages.png: 10.78% diff (лимит 6%)
+  ✅ mobile-390/states/onboarding.png: 37.44% diff (разрешено до 70%)
+  ❌ mobile-390/states/profile.png: 71.36% diff (разрешено до 70%)
+  ✅ mobile-390/states/settings.png: 43.81% diff (разрешено до 70%)
+  ✅ mobile-390/states/vault.png: 60.33% diff (разрешено до 70%)
+  ❌ mobile-430/states/analytics.png: 26.76% diff (лимит 6%)
+  ✅ mobile-430/states/auth.png: 25.01% diff (разрешено до 70%)
+  ❌ mobile-430/states/chat-thread.png: 33.59% diff (лимит 6%)
+  ✅ mobile-430/states/composer.png: 40.87% diff (разрешено до 70%)
+  ❌ mobile-430/states/explore.png: 37.09% diff (лимит 6%)
+  ✅ mobile-430/states/guide.png: 54.89% diff (разрешено до 70%)
+  ❌ mobile-430/states/home.png: 40.95% diff (лимит 6%)
+  ❌ mobile-430/states/intentions.png: 65.81% diff (лимит 6%)
+  ✅ mobile-430/states/landing.png: 37.86% diff (разрешено до 70%)
+  ✅ mobile-430/states/leaderboard.png: 60.44% diff (разрешено до 70%)
+  ❌ mobile-430/states/messages.png: 8.93% diff (лимит 6%)
+  ✅ mobile-430/states/onboarding.png: 54.48% diff (разрешено до 70%)
+  ❌ mobile-430/states/profile.png: 72.04% diff (разрешено до 70%)
+  ✅ mobile-430/states/settings.png: 43.12% diff (разрешено до 70%)
+  ✅ mobile-430/states/vault.png: 61.63% diff (разрешено до 70%)
+  ❌ tablet-1024/states/analytics.png: 41.87% diff (разрешено до 6%)
+  ✅ tablet-1024/states/auth.png: 44.52% diff (разрешено до 70%)
+  ❌ tablet-1024/states/chat-thread.png: 27.94% diff (разрешено до 6%)
+  ✅ tablet-1024/states/composer.png: 44.66% diff (разрешено до 70%)
+  ❌ tablet-1024/states/explore.png: 41.79% diff (разрешено до 6%)
+  ✅ tablet-1024/states/guide.png: 31.88% diff (разрешено до 70%)
+  ❌ tablet-1024/states/home.png: 44.35% diff (разрешено до 6%)
+  ❌ tablet-1024/states/intentions.png: 43.51% diff (разрешено до 6%)
+  ✅ tablet-1024/states/landing.png: 34.89% diff (разрешено до 70%)
+  ✅ tablet-1024/states/leaderboard.png: 38.88% diff (разрешено до 70%)
+  ❌ tablet-1024/states/messages.png: 8.53% diff (разрешено до 6%)
+  ✅ tablet-1024/states/onboarding.png: 44.72% diff (разрешено до 70%)
+  ✅ tablet-1024/states/profile.png: 48.6% diff (разрешено до 70%)
+  ✅ tablet-1024/states/settings.png: 37.64% diff (разрешено до 70%)
+  ✅ tablet-1024/states/vault.png: 38.01% diff (разрешено до 70%)
+  ❌ tablet-768/states/analytics.png: 39.93% diff (разрешено до 6%)
+  ✅ tablet-768/states/auth.png: 23.82% diff (разрешено до 70%)
+  ❌ tablet-768/states/chat-thread.png: 18.88% diff (разрешено до 6%)
+  ✅ tablet-768/states/composer.png: 21.63% diff (разрешено до 70%)
+  ❌ tablet-768/states/explore.png: 40.35% diff (разрешено до 6%)
+  ✅ tablet-768/states/guide.png: 46.84% diff (разрешено до 70%)
+  ❌ tablet-768/states/home.png: 45.35% diff (разрешено до 6%)
+  ❌ tablet-768/states/intentions.png: 43.2% diff (разрешено до 6%)
+  ✅ tablet-768/states/landing.png: 32.97% diff (разрешено до 70%)
+  ✅ tablet-768/states/leaderboard.png: 43.26% diff (разрешено до 70%)
+  ✅ tablet-768/states/messages.png: 4.97% diff (разрешено до 6%)
+  ✅ tablet-768/states/onboarding.png: 39.32% diff (разрешено до 70%)
+  ✅ tablet-768/states/profile.png: 50.7% diff (разрешено до 70%)
+  ✅ tablet-768/states/settings.png: 41.18% diff (разрешено до 70%)
+  ✅ tablet-768/states/vault.png: 39.92% diff (разрешено до 70%)
+  ❌ tablet-820/states/analytics.png: 36.72% diff (разрешено до 6%)
+  ✅ tablet-820/states/auth.png: 20.87% diff (разрешено до 70%)
+  ❌ tablet-820/states/chat-thread.png: 15.69% diff (разрешено до 6%)
+  ✅ tablet-820/states/composer.png: 18.58% diff (разрешено до 70%)
+  ❌ tablet-820/states/explore.png: 35.99% diff (разрешено до 6%)
+  ✅ tablet-820/states/guide.png: 33.17% diff (разрешено до 70%)
+  ❌ tablet-820/states/home.png: 44.18% diff (разрешено до 6%)
+  ❌ tablet-820/states/intentions.png: 36.41% diff (разрешено до 6%)
+  ✅ tablet-820/states/landing.png: 27.83% diff (разрешено до 70%)
+  ✅ tablet-820/states/leaderboard.png: 39.58% diff (разрешено до 70%)
+  ✅ tablet-820/states/messages.png: 4.06% diff (разрешено до 6%)
+  ✅ tablet-820/states/onboarding.png: 44.25% diff (разрешено до 70%)
+  ✅ tablet-820/states/profile.png: 44.32% diff (разрешено до 70%)
+  ✅ tablet-820/states/settings.png: 35.6% diff (разрешено до 70%)
+  ✅ tablet-820/states/vault.png: 34.51% diff (разрешено до 70%)
+
+❌ VISUAL-DIFF: Обнаружено 53 нежелательных изменений дизайна!
+
+🖼️ Интерактивная галерея скриншотов сгенерирована в /Users/user/Desktop/ogonyok-ai-clone/gallery.html
+
+📋 Итоговый отчёт верификации сохранён в /Users/user/Desktop/ogonyok-ai-clone/VERIFY.md
+
+═════════════════════════════════════════════════════════════════
+ИТОГ VERIFY:ALL: ⚠️ НАЙДЕНО 277 ПРОБЛЕМ
+═════════════════════════════════════════════════════════════════
+
