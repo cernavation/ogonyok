@@ -26,6 +26,7 @@ import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
 import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { formatPhotoAttachmentCaption } from '@/lib/ogonek/attached-targets'
 import { getInitials } from '@/lib/ogonek/initials'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
@@ -320,6 +321,11 @@ function DayCardComponent({
     ? new Date(day.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     : 'сегодня'
 
+  const photoCaption = useMemo(() => {
+    const targets = day.attached_targets || (day as any).attachedTargets
+    return formatPhotoAttachmentCaption(targets, day.prides, day.gratitudes)
+  }, [day.attached_targets, (day as any).attachedTargets, day.prides, day.gratitudes])
+
   return (
     <>
       <article
@@ -554,27 +560,34 @@ function DayCardComponent({
 
             {/* Photos */}
             {photoUrls.length > 0 && (
-              <div
-                className={`mt-3 overflow-hidden rounded-2xl border border-[var(--line)] ${
-                  photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
-                }`}
-              >
-                {photoUrls.map((url, i) => (
-                  <button
-                    key={url}
-                    type="button"
-                    onClick={() => setMediaIndex(i)}
-                    className="block w-full focus:outline-none"
-                    aria-label={`Открыть фото ${i + 1}`}
-                  >
-                    <img
-                      src={url}
-                      alt="Фото дня"
-                      loading="lazy"
-                      className="w-full max-h-[380px] object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="mt-3">
+                <div
+                  className={`overflow-hidden rounded-2xl border border-[var(--line)] ${
+                    photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
+                  }`}
+                >
+                  {photoUrls.map((url, i) => (
+                    <button
+                      key={url}
+                      type="button"
+                      onClick={() => setMediaIndex(i)}
+                      className="block w-full focus:outline-none"
+                      aria-label={`Открыть фото ${i + 1}`}
+                    >
+                      <img
+                        src={url}
+                        alt="Фото дня"
+                        loading="lazy"
+                        className="w-full max-h-[380px] object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+                {photoCaption && (
+                  <div className="mt-1.5 px-1 text-xs text-[var(--muted)] font-medium">
+                    <span>{photoCaption}</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -708,6 +721,8 @@ function DayCardComponent({
         <MediaLightbox
           photos={photoUrls}
           prides={day.prides}
+          gratitudes={day.gratitudes}
+          attachedTargets={day.attached_targets || (day as any).attachedTargets}
           initialIndex={mediaIndex}
           onClose={() => setMediaIndex(null)}
           title={`День #${day.id} · ${dateStr}`}

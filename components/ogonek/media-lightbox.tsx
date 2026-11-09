@@ -14,7 +14,8 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { useCallback, useEffect, useRef, useState, type Touch } from 'react'
-import type { PrideEntry } from '@/lib/ogonek/types'
+import type { GratitudeEntry, PrideEntry } from '@/lib/ogonek/types'
+import { formatPhotoAttachmentCaption, type AttachedPhotoTarget } from '@/lib/ogonek/attached-targets'
 
 export type MediaLightboxItem = {
   src: string
@@ -45,6 +46,10 @@ export type MediaLightboxProps = {
   prideCaptions?: string[] | null
   /** Гордости дня — используются как подписи, если явной привязки нет */
   prides?: (PrideEntry | string)[] | null
+  /** Благодарности дня для отображения привязки */
+  gratitudes?: (GratitudeEntry | string)[] | null
+  /** Мульти-привязка фото к конкретным гордостям и благодарностям */
+  attachedTargets?: AttachedPhotoTarget[] | null
   /** Явная карта: индекс фото → индекс гордости (или -1 если без привязки) */
   photoPrideIndices?: number[] | null
   initialIndex?: number
@@ -136,6 +141,7 @@ export function MediaLightbox(props: MediaLightboxProps) {
 
   const items = normalizeItems(props)
   const prideList = prideTextsFromPrides(prides)
+  const attachedCaption = formatPhotoAttachmentCaption(props.attachedTargets, prides, props.gratitudes)
 
   // Разрешённые тексты гордостей для каждой фотографии
   const prideFor = useCallback(
@@ -481,22 +487,25 @@ export function MediaLightbox(props: MediaLightboxProps) {
           )}
         </div>
 
-        {/* Подпись + привязка к гордости */}
+        {/* Подпись + привязка к гордости или благодарности */}
         <div className="px-4 py-4 text-center text-white">
           <div className="mx-auto max-w-3xl rounded-2xl bg-white/5 px-4 py-3">
             <p className="text-sm font-semibold text-white/90">
               {current.caption || `Фото ${safeIndex + 1} из ${items.length}`}
             </p>
-            {prideText && (
+            {attachedCaption ? (
+              <p className="mt-1 text-sm font-medium text-amber-300">
+                {attachedCaption}
+              </p>
+            ) : prideText ? (
               <p className="mt-1 text-sm text-orange-300">
                 🔥 Относится к гордости: «{prideText}»
               </p>
-            )}
-            {!prideText && prideList.length > 0 && (
+            ) : prideList.length > 0 ? (
               <p className="mt-1 text-xs text-white/40">
                 Снимок без явной привязки к гордости
               </p>
-            )}
+            ) : null}
             <p className="mt-2 text-[11px] text-white/40">
               Зум: колесо мыши, +/-, двойной клик. Перемещение: перетаскивание. Стрелки: ←/→. Esc — закрыть.
             </p>

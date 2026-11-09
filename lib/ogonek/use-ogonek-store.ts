@@ -583,6 +583,8 @@ export function mapCloudDayToDay(row: any): Day {
     visibility: (row.visibility || 'public') as VisibilityLevel,
     user_id: row.user_id,
     userId: row.user_id,
+    attached_targets: row.attached_targets || null,
+    attachedTargets: row.attached_targets || null,
     prides,
     gratitudes,
   }
@@ -623,6 +625,7 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
       visibility: day.visibility || 'public',
+      attached_targets: day.attached_targets || (day as any).attachedTargets || null,
       client_updated_at: nowISO,
     }
 
@@ -722,6 +725,7 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
         date_iso: d.dateISO || nowISO,
         status: d.status === 'missed' ? 'missed' : 'normal',
         visibility: d.visibility || 'public',
+        attached_targets: d.attached_targets || (d as any).attachedTargets || null,
         client_updated_at: nowISO,
       }))
 
@@ -1058,6 +1062,8 @@ export function useOgonekStore() {
           gratitudes: newGratitudeEntries,
           photos: payload.photo ? [payload.photo] : undefined,
           media_url: payload.photo || null,
+          attached_targets: payload.attachedTargets || (payload as any).attached_targets || null,
+          attachedTargets: payload.attachedTargets || (payload as any).attached_targets || null,
           dateISO: computedDate,
           status: 'normal',
           visibility: normalizeVisibility(payload.visibility),
@@ -1245,6 +1251,8 @@ export function useOgonekStore() {
             ? [payload.photo]
             : [],
           media_url: payload.photo || null,
+          attached_targets: payload.attachedTargets ?? (payload as any).attached_targets ?? targetDay.attached_targets ?? targetDay.attachedTargets ?? null,
+          attachedTargets: payload.attachedTargets ?? (payload as any).attached_targets ?? targetDay.attached_targets ?? targetDay.attachedTargets ?? null,
           visibility: payload.visibility
             ? normalizeVisibility(payload.visibility)
             : targetDay.visibility,

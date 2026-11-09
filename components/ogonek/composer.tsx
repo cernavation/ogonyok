@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto, resolvePhotoUrl, uploadDayPhotoToStorage } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
+import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
@@ -208,6 +208,38 @@ export function Composer({
     return initialDraft?.photo || null
   })
   const [photoId, setPhotoId] = useState<string | null>(null)
+  const [attachedTargets, setAttachedTargets] = useState<AttachedPhotoTarget[]>(() => {
+    if (editingDay?.attached_targets && Array.isArray(editingDay.attached_targets)) {
+      return editingDay.attached_targets
+    }
+    if ((editingDay as any)?.attachedTargets && Array.isArray((editingDay as any).attachedTargets)) {
+      return (editingDay as any).attachedTargets
+    }
+    if (initialDraft?.attachedTargets && Array.isArray(initialDraft.attachedTargets)) {
+      return initialDraft.attachedTargets
+    }
+    return []
+  })
+
+  const handleToggleTarget = (targetType: 'pride' | 'gratitude', index: number) => {
+    playClick(soundEnabled)
+    setAttachedTargets((prev) => {
+      const current = prev.length > 0 ? prev : [{ type: tab, index: activeSlot + 1 }]
+      const exists = current.some((t) => t.type === targetType && t.index === index)
+      if (exists) {
+        return current.filter((t) => !(t.type === targetType && t.index === index))
+      } else {
+        return [...current, { type: targetType, index }]
+      }
+    })
+  }
+
+  const isTargetActive = (targetType: 'pride' | 'gratitude', index: number) => {
+    if (attachedTargets.length === 0 && preview) {
+      return tab === targetType && activeSlot + 1 === index
+    }
+    return attachedTargets.some((t) => t.type === targetType && t.index === index)
+  }
 
   useEffect(() => {
     if (candidatePhoto) {
@@ -349,6 +381,7 @@ export function Composer({
         prides,
         gratitudes,
         photo: preview,
+        attachedTargets,
         tab,
         extra,
         lastSavedISO: new Date().toISOString(),
@@ -368,7 +401,7 @@ export function Composer({
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [prides, gratitudes, preview, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis])
+  }, [prides, gratitudes, preview, attachedTargets, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -380,6 +413,9 @@ export function Composer({
       previewRef.current = url
       setPreview(url)
       setSelectedFile(file)
+      if (attachedTargets.length === 0) {
+        setAttachedTargets([{ type: tab, index: activeSlot + 1 }])
+      }
 
       try {
         const id = await savePhoto(file)
@@ -399,6 +435,7 @@ export function Composer({
     previewRef.current = null
     setPhotoId(null)
     setSelectedFile(null)
+    setAttachedTargets([])
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
@@ -577,10 +614,16 @@ export function Composer({
       ? exactScore
       : (prideScores.length > 0 ? Number((prideScores.reduce((a, b) => a + b, 0) / prideScores.length).toFixed(1)) : undefined)
 
+    const resolvedTargets = attachedTargets.length > 0
+      ? attachedTargets
+      : (preview ? [{ type: tab, index: activeSlot + 1 }] : [])
+
     return {
       prides: filledPrides,
       gratitudes: filledGratitudes,
       photo: photoUrlOverride !== undefined ? photoUrlOverride : (photoId || preview),
+      attachedTargets: resolvedTargets,
+      attached_targets: resolvedTargets,
       ratings,
       score: computedScore,
       aiScore: computedScore,
@@ -598,6 +641,7 @@ export function Composer({
       prides,
       gratitudes,
       photo: preview,
+      attachedTargets,
       tab,
       extra,
       lastSavedISO: new Date().toISOString(),
@@ -955,20 +999,88 @@ export function Composer({
 
       {/* Превью фото, если прикреплено */}
       {preview && (
-        <div className="relative w-full max-h-[260px] my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336] flex items-center justify-center">
-          <img
-            src={preview}
-            className="max-h-[260px] w-auto object-contain rounded-xl"
-            alt="Фото дня"
-          />
-          <button
-            type="button"
-            onClick={handleRemovePhoto}
-            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-black text-white border border-white/20 transition z-10"
-            aria-label="Удалить фото"
-          >
-            ✕
-          </button>
+        <div className="relative w-full my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336] flex flex-col">
+          <div className="relative w-full max-h-[260px] flex items-center justify-center overflow-hidden bg-black/40">
+            <img
+              src={preview}
+              className="max-h-[260px] w-auto object-contain rounded-xl"
+              alt="Фото дня"
+            />
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/80 hover:bg-black text-white border border-white/20 transition z-10"
+              aria-label="Удалить фото"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Стеклянный оверлей селектора привязки */}
+          <div className="p-3 bg-zinc-950/85 backdrop-blur-md border-t border-[#2f3336] flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-[#71767b] font-medium">К чему относится это фото?</span>
+              <span className="text-[10px] text-zinc-500 font-mono">мультивыбор</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+              {/* Ряд Гордостей: оранжевые круглые кнопки 1 2 3 4 5 */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-amber-500 font-bold flex items-center gap-1 min-w-[70px] flex-none">
+                  🔥 Гордости:
+                </span>
+                <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к гордостям">
+                  {[1, 2, 3, 4, 5].map((num) => {
+                    const active = isTargetActive('pride', num)
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => handleToggleTarget('pride', num)}
+                        className={`w-7 h-7 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center min-h-[28px] min-w-[28px] ${
+                          active
+                            ? 'bg-amber-500 text-black shadow-[0_0_8px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/50 scale-105'
+                            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700/60'
+                        }`}
+                        title={`Привязать к Гордости #${num}`}
+                        aria-pressed={active}
+                      >
+                        {num}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Ряд Благодарностей: розовые круглые кнопки 1 2 3 4 5 */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-rose-500 font-bold flex items-center gap-1 min-w-[95px] flex-none">
+                  ❤️ Благодарности:
+                </span>
+                <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к благодарностям">
+                  {[1, 2, 3, 4, 5].map((num) => {
+                    const active = isTargetActive('gratitude', num)
+                    return (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => handleToggleTarget('gratitude', num)}
+                        className={`w-7 h-7 rounded-full text-xs font-mono font-bold transition-all flex items-center justify-center min-h-[28px] min-w-[28px] ${
+                          active
+                            ? 'bg-rose-500 text-white shadow-[0_0_8px_rgba(244,63,94,0.5)] ring-2 ring-rose-400/50 scale-105'
+                            : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border border-zinc-700/60'
+                        }`}
+                        title={`Привязать к Благодарности #${num}`}
+                        aria-pressed={active}
+                      >
+                        {num}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

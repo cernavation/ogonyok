@@ -13,6 +13,11 @@ export type ViewId =
 
 export type Mode = 'pride' | 'gratitude'
 
+export type AttachedPhotoTarget = {
+  type: 'pride' | 'gratitude'
+  index: number // 1..5
+}
+
 /* ────────────────────────────────────────────────────────────────────────
    ЭТАП 14 — СУПЕР-НАСТРОЙКИ: ТЕМА ОФОРМЛЕНИЯ, АКЦЕНТ, ШРИФТ, ПЛОТНОСТЬ
    ──────────────────────────────────────────────────────────────────────── */
@@ -82,6 +87,9 @@ export type Day = {
   gratitudes: (string | GratitudeEntry)[]
   photos?: string[]
   media_url?: string | null
+  /** Мульти-привязка фото к конкретным гордостям и благодарностям */
+  attached_targets?: AttachedPhotoTarget[] | null
+  attachedTargets?: AttachedPhotoTarget[] | null
   dateISO?: string
   status?: DayStatus
   /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */
@@ -275,6 +283,9 @@ export type ComposerPayload = {
   prides: string[]
   gratitudes: string[]
   photo: string | null
+  /** Мульти-привязка фото к гордостям и благодарностям */
+  attachedTargets?: AttachedPhotoTarget[]
+  attached_targets?: AttachedPhotoTarget[]
   ratings?: Record<number, { scale: number; score?: number; overcome: OvercomeLevel; comment?: string }>
   score?: number
   aiScore?: number
@@ -292,6 +303,7 @@ export type ComposerDraft = {
   prides: string[]
   gratitudes: string[]
   photo: string | null
+  attachedTargets?: AttachedPhotoTarget[]
   tab: Mode
   extra: boolean
   lastSavedISO: string
