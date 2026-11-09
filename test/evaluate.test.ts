@@ -120,4 +120,18 @@ describe('Pride Heuristic Evaluator', () => {
     const res3 = extractAndParseJson('```json\n{"score": 7.5, "verdict": "Хорошая работа"}\n```')
     assert.equal(res3.score, 7.5)
   })
+
+  it('отображает бейдж оценки для первой гордости в day-card.tsx и золотое свечение с фейерверком для 10★ в церемонии', async () => {
+    const fs = await import('node:fs')
+    const path = await import('node:path')
+    const cardCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/day-card.tsx'), 'utf8')
+    assert.ok(cardCode.includes('firstPride.score ?? firstPride.scale'), 'Первая гордость отображает бейдж оценки')
+    assert.ok(cardCode.includes('bg-black/40 border border-[#2f3336] text-[#e7e9ea]'), 'Бейдж первой гордости оформлен в едином стиле')
+
+    const ceremonyCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/evaluation-ceremony-modal.tsx'), 'utf8')
+    assert.ok(ceremonyCode.includes('from-amber-400 to-yellow-300'), 'Шкала гордости >= 9.0 имеет золотой градиент')
+    assert.ok(ceremonyCode.includes('shadow-[0_0_12px_rgba(251,191,36,0.4)]'), 'Шкала гордости >= 9.0 имеет неоновое свечение')
+    assert.ok(ceremonyCode.includes('text-[#ff6b35] font-bold'), 'Шкала < 9.0 оформлена в фирменном оранжевом стиле')
+    assert.ok(ceremonyCode.includes("['#ffd700', '#ffa500', '#ffffff']"), 'Для оценки 10.0★ запускается салют с золотыми искрами')
+  })
 })

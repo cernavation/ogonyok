@@ -300,21 +300,23 @@ function DayCardComponent({
   }
 
   const averageScore = useMemo(() => {
-    if (typeof day.score === 'number' && !isNaN(day.score) && day.score > 0) {
-      return Number(day.score.toFixed(1))
-    }
-    if (typeof day.aiScore === 'number' && !isNaN(day.aiScore) && day.aiScore > 0) {
-      return Number(day.aiScore.toFixed(1))
-    }
     const valid = (day.prides || []).filter(
       (p) => {
         const sc = typeof p.score === 'number' ? p.score : p.scale
         return typeof sc === 'number' && !isNaN(sc) && sc > 0 && p.text !== '—'
       }
     )
-    if (valid.length === 0) return null
-    const sum = valid.reduce((acc, p) => acc + (typeof p.score === 'number' ? p.score : p.scale), 0)
-    return Number((sum / valid.length).toFixed(1))
+    if (valid.length > 0) {
+      const sum = valid.reduce((acc, p) => acc + (typeof p.score === 'number' ? p.score : (p.scale || 0)), 0)
+      return Number((sum / valid.length).toFixed(1))
+    }
+    if (typeof day.score === 'number' && !isNaN(day.score) && day.score > 0) {
+      return Number(day.score.toFixed(1))
+    }
+    if (typeof day.aiScore === 'number' && !isNaN(day.aiScore) && day.aiScore > 0) {
+      return Number(day.aiScore.toFixed(1))
+    }
+    return null
   }, [day.score, day.aiScore, day.prides])
 
   const dateStr = day.dateISO
@@ -400,50 +402,57 @@ function DayCardComponent({
               </div>
             </div>
 
-            {/* Post body — ТЕКСТ ПОСТОВ: text-[15px] leading-6 font-normal text-[var(--text)] */}
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <p className="text-[15px] leading-6 font-normal text-[var(--text)] flex-1">
+            {/* Post body — ТЕКСТ ПОСТОВ */}
+            <div className="flex items-start justify-between gap-3 mt-1 mb-2">
+              <p className="text-[15px] leading-relaxed text-[var(--text)] flex-1">
                 {firstPride?.text || day.title}
               </p>
-              {firstPride && (() => {
-                const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
-                const isPub = effectiveVisibility === 'public'
-                return (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      const actualFirstIdx = (day.prides || []).indexOf(firstPride)
-                      const nextVis = isPub ? 'private' : 'public'
-                      setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
-                      onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
-                    }}
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
-                      isPub
-                        ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
-                        : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
-                    }`}
-                    title={
-                      isPub
-                        ? '🌐 Публично (видят все) — нажми для переключения'
-                        : '🔒 Лично (видит только автор) — нажми для переключения'
-                    }
-                    aria-label="Видимость гордости"
-                  >
-                    {isPub ? (
-                      <>
-                        <Globe size={11} className="text-sky-400" />
-                        <span>Публично</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={11} className="text-zinc-400" />
-                        <span>Лично</span>
-                      </>
-                    )}
-                  </button>
-                )
-              })()}
+              <div className="flex items-center gap-2 flex-none">
+                {firstPride && ((typeof firstPride.score === 'number' && firstPride.score > 0) || (typeof firstPride.scale === 'number' && firstPride.scale > 0)) && (
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold shrink-0 bg-black/40 border border-[#2f3336] text-[#e7e9ea]">
+                    {Number(firstPride.score ?? firstPride.scale).toFixed(1)}★
+                  </span>
+                )}
+                {firstPride && (() => {
+                  const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
+                  const isPub = effectiveVisibility === 'public'
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        const actualFirstIdx = (day.prides || []).indexOf(firstPride)
+                        const nextVis = isPub ? 'private' : 'public'
+                        setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
+                        onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
+                      }}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
+                        isPub
+                          ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
+                          : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
+                      }`}
+                      title={
+                        isPub
+                          ? '🌐 Публично (видят все) — нажми для переключения'
+                          : '🔒 Лично (видит только автор) — нажми для переключения'
+                      }
+                      aria-label="Видимость гордости"
+                    >
+                      {isPub ? (
+                        <>
+                          <Globe size={11} className="text-sky-400" />
+                          <span>Публично</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={11} className="text-zinc-400" />
+                          <span>Лично</span>
+                        </>
+                      )}
+                    </button>
+                  )
+                })()}
+              </div>
             </div>
 
             {/* Toggle «ещё N гордостей · M благодарностей» */}

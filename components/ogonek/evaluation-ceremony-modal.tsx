@@ -112,12 +112,9 @@ export function EvaluationCeremonyModal({
           }
         })
 
-        const prideScoresSum = evaluatedItems.reduce((acc, it) => acc + it.score, 0)
-        const avg = typeof data?.score === 'number' && !isNaN(data.score)
-          ? Number(data.score.toFixed(1))
-          : evaluatedItems.length > 0
-          ? Number((prideScoresSum / evaluatedItems.length).toFixed(1))
-          : 8.8
+        // Строгая математика балла: среднее арифметическое всех гордостей
+        const avg = evaluatedItems.reduce((acc, p) => acc + (p.score || 0), 0) / (evaluatedItems.length || 1)
+        const exactScore = Number(avg.toFixed(1))
 
         const mentor =
           data?.verdict ||
@@ -126,7 +123,7 @@ export function EvaluationCeremonyModal({
           'Сегодня ты проявил характер и удержал планку дисциплины. Каждое преодоление укрепляет твой стрик и внутренний огонь. Продолжай движение вперед!'
 
         setItems(evaluatedItems)
-        setAverageScore(avg)
+        setAverageScore(exactScore)
         setMentorWord(mentor)
         setIsLoading(false)
 
@@ -145,8 +142,9 @@ export function EvaluationCeremonyModal({
           tags: ['#Характер'],
           type: 'pride',
         }))
+        const fbAvg = fallbackItems.reduce((acc, p) => acc + (p.score || 0), 0) / (fallbackItems.length || 1)
         setItems(fallbackItems)
-        setAverageScore(8.8)
+        setAverageScore(Number(fbAvg.toFixed(1)))
         setIsLoading(false)
         startSequentialAnimation(fallbackItems)
       })
@@ -173,18 +171,19 @@ export function EvaluationCeremonyModal({
         }
 
         // Если получен наивысший балл 10★ — праздничные частицы конфетти
-        if (item.score >= 9.8) {
+        if (item.score >= 9.95) {
           const confettiTimer = setTimeout(() => {
             playSuccess(soundEnabled)
             try {
+              const itemYPosition = 0.35 + (index / Math.max(1, list.length)) * 0.35
               confetti({
-                particleCount: 50,
+                particleCount: 45,
                 spread: 70,
-                origin: { y: 0.65 },
-                colors: ['#FF5C00', '#FFD700', '#FFFFFF', '#00BA7C'],
+                origin: { y: itemYPosition },
+                colors: ['#ffd700', '#ffa500', '#ffffff'],
               })
             } catch {}
-          }, stepDuration - 100)
+          }, stepDuration - 50)
           animationTimersRef.current.push(confettiTimer)
         }
       }, index * stepDuration)
@@ -235,8 +234,11 @@ export function EvaluationCeremonyModal({
       }
     })
 
+    const avg = items.reduce((acc, p) => acc + (p.score || 0), 0) / (items.length || 1)
+    const finalScore = Number(avg.toFixed(1))
+
     onNotify?.('✅ Запись успешно сохранена в облако Supabase')
-    onAccept(evalMap, mentorWord, averageScore)
+    onAccept(evalMap, mentorWord, finalScore)
   }
 
   if (!isOpen) return null
@@ -312,7 +314,8 @@ export function EvaluationCeremonyModal({
             {items.map((item, idx) => {
               const currentScore = animatedScores[idx] ?? 0
               const isActive = activeItemIndex === idx && !isFinished
-              const isTen = item.score >= 9.8
+              const isGold = item.score >= 9.0
+              const isTen = item.score >= 9.95
 
               return (
                 <div
@@ -337,10 +340,10 @@ export function EvaluationCeremonyModal({
                     <div className="flex items-center gap-1 flex-none">
                       <span
                         className={`text-xs sm:text-sm font-black transition-all ${
-                          isTen
-                            ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
-                            : 'text-[var(--accent)]'
-                        }`}
+                          isGold
+                            ? 'text-amber-400 font-bold drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+                            : 'text-[#ff6b35] font-bold'
+                        } ${isTen ? 'scale-110' : ''}`}
                       >
                         ★ {currentScore.toFixed(1)}
                       </span>
@@ -351,7 +354,9 @@ export function EvaluationCeremonyModal({
                   <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-200 ${
-                        isTen ? 'bg-gradient-to-r from-amber-500 to-yellow-300 shadow-[0_0_10px_#fbbf24]' : 'bg-[var(--accent)]'
+                        isGold
+                          ? 'bg-gradient-to-r from-amber-400 to-yellow-300 shadow-[0_0_12px_rgba(251,191,36,0.4)]'
+                          : 'bg-[#ff6b35]'
                       }`}
                       style={{ width: `${Math.min(100, (currentScore / 10) * 100)}%` }}
                     />

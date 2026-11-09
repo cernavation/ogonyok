@@ -14,8 +14,8 @@ describe('Мульти-привязка фото к гордостям и бла
   it('formatPhotoAttachmentCaption: форматирует одиночную гордость с текстом', () => {
     const targets: AttachedPhotoTarget[] = [{ type: 'pride', index: 2 }]
     const prides = [
-      { text: 'Первое дело' },
-      { text: 'Пробежал полумарафон 21 км' },
+      { num: '1', text: 'Первое дело', scale: 8, overcome: 1 as const },
+      { num: '2', text: 'Пробежал полумарафон 21 км', scale: 10, overcome: 3 as const },
     ]
     const caption = formatPhotoAttachmentCaption(targets, prides, [])
     assert.strictEqual(caption, '🔥 Иллюстрация к Гордости #2: Пробежал полумарафон 21 км')
