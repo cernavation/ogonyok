@@ -1,6 +1,7 @@
 export type ViewId =
   | 'home'
   | 'explore'
+  | 'notifications'
   | 'messages'
   | 'comrades'
   | 'vault'

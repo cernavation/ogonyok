@@ -1,24 +1,28 @@
 'use client'
 
-import { Flame, Settings } from 'lucide-react'
+import { Bell, Flame, Settings } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { useUnreadCounts } from '@/lib/ogonek/use-unread-counts'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ViewId } from '@/lib/ogonek/types'
 
 type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (msg: string) => void
+  onOpenNotifications?: () => void
   streak?: number
   streakStatus?: StreakStatus
   hoursLeft?: number | null
 }
 
-export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
+export function MobileTopBar({ onNavigate, onNotify, onOpenNotifications, streak }: Props) {
   const { state, currentUser, signOut } = useOgonekStore()
+  const currentUid = currentUser?.id || state.auth?.activeAccountId
+  const { counts } = useUnreadCounts(currentUid)
   const [drawerOpen, setDrawerOpen] = useState(false)
   useBodyScrollLock(drawerOpen)
 
@@ -66,7 +70,7 @@ export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
           <span className="font-bold text-[17px] tracking-tight text-[var(--text)]">Огонёк</span>
         </button>
 
-        {/* Right: Streak badge + Settings icon */}
+        {/* Right: Streak badge + Bell + Settings icon */}
         <div className="flex items-center gap-1.5">
           {streak != null && streak > 0 && (
             <button
@@ -79,6 +83,25 @@ export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
               <span className="text-[12px] font-bold text-[var(--text)]">{streak}</span>
             </button>
           )}
+          <button
+            type="button"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors relative"
+            aria-label="Уведомления"
+            onClick={() => {
+              if (onOpenNotifications) {
+                onOpenNotifications()
+              } else {
+                onNavigate('notifications')
+              }
+            }}
+          >
+            <Bell size={20} strokeWidth={1.8} />
+            {counts.notifications > 0 && (
+              <span className="absolute top-1 right-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[9px] font-bold flex items-center justify-center shadow">
+                {counts.notifications > 9 ? '9+' : counts.notifications}
+              </span>
+            )}
+          </button>
           <button
             type="button"
             className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors"

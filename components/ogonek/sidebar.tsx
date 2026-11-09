@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import {
   BadgeCheck,
   BarChart2,
+  Bell,
   Flame,
   Home,
   LogOut,
@@ -26,6 +27,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getSocialCounts } from '@/lib/ogonek/social'
+import { useUnreadCounts } from '@/lib/ogonek/use-unread-counts'
 import { Tooltip } from './tooltip'
 
 type Props = {
@@ -55,6 +57,7 @@ interface NavItemDef {
 const UNIFIED_NAV: NavItemDef[] = [
   { id: 'home', label: 'Главная' },
   { id: 'explore', label: 'Поиск' },
+  { id: 'notifications', label: 'Уведомления' },
   { id: 'comrades', label: 'Соратники' },
   { id: 'messages', label: 'Чаты' },
   { id: 'profile', label: 'Профиль' },
@@ -114,6 +117,15 @@ function NavIcon({ id, isActive, size = 24 }: { id: ViewId; isActive: boolean; s
             </>
           )}
         </svg>
+      )
+
+    case 'notifications':
+      return (
+        <Bell
+          size={24}
+          strokeWidth={2}
+          className={`w-6 h-6 shrink-0 ${isActive ? 'text-[var(--text)] fill-current' : 'text-[var(--muted)] group-hover:text-[var(--text)] transition-colors'}`}
+        />
       )
 
     case 'messages':
@@ -321,7 +333,11 @@ export function Sidebar({
   isCollapsed: propIsCollapsed,
 }: Props) {
   const { state, signOut, currentUser } = useOgonekStore()
-  const unread = totalUnread(state.chatThreads ?? {})
+  const currentUid = currentUser?.id || state.auth?.activeAccountId
+  const { counts: unreadCounts } = useUnreadCounts(currentUid)
+  const unreadChats = unreadCounts.chats > 0 ? unreadCounts.chats : totalUnread(state.chatThreads ?? {})
+  const unreadComrades = unreadCounts.comrades > 0 ? unreadCounts.comrades : 0
+  const unreadNotifications = unreadCounts.notifications
   const [socialCounts, setSocialCounts] = useState({ incomingRequests: 0 })
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -414,28 +430,40 @@ export function Sidebar({
           >
             {label}
           </span>
-          {id === 'messages' && unread > 0 && (
+          {id === 'messages' && unreadChats > 0 && (
             <span
               className={
                 isCollapsed
                   ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
                   : 'nav-item__badge'
               }
-              aria-label={`${unread} непрочитанных`}
+              aria-label={`${unreadChats} непрочитанных сообщений`}
             >
-              {unread > 99 ? '99+' : unread}
+              {unreadChats > 99 ? '99+' : unreadChats}
             </span>
           )}
-          {id === 'comrades' && socialCounts.incomingRequests > 0 && (
+          {id === 'comrades' && (unreadComrades > 0 || socialCounts.incomingRequests > 0) && (
             <span
               className={
                 isCollapsed
                   ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
                   : 'nav-item__badge'
               }
-              aria-label={`${socialCounts.incomingRequests} входящих заявок`}
+              aria-label={`${unreadComrades || socialCounts.incomingRequests} входящих заявок`}
             >
-              {socialCounts.incomingRequests > 99 ? '99+' : socialCounts.incomingRequests}
+              {(unreadComrades || socialCounts.incomingRequests) > 99 ? '99+' : (unreadComrades || socialCounts.incomingRequests)}
+            </span>
+          )}
+          {id === 'notifications' && unreadNotifications > 0 && (
+            <span
+              className={
+                isCollapsed
+                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
+                  : 'nav-item__badge'
+              }
+              aria-label={`${unreadNotifications} непрочитанных уведомлений`}
+            >
+              {unreadNotifications > 99 ? '99+' : unreadNotifications}
             </span>
           )}
         </button>

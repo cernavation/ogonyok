@@ -44,6 +44,7 @@ import { PrivacyPanel, StreakDeadlinePanel } from '../settings'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { DifficultyLevelPanel } from '../settings/difficulty-level-panel'
 import { TelegramReminderPanel } from '../settings/telegram-reminder-panel'
+import { NotificationsSettingsPanel } from '../settings/notifications-settings-panel'
 import { Button } from '../ui'
 
 type Props = {
@@ -381,6 +382,7 @@ export function SettingsView({
       case 'notifications':
         return (
           <div className="flex flex-col gap-5 p-4 sm:p-5">
+            <NotificationsSettingsPanel onNotify={onNotify} />
             <TelegramReminderPanel
               chatId={state.profile.telegramChatId}
               reminderTimes={state.profile.reminderTimes}

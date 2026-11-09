@@ -41,6 +41,13 @@ import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/og
 import { getSupabase } from '@/lib/supabase/browser'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { Phone, PhoneOff, Video } from 'lucide-react'
+import { TelegramToastStack, dispatchTelegramToast } from './notifications/telegram-toast-stack'
+import { NotificationCenterModal } from './notifications/notification-center-modal'
+import {
+  playNewMessageSound,
+  playFriendRequestSound,
+  playMissedCallSound,
+} from '@/lib/ogonek/notification-sound'
 
 // Динамические импорты тяжелых модальных окон (Zero Initial Lag, 120 FPS сплиттинг)
 const Composer = dynamic(() => import('./composer').then((m) => m.Composer), { ssr: false })
@@ -64,6 +71,7 @@ export function AppShell() {
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
+  const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
 
   // Аудио и видео звонки: глобальный стейт
   const [incomingCall, setIncomingCall] = useState<{
@@ -114,6 +122,7 @@ export function AppShell() {
     provisionDemoAccountSecrets,
     continueAsGuest,
     setActiveChatFriend,
+    sendChatMessage,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -149,6 +158,24 @@ export function AppShell() {
   useEffect(() => {
     void provisionDemoAccountSecrets()
   }, [provisionDemoAccountSecrets])
+
+  const navigate = useCallback((next: ViewId, targetUserId?: string | null) => {
+    playClick(state.soundEnabled)
+    if (next === 'notifications') {
+      setNotificationCenterOpen(true)
+      return
+    }
+    setView(next)
+    setViewProfileUserId(next === 'profile' ? (targetUserId || null) : null)
+    if (typeof window !== 'undefined') {
+      let url = next === 'home' ? '/' : `/?view=${next}`
+      if (next === 'profile' && targetUserId) {
+        url += `&userId=${encodeURIComponent(targetUserId)}`
+      }
+      window.history.pushState(null, '', url)
+    }
+    window.scrollTo(0, 0)
+  }, [state.soundEnabled])
 
   // Прямой Realtime Broadcast канал входящих звонков: user_calls_${currentUser.id}
   useEffect(() => {
@@ -231,13 +258,79 @@ export function AppShell() {
           }
         }
       )
+      // 3. Уведомления в реальном времени (новые сообщения, заявки, пропущенные звонки, реакции)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${myId}`,
+        },
+        (payload) => {
+          const notif = payload.new as any
+          if (!notif) return
+
+          // Не показываем тост и звук, если пользователь прямо сейчас смотрит этот чат в активной вкладке
+          const isLookingAtChat =
+            typeof document !== 'undefined' &&
+            document.hasFocus() &&
+            view === 'messages' &&
+            notif.actor_id &&
+            state.chatActiveFriendId === notif.actor_id
+
+          if (!isLookingAtChat) {
+            // Воспроизведение звука
+            if (notif.type === 'new_message') {
+              playNewMessageSound()
+            } else if (notif.type === 'missed_call') {
+              playMissedCallSound()
+            } else if (notif.type === 'friend_request' || notif.type === 'friend_accepted') {
+              playFriendRequestSound()
+            }
+
+            // Всплывающее уведомление Telegram Desktop
+            dispatchTelegramToast({
+              id: notif.id,
+              type: notif.type,
+              title: notif.title || 'Огонёк',
+              body: notif.body || 'Новое уведомление',
+              senderId: notif.actor_id,
+              threadKey: notif.payload?.thread_key,
+              avatarUrl: notif.payload?.sender_avatar || notif.payload?.actor_avatar,
+            })
+
+            // Системное уведомление браузера, если вкладка свернута
+            if (
+              typeof document !== 'undefined' &&
+              document.hidden &&
+              typeof window !== 'undefined' &&
+              'Notification' in window &&
+              Notification.permission === 'granted'
+            ) {
+              try {
+                const sysNotif = new Notification(notif.title || 'Огонёк', {
+                  body: notif.body || 'Новое уведомление',
+                  icon: '/icons/icon-192.png',
+                })
+                sysNotif.onclick = () => {
+                  window.focus()
+                  if (notif.actor_id) {
+                    navigate('messages', notif.actor_id)
+                  }
+                }
+              } catch {}
+            }
+          }
+        }
+      )
       .subscribe()
 
     return () => {
       stopCallSounds()
       supabase.removeChannel(channel)
     }
-  }, [currentUser?.id, state.auth?.activeAccountId, state.soundEnabled])
+  }, [currentUser?.id, state.auth?.activeAccountId, state.soundEnabled, view, state.chatActiveFriendId, navigate])
 
   const handleAcceptIncomingCall = async () => {
     stopCallSounds()
@@ -407,20 +500,6 @@ export function AppShell() {
     notify('Журнал разблокирован')
   }, [notify])
 
-  const navigate = useCallback((next: ViewId, targetUserId?: string | null) => {
-    playClick(state.soundEnabled)
-    setView(next)
-    setViewProfileUserId(next === 'profile' ? (targetUserId || null) : null)
-    if (typeof window !== 'undefined') {
-      let url = next === 'home' ? '/' : `/?view=${next}`
-      if (next === 'profile' && targetUserId) {
-        url += `&userId=${encodeURIComponent(targetUserId)}`
-      }
-      window.history.pushState(null, '', url)
-    }
-    window.scrollTo(0, 0)
-  }, [state.soundEnabled])
-
   // Синхронизация view с URL (query param ?view=...) и поддержка кнопки «Назад»
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -444,6 +523,8 @@ export function AppShell() {
       const validViews: ViewId[] = [
         'home',
         'explore',
+        'notifications',
+        'comrades',
         'messages',
         'profile',
         'vault',
@@ -455,7 +536,11 @@ export function AppShell() {
         'premium',
       ]
       if (v && validViews.includes(v)) {
-        setView(v)
+        if (v === 'notifications') {
+          setNotificationCenterOpen(true)
+        } else {
+          setView(v)
+        }
         if (v === 'profile') {
           setViewProfileUserId(u || null)
         } else {
@@ -730,6 +815,15 @@ export function AppShell() {
           soundEnabled={state.soundEnabled}
         />
       ),
+      notifications: (
+        <NotificationCenterModal
+          isOpen={true}
+          onClose={() => navigate('home')}
+          onNavigate={navigate}
+          onNotify={notify}
+          currentUserId={currentUser?.id || state.auth?.activeAccountId}
+        />
+      ),
       comrades: (
         <ComradesView
           onNavigate={navigate}
@@ -940,6 +1034,7 @@ export function AppShell() {
                   <MobileTopBar
                     onNavigate={navigate}
                     onNotify={notify}
+                    onOpenNotifications={() => setNotificationCenterOpen(true)}
                     streak={streakState.streak}
                     streakStatus={streakState.status}
                     hoursLeft={streakState.hoursLeft}
@@ -1164,6 +1259,23 @@ export function AppShell() {
             />
           </CallErrorBoundary>
         )}
+
+        <TelegramToastStack
+          activeView={view}
+          activeChatFriendId={state.chatActiveFriendId}
+          onNavigate={navigate}
+          onSendQuickReply={async (friendId, text) => {
+            await sendChatMessage(friendId, text)
+          }}
+        />
+
+        <NotificationCenterModal
+          isOpen={notificationCenterOpen}
+          onClose={() => setNotificationCenterOpen(false)}
+          onNavigate={navigate}
+          onNotify={notify}
+          currentUserId={currentUser?.id || state.auth?.activeAccountId}
+        />
 
         <Toast message={toast} />
       </main>

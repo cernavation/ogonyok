@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   Mic,
   PenSquare,
+  PhoneMissed,
   Pin,
   Plus,
   Search,
@@ -486,6 +487,11 @@ export function MessengerDialogList({
                               )}
                             </span>
                           )}
+                          {(last.text?.includes('Пропущенный звонок') || (last as any).attachment?.type === 'missed_call') && (
+                            <span className="flex items-center gap-1 text-rose-400 font-semibold shrink-0">
+                              <PhoneMissed size={13} /> Пропущенный звонок
+                            </span>
+                          )}
                           {last.media?.type === 'audio' && (
                             <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
                               <Mic size={13} /> Голосовое
@@ -508,10 +514,22 @@ export function MessengerDialogList({
                       )}
                     </div>
 
-                    {/* Счётчик непрочитанных: акцентный круг справа */}
+                    {/* Счётчик непрочитанных: акцентный круг справа или красный бейдж для пропущенных */}
                     {unread > 0 && (
-                      <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-sm animate-pulse">
-                        {unread > 99 ? '99+' : unread}
+                      <span
+                        className={`min-w-[22px] h-[22px] px-1.5 rounded-full text-white text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-sm animate-pulse ${
+                          last?.text?.includes('Пропущенный звонок') || (last as any)?.attachment?.type === 'missed_call'
+                            ? 'bg-rose-500'
+                            : 'bg-[var(--accent)] text-[var(--accent-text)]'
+                        }`}
+                      >
+                        {last?.text?.includes('Пропущенный звонок') || (last as any)?.attachment?.type === 'missed_call' ? (
+                          <PhoneMissed size={12} />
+                        ) : unread > 99 ? (
+                          '99+'
+                        ) : (
+                          unread
+                        )}
                       </span>
                     )}
                   </div>

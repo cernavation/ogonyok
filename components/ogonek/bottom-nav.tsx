@@ -7,6 +7,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getSocialCounts } from '@/lib/ogonek/social'
+import { useUnreadCounts } from '@/lib/ogonek/use-unread-counts'
 import { useEffect, useState } from 'react'
 
 const ITEMS = [
@@ -24,7 +25,10 @@ type Props = {
 
 export function BottomNav({ view, onNavigate, onCompose }: Props) {
   const { state, currentUser } = useOgonekStore()
-  const unread = totalUnread(state.chatThreads ?? {})
+  const currentUid = currentUser?.id || state.auth?.activeAccountId
+  const { counts: unreadCounts } = useUnreadCounts(currentUid)
+  const unreadChats = unreadCounts.chats > 0 ? unreadCounts.chats : totalUnread(state.chatThreads ?? {})
+  const unreadComrades = unreadCounts.comrades > 0 ? unreadCounts.comrades : 0
   const [socialCounts, setSocialCounts] = useState({ incomingRequests: 0 })
 
   useEffect(() => {
@@ -95,20 +99,20 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
                   className="w-6 h-6 stroke-[2px]"
                 />
               )}
-              {id === 'messages' && unread > 0 && (
+              {id === 'messages' && unreadChats > 0 && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center"
-                  aria-label={`${unread} непрочитанных`}
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow"
+                  aria-label={`${unreadChats} непрочитанных`}
                 >
-                  {unread > 9 ? '9+' : unread}
+                  {unreadChats > 99 ? '99+' : unreadChats}
                 </span>
               )}
-              {id === 'comrades' && socialCounts.incomingRequests > 0 && (
+              {id === 'comrades' && (unreadComrades > 0 || socialCounts.incomingRequests > 0) && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center"
-                  aria-label={`${socialCounts.incomingRequests} входящих заявок`}
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow"
+                  aria-label={`${unreadComrades || socialCounts.incomingRequests} входящих заявок`}
                 >
-                  {socialCounts.incomingRequests > 9 ? '9+' : socialCounts.incomingRequests}
+                  {(unreadComrades || socialCounts.incomingRequests) > 99 ? '99+' : (unreadComrades || socialCounts.incomingRequests)}
                 </span>
               )}
             </button>

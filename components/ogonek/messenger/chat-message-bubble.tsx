@@ -17,6 +17,7 @@ import {
   Mic,
   MoreHorizontal,
   Pencil,
+  PhoneMissed,
   Pin,
   Reply,
   SmilePlus,
@@ -241,6 +242,22 @@ export function ChatMessageBubble({
     checkOnlyEmojis(message.text)
 
   const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
+
+  const isMissedCall =
+    Boolean((message as any).is_system) ||
+    (message.attachment as any)?.type === 'missed_call' ||
+    (typeof message.text === 'string' && message.text.includes('Пропущенный звонок'))
+
+  if (isMissedCall) {
+    return (
+      <div className="w-full flex justify-center my-3 select-none">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs shadow-sm">
+          <PhoneMissed size={14} className="text-rose-400" />
+          <span className="font-medium">{message.text || 'Пропущенный звонок'}</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

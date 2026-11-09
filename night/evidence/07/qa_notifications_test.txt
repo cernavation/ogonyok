@@ -1,0 +1,61 @@
+==============================================================================
+STAGE 07 QA VERIFICATION: NOTIFICATION CENTER, UNREAD COUNTS, TOASTS & AUDIO
+==============================================================================
+
+--- Suite 1: Migration 070_notifications.sql & SQL_ORDER.md ---
+  [PASS] 070_notifications.sql file exists on disk
+  [PASS] Notification type 'friend_request' present in schema
+  [PASS] Notification type 'friend_accepted' present in schema
+  [PASS] Notification type 'new_message' present in schema
+  [PASS] Notification type 'missed_call' present in schema
+  [PASS] Notification type 'comment' present in schema
+  [PASS] Notification type 'reaction' present in schema
+  [PASS] Notification type 'group_invite' present in schema
+  [PASS] Notification type 'milestone' present in schema
+  [PASS] Notification type 'system' present in schema
+  [PASS] Composite index (user_id, read_at, created_at desc) present
+  [PASS] RLS enabled on public.notifications
+  [PASS] Client INSERT forbidden (triggers & security definer only)
+  [PASS] RPC public.get_unread_counts declared
+  [PASS] RPC public.mark_notification_read declared
+  [PASS] RPC public.mark_all_notifications_read declared
+  [PASS] RPC public.mark_chat_read declared
+  [PASS] 070_notifications.sql registered in night/SQL_ORDER.md
+
+--- Suite 2: Unread Counts Engine & Persistence Across Reloads ---
+  [PASS] Initial unread counts are all 0
+  [PASS] After incoming message: chats=1, notifications=1
+  [PASS] Total unread is 2
+  [PASS] Persistence: unread count survives page reload
+  [PASS] After opening chat: chats count drops to 0
+  [PASS] Related message notifications marked read
+
+--- Suite 3: Telegram Toast Stack & Capping at 3 Items ---
+  [PASS] Toast added when outside active chat
+  [PASS] 30 messages in a row do NOT create 30 toasts: stack strictly <= 3
+  [PASS] Newest message is on top of stack
+  [PASS] Toast is suppressed when chat is actively open
+
+--- Suite 4: Web Audio Synthesizer, DND Mode & Unlocking ---
+  [PASS] playNewMessageSound synthesized via Web Audio oscillators
+  [PASS] playFriendRequestSound synthesized via Web Audio
+  [PASS] playMissedCallSound synthesized via Web Audio
+  [PASS] Gesture unlocking listeners (pointerdown, keydown, touchstart) present
+  [PASS] DND (Do Not Disturb) expiry checked in isNotificationSoundAllowed
+
+--- Suite 5: Missed Call Notifications & System Messages ---
+  [PASS] missed_calls count incremented to 1
+  [PASS] System message created in direct_messages
+
+--- Suite 6: Reaction Aggregation & Spam Protection ---
+  [PASS] First reaction creates a notification
+  [PASS] Subsequent reactions in 1 minute are aggregated, NOT spammed
+
+--- Suite 7: Document Title & Favicon Badge ---
+  [PASS] 0 unread -> "Огонёк"
+  [PASS] 3 unread -> "(3) Огонёк"
+  [PASS] 150 unread -> "(99+) Огонёк"
+
+==============================================================================
+STAGE 07 QA TEST SUMMARY: TOTAL 40 | PASSED: 40 | FAILED: 0
+==============================================================================
