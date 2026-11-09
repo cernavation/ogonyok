@@ -1,0 +1,9 @@
+═════════════════════════════════════════════════════════════════
+🧪 САМОПРОВЕРКА QA-ХАРНЕССА ДВУХ ПОЛЬЗОВАТЕЛЕЙ (scripts/qa/two-users.mjs)
+═════════════════════════════════════════════════════════════════
+[1/4] Инициализация харнесса и создание пользователей в staging...
+
+❌ Ошибка самопроверки two-users.mjs: Error: Ошибка создания User A: Invalid API key
+    at createTestHarness (file:///Users/user/Desktop/ogonyok-ai-clone/scripts/qa/two-users.mjs:86:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async selfTest (file:///Users/user/Desktop/ogonyok-ai-clone/scripts/qa/two-users.mjs:190:15)

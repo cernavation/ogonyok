@@ -1,0 +1,7 @@
+[shot] Starting capture: URL=http://localhost:3000, name=home, stage=00
+[shot] Output directory: /Users/user/Desktop/ogonyok-ai-clone/night/evidence/00
+[shot] Navigating desktop (1440x900)...
+[shot] Desktop screenshot saved: /Users/user/Desktop/ogonyok-ai-clone/night/evidence/00/home-1440x900.png
+[shot] Navigating mobile (390x844)...
+[shot] Mobile screenshot saved: /Users/user/Desktop/ogonyok-ai-clone/night/evidence/00/home-390x844.png
+[shot] Successfully captured both viewports for home
