@@ -1,16 +1,23 @@
 # UI EXPLORE SUITE — ОТЧЁТ ИССЛЕДОВАНИЯ ИНТЕРФЕЙСА
 
-- **Дата**: 2026-10-24T20:48:32.478Z
+- **Дата**: 2026-11-09T21:01:40.154Z
 - **Движок**: CHROMIUM
 - **Состояний исследовано**: 135
 - **Кнопок проверено**: 8
-- **Обнаружено проблем**: 0
+- **Обнаружено проблем**: 8
 
 ## Сводная таблица проблем
 
 | # | Тип | Устройство | Состояние | Описание проблемы | Скриншот-доказательство |
 |---|-----|------------|-----------|-------------------|-------------------------|
-| - | - | - | - | 0 проблем: все состояния доступны, ловушек нет | - |
+| 1 | `trap-state` | tablet-1024 | messages | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/tablet-1024/states/messages.png` |
+| 2 | `trap-state` | tablet-1024 | chat-thread | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/tablet-1024/states/chat-thread.png` |
+| 3 | `trap-state` | desktop-1280 | messages | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1280/states/messages.png` |
+| 4 | `trap-state` | desktop-1280 | chat-thread | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1280/states/chat-thread.png` |
+| 5 | `trap-state` | desktop-1440 | messages | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1440/states/messages.png` |
+| 6 | `trap-state` | desktop-1440 | chat-thread | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1440/states/chat-thread.png` |
+| 7 | `trap-state` | desktop-1920 | messages | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1920/states/messages.png` |
+| 8 | `trap-state` | desktop-1920 | chat-thread | Рейка иконок не содержит рабочей кнопки «Домой» | `explore/desktop-1920/states/chat-thread.png` |
 
 ## Каталог скриншотов по устройствам
 
