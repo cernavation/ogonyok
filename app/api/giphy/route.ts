@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
 import { apiErrorResponse, validateSearchParams, GiphyQuerySchema } from '@/lib/server/api-validator'
 
 export async function GET(request: Request) {
-  const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('giphy', ip, 30, 60_000)
-  if (!rateLimit.allowed) {
-    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов GIF. Подождите минуту.', 429)
-  }
+  const authUser = await getAuthenticatedUser(request)
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'giphy',
+    limit: 60,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) return rateLimitResponse
 
   try {
     const { searchParams } = new URL(request.url)
@@ -52,7 +56,9 @@ export async function GET(request: Request) {
       gifs,
     })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Ошибка Giphy'
-    return NextResponse.json({ keyConfigured: false, gifs: [], error: message }, { status: 500 })
+    return NextResponse.json(
+      { keyConfigured: true, gifs: [], error: String(err) },
+      { status: 500 }
+    )
   }
 }

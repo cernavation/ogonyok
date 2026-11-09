@@ -6,21 +6,8 @@ import {
   sanitizeRegulation,
 } from '@/lib/ogonek/achievement-regulation'
 import { apiErrorResponse, validateJsonBody, RegulateAchievementSchema } from '@/lib/server/api-validator'
-
-// In-memory rate limiter: 20 requests per minute per client IP
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = rateLimitMap.get(ip)
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 })
-    return true
-  }
-  if (record.count >= 20) return false
-  record.count++
-  return true
-}
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
 
 // ── DEEP CONTEXT SYSTEM PROMPT ──────────────────────────────────────────────
 const SYSTEM_PROMPT = `Ты — строгий верификатор достижений платформы «Огонёк» (дневник силы Алексея Черна, @cernavation).
@@ -57,11 +44,14 @@ const SYSTEM_PROMPT = `Ты — строгий верификатор дости
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
-
-    if (!checkRateLimit(ip)) {
-      return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов. Лимит: 20 запросов в минуту.', 429)
-    }
+    const authUser = await getAuthenticatedUser(request)
+    const rateLimitResponse = await applyRateLimit(request, {
+      route: 'achievements-regulate',
+      limit: 20,
+      windowSeconds: 60,
+      userId: authUser?.userId,
+    })
+    if (rateLimitResponse) return rateLimitResponse
 
     const validated = await validateJsonBody(request, RegulateAchievementSchema)
     if (!validated.success) {

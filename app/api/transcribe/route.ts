@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
+import { getEffectiveTier } from '@/lib/server/tier'
+import { getTierLimits } from '@/lib/ogonek/permissions'
 import { apiErrorResponse, validateJsonBody, TranscribeSchema } from '@/lib/server/api-validator'
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('transcribe', ip, 30, 60_000)
-  if (!rateLimit.allowed) {
-    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов на расшифровку. Попробуйте через минуту.', 429)
+  const authUser = await getAuthenticatedUser(request)
+
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'transcribe',
+    limit: 30,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) {
+    return rateLimitResponse
   }
 
   try {
@@ -15,7 +24,27 @@ export async function POST(request: Request) {
       return validated.response
     }
 
-    const { audioBase64, mimeType = 'audio/webm', mockText } = validated.data
+    const { audioBase64, mimeType = 'audio/webm', mockText, durationSeconds } = validated.data
+
+    // Проверка квоты по длительности аудио (maxVoiceSeconds)
+    const tier = authUser ? await getEffectiveTier(authUser.userId) : 'free'
+    const limits = getTierLimits(tier)
+    const maxVoice = limits.maxVoiceSeconds
+
+    if (typeof durationSeconds === 'number' && durationSeconds > maxVoice) {
+      return NextResponse.json(
+        {
+          error: {
+            code: 'quota_exceeded',
+            feature: 'maxVoiceSeconds',
+            limit: maxVoice,
+            tier,
+            message: `Длительность голосового (${durationSeconds} сек) превышает лимит тарифа ${tier} (${maxVoice} сек)`,
+          },
+        },
+        { status: 403 }
+      )
+    }
 
     const realisticFallbacks = [
       'Привет! Договорились, всё в силе. Записал в летопись дня!',
@@ -47,7 +76,7 @@ export async function POST(request: Request) {
     const cleanMime = detectedMime.split(';')[0].trim() || 'audio/webm'
     const rawBase64 = (audioBase64 || '').replace(/^data:[^;]+;base64,/, '')
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
     const prompt =
       'Расшифруй это аудиосообщение точно и дословно на русском языке. Верни ТОЛЬКО текст расшифровки без вводных слов, пояснений и кавычек.'
 

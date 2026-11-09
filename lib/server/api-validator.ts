@@ -125,6 +125,7 @@ export const TranscribeSchema = z.object({
   audioBase64: z.string().max(20_000_000, 'Аудиофайл слишком большой (макс. 15 МБ)').optional(),
   mimeType: z.string().max(100).optional().default('audio/webm'),
   mockText: z.string().max(5000).optional(),
+  durationSeconds: z.number().nonnegative().max(3600).optional(),
 }).refine((data) => Boolean(data.audioBase64 || data.mockText), {
   message: 'Аудиоданные не переданы',
   path: ['audioBase64'],

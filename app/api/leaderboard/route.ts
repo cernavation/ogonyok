@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isSupabaseConfigured } from '@/lib/supabase/browser'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { applyRateLimit } from '@/lib/server/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,13 @@ const SEED_USERS = [
 ]
 
 export async function GET(req: NextRequest) {
+  const rateLimitResponse = await applyRateLimit(req, {
+    route: 'leaderboard',
+    limit: 60,
+    windowSeconds: 60,
+  })
+  if (rateLimitResponse) return rateLimitResponse
+
   const { searchParams } = new URL(req.url)
   const scope = searchParams.get('scope') || 'all'
   const period = searchParams.get('period') || 'all_time'

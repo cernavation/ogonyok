@@ -246,6 +246,9 @@ export async function signUpWithUsername(params: {
   password: string
   displayName?: string
   level?: number
+  formStartTime?: number
+  honeypot?: string
+  turnstileToken?: string
 }): Promise<{ ok: boolean; user?: User | any; session?: Session | null; error?: string }> {
   const cleanNick = (params.username || '')
     .trim()
@@ -260,6 +263,48 @@ export async function signUpWithUsername(params: {
     return { ok: false, error: 'Пароль должен содержать не менее 8 символов' }
   }
 
+  // 1. Приоритетный путь: регистрация через серверный эндпоинт /api/auth/signup (admin.createUser)
+  try {
+    const signupRes = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: cleanNick,
+        password: params.password,
+        displayName: params.displayName || cleanNick,
+        formStartTime: params.formStartTime || Date.now() - 5000,
+        website: params.honeypot || '',
+        turnstileToken: params.turnstileToken,
+      }),
+    })
+
+    const signupData = await signupRes.json().catch(() => null)
+
+    if (signupRes.ok && signupData?.ok) {
+      // Пользователь создан через admin.createUser, теперь авторизуем в клиентской сессии
+      const signInRes = await signInWithUsername({ username: cleanNick, password: params.password })
+      if (signInRes.ok) {
+        return {
+          ok: true,
+          user: signInRes.user || signupData.user,
+          session: signInRes.session,
+        }
+      }
+      return {
+        ok: true,
+        user: signupData.user,
+      }
+    }
+
+    if (signupData?.error) {
+      const msg = signupData.error.message || signupData.error
+      return { ok: false, error: msg }
+    }
+  } catch (serverErr) {
+    console.warn('[SERVER_SIGNUP_FALLBACK]: Server signup unavailable, attempting direct client signup:', serverErr)
+  }
+
+  // 2. Fallback: прямой клиентский signUp (если серверный роут недоступен)
   const client = getSupabase()
   if (!client) {
     const errMsg = 'База данных не подключена. Добавь ключи Supabase.'

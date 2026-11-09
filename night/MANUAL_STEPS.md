@@ -75,3 +75,34 @@
    - В Supabase Dashboard выбрать точку восстановления `Restore backup` из шага А.
    - Либо выполнить накат дампа: `psql "$DATABASE_URL" -f backup_prod_pre_rls_*.sql`.
 3. Зафиксировать причину сбоя в `night/reports/`.
+
+---
+
+## 4. Настройки безопасности Supabase Auth и Cloudflare Turnstile (Этап 5)
+
+Для гарантированной защиты от массовой регистрации ботов и обхода серверной проверки:
+
+### А. Отключение публичной регистрации в Supabase Auth
+1. Открыть панель Supabase: **Authentication** -> **Providers** -> **Email**.
+2. Отключить переключатель **Allow new users to sign up** (или в **Authentication** -> **Configuration** -> снять флаг *Enable Signup*).
+3. **Результат**: прямой вызов `supabase.auth.signUp(...)` с клиента будет блокироваться ядром GoTrue. Все регистрации теперь проходят строго через защищённый серверный роут `/api/auth/signup` с проверкой IP-лимитов (3/сутки на IP, 10/сутки на /24-подсеть), honeypot, тайминга ≥3 сек и нормализации никнеймов.
+
+### Б. Включение и настройка Cloudflare Turnstile
+1. Зайти в панель Cloudflare Dashboard -> **Turnstile**.
+2. Добавить новый сайт:
+   - Имя: `Ogonek Web`
+   - Домен: `ogonek.app` (и `localhost` для тестирования)
+   - Режим: **Managed** (рекомендуется)
+3. Скопировать ключи и добавить в переменные окружения Vercel и `.env.local`:
+   ```env
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=0x4AAAAAAA...
+   TURNSTILE_SECRET_KEY=0x4AAAAAAA...
+   ```
+4. Если ключи не заданы, форма регистрации работает в режиме разработчика с записью предупреждения в консоль сервера.
+
+### В. Настройка Rate Limits в дашборде Supabase Auth
+1. Открыть **Authentication** -> **Rate Limits**.
+2. Задать рекомендуемые пороги:
+   - **Email Signups**: 3 per hour per IP;
+   - **Token Refresh**: 30 per minute;
+   - **Password Recovery**: 3 per hour per email.

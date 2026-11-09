@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
 import { apiErrorResponse } from '@/lib/server/api-validator'
+import { applyRateLimit } from '@/lib/server/rate-limit'
 
 export async function GET(request: Request) {
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-cron-get',
+    limit: 60,
+    windowSeconds: 60,
+  })
+  if (rateLimitResponse) return rateLimitResponse
   return handleCron(request)
 }
 
 export async function POST(request: Request) {
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-cron-post',
+    limit: 60,
+    windowSeconds: 60,
+  })
+  if (rateLimitResponse) return rateLimitResponse
   return handleCron(request)
 }
 

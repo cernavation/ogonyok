@@ -69,6 +69,18 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
   const [selectedLevel, setSelectedLevel] = useState(2)
   const [avatarFile, setAvatarFile] = useState<string | null>(null) // base64
 
+  // Защита от ботов: honeypot, отслеживание времени формы и Turnstile (Этап 5)
+  const [honeypot, setHoneypot] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const formStartTimeRef = useRef<number>(Date.now())
+
+  useEffect(() => {
+    formStartTimeRef.current = Date.now()
+    if (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
+      console.warn('[TURNSTILE]: NEXT_PUBLIC_TURNSTILE_SITE_KEY не настроен в env. Регистрация работает без капчи.')
+    }
+  }, [mode, registrationStep])
+
   // Проверка уникальности никнейма на лету (debounce 400ms)
   const [checkingUsername, setCheckingUsername] = useState(false)
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null)
@@ -159,6 +171,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
         username: targetNick,
         password: password,
         displayName: '',
+        formStartTime: formStartTimeRef.current,
+        honeypot,
+        turnstileToken: turnstileToken || undefined,
       })
       if (!res.ok) {
         const authError = (res as any).error
@@ -526,6 +541,42 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
               </div>
             )}
           </div>
+
+          {/* Honeypot поле (невидимо для человека, перехватывает спам-ботов) */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              top: '-9999px',
+              opacity: 0,
+              height: 0,
+              width: 0,
+              pointerEvents: 'none',
+            }}
+            aria-hidden="true"
+          >
+            <label htmlFor="auth-hp-company">Компания</label>
+            <input
+              id="auth-hp-company"
+              type="text"
+              name="company"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </div>
+
+          {/* Cloudflare Turnstile виджет (если настроен ключ сайта) */}
+          {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+            <div className="my-2 flex justify-center">
+              <div
+                className="cf-turnstile"
+                data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                data-callback="onTurnstileSuccess"
+              />
+            </div>
+          )}
 
           <button
             type="submit"

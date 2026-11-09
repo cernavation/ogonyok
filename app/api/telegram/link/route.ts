@@ -1,15 +1,28 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
-import { validateJsonBody, TelegramLinkSchema } from '@/lib/server/api-validator'
+import { getAuthenticatedUser } from '@/lib/server/auth'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { apiErrorResponse } from '@/lib/server/api-validator'
 import crypto from 'crypto'
 
 export async function POST(request: Request) {
+  const authUser = await getAuthenticatedUser(request)
+
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-link',
+    limit: 10,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) return rateLimitResponse
+
+  if (!authUser) {
+    return apiErrorResponse('UNAUTHORIZED', 'Требуется авторизация для генерации ссылки Telegram', 401)
+  }
+
   try {
-    const validated = await validateJsonBody(request, TelegramLinkSchema)
-    if (!validated.success) {
-      return validated.response
-    }
-    const userId = validated.data.userId
+    // userId берется строго из сессии, а не из тела
+    const userId = authUser.userId
 
     const botUsername = process.env.TELEGRAM_BOT_USERNAME?.replace(/^@/, '') || 'OgonekDiaryBot'
     const code = 'ogk_' + crypto.randomBytes(4).toString('hex')

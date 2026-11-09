@@ -1,0 +1,875 @@
+
+> my-project@0.1.0 test:unit
+> node --experimental-strip-types --test test/*.test.ts
+
+(node:72310) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/achievement-moderation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Achievement moderation (ЭТАП 6)
+  ✔ exposes exactly the three required status labels (0.449916ms)
+  ✔ maps achievement status to moderation status both ways (0.086042ms)
+  ✔ generates a well-formed tracking code (0.177458ms)
+  ✔ splits evidence into link and stored-file kinds (7.934917ms)
+  ✔ builds a ready email package containing the tracking code and title (124.7455ms)
+  ✔ creates a submission record starting on moderation (0.400083ms)
+  ✔ appends review events to the history (0.25225ms)
+  ✔ sanitizes persisted submissions and rejects garbage (0.454167ms)
+  ✔ summarizes moderation across achievements (0.799833ms)
+  ✔ reports readiness only when all mandatory evidence is attached (0.68075ms)
+✔ Achievement moderation (ЭТАП 6) (136.931875ms)
+(node:72311) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/achievement-regulation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Achievement regulation engine
+  ✔ defines exactly the four required categories (2.071833ms)
+  ✔ falls back to the first category for an unknown id (0.085666ms)
+  ✔ builds a forensic barefoot-marathon regulation with video proof (0.198584ms)
+  ✔ requires a payment screenshot for business revenue (0.109167ms)
+  ✔ adds an investment term sheet and forensic strictness for funding (0.106667ms)
+  ✔ requires an olympiad protocol for education contests (0.117334ms)
+  ✔ requires a full calendar export for discipline streaks (2.3905ms)
+  ✔ always guarantees at least one required requirement per category (0.391833ms)
+✔ Achievement regulation engine (6.172209ms)
+▶ Achievement evidence progress
+  ✔ reports incomplete when required evidence is missing (0.185125ms)
+  ✔ reports complete once every required requirement is covered (18.719708ms)
+  ✔ ignores extra optional evidence for completeness (0.097667ms)
+✔ Achievement evidence progress (19.151208ms)
+▶ sanitizeRegulation
+  ✔ falls back to the heuristic when AI returns no requirements (0.2265ms)
+  ✔ keeps valid AI requirements but forces at least one required (0.145459ms)
+✔ sanitizeRegulation (0.433042ms)
+(node:72312) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/api-validation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Zod Валидация API-маршрутов (Этап 3)
+  ✔ EvaluateDaySchema: принимает валидный массив гордостей до 10 элементов (5.286083ms)
+  ✔ EvaluateDaySchema: отклоняет массив более 10 элементов и строки более 5000 символов (0.407542ms)
+  ✔ TranslateSchema: требует непустой текст и ограничивает 5000 символов (0.187791ms)
+  ✔ TranscribeSchema: требует audioBase64 или mockText (0.304292ms)
+  ✔ GiphyQuerySchema: ограничивает limit от 1 до 50 и длину q (2.378375ms)
+  ✔ StreakSyncSchema: принимает массив дат и отклоняет свыше 1000 элементов (0.7545ms)
+  ✔ TelegramLinkSchema: требует непустой userId (0.103584ms)
+  ✔ RegulateAchievementSchema: требует categoryId и topic (0.226792ms)
+  ✔ apiErrorResponse: возвращает корректную структуру ошибки (38.098625ms)
+✔ Zod Валидация API-маршрутов (Этап 3) (52.375959ms)
+(node:72313) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/attached-targets.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Мульти-привязка фото к гордостям и благодарностям дня
+  ✔ formatPhotoAttachmentCaption: возвращает null если целей нет (1.021084ms)
+  ✔ formatPhotoAttachmentCaption: форматирует одиночную гордость с текстом (9.400291ms)
+  ✔ formatPhotoAttachmentCaption: форматирует одиночную гордость без текста (0.112625ms)
+  ✔ formatPhotoAttachmentCaption: форматирует одиночную благодарность (0.074375ms)
+  ✔ formatPhotoAttachmentCaption: форматирует несколько гордостей (мультивыбор) (0.08125ms)
+  ✔ formatPhotoAttachmentCaption: форматирует несколько благодарностей (0.087458ms)
+  ✔ formatPhotoAttachmentCaption: форматирует смешанный мультивыбор (гордости + благодарности) (0.061666ms)
+  ✔ composer.tsx содержит селектор привязки с двумя рядами чипов 1..5 и вопросом (1.673209ms)
+  ✔ day-card.tsx, lightbox.tsx и media-lightbox.tsx выводят точную привязку фото (15.82575ms)
+  ✔ use-ogonek-store.ts сохраняет attached_targets в локальное хранилище и Supabase (9.436792ms)
+✔ Мульти-привязка фото к гордостям и благодарностям дня (38.699417ms)
+(node:72314) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/batch-privacy.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Пакетное изменение приватности в Composer и модуль visibility.ts
+  ✔ composer.tsx содержит канонические функции пакетной приватности (4.366458ms)
+  ✔ normalizeVisibility корректно сохраняет валидные уровни (1.228875ms)
+  ✔ normalizeVisibility сбрасывает мусор и undefined в публичный уровень по умолчанию (0.083625ms)
+  ✔ mostRestrictive корректно определяет наиболее строгий уровень (0.097584ms)
+  ✔ isPubliclyVisible возвращает true только для public (0.06175ms)
+  ✔ visibilityLabel и visibilityMeta возвращают полные человекочитаемые данные (0.06575ms)
+  ✔ checkIsAllPrivate возвращает true, если все 5 слотов установлены в private (0.072375ms)
+  ✔ checkIsAllPrivate возвращает false, если хотя бы один слот public или friends (0.423625ms)
+  ✔ checkIsAllPrivate учитывает наследование от dayVisibility при пустом visMap (0.0765ms)
+  ✔ generateBatchPrivacy устанавливает все 5 слотов в private, если текущий слот private (0.453334ms)
+  ✔ generateBatchPrivacy устанавливает все 5 слотов в public, если текущий слот public или friends (0.069833ms)
+  ✔ симуляция переключения: пользователь делает день и все записи личными в 1 клик (0.06625ms)
+  ✔ сериализация visibilities: buildPayload сжимает пустые записи и сохраняет приватность заполненных (0.070459ms)
+✔ Пакетное изменение приватности в Composer и модуль visibility.ts (8.685166ms)
+(node:72315) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/billing-webhook.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Платёжный вебхук /api/billing/webhook (Этап 4)
+  ✔ возвращает 503 SERVICE_UNAVAILABLE, если BILLING_WEBHOOK_SECRET не задан (19.690166ms)
+  ✔ возвращает 401 UNAUTHORIZED при отсутствующей или неверной HMAC-подписи (3.09225ms)
+  ✔ успешно верифицирует правильную HMAC SHA-256 подпись (0.118917ms)
+✔ Платёжный вебхук /api/billing/webhook (Этап 4) (23.420416ms)
+(node:72316) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/cache-and-supabase-sync.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Локальный кэш и синхронизация с Supabase
+  ✔ sanitizePostgresString удаляет нулевые байты и невалидные суррогаты, сохраняя эмодзи и кириллицу (1.432667ms)
+  ✔ sanitizePostgresValue рекурсивно очищает вложенные объекты и массивы (0.178833ms)
+  ✔ buildRemoteDataset корректно раскладывает состояние на реляционные строки days и prides (0.655291ms)
+  ✔ buildPushPlan на пустой мете синхронизации включает все строки в план отправки (0.424333ms)
+  ✔ countPendingChanges возвращает точное число несохраненных изменений (0.326583ms)
+  ✔ mergeRemoteDataset добавляет новый день с облака и не создает дубликатов (1.166833ms)
+  ✔ mergeRemoteDataset защищает локальные грязные записи от перезаписи (0.686875ms)
+  ✔ parseReactionTarget безошибочно разбирает цели дня, гордости и благодарности (0.119125ms)
+  ✔ сериализация состояния кэша в JSON сохраняет стабильную schemaVersion (0.118584ms)
+  ✔ LWW: разрешает коллизии профиля на основе временной метки updated_at (0.261167ms)
+✔ Локальный кэш и синхронизация с Supabase (6.794583ms)
+(node:72317) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/calls.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Web Audio API call synthesizer (lib/ogonek/call-sound.ts)
+  ✔ работает безопасно и без ошибок в любых средах (включая SSR / Node.js) (2.066958ms)
+✔ Web Audio API call synthesizer (lib/ogonek/call-sound.ts) (2.919917ms)
+▶ Система сессий звонков (lib/supabase/api.ts)
+  ✔ createCallSession создает валидный объект сессии звонка со статусом ringing (1.094792ms)
+  ✔ updateCallSessionStatus принимает валидные статусы (accepted, rejected, ended) (0.1065ms)
+  ✔ getCallSession возвращает null для несуществующей сессии без падений (0.077125ms)
+✔ Система сессий звонков (lib/supabase/api.ts) (1.588292ms)
+▶ Схема миграции SUPABASE_2.0_MIGRATION.sql для звонков
+  ✔ содержит корректное определение таблицы call_sessions и realtime публикацию (0.886084ms)
+✔ Схема миграции SUPABASE_2.0_MIGRATION.sql для звонков (1.003917ms)
+▶ Зачистка остатков Волошина и единая комната звонка
+  ✔ в storage.ts, fullscreen-messenger.tsx и messages-view.tsx нет fr-voloshin (1.466334ms)
+  ✔ chat-call-modal.tsx использует единую комнату call_room_ и WebRTC (0.525875ms)
+✔ Зачистка остатков Волошина и единая комната звонка (2.226ms)
+▶ Защищенный рендер ChatCallModal и CallErrorBoundary
+  ✔ chat-call-modal.tsx защищен от падений при пустых профилях и mediaDevices (0.185917ms)
+  ✔ call-error-boundary.tsx перехватывает ошибки звонка и отображает кнопку закрытия (0.313166ms)
+  ✔ app-shell.tsx оборачивает ChatCallModal в CallErrorBoundary (0.855167ms)
+  ✔ chat-call-modal.tsx полностью свободен от postgres_changes и использует только broadcast (0.204ms)
+✔ Защищенный рендер ChatCallModal и CallErrorBoundary (1.811791ms)
+▶ Реальные голосовые сообщения, живая волна и Gemini-расшифровка
+  ✔ chat-voice-recorder.tsx поддерживает реальный микрофон, Web Audio Analyser и живую волну (0.329416ms)
+  ✔ chat-voice-player.tsx содержит HTML5 audio элемент и интерактивную перемотку (0.181167ms)
+  ✔ api/transcribe/route.ts и direct_messages поддерживают Gemini и синхронизацию расшифровки (0.449458ms)
+✔ Реальные голосовые сообщения, живая волна и Gemini-расшифровка (1.117834ms)
+(node:72318) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/chat-engine.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Telegram Web UX: Папки и фильтрация диалогов (5.762625ms)
+✔ Telegram Web UX: Распознавание ссылок и превью (0.164583ms)
+✔ Telegram Web UX: Карточка благодарности и гордости для чата (28.43725ms)
+✔ Telegram Web UX: Создание сообщения с ответом и медиа (1.651625ms)
+(node:72319) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/composer-smart-switching.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Умное переключение кружков и слотов в Composer
+  ✔ компонент composer.tsx содержит каноническую реализацию умного переключения слотов (0.550959ms)
+  ✔ выбирает слот 0, если список полностью пустой (0.095917ms)
+  ✔ выбирает слот 1, если заполнен только слот 0 (0.064459ms)
+  ✔ выбирает слот 2, если заполнены слоты 0 и 1 (0.057209ms)
+  ✔ выбирает слот 3, если заполнены слоты 0, 1 и 2 (0.055125ms)
+  ✔ выбирает слот 4, если заполнены 4 слота (0.054ms)
+  ✔ возвращает слот 0 (fallback), если все 5 слотов заполнены текстом (15.366209ms)
+  ✔ считает слоты только из пробелов или переводов строк пустыми (0.099083ms)
+  ✔ считает undefined и null в массиве пустыми слотами (0.086875ms)
+  ✔ корректно находит первый пропущенный слот (например слот 0 пуст, а 1 заполнен) (0.088042ms)
+  ✔ игнорирует шестой слот (extra) при расчете первых пяти кружков (0.053084ms)
+  ✔ симуляция переключения между Гордостями и Благодарностями (0.051709ms)
+  ✔ симуляция заполнения всех слотов благодарения (0.046792ms)
+✔ Умное переключение кружков и слотов в Composer (18.493667ms)
+(node:72320) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/day-score-calculation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Вычисление среднего балла дня и аналитики
+  ✔ вычисляет точное среднее арифметическое 5 оцененных гордостей [9, 10, 9, 10, 9] -> 9.4 (0.50075ms)
+  ✔ исключает незаполненные прочерки «—» из знаменателя (0.083084ms)
+  ✔ исключает записи со scale: 0, undefined или NaN (0.071708ms)
+  ✔ возвращает null, если ни одна запись дня не оценена (0.072916ms)
+  ✔ безопасно обрабатывает null, undefined и пустые объекты (0.097084ms)
+  ✔ computeDaysAverage корректно усредняет баллы за неделю (1.698417ms)
+  ✔ formatScore преобразует числа в формат с одним знаком после запятой (0.250458ms)
+  ✔ scoreToLevel градирует оценку дня в уровни активности 0..4 (0.195541ms)
+  ✔ computeScoreTrend определяет положительную, отрицательную и нейтральную динамику (0.184625ms)
+  ✔ округление до десятых исключает накапливающиеся аномалии чисел с плавающей точкой (0.129709ms)
+✔ Вычисление среднего балла дня и аналитики (4.099ms)
+(node:72321) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/deliver-scheduled.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Крон доставки отложенных сообщений: scheduled_messages -> direct_messages
+  ✔ доставляет отложенное сообщение из прошлого в direct_messages с thread_key, author_id, recipient_id, sent_at (18.520583ms)
+  ✔ автоматически строит thread_key из author_id и recipient_id если он не задан (0.519583ms)
+✔ Крон доставки отложенных сообщений: scheduled_messages -> direct_messages (19.5305ms)
+(node:72322) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/diary-engine.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Правила дней и стрика (PRODUCT_SPEC.md, Правила 1–6)
+  ✔ Правило 1 & 2: Смена уровня заблокирована на 30 дней с обратным отсчётом (5.942708ms)
+  ✔ Правило 3: Огонёк НИКОГДА не сбрасывается. Стрик = количество закрытых дней (0.356417ms)
+  ✔ Правило 4: Пропуск двух дней → запись идёт в первый незакрытый день (следующий номер) (1.726542ms)
+  ✔ Правило 5: Закрытие дня происходит строго при наборе нормы уровня (0.223833ms)
+  ✔ Правило 5: Лимит — максимум 1 новый закрытый день за календарные сутки (0.15475ms)
+✔ Правила дней и стрика (PRODUCT_SPEC.md, Правила 1–6) (9.688041ms)
+(node:72323) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/env-and-secrets.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Серверная валидация окружения и аудит секретов (Этап 3)
+  ✔ .env.example существует и содержит все обязательные ключи (1.002083ms)
+  ✔ validateServerEnv выбрасывает понятную ошибку в строгом режиме при отсутствии ключей (0.321916ms)
+  ✔ скрипт pre-commit-secrets-check.mjs существует и содержит регулярные выражения для sk-, eyJ-, AIza- (0.483959ms)
+✔ Серверная валидация окружения и аудит секретов (Этап 3) (2.716792ms)
+(node:72324) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/evaluate.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Pride Heuristic Evaluator
+  ✔ handles empty strings gracefully (0.961459ms)
+  ✔ detects routine achievements with overcome 0 (0.294875ms)
+  ✔ detects light discipline overcome 1 (0.26725ms)
+  ✔ detects medium barrier overcome 2 (0.0905ms)
+  ✔ detects extreme breakthrough overcome 3 (0.082875ms)
+  ✔ correctly maps tags for sports with numbers (0.064458ms)
+  ✔ evaluates batches of items correctly (0.086875ms)
+  ✔ содержит официальный эндпоинт DeepSeek API и модель deepseek-chat (0.756708ms)
+  ✔ проверяет изоляцию ленты Друзья и чистку рейтинга @cernavation / @ilonmusk (0.980708ms)
+  ✔ содержит строгие параметры DeepSeek: json_object format, temperature: 0.5, оценка только для гордостей (0.27375ms)
+  ✔ сохраняет точный десятичный балл (float 8.8) в карточке дня и летописи (0.804666ms)
+  ✔ extractAndParseJson корректно извлекает JSON при наличии префикса "Calibrated..." или markdown (1.612417ms)
+  ✔ отображает единые монохромные бейджи для всех 5 гордостей и золотой балл дня в day-card.tsx (2.312792ms)
+  ✔ composer.tsx содержит 2-рядные чипы выбора на превью фото с градиентом и фирменным оранжевым (1.641583ms)
+✔ Pride Heuristic Evaluator (15.671083ms)
+(node:72325) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/explore-search-anonymity.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Зачистка хардкодных людей и режим анонимности
+  ✔ в explore-content и friends отсутствуют хардкодные боты (0.609333ms)
+  ✔ threadTitle корректно использует peerMeta для реальных пользователей Supabase (0.148041ms)
+  ✔ threadTitle отдает никнейм через @ если нет display name (0.104917ms)
+✔ Зачистка хардкодных людей и режим анонимности (1.348167ms)
+(node:72326) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/general-order-features.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Монолитная сетка X.com (Задача 1)
+  ✔ app-shell.tsx: единая фиксированная ширина 600px для всех экранов без прыжков на 920px (1.396166ms)
+  ✔ premium-view.tsx: вертикальное расположение карточек тарифов внутри 600px (0.772042ms)
+  ✔ settings-view.tsx: вертикальное расположение настроек без ломающихся строчек (0.789708ms)
+✔ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Монолитная сетка X.com (Задача 1) (3.63375ms)
+▶ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Полная блокировка фона при открытии Composer / Модалок (Задача 2)
+  ✔ modal-shell.tsx: эталонный затемняющий оверлей X.com с перехватом кликов (0.321584ms)
+  ✔ composer.tsx: остановка всплытия кликов, чтобы клик мимо не триггерил сайдбар (0.220792ms)
+✔ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Полная блокировка фона при открытии Composer / Модалок (Задача 2) (0.757667ms)
+▶ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Снятие ограничения 50 дней в профиле (Задача 3)
+  ✔ profile-view.tsx: удален лимит limit(50), подгружаются все дни (0.966916ms)
+  ✔ api.ts: удален жесткий лимит limit(50) в getUserPosts (0.290625ms)
+✔ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Снятие ограничения 50 дней в профиле (Задача 3) (1.461833ms)
+▶ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Синхронизация приватности (День + Пункты) (Задача 4)
+  ✔ use-ogonek-store.ts: setDayVisibility обновляет день и все его гордости (0.582541ms)
+  ✔ day-card.tsx: вычисление effectiveVisibility и бейдж 🔒 Лично при приватном дне (0.147458ms)
+✔ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Синхронизация приватности (День + Пункты) (Задача 4) (0.883041ms)
+▶ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Защита от дублирования в Supabase (Задача 5)
+  ✔ supabase-sync.ts: upsert использует ключи onConflict user_id,date_iso и day_id,position (0.301625ms)
+  ✔ legacy-migration.ts: upsert дней и гордостей с явным onConflict (0.3825ms)
+  ✔ use-ogonek-store.ts: фильтрация дубликатов по дате при добавлении дней (0.502625ms)
+✔ ГЕНЕРАЛЬНЫЙ ПРИКАЗ: Защита от дублирования в Supabase (Задача 5) (1.364083ms)
+▶ Сохранение функционала: Удаление дня, точечная приватность и стелс-режим профиля
+  ✔ use-ogonek-store.ts: deleteDay удаляет день и пересчитывает стрик (0.507833ms)
+  ✔ calculateStreak: корректно уменьшает стрик при удалении дня (0.162833ms)
+  ✔ day-options-modal.tsx: содержит пункт удаления и стильную модалку подтверждения (0.440417ms)
+  ✔ profile-view.tsx: стелс-хронология и фильтры (0.244958ms)
+✔ Сохранение функционала: Удаление дня, точечная приватность и стелс-режим профиля (1.610625ms)
+(node:72327) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/import-cycles.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Статический анализ графа импортов и отсутствие циклических зависимостей
+  ✔ директория lib/ogonek содержит валидные TypeScript модули (0.8265ms)
+  ✔ граф зависимостей lib/ogonek не содержит прямых взаимных циклов A -> B -> A (21.679833ms)
+  ✔ в графе зависимостей lib/ogonek полностью отсутствуют циклы любой длины (DAG) (40.691625ms)
+  ✔ модуль types.ts является чистым листовым узлом и не импортирует store или компоненты (1.525833ms)
+  ✔ модуль scores.ts является чистым модулем без внешних побочных эффектов (0.40475ms)
+  ✔ модуль initials.ts не зависит от React и состояния приложения (0.333667ms)
+  ✔ модуль sound.ts не импортирует компоненты UI (0.118833ms)
+  ✔ модуль visibility.ts не импортирует хранилище приложения (0.119ms)
+  ✔ модуль feed-memo.ts изолирован от рендеринга и содержит только чистые компараторы (4.8095ms)
+  ✔ все относительные импорты в lib/ogonek успешно разрешаются в существующие файлы (9.601667ms)
+✔ Статический анализ графа импортов и отсутствие циклических зависимостей (81.919709ms)
+(node:72328) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/import-real-raw.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Authentic Real Raw Data Import
+  ✔ generates both public/seeds and data/migrated import files (6.418083ms)
+  ✔ contains correct total days in ledger (≥700) and feed is sorted descending (41.061958ms)
+  ✔ first 24 days (notebook) have placeholder "—" (67.894333ms)
+  ✔ Day #657: date is 21.08.2026 and text contains "читал сашу" (26.26375ms)
+  ✔ Day #639: date is 01.08.2026 and text contains "огромного листа" (72.550583ms)
+  ✔ Day #702: date is 07.10.2026 and contains merged prides from both original entries (69.285875ms)
+  ✔ contains NO stock bike pictures when images is empty array (56.98425ms)
+  ✔ correctly stitches Day 24/25 and Day 296/297 seams (39.00625ms)
+  ✔ feed top (newest) is October 2026, feed bottom (oldest) is October 2024 (26.261834ms)
+✔ Authentic Real Raw Data Import (407.410625ms)
+(node:72329) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/initials.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Единая утилита инициалов getInitials
+  ✔ строго возвращает "АЦ" для Алексея Церна и "C" для никнейма cernavation без имени (0.562584ms)
+  ✔ корректно генерирует инициалы из двух слов (0.142583ms)
+  ✔ генерирует 1 букву для одиночного никнейма и 2 буквы при разделителе (0.09775ms)
+  ✔ обрабатывает пустые значения и 1 символ (0.069292ms)
+✔ Единая утилита инициалов getInitials (1.421958ms)
+(node:72330) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/layout-sticky.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Эталонная сетка X.com и железная фиксация sticky меню
+  ✔ globals.css: html и body свободны от overflow-x: hidden, ломающего sticky (2.148459ms)
+  ✔ app-shell.tsx: единый flex-контейнер X.com с центрированием (0.24875ms)
+  ✔ sidebar.tsx: строгое соответствие sticky стилей левого меню (0.541417ms)
+  ✔ right-rail.tsx: строгое соответствие sticky стилей правого меню (0.360584ms)
+  ✔ home-view.tsx: центральная лента независима и монолитна (0.67175ms)
+✔ Эталонная сетка X.com и железная фиксация sticky меню (4.810334ms)
+(node:72331) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/leaderboard-ranking-author.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Расчет рейтинга сообщества и гарантированный топ-1 автора (leaderboard-view.tsx)
+  ✔ leaderboard-view.tsx содержит канонический расчет myStreak с гарантией 720 (1.869958ms)
+  ✔ computeMyStreak гарантирует минимум 720 даже при пустом профиле и 0 дней (0.112084ms)
+  ✔ computeMyStreak гарантирует минимум 720 для 30 или 100 дней (0.108709ms)
+  ✔ computeMyStreak корректно учитывает дни больше 720 (например 850) (0.193041ms)
+  ✔ computeMyStreak парсит строковые id формата day-750 (0.100667ms)
+  ✔ автор всегда занимает место #1 в сообществе против соперников с меньшим стриком (0.185792ms)
+  ✔ при равенстве стриков (720 vs 720) автор побеждает за счет 3600 гордостей (0.072125ms)
+  ✔ фильтр периода week: нормирует стрик до 7 и гордости до 35 (0.068625ms)
+  ✔ фильтр периода month: нормирует стрик до 30 и гордости до 150 (0.089ms)
+  ✔ выключение участия (inLeaderboard = false) убирает автора из списка и дает myRank = null (0.112833ms)
+  ✔ таб friends оставляет только друзей и самого пользователя (0.107334ms)
+  ✔ флаг анонимности isAnonymous корректно проставляется в объекте автора (0.058041ms)
+✔ Расчет рейтинга сообщества и гарантированный топ-1 автора (leaderboard-view.tsx) (4.9915ms)
+(node:72332) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/legacy-migration.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Legacy Migration: Структура строк и ключи идемпотентности (ЗАДАЧА 5)
+  ✔ размер батча строго равен 50 дней (0.322292ms)
+  ✔ формирует строку days со стабильным составным ключом (user_id, client_id) (2.976291ms)
+  ✔ формирует строки prides со связью day_client_id и уникальным client_id (0.283958ms)
+  ✔ формирует строки gratitudes со связью day_client_id (0.142459ms)
+  ✔ удаляет недопустимые Unicode-символы (  и суррогаты) из days, prides и gratitudes (ЧАНК 13) (0.542666ms)
+✔ Legacy Migration: Структура строк и ключи идемпотентности (ЗАДАЧА 5) (5.007833ms)
+▶ Legacy Migration: Батчевая вставка и прогресс (ЗАДАЧА 5)
+  ✔ обрабатывает 120 дней двумя полными батчами по 50 и одним остаточным 20 (0.380709ms)
+  ✔ поддерживает прерывание и паузу (0.117166ms)
+✔ Legacy Migration: Батчевая вставка и прогресс (ЗАДАЧА 5) (0.753084ms)
+▶ Legacy Migration: Верификация целостности и выборки (ЗАДАЧА 5)
+  ✔ сверяет локальный снимок с базой и проверяет 10 случайных дней (0.192292ms)
+  ✔ поддерживает пагинацию по 500 записей для второго устройства (0.095917ms)
+✔ Legacy Migration: Верификация целостности и выборки (ЗАДАЧА 5) (0.4555ms)
+(node:72333) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[TURNSTILE]: TURNSTILE_SECRET_KEY не настроен в env. Пропуск проверки капчи с предупреждением.
+[AI_PROVIDER_ERROR]: Error: AI Provider Service Unavailable
+    at failingProvider (file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts:255:13)
+    at evaluateDayWithAI (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/ai.ts:291:26)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async TestContext.<anonymous> (file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts:259:17)
+    at async Test.run (node:internal/test_runner/test:1125:7)
+    at async Suite.processPendingSubtests (node:internal/test_runner/test:787:7)
+[getEffectiveTier] Error fetching tier: Error: NEXT_PUBLIC_SUPABASE_URL is not configured
+    at getServerSupabase (file:///Users/user/Desktop/ogonyok-ai-clone/lib/supabase/server.ts:8:11)
+    at getEffectiveTier (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/tier.ts:25:22)
+    at consumeServerQuota (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/quota.ts:27:38)
+    at TestContext.<anonymous> (file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts:310:22)
+    at Test.runInAsyncScope (node:async_hooks:228:14)
+    at Test.run (node:internal/test_runner/test:1118:25)
+    at Suite.processPendingSubtests (node:internal/test_runner/test:787:18)
+    at Test.postRun (node:internal/test_runner/test:1247:19)
+    at Test.run (node:internal/test_runner/test:1175:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[getEffectiveTier] Error fetching tier: Error: NEXT_PUBLIC_SUPABASE_URL is not configured
+    at getServerSupabase (file:///Users/user/Desktop/ogonyok-ai-clone/lib/supabase/server.ts:8:11)
+    at getEffectiveTier (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/tier.ts:25:22)
+    at consumeServerQuota (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/quota.ts:27:38)
+    at TestContext.<anonymous> (file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts:318:22)
+    at Test.runInAsyncScope (node:async_hooks:228:14)
+    at Test.run (node:internal/test_runner/test:1118:25)
+    at Suite.processPendingSubtests (node:internal/test_runner/test:787:18)
+    at Test.postRun (node:internal/test_runner/test:1247:19)
+    at Test.run (node:internal/test_runner/test:1175:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[getEffectiveTier] Error fetching tier: Error: NEXT_PUBLIC_SUPABASE_URL is not configured
+    at getServerSupabase (file:///Users/user/Desktop/ogonyok-ai-clone/lib/supabase/server.ts:8:11)
+    at getEffectiveTier (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/tier.ts:25:22)
+    at consumeServerQuota (file:///Users/user/Desktop/ogonyok-ai-clone/lib/server/quota.ts:27:38)
+    at TestContext.<anonymous> (file:///Users/user/Desktop/ogonyok-ai-clone/test/limits-and-abuse.test.ts:321:22)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async Test.run (node:internal/test_runner/test:1125:7)
+    at async Suite.processPendingSubtests (node:internal/test_runner/test:787:7)
+▶ 1. Rate Limiting: IP, Подсети и Ключи (Этап 5)
+  ✔ 1. getClientIp: корректно парсит x-forwarded-for с цепочкой прокси (51.476833ms)
+  ✔ 2. getClientIp: использует x-real-ip при отсутствии x-forwarded-for (0.586708ms)
+  ✔ 3. getClientIp: возвращает 127.0.0.1 при отсутствии заголовков (0.313333ms)
+  ✔ 4. getSubnet24: корректно вычисляет /24 подсеть для IPv4 (0.245125ms)
+  ✔ 5. getSubnet24: корректно извлекает префикс для IPv6 (0.17875ms)
+  ✔ 6. buildRateLimitKey: генерирует ключ с IP для неавторизованного запроса (0.193ms)
+  ✔ 7. buildRateLimitKey: включает userId и IP для авторизованного запроса (0.2645ms)
+  ✔ 8. checkRateLimit: разрешает запросы в пределах лимита (0.207167ms)
+  ✔ 9. checkRateLimit: блокирует запросы при превышении лимита (возвращает allowed=false) (0.144166ms)
+  ✔ 10. checkRateLimit: изолирует разные ключи друг от друга (0.143667ms)
+✔ 1. Rate Limiting: IP, Подсети и Ключи (Этап 5) (58.515709ms)
+▶ 2. Защита регистрации: Никнеймы, Пароли, Тайминг и Капча (Этап 5)
+  ✔ 11. normalizeUsername: очищает ведущие @, пробелы и переводит в нижний регистр (0.186875ms)
+  ✔ 12. normalizeUsername: заменяет кириллические гомоглифы (юникод-двойники) в canonical (0.080125ms)
+  ✔ 13. validateUsernameSecurity: запрещает никнеймы короче 3 символов (0.103416ms)
+  ✔ 14. validateUsernameSecurity: запрещает никнеймы длиннее 20 символов (0.050834ms)
+  ✔ 15. validateUsernameSecurity: отклоняет недопустимые спецсимволы (0.083583ms)
+  ✔ 16. validateUsernameSecurity: блокирует зарезервированные никнеймы (admin, support, ogonek, memernity) (0.163583ms)
+  ✔ 17. validateUsernameSecurity: блокирует гомоглиф-мимикрию под зарезервированные ники (0.052583ms)
+  ✔ 18. validatePasswordSecurity: отклоняет пароли короче 8 символов (0.065333ms)
+  ✔ 19. validatePasswordSecurity: отклоняет пароли без букв или без цифр/спецсимволов (0.071791ms)
+  ✔ 20. validatePasswordSecurity: принимает надежный пароль (0.062125ms)
+  ✔ 21. validateFormTiming: блокирует отправку формы быстрее 3 секунд (0.092167ms)
+  ✔ 22. validateFormTiming: разрешает отправку формы при длительности >= 3 секунд (0.042709ms)
+  ✔ 23. verifyTurnstileToken: пропускает с предупреждением, если TURNSTILE_SECRET_KEY не задан (0.16775ms)
+✔ 2. Защита регистрации: Никнеймы, Пароли, Тайминг и Капча (Этап 5) (1.453167ms)
+▶ 3. ИИ-квоты, Кэширование по Хэшу и Таймауты (Этап 5)
+  ✔ 24. computeDayContentHash: детерминирован и выдает одинаковый SHA-256 для одного контента (0.342583ms)
+  ✔ 25. computeDayContentHash: меняется при изменении хотя бы одного символа (0.067041ms)
+  ✔ 26. canRequestAiEvaluation: блокирует бесплатный тариф (free = 0 оценок в день) (0.109417ms)
+  ✔ 27. canRequestAiEvaluation: разрешает 1 оценку на pro и ultra (0.04375ms)
+  ✔ 28. canRequestAiEvaluation: блокирует повторный вызов на pro и ultra при usedToday >= 1 (0.039625ms)
+  ✔ 29. evaluateDayWithAI: возвращает кэшированный ответ без повторного вызова провайдера (16.939125ms)
+  ✔ 30. evaluateDayWithAI: при ошибке провайдера квота НЕ списывается (0.489875ms)
+✔ 3. ИИ-квоты, Кэширование по Хэшу и Таймауты (Этап 5) (18.167583ms)
+▶ 4. Лимиты тарифов: Заявки в соратники, Голосовые и Квоты (Этап 5)
+  ✔ 31. friendRequestsPerDay: free=20, pro=50, ultra=100 (0.128792ms)
+  ✔ 32. canSendFriendRequest: разрешает до суточного лимита (0.07325ms)
+  ✔ 33. maxVoiceSeconds: free=60, pro=300, ultra=600 (0.041625ms)
+  ✔ 34. chatMessagesPerMinute: 30 для всех тарифов (0.048167ms)
+  ✔ 35. profileSearchesPerMinute: 60 для всех тарифов (0.041ms)
+  ✔ 36. consumeServerQuota: разрешает списание в пределах лимита и возвращает remaining (1.08125ms)
+  ✔ 37. consumeServerQuota: блокирует списание при превышении дневного лимита (0.236292ms)
+  ✔ 38. normalizeTier: истёкшая подписка автоматически сбрасывает лимиты в free (0.065292ms)
+  ✔ 39. RESERVED_USERNAMES: содержит все критические системные имена (0.049917ms)
+  ✔ 40. honeypot: обнаружение непустого honeypot-поля ботов (0.047791ms)
+  ✔ 41. honeypot: пустое honeypot-поле у легитимного человека (0.038833ms)
+  ✔ 42. HTTP 429 Retry-After заголовок рассчитывается корректно (0.064458ms)
+✔ 4. Лимиты тарифов: Заявки в соратники, Голосовые и Квоты (Этап 5) (2.113208ms)
+(node:72335) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/memoization-perf.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Мемоизация карточек ленты DayCard и DayEntries (120 FPS скролл)
+  ✔ areDayCardPropsEqual возвращает true при одинаковых данных дня (0.406334ms)
+  ✔ areDayCardPropsEqual возвращает false при смене day.id (0.0765ms)
+  ✔ areDayCardPropsEqual возвращает false при изменении приватности дня (3.4025ms)
+  ✔ areDayCardPropsEqual возвращает false при изменении текста или шкалы гордости (0.158541ms)
+  ✔ areDayCardPropsEqual возвращает false при изменении благодарностей (0.0785ms)
+  ✔ areDayCardPropsEqual возвращает false при смене soundEnabled (0.06525ms)
+  ✔ areDayEntriesPropsEqual корректно сравнивает пропсы списка записей (0.134209ms)
+✔ Мемоизация карточек ленты DayCard и DayEntries (120 FPS скролл) (28.511ms)
+▶ Стабильное кеширование сессий и профиля в use-ogonek-store.ts
+  ✔ getMemoizedCurrentUser возвращает null для неавторизованного пользователя (0.1405ms)
+  ✔ getMemoizedCurrentUser возвращает стабильную ссылку на объект при повторных вызовах (0.260292ms)
+  ✔ use-ogonek-store.ts содержит примитивные селекторы и стабильный кэш профиля (0.667958ms)
+✔ Стабильное кеширование сессий и профиля в use-ogonek-store.ts (4.161208ms)
+▶ Динамические импорты тяжелых модальных окон (code-splitting next/dynamic)
+  ✔ app-shell.tsx загружает ChatCallModal, Composer и AuthModal через dynamic(..., { ssr: false }) (0.171709ms)
+  ✔ stories-bar.tsx загружает StoryComposerModal и StoryViewerModal через dynamic(..., { ssr: false }) (2.483167ms)
+  ✔ composer.tsx загружает EvaluationCeremonyModal через dynamic(..., { ssr: false }) (0.217291ms)
+  ✔ home-view.tsx загружает FocusHistoryModal через dynamic(..., { ssr: false }) (0.09925ms)
+✔ Динамические импорты тяжелых модальных окон (code-splitting next/dynamic) (3.18675ms)
+(node:72336) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/messenger.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Messenger — карточки-вложения (ЭТАП 13)
+  ✔ собирает карточку конкретной гордости с масштабом и приватностью (17.545292ms)
+  ✔ берёт приватность дня, если у гордости её нет (2.986334ms)
+  ✔ собирает карточку целого дня с числом гордостей и благодарностей (0.391125ms)
+  ✔ собирает карточку сторис с автором и номером кадра (0.346291ms)
+  ✔ собирает карточку верифицированной ачивки (0.135167ms)
+✔ Messenger — карточки-вложения (ЭТАП 13) (22.689ms)
+▶ Messenger — сообщения, прочтение и сортировка тредов
+  ✔ обрезает длинный текст и подчищает пустоту в makeChatMessage (0.846042ms)
+  ✔ считает непрочитанные сообщения только от собеседника (0.446792ms)
+  ✔ суммирует непрочитанные по всем перепискам (0.3125ms)
+  ✔ сортирует закреплённые вперёд, затем по свежести (0.632291ms)
+  ✔ делает читаемую выжимку последнего сообщения (0.660584ms)
+✔ Messenger — сообщения, прочтение и сортировка тредов (3.941542ms)
+▶ Messenger — живой собеседник (автоответ)
+  ✔ отвечает дружелюбно на приветствие (0.191708ms)
+  ✔ благодарит в ответ на спасибо и ставит реакцию (0.10325ms)
+  ✔ на карточку-вложение отвечает с реакцией «огонь» (0.0965ms)
+  ✔ отвечает детерминированно на одинаковый ввод (0.067084ms)
+✔ Messenger — живой собеседник (автоответ) (0.555875ms)
+▶ Messenger — валидация переписок из хранилища
+  ✔ сохраняет корректные треды реальных друзей (0.277625ms)
+  ✔ отбрасывает несуществующих друзей и пустые сообщения (0.078458ms)
+  ✔ возвращает фолбэк, когда во входе нет валидных данных (0.050667ms)
+✔ Messenger — валидация переписок из хранилища (0.461792ms)
+(node:72338) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/migrate.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Gordza Legacy Migration Engine
+  ✔ correctly maps pride day id using prideOffset (seq + 289) (1.078709ms)
+  ✔ correctly merges paired pride and gratitude items by date (0.173625ms)
+  ✔ maps legacy English tags to Russian journal tags (0.0905ms)
+  ✔ normalizes scale and calculates overcome from text (0.096792ms)
+✔ Gordza Legacy Migration Engine (2.00125ms)
+(node:72340) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/morning-focus.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Morning Focus & Focus Flame (ЭТАП 10)
+  ✔ считает процент выполнения только по записанным обещаниям (0.545875ms)
+  ✔ не учитывает пустые шаги при расчёте процента (0.078125ms)
+  ✔ создаёт запись фокуса и сохраняет статусы при неизменном тексте (10.912542ms)
+  ✔ автоматически фиксирует время сверки, когда все обещания отмечены (0.139833ms)
+  ✔ finalizeEveningReview помечает неотмеченные шаги как невыполненные (0.10725ms)
+  ✔ собирает статистику огонька и текущую серию (14.528375ms)
+  ✔ не завершённый сегодняшний день не обрывает серию (0.807875ms)
+  ✔ валидирует историю из хранилища и восстанавливает процент (0.65625ms)
+  ✔ мигрирует старые morningIntentions в историю фокусов (0.396958ms)
+  ✔ countFulfilledSteps считает только выполненные шаги (0.251583ms)
+✔ Morning Focus & Focus Flame (ЭТАП 10) (38.462209ms)
+(node:72343) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/pair-5plus5-discipline.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Дисциплина и парность 5+5: гордости и благодарности
+  ✔ нормализует пустые или короткие массивы строго до 5 элементов с прочерками (0.516792ms)
+  ✔ обрезает лишние элементы сверх 5 слотов до канонического лимита 5 (0.075833ms)
+  ✔ день считается образцовым (полным 5+5), когда заполнено ровно 5 гордостей и 5 благодарностей (0.104583ms)
+  ✔ прочерки «—» не учитываются как выполненные записи (0.081208ms)
+  ✔ каждый из 10 слотов сохраняет независимый уровень приватности (0.102792ms)
+  ✔ извлекает первую значимую гордость дня для главного тизера карточки (0.952375ms)
+  ✔ вычисляет общее число записей за 720 дней летописи (до 7200 записей) (0.090791ms)
+  ✔ сворачивание карточки скрывает остальные 4 гордости и 5 благодарностей (0.099708ms)
+  ✔ конвертация между строковым форматом благодарности и объектом обратима (0.086417ms)
+  ✔ сохранение иммутабельности: обновление одной записи не мутирует остальные 9 слотов (0.115209ms)
+✔ Дисциплина и парность 5+5: гордости и благодарности (2.894167ms)
+(node:72344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/permissions.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Тарифная система: Константы и Имена (Этап 4)
+  ✔ 1. Названия тарифов соответствуют Базовый / Премиум / Основатель Ultra (0.350709ms)
+  ✔ 2. Бейджи тарифов: free=null, pro=★ PREMIUM, ultra=⚡ ULTRA FOUNDER (0.068834ms)
+✔ Тарифная система: Константы и Имена (Этап 4) (0.917167ms)
+▶ Тарифная система: normalizeTier и обработка сроков (Этап 4)
+  ✔ 3. normalizeTier: возвращает free для пустых и невалидных значений (0.150792ms)
+  ✔ 4. normalizeTier: возвращает pro для pro (0.062584ms)
+  ✔ 5. normalizeTier: мигрирует устаревшее premium в pro (0.053583ms)
+  ✔ 6. normalizeTier: возвращает ultra для ultra (0.047625ms)
+  ✔ 7. normalizeTier: сбрасывает в free, если validUntil в прошлом (4.027958ms)
+  ✔ 8. normalizeTier: сохраняет тариф, если validUntil в будущем (0.176542ms)
+  ✔ 9. normalizeTier: сохраняет free независимо от даты (0.0795ms)
+✔ Тарифная система: normalizeTier и обработка сроков (Этап 4) (4.832291ms)
+▶ Тарифная система: Лимиты TIER_LIMITS_MAP и getTierLimits (Этап 4)
+  ✔ 10. maxCharsPerEntry: free=1000, pro=3000, ultra=5000 (0.213625ms)
+  ✔ 11. aiEvaluationsPerDay: free=0, pro=1, ultra=1 (0.049458ms)
+  ✔ 12. maxPhotosPerDay: free=0, pro=1, ultra=3 (0.047833ms)
+  ✔ 13. maxGroupsOwned: free=1, pro=5, ultra=20 (0.049917ms)
+  ✔ 14. maxGroupMembers: free=5, pro=25, ultra=100 (0.042333ms)
+  ✔ 15. maxStoriesPerDay: free=1, pro=5, ultra=15 (0.037375ms)
+  ✔ 16. maxScheduledMessages: free=3, pro=20, ultra=100 (0.0375ms)
+  ✔ 17. maxVoiceSeconds: free=60, pro=300, ultra=600 (0.035958ms)
+  ✔ 18. videoCalls: free=false, pro=true, ultra=true (0.059041ms)
+  ✔ 19. milestoneReport: free=basic, pro=stats, ultra=deep (0.043084ms)
+  ✔ 20. statsDepth: free=basic, pro=advanced, ultra=advanced (0.055958ms)
+  ✔ 21. getTierLimits для истёкшей подписки возвращает лимиты free (0.049375ms)
+✔ Тарифная система: Лимиты TIER_LIMITS_MAP и getTierLimits (Этап 4) (0.889209ms)
+▶ Тарифная система: Функции проверки прав (Этап 4)
+  ✔ 22. canCreatePride: разрешает текст <= лимита (0.126ms)
+  ✔ 23. canCreatePride: отклоняет текст > лимита и выдает ошибку (0.118166ms)
+  ✔ 24. canAddPhoto: запрещает фото на free (0.110167ms)
+  ✔ 25. canAddPhoto: контролирует лимит на pro (1 фото) (0.032709ms)
+  ✔ 26. canAddPhoto: контролирует лимит на ultra (3 фото) (0.031833ms)
+  ✔ 27. canMakeVideoCall: блокирует free и разрешает pro/ultra (0.038709ms)
+  ✔ 28. canCreateStory: проверяет лимиты сторис (0.0435ms)
+  ✔ 29. canScheduleMessage: проверяет лимиты отложенных сообщений (0.038833ms)
+  ✔ 30. canRequestAiEvaluation: блокирует free и разрешает 1 раз в сутки на pro/ultra (0.046875ms)
+  ✔ 31. isPaidTierActive: возвращает true только для активных pro/ultra (0.041667ms)
+  ✔ 32. getBillingCheckoutUrl: генерирует корректную ссылку Memernity (0.106208ms)
+  ✔ 33. getPaymentButtonLabel: возвращает Продлить или Оформить (0.041542ms)
+✔ Тарифная система: Функции проверки прав (Этап 4) (0.911625ms)
+(node:72345) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/privacy-backup.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Приватность профиля (ЭТАП 16)
+  ✔ валидирует корректные уровни приватности (0.357959ms)
+  ✔ восстанавливает приватность с фолбэками по умолчанию (0.428208ms)
+  ✔ оценивает приватность: закрытый аккаунт приватнее открытого (0.130542ms)
+  ✔ строит читаемую сводку приватности (0.104667ms)
+✔ Приватность профиля (ЭТАП 16) (1.532333ms)
+▶ Ночной дедлайн стрика (ЭТАП 16)
+  ✔ форматирует и парсит время дедлайна (0.221084ms)
+  ✔ считает момент дедлайна по кастомному времени (49.922666ms)
+  ✔ кастомный дедлайн переносит сгорание стрика на более раннее время (1.336209ms)
+  ✔ льгота на выходные добавляет день прощения (0.483917ms)
+  ✔ валидирует настройки дедлайна (0.172458ms)
+✔ Ночной дедлайн стрика (ЭТАП 16) (52.3145ms)
+▶ Полный экспорт / импорт и синхронизация (ЭТАП 16)
+  ✔ base64url кодирует и декодирует UTF-8 с эмодзи (0.349542ms)
+  ✔ считает контрольную сумму детерминированно (0.087416ms)
+  ✔ собирает и разбирает код синхронизации без потерь (0.632ms)
+  ✔ отклоняет повреждённый код синхронизации (0.310417ms)
+  ✔ отклоняет чужой текст как код синхронизации (0.04775ms)
+  ✔ универсальный импорт принимает и JSON, и код синхронизации (0.677834ms)
+  ✔ считает статистику содержимого базы (0.064584ms)
+  ✔ отпечаток базы меняется при изменении данных (0.082167ms)
+  ✔ форматирует байты в человекочитаемый размер (0.066208ms)
+✔ Полный экспорт / импорт и синхронизация (ЭТАП 16) (2.477ms)
+(node:72346) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/profile-level-and-follow.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Профиль: разрешение уровня и подписчики
+  ✔ mapProfileRecord корректно считывает level из row.level (0.444584ms)
+  ✔ mapProfileRecord корректно считывает level из settings.level (как у Илона Маска) (0.105958ms)
+  ✔ mapProfileRecord подставляет 1 если уровень не указан (0.075042ms)
+  ✔ mapProfileRecord отдает приоритет level, затем settings.level, затем difficulty_level (0.079209ms)
+✔ Профиль: разрешение уровня и подписчики (1.259125ms)
+(node:72347) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/profile-media.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Profile Media: Валидация типов файлов (ЗАДАЧА 4)
+  ✔ принимает допустимые форматы: JPG, PNG, WebP, HEIC (2.162958ms)
+  ✔ отклоняет неподдерживаемые форматы (exe, pdf, txt, svg) (0.115458ms)
+✔ Profile Media: Валидация типов файлов (ЗАДАЧА 4) (3.078458ms)
+▶ Profile Media: Компрессия и лимит размера (ЗАДАЧА 4)
+  ✔ проверяет константу максимального размера (ровно 2 МБ) (0.068167ms)
+  ✔ обрабатывает сжатие в WebP без падений (0.25ms)
+✔ Profile Media: Компрессия и лимит размера (ЗАДАЧА 4) (0.505417ms)
+▶ Profile Media: Загрузка аватара и обложки (ЗАДАЧА 4)
+  ✔ загружает аватар в fallback-режиме при отсутствии облака без битых картинок (0.240625ms)
+  ✔ загружает обложку с сохранением URL (0.093583ms)
+✔ Profile Media: Загрузка аватара и обложки (ЗАДАЧА 4) (0.558458ms)
+(node:72348) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/reminder.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Telegram Reminder Decision Logic
+  ✔ does not send reminder if entry is already recorded today (36.202ms)
+  ✔ triggers urgent reminder during grace period when <= 24 hours left (0.204084ms)
+  ✔ triggers burned recovery notification when streak has expired (0.126833ms)
+  ✔ skips daytime reminder when status is safe and hour is before 20:00 (0.4855ms)
+  ✔ triggers evening nudge when status is safe and hour is >= 20:00 in Chisinau (0.176375ms)
+✔ Telegram Reminder Decision Logic (37.74025ms)
+(node:72349) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/safe-url.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Защита от XSS и санитайзер URL (lib/ogonek/safe-url.ts)
+  ✔ разрешает легитимные http: и https: адреса (0.693042ms)
+  ✔ отклоняет javascript: во всех регистрах и вариантах (0.097542ms)
+  ✔ отклоняет data: ссылки для href (защита от Stored XSS) (0.073792ms)
+  ✔ отклоняет vbscript: схемы (0.653791ms)
+  ✔ отклоняет protocol-relative ссылки вида //evil.com (0.060959ms)
+  ✔ нейтрализует пробелы, переносы строк и табуляции для обхода фильтра (0.205542ms)
+  ✔ отклоняет нулевые байты и скрытые управляющие символы (0x00-0x1F, 0x7F) (0.097916ms)
+  ✔ отклоняет URL-encoded и Unicode-обходы (полноширинные символы и zero-width spaces) (0.125583ms)
+  ✔ безопасно валидирует источники изображений (isSafeImageSrc & safeImageSrc) (0.136291ms)
+  ✔ санитизирует сайт пользователя в профиле (sanitizeWebsiteUrl) (0.167ms)
+  ✔ корректно обрабатывает нестроковые и пустые входные данные (0.061209ms)
+✔ Защита от XSS и санитайзер URL (lib/ogonek/safe-url.ts) (3.100666ms)
+(node:72350) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/security.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Безопасность и вход (ЭТАП 15)
+  ✔ generateSalt выдаёт 32-символьную hex-соль и не повторяется (3.691292ms)
+  ✔ hashSecret детерминирован для пары секрет+соль и меняется при другой соли (3.8965ms)
+  ✔ verifySecret подтверждает верный секрет и отклоняет неверный (1.238ms)
+  ✔ isValidPin принимает только нужное число цифр (0.458958ms)
+  ✔ isValidPassword проверяет границы длины (0.209375ms)
+  ✔ evaluatePasswordStrength оценивает надёжность и даёт подсказки (0.617667ms)
+  ✔ nextFailedAttemptState блокирует вход после лимита попыток (1.938166ms)
+  ✔ computeLockout считает остаток блокировки и снимает просроченную (0.437416ms)
+  ✔ attemptsLeft не уходит в минус (0.312333ms)
+  ✔ appendSecurityEvent кладёт событие в начало и обрезает журнал (0.943583ms)
+  ✔ sanitizeSecurityState отбрасывает PIN без соли и биометрию без ключа (0.205834ms)
+  ✔ sanitizeSecurityState приводит числа в допустимые границы (0.356791ms)
+  ✔ помощники состояния верно определяют активные способы входа (0.153208ms)
+  ✔ evaluateSecurityLevel отражает силу защиты (0.09225ms)
+  ✔ buildSecurityHint отражает готовность способов входа (0.054333ms)
+✔ Безопасность и вход (ЭТАП 15) (17.4715ms)
+(node:72351) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/set-tier.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Админ-скрипт смены тарифа scripts/admin/set-tier.mjs (Этап 02)
+  ✔ скрипт существует и содержит валидацию аргументов (1.430167ms)
+  ✔ миграция 020_rls.sql содержит защиту тарифов и таблицу subscription_audit (0.8445ms)
+✔ Админ-скрипт смены тарифа scripts/admin/set-tier.mjs (Этап 02) (4.253625ms)
+(node:72352) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/streak-720-preservation.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Сохранение 720 дней летописи и расчет стрика без потерь
+  ✔ содержит ровно 720 дней с непрерывной нумерацией 1..720 (22.414292ms)
+  ✔ все 720 дат уникальны и последовательны без пропусков (1.443333ms)
+  ✔ computeStreak вычисляет честный стрик 720 дней (34.978ms)
+  ✔ при добавлении 721-го дня стрик корректно возрастает до 721 (1.877541ms)
+  ✔ сортировка перемешанного массива 720 дней восстанавливает убывающий порядок (2.447291ms)
+  ✔ Map-индексирование 720 дней обеспечивает поиск за O(1) (1.160833ms)
+  ✔ JSON сериализация и парсинг 720 дней не теряют ни одного поля (10.931584ms)
+  ✔ повторное добавление существующей даты не раздувает стрик (0.647583ms)
+  ✔ вычисляет grace period при отсутствии записи за сегодня, если вчера было закрыто (27.44525ms)
+  ✔ при пропуске более допустимого grace period стрик считается сгоревшим (burned) (1.282875ms)
+✔ Сохранение 720 дней летописи и расчет стрика без потерь (105.428583ms)
+(node:72353) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/streak-unified.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Единый источник правды для стрика (PRODUCT_SPEC.md Правило 3 & Требование 5)
+  ✔ Стрик равен количеству закрытых дней дневника, а не календарным дням подряд (0.401583ms)
+  ✔ Корректно считает стрик из локальных объектов Day (RightRail и ProfileView совпадают) (0.30475ms)
+  ✔ Для 705 дней истории стрик равен ровно 705 и в профиле, и в правой колонке (37.772833ms)
+  ✔ Пустой дневник возвращает 0 (0.084875ms)
+✔ Единый источник правды для стрика (PRODUCT_SPEC.md Правило 3 & Требование 5) (39.093ms)
+(node:72354) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/streak.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Streak Calculation & Bridge Engine (Europe/Chisinau)
+  ✔ 1. returns 0 streak and burned status for empty entries (0.880542ms)
+  ✔ 2. returns streak 1 and safe status when entry is today (41.407125ms)
+  ✔ 3. returns streak 1 and grace status when last entry was yesterday (0.322416ms)
+  ✔ 4. returns streak 1 and grace status when last entry was 2 days ago (0.271875ms)
+  ✔ 5. returns streak 1 and grace status on 3rd missed day (0.299833ms)
+  ✔ 6. retains grace on deadline day before midnight in Chisinau (0.322041ms)
+  ✔ 7. burns streak when now is past deadline (past 23:59:59 on 4th day) (0.206208ms)
+  ✔ 8. computes consecutive daily entries correctly (0.81075ms)
+  ✔ 9. calculates 10 continuous consecutive days (1.828875ms)
+  ✔ 10. bridges 1 missed day without breaking streak (0.379292ms)
+  ✔ 11. bridges 2 missed days (0.314542ms)
+  ✔ 12. bridges maximum 3 missed days (0.327334ms)
+  ✔ 13. resets streak to 1 when gap is 4 missed days (diff = 5) (0.172416ms)
+  ✔ 14. preserves best streak forever after active streak is broken (0.189209ms)
+  ✔ 15. correctly respects midnight boundary in Chisinau (0.121959ms)
+  ✔ 16. handles DST Spring change across late March smoothly (0.187542ms)
+  ✔ 17. handles DST Autumn change across late October smoothly (0.162791ms)
+  ✔ 18. handles Leap year (Feb 28 to Feb 29 to Mar 01) accurately (0.118667ms)
+  ✔ 19. ignores duplicate day entries without inflating streak (0.156583ms)
+  ✔ 20. sorts unordered entries correctly (0.163208ms)
+  ✔ 21. computes exact end of day for Chisinau (0.2255ms)
+  ✔ 22. populates filledDays for ongoing gap while under grace (0.244917ms)
+✔ Streak Calculation & Bridge Engine (Europe/Chisinau) (49.918708ms)
+(node:72355) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/supabase-2.0-architecture.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ SUPABASE 2.0: Архитектурный аудит и верификация миграции
+  ✔ файл SUPABASE_2.0_MIGRATION.sql существует в корне проекта (1.789875ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql содержит все обязательные поля profiles (особенно level) (1.232625ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql содержит таблицу stories со строгим таймером 20 часов (0.334916ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql содержит таблицу direct_messages для чатов и мессенджера (0.237292ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql содержит таблицу evidence_vault для фактов силы (0.203ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql содержит таблицы комментариев и реакций (0.188208ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql настраивает Realtime для direct_messages и stories (0.184292ms)
+  ✔ SUPABASE_2.0_MIGRATION.sql снимает или настраивает открытый RLS для разработки (0.163417ms)
+✔ SUPABASE 2.0: Архитектурный аудит и верификация миграции (5.285708ms)
+▶ SUPABASE 2.0: Сквозная логика уровней профилей (Elon Musk и другие)
+  ✔ Elon Musk (ilonmusk) с settings.level = 5 отображается с level = 5 для всех аккаунтов (0.207167ms)
+  ✔ Пользователь с прямой колонкой level = 5 возвращает level = 5 (0.1055ms)
+  ✔ Поля возраста, города, сайта, анонимности и верификации маппятся без потерь (0.09775ms)
+✔ SUPABASE 2.0: Сквозная логика уровней профилей (Elon Musk и другие) (0.5235ms)
+▶ SUPABASE 2.0: Правило 20 часов для сторис
+  ✔ сторис младше 20 часов считается активной, старше 20 часов — отсекается (1.44375ms)
+✔ SUPABASE 2.0: Правило 20 часов для сторис (1.552458ms)
+▶ SUPABASE 2.0: Симметричный thread_key для сообщений (Багфикс 2)
+  ✔ getDirectThreadKey генерирует одинаковый ключ независимо от порядка участников (22.703166ms)
+  ✔ getDirectThreadKey безопасно обрабатывает пустые и одинарные ID (0.116042ms)
+✔ SUPABASE 2.0: Симметричный thread_key для сообщений (Багфикс 2) (22.921292ms)
+▶ SUPABASE 2.0: Защита мессенджера от падений (Error Boundary crash)
+  ✔ threadOf, unreadCount, lastMessage, sortThreadIds не падают при undefined/null (9.60125ms)
+  ✔ emptyMessengerState возвращает валидный пустой объект состояния (0.177708ms)
+  ✔ sanitizeChatThreads очищает мусорные ключи "undefined" и "null" (0.316792ms)
+  ✔ sanitizeChatActiveFriendId преобразует "undefined" и "null" в null (0.077542ms)
+✔ SUPABASE 2.0: Защита мессенджера от падений (Error Boundary crash) (10.266416ms)
+(node:72356) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/supabase-auth.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Supabase Auth: Валидация никнейма (ЗАДАЧА 3)
+  ✔ принимает корректный никнейм из 3-20 латинских букв, цифр и _ (2.451958ms)
+  ✔ приводит никнейм к нижнему регистру и обрезает пробелы (0.088625ms)
+  ✔ очищает никнейм от ведущего символа @ и пробелов (0.069417ms)
+  ✔ отклоняет слишком короткий (< 3 символов) никнейм (0.145459ms)
+  ✔ отклоняет слишком длинный (> 20 символов) никнейм (0.097625ms)
+  ✔ отклоняет спецсимволы, пробелы, точки и кириллицу (0.107208ms)
+✔ Supabase Auth: Валидация никнейма (ЗАДАЧА 3) (4.090416ms)
+▶ Supabase Auth: Валидация пароля (ЗАДАЧА 3)
+  ✔ требует минимум 8 символов (0.144667ms)
+  ✔ корректно оценивает сложность пароля (0.137041ms)
+✔ Supabase Auth: Валидация пароля (ЗАДАЧА 3) (0.378292ms)
+▶ Supabase Auth: Маппинг email и понятные ошибки (ЗАДАЧА 3)
+  ✔ маппит никнейм в канонический email @ogonek.app и поддерживает legacy @ogonek.local (0.173333ms)
+  ✔ переводит системные ошибки Supabase на дружелюбный русский язык (0.117ms)
+✔ Supabase Auth: Маппинг email и понятные ошибки (ЗАДАЧА 3) (0.384875ms)
+(node:72357) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/supabase-sync.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Supabase: разбор целей реакций (ЭТАП 19)
+  ✔ понимает день, гордость и благодарность (0.678541ms)
+✔ Supabase: разбор целей реакций (ЭТАП 19) (1.11875ms)
+▶ Supabase: сборка снимка и план отправки (ЭТАП 19)
+  ✔ разворачивает локальное состояние в строки таблиц (6.939541ms)
+  ✔ на пустой мете отправляет все строки, а после отправки — ничего (1.162459ms)
+  ✔ считает удалённую строку как операцию DELETE (0.366375ms)
+✔ Supabase: сборка снимка и план отправки (ЭТАП 19) (8.590875ms)
+▶ Supabase: слияние серверных данных (ЭТАП 19)
+  ✔ добавляет день с другого устройства и не повторяет это дважды (1.036459ms)
+  ✔ не перезатирает локально изменённую (грязную) строку (0.337334ms)
+✔ Supabase: слияние серверных данных (ЭТАП 19) (1.45875ms)
+▶ Supabase: настройки автосинхронизации из окружения (ЭТАП 19)
+  ✔ читает интервал и флаг отключения из .env (0.177208ms)
+  ✔ sanitizePostgresString: удаляет нулевые байты, невалидные суррогаты и триммит (0.101375ms)
+  ✔ sanitizePostgresValue: рекурсивно очищает структуры данных (0.127416ms)
+  ✔ buildRemoteDataset: автоматически санитизирует все строковые поля модели (0.161209ms)
+✔ Supabase: настройки автосинхронизации из окружения (ЭТАП 19) (0.693ms)
+(node:72358) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/systemic-features.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Systemic Leaderboard & Default Privacy (ЭТАП 24)
+  ✔ sanitizes defaultDayVisibility properly (1.64225ms)
+  ✔ DEFAULT_PRIVACY has public defaultDayVisibility (0.234458ms)
+  ✔ isMutualFriend detects mutual friendship correctly (0.251875ms)
+✔ Systemic Leaderboard & Default Privacy (ЭТАП 24) (4.553208ms)
+(node:72359) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/user/Desktop/ogonyok-ai-clone/test/webrtc-signaling-room.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/user/Desktop/ogonyok-ai-clone/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ WebRTC сигналы, протокол комнаты звонка и сессии вызовов
+  ✔ chat-call-modal.tsx содержит каноническую архитектуру WebRTC сигналов (0.453917ms)
+  ✔ getCallRoomChannelName генерирует правильное имя канала и выбрасывает ошибку на пустой id (0.216625ms)
+  ✔ getDirectThreadKey детерминированно сортирует ID участников по алфавиту (0.076167ms)
+  ✔ formatCallDuration корректно форматирует секунды в mm:ss (0.079084ms)
+  ✔ formatCallDuration безопасно обрабатывает отрицательные числа и NaN (0.064ms)
+  ✔ validateWebRTCPayload валидирует broadcast события WebRTC (0.076167ms)
+  ✔ validateWebRTCPayload отклоняет некорректные и поддельные сообщения (0.054083ms)
+  ✔ STUN конфигурация содержит эталонные серверы Google (0.140875ms)
+  ✔ очередь кандидатов pendingCandidatesRef обрабатывается после установки remoteDescription (0.157875ms)
+  ✔ автоматическая зачистка медиа-треков и звуков при вызове cleanupAndClose (0.1605ms)
+  ✔ сессия звонка передает итоговую длительность в секундах в onEndCall (0.057292ms)
+✔ WebRTC сигналы, протокол комнаты звонка и сессии вызовов (2.430458ms)
+ℹ tests 507
+ℹ suites 55
+ℹ pass 507
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1632.818083
+exit: 0

@@ -1,0 +1,5 @@
+
+> my-project@0.1.0 lint
+> tsc --noEmit
+
+exit: 0

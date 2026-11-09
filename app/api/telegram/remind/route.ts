@@ -3,19 +3,34 @@ import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { evaluateReminder } from '@/lib/ogonek/reminder-logic'
 import { apiErrorResponse } from '@/lib/server/api-validator'
+import { getAuthenticatedUser } from '@/lib/server/auth'
+import { applyRateLimit } from '@/lib/server/rate-limit'
 import type { StreakState } from '@/lib/ogonek/streak'
 
 const SNAPSHOT_FILE = path.join(process.cwd(), '.data', 'streak-snapshot.json')
 
 export async function POST(request: Request) {
-  // Check CRON_SECRET if configured
+  const authUser = await getAuthenticatedUser(request)
+
+  // Rate limit: 20 запросов в минуту
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-remind',
+    limit: 20,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) return rateLimitResponse
+
+  // Check CRON_SECRET if configured, or user authorization
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const authHeader = request.headers.get('authorization')
-    const token = authHeader?.replace(/^Bearer\s+/i, '').trim()
-    if (token !== cronSecret) {
-      return apiErrorResponse('UNAUTHORIZED', 'Не авторизован', 401)
-    }
+  const authHeader = request.headers.get('authorization')
+  const token = authHeader?.replace(/^Bearer\s+/i, '').trim()
+
+  const isCronAuthorized = cronSecret && token === cronSecret
+  const isUserAuthorized = Boolean(authUser)
+
+  if (!isCronAuthorized && !isUserAuthorized) {
+    return apiErrorResponse('UNAUTHORIZED', 'Не авторизован для отправки напоминания', 401)
   }
 
   // Load streak snapshot

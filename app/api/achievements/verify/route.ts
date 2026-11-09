@@ -3,6 +3,8 @@ import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { isAchievementCategoryId } from '@/lib/ogonek/achievement-regulation'
 import { apiErrorResponse } from '@/lib/server/api-validator'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
 import {
   DEFAULT_MODERATION_FROM,
   DEFAULT_MODERATION_INBOX,
@@ -34,21 +36,6 @@ import type { ModerationChannel, ModerationDelivery } from '@/lib/ogonek/types'
 
 const OUTBOX_DIR = path.join(process.cwd(), '.data')
 const OUTBOX_FILE = path.join(OUTBOX_DIR, 'moderation-outbox.json')
-
-// In-memory rate limiter: 20 requests per minute per client IP
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = rateLimitMap.get(ip)
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 })
-    return true
-  }
-  if (record.count >= 20) return false
-  record.count++
-  return true
-}
 
 /* ── Валидация входящего пакета ─────────────────────────────────────────── */
 
@@ -256,10 +243,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
-    if (!checkRateLimit(ip)) {
-      return apiErrorResponse('RATE_LIMITED', 'Слишком много заявок. Лимит: 20 в минуту.', 429)
-    }
+    const authUser = await getAuthenticatedUser(request)
+    const rateLimitResponse = await applyRateLimit(request, {
+      route: 'achievements-verify',
+      limit: 20,
+      windowSeconds: 60,
+      userId: authUser?.userId,
+    })
+    if (rateLimitResponse) return rateLimitResponse
 
     let rawBody: unknown
     try {

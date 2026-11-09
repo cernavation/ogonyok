@@ -1,8 +1,8 @@
 # Прогресс ночной смены
 
 - **Текущая ветка**: `night-shift`
-- **Текущий этап**: Завершён Этап 04 (Архитектура тарифов и серверное принуждение). Готов к переходу на Этап 05.
-- **Статус**: Этапы 00, 01, 02, 03, 04 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=465 pass, build exit 0, webhooks HMAC pass, DB triggers pass).
+- **Текущий этап**: Завершён Этап 05 (Лимиты, квоты и защита от злоупотреблений). Готов к переходу на Этап 06.
+- **Статус**: Этапы 00, 01, 02, 03, 04, 05 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=507 pass, build exit 0, rate-limiting & concurrency race condition pass).
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)
@@ -10,7 +10,8 @@
 - [x] **Этап 02: Безопасность БД (RLS, Тариф-Защита, Two-Users матрица, Демо-режим)** — миграция 020_rls.sql (RLS на 16 таблицах, profiles_public, profile_private, trigger защиты тарифа, REVOKE UPDATE, effective_tier, subscription_audit), админ-скрипт scripts/admin/set-tier.mjs, матрица scripts/qa/two-users.mjs (53 теста), строгий demo-режим без запросов к таблицам Supabase (подтверждено Playwright), регламент наката на прод в night/MANUAL_STEPS.md
 - [x] **Этап 03: Гигиена и безопасность фронтенда** — единый браузерный синглтон lib/supabase/browser.ts (один WebSocket, домен ogonek.app с fallback на ogonek.local), защита от XSS в chat-message-bubble.tsx и общая утилита safe-url.ts, next.config.mjs (удаление ignoreBuildErrors, оптимизация картинок, строгие CSP/безопасные заголовки без ошибок в консоли), аудит секретов, .env.example, lib/server/env.ts, scripts/pre-commit-secrets-check.mjs, Zod-валидация всех 18 API-роутов, удаление дубля @google/generative-ai
 - [x] **Этап 04: Система тарифов и серверный энфорсмент** — спецификация night/TIERS_SPEC.md, единый источник лимитов permissions.ts (Базовый, Премиум, Основатель Ultra), серверная функция getEffectiveTier / effective_tier, миграция 040_tier_enforcement.sql (billing_events, DB-триггер check_entry_char_limit на 1000/3000/5000 символов), webhook /api/billing/webhook (HMAC-SHA256, 503 при отсутствии секрета, идемпотентность по event_id), ссылки оплаты https://memernity.com/checkout, динамическая надпись «Продлить», бейджи [⚡ ULTRA FOUNDER] / [★ PREMIUM] и строгая верификация только ultra/is_founder, звезды ленты (Самооценка автора vs Оценено ИИ), Gate компонент и useEntitlement хук, тесты scripts/qa/test-tier-enforcement.mjs, матрица night/evidence/04/tier_matrix.md
-- [ ] **Этап 05**: ...
+- [x] **Этап 05: Лимиты и защита от злоупотреблений** — миграция 050_limits.sql (rate_limits, usage_counters, ai_cache, check_rate_limit, consume_quota с блокировкой строк от race condition), замена rate-limit.ts на единый хелпер с 429 Retry-After на всех 18 маршрутах, JWT аутентификация getAuthenticatedUser(request), серверные квоты consumeServerQuota(userId, feature), защита регистрации /api/auth/signup (3/сутки на IP, 10/сутки на /24 подсеть, honeypot, тайминг формы >= 3с, защита от гомоглифов и зарезервированных ников, Cloudflare Turnstile), ИИ-кэширование по SHA-256 хэшу и сохранение квот при сбое, 42 unit-проверки в limits-and-abuse.test.ts, скрипт scripts/qa/test-stage05-limits.mjs (28 тестов, включая 20 параллельных запросов -> ровно 1 успех), Playwright скриншоты десктоп и мобильный в night/evidence/05/
+- [ ] **Этап 06**: ...
 - [ ] **Этап 06**: ...
 - [ ] **Этап 07**: ...
 - [ ] **Этап 08**: ...

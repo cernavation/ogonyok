@@ -31,6 +31,12 @@ export interface TierLimits {
   milestoneReport: 'basic' | 'stats' | 'deep'
   /** Глубина аналитики стрика */
   statsDepth: 'basic' | 'advanced'
+  /** Лимит заявок в соратники в сутки (free 20, pro 50, ultra 100) */
+  friendRequestsPerDay: number
+  /** Лимит сообщений в чат в минуту (антиспам 30/мин для всех) */
+  chatMessagesPerMinute: number
+  /** Лимит поисковых запросов профилей в минуту (60/мин для всех) */
+  profileSearchesPerMinute: number
 }
 
 /**
@@ -67,6 +73,9 @@ export const TIER_LIMITS_MAP: Record<SubscriptionTier, Readonly<TierLimits>> = {
     videoCalls: false,
     milestoneReport: 'basic',
     statsDepth: 'basic',
+    friendRequestsPerDay: 20,
+    chatMessagesPerMinute: 30,
+    profileSearchesPerMinute: 60,
   },
   pro: {
     maxCharsPerEntry: 3000,
@@ -80,6 +89,9 @@ export const TIER_LIMITS_MAP: Record<SubscriptionTier, Readonly<TierLimits>> = {
     videoCalls: true,
     milestoneReport: 'stats',
     statsDepth: 'advanced',
+    friendRequestsPerDay: 50,
+    chatMessagesPerMinute: 30,
+    profileSearchesPerMinute: 60,
   },
   ultra: {
     maxCharsPerEntry: 5000,
@@ -93,6 +105,9 @@ export const TIER_LIMITS_MAP: Record<SubscriptionTier, Readonly<TierLimits>> = {
     videoCalls: true,
     milestoneReport: 'deep',
     statsDepth: 'advanced',
+    friendRequestsPerDay: 100,
+    chatMessagesPerMinute: 30,
+    profileSearchesPerMinute: 60,
   },
 }
 
@@ -233,6 +248,25 @@ export function canRequestAiEvaluation(
       allowed: false,
       max,
       error: 'ИИ-оценка на сегодня уже получена (1 оценка в день)',
+    }
+  }
+  return { allowed: true, max }
+}
+
+/**
+ * Лимит на отправку заявок в соратники в сутки
+ */
+export function canSendFriendRequest(
+  rawTier: unknown,
+  sentToday: number,
+  validUntil?: string | null
+): { allowed: boolean; max: number; error?: string } {
+  const max = getTierLimits(rawTier, validUntil).friendRequestsPerDay
+  if (sentToday >= max) {
+    return {
+      allowed: false,
+      max,
+      error: `Превышен суточный лимит заявок в соратники (${max} в день для вашего тарифа)`,
     }
   }
   return { allowed: true, max }

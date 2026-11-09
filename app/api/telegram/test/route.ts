@@ -1,8 +1,18 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
 import { apiErrorResponse } from '@/lib/server/api-validator'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
 
 export async function POST(request: Request) {
+  const authUser = await getAuthenticatedUser(request)
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-test',
+    limit: 10,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) return rateLimitResponse
   const token = process.env.TELEGRAM_BOT_TOKEN
   if (!token) {
     return apiErrorResponse('CONFIG_ERROR', 'TELEGRAM_BOT_TOKEN не настроен в .env.local', 400)

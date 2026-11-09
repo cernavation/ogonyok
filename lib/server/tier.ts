@@ -6,13 +6,13 @@
  * с проверкой срока действия подписки.
  */
 
-import { getServerSupabase } from '../supabase/server'
+import { getServerSupabase } from '../supabase/server.ts'
 import {
   normalizeTier,
   getTierLimits,
   type SubscriptionTier,
   type TierLimits,
-} from '../ogonek/permissions'
+} from '../ogonek/permissions.ts'
 
 /**
  * Получает эффективный тариф пользователя непосредственно из базы данных.
@@ -21,13 +21,12 @@ import {
 export async function getEffectiveTier(userId: string): Promise<SubscriptionTier> {
   if (!userId) return 'free'
 
-  const supabase = getServerSupabase()
-  if (!supabase) {
-    console.warn('[getEffectiveTier] Supabase client unavailable, defaulting to free')
-    return 'free'
-  }
-
   try {
+    const supabase = getServerSupabase()
+    if (!supabase) {
+      return 'free'
+    }
+
     // 1. Попытка вызова RPC effective_tier(user_id)
     const { data: rpcTier, error: rpcError } = await supabase.rpc('effective_tier', {
       user_id: userId,

@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
 import { apiErrorResponse, validateJsonBody, TranslateSchema } from '@/lib/server/api-validator'
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('translate', ip, 30, 60_000)
-  if (!rateLimit.allowed) {
-    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов на перевод. Попробуйте через минуту.', 429)
-  }
+  const authUser = await getAuthenticatedUser(request)
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'translate',
+    limit: 30,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) return rateLimitResponse
 
   try {
     const validated = await validateJsonBody(request, TranslateSchema)
@@ -32,7 +36,7 @@ export async function POST(request: Request) {
       })
     }
 
-    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
     const systemPrompt = `Ты профессиональный переводчик чат-сообщений. Переведи текст на язык: "${targetLang}". Сохраняй сленг, эмодзи, интонацию и пунктуацию. Верни ТОЛЬКО переведённый текст без лишних пояснений, кавычек и метаданных.`
 
     const res = await fetch(
@@ -53,16 +57,17 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '')
+      console.warn('[Gemini Translate] API response not ok:', res.status, errText)
       return NextResponse.json({
         success: true,
-        source: 'fallback-error',
-        translation: `[Перевод]: ${text}`,
-        error: `Gemini API: ${res.status}`,
+        source: 'fallback',
+        translation: text,
       })
     }
 
     const data = await res.json()
-    const translation = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text
+    const translation =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || text
 
     return NextResponse.json({
       success: true,
@@ -71,6 +76,11 @@ export async function POST(request: Request) {
     })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Ошибка перевода'
-    return NextResponse.json({ success: false, error: message }, { status: 500 })
+    console.warn('[Gemini Translate] Exception:', message)
+    return NextResponse.json({
+      success: true,
+      source: 'fallback',
+      translation: 'Перевод временно недоступен',
+    })
   }
 }

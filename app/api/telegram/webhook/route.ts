@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
-import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { applyRateLimit } from '@/lib/server/rate-limit'
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('telegram-webhook', ip, 60, 60_000)
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: 'Too Many Requests' }, { status: 429 })
-  }
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'telegram-webhook',
+    limit: 60,
+    windowSeconds: 60,
+  })
+  if (rateLimitResponse) return rateLimitResponse
 
   try {
     const token = process.env.TELEGRAM_BOT_TOKEN
