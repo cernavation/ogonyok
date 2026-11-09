@@ -32,6 +32,10 @@ export type FriendProfile = {
   lastActive: string
   /** Онлайн-статус (кружок присутствия в виджете активных друзей) */
   presence: FriendPresence
+  subscription_tier?: 'free' | 'pro' | 'ultra' | 'premium'
+  subscription_valid_until?: string | null
+  subscription_expires_at?: string | null
+  is_founder?: boolean
 }
 
 export const FRIEND_PROFILES: FriendProfile[] = []

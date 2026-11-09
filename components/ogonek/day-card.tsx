@@ -29,6 +29,8 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { formatPhotoAttachmentCaption } from '@/lib/ogonek/attached-targets'
 import { getInitials } from '@/lib/ogonek/initials'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
+import { normalizeTier, TIER_BADGES } from '@/lib/ogonek/permissions'
+import { getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
@@ -112,8 +114,74 @@ function DayCardComponent({
 
   const dayVisibility = normalizeVisibility(day.visibility)
 
-  const displayName = state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
-  const username = state.profile?.username || currentUser?.username || 'cernavation'
+  const authorUserId = day.user_id || day.userId || day.author?.id
+  const isMine =
+    !authorUserId ||
+    (currentUser?.id && authorUserId === currentUser.id) ||
+    (state.profile?.id && authorUserId === state.profile.id)
+
+  const [authorProfile, setAuthorProfile] = useState<ProfileRecord | null>(null)
+
+  useEffect(() => {
+    if (isMine || !authorUserId) return
+    let active = true
+    getProfile(authorUserId).then((p) => {
+      if (active && p) setAuthorProfile(p)
+    })
+    return () => {
+      active = false
+    }
+  }, [authorUserId, isMine])
+
+  const effectiveAuthorTier = useMemo(() => {
+    if (isMine) {
+      return normalizeTier(state.profile?.subscription_tier, state.profile?.subscription_expires_at)
+    }
+    const rawTier =
+      authorProfile?.subscription_tier ||
+      day.author?.subscription_tier ||
+      day.author?.subscriptionTier ||
+      day.author?.tier
+    const rawExpires =
+      authorProfile?.subscription_expires_at ||
+      day.author?.subscription_expires_at ||
+      day.author?.subscriptionExpiresAt
+    return normalizeTier(rawTier, rawExpires)
+  }, [
+    isMine,
+    state.profile?.subscription_tier,
+    state.profile?.subscription_expires_at,
+    authorProfile?.subscription_tier,
+    authorProfile?.subscription_expires_at,
+    day.author,
+  ])
+
+  const authorIsFounder = useMemo(() => {
+    if (isMine) {
+      return Boolean(state.profile?.is_founder || (state.profile as any)?.isFounder)
+    }
+    return Boolean(
+      authorProfile?.is_founder ||
+        day.author?.is_founder ||
+        day.author?.isFounder
+    )
+  }, [isMine, state.profile?.is_founder, (state.profile as any)?.isFounder, authorProfile?.is_founder, day.author])
+
+  const authorBadge = TIER_BADGES[effectiveAuthorTier]
+  const hasVerification = effectiveAuthorTier === 'ultra' || authorIsFounder
+
+  const displayName =
+    (!isMine && (authorProfile?.display_name || day.author?.displayName || day.author?.display_name)) ||
+    state.profile?.displayName ||
+    currentUser?.displayName ||
+    'Alexei Cerna'
+
+  const username =
+    (!isMine && (authorProfile?.username || day.author?.username)) ||
+    state.profile?.username ||
+    currentUser?.username ||
+    'cernavation'
+
   const initials = getInitials(displayName, username)
 
   const isAuthor =
@@ -361,14 +429,36 @@ function DayCardComponent({
                 <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
                   {displayName}
                 </span>
-                <span
-                  className="inline-flex items-center justify-center rounded-full text-white flex-none"
-                  style={{ background: '#1d9bf0', width: 16, height: 16 }}
-                  title="Верифицирован"
-                  aria-label="Верифицирован"
-                >
-                  <Check size={10} strokeWidth={3} />
-                </span>
+                {effectiveAuthorTier === 'ultra' && (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-gradient-to-r from-amber-400 via-amber-200 to-yellow-500 text-black shadow-sm flex items-center gap-0.5 flex-none"
+                    title="Основатель Ultra"
+                  >
+                    ⚡ ULTRA FOUNDER
+                  </span>
+                )}
+                {effectiveAuthorTier === 'pro' && (
+                  <span
+                    className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 text-white shadow-sm flex items-center gap-0.5 flex-none"
+                    title="Премиум подписчик"
+                  >
+                    ★ PREMIUM
+                  </span>
+                )}
+                {hasVerification && (
+                  <span
+                    className="inline-flex items-center justify-center rounded-full text-white flex-none"
+                    style={{
+                      background: effectiveAuthorTier === 'ultra' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : '#1d9bf0',
+                      width: 16,
+                      height: 16,
+                    }}
+                    title={effectiveAuthorTier === 'ultra' ? 'Основатель Ultra (верифицирован)' : 'Верифицирован'}
+                    aria-label="Верифицирован"
+                  >
+                    <Check size={10} strokeWidth={3} />
+                  </span>
+                )}
                 {dayVisibility !== 'public' && (
                   <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
                     <Lock size={13} />
@@ -378,12 +468,23 @@ function DayCardComponent({
                   @{username} · {dateStr}
                 </span>
                 {averageScore !== null && (
-                  <span
-                    className="inline-flex items-center gap-0.5 text-[13px] text-amber-400 font-bold bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full"
-                    title={`Балл дня: ${Number(day.score ?? averageScore).toFixed(1)}/10`}
-                  >
-                    ★ {Number(day.score ?? averageScore).toFixed(1)}
-                  </span>
+                  <div className="inline-flex items-center gap-1.5 flex-none">
+                    <span
+                      className="inline-flex items-center gap-0.5 text-[13px] text-amber-400 font-bold bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full"
+                      title={effectiveAuthorTier === 'free' ? 'Самооценка автора' : `Оценка ИИ: ${Number(day.score ?? averageScore).toFixed(1)}/10`}
+                    >
+                      ★ {Number(day.score ?? averageScore).toFixed(1)}
+                    </span>
+                    {effectiveAuthorTier !== 'free' && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/30"
+                        title="Оценка проверена и подтверждена ИИ"
+                      >
+                        <Sparkles size={11} className="text-violet-400" />
+                        Оценено ИИ
+                      </span>
+                    )}
+                  </div>
                 )}
                 <span
                   className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]"
@@ -409,7 +510,10 @@ function DayCardComponent({
               </p>
               <div className="flex items-center gap-2 flex-none">
                 {firstPride && ((typeof firstPride.score === 'number' && firstPride.score > 0) || (typeof firstPride.scale === 'number' && firstPride.scale > 0)) && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
+                  <span
+                    className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]"
+                    title={effectiveAuthorTier === 'free' ? 'Самооценка автора' : 'Оценено ИИ'}
+                  >
                     {Number(firstPride.score ?? firstPride.scale).toFixed(1)}★
                   </span>
                 )}
@@ -491,7 +595,10 @@ function DayCardComponent({
                               </span>
                               <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{p.text}</span>
                               {((typeof p.score === 'number' && p.score > 0) || (typeof p.scale === 'number' && p.scale > 0)) && (
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
+                                <span
+                                  className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]"
+                                  title={effectiveAuthorTier === 'free' ? 'Самооценка автора' : 'Оценено ИИ'}
+                                >
                                   {Number(p.score ?? p.scale).toFixed(1)}★
                                 </span>
                               )}

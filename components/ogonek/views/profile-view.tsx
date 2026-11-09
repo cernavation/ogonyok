@@ -46,6 +46,7 @@ import { getInitials } from '@/lib/ogonek/initials'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { sanitizeWebsiteUrl } from '@/lib/ogonek/safe-url'
+import { normalizeTier, TIER_BADGES } from '@/lib/ogonek/permissions'
 import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import { getSupabase } from '@/lib/supabase/browser'
 import {
@@ -155,6 +156,9 @@ export function ProfileView({
             together: 0,
             mutual: 0,
             verified: Boolean(prof.verified),
+            subscription_tier: prof.subscription_tier,
+            subscription_valid_until: prof.subscription_valid_until,
+            is_founder: (prof as any).is_founder,
             lastActive: 'недавно',
             presence: 'online',
           })
@@ -348,6 +352,9 @@ export function ProfileView({
       monthlyGoal: '',
       monthlyGoalUpdatedAtISO: '',
       verified: Boolean(foreignProfile?.verified),
+      subscription_tier: foreignProfile?.subscription_tier,
+      subscription_valid_until: foreignProfile?.subscription_valid_until,
+      is_founder: foreignProfile?.is_founder,
       difficultyLevel: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || 1,
       level: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || 1,
       isAnonymous: Boolean(foreignProfile?.is_anonymous),
@@ -838,9 +845,23 @@ export function ProfileView({
             <h2 className="text-[20px] font-[800] text-[var(--text)] tracking-tight">
               {displayProfile.displayName || (displayProfile.username ? `@${displayProfile.username}` : 'Пользователь')}
             </h2>
-            {displayProfile.verified && (
-              <span className="w-4 h-4 rounded-full bg-[#1d9bf0] text-white inline-flex items-center justify-center flex-none" title="Верифицированный профиль">
+            {Boolean(
+              displayProfile.verified &&
+                (normalizeTier(displayProfile.subscription_tier, (displayProfile as any).subscription_valid_until) === 'ultra' ||
+                  (displayProfile as any).is_founder)
+            ) && (
+              <span className="w-4 h-4 rounded-full bg-[#1d9bf0] text-white inline-flex items-center justify-center flex-none" title="Верифицированный профиль (Ultra)">
                 <Check size={10} strokeWidth={3} />
+              </span>
+            )}
+            {normalizeTier(displayProfile.subscription_tier, (displayProfile as any).subscription_valid_until) === 'ultra' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm flex-none">
+                ⚡ ULTRA FOUNDER
+              </span>
+            )}
+            {normalizeTier(displayProfile.subscription_tier, (displayProfile as any).subscription_valid_until) === 'pro' && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#1d9bf0]/15 text-[#1d9bf0] border border-[#1d9bf0]/30 shadow-sm flex-none">
+                ★ PREMIUM
               </span>
             )}
             {isMutualFriend && (

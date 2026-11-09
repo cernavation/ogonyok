@@ -23,6 +23,13 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import type { OgonekProfile, ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import {
+  type SubscriptionTier,
+  normalizeTier,
+  getBillingCheckoutUrl,
+  getPaymentButtonLabel,
+  TIER_NAMES,
+} from '@/lib/ogonek/permissions'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -30,7 +37,7 @@ type Props = {
   onNotify: (msg: string) => void
   soundEnabled?: boolean
   verified?: boolean
-  subscriptionTier?: 'free' | 'premium' | 'ultra'
+  subscriptionTier?: SubscriptionTier | 'premium'
 }
 
 type BillingPeriod = 'monthly' | 'yearly'
@@ -45,14 +52,16 @@ export function PremiumView({
 }: Props) {
   const { state } = useOgonekStore()
   const [billing, setBilling] = useState<BillingPeriod>('monthly')
-  const [modalTier, setModalTier] = useState<'premium' | 'ultra' | null>(null)
+  const [modalTier, setModalTier] = useState<'pro' | 'ultra' | null>(null)
   useBodyScrollLock(Boolean(modalTier))
 
-  // Текущий тариф считывается из profile.subscription_tier ('free' | 'premium' | 'ultra')
-  const activeTier: 'free' | 'premium' | 'ultra' =
-    subscriptionTier ||
-    state.profile.subscription_tier ||
-    (verified ? 'premium' : 'free')
+  // Единый источник истины для активного тарифа
+  const activeTier: SubscriptionTier = normalizeTier(
+    subscriptionTier || state.profile.subscription_tier,
+    state.profile.subscription_expires_at
+  )
+
+  const username = state.profile.username || 'user'
 
   // Закрытие модального окна по Escape
   useEffect(() => {
@@ -67,7 +76,7 @@ export function PremiumView({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [modalTier])
 
-  const handleSelectTier = (tier: 'free' | 'premium' | 'ultra') => {
+  const handleSelectTier = (tier: SubscriptionTier) => {
     playClick(soundEnabled)
 
     if (tier === 'free') {
@@ -78,9 +87,15 @@ export function PremiumView({
       return
     }
 
-    // Для платных тарифов самовольное переключение запрещено!
-    // Открываем стильное модальное окно с обращением к @cernavation
-    setModalTier(tier)
+    const checkoutUrl = getBillingCheckoutUrl({
+      tier,
+      username,
+      period: billing === 'yearly' ? 'year' : 'month',
+    })
+
+    // По ТЗ кнопка ведёт прямо на https://memernity.com/checkout
+    window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+    onNotify?.(`Переход к оформлению: ${TIER_NAMES[tier]}`)
   }
 
   const openTelegramSupport = () => {
@@ -251,7 +266,7 @@ export function PremiumView({
         {/* TARIFF 2: ПРЕМИУМ (25 MDL / $1.5 в месяц) [ХИТ] */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[var(--bg-elev)] border transition-all relative ${
-            activeTier === 'premium'
+            activeTier === 'pro'
               ? 'border-[#1d9bf0] ring-2 ring-[#1d9bf0]/20'
               : 'border-[#1d9bf0]/70 hover:border-[#1d9bf0]'
           }`}
@@ -268,7 +283,7 @@ export function PremiumView({
               </span>
               <span className="flex items-center gap-1 text-[11px] font-bold text-[#1d9bf0] px-2 py-0.5 rounded-full bg-[#1d9bf0]/10 border border-[#1d9bf0]/20">
                 <BadgeCheck size={12} />
-                Синяя галочка
+                Премиум
               </span>
             </div>
 
@@ -277,7 +292,7 @@ export function PremiumView({
               <BadgeCheck size={19} className="text-[#1d9bf0]" />
             </h3>
             <p className="text-xs text-[var(--text-2)] mt-1 min-h-[32px]">
-              Официальная верификация и умный ИИ-анализ записей
+              Официальный статус, Gemini AI-оценка и расширенные лимиты
             </p>
 
             {/* Price: 25 MDL / $1.5 в месяц */}
@@ -302,7 +317,7 @@ export function PremiumView({
                   <Check size={12} strokeWidth={3} />
                 </span>
                 <span>
-                  <b>Синяя галочка верификации</b> в профиле и комментариях
+                  <b>Лимит записей до 3 000 символов</b>
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -310,20 +325,20 @@ export function PremiumView({
                   <Sparkles size={12} />
                 </span>
                 <span>
-                  <b>Google Gemini AI:</b> автоматическая оценка и мудрые советы
+                  <b>Google Gemini AI:</b> 1 авто-оценка в день и мудрые советы
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-[#1d9bf0]/20 text-[#1d9bf0] flex items-center justify-center flex-none mt-0.5">
                   <ImageIcon size={12} />
                 </span>
-                <span>До 4 фото высокого качества к каждому дню</span>
+                <span>До 1 фото в день к записям</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-[#1d9bf0]/20 text-[#1d9bf0] flex items-center justify-center flex-none mt-0.5">
                   <TrendingUp size={12} />
                 </span>
-                <span>Приоритет в ленте друзей и поиске</span>
+                <span>Видеозвонки, до 5 групп и расширенная аналитика</span>
               </li>
             </ul>
           </div>
@@ -331,22 +346,22 @@ export function PremiumView({
           <div className="pt-6 mt-6">
             <button
               type="button"
-              onClick={() => handleSelectTier('premium')}
+              onClick={() => handleSelectTier('pro')}
               className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
-                activeTier === 'premium'
+                activeTier === 'pro'
                   ? 'bg-[#1d9bf0] text-white ring-2 ring-[#1d9bf0]/50'
                   : 'bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white'
               }`}
             >
-              {activeTier === 'premium' ? (
+              {activeTier === 'pro' ? (
                 <>
                   <Check size={16} strokeWidth={3} />
-                  <span>Премиум подключён</span>
+                  <span>{getPaymentButtonLabel(activeTier, 'pro')}</span>
                 </>
               ) : (
                 <>
                   <BadgeCheck size={16} />
-                  <span>Подключить Премиум</span>
+                  <span>{getPaymentButtonLabel(activeTier, 'pro')}</span>
                 </>
               )}
             </button>
@@ -439,12 +454,12 @@ export function PremiumView({
               {activeTier === 'ultra' ? (
                 <>
                   <Check size={16} strokeWidth={3} />
-                  <span>Ultra подключён</span>
+                  <span>{getPaymentButtonLabel(activeTier, 'ultra')}</span>
                 </>
               ) : (
                 <>
                   <Crown size={16} />
-                  <span>Выбрать Ultra</span>
+                  <span>{getPaymentButtonLabel(activeTier, 'ultra')}</span>
                 </>
               )}
             </button>
@@ -540,8 +555,29 @@ export function PremiumView({
             <div className="mt-6 flex flex-col gap-2.5">
               <button
                 type="button"
+                onClick={() => {
+                  if (modalTier) {
+                    window.open(
+                      getBillingCheckoutUrl({
+                        tier: modalTier,
+                        username,
+                        period: billing === 'yearly' ? 'year' : 'month',
+                      }),
+                      '_blank',
+                      'noopener,noreferrer'
+                    )
+                  }
+                }}
+                className="w-full h-12 rounded-full bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-[14px] flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+              >
+                <span>Оплатить онлайн (Memernity Checkout)</span>
+                <ExternalLink size={14} className="opacity-70" />
+              </button>
+
+              <button
+                type="button"
                 onClick={openTelegramSupport}
-                className="w-full h-12 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95"
+                className="w-full h-11 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold text-[14px] flex items-center justify-center gap-2 shadow transition-all active:scale-95"
               >
                 <MessageCircle size={18} />
                 <span>Написать в Telegram (@cernavation)</span>

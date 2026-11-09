@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { getSupabase } from '../supabase/browser'
+import { getTierLimits } from './permissions.ts'
 import {
   updateProfileInDb,
   updateProfileLevel,
@@ -617,13 +618,22 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
     const clientId = String(day.id)
     const nowISO = new Date().toISOString()
 
+    const userTier = (snap.profile as any)?.subscription_tier || 'free'
+    const validUntil = (snap.profile as any)?.subscription_valid_until
+    const tierLimits = getTierLimits(userTier, validUntil)
+
+    let rawPhotos = Array.isArray(day.photos) && day.photos.length > 0 ? day.photos : (day.media_url ? [day.media_url] : [])
+    if (rawPhotos.length > tierLimits.maxPhotosPerDay) {
+      rawPhotos = rawPhotos.slice(0, tierLimits.maxPhotosPerDay)
+    }
+
     const dayRow = {
       user_id: uid,
       client_id: clientId,
       day_number: day.id,
       title: (day.title || `День #${day.id}`).slice(0, 300),
       tags: Array.isArray(day.tags) ? day.tags : [],
-      photos: Array.isArray(day.photos) && day.photos.length > 0 ? day.photos : (day.media_url ? [day.media_url] : []),
+      photos: rawPhotos,
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
       visibility: day.visibility || 'public',

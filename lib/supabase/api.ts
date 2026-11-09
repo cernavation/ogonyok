@@ -29,7 +29,10 @@ export interface ProfileRecord {
   settings?: { level?: number; [key: string]: any }
   age?: number | null
   verified?: boolean
-  subscription_tier?: 'free' | 'premium' | 'ultra'
+  is_founder?: boolean
+  subscription_tier?: 'free' | 'pro' | 'premium' | 'ultra'
+  subscription_expires_at?: string | null
+  subscription_valid_until?: string | null
   avatar_color?: string | null
   created_at?: string
   updated_at?: string
@@ -54,9 +57,12 @@ export function mapProfileRecord(row: any): ProfileRecord {
     level: userLevel,
     difficulty_level: userLevel,
     subscription_tier:
-      row.subscription_tier === 'premium' || row.subscription_tier === 'ultra'
-        ? row.subscription_tier
+      row.subscription_tier === 'pro' || row.subscription_tier === 'premium' || row.subscription_tier === 'ultra'
+        ? (row.subscription_tier === 'premium' ? 'pro' : row.subscription_tier)
         : 'free',
+    subscription_expires_at: row.subscription_expires_at || row.subscription_valid_until || null,
+    subscription_valid_until: row.subscription_valid_until || row.subscription_expires_at || null,
+    is_founder: Boolean(row.is_founder),
     avatar_url: row.avatar_image || row.avatar_url || null,
     avatar_image: row.avatar_image || row.avatar_url || null,
     banner_image: row.banner_image || row.cover_url || null,

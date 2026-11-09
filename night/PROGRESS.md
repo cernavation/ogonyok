@@ -1,15 +1,15 @@
 # Прогресс ночной смены
 
 - **Текущая ветка**: `night-shift`
-- **Текущий этап**: Завершён Этап 03 (Гигиена и безопасность фронтенда). Готов к переходу на Этап 04.
-- **Статус**: Этапы 00, 01, 02, 03 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=429 pass, build exit 0 без ignoreBuildErrors, CSP violations=0).
+- **Текущий этап**: Завершён Этап 04 (Архитектура тарифов и серверное принуждение). Готов к переходу на Этап 05.
+- **Статус**: Этапы 00, 01, 02, 03, 04 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=465 pass, build exit 0, webhooks HMAC pass, DB triggers pass).
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)
 - [x] **Этап 01: Единая каноническая схема БД** — анализ schema_usage, миграция 010_canonical_schema.sql (15 сущностей, VIEW diary_days, RLS, storage buckets), перевод эндпоинтов на days/prides/gratitudes, доставка scheduled_messages -> direct_messages, buckets.ts, удаление хардкод UUID и фоллбека service_role, скрипт migrate-diary-days.mjs
 - [x] **Этап 02: Безопасность БД (RLS, Тариф-Защита, Two-Users матрица, Демо-режим)** — миграция 020_rls.sql (RLS на 16 таблицах, profiles_public, profile_private, trigger защиты тарифа, REVOKE UPDATE, effective_tier, subscription_audit), админ-скрипт scripts/admin/set-tier.mjs, матрица scripts/qa/two-users.mjs (53 теста), строгий demo-режим без запросов к таблицам Supabase (подтверждено Playwright), регламент наката на прод в night/MANUAL_STEPS.md
 - [x] **Этап 03: Гигиена и безопасность фронтенда** — единый браузерный синглтон lib/supabase/browser.ts (один WebSocket, домен ogonek.app с fallback на ogonek.local), защита от XSS в chat-message-bubble.tsx и общая утилита safe-url.ts, next.config.mjs (удаление ignoreBuildErrors, оптимизация картинок, строгие CSP/безопасные заголовки без ошибок в консоли), аудит секретов, .env.example, lib/server/env.ts, scripts/pre-commit-secrets-check.mjs, Zod-валидация всех 18 API-роутов, удаление дубля @google/generative-ai
-- [ ] **Этап 04**: ...
+- [x] **Этап 04: Система тарифов и серверный энфорсмент** — спецификация night/TIERS_SPEC.md, единый источник лимитов permissions.ts (Базовый, Премиум, Основатель Ultra), серверная функция getEffectiveTier / effective_tier, миграция 040_tier_enforcement.sql (billing_events, DB-триггер check_entry_char_limit на 1000/3000/5000 символов), webhook /api/billing/webhook (HMAC-SHA256, 503 при отсутствии секрета, идемпотентность по event_id), ссылки оплаты https://memernity.com/checkout, динамическая надпись «Продлить», бейджи [⚡ ULTRA FOUNDER] / [★ PREMIUM] и строгая верификация только ultra/is_founder, звезды ленты (Самооценка автора vs Оценено ИИ), Gate компонент и useEntitlement хук, тесты scripts/qa/test-tier-enforcement.mjs, матрица night/evidence/04/tier_matrix.md
 - [ ] **Этап 05**: ...
 - [ ] **Этап 06**: ...
 - [ ] **Этап 07**: ...

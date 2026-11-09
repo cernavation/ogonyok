@@ -1,0 +1,23 @@
+
+--- 1. Тестирование DB-триггера check_entry_char_limit (pg-mem) ---
+[PASS] DB Trigger: Free user can insert 1000 chars 
+[PASS] DB Trigger: Free user inserting 1001 chars rejected with check_char_limit_exceeded 
+[PASS] DB Trigger: Pro user can insert 3000 chars 
+[PASS] DB Trigger: Pro user inserting 3001 chars rejected with check_char_limit_exceeded 
+[PASS] DB Trigger: Ultra user can insert 5000 chars 
+[PASS] DB Trigger: Ultra user inserting 5001 chars rejected with check_char_limit_exceeded 
+[PASS] DB Trigger: Expired Pro user is treated as free (1001 chars rejected) 
+
+--- 2. Тестирование логики платежного вебхука Memernity ---
+[PASS] Billing Webhook: 503 when secret is missing 
+[PASS] Billing Webhook: 401 when HMAC signature is invalid 
+[PASS] Billing Webhook: 200 on valid signature 
+[PASS] Billing Webhook: Profile updated to pro 
+[PASS] Billing Webhook: Audit entry recorded 
+[PASS] Billing Webhook Idempotency: Returns 200 with duplicate=true 
+[PASS] Billing Webhook Idempotency: Audit length stays 1 
+
+--- 3. Генерация матрицы тарифов night/evidence/04/tier_matrix.md ---
+Матрица тарифов успешно сохранена: /Users/user/Desktop/ogonyok-ai-clone/night/evidence/04/tier_matrix.md
+
+✅ ВСЕ ТЕСТЫ ЭТАПА 4 УСПЕШНО ПРОЙДЕНЫ!

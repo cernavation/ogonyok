@@ -9,6 +9,7 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { getTierLimits } from '@/lib/ogonek/permissions'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import dynamic from 'next/dynamic'
@@ -470,8 +471,15 @@ export function Composer({
   const totalFilled = filledPrides.length + filledGratitudes.length
 
   const userLevel = storeState.profile?.level || 3
-  // Validation: require at least level entries to publish (Правило 1 ТЗ)
-  const canPublish = filledPrides.length >= userLevel
+  const userTier = storeState.profile?.subscription_tier || 'free'
+  const validUntil = storeState.profile?.subscription_valid_until
+  const tierLimits = getTierLimits(userTier, validUntil)
+  const maxChars = tierLimits.maxCharsPerEntry
+
+  const hasOverlongItem =
+    prides.some((p) => p.length > maxChars) || gratitudes.some((g) => g.length > maxChars)
+  // Validation: require at least level entries to publish and not exceed character limit
+  const canPublish = filledPrides.length >= userLevel && !hasOverlongItem
   // Can save as draft with any content
   const canDraft = totalFilled > 0
 
@@ -653,6 +661,10 @@ export function Composer({
   }
 
   const handlePublish = async () => {
+    if (hasOverlongItem) {
+      onNotify?.(`Текст превышает допустимый лимит ${maxChars} символов для тарифа ${userTier.toUpperCase()}`)
+      return
+    }
     const publishEnabled = editingDay ? totalFilled > 0 : canPublish
     if (!publishEnabled || isPublishing || isEvaluating) return
 
@@ -1118,11 +1130,15 @@ export function Composer({
 
         {/* Справа счётчик */}
         <div className="flex items-center gap-2">
-          {activeValue.length > 0 && (
-            <span className="text-[12px] text-[var(--text-3)] font-mono">
-              {activeValue.length} симв.
-            </span>
-          )}
+          <span
+            className={`text-[12px] font-mono transition-colors ${
+              activeValue.length > maxChars
+                ? 'text-rose-500 font-bold'
+                : 'text-[var(--text-3)]'
+            }`}
+          >
+            {activeValue.length} / {maxChars}
+          </span>
           <span className="text-[13px] font-bold text-[var(--text-2)] font-mono">
             {activeSlot + 1}/5
           </span>
