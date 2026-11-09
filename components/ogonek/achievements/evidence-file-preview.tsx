@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { AchievementEvidenceFile } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { isSafeUrl, safeImageSrc } from '@/lib/ogonek/safe-url'
 
 type Props = {
   file: AchievementEvidenceFile
@@ -70,7 +71,7 @@ export function EvidenceFilePreview({ file, onRemove, compact = false }: Props) 
     <div className={`ach-ev-file ${compact ? 'is-compact' : ''}`}>
       {showImage ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="ach-ev-file-thumb" src={resolved ?? ''} alt={file.fileName} />
+        <img className="ach-ev-file-thumb" src={safeImageSrc(resolved ?? '')} alt={file.fileName} />
       ) : (
         <span className="ach-ev-file-icon" aria-hidden="true">
           <Icon size={compact ? 14 : 16} />
@@ -84,7 +85,7 @@ export function EvidenceFilePreview({ file, onRemove, compact = false }: Props) 
         <span className="ach-ev-file-size">{formatSize(file.size)}</span>
       </span>
 
-      {file.ref.startsWith('http') && (
+      {isSafeUrl(file.ref) && (
         <a
           className="ach-ev-file-open"
           href={file.ref}

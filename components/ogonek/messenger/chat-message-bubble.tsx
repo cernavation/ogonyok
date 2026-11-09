@@ -31,6 +31,7 @@ import { getFriend } from '@/lib/ogonek/friends'
 import { formatChatTime, STICKER_PACK } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessage, CustomEmoji } from '@/lib/ogonek/types'
+import { isSafeUrl, safeHref, safeImageSrc } from '@/lib/ogonek/safe-url'
 import { ChatAttachmentCard } from './chat-attachment-card'
 import { ChatMediaLightbox } from './chat-media-lightbox'
 import { ChatVoicePlayer } from './chat-voice-player'
@@ -522,7 +523,7 @@ export function ChatMessageBubble({
                 <div className="mb-2 overflow-hidden rounded-xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={message.media.url}
+                    src={safeImageSrc(message.media.url)}
                     alt={message.media.name || 'Фотография'}
                     className="max-h-80 w-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
                     onClick={() => setLightboxUrl(message.media!.url)}
@@ -534,7 +535,7 @@ export function ChatMessageBubble({
               {message.media?.type === 'video' && (
                 <div className="mb-2 overflow-hidden rounded-xl bg-black">
                   <video
-                    src={message.media.url}
+                    src={safeHref(message.media.url) || undefined}
                     controls
                     className="max-h-80 w-full rounded-xl"
                   />
@@ -667,7 +668,7 @@ export function ChatMessageBubble({
                     </div>
                   </div>
                   <a
-                    href={message.media.url}
+                    href={safeHref(message.media.url) || '#'}
                     download={message.media.name || 'file'}
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                   >
@@ -699,23 +700,38 @@ export function ChatMessageBubble({
 
               {/* Превью ссылки */}
               {message.linkPreview && (
-                <a
-                  href={message.linkPreview.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 flex flex-col rounded-xl border border-white/15 bg-black/15 p-2.5 text-xs transition-opacity hover:opacity-90"
-                >
-                  <div className="flex items-center justify-between font-bold text-[var(--text)] dark:text-[var(--accent)] text-[11px] mb-0.5">
-                    <span>{message.linkPreview.siteName}</span>
-                    <ExternalLink size={12} />
+                isSafeUrl(message.linkPreview.url) ? (
+                  <a
+                    href={message.linkPreview.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 flex flex-col rounded-xl border border-white/15 bg-black/15 p-2.5 text-xs transition-opacity hover:opacity-90"
+                  >
+                    <div className="flex items-center justify-between font-bold text-[var(--text)] dark:text-[var(--accent)] text-[11px] mb-0.5">
+                      <span>{message.linkPreview.siteName}</span>
+                      <ExternalLink size={12} />
+                    </div>
+                    <p className="font-bold text-xs mb-0.5">{message.linkPreview.title}</p>
+                    {message.linkPreview.description && (
+                      <p className="line-clamp-2 text-[11px] opacity-80">
+                        {message.linkPreview.description}
+                      </p>
+                    )}
+                  </a>
+                ) : (
+                  <div className="mt-2 flex flex-col rounded-xl border border-white/15 bg-black/15 p-2.5 text-xs select-text">
+                    <div className="flex items-center justify-between font-bold text-[var(--text)] text-[11px] mb-0.5 opacity-60">
+                      <span>{message.linkPreview.siteName || 'Ссылка'}</span>
+                    </div>
+                    <p className="font-bold text-xs mb-0.5">{message.linkPreview.title}</p>
+                    {message.linkPreview.description && (
+                      <p className="line-clamp-2 text-[11px] opacity-80">
+                        {message.linkPreview.description}
+                      </p>
+                    )}
+                    <span className="text-[10px] text-muted-foreground mt-1 break-all">{message.linkPreview.url}</span>
                   </div>
-                  <p className="font-bold text-xs mb-0.5">{message.linkPreview.title}</p>
-                  {message.linkPreview.description && (
-                    <p className="line-clamp-2 text-[11px] opacity-80">
-                      {message.linkPreview.description}
-                    </p>
-                  )}
-                </a>
+                )
               )}
 
               {/* Метки сообщения («Важное», «Позже») */}

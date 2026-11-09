@@ -61,7 +61,7 @@ import {
   createCallSession,
   type ProfileRecord,
 } from '@/lib/supabase/api'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { ChatAvatar } from './chat-avatar'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'

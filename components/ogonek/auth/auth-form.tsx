@@ -25,7 +25,7 @@ import {
   validatePassword,
   validateUsername,
   getSupabase,
-} from '@/lib/ogonek/supabase-client'
+} from '@/lib/supabase/browser'
 
 export type AuthMode = 'signin' | 'register'
 

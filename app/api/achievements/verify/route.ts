@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { isAchievementCategoryId } from '@/lib/ogonek/achievement-regulation'
+import { apiErrorResponse } from '@/lib/server/api-validator'
 import {
   DEFAULT_MODERATION_FROM,
   DEFAULT_MODERATION_INBOX,
@@ -257,24 +258,22 @@ export async function POST(request: Request) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
     if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: 'Слишком много заявок. Лимит: 20 в минуту.' },
-        { status: 429 }
-      )
+      return apiErrorResponse('RATE_LIMITED', 'Слишком много заявок. Лимит: 20 в минуту.', 429)
     }
 
     let rawBody: unknown
     try {
       rawBody = await request.json()
     } catch {
-      return NextResponse.json({ error: 'Ожидается корректный JSON-пакет заявки.' }, { status: 400 })
+      return apiErrorResponse('INVALID_JSON', 'Ожидается корректный JSON-пакет заявки.', 400)
     }
 
     const payload = sanitizeIncomingPayload(rawBody)
     if (!payload) {
-      return NextResponse.json(
-        { error: 'Неполный пакет заявки: нужны trackingCode, достижение и категория.' },
-        { status: 400 }
+      return apiErrorResponse(
+        'VALIDATION_ERROR',
+        'Неполный пакет заявки: нужны trackingCode, достижение и категория.',
+        422
       )
     }
 

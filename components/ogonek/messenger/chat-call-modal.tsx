@@ -18,7 +18,7 @@ import {
   playEndCallSound,
   stopCallSounds,
 } from '@/lib/ogonek/call-sound'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { updateCallSessionStatus, type CallSessionRecord } from '@/lib/supabase/api'
 import { ChatAvatar } from './chat-avatar'
 

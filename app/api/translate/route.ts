@@ -1,28 +1,21 @@
 import { NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { apiErrorResponse, validateJsonBody, TranslateSchema } from '@/lib/server/api-validator'
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('translate', ip, 30, 60_000)
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { success: false, error: 'Слишком много запросов на перевод. Попробуйте через минуту.' },
-      { status: 429 }
-    )
+    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов на перевод. Попробуйте через минуту.', 429)
   }
 
   try {
-    const body = (await request.json().catch(() => ({}))) as {
-      text?: string
-      targetLanguage?: string
+    const validated = await validateJsonBody(request, TranslateSchema)
+    if (!validated.success) {
+      return validated.response
     }
 
-    const text = (body.text || '').trim()
-    const targetLang = (body.targetLanguage || 'ru').trim()
-
-    if (!text) {
-      return NextResponse.json({ success: false, error: 'Текст для перевода пуст' }, { status: 400 })
-    }
+    const { text, targetLanguage: targetLang } = validated.data
 
     const apiKey = process.env.GEMINI_API_KEY
     if (!apiKey || !apiKey.startsWith('AIzaSy')) {

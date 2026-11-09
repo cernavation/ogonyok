@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { apiErrorResponse } from '@/lib/server/api-validator'
 
 export async function POST(request: Request) {
   const token = process.env.TELEGRAM_BOT_TOKEN
   if (!token) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'TELEGRAM_BOT_TOKEN не настроен в .env.local',
-      },
-      { status: 400 }
-    )
+    return apiErrorResponse('CONFIG_ERROR', 'TELEGRAM_BOT_TOKEN не настроен в .env.local', 400)
   }
 
   const body = (await request.json().catch(() => ({}))) as {

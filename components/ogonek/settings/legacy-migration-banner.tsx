@@ -7,7 +7,7 @@ import {
   downloadBackupBeforeMigration,
   type MigrationProgress,
 } from '@/lib/ogonek/legacy-migration'
-import { getSupabase } from '@/lib/ogonek/supabase-client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 
 type Props = {

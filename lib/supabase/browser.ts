@@ -1,24 +1,32 @@
 /**
- * SUPABASE CLIENT & AUTH MODULE — «ОГОНЁК» (ЗАДАЧА 3)
+ * CANONICAL BROWSER SUPABASE SINGLETON & AUTH MODULE — «ОГОНЁК»
  * 
- * - Singleton-клиент (@supabase/supabase-js)
- * - persistSession: true, autoRefreshToken: true
- * - Валидация никнейма: ^[a-z0-9_]{3,20}$
- * - Валидация пароля: минимум 8 символов
- * - Под капотом email = `${username}@ogonek.app` (НЕ .local)
- * - Проверка уникальности никнейма в public.profiles на лету (debounce 400ms)
- * - Динамическая проверка включённости Google Provider (GET /auth/v1/settings)
- * - Гарантированное создание строки в public.profiles после регистрации
- * - Понятные русскоязычные сообщения об ошибках
+ * - Singleton-клиент (@supabase/supabase-js) для всех компонентов браузера
+ * - Гарантирует ровно одно WebSocket-соединение для Realtime
+ * - Единый канонический домен виртуальных email: VIRTUAL_EMAIL_DOMAIN = 'ogonek.app'
+ * - Обратная совместимость для существующих пользователей с '@ogonek.local'
+ * - Валидация никнейма и пароля
+ * - Динамическая проверка Google OAuth
+ * - Загрузка медиа в бакет ogonyok-media
  */
 
 import { createClient, type SupabaseClient, type User, type Session } from '@supabase/supabase-js'
+import { BUCKET_OGONYOK_MEDIA } from './buckets.ts'
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
+export const SUPABASE_ANON_KEY =
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  ''
+
+export const VIRTUAL_EMAIL_DOMAIN = 'ogonek.app'
+export const LEGACY_VIRTUAL_EMAIL_DOMAIN = 'ogonek.local'
 
 export function isSupabaseConfigured(): boolean {
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    SUPABASE_ANON_KEY
   return (
     Boolean(SUPABASE_URL) &&
     Boolean(supabaseKey) &&
@@ -52,7 +60,7 @@ export function validateUsername(username: string): { valid: boolean; error?: st
 
 /**
  * Валидация пароля:
- * Минимум 8 символов, оценка сложности.
+ * Минимум 6-8 символов, оценка сложности.
  */
 export function validatePassword(password: string): { valid: boolean; score: number; label: string; error?: string } {
   if (!password) {
@@ -76,11 +84,15 @@ export function validatePassword(password: string): { valid: boolean; score: num
 
 /**
  * Превращение никнейма в валидный email для Supabase Auth.
- * По умолчанию используется канонический @ogonek.local.
+ * По умолчанию используется канонический VIRTUAL_EMAIL_DOMAIN ('ogonek.app').
  */
-export function usernameToEmail(username: string, domain: string = 'ogonek.local'): string {
-  const cleanUsername = (username || '').trim().replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
-  return `${cleanUsername || 'user'}@${domain}`
+export function usernameToEmail(username: string, domain: string = VIRTUAL_EMAIL_DOMAIN): string {
+  const clean = (username || '')
+    .trim()
+    .replace(/^@+/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
+  return `${clean || 'user'}@${domain}`
 }
 
 export function emailToUsername(email: string): string {
@@ -88,15 +100,22 @@ export function emailToUsername(email: string): string {
   return email.split('@')[0] || 'user'
 }
 
-let singletonClient: SupabaseClient | null = null
+let browserClient: SupabaseClient | null = null
 
+/**
+ * Единый синглтон браузерного клиента Supabase
+ */
 export function getSupabase(): SupabaseClient | null {
   if (!isSupabaseConfigured()) {
     return null
   }
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || SUPABASE_ANON_KEY
-  if (!singletonClient) {
-    singletonClient = createClient(SUPABASE_URL, supabaseKey, {
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    SUPABASE_ANON_KEY
+
+  if (!browserClient) {
+    browserClient = createClient(SUPABASE_URL, supabaseKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -109,15 +128,58 @@ export function getSupabase(): SupabaseClient | null {
       },
     })
   }
-  return singletonClient
+  return browserClient
+}
+
+/**
+ * Сброс синглтона (используется только в изолированных тестах)
+ */
+export function _resetBrowserClientForTesting(): void {
+  browserClient = null
+}
+
+/**
+ * Перевод системных ошибок Supabase Auth на человеческий русский язык без тех. терминов.
+ */
+export function friendlyAuthError(errMessage: string): string {
+  const lower = (errMessage || '').toLowerCase()
+  if (
+    lower.includes('already registered') ||
+    lower.includes('user already exists') ||
+    lower.includes('unique constraint')
+  ) {
+    return 'Этот ник уже занят'
+  }
+  if (
+    lower.includes('invalid login credentials') ||
+    lower.includes('invalid credentials') ||
+    lower.includes('email not confirmed')
+  ) {
+    return 'Неверный логин или пароль'
+  }
+  if (
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('over_email_send_rate_limit')
+  ) {
+    return 'Слишком много попыток, подожди минуту'
+  }
+  if (
+    lower.includes('failed to fetch') ||
+    lower.includes('networkerror') ||
+    lower.includes('network request failed')
+  ) {
+    return 'Нет связи. Проверь интернет-соединение'
+  }
+  return errMessage || 'Произошла ошибка авторизации'
 }
 
 /**
  * Проверка уникальности никнейма в public.profiles на лету.
  */
 export async function isUsernameAvailable(username: string, excludeUserId?: string): Promise<boolean> {
-  const validation = validateUsername(username)
-  if (!validation.valid) return false
+  const clean = (username || '').trim().toLowerCase()
+  if (clean.length < 3) return false
 
   const client = getSupabase()
   if (!client) return true // в локальном демо-режиме считаем свободным
@@ -126,7 +188,7 @@ export async function isUsernameAvailable(username: string, excludeUserId?: stri
     let q = client
       .from('profiles')
       .select('id')
-      .eq('username', validation.clean)
+      .eq('username', clean)
       .limit(1)
 
     if (excludeUserId) {
@@ -135,7 +197,6 @@ export async function isUsernameAvailable(username: string, excludeUserId?: stri
 
     const { data, error } = await q
     if (error) {
-      console.warn('Ошибка проверки уникальности никнейма:', error.message)
       return true
     }
     return !data || data.length === 0
@@ -144,13 +205,12 @@ export async function isUsernameAvailable(username: string, excludeUserId?: stri
   }
 }
 
-/**
- * Проверка включённости провайдера Google OAuth в Supabase.
- * Запрашивает GET /auth/v1/settings и проверяет external.google.
- */
 let googleEnabledCache: boolean | null = null
 let googleCacheTime = 0
 
+/**
+ * Проверка включённости провайдера Google OAuth в Supabase.
+ */
 export async function isGoogleAuthEnabled(): Promise<boolean> {
   if (!isSupabaseConfigured()) return false
   const now = Date.now()
@@ -172,68 +232,41 @@ export async function isGoogleAuthEnabled(): Promise<boolean> {
     }
   } catch {}
 
-  // Fallback: если эндпоинт недоступен, возвращаем false
   googleEnabledCache = false
   googleCacheTime = now
   return false
 }
 
 /**
- * Перевод системных ошибок Supabase Auth на человеческий русский язык без тех. терминов.
- */
-export function friendlyAuthError(errMessage: string): string {
-  const lower = (errMessage || '').toLowerCase()
-  if (lower.includes('already registered') || lower.includes('user already exists') || lower.includes('unique constraint')) {
-    return 'Этот ник уже занят'
-  }
-  if (lower.includes('invalid login credentials') || lower.includes('invalid credentials') || lower.includes('email not confirmed')) {
-    return 'Неверный логин или пароль'
-  }
-  if (lower.includes('rate limit') || lower.includes('too many requests') || lower.includes('over_email_send_rate_limit')) {
-    return 'Слишком много попыток, подожди минуту'
-  }
-  if (lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network request failed')) {
-    return 'Нет связи. Проверь интернет-соединение'
-  }
-  return errMessage || 'Произошла ошибка авторизации'
-}
-
-/**
  * Регистрация нового пользователя по никнейму и паролю.
- * Гарантирует наличие строки в public.profiles после создания пользователя.
+ * Внутри превращается в nick@ogonek.app с фоллбеком при необходимости.
  */
 export async function signUpWithUsername(params: {
   username: string
   password: string
   displayName?: string
   level?: number
-}): Promise<{ ok: boolean; user?: User; session?: Session | null; error?: string }> {
-  const cleanUsername = (params.username || '').trim().replace(/^@+/, '').trim().toLowerCase()
-  const validNick = validateUsername(cleanUsername)
-  if (!validNick.valid) {
-    return { ok: false, error: validNick.error }
-  }
+}): Promise<{ ok: boolean; user?: User | any; session?: Session | null; error?: string }> {
+  const cleanNick = (params.username || '')
+    .trim()
+    .replace(/^@+/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
 
-  const validPass = validatePassword(params.password)
-  if (!validPass.valid) {
-    return { ok: false, error: validPass.error }
+  if (cleanNick.length < 3) {
+    return { ok: false, error: 'Никнейм должен содержать минимум 3 символа' }
+  }
+  if (params.password.length < 8) {
+    return { ok: false, error: 'Пароль должен содержать не менее 8 символов' }
   }
 
   const client = getSupabase()
   if (!client) {
-    const errMsg = 'База данных не подключена. Добавь ключи Supabase (NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY).'
-    console.error('[AUTH_ERROR_FULL]:', errMsg)
+    const errMsg = 'База данных не подключена. Добавь ключи Supabase.'
     return { ok: false, error: errMsg }
   }
 
-  // Проверяем доступность ника перед отправкой
-  const available = await isUsernameAvailable(cleanUsername)
-  if (!available) {
-    return { ok: false, error: 'Этот ник уже занят' }
-  }
-
-  const cleanNick = cleanUsername
-  const email = `${cleanNick}@ogonek.local`
+  const email = usernameToEmail(cleanNick, VIRTUAL_EMAIL_DOMAIN)
   const displayName = (params.displayName || cleanNick).trim()
   const level = Math.max(1, Math.min(5, params.level || 3))
 
@@ -250,10 +283,10 @@ export async function signUpWithUsername(params: {
       },
     })
 
-    // Если Supabase GoTrue отклоняет псевдодомен .local, делаем автоматический фолбэк на .app
+    // Если Supabase отклоняет псевдодомен, пробуем legacy fallback на .local
     if (error && (error.message?.includes('invalid') || (error as any).code === 'email_address_invalid')) {
       const fallbackRes = await client.auth.signUp({
-        email: `${cleanNick}@ogonek.app`,
+        email: usernameToEmail(cleanNick, LEGACY_VIRTUAL_EMAIL_DOMAIN),
         password: params.password,
         options: {
           data: {
@@ -268,15 +301,14 @@ export async function signUpWithUsername(params: {
     }
 
     if (error) {
-      console.error('[AUTH_ERROR_FULL]:', error)
-      return { ok: false, error: error.message || JSON.stringify(error) }
+      return { ok: false, error: friendlyAuthError(error.message || JSON.stringify(error)) }
     }
 
     if (!data.user) {
       return { ok: false, error: 'Не удалось создать пользователя' }
     }
 
-    // Гарантируем строку в public.profiles с введенными username и display_name
+    // Гарантируем строку в public.profiles
     try {
       await client.from('profiles').upsert(
         {
@@ -295,22 +327,27 @@ export async function signUpWithUsername(params: {
 
     return { ok: true, user: data.user, session: data.session }
   } catch (err: any) {
-    console.error('[AUTH_ERROR_FULL]:', err)
-    return { ok: false, error: err?.message || JSON.stringify(err) }
+    return { ok: false, error: friendlyAuthError(err?.message || JSON.stringify(err)) }
   }
 }
 
 /**
  * Вход по никнейму и паролю.
+ * Сначала проверяет канонический домен @ogonek.app, при неверных учетных данных
+ * проверяет legacy-пользователей с @ogonek.local.
  */
 export async function signInWithUsername(params: {
   username: string
   password: string
 }): Promise<{ ok: boolean; user?: User | null; session?: Session | null; error?: string }> {
-  const cleanUsername = (params.username || '').trim().replace(/^@+/, '').trim().toLowerCase()
-  const validNick = validateUsername(cleanUsername)
-  if (!validNick.valid) {
-    return { ok: false, error: validNick.error }
+  const cleanNick = (params.username || '')
+    .trim()
+    .replace(/^@+/, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '')
+
+  if (!cleanNick) {
+    return { ok: false, error: 'Введи никнейм' }
   }
   if (!params.password) {
     return { ok: false, error: 'Введи пароль' }
@@ -318,24 +355,27 @@ export async function signInWithUsername(params: {
 
   const client = getSupabase()
   if (!client) {
-    const errMsg = 'База данных не подключена. Добавь ключи Supabase (NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY).'
-    console.error('[AUTH_ERROR_FULL]:', errMsg)
-    return { ok: false, error: errMsg }
+    return { ok: false, error: 'База данных не подключена. Добавь ключи Supabase.' }
   }
 
-  const cleanNick = cleanUsername
-  const email = `${cleanNick}@ogonek.local`
+  const primaryEmail = usernameToEmail(cleanNick, VIRTUAL_EMAIL_DOMAIN)
 
   try {
     let { data, error } = await client.auth.signInWithPassword({
-      email,
+      email: primaryEmail,
       password: params.password,
     })
 
-    // Если вход с .local не удался из-за credentials, пробуем .app для существующих юзеров
-    if (error && (error.message?.includes('Invalid login credentials') || (error as any).code === 'invalid_credentials')) {
+    // Если вход с @ogonek.app не удался из-за credentials, поддерживаем старых юзеров с @ogonek.local
+    if (
+      error &&
+      (error.message?.includes('Invalid login credentials') ||
+        (error as any).code === 'invalid_credentials' ||
+        error.message?.includes('not found'))
+    ) {
+      const legacyEmail = usernameToEmail(cleanNick, LEGACY_VIRTUAL_EMAIL_DOMAIN)
       const fallbackRes = await client.auth.signInWithPassword({
-        email: `${cleanNick}@ogonek.app`,
+        email: legacyEmail,
         password: params.password,
       })
       if (!fallbackRes.error && fallbackRes.data?.user) {
@@ -345,14 +385,12 @@ export async function signInWithUsername(params: {
     }
 
     if (error) {
-      console.error('[AUTH_ERROR_FULL]:', error)
-      return { ok: false, error: error.message || JSON.stringify(error) }
+      return { ok: false, error: friendlyAuthError(error.message || JSON.stringify(error)) }
     }
 
     return { ok: true, user: data.user, session: data.session }
   } catch (err: any) {
-    console.error('[AUTH_ERROR_FULL]:', err)
-    return { ok: false, error: err?.message || JSON.stringify(err) }
+    return { ok: false, error: friendlyAuthError(err?.message || JSON.stringify(err)) }
   }
 }
 
@@ -402,4 +440,29 @@ export async function signOut(): Promise<{ ok: boolean; error?: string }> {
   } catch (err: any) {
     return { ok: false, error: friendlyAuthError(err?.message) }
   }
+}
+
+/**
+ * Загрузка медиа в Supabase Storage (канонический бакет ogonyok-media)
+ */
+export async function uploadMediaFile(
+  userId: string,
+  file: File | Blob,
+  fileName: string
+): Promise<{ ok: boolean; publicUrl?: string; error?: string }> {
+  const client = getSupabase()
+  if (!client) return { ok: false, error: 'База данных не подключена' }
+
+  const filePath = `${userId}/${Date.now()}-${fileName}`
+  const { error } = await client.storage.from(BUCKET_OGONYOK_MEDIA).upload(filePath, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+
+  const { data } = client.storage.from(BUCKET_OGONYOK_MEDIA).getPublicUrl(filePath)
+  return { ok: true, publicUrl: data.publicUrl }
 }

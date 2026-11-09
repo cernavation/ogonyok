@@ -12,7 +12,7 @@
  * 6. Безопасный откат при ошибках (без битых картинок).
  */
 
-import { getSupabase } from './supabase-client.ts'
+import { getSupabase } from '../supabase/browser.ts'
 import { BUCKET_OGONYOK_MEDIA } from '../supabase/buckets.ts'
 
 export const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 МБ

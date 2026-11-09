@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { apiErrorResponse, validateSearchParams, GiphyQuerySchema } from '@/lib/server/api-validator'
 
 export async function GET(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('giphy', ip, 30, 60_000)
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { keyConfigured: false, gifs: [], error: 'Слишком много запросов GIF. Подождите минуту.' },
-      { status: 429 }
-    )
+    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов GIF. Подождите минуту.', 429)
   }
 
   try {
     const { searchParams } = new URL(request.url)
-    const q = searchParams.get('q')?.trim() || ''
+    const validated = await validateSearchParams(searchParams, GiphyQuerySchema)
+    if (!validated.success) {
+      return validated.response
+    }
+
+    const { q, limit } = validated.data
     const apiKey = process.env.GIPHY_API_KEY
 
     if (!apiKey) {
@@ -25,8 +28,8 @@ export async function GET(request: Request) {
     }
 
     const endpoint = q
-      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=24&rating=g`
-      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=24&rating=g`
+      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${limit}&rating=g`
+      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${limit}&rating=g`
 
     const res = await fetch(endpoint, { signal: AbortSignal.timeout(6000) })
     if (!res.ok) {

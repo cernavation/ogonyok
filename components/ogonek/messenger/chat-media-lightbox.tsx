@@ -2,6 +2,7 @@
 
 import { Download, X } from 'lucide-react'
 import { useEffect } from 'react'
+import { safeHref, safeImageSrc } from '@/lib/ogonek/safe-url'
 
 type Props = {
   imageUrl: string
@@ -28,14 +29,16 @@ export function ChatMediaLightbox({ imageUrl, title, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="absolute right-3 top-3 z-10 flex items-center gap-2">
-          <a
-            href={imageUrl}
-            download={title || 'ogonek-photo.jpg'}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-colors"
-            title="Скачать фото"
-          >
-            <Download size={16} />
-          </a>
+          {safeHref(imageUrl) && (
+            <a
+              href={safeHref(imageUrl)!}
+              download={title || 'ogonek-photo.jpg'}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-black/80 transition-colors"
+              title="Скачать фото"
+            >
+              <Download size={16} />
+            </a>
+          )}
           <button
             type="button"
             onClick={onClose}
@@ -48,7 +51,7 @@ export function ChatMediaLightbox({ imageUrl, title, onClose }: Props) {
 
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl}
+          src={safeImageSrc(imageUrl)}
           alt={title || 'Фотография'}
           className="max-h-[85vh] max-w-[85vw] rounded-2xl object-contain shadow-2xl"
         />

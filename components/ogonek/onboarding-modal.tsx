@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { Button, Card, Badge } from './ui'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import { isUsernameAvailable } from '@/lib/supabase/client'
+import { isUsernameAvailable } from '@/lib/supabase/browser'
 
 type Props = {
   isOpen: boolean

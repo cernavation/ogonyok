@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { computeStreak } from '@/lib/ogonek/streak'
+import { validateJsonBody, StreakSyncSchema } from '@/lib/server/api-validator'
 
 const SNAPSHOT_DIR = path.join(process.cwd(), '.data')
 const SNAPSHOT_FILE = path.join(SNAPSHOT_DIR, 'streak-snapshot.json')
@@ -21,15 +22,12 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { days?: unknown }
-    if (!body || !Array.isArray(body.days)) {
-      return NextResponse.json(
-        { error: 'Ожидается массив дат "days"' },
-        { status: 400 }
-      )
+    const validated = await validateJsonBody(request, StreakSyncSchema)
+    if (!validated.success) {
+      return validated.response
     }
 
-    const dayStrings = body.days.filter((d): d is string => typeof d === 'string')
+    const dayStrings = validated.data.days
     const calculated = computeStreak(new Set(dayStrings), new Date())
 
     const snapshot = {

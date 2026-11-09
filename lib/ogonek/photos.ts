@@ -142,7 +142,7 @@ export async function uploadDayPhotoToStorage(
   fileName?: string
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
   try {
-    const { getSupabase } = await import('@/lib/supabase/client')
+    const { getSupabase } = await import('@/lib/supabase/browser')
     const { BUCKET_OGONYOK_MEDIA } = await import('@/lib/supabase/buckets')
     const supabase = getSupabase()
     if (!supabase) return { ok: false, error: 'База данных не подключена' }

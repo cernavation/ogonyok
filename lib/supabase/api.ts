@@ -1,4 +1,4 @@
-import { getSupabase } from './client.ts'
+import { getSupabase } from './browser.ts'
 import { canChangeLevel, evaluateDayClosing, getTargetDayForNewEntry, type DiaryDayRecord, type EntryType } from '../ogonek/diary-engine.ts'
 
 export interface ProfileRecord {
@@ -1915,7 +1915,7 @@ export function subscribeToDirectMessages(
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'direct_messages' },
-      (payload) => {
+      (payload: any) => {
         if (payload.new) {
           onMessage(payload.new as DirectMessageRecord)
         }
@@ -1924,7 +1924,7 @@ export function subscribeToDirectMessages(
     .on(
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'direct_messages' },
-      (payload) => {
+      (payload: any) => {
         if (payload.new && onUpdate) {
           onUpdate(payload.new as DirectMessageRecord)
         }

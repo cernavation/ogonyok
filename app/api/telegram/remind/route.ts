@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { evaluateReminder } from '@/lib/ogonek/reminder-logic'
+import { apiErrorResponse } from '@/lib/server/api-validator'
 import type { StreakState } from '@/lib/ogonek/streak'
 
 const SNAPSHOT_FILE = path.join(process.cwd(), '.data', 'streak-snapshot.json')
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace(/^Bearer\s+/i, '').trim()
     if (token !== cronSecret) {
-      return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+      return apiErrorResponse('UNAUTHORIZED', 'Не авторизован', 401)
     }
   }
 
@@ -33,9 +34,10 @@ export async function POST(request: Request) {
       filledDays: Array.isArray(parsed.filledDays) ? parsed.filledDays : [],
     }
   } catch {
-    return NextResponse.json(
-      { error: 'Снимок стрика (.data/streak-snapshot.json) не найден. Сначала выполните синхронизацию.' },
-      { status: 404 }
+    return apiErrorResponse(
+      'NOT_FOUND',
+      'Снимок стрика (.data/streak-snapshot.json) не найден. Сначала выполните синхронизацию.',
+      404
     )
   }
 

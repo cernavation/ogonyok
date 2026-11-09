@@ -5,6 +5,7 @@ import {
   regulateAchievement,
   sanitizeRegulation,
 } from '@/lib/ogonek/achievement-regulation'
+import { apiErrorResponse, validateJsonBody, RegulateAchievementSchema } from '@/lib/server/api-validator'
 
 // In-memory rate limiter: 20 requests per minute per client IP
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -59,28 +60,17 @@ export async function POST(request: Request) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || '127.0.0.1'
 
     if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: 'Слишком много запросов. Лимит: 20 запросов в минуту.' },
-        { status: 429 }
-      )
+      return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов. Лимит: 20 запросов в минуту.', 429)
     }
 
-    const body = (await request.json()) as { categoryId?: unknown; topic?: unknown }
-    if (!isAchievementCategoryId(body?.categoryId)) {
-      return NextResponse.json(
-        { error: 'Неверная категория достижения.' },
-        { status: 400 }
-      )
+    const validated = await validateJsonBody(request, RegulateAchievementSchema)
+    if (!validated.success) {
+      return validated.response
     }
 
-    const categoryId = body.categoryId
-    const topic = typeof body.topic === 'string' ? body.topic.trim().slice(0, 300) : ''
-
-    if (!topic) {
-      return NextResponse.json(
-        { error: 'Опиши тему достижения, чтобы получить регламент.' },
-        { status: 400 }
-      )
+    const { categoryId, topic } = validated.data
+    if (!isAchievementCategoryId(categoryId)) {
+      return apiErrorResponse('INVALID_CATEGORY', 'Неверная категория достижения.', 400)
     }
 
     const apiKey = process.env.GEMINI_API_KEY

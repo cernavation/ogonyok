@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { apiErrorResponse } from '@/lib/server/api-validator'
 
 export async function GET(request: Request) {
   return handleCron(request)
@@ -25,17 +26,17 @@ async function handleCron(request: Request) {
       request.headers.get('x-vercel-cron') === '1'
 
     if (!isMatch) {
-      return NextResponse.json({ error: 'Доступ запрещён (неверный CRON_SECRET)' }, { status: 401 })
+      return apiErrorResponse('UNAUTHORIZED', 'Доступ запрещён (неверный CRON_SECRET)', 401)
     }
   }
 
   if (!token) {
-    return NextResponse.json({ error: 'TELEGRAM_BOT_TOKEN не настроен' }, { status: 400 })
+    return apiErrorResponse('CONFIG_ERROR', 'TELEGRAM_BOT_TOKEN не настроен', 400)
   }
 
   const supabase = getServerSupabase()
   if (!supabase) {
-    return NextResponse.json({ error: 'Supabase не подключен' }, { status: 400 })
+    return apiErrorResponse('CONFIG_ERROR', 'Supabase не подключен', 400)
   }
 
   try {

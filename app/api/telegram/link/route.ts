@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { validateJsonBody, TelegramLinkSchema } from '@/lib/server/api-validator'
 import crypto from 'crypto'
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => ({}))) as { userId?: string }
-    const userId = body.userId
-
-    if (!userId) {
-      return NextResponse.json({ success: false, error: 'Требуется идентификатор пользователя' }, { status: 400 })
+    const validated = await validateJsonBody(request, TelegramLinkSchema)
+    if (!validated.success) {
+      return validated.response
     }
+    const userId = validated.data.userId
 
     const botUsername = process.env.TELEGRAM_BOT_USERNAME?.replace(/^@/, '') || 'OgonekDiaryBot'
     const code = 'ogk_' + crypto.randomBytes(4).toString('hex')

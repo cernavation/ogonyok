@@ -8,7 +8,7 @@ import { isGroupThread, sortThreadIds, totalUnread } from '@/lib/ogonek/messenge
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { subscribeToDirectMessages } from '@/lib/supabase/api'
 import { ChatThreadList } from '../messenger/chat-thread-list'
 import { ChatWindow } from '../messenger/chat-window'

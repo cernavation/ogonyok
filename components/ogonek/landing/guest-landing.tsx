@@ -29,7 +29,7 @@ import {
   Code2,
   Compass,
 } from 'lucide-react'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/browser'
 import { AuthModal } from '../auth/auth-modal'
 
 type Props = {

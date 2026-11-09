@@ -301,7 +301,7 @@ export function DayOptionsModal({
               className="mt-1 text-xs text-rose-400 hover:text-rose-300 underline text-left"
               onClick={async () => {
                 playClick(soundEnabled)
-                const { getSupabase } = await import('@/lib/ogonek/supabase-client')
+                const { getSupabase } = await import('@/lib/supabase/browser')
                 const supabase = getSupabase()
                 if (supabase && state.auth?.activeAccountId) {
                   await supabase

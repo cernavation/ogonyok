@@ -14,7 +14,7 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   MAX_FILE_SIZE_BYTES,

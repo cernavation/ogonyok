@@ -10,7 +10,7 @@
  * 6. Пагинация по 500 записей для второго устройства.
  */
 
-import { getSupabase } from './supabase-client.ts'
+import { getSupabase } from '../supabase/browser.ts'
 import { sanitizePostgresString, sanitizePostgresValue } from './supabase-sync.ts'
 import type { Day, OgonekStoreState } from './types.ts'
 

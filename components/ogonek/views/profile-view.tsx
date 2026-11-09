@@ -45,8 +45,9 @@ import { playClick } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
 import { exportStoreAsJson } from '@/lib/ogonek/storage'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
+import { sanitizeWebsiteUrl } from '@/lib/ogonek/safe-url'
 import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import {
   getProfile,
   getFriendshipCounts,
@@ -590,19 +591,28 @@ export function ProfileView({
     }
     if (displayProfile.website) {
       const rawWeb = displayProfile.website.trim()
-      const href = rawWeb.startsWith('http://') || rawWeb.startsWith('https://') ? rawWeb : `https://${rawWeb}`
-      items.push(
-        <a
-          key="website"
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[var(--accent)] hover:underline shrink-0"
-        >
-          <span>🔗</span>
-          <span className="truncate max-w-[220px]">{rawWeb.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
-        </a>
-      )
+      const href = sanitizeWebsiteUrl(rawWeb)
+      if (href) {
+        items.push(
+          <a
+            key="website"
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[var(--accent)] hover:underline shrink-0"
+          >
+            <span>🔗</span>
+            <span className="truncate max-w-[220px]">{rawWeb.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+          </a>
+        )
+      } else {
+        items.push(
+          <span key="website" className="inline-flex items-center gap-1.5 text-muted-foreground shrink-0">
+            <span>🔗</span>
+            <span className="truncate max-w-[220px]">{rawWeb}</span>
+          </span>
+        )
+      }
     }
     return items
   }, [displayProfile.city, displayProfile.age, displayProfile.website])

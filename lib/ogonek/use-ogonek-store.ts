@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import { getSupabase } from './supabase-client'
+import { getSupabase } from '../supabase/browser'
 import {
   updateProfileInDb,
   updateProfileLevel,

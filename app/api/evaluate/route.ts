@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { apiErrorResponse, validateJsonBody, EvaluateDaySchema } from '@/lib/server/api-validator'
 
 function isGibberish(text: string): boolean {
   const clean = text.trim().toLowerCase()
@@ -17,30 +18,24 @@ export async function POST(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('evaluate', ip, 60, 60_000)
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { success: false, error: 'Слишком много запросов. Подождите минуту.' },
-      { status: 429 }
-    )
+    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов. Подождите минуту.', 429)
   }
 
   const apiKey = (process.env.DEEPSEEK_API_KEY || '').trim().replace(/^["']|["']$/g, '')
 
   if (!apiKey) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Ключ DEEPSEEK_API_KEY не задан в переменных окружения (Settings -> Environment Variables)',
-      },
-      { status: 500 }
+    return apiErrorResponse(
+      'CONFIG_ERROR',
+      'Ключ DEEPSEEK_API_KEY не задан в переменных окружения (Settings -> Environment Variables)',
+      500
     )
   }
 
-  let body: any
-  try {
-    body = await request.json()
-  } catch {
-    body = {}
+  const validated = await validateJsonBody(request, EvaluateDaySchema)
+  if (!validated.success) {
+    return validated.response
   }
+  const body = validated.data as any
 
   const prides: string[] = Array.isArray(body.prides)
     ? body.prides.filter((p: unknown): p is string => typeof p === 'string' && p.trim().length > 0 && p.trim() !== '—')

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/browser'
 import { getServerSupabase } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'

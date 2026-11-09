@@ -1,28 +1,21 @@
 import { NextResponse } from 'next/server'
 import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
+import { apiErrorResponse, validateJsonBody, TranscribeSchema } from '@/lib/server/api-validator'
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
   const rateLimit = checkRateLimit('transcribe', ip, 30, 60_000)
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { success: false, error: 'Слишком много запросов на расшифровку. Попробуйте через минуту.' },
-      { status: 429 }
-    )
+    return apiErrorResponse('RATE_LIMITED', 'Слишком много запросов на расшифровку. Попробуйте через минуту.', 429)
   }
 
   try {
-    const body = (await request.json().catch(() => ({}))) as {
-      audioBase64?: string
-      mimeType?: string
-      mockText?: string
+    const validated = await validateJsonBody(request, TranscribeSchema)
+    if (!validated.success) {
+      return validated.response
     }
 
-    const { audioBase64, mimeType = 'audio/webm', mockText } = body
-
-    if (!audioBase64 && !mockText) {
-      return NextResponse.json({ success: false, error: 'Аудиоданные не переданы' }, { status: 400 })
-    }
+    const { audioBase64, mimeType = 'audio/webm', mockText } = validated.data
 
     const realisticFallbacks = [
       'Привет! Договорились, всё в силе. Записал в летопись дня!',

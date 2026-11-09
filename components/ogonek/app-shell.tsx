@@ -37,7 +37,7 @@ import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
 import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
-import { getSupabase } from '@/lib/supabase/client'
+import { getSupabase } from '@/lib/supabase/browser'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { Phone, PhoneOff, Video } from 'lucide-react'
 
