@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { BUCKET_OGONYOK_MEDIA } from './buckets.ts'
 
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || ''
@@ -208,7 +209,7 @@ export async function signOut(): Promise<{ ok: boolean; error?: string }> {
 }
 
 /**
- * Загрузка медиа в Supabase Storage (бакет ogonek-media)
+ * Загрузка медиа в Supabase Storage (канонический бакет ogonyok-media)
  */
 export async function uploadMediaFile(
   userId: string,
@@ -219,7 +220,7 @@ export async function uploadMediaFile(
   if (!client) return { ok: false, error: 'База данных не подключена' }
 
   const filePath = `${userId}/${Date.now()}-${fileName}`
-  const { error } = await client.storage.from('ogonek-media').upload(filePath, file, {
+  const { error } = await client.storage.from(BUCKET_OGONYOK_MEDIA).upload(filePath, file, {
     cacheControl: '3600',
     upsert: false,
   })
@@ -228,6 +229,6 @@ export async function uploadMediaFile(
     return { ok: false, error: error.message }
   }
 
-  const { data } = client.storage.from('ogonek-media').getPublicUrl(filePath)
+  const { data } = client.storage.from(BUCKET_OGONYOK_MEDIA).getPublicUrl(filePath)
   return { ok: true, publicUrl: data.publicUrl }
 }

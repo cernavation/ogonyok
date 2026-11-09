@@ -1,13 +1,12 @@
 # Прогресс ночной смены
 
 - **Текущая ветка**: `night-shift`
-- **Текущий этап**: Завершён Этап 00 (Подготовка). Готов к переходу на Этап 01.
-- **Статус**: Этап 00 закоммичен и отправлен в `night-shift`.
-- **Текущий коммит**: `dce14eb` (`stage-00: record completed verify:all baseline metrics in report and evidence`)
+- **Текущий этап**: Завершён Этап 01 (Единая каноническая схема БД). Готов к переходу на Этап 02.
+- **Статус**: Этап 01 выполнен, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=404 pass, build exit 0).
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)
-- [ ] **Этап 01**: ...
+- [x] **Этап 01: Единая каноническая схема БД** — анализ schema_usage, миграция 010_canonical_schema.sql (15 сущностей, VIEW diary_days, RLS, storage buckets), перевод эндпоинтов на days/prides/gratitudes, доставка scheduled_messages -> direct_messages, buckets.ts, удаление хардкод UUID и фоллбека service_role, скрипт migrate-diary-days.mjs
 - [ ] **Этап 02**: ...
 - [ ] **Этап 03**: ...
 - [ ] **Этап 04**: ...

@@ -57,16 +57,20 @@ async function handleCron(request: Request) {
     for (const u of users) {
       if (!u.telegram_chat_id) continue
 
-      // Проверяем, закрыт ли день пользователя сегодня (Правило ТЗ: напоминать только если день ещё НЕ закрыт!)
+      // Проверяем, закрыт ли день пользователя сегодня (Каноническая модель: таблица days)
       const { data: todayDays } = await supabase
-        .from('diary_days')
-        .select('id, day_number, closed_at')
+        .from('days')
+        .select('id, day_number, status, closed_at, date_iso, updated_at')
         .eq('user_id', u.id)
         .order('day_number', { ascending: false })
         .limit(1)
 
       const latestDay = todayDays?.[0]
-      const isAlreadyClosed = latestDay?.closed_at && latestDay.closed_at.slice(0, 10) === todayStr
+      const isAlreadyClosed =
+        latestDay?.status === 'closed' &&
+        (latestDay.closed_at?.slice(0, 10) === todayStr ||
+          latestDay.date_iso === todayStr ||
+          latestDay.updated_at?.slice(0, 10) === todayStr)
 
       if (isAlreadyClosed) {
         skippedClosedCount += 1

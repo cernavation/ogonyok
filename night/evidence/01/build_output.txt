@@ -1,0 +1,61 @@
+
+> my-project@0.1.0 build
+> next build --webpack
+
+▲ Next.js 16.4.0 (webpack)
+- Environments: .env.local
+⚠ Warning: Next.js ignored package-lock.json in /Users/user/Desktop because it is outside the current Git repository (/Users/user/Desktop/ogonyok-ai-clone).
+ To use this directory, set `outputFileTracingRoot` in your Next.js config.
+
+✓ Running next.config.mjs took 9ms
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead.
+
+  To migrate automatically, run:
+  npx @next/codemod@canary middleware-to-proxy .
+
+  Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+⚠ Your version of Next.js is affected by a known security vulnerability. This command is continuing after the upgrade reminder.
+Reference: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+✓ Compiled successfully in 2.7s
+  Skipping validation of types
+  Finished TypeScript config validation in 4ms    ✓ Finished TypeScript config validation in 4ms 
+  Collecting page data using 7 workers in 542ms    ✓ Collecting page data using 7 workers in 542ms 
+✓ Generating static pages using 7 workers (24/24) in 302ms
+  Collecting build traces in 3.5s    ✓ Collecting build traces in 3.5s 
+  Finalizing page optimization in 3.5s    ✓ Finalizing page optimization in 3.5s 
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/achievements/regulate
+├ ƒ /api/achievements/verify
+├ ƒ /api/ai/evaluate
+├ ƒ /api/ai/evaluate-day
+├ ƒ /api/cron/deliver-scheduled
+├ ƒ /api/evaluate
+├ ƒ /api/giphy
+├ ƒ /api/leaderboard
+├ ƒ /api/streak/sync
+├ ƒ /api/telegram/cron
+├ ƒ /api/telegram/link
+├ ƒ /api/telegram/remind
+├ ƒ /api/telegram/setup
+├ ƒ /api/telegram/status
+├ ƒ /api/telegram/test
+├ ƒ /api/telegram/webhook
+├ ƒ /api/transcribe
+├ ƒ /api/translate
+├ ƒ /auth/callback
+├ ○ /chats
+├ ƒ /chats/[id]
+├ ○ /privacy
+└ ○ /terms
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

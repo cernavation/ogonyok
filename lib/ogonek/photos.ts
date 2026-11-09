@@ -134,7 +134,7 @@ export function revokePhotoUrl(url: string | null): void {
 }
 
 /**
- * Загружает фото дня в Supabase Storage (бакет ogonyok-media/photos/ с фоллбеком в ogonek-media)
+ * Загружает фото дня в Supabase Storage (канонический бакет ogonyok-media)
  * и возвращает постоянный публичный URL.
  */
 export async function uploadDayPhotoToStorage(
@@ -143,6 +143,7 @@ export async function uploadDayPhotoToStorage(
 ): Promise<{ ok: boolean; url?: string; error?: string }> {
   try {
     const { getSupabase } = await import('@/lib/supabase/client')
+    const { BUCKET_OGONYOK_MEDIA } = await import('@/lib/supabase/buckets')
     const supabase = getSupabase()
     if (!supabase) return { ok: false, error: 'База данных не подключена' }
 
@@ -150,9 +151,8 @@ export async function uploadDayPhotoToStorage(
     const cleanName = fileName ? fileName.replace(/[^a-zA-Z0-9._-]/g, '_') : `photo.${ext}`
     const storagePath = `photos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`
 
-    // 1. Попытка в бакет ogonyok-media
-    let { error: uploadError } = await supabase.storage
-      .from('ogonyok-media')
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET_OGONYOK_MEDIA)
       .upload(storagePath, fileOrBlob, {
         contentType: fileOrBlob.type || 'image/jpeg',
         cacheControl: '31536000',
@@ -160,21 +160,7 @@ export async function uploadDayPhotoToStorage(
       })
 
     if (!uploadError) {
-      const { data } = supabase.storage.from('ogonyok-media').getPublicUrl(storagePath)
-      return { ok: true, url: data.publicUrl }
-    }
-
-    // 2. Фоллбек в ogonek-media
-    const { error: fallbackError } = await supabase.storage
-      .from('ogonek-media')
-      .upload(storagePath, fileOrBlob, {
-        contentType: fileOrBlob.type || 'image/jpeg',
-        cacheControl: '31536000',
-        upsert: true,
-      })
-
-    if (!fallbackError) {
-      const { data } = supabase.storage.from('ogonek-media').getPublicUrl(storagePath)
+      const { data } = supabase.storage.from(BUCKET_OGONYOK_MEDIA).getPublicUrl(storagePath)
       return { ok: true, url: data.publicUrl }
     }
 

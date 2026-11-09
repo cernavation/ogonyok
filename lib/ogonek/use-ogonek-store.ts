@@ -603,12 +603,10 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
     const snap = getSnapshot()
     const activeAccId = snap.auth?.activeAccountId
     const profileId = (snap.profile as any)?.id
-    const username = (snap.profile?.username || '').toLowerCase()
     const uid =
       overrideUid ||
       activeAccId ||
-      profileId ||
-      (username === 'cernavation' ? '94e9eaf7-ec74-4366-9ce3-7de1e670f52b' : null)
+      profileId
 
     if (!uid) return { ok: false, error: 'No user ID' }
 
@@ -699,12 +697,10 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
     const snap = getSnapshot()
     const activeAccId = snap.auth?.activeAccountId
     const profileId = (snap.profile as any)?.id
-    const username = (snap.profile?.username || '').toLowerCase()
     const uid =
       overrideUid ||
       activeAccId ||
-      profileId ||
-      (username === 'cernavation' ? '94e9eaf7-ec74-4366-9ce3-7de1e670f52b' : null)
+      profileId
 
     if (!uid) return { ok: false }
 
@@ -788,13 +784,12 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
 
 let hasAutoSyncedAllDays = false
 export async function autoSyncCernavationDaysToCloud(days: Day[], uid?: string) {
-  if (hasAutoSyncedAllDays || !days || days.length === 0) return
+  if (hasAutoSyncedAllDays || !days || days.length === 0 || !uid) return
   hasAutoSyncedAllDays = true
-  const targetUid = uid || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
   try {
-    await syncAllDaysToSupabase(days, targetUid)
+    await syncAllDaysToSupabase(days, uid)
   } catch (err) {
-    console.warn('[Ogonek] Auto-sync cernavation days error:', err)
+    console.warn('[Ogonek] Auto-sync days error:', err)
   }
 }
 
@@ -1151,12 +1146,10 @@ export function useOgonekStore() {
         const uid = getSnapshot().auth?.activeAccountId
         if (supabase && uid) {
           const clientId = String(dayId)
-          await Promise.allSettled([
-            supabase.from('prides').delete().match({ user_id: uid, day_client_id: clientId }),
-            supabase.from('gratitudes').delete().match({ user_id: uid, day_client_id: clientId }),
-            supabase.from('days').delete().match({ user_id: uid, client_id: clientId }),
-            supabase.from('diary_days').delete().match({ user_id: uid, day_number: dayId }),
-          ])
+          // Каскадное удаление по ON DELETE CASCADE: удаление из 'days' автоматически каскадирует
+          // удаление связанных записей (ранее: supabase.from('prides').delete(), supabase.from('gratitudes').delete(), supabase.from('diary_days').delete()).
+          // Теперь удаляется только days:
+          await supabase.from('days').delete().match({ user_id: uid, client_id: clientId })
           const currentStreak = calculateStreak(getSnapshot().days)
           await supabase
             .from('profiles')

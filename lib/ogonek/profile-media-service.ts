@@ -13,6 +13,7 @@
  */
 
 import { getSupabase } from './supabase-client.ts'
+import { BUCKET_OGONYOK_MEDIA } from '../supabase/buckets.ts'
 
 export const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 // 2 МБ
 export const ALLOWED_MIME_TYPES = [
@@ -200,7 +201,7 @@ export async function uploadProfileMedia(params: {
     const storagePath = `${folder}/${uid}-${timestamp}.${ext}`
 
     const { error: uploadError } = await supabase.storage
-      .from('ogonyok-media')
+      .from(BUCKET_OGONYOK_MEDIA)
       .upload(storagePath, blob, {
         contentType: blob.type || 'image/jpeg',
         cacheControl: '31536000',
@@ -216,7 +217,7 @@ export async function uploadProfileMedia(params: {
     }
 
     // 3. Получение publicUrl
-    const { data: pubData } = supabase.storage.from('ogonyok-media').getPublicUrl(storagePath)
+    const { data: pubData } = supabase.storage.from(BUCKET_OGONYOK_MEDIA).getPublicUrl(storagePath)
     const publicUrl = pubData?.publicUrl || ''
 
     // 4. Запись в public.profiles (avatar_image или banner_image)

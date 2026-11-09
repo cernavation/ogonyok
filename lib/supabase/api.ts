@@ -700,29 +700,67 @@ export async function getUserPosts(userId: string): Promise<PostRecord[]> {
 }
 
 /**
- * Загрузить дни и записи пользователя (за 2+ года)
+ * Загрузить дни и записи пользователя (канонические таблицы days, prides, gratitudes)
  */
 export async function getUserDiaryDays(userId: string): Promise<DayRecord[]> {
   const supabase = getSupabase()
   if (!supabase) return []
   const { data: days, error: daysError } = await supabase
-    .from('diary_days')
+    .from('days')
     .select('*')
     .eq('user_id', userId)
     .order('day_number', { ascending: false })
 
   if (daysError || !days) return []
 
-  const dayIds = days.map((d) => d.id)
-  let entries: EntryRecord[] = []
+  const dayIds = days.map((d: any) => d.id)
+  const entries: EntryRecord[] = []
+
   if (dayIds.length > 0) {
-    const { data: entriesData } = await supabase
-      .from('entries')
-      .select('*')
-      .in('day_id', dayIds)
-      .order('created_at', { ascending: true })
-    if (entriesData) {
-      entries = entriesData as EntryRecord[]
+    const [{ data: pridesData }, { data: gratitudesData }] = await Promise.all([
+      supabase
+        .from('prides')
+        .select('*')
+        .in('day_id', dayIds)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('gratitudes')
+        .select('*')
+        .in('day_id', dayIds)
+        .order('created_at', { ascending: true }),
+    ])
+
+    if (pridesData) {
+      for (const p of pridesData as any[]) {
+        entries.push({
+          id: p.id,
+          user_id: p.user_id,
+          day_id: p.day_id,
+          type: 'pride',
+          text: p.text || '',
+          score: typeof p.scale === 'number' ? p.scale : null,
+          ai_comment: p.comment || null,
+          overcome: typeof p.overcome === 'number' ? p.overcome : 0,
+          visibility: p.visibility || 'private',
+          created_at: p.created_at,
+        })
+      }
+    }
+
+    if (gratitudesData) {
+      for (const g of gratitudesData as any[]) {
+        entries.push({
+          id: g.id,
+          user_id: g.user_id,
+          day_id: g.day_id,
+          type: 'gratitude',
+          text: g.text || '',
+          score: null,
+          ai_comment: null,
+          visibility: g.visibility || 'private',
+          created_at: g.created_at,
+        })
+      }
     }
   }
 
@@ -733,8 +771,13 @@ export async function getUserDiaryDays(userId: string): Promise<DayRecord[]> {
     entriesByDay.set(entry.day_id, list)
   }
 
-  return days.map((day) => ({
-    ...day,
+  return days.map((day: any) => ({
+    id: day.id,
+    user_id: day.user_id,
+    day_number: day.day_number,
+    day_date: day.date || day.day_date || '',
+    closed_at: day.closed_at || null,
+    created_at: day.created_at,
     entries: entriesByDay.get(day.id) || [],
   }))
 }
@@ -760,24 +803,32 @@ export async function addDiaryEntry(params: {
 
     // 1. Если день не указан, находим первый незакрытый день (Правило 4)
     if (!dayId) {
-      const { data: days } = await supabase
-        .from('diary_days')
+      const { data: rawDays } = await supabase
+        .from('days')
         .select('*')
         .eq('user_id', params.userId)
         .order('day_number', { ascending: true })
 
-      const target = getTargetDayForNewEntry(days || [], todayStr)
+      const diaryDays: DiaryDayRecord[] = (rawDays || []).map((d: any) => ({
+        id: d.id,
+        user_id: d.user_id,
+        day_number: d.day_number,
+        day_date: d.date || d.day_date || todayStr,
+        closed_at: d.closed_at || null,
+      }))
+
+      const target = getTargetDayForNewEntry(diaryDays, todayStr)
 
       if (target.existingDayId) {
         dayId = target.existingDayId
       } else {
-        // Создаем новый день
+        // Создаем новый день в days
         const { data: newDay, error: createError } = await supabase
-          .from('diary_days')
+          .from('days')
           .insert({
             user_id: params.userId,
             day_number: target.day_number,
-            day_date: target.day_date,
+            date: target.day_date,
           })
           .select()
           .single()
@@ -789,50 +840,98 @@ export async function addDiaryEntry(params: {
       }
     }
 
-    // 2. Вставляем запись в entries
-    const { data: entry, error: entryError } = await supabase
-      .from('entries')
-      .insert({
-        user_id: params.userId,
-        day_id: dayId,
-        type: params.type,
-        text: params.text.trim(),
-        visibility: params.visibility || 'private',
-        score: params.score || null,
-        ai_comment: params.aiComment || null,
-      })
-      .select()
-      .single()
+    if (!dayId) {
+      return { ok: false, error: 'Не удалось определить идентификатор дня' }
+    }
 
-    if (entryError || !entry) {
-      return { ok: false, error: entryError?.message || 'Не удалось сохранить запись' }
+    // 2. Вставляем запись в каноническую таблицу (prides или gratitudes)
+    let entryRow: any = null
+    if (params.type === 'pride') {
+      const { data, error: prideErr } = await supabase
+        .from('prides')
+        .insert({
+          user_id: params.userId,
+          day_id: dayId,
+          text: params.text.trim(),
+          scale: params.score || null,
+          comment: params.aiComment || null,
+          visibility: params.visibility || 'private',
+        })
+        .select()
+        .single()
+
+      if (prideErr || !data) {
+        return { ok: false, error: prideErr?.message || 'Не удалось сохранить гордость' }
+      }
+      entryRow = data
+    } else {
+      const { data, error: gratErr } = await supabase
+        .from('gratitudes')
+        .insert({
+          user_id: params.userId,
+          day_id: dayId,
+          text: params.text.trim(),
+          visibility: params.visibility || 'private',
+        })
+        .select()
+        .single()
+
+      if (gratErr || !data) {
+        return { ok: false, error: gratErr?.message || 'Не удалось сохранить благодарность' }
+      }
+      entryRow = data
+    }
+
+    const createdEntry: EntryRecord = {
+      id: entryRow.id,
+      user_id: params.userId,
+      day_id: dayId,
+      type: params.type,
+      text: entryRow.text || params.text.trim(),
+      score: typeof entryRow.scale === 'number' ? entryRow.scale : params.score || null,
+      ai_comment: entryRow.comment || params.aiComment || null,
+      overcome: typeof entryRow.overcome === 'number' ? entryRow.overcome : 0,
+      visibility: entryRow.visibility || params.visibility || 'private',
+      created_at: entryRow.created_at || new Date().toISOString(),
     }
 
     // 3. Проверяем, закрывается ли день (Правило 5)
-    const { data: currentDay } = await supabase
-      .from('diary_days')
-      .select('*')
-      .eq('id', dayId)
-      .single()
+    const [{ data: currentDayRaw }, { data: dayPrides }, { data: dayGrats }, { data: allUserDaysRaw }] = await Promise.all([
+      supabase.from('days').select('*').eq('id', dayId).single(),
+      supabase.from('prides').select('id').eq('day_id', dayId),
+      supabase.from('gratitudes').select('id').eq('day_id', dayId),
+      supabase.from('days').select('*').eq('user_id', params.userId),
+    ])
 
-    const { data: dayEntries } = await supabase
-      .from('entries')
-      .select('type')
-      .eq('day_id', dayId)
+    const currentDay: DiaryDayRecord = {
+      id: currentDayRaw?.id || dayId,
+      user_id: currentDayRaw?.user_id || params.userId,
+      day_number: currentDayRaw?.day_number || 1,
+      day_date: currentDayRaw?.date || currentDayRaw?.day_date || todayStr,
+      closed_at: currentDayRaw?.closed_at || null,
+    }
+
+    const dayEntries: Array<{ type: EntryType }> = [
+      ...(dayPrides || []).map(() => ({ type: 'pride' as const })),
+      ...(dayGrats || []).map(() => ({ type: 'gratitude' as const })),
+    ]
 
     const profile = await getProfile(params.userId)
     const level = profile?.level || 3
 
-    const { data: allUserDays } = await supabase
-      .from('diary_days')
-      .select('*')
-      .eq('user_id', params.userId)
+    const allUserDays: DiaryDayRecord[] = (allUserDaysRaw || []).map((d: any) => ({
+      id: d.id,
+      user_id: d.user_id,
+      day_number: d.day_number,
+      day_date: d.date || d.day_date || todayStr,
+      closed_at: d.closed_at || null,
+    }))
 
     const evaluation = evaluateDayClosing(
-      currentDay as DiaryDayRecord,
-      (dayEntries || []) as Array<{ type: EntryType }>,
+      currentDay,
+      dayEntries,
       level,
-      (allUserDays || []) as DiaryDayRecord[],
+      allUserDays,
       todayStr
     )
 
@@ -840,15 +939,15 @@ export async function addDiaryEntry(params: {
     if (evaluation.canClose) {
       const nowISO = new Date().toISOString()
       await supabase
-        .from('diary_days')
-        .update({ closed_at: nowISO, updated_at: nowISO })
+        .from('days')
+        .update({ closed_at: nowISO, status: 'closed', updated_at: nowISO })
         .eq('id', dayId)
 
       // Стрик = общее количество закрытых дней
-      const closedDaysCount = (allUserDays || []).filter((d) => d.closed_at || d.id === dayId).length
+      const closedDaysCount = allUserDays.filter((d) => d.closed_at || d.id === dayId).length
       await supabase
         .from('profiles')
-        .update({ streak: closedDaysCount, updated_at: nowISO })
+        .update({ streak: closedDaysCount, streak_count: closedDaysCount, updated_at: nowISO })
         .eq('id', params.userId)
 
       await supabase
@@ -865,10 +964,19 @@ export async function addDiaryEntry(params: {
       closedNow = true
     }
 
+    const dayResult: DayRecord = {
+      id: currentDay.id,
+      user_id: currentDay.user_id,
+      day_number: currentDay.day_number,
+      day_date: currentDay.day_date,
+      closed_at: closedNow ? new Date().toISOString() : currentDay.closed_at,
+      created_at: currentDayRaw?.created_at || new Date().toISOString(),
+    }
+
     return {
       ok: true,
-      entry: entry as EntryRecord,
-      day: currentDay as DayRecord,
+      entry: createdEntry,
+      day: dayResult,
       closedNow,
     }
   } catch (err) {
@@ -1052,7 +1160,7 @@ export async function changeDifficultyLevel(userId: string, newLevel: number): P
 }
 
 /**
- * Миграция локальной истории из localStorage в облачный аккаунт (Правило 9)
+ * Миграция локальной истории из localStorage в облачный аккаунт (канонические таблицы days, prides, gratitudes)
  */
 export async function migrateLegacyDaysToSupabase(
   userId: string,
@@ -1072,15 +1180,16 @@ export async function migrateLegacyDaysToSupabase(
       const isClosed = Boolean(d.closedAt || d.completed || (d.prides && d.prides.length >= 3))
       const closedAt = isClosed ? (d.closedAt || new Date().toISOString()) : null
 
-      // Вставляем день
+      // Вставляем день в days
       const { data: dayRow } = await supabase
-        .from('diary_days')
+        .from('days')
         .upsert(
           {
             user_id: userId,
             day_number: dayNumber,
-            day_date: dayDate,
+            date: dayDate,
             closed_at: closedAt,
+            status: isClosed ? 'closed' : 'open',
           },
           { onConflict: 'user_id,day_number' }
         )
@@ -1088,26 +1197,30 @@ export async function migrateLegacyDaysToSupabase(
         .single()
 
       if (dayRow) {
-        // Идемпотентность: удаляем старые записи дня перед повторной вставкой, чтобы исключить дубли
+        // Идемпотентность: удаляем старые записи дня перед повторной вставкой
         try {
-          await supabase.from('entries').delete().eq('day_id', dayRow.id)
+          await Promise.allSettled([
+            supabase.from('prides').delete().eq('day_id', dayRow.id),
+            supabase.from('gratitudes').delete().eq('day_id', dayRow.id),
+          ])
         } catch {
           // ignore delete error
         }
 
         if (d.prides && Array.isArray(d.prides)) {
+          let pIdx = 0
           for (const pride of d.prides) {
             const text = typeof pride === 'string' ? pride : pride.text
             if (!text) continue
             try {
-              await supabase.from('entries').insert({
+              await supabase.from('prides').insert({
                 user_id: userId,
                 day_id: dayRow.id,
-                type: 'pride',
                 text,
-                score: typeof pride === 'object' ? pride.scale : null,
-                ai_comment: typeof pride === 'object' ? pride.comment : null,
+                scale: typeof pride === 'object' ? pride.scale : null,
+                comment: typeof pride === 'object' ? pride.comment : null,
                 overcome: typeof pride === 'object' ? pride.overcome : 0,
+                order_index: pIdx++,
                 visibility: 'private',
               })
             } catch {
@@ -1117,15 +1230,16 @@ export async function migrateLegacyDaysToSupabase(
         }
 
         if (d.gratitudes && Array.isArray(d.gratitudes)) {
+          let gIdx = 0
           for (const grat of d.gratitudes) {
             const text = typeof grat === 'string' ? grat : grat.text
             if (!text) continue
             try {
-              await supabase.from('entries').insert({
+              await supabase.from('gratitudes').insert({
                 user_id: userId,
                 day_id: dayRow.id,
-                type: 'gratitude',
                 text,
+                order_index: gIdx++,
                 visibility: 'private',
               })
             } catch {
@@ -1141,13 +1255,13 @@ export async function migrateLegacyDaysToSupabase(
 
     // Обновляем стрик
     const { count: closedCount } = await supabase
-      .from('diary_days')
+      .from('days')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
       .not('closed_at', 'is', null)
 
     const streakVal = closedCount || count
-    await supabase.from('profiles').update({ streak: streakVal }).eq('id', userId)
+    await supabase.from('profiles').update({ streak: streakVal, streak_count: streakVal }).eq('id', userId)
 
     return { success: true, migratedDays: count }
   } catch (err) {
