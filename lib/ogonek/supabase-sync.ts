@@ -532,9 +532,13 @@ export class SupabaseRestClient {
   }
 
   private headers(extra?: Record<string, string>): Record<string, string> {
+    const authHeader = this.accessToken
+      ? `Bearer ${this.accessToken}`
+      : `Bearer ${this.config.anonKey}`
+
     return {
       apikey: this.config.anonKey,
-      Authorization: `Bearer ${this.accessToken ?? this.config.anonKey}`,
+      Authorization: authHeader,
       'Content-Type': 'application/json',
       Accept: 'application/json',
       ...(extra ?? {}),
@@ -762,14 +766,18 @@ function isSessionFresh(session: SupabaseSession): boolean {
   return session.expiresAt - Date.now() > SESSION_REFRESH_MARGIN_MS
 }
 
-/** Гарантирует валидную сессию: обновляет токен или входит анонимно */
+/** Гарантирует валидную сессию: обновляет токен авторизованного пользователя */
 export async function ensureSession(
   config: SupabaseConfig
 ): Promise<{ ok: true; session: SupabaseSession } | { ok: false; error: string }> {
   const current = readSession()
-  if (current && isSessionFresh(current)) return { ok: true, session: current }
+  if (!current) {
+    return { ok: false, error: 'Демо-режим: вход не выполнен, данные сохраняются локально' }
+  }
 
-  if (current && current.refreshToken) {
+  if (isSessionFresh(current)) return { ok: true, session: current }
+
+  if (current.refreshToken) {
     const refreshed = await refreshSession(config, current)
     if (refreshed) {
       writeSession(refreshed)
@@ -777,7 +785,7 @@ export async function ensureSession(
     }
   }
 
-  return signInAnonymously(config)
+  return { ok: false, error: 'Срок действия сессии истёк. Пожалуйста, выполните повторный вход.' }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1815,6 +1823,22 @@ export async function syncWithSupabase(
       changed: false,
       atISO,
       error: 'Нет сети — изменения сохранены локально',
+    }
+  }
+
+  // Демо-режим без авторизации: данные живут строго в localStorage, никаких сетевых вызовов
+  const currentSession = readSession()
+  if (!currentSession) {
+    updateStatus({ phase: 'disabled', authenticated: false, message: 'Демо-режим: данные сохраняются локально' })
+    return {
+      ok: false,
+      phase: 'disabled',
+      pushed: 0,
+      deleted: 0,
+      pulled: 0,
+      changed: false,
+      atISO,
+      error: 'Демо-режим: вход не выполнен, данные сохраняются только в localStorage',
     }
   }
 

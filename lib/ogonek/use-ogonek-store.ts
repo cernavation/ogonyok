@@ -601,6 +601,10 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
     const supabase = getSupabase()
     if (!supabase) return { ok: false, error: 'Supabase client unavailable' }
     const snap = getSnapshot()
+    if (!overrideUid && (!snap.auth?.signedIn || !snap.auth?.activeAccountId)) {
+      // Демо-режим без авторизации: данные живут строго в localStorage
+      return { ok: true }
+    }
     const activeAccId = snap.auth?.activeAccountId
     const profileId = (snap.profile as any)?.id
     const uid =
@@ -695,6 +699,10 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
     const supabase = getSupabase()
     if (!supabase || !Array.isArray(days) || days.length === 0) return { ok: false }
     const snap = getSnapshot()
+    if (!overrideUid && (!snap.auth?.signedIn || !snap.auth?.activeAccountId)) {
+      // Демо-режим без авторизации: данные живут строго в localStorage
+      return { ok: true }
+    }
     const activeAccId = snap.auth?.activeAccountId
     const profileId = (snap.profile as any)?.id
     const uid =

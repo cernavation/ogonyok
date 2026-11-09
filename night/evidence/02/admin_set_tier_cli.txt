@@ -1,0 +1,9 @@
+
+Использование:
+  node scripts/admin/set-tier.mjs <username> <free|pro|ultra> <days> [--yes] [--reason="причина"]
+
+Примеры:
+  node scripts/admin/set-tier.mjs ivan pro 30 --reason="Оплата подписки картой"
+  node scripts/admin/set-tier.mjs maria ultra 365 --yes
+  node scripts/admin/set-tier.mjs alex free 0
+

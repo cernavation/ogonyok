@@ -1,13 +1,14 @@
 # Прогресс ночной смены
 
 - **Текущая ветка**: `night-shift`
-- **Текущий этап**: Завершён Этап 01 (Единая каноническая схема БД). Готов к переходу на Этап 02.
-- **Статус**: Этап 01 выполнен, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=404 pass, build exit 0).
+- **Текущий этап**: Завершён Этап 02 (Безопасность БД: RLS, Тариф-Защита, Two-Users верификация, Демо-режим). Готов к переходу на Этап 03.
+- **Статус**: Этапы 00, 01, 02 выполнены, доказательства собраны, quality gates пройдены (tsc=0, lint=0, unit=406 pass, build exit 0, rls_matrix=53/53 pass).
 
 ## Журнал этапов
 - [x] **Этап 00: Подготовка** — протокол, решения, baseline, инструменты (Playwright, two-users harness, отчёт STAGE_00)
 - [x] **Этап 01: Единая каноническая схема БД** — анализ schema_usage, миграция 010_canonical_schema.sql (15 сущностей, VIEW diary_days, RLS, storage buckets), перевод эндпоинтов на days/prides/gratitudes, доставка scheduled_messages -> direct_messages, buckets.ts, удаление хардкод UUID и фоллбека service_role, скрипт migrate-diary-days.mjs
-- [ ] **Этап 02**: ...
+- [x] **Этап 02: Безопасность БД (RLS, Тариф-Защита, Two-Users матрица, Демо-режим)** — миграция 020_rls.sql (RLS на 16 таблицах, profiles_public, profile_private, trigger защиты тарифа, REVOKE UPDATE, effective_tier, subscription_audit), админ-скрипт scripts/admin/set-tier.mjs, матрица scripts/qa/two-users.mjs (53 теста), строгий demo-режим без запросов к таблицам Supabase (подтверждено Playwright), регламент наката на прод в night/MANUAL_STEPS.md
+- [ ] **Этап 03**: ...
 - [ ] **Этап 03**: ...
 - [ ] **Этап 04**: ...
 - [ ] **Этап 05**: ...

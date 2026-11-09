@@ -1296,23 +1296,21 @@ export interface PublicDayRecord {
   created_at: string
 }
 
-export async function getUserPublicDays(userId: string, isFriend: boolean = false): Promise<PublicDayRecord[]> {
+/**
+ * Получить публичные/доступные дни пользователя.
+ * С RLS фильтрацию доступности (public, friends) выполняет база данных через auth.uid().
+ * Клиентский параметр isFriend больше не требуется (сохранён как опциональный для обратной совместимости).
+ */
+export async function getUserPublicDays(userId: string, _isFriend?: boolean): Promise<PublicDayRecord[]> {
   const supabase = getSupabase()
   if (!supabase) return []
-  let q = supabase
+  const { data, error } = await supabase
     .from('days')
     .select('id,user_id,day_number,day_date,visibility,title,closed_at,created_at')
     .eq('user_id', userId)
     .order('day_number', { ascending: false })
     .limit(20)
 
-  if (isFriend) {
-    q = q.in('visibility', ['public', 'friends'])
-  } else {
-    q = q.eq('visibility', 'public')
-  }
-
-  const { data, error } = await q
   if (error || !data) return []
   return data as PublicDayRecord[]
 }
