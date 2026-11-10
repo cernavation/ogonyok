@@ -280,6 +280,8 @@ export type OgonekProfile = {
   /** Число дней стрика / летописи */
   streak_count?: number
   streak?: number
+  /** Список фич, для которых пользователь нажал «Больше не напоминать» (ЭТАП 13) */
+  dismissed_upsells?: string[]
 }
 
 /** Статусы сессии аудио/видео звонка */

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown, ChevronUp, History, Moon, Target, Sparkles } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, History, Lock, Moon, Target, Sparkles, Timer } from 'lucide-react'
 import { FocusFlame } from './focus-flame'
 import {
   MORNING_FOCUS_PLACEHOLDERS,
@@ -12,6 +12,9 @@ import {
 } from '@/lib/ogonek/morning-focus'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { MorningFocusRecord } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import { Button } from './ui'
 
 const PLACEHOLDERS = MORNING_FOCUS_PLACEHOLDERS
@@ -37,6 +40,10 @@ export function QuickFocus({
   notify,
   soundEnabled = true,
 }: Props) {
+  const { state: storeState } = useOgonekStore()
+  const userTier = normalizeTier(storeState?.profile?.subscription_tier, storeState?.profile?.subscription_valid_until)
+  const isFree = userTier === 'free'
+
   const [focus, setFocus] = useState<[string, string, string]>(() => {
     return initialFocus || ['', '', '']
   })
@@ -206,6 +213,29 @@ export function QuickFocus({
                     <Moon size={14} /> Вечерняя сверка
                   </Button>
                 )}
+
+                {/* ЭТАП 13: Таймер фокуса (с замком для Free) */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    if (isFree) {
+                      dispatchUpgradeModal({
+                        feature: 'intentionsTimer',
+                        reason: 'Таймеры глубокого фокуса доступны в тарифах Премиум и Ultra',
+                      })
+                    } else {
+                      notify('Таймер фокуса на 25 минут запущен ⏱️')
+                    }
+                  }}
+                  className="min-h-[36px] flex items-center gap-1.5"
+                  title={isFree ? 'Таймер фокуса (Премиум)' : 'Запустить таймер фокуса на 25 мин'}
+                >
+                  <Timer size={14} className={isFree ? 'text-[var(--text-3)]' : 'text-[var(--accent)]'} />
+                  <span>Таймер</span>
+                  {isFree && <Lock size={12} className="text-amber-400 -ml-0.5" />}
+                </Button>
 
                 {onOpenHistory && (
                   <Button

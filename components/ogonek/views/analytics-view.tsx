@@ -7,6 +7,7 @@ import {
   ChevronUp,
   Flame,
   Lightbulb,
+  Lock,
   Sparkles,
   TrendingUp,
   Trophy,
@@ -29,6 +30,9 @@ import dynamic from 'next/dynamic'
 import { AnalyticsPeriodSwitcher } from '../analytics/period-switcher'
 import { FlameIcon } from '../flame-icon'
 import { Button, Card, Badge } from '../ui'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 const DynamicsChart = dynamic(() => import('../analytics/dynamics-chart').then((m) => m.DynamicsChart), { ssr: false })
 const MonthlyKpiPanel = dynamic(() => import('../analytics/monthly-kpi-panel').then((m) => m.MonthlyKpiPanel), { ssr: false })
@@ -47,6 +51,10 @@ export function AnalyticsView({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  const { state: storeState } = useOgonekStore()
+  const userTier = normalizeTier(storeState?.profile?.subscription_tier, storeState?.profile?.subscription_valid_until)
+  const isFree = userTier === 'free'
+
   const [period, setPeriod] = useState<AnalyticsPeriod>('month')
   const [showArchive, setShowArchive] = useState(false)
   const [insightSeed, setInsightSeed] = useState(0)
@@ -184,6 +192,53 @@ export function AnalyticsView({
             </div>
           ))}
         </div>
+
+        {/* 4. Расширенная аналитика (в 5 раз больше метрик) для Базового тарифа */}
+        {isFree ? (
+          <div className="relative p-6 rounded-3xl border border-[var(--border)] bg-[var(--bg-elev)] overflow-hidden">
+            {/* Размытая структура расширенных графиков */}
+            <div className="filter blur-sm select-none pointer-events-none opacity-30 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="h-4 w-40 bg-[var(--text)]/40 rounded-full" />
+                <div className="h-6 w-24 bg-[var(--accent)]/30 rounded-full" />
+              </div>
+              <div className="grid grid-cols-4 gap-2 pt-2">
+                <div className="h-20 bg-[var(--surface2)] rounded-xl" />
+                <div className="h-28 bg-[var(--surface2)] rounded-xl" />
+                <div className="h-16 bg-[var(--surface2)] rounded-xl" />
+                <div className="h-24 bg-[var(--surface2)] rounded-xl" />
+              </div>
+              <div className="space-y-2 pt-2">
+                <div className="h-3 w-full bg-[var(--text)]/20 rounded-full" />
+                <div className="h-3 w-5/6 bg-[var(--text)]/20 rounded-full" />
+                <div className="h-3 w-2/3 bg-[var(--text)]/20 rounded-full" />
+              </div>
+            </div>
+
+            {/* Единый мягкий баннер апселла поверх */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-5 text-center bg-black/50 backdrop-blur-[2px]">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/15 text-amber-400 flex items-center justify-center mb-2.5 border border-amber-500/30">
+                <Lock size={20} />
+              </div>
+              <h3 className="text-base sm:text-lg font-black text-white mb-1">
+                Расширенная аналитика (в 5 раз больше метрик)
+              </h3>
+              <p className="text-xs text-zinc-300 max-w-sm mb-4 leading-relaxed">
+                10 декад пути, динамика преодоления L0–L3, смысловые теги побед и корреляция продуктивности доступны в Премиум.
+              </p>
+              <button
+                type="button"
+                onClick={() => dispatchUpgradeModal({ feature: 'advancedStats', force: true })}
+                className="h-9 px-5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-xs font-bold inline-flex items-center gap-1.5 shadow-lg transition-transform active:scale-95"
+              >
+                <Sparkles size={14} />
+                <span>Открыть в Премиум</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <MonthlyKpiPanel days={days} onNotify={onNotify || (() => {})} />
+        )}
       </div>
     </div>
   )

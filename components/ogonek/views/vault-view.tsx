@@ -1,11 +1,14 @@
 'use client'
 
-import { ArrowLeft, Check, Flame, Pin, Plus, Search, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Flame, Lock, Pin, Plus, Search, Sparkles, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { EvidenceItem, ViewId } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 const MilestoneVaultCard = dynamic(
   () => import('../milestones/milestone-vault-card').then((m) => m.MilestoneVaultCard),
@@ -35,6 +38,10 @@ export function VaultView({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  const { state: storeState } = useOgonekStore()
+  const userTier = normalizeTier(storeState?.profile?.subscription_tier, storeState?.profile?.subscription_valid_until)
+  const isFree = userTier === 'free'
+
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Все')
   const [isAdding, setIsAdding] = useState(false)
@@ -143,6 +150,13 @@ export function VaultView({
           type="button"
           onClick={() => {
             playClick(soundEnabled)
+            if (isFree) {
+              dispatchUpgradeModal({
+                feature: 'vault',
+                reason: 'Evidence Vault доступен на тарифах Премиум и Ultra',
+              })
+              return
+            }
             setIsAdding(!isAdding)
           }}
           className="min-h-[36px] px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
@@ -316,8 +330,87 @@ export function VaultView({
         </div>
       )}
 
-      {/* Flat List like X Feed */}
-      {filteredItems.length > 0 ? (
+      {/* ЭТАП 13: Режим превью для Базового тарифа с 1-2 примерами и мягким блоком апселла */}
+      {isFree ? (
+        <div className="flex flex-col">
+          <div className="p-4 border-b border-[var(--border)] bg-[var(--bg-elev)]/50">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
+              <Sparkles size={14} />
+              <span>Режим предпросмотра Evidence Vault</span>
+            </div>
+            <p className="text-xs text-[var(--text-2)] leading-relaxed">
+              Ниже показано, как выглядит Свод личной силы для фиксации ключевых моментов стойкости и побед.
+            </p>
+          </div>
+
+          <div className="divide-y divide-[var(--border)] opacity-85">
+            <article className="px-4 py-3.5 relative">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-bold text-[var(--text-2)] uppercase tracking-wider">
+                    14 ОКТЯБРЯ 2026
+                  </span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    Демо-пример
+                  </span>
+                  <span className="text-[13px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--text)]">
+                    Закреплено
+                  </span>
+                </div>
+              </div>
+              <h2 className="text-[15px] font-bold text-[var(--text)] leading-snug">
+                Преодолел спад мотивации на 42-й день пути
+              </h2>
+              <p className="text-[14px] text-[var(--text-2)] leading-normal mt-1">
+                Когда не было сил и желания даже открывать дневник — сел и честно зафиксировал 3 гордости. Характер закаляется именно в такие дни.
+              </p>
+            </article>
+
+            <article className="px-4 py-3.5 relative">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-bold text-[var(--text-2)] uppercase tracking-wider">
+                    28 СЕНТЯБРЯ 2026
+                  </span>
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    Демо-пример
+                  </span>
+                </div>
+              </div>
+              <h2 className="text-[15px] font-bold text-[var(--text)] leading-snug">
+                Первый марафон дисциплины: 100 дней подряд
+              </h2>
+              <p className="text-[14px] text-[var(--text-2)] leading-normal mt-1">
+                Доказал себе, что слово не расходится с делом. Рубеж взят, ни единого пропуска.
+              </p>
+            </article>
+          </div>
+
+          {/* Единый мягкий блок разблокировки */}
+          <div className="m-4 p-6 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center shadow-lg relative overflow-hidden">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto mb-3 border border-amber-500/20">
+              <Lock size={22} />
+            </div>
+            <h3 className="text-lg font-black text-[var(--text)] mb-1">
+              Разблокируйте Evidence Vault
+            </h3>
+            <p className="text-xs sm:text-[13px] text-[var(--text-2)] max-w-md mx-auto leading-relaxed mb-4">
+              Свод личной силы сохраняет неопровержимые доказательства твоих побед и вех. Доступно на тарифах Премиум и Ultra.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                dispatchUpgradeModal({ feature: 'vault', force: true })
+              }}
+              className="h-10 px-6 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+            >
+              <Sparkles size={14} />
+              <span>Разблокировать Свод Силы</span>
+            </button>
+          </div>
+        </div>
+      ) : filteredItems.length > 0 ? (
         <div className="divide-y divide-[var(--border)]">
           {filteredItems.map((item) => {
             const isPinned = Boolean(item.pinned)

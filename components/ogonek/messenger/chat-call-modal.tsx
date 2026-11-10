@@ -37,6 +37,9 @@ import {
   type CallSessionRecord,
 } from '@/lib/supabase/api'
 import { ChatAvatar } from './chat-avatar'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier, getTierLimits } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 export interface ChatCallModalProps {
   friendId: string
@@ -829,9 +832,20 @@ export function ChatCallModal({
     })
   }
 
+  const { state: storeState } = useOgonekStore()
+  const userTier = normalizeTier(storeState?.profile?.subscription_tier, storeState?.profile?.subscription_valid_until)
+  const limits = getTierLimits(userTier)
+
   // Камера Toggle
   const toggleCamera = () => {
     playClick(soundEnabled)
+    if (cameraOff && !limits.videoCalls) {
+      dispatchUpgradeModal({
+        feature: 'videoCalls',
+        reason: 'Видеосвязь доступна на тарифах Премиум и Ultra. Аудиозвонки бесплатны для всех.',
+      })
+      return
+    }
     setCameraOff((prev) => {
       const next = !prev
       if (localStreamRef.current) {

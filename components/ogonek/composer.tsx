@@ -1,6 +1,6 @@
 'use client'
 
-import { BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
+import { AlertCircle, BookmarkCheck, Briefcase, CalendarDays, Check, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
@@ -9,7 +9,8 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OgonekGroup, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { getTierLimits } from '@/lib/ogonek/permissions'
+import { getTierLimits, TIER_NAMES, normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { listUserGroups } from '@/lib/ogonek/groups'
@@ -489,6 +490,25 @@ export function Composer({
     }
   }
 
+  const handlePhotoClick = (e: React.MouseEvent) => {
+    if (tierLimits.maxPhotosPerDay === 0) {
+      e.preventDefault()
+      dispatchUpgradeModal({
+        feature: 'maxPhotosPerDay',
+        reason: 'Прикрепление фото дня доступно на тарифах Премиум и Ultra',
+      })
+      return
+    }
+    if (preview && tierLimits.maxPhotosPerDay <= 1) {
+      e.preventDefault()
+      dispatchUpgradeModal({
+        feature: 'maxPhotosPerDay',
+        reason: 'На тарифе Премиум доступно 1 фото в день. В Ultra доступно до 3 фото!',
+      })
+      return
+    }
+  }
+
   const handleInputChange = (index: number, val: string) => {
     if (tab === 'pride') {
       setPrides((prev) => prev.map((item, i) => (i === index ? val : item)))
@@ -544,7 +564,14 @@ export function Composer({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prides: filledPrides, gratitudes: filledGratitudes }),
         })
-        if (res.ok) {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          if (errData.code === 'tier_required' || errData.error === 'tier_required' || res.status === 403) {
+            dispatchUpgradeModal({ feature: 'aiEvaluationsPerDay', reason: 'ИИ-оценка дня доступна на тарифах Премиум и Ultra' })
+          } else if (errData.code === 'quota_exceeded' || errData.error === 'quota_exceeded' || res.status === 429) {
+            dispatchUpgradeModal({ feature: 'aiEvaluationsPerDay', reason: 'Сегодня ИИ-оценка уже использована (лимит 1 в день)' })
+          }
+        } else {
           const data = (await res.json()) as any
           const list = Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
             ? data.prideEvaluations
@@ -1166,11 +1193,31 @@ export function Composer({
         </div>
       )}
 
+      {/* Мягкое предупреждение о превышении лимита символов: текст НЕ обрезается */}
+      {activeValue.length > maxChars && (
+        <div className="my-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between gap-2 text-xs text-rose-400">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <AlertCircle size={15} className="flex-none text-rose-400" />
+            <span className="leading-tight">
+              Достигнут лимит {maxChars} симв. для тарифа {TIER_NAMES[normalizeTier(userTier)]}. Текст не обрезан, но для сохранения сократите его или увеличьте лимит.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => dispatchUpgradeModal({ feature: 'maxCharsPerEntry', force: true })}
+            className="px-2.5 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-bold text-[11px] whitespace-nowrap transition-colors flex-none"
+          >
+            Увеличить лимит
+          </button>
+        </div>
+      )}
+
       {/* 3. Под полем ряд иконок: СТРОГО 2 ДЕЙСТВИЯ (Фото дня и Подсказка ❓), справа счётчик */}
       <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5" role="group" aria-label="Инструменты записи">
           {/* Фото / Медиа */}
           <label
+            onClick={handlePhotoClick}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer min-h-[40px] min-w-[40px]"
             title="Прикрепить фото дня"
             aria-label="Прикрепить фото дня"
@@ -1180,6 +1227,7 @@ export function Composer({
               ref={fileInputRef}
               type="file"
               accept="image/*"
+              disabled={tierLimits.maxPhotosPerDay === 0}
               onChange={handleFileChange}
               className="sr-only"
             />
@@ -1205,6 +1253,8 @@ export function Composer({
             className={`text-[12px] font-mono transition-colors ${
               activeValue.length > maxChars
                 ? 'text-rose-500 font-bold'
+                : activeValue.length >= 900
+                ? 'text-amber-500 font-bold'
                 : 'text-[var(--text-3)]'
             }`}
           >

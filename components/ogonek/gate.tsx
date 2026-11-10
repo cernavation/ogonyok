@@ -4,6 +4,7 @@ import React from 'react'
 import { Lock, Sparkles } from 'lucide-react'
 import { useEntitlement, type EntitlementResult } from '@/lib/ogonek/use-entitlement'
 import { type TierLimits, TIER_NAMES } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 export interface GateProps<F extends keyof TierLimits> {
   feature: F
@@ -16,13 +17,7 @@ export interface GateProps<F extends keyof TierLimits> {
 
 /**
  * Gate-компонент для ограничения интерфейса по тарифу.
- * 
- * Пример:
- * ```tsx
- * <Gate feature="videoCalls" onBlocked={() => notify('Требуется Премиум')}>
- *   <VideoCallButton />
- * </Gate>
- * ```
+ * При блокировке действия открывает единую модалку UpgradeModal (Этап 13).
  */
 export function Gate<F extends keyof TierLimits>({
   feature,
@@ -34,6 +29,17 @@ export function Gate<F extends keyof TierLimits>({
 }: GateProps<F>) {
   const entitlement = useEntitlement(feature, currentCount)
 
+  const handleBlocked = () => {
+    if (onBlocked) {
+      onBlocked(entitlement)
+    } else {
+      dispatchUpgradeModal({
+        feature: String(feature),
+        reason: entitlement.reason,
+      })
+    }
+  }
+
   if (entitlement.allowed) {
     return <>{children}</>
   }
@@ -41,7 +47,7 @@ export function Gate<F extends keyof TierLimits>({
   if (fallback) {
     return (
       <div
-        onClick={() => onBlocked?.(entitlement)}
+        onClick={handleBlocked}
         className="contents"
       >
         {typeof fallback === 'function' ? fallback(entitlement) : fallback}
@@ -67,7 +73,7 @@ export function Gate<F extends keyof TierLimits>({
         </p>
         <button
           type="button"
-          onClick={() => onBlocked?.(entitlement)}
+          onClick={handleBlocked}
           className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
         >
           <Sparkles size={14} />
@@ -83,7 +89,7 @@ export function Gate<F extends keyof TierLimits>({
       onClick={(e) => {
         e.preventDefault()
         e.stopPropagation()
-        onBlocked?.(entitlement)
+        handleBlocked()
       }}
       className="inline-block opacity-60 cursor-pointer"
       title={`Доступно на тарифе ${entitlement.upgradeTo ? TIER_NAMES[entitlement.upgradeTo] : 'Премиум'}`}

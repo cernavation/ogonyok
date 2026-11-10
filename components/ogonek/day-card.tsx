@@ -28,6 +28,7 @@ import { dayTarget } from '@/lib/ogonek/reactions'
 import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { formatPhotoAttachmentCaption } from '@/lib/ogonek/attached-targets'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import { getInitials } from '@/lib/ogonek/initials'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { normalizeTier, TIER_BADGES } from '@/lib/ogonek/permissions'
@@ -264,6 +265,20 @@ function DayCardComponent({
 
       const data = await res.json().catch(() => ({}))
       if (!res.ok || data.success === false) {
+        if (data.code === 'tier_required' || data.error === 'tier_required' || res.status === 403) {
+          dispatchUpgradeModal({
+            feature: 'aiEvaluationsPerDay',
+            reason: 'ИИ-оценка дня доступна на тарифах Премиум и Ultra',
+          })
+          return
+        }
+        if (data.code === 'quota_exceeded' || data.error === 'quota_exceeded' || res.status === 429) {
+          dispatchUpgradeModal({
+            feature: 'aiEvaluationsPerDay',
+            reason: 'Сегодня ИИ-оценка уже использована (лимит 1 в день)',
+          })
+          return
+        }
         throw new Error(data.error || `Ошибка сервера (${res.status})`)
       }
 

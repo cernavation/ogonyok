@@ -27,6 +27,7 @@ import {
   type GroupFeedItem,
 } from '@/lib/ogonek/groups'
 import { getTierLimits } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import type { ComradeProfile } from '@/lib/ogonek/social'
 import type { OgonekGroup, GroupKind, ViewId } from '@/lib/ogonek/types'
 
@@ -564,8 +565,10 @@ export function GroupsSection({
           onClick={() => {
             playClick(soundEnabled)
             if (!canCreateGroup) {
-              onNotify(`Для создания более ${tierLimits.maxGroupsOwned} групп перейдите на тариф Премиум или Ultra`)
-              onNavigate('premium')
+              dispatchUpgradeModal({
+                feature: 'maxGroupsOwned',
+                reason: `Достигнут лимит созданных групп (${tierLimits.maxGroupsOwned}) для тарифа ${userTier.toUpperCase()}`,
+              })
               return
             }
             setCreateModalOpen(true)
@@ -593,6 +596,13 @@ export function GroupsSection({
             size="sm"
             onClick={() => {
               playClick(soundEnabled)
+              if (!canCreateGroup) {
+                dispatchUpgradeModal({
+                  feature: 'maxGroupsOwned',
+                  reason: `Достигнут лимит созданных групп (${tierLimits.maxGroupsOwned}) для тарифа ${userTier.toUpperCase()}`,
+                })
+                return
+              }
               setCreateModalOpen(true)
             }}
             className="text-xs font-semibold gap-1.5"

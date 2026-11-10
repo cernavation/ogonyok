@@ -8,6 +8,7 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import type { OvercomeLevel } from '@/lib/ogonek/types'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 type ItemEvaluation = {
   num: number
@@ -91,8 +92,30 @@ export function EvaluationCeremonyModal({
         dayNumber,
       }),
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          if (errData.code === 'tier_required' || errData.error === 'tier_required' || res.status === 403) {
+            onClose()
+            dispatchUpgradeModal({
+              feature: 'aiEvaluationsPerDay',
+              reason: 'ИИ-оценка дня доступна на тарифах Премиум и Ultra',
+            })
+            return null
+          }
+          if (errData.code === 'quota_exceeded' || errData.error === 'quota_exceeded' || res.status === 429) {
+            onClose()
+            dispatchUpgradeModal({
+              feature: 'aiEvaluationsPerDay',
+              reason: 'Сегодня ИИ-оценка уже использована (лимит 1 в день)',
+            })
+            return null
+          }
+        }
+        return res.json().catch(() => null)
+      })
       .then((data) => {
+        if (!data) return
         const rawPrideEvals = Array.isArray(data?.prideEvaluations) ? data.prideEvaluations : []
 
         // Оцениваются СТРОГО гордости (пункты 1–5). Благодарности без звёзд и чисел!

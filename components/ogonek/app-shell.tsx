@@ -59,6 +59,7 @@ const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { s
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
 const MilestoneModal = dynamic(() => import('./milestones/milestone-modal').then((m) => m.MilestoneModal), { ssr: false })
+const UpgradeModal = dynamic(() => import('./billing/upgrade-modal').then((m) => m.UpgradeModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -75,6 +76,15 @@ export function AppShell() {
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
   const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
   const [activeMilestoneNumber, setActiveMilestoneNumber] = useState<number | null>(null)
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean
+    feature: string
+    reason?: string
+    force?: boolean
+  }>({
+    isOpen: false,
+    feature: 'aiEvaluationsPerDay',
+  })
 
   // Аудио и видео звонки: глобальный стейт
   const [incomingCall, setIncomingCall] = useState<{
@@ -542,6 +552,48 @@ export function AppShell() {
     setLocked(false)
     notify('Журнал разблокирован')
   }, [notify])
+
+  // ЭТАП 13: слушатель глобального события вызова апселла
+  useEffect(() => {
+    const handleUpgradeModal = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        feature: string
+        reason?: string
+        force?: boolean
+      }>
+      if (customEvent.detail?.feature) {
+        setUpgradeModal({
+          isOpen: true,
+          feature: customEvent.detail.feature,
+          reason: customEvent.detail.reason,
+          force: customEvent.detail.force,
+        })
+      }
+    }
+    window.addEventListener('ogonek:upgrade-modal', handleUpgradeModal)
+    return () => window.removeEventListener('ogonek:upgrade-modal', handleUpgradeModal)
+  }, [])
+
+  // ЭТАП 13: мягкое уведомление за 3 дня до окончания подписки
+  useEffect(() => {
+    if (!state.auth.signedIn || !state.profile.subscription_valid_until) return
+    const validUntil = new Date(state.profile.subscription_valid_until).getTime()
+    if (isNaN(validUntil)) return
+    const now = Date.now()
+    const diffDays = (validUntil - now) / (1000 * 60 * 60 * 24)
+    if (diffDays > 0 && diffDays <= 3) {
+      const storageKey = `ogonek_expiry_notified_${state.profile.subscription_valid_until.slice(0, 10)}`
+      if (typeof window !== 'undefined' && !localStorage.getItem(storageKey)) {
+        localStorage.setItem(storageKey, 'true')
+        dispatchTelegramToast({
+          id: `expiry-warning-${Date.now()}`,
+          type: 'system',
+          title: 'Огонёк Подписка',
+          body: `Подписка истекает через ${Math.ceil(diffDays)} дн. Записи сохранятся, но лимиты станут базовыми.`,
+        })
+      }
+    }
+  }, [state.auth.signedIn, state.profile.subscription_valid_until, state.soundEnabled, navigate])
 
   // Синхронизация view с URL (query param ?view=...) и поддержка кнопки «Назад»
   useEffect(() => {
@@ -1406,6 +1458,21 @@ export function AppShell() {
             onUpgrade={() => {
               setActiveMilestoneNumber(null)
               notify('Для перехода на Премиум выберите тариф в настройках')
+            }}
+          />
+        )}
+
+        {/* ЭТАП 13: Единая модалка апселла */}
+        {upgradeModal.isOpen && (
+          <UpgradeModal
+            isOpen={upgradeModal.isOpen}
+            feature={upgradeModal.feature}
+            reason={upgradeModal.reason}
+            force={upgradeModal.force}
+            onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
+            soundEnabled={state.soundEnabled}
+            onSelectTier={() => {
+              navigate('premium')
             }}
           />
         )}

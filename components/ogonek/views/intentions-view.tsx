@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeft, Check, ChevronRight, Target, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, Lock, Target, Timer, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import {
   countActiveFocusSteps,
@@ -10,6 +10,9 @@ import {
 } from '@/lib/ogonek/morning-focus'
 import { FocusFlame } from '@/components/ogonek/focus-flame'
 import type { MorningFocusRecord, MorningFocusStepStatus, ViewId } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 
 type Props = {
   morningIntentions: Record<string, [string, string, string]>
@@ -50,6 +53,10 @@ export function IntentionsView({
   onSave,
   notify,
 }: Props) {
+  const { state: storeState } = useOgonekStore()
+  const userTier = normalizeTier(storeState?.profile?.subscription_tier, storeState?.profile?.subscription_valid_until)
+  const isFree = userTier === 'free'
+
   const todayKey = getTodayKey()
   const history = morningFocusHistory ?? {}
   const todayRecord = history[todayKey]
@@ -178,13 +185,34 @@ export function IntentionsView({
                 <Check size={16} />
                 <span>Фокус сохранён — действуй!</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setSaved(false)}
-                className="text-[13px] font-semibold text-[var(--text-2)] hover:text-[var(--text)] underline transition-colors"
-              >
-                Изменить
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isFree) {
+                      dispatchUpgradeModal({
+                        feature: 'intentionsTimer',
+                        reason: 'Таймеры глубокого фокуса доступны в тарифах Премиум и Ultra',
+                      })
+                    } else {
+                      notify?.('Таймер фокуса на 25 минут запущен ⏱️')
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-xs font-bold text-[var(--text)] transition-colors"
+                  title={isFree ? 'Таймер фокуса (Премиум)' : 'Запустить таймер фокуса на 25 мин'}
+                >
+                  <Timer size={14} className={isFree ? 'text-[var(--text-3)]' : 'text-[var(--accent)]'} />
+                  <span>Таймер 25 мин</span>
+                  {isFree && <Lock size={12} className="text-amber-400 -ml-0.5" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSaved(false)}
+                  className="text-[13px] font-semibold text-[var(--text-2)] hover:text-[var(--text)] underline transition-colors"
+                >
+                  Изменить
+                </button>
+              </div>
             </div>
           )}
         </section>

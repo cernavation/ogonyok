@@ -35,6 +35,7 @@ import {
 } from 'lucide-react'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import {
   chatDayKey,
   formatChatDayLabel,
@@ -584,7 +585,10 @@ export function MessengerChatPane({
     const limits = getTierLimits(userTier)
 
     if (video && !limits.videoCalls) {
-      onNotify?.('Видеозвонки доступны на тарифе Премиум ★')
+      dispatchUpgradeModal({
+        feature: 'videoCalls',
+        reason: 'Видеосвязь доступна на тарифах Премиум и Ultra. Аудиозвонки бесплатны для всех.',
+      })
       return
     }
 

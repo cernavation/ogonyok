@@ -30,6 +30,8 @@ import {
 } from '@/lib/ogonek/appearance'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { exportStoreAsJson, validateAndImportJson } from '@/lib/ogonek/storage'
+import { normalizeTier } from '@/lib/ogonek/permissions'
+import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import type {
   AccentId,
   FeedDensityId,
@@ -138,6 +140,9 @@ export function SettingsView({
 }: Props) {
   const [activeSection, setActiveSection] = useState<SettingsSection | null>('appearance')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const userTier = normalizeTier(state.profile?.subscription_tier, state.profile?.subscription_valid_until)
+  const isFree = userTier === 'free'
 
   const handleExport = () => {
     try {
@@ -258,37 +263,82 @@ export function SettingsView({
               </div>
 
               {/* Выбор своего цвета (Color Picker) */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border border-[var(--border)] mt-1">
+              <div
+                onClick={() => {
+                  if (isFree) {
+                    dispatchUpgradeModal({
+                      feature: 'customAccent',
+                      reason: 'Кастомизация темы доступна в Премиум',
+                    })
+                  }
+                }}
+                className={`flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border mt-1 transition-colors ${
+                  isFree ? 'cursor-pointer border-amber-500/20 hover:border-amber-500/40' : 'border-[var(--border)]'
+                }`}
+              >
                 <div className="flex items-center gap-2.5">
                   <div className="relative">
-                    <input
-                      type="color"
-                      value={state.accent.startsWith('#') ? state.accent : '#FF5C00'}
-                      onChange={(e) => {
-                        onSetAccent(e.target.value as any)
-                      }}
-                      className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
-                      aria-label="Выбрать свой цвет"
-                    />
+                    {!isFree && (
+                      <input
+                        type="color"
+                        value={state.accent.startsWith('#') ? state.accent : '#FF5C00'}
+                        onChange={(e) => {
+                          onSetAccent(e.target.value as any)
+                        }}
+                        className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
+                        aria-label="Выбрать свой цвет"
+                      />
+                    )}
                     <div
                       className="w-9 h-9 rounded-full border-2 border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-105"
                       style={{
                         background: state.accent.startsWith('#') ? state.accent : 'var(--accent)',
                       }}
                     >
-                      <Pipette size={14} className="text-white drop-shadow" />
+                      {isFree ? (
+                        <Lock size={14} className="text-amber-400 drop-shadow" />
+                      ) : (
+                        <Pipette size={14} className="text-white drop-shadow" />
+                      )}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-[var(--text)]">Свой цвет (HEX)</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[13px] font-bold text-[var(--text)]">Свой цвет (HEX)</p>
+                      {isFree && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/20">
+                          <Lock size={10} /> Премиум
+                        </span>
+                      )}
+                    </div>
                     <p className="text-[12px] text-[var(--text-2)]">
-                      {state.accent.startsWith('#') ? state.accent.toUpperCase() : 'Выбери любой оттенок'}
+                      {isFree
+                        ? 'Кастомизация темы доступна в Премиум'
+                        : state.accent.startsWith('#')
+                        ? state.accent.toUpperCase()
+                        : 'Выбери любой оттенок'}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <HexColorInput currentAccent={state.accent} onSetAccent={onSetAccent} />
+                  {isFree ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        dispatchUpgradeModal({
+                          feature: 'customAccent',
+                          reason: 'Кастомизация темы доступна в Премиум',
+                        })
+                      }}
+                      className="h-8 px-3 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                    >
+                      Открыть
+                    </button>
+                  ) : (
+                    <HexColorInput currentAccent={state.accent} onSetAccent={onSetAccent} />
+                  )}
                 </div>
               </div>
             </div>

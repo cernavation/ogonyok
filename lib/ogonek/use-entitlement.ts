@@ -15,6 +15,7 @@ export interface EntitlementResult<F extends keyof TierLimits = keyof TierLimits
   limit: TierLimits[F]
   currentTier: SubscriptionTier
   upgradeTo: SubscriptionTier | null
+  reason?: string
 }
 
 /**
@@ -64,11 +65,16 @@ export function useEntitlement<F extends keyof TierLimits>(
       }
     }
 
+    const reason = upgradeTo
+      ? `Доступно на тарифе ${upgradeTo === 'pro' ? 'Премиум' : 'Ultra'}`
+      : undefined
+
     return {
       allowed,
       limit,
       currentTier,
       upgradeTo,
+      reason,
     }
   }, [
     feature,

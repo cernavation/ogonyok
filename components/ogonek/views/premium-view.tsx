@@ -18,6 +18,8 @@ import {
   TrendingUp,
   X,
   Zap,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
@@ -29,6 +31,7 @@ import {
   getBillingCheckoutUrl,
   getPaymentButtonLabel,
   TIER_NAMES,
+  TIER_LIMITS_MAP,
 } from '@/lib/ogonek/permissions'
 
 type Props = {
@@ -42,6 +45,94 @@ type Props = {
 
 type BillingPeriod = 'monthly' | 'yearly'
 
+const FAQS = [
+  {
+    q: 'Что будет, если подписка закончится?',
+    a: 'Твои данные НИКОГДА не удаляются. Все созданные записи, группы, вехи и достижения сохраняются навсегда. Записи длиннее 1 000 символов останутся полностью читаемыми в ленте и профиле. При их последующем редактировании система попросит сократить текст до лимита Базового тарифа либо возобновить подписку. Платные возможности (видеозвонки, ИИ-оценка, Evidence Vault) временно заблокируются до продления.',
+  },
+  {
+    q: 'Можно ли отменить подписку в любой момент?',
+    a: 'Да, в любой момент без скрытых штрафов или комиссий. До конца оплаченного периода все возможности тарифа останутся активными.',
+  },
+  {
+    q: 'Безопасна ли онлайн-оплата?',
+    a: 'Оплата проходит через защищённый биллинг-шлюз с шифрованием PCI DSS уровня банковской безопасности (Visa, Mastercard, Apple Pay). Мы не храним номера банковских карт.',
+  },
+  {
+    q: 'Чем тариф Ultra отличается от Премиум?',
+    a: 'Ultra даёт золотую галочку основателя ⚡, лимит до 5 000 символов, до 3 фото в день, до 20 групп, персональное напутствие Ментора при ИИ-оценке и золотые карточки 100-дневных вех трансформации.',
+  },
+]
+
+const COMPARISON_ROWS = [
+  {
+    title: 'Объём записи гордости',
+    free: `${TIER_LIMITS_MAP.free.maxCharsPerEntry.toLocaleString('ru-RU')} симв.`,
+    pro: `${TIER_LIMITS_MAP.pro.maxCharsPerEntry.toLocaleString('ru-RU')} симв.`,
+    ultra: `${TIER_LIMITS_MAP.ultra.maxCharsPerEntry.toLocaleString('ru-RU')} симв.`,
+  },
+  {
+    title: 'Фото дня к летописи',
+    free: '—',
+    pro: '1 фото в день',
+    ultra: 'До 3 фото в день',
+  },
+  {
+    title: 'ИИ-оценка летописи',
+    free: '—',
+    pro: '1 в день (шкалы)',
+    ultra: '1 в день + напутствие Ментора',
+  },
+  {
+    title: 'Видеозвонки соратникам',
+    free: '—',
+    pro: 'Включено (HD)',
+    ultra: 'Включено (HD + приоритет)',
+  },
+  {
+    title: 'Аудиозвонки соратникам',
+    free: 'Бесплатно',
+    pro: 'Бесплатно',
+    ultra: 'Бесплатно',
+  },
+  {
+    title: 'Создание своих сообществ',
+    free: `${TIER_LIMITS_MAP.free.maxGroupsOwned} группа`,
+    pro: `До ${TIER_LIMITS_MAP.pro.maxGroupsOwned} групп`,
+    ultra: `До ${TIER_LIMITS_MAP.ultra.maxGroupsOwned} групп`,
+  },
+  {
+    title: 'Участников в группе',
+    free: `${TIER_LIMITS_MAP.free.maxGroupMembers}`,
+    pro: `${TIER_LIMITS_MAP.pro.maxGroupMembers}`,
+    ultra: `${TIER_LIMITS_MAP.ultra.maxGroupMembers}`,
+  },
+  {
+    title: 'Evidence Vault (Свод силы)',
+    free: 'Превью',
+    pro: 'Полный доступ',
+    ultra: 'Золотые вехи + экспорт',
+  },
+  {
+    title: 'Утренний фокус & таймеры',
+    free: 'Базовый',
+    pro: 'Таймер фокуса 25 мин',
+    ultra: 'Таймер + аналитика фокуса',
+  },
+  {
+    title: 'Кастомизация темы и цвета',
+    free: '6 пресетов',
+    pro: 'Любой HEX-цвет',
+    ultra: 'Эксклюзивное золото',
+  },
+  {
+    title: 'Расширенная аналитика',
+    free: 'Базовая',
+    pro: 'В 5 раз больше метрик',
+    ultra: 'Глубокий разбор Ментора',
+  },
+]
+
 export function PremiumView({
   onNavigate,
   onUpdateProfile,
@@ -53,13 +144,15 @@ export function PremiumView({
   const { state } = useOgonekStore()
   const [billing, setBilling] = useState<BillingPeriod>('monthly')
   const [modalTier, setModalTier] = useState<'pro' | 'ultra' | null>(null)
+  const [openFaq, setOpenFaq] = useState<number | null>(0)
   useBodyScrollLock(Boolean(modalTier))
 
   // Единый источник истины для активного тарифа
   const activeTier: SubscriptionTier = normalizeTier(
     subscriptionTier || state.profile.subscription_tier,
-    state.profile.subscription_expires_at
+    state.profile.subscription_expires_at || state.profile.subscription_valid_until
   )
+  const validUntil = state.profile.subscription_valid_until || state.profile.subscription_expires_at
 
   const username = state.profile.username || 'user'
 
@@ -139,6 +232,17 @@ export function PremiumView({
         <p className="text-[15px] sm:text-[16px] text-[var(--text-2)] mt-2 max-w-xl">
           Выберите подходящий тариф: от базового доступа до синей галочки верификации и расширенной ИИ-оценки от Огонёк ИИ.
         </p>
+
+        {/* Индикатор срока действия подписки */}
+        {validUntil && activeTier !== 'free' && (
+          <div className="mt-4 px-4 py-1.5 rounded-full bg-[var(--bg-elev)] border border-[var(--line)] inline-flex items-center gap-2 text-xs text-[var(--text)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>
+              Тариф <strong>{TIER_NAMES[activeTier]}</strong> активен до{' '}
+              <strong>{new Date(validUntil).toLocaleDateString('ru-RU')}</strong>
+            </span>
+          </div>
+        )}
 
         {/* Billing Switcher (Ежемесячно / Ежегодно) */}
         <div className="mt-6 inline-flex p-1 rounded-full bg-[var(--bg-elev)] border border-[var(--line)] relative" role="radiogroup" aria-label="Период оплаты">
@@ -464,6 +568,86 @@ export function PremiumView({
               )}
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* Сравнительная таблица всех возможностей (Этап 13) */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-12 w-full">
+        <div className="text-center mb-6">
+          <span className="text-xs font-black uppercase tracking-wider text-[var(--accent)]">
+            Сравнение тарифов
+          </span>
+          <h3 className="text-xl sm:text-2xl font-[900] text-[var(--text)] tracking-tight mt-1">
+            Матрица возможностей
+          </h3>
+        </div>
+
+        <div className="overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)]">
+          <table className="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr className="border-b border-[var(--line)] bg-[var(--surface2)]">
+                <th className="p-3.5 sm:p-4 font-bold text-[var(--text)]">Функция</th>
+                <th className="p-3.5 sm:p-4 font-bold text-[var(--text-2)]">Базовый</th>
+                <th className="p-3.5 sm:p-4 font-bold text-[#1d9bf0]">Премиум</th>
+                <th className="p-3.5 sm:p-4 font-bold text-[#f5b942]">Ultra</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--line)] text-[var(--text)]">
+              {COMPARISON_ROWS.map((row, idx) => (
+                <tr key={idx} className="hover:bg-[var(--bg-hover)] transition-colors">
+                  <td className="p-3.5 sm:p-4 font-semibold text-[var(--text)]">{row.title}</td>
+                  <td className="p-3.5 sm:p-4 text-[var(--text-2)]">{row.free}</td>
+                  <td className="p-3.5 sm:p-4 font-medium text-[#1d9bf0]">{row.pro}</td>
+                  <td className="p-3.5 sm:p-4 font-medium text-[#f5b942]">{row.ultra}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* FAQ: Часто задаваемые вопросы (Этап 13) */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 mt-14 w-full">
+        <div className="text-center mb-6">
+          <span className="text-xs font-black uppercase tracking-wider text-[var(--accent)]">
+            Вопросы и ответы
+          </span>
+          <h3 className="text-xl sm:text-2xl font-[900] text-[var(--text)] tracking-tight mt-1">
+            Часто задаваемые вопросы
+          </h3>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          {FAQS.map((faq, idx) => {
+            const isOpen = openFaq === idx
+            return (
+              <div
+                key={idx}
+                className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] overflow-hidden transition-all"
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    setOpenFaq(isOpen ? null : idx)
+                  }}
+                  className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-left font-bold text-sm sm:text-base text-[var(--text)] hover:text-[var(--accent)] transition-colors"
+                >
+                  <span>{faq.q}</span>
+                  {isOpen ? (
+                    <ChevronUp size={18} className="flex-none text-[var(--text-2)]" />
+                  ) : (
+                    <ChevronDown size={18} className="flex-none text-[var(--text-2)]" />
+                  )}
+                </button>
+                {isOpen && (
+                  <div className="px-4 sm:px-5 pb-5 pt-1 text-xs sm:text-[13px] text-[var(--text-2)] leading-relaxed border-t border-[var(--line)]/50">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
