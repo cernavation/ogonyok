@@ -320,6 +320,9 @@ export async function runVerifyAll() {
   // 4g. Аудит доступности Axe-Core (axe-audit)
   await executeCommand('4g. Аудит доступности Axe-Core (axe-audit)', 'node scripts/qa/test-axe-audit.mjs')
 
+  // 4h. Пентест Красной команды (redteam)
+  await executeCommand('4h. Пентест Красной команды (redteam)', 'node --experimental-strip-types scripts/qa/test-redteam.mjs')
+
   // 5. UI-Аудит
   await executeCommand('5. UI-Аудит интерфейса (audit-ui)', isFast ? 'node scripts/ui-audit.mjs --fast' : 'node scripts/ui-audit.mjs --viewport=desktop,mobile')
 
