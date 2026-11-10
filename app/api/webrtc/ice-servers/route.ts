@@ -23,10 +23,14 @@ export async function GET(request: Request) {
     return rateLimitResponse
   }
 
-  const meteredDomain = process.env.METERED_DOMAIN
+  const rawMeteredApp = process.env.METERED_APP || process.env.METERED_DOMAIN
   const meteredApiKey = process.env.METERED_API_KEY
 
-  if (meteredDomain && meteredApiKey) {
+  if (rawMeteredApp && meteredApiKey) {
+    const meteredDomain = rawMeteredApp.includes('.')
+      ? rawMeteredApp
+      : `${rawMeteredApp}.metered.live`
+
     try {
       const res = await fetch(
         `https://${meteredDomain}/api/v1/turn/credentials?apiKey=${meteredApiKey}`,
@@ -35,10 +39,17 @@ export async function GET(request: Request) {
       if (res.ok) {
         const iceServers = await res.json()
         return NextResponse.json({ iceServers, provider: 'metered' })
+      } else {
+        console.warn(`[WebRTC] Metered API returned HTTP ${res.status}, falling back to STUN.`)
       }
     } catch (err) {
-      console.warn('[METERED_TURN_WARN]: Failed to fetch Metered TURN, falling back to STUN:', err)
+      console.warn('[WebRTC] Failed to fetch Metered TURN credentials, falling back to STUN:', err)
     }
+  } else {
+    console.warn(
+      '[WebRTC] Metered credentials not configured (METERED_API_KEY / METERED_APP missing). ' +
+      'Falling back to STUN only. To enable TURN, follow instructions in night/MANUAL_STEPS.md.'
+    )
   }
 
   // Fallback: публичные надежные Google STUN серверы

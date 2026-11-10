@@ -17,6 +17,7 @@ import {
   Mic,
   MoreHorizontal,
   Pencil,
+  Phone,
   PhoneMissed,
   Pin,
   Reply,
@@ -25,6 +26,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  Video,
   Volume2,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -246,17 +248,45 @@ export function ChatMessageBubble({
 
   const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
 
-  const isMissedCall =
+  const attType = (message.attachment as any)?.type
+  const isCallSystemMessage =
     Boolean((message as any).is_system) ||
-    (message.attachment as any)?.type === 'missed_call' ||
-    (typeof message.text === 'string' && message.text.includes('Пропущенный звонок'))
+    attType === 'missed_call' ||
+    attType === 'call_session' ||
+    attType === 'call_ended' ||
+    attType === 'call_rejected' ||
+    (typeof message.text === 'string' && (
+      message.text.includes('Пропущенный звонок') ||
+      message.text.includes('Звонок') ||
+      message.text.includes('Видеозвонок')
+    ))
 
-  if (isMissedCall) {
+  if (isCallSystemMessage) {
+    const isMissedCall = attType === 'missed_call' || (typeof message.text === 'string' && message.text.includes('Пропущенный'))
+    const isMissed = isMissedCall
+    const isRejected = attType === 'call_rejected' || (typeof message.text === 'string' && message.text.includes('отклонён'))
+    const isBusy = typeof message.text === 'string' && message.text.includes('занят')
+    const isVideo = attType === 'call_session'
+      ? Boolean((message.attachment as any)?.is_video)
+      : typeof message.text === 'string' && message.text.includes('Видео')
+
+    const chipBg = isMissed
+      ? 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+      : isRejected || isBusy
+      ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+      : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+
     return (
       <div className="w-full flex justify-center my-3 select-none">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs shadow-sm">
-          <PhoneMissed size={14} className="text-rose-400" />
-          <span className="font-medium">{message.text || 'Пропущенный звонок'}</span>
+        <div className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs shadow-sm ${chipBg}`}>
+          {isMissed ? (
+            <PhoneMissed size={14} className="text-rose-400" />
+          ) : isVideo ? (
+            <Video size={14} className="text-blue-400" />
+          ) : (
+            <Phone size={14} className={isRejected ? 'text-amber-400' : 'text-emerald-400'} />
+          )}
+          <span className="font-medium">{message.text || 'Звонок'}</span>
         </div>
       </div>
     )

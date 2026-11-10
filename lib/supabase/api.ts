@@ -2085,7 +2085,15 @@ export async function deleteEvidenceVaultItem(itemId: string): Promise<boolean> 
   }
 }
 
-export type CallStatus = 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed'
+export type CallStatus =
+  | 'ringing'
+  | 'connected'
+  | 'accepted'
+  | 'rejected'
+  | 'declined'
+  | 'ended'
+  | 'missed'
+  | 'busy'
 
 export type CallSessionRecord = {
   id: string
@@ -2094,8 +2102,171 @@ export type CallSessionRecord = {
   status: CallStatus
   is_video: boolean
   duration_seconds?: number
+  started_at?: string
+  ended_at?: string
+  ended_by?: string
+  end_reason?: string
   created_at?: string
   updated_at?: string
+}
+
+/**
+ * Инициализация звонка через RPC initiate_call (Этап 10)
+ * Проверяет взаимные блокировки, тариф для видеозвонков, статус busy и детерминированный glare
+ */
+export async function initiateCallRpc(
+  receiverId: string,
+  isVideo: boolean = false
+): Promise<{ ok: boolean; session?: CallSessionRecord; error?: string; message?: string; glare?: boolean }> {
+  const supabase = getSupabase()
+  if (!supabase || !receiverId) {
+    const fallbackId = `call-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    return {
+      ok: true,
+      session: {
+        id: fallbackId,
+        caller_id: 'local-user',
+        receiver_id: receiverId,
+        status: 'ringing',
+        is_video: isVideo,
+        duration_seconds: 0,
+        created_at: new Date().toISOString(),
+      },
+    }
+  }
+
+  try {
+    const { data, error } = await supabase.rpc('initiate_call', {
+      p_receiver_id: receiverId,
+      p_is_video: isVideo,
+    })
+
+    if (error) {
+      // Fallback на прямой insert если RPC еще не накатана в staging
+      return createCallSession({
+        caller_id: (await supabase.auth.getUser()).data.user?.id || 'local-user',
+        receiver_id: receiverId,
+        is_video: isVideo,
+      }).then((res) => ({
+        ok: Boolean(res.session),
+        session: res.session,
+        error: res.error,
+      }))
+    }
+
+    if (data && typeof data === 'object') {
+      if (data.ok && data.session) {
+        return {
+          ok: true,
+          session: data.session as CallSessionRecord,
+          glare: Boolean(data.glare),
+        }
+      }
+      return {
+        ok: false,
+        error: data.error || 'call_failed',
+        message: data.message || 'Не удалось начать звонок',
+      }
+    }
+
+    return { ok: false, error: 'unexpected_response' }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'network_error' }
+  }
+}
+
+/**
+ * Ответ на входящий звонок через RPC respond_to_call (Этап 10)
+ */
+export async function respondToCallRpc(
+  sessionId: string,
+  action: 'accept' | 'reject' | 'busy' | 'end'
+): Promise<{ ok: boolean; status?: string; error?: string; message?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !sessionId) return { ok: true }
+
+  try {
+    const { data, error } = await supabase.rpc('respond_to_call', {
+      p_session_id: sessionId,
+      p_action: action,
+    })
+
+    if (error) {
+      const fallbackStatus = action === 'accept' ? 'accepted' : action === 'reject' ? 'rejected' : 'ended'
+      return updateCallSessionStatus(sessionId, fallbackStatus as CallStatus)
+    }
+
+    return {
+      ok: Boolean(data?.ok),
+      status: data?.status,
+      error: data?.error,
+      message: data?.message,
+    }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
+}
+
+/**
+ * Завершить сессию звонка через RPC end_call_session (Этап 10)
+ */
+export async function endCallSessionRpc(
+  sessionId: string,
+  durationSeconds: number = 0,
+  reason: string = 'normal'
+): Promise<{ ok: boolean; status?: string; duration_seconds?: number; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !sessionId) return { ok: true, duration_seconds: durationSeconds }
+
+  try {
+    const { data, error } = await supabase.rpc('end_call_session', {
+      p_session_id: sessionId,
+      p_duration_seconds: durationSeconds,
+      p_reason: reason,
+    })
+
+    if (error) {
+      return updateCallSessionStatus(sessionId, 'ended', durationSeconds)
+    }
+
+    return {
+      ok: Boolean(data?.ok),
+      status: data?.status,
+      duration_seconds: data?.duration_seconds ?? durationSeconds,
+      error: data?.error,
+    }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
+}
+
+/**
+ * Получить историю звонков пользователя с профилями собеседников через RPC get_call_history (Этап 10)
+ */
+export async function getCallHistoryRpc(
+  limit: number = 50,
+  offset: number = 0
+): Promise<{ ok: boolean; calls: any[] }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: true, calls: [] }
+
+  try {
+    const { data, error } = await supabase.rpc('get_call_history', {
+      p_limit: limit,
+      p_offset: offset,
+    })
+
+    if (error || !data) {
+      return { ok: false, calls: [] }
+    }
+
+    return {
+      ok: Boolean(data.ok),
+      calls: Array.isArray(data.calls) ? data.calls : [],
+    }
+  } catch {
+    return { ok: false, calls: [] }
+  }
 }
 
 /**

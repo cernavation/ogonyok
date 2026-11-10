@@ -10,6 +10,8 @@ import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
 import { getSupabase } from '@/lib/supabase/browser'
 import { subscribeToDirectMessages } from '@/lib/supabase/api'
+import { useCallStore } from '@/lib/ogonek/use-call-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import { ChatThreadList } from '../messenger/chat-thread-list'
 import { ChatWindow } from '../messenger/chat-window'
 import { NewChatModal } from '../messenger/new-chat-modal'
@@ -48,6 +50,8 @@ export function MessagesView({
     deleteChatFolder,
     setChatActiveFolderId,
   } = useOgonekStore()
+
+  const { startCall } = useCallStore(currentUserId)
 
   const [newChatOpen, setNewChatOpen] = useState(false)
 
@@ -158,6 +162,21 @@ export function MessagesView({
             onSaveCustomFolder={setChatFolder}
             onDeleteCustomFolder={deleteChatFolder}
             soundEnabled={soundEnabled}
+            onStartCall={(peerId, isVideo, peerName, peerAvatar) => {
+              const userTier = normalizeTier(state?.profile?.subscription_tier)
+              startCall({
+                peerId,
+                isVideo,
+                peerName,
+                peerAvatar,
+                userTier,
+                soundEnabled,
+              }).then((res) => {
+                if (!res.ok && res.message) {
+                  onNotify(res.message)
+                }
+              })
+            }}
           />
         </div>
 

@@ -233,6 +233,7 @@ export const DEFAULT_CHAT_FOLDERS: ChatFolder[] = [
   { id: 'all', title: 'Все', isBuiltIn: true, type: 'all', chatIds: [] },
   { id: 'direct', title: 'Личные', icon: '👤', isBuiltIn: true, type: 'direct', chatIds: [] },
   { id: 'groups', title: 'Группы', icon: '👥', isBuiltIn: true, type: 'groups', chatIds: [] },
+  { id: 'calls', title: 'Звонки', icon: '📞', isBuiltIn: true, type: 'custom', chatIds: [] },
   { id: 'unread', title: 'Непрочитанные', icon: '💬', isBuiltIn: true, type: 'unread', chatIds: [] },
   { id: 'pinned', title: 'Закреплённые', icon: '📌', isBuiltIn: true, type: 'custom', chatIds: [] },
   { id: 'archived', title: 'Архив', icon: '📦', isBuiltIn: true, type: 'custom', chatIds: [] },

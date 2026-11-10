@@ -283,7 +283,15 @@ export type OgonekProfile = {
 }
 
 /** Статусы сессии аудио/видео звонка */
-export type CallStatus = 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed'
+export type CallStatus =
+  | 'ringing'
+  | 'connected'
+  | 'accepted'
+  | 'rejected'
+  | 'declined'
+  | 'ended'
+  | 'missed'
+  | 'busy'
 
 /** Сессия звонка в Supabase (таблица call_sessions) */
 export type CallSession = {
@@ -293,8 +301,32 @@ export type CallSession = {
   status: CallStatus
   is_video: boolean
   duration_seconds?: number
+  started_at?: string
+  ended_at?: string
+  ended_by?: string
+  end_reason?: string
   created_at?: string
   updated_at?: string
+}
+
+/** Запись истории звонков с профилем собеседника */
+export type CallHistoryItem = {
+  id: string
+  status: CallStatus
+  is_video: boolean
+  duration_seconds: number
+  created_at: string
+  started_at?: string
+  ended_at?: string
+  ended_by?: string
+  end_reason?: string
+  caller_id: string
+  receiver_id: string
+  is_outgoing: boolean
+  peer_id: string
+  peer_username: string | null
+  peer_name: string
+  peer_avatar: string | null
 }
 
 /** Запись в истории смен уровней сложности */

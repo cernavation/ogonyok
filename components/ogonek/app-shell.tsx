@@ -40,7 +40,7 @@ import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
 import { getSupabase } from '@/lib/supabase/browser'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
-import { Phone, PhoneOff, Video } from 'lucide-react'
+import { MessageSquare, Phone, PhoneOff, Video } from 'lucide-react'
 import { TelegramToastStack, dispatchTelegramToast } from './notifications/telegram-toast-stack'
 import { NotificationCenterModal } from './notifications/notification-center-modal'
 import {
@@ -87,7 +87,10 @@ export function AppShell() {
     callerName: string
     callerAvatar?: string | null
     isVideo: boolean
+    isMinimized?: boolean
   } | null>(null)
+  const [quickReplyOpen, setQuickReplyOpen] = useState(false)
+  const [quickReplyCustom, setQuickReplyCustom] = useState('')
 
   const {
     state,
@@ -191,15 +194,30 @@ export function AppShell() {
       .on('broadcast', { event: 'incoming_call' }, (event) => {
         const payload = event?.payload
         if (payload && payload.callerId !== myId) {
-          setIncomingCall({
+          const callData = {
             sessionId: payload.sessionId,
             callerId: payload.callerId,
             callerName: payload.callerName || 'Соратник',
             callerAvatar: payload.callerAvatar || null,
             isVideo: Boolean(payload.isVideo),
-          })
+          }
+          setIncomingCall(callData)
           if (state.soundEnabled) {
             playIncomingRingtone()
+          }
+
+          // Системное браузерное уведомление если вкладка скрыта (Этап 7, 10)
+          if (typeof window !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+            try {
+              const notif = new Notification(`📞 Входящий звонок: ${callData.callerName}`, {
+                body: callData.isVideo ? 'Входящий видеовызов в Огоньке' : 'Входящий аудиовызов в Огоньке',
+                tag: 'incoming-call',
+              })
+              notif.onclick = () => {
+                window.focus()
+                notif.close()
+              }
+            } catch {}
           }
         }
       })
@@ -418,6 +436,28 @@ export function AppShell() {
       if (callData.sessionId) {
         await updateCallSessionStatus(callData.sessionId, 'rejected')
       }
+    }
+  }
+
+  const handleQuickReplyIncomingCall = async (text: string) => {
+    if (!incomingCall) return
+    const callData = incomingCall
+    setQuickReplyOpen(false)
+    await handleRejectIncomingCall()
+
+    const supabase = getSupabase()
+    const myId = currentUser?.id || state.auth?.activeAccountId
+    if (supabase && myId && callData.callerId) {
+      const threadKey = myId < callData.callerId ? `${myId}:${callData.callerId}` : `${callData.callerId}:${myId}`
+      await supabase.from('direct_messages').insert({
+        thread_key: threadKey,
+        author_id: myId,
+        recipient_id: callData.callerId,
+        body: text,
+        is_system: false,
+        is_read: false,
+        sent_at: new Date().toISOString(),
+      })
     }
   }
 
@@ -1210,8 +1250,8 @@ export function AppShell() {
                   {incomingCall.isVideo ? 'Входящий видеозвонок...' : 'Входящий аудиозвонок...'}
                 </p>
 
-                {/* Кнопки Отклонить (красная) и Принять (зеленая) */}
-                <div className="mt-7 flex items-center justify-center gap-6 w-full">
+                {/* Кнопки Отклонить (красная), Ответить сообщением, Принять (зеленая) */}
+                <div className="mt-7 flex items-center justify-center gap-4 w-full">
                   <button
                     type="button"
                     onClick={handleRejectIncomingCall}
@@ -1224,6 +1264,16 @@ export function AppShell() {
 
                   <button
                     type="button"
+                    onClick={() => setQuickReplyOpen((p) => !p)}
+                    className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shadow-md transition-all"
+                    aria-label="Ответить сообщением"
+                    title="Ответить сообщением"
+                  >
+                    <MessageSquare size={20} />
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleAcceptIncomingCall}
                     className="w-16 h-16 rounded-full bg-[#00ba7c] hover:bg-[#00a36d] text-white flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all animate-bounce"
                     aria-label="Принять"
@@ -1232,6 +1282,42 @@ export function AppShell() {
                     <Phone size={28} />
                   </button>
                 </div>
+
+                {/* Выпадающее окно быстрого ответа */}
+                {quickReplyOpen && (
+                  <div className="mt-4 w-full rounded-2xl bg-[var(--surface2)] border border-[var(--border)] p-3 text-left animate-in fade-in zoom-in-95">
+                    <p className="text-[11px] font-bold text-[var(--text)] mb-2">Ответить сообщением:</p>
+                    <div className="flex flex-col gap-1.5">
+                      {['Перезвоню позже ⏳', 'Сейчас на встрече 💼', 'Пиши в чат ✍️', 'Не могу говорить 🤫'].map((txt) => (
+                        <button
+                          key={txt}
+                          type="button"
+                          onClick={() => handleQuickReplyIncomingCall(txt)}
+                          className="text-left px-2.5 py-1.5 rounded-lg bg-[var(--bg)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] text-xs text-[var(--text)] transition-colors"
+                        >
+                          {txt}
+                        </button>
+                      ))}
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <input
+                          type="text"
+                          placeholder="Свой ответ..."
+                          value={quickReplyCustom}
+                          onChange={(e) => setQuickReplyCustom(e.target.value)}
+                          className="flex-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg px-2 py-1 text-xs text-[var(--text)] focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          disabled={!quickReplyCustom.trim()}
+                          onClick={() => handleQuickReplyIncomingCall(quickReplyCustom.trim())}
+                          className="px-2.5 py-1 rounded-lg bg-[var(--accent)] text-white text-xs font-bold disabled:opacity-40"
+                        >
+                          Отправить
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -1253,6 +1339,12 @@ export function AppShell() {
               isVideo={activeGlobalCall.isVideo}
               isIncoming={true}
               initialConnected={true}
+              isMinimized={Boolean(activeGlobalCall.isMinimized)}
+              onToggleMinimize={() =>
+                setActiveGlobalCall((curr) =>
+                  curr ? { ...curr, isMinimized: !curr.isMinimized } : null
+                )
+              }
               onClose={() => setActiveGlobalCall(null)}
               onEndCall={() => setActiveGlobalCall(null)}
               soundEnabled={state.soundEnabled}

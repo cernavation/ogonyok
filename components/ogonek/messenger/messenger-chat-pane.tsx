@@ -47,7 +47,8 @@ import {
 } from '@/lib/ogonek/messenger'
 import { resolveEmojiChar } from '@/lib/ogonek/reactions'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import { normalizeTier } from '@/lib/ogonek/permissions'
+import { normalizeTier, getTierLimits } from '@/lib/ogonek/permissions'
+import { playEndCallSound } from '@/lib/ogonek/call-sound'
 import type {
   ChatAttachment,
   ChatMessage,
@@ -61,6 +62,7 @@ import {
   markDirectMessagesAsRead,
   subscribeToDirectMessages,
   createCallSession,
+  initiateCallRpc,
   pinThreadMessage,
   unpinThreadMessage,
   updateGroupThread,
@@ -578,6 +580,14 @@ export function MessengerChatPane({
 
   const handleStartCall = async (video: boolean) => {
     playClick(soundEnabled)
+    const userTier = normalizeTier(state.profile.subscription_tier)
+    const limits = getTierLimits(userTier)
+
+    if (video && !limits.videoCalls) {
+      onNotify?.('Видеозвонки доступны на тарифе Премиум ★')
+      return
+    }
+
     setCallIsVideo(video)
 
     const peerId = targetPeerId || friendId
@@ -586,8 +596,27 @@ export function MessengerChatPane({
       return
     }
 
-    const newSessionId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-    setActiveCallSessionId(newSessionId)
+    const rpcRes = await initiateCallRpc(peerId, video)
+    if (!rpcRes.ok) {
+      if (rpcRes.error === 'busy') {
+        playEndCallSound()
+        onNotify?.('Собеседник занят другим звонком 📞')
+        return
+      }
+      if (rpcRes.error === 'blocked') {
+        onNotify?.('Пользователь заблокирован 🚫')
+        return
+      }
+      if (rpcRes.error === 'upgrade_required') {
+        onNotify?.('Видеозвонки доступны на тарифе Премиум ★')
+        return
+      }
+      onNotify?.(rpcRes.message || 'Не удалось начать вызов')
+      return
+    }
+
+    const sessionId = rpcRes.session?.id || `call_${Date.now()}`
+    setActiveCallSessionId(sessionId)
 
     // 1. Создаем подключение к персональному broadcast каналу получателя: user_calls_${receiverId}
     const supabase = getSupabase()
@@ -608,7 +637,7 @@ export function MessengerChatPane({
             type: 'broadcast',
             event: 'incoming_call',
             payload: {
-              sessionId: newSessionId,
+              sessionId,
               callerId: currentUserId,
               callerName,
               callerAvatar,
@@ -618,17 +647,6 @@ export function MessengerChatPane({
         }
       })
     }
-
-    // 2. Параллельно создаем запись в таблице call_sessions в Supabase для истории
-    createCallSession({
-      caller_id: currentUserId,
-      receiver_id: peerId,
-      is_video: video,
-    }).then((res) => {
-      if (res.session?.id) {
-        setActiveCallSessionId(res.session.id)
-      }
-    }).catch(() => {})
 
     setCallModalOpen(true)
   }

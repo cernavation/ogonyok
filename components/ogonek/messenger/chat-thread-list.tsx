@@ -19,6 +19,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
 import { ChatFoldersBar } from './chat-folders-bar'
+import { CallsHistoryView } from './calls-history-view'
 
 type Props = {
   threads: ChatThreads
@@ -31,6 +32,7 @@ type Props = {
   onSaveCustomFolder?: (folder: ChatFolder) => void
   onDeleteCustomFolder?: (folderId: string) => void
   soundEnabled?: boolean
+  onStartCall?: (peerId: string, isVideo: boolean, peerName?: string, peerAvatar?: string | null) => void
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -46,6 +48,7 @@ export function ChatThreadList({
   onSaveCustomFolder,
   onDeleteCustomFolder,
   soundEnabled = true,
+  onStartCall,
 }: Props) {
   const [query, setQuery] = useState('')
   const [showArchived, setShowArchived] = useState(false)
@@ -144,8 +147,22 @@ export function ChatThreadList({
         )}
       </div>
 
-      {/* Список диалогов */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar" role="list">
+      {/* Список диалогов или Раздел «Звонки» */}
+      {activeFolderId === 'calls' ? (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <CallsHistoryView
+            onStartCall={(peerId, isVideo, peerName, peerAvatar) => {
+              if (onStartCall) {
+                onStartCall(peerId, isVideo, peerName, peerAvatar)
+              } else {
+                onSelect(peerId)
+              }
+            }}
+            soundEnabled={soundEnabled}
+          />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar" role="list">
         {/* Кнопка перехода в Архив, если есть архивированные чаты */}
         {archivedIds.length > 0 && (
           <button
@@ -288,6 +305,7 @@ export function ChatThreadList({
           })
         )}
       </div>
+      )}
 
       {/* Подвал сайдбара: Прочитать все */}
       {unreadTotal > 0 && (
