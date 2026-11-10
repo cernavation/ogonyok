@@ -2196,3 +2196,514 @@ export async function getCallSession(sessionId: string): Promise<CallSessionReco
     return null
   }
 }
+
+/* ============================================================================
+   ЭТАП 8: КОРПОРАТИВНЫЙ МЕССЕНДЖЕР (THREADS, GROUPS, PINS, ARCHIVE, SEARCH)
+   ============================================================================ */
+
+export interface ThreadRecord {
+  id: string
+  kind: 'direct' | 'group'
+  group_id?: string | null
+  title?: string | null
+  avatar?: string | null
+  created_by?: string | null
+  is_channel: boolean
+  pinned_message_id?: string | null
+  direct_key?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ThreadMemberRecord {
+  thread_id: string
+  user_id: string
+  role: 'owner' | 'admin' | 'member'
+  muted_until?: string | null
+  last_read_at: string
+  cleared_until?: string | null
+  is_pinned: boolean
+  is_archived: boolean
+  folder_id?: string | null
+  joined_at: string
+}
+
+/** Получить или создать 1-на-1 тред */
+export async function getOrCreateDirectThread(peerId: string): Promise<string | null> {
+  const supabase = getSupabase()
+  if (!supabase || !peerId) return null
+  try {
+    const { data, error } = await supabase.rpc('get_or_create_direct_thread', {
+      p_peer_id: peerId,
+    })
+    if (error) {
+      console.warn('[getOrCreateDirectThread] error:', error.message)
+      return null
+    }
+    return data as string
+  } catch {
+    return null
+  }
+}
+
+/** Создать группу */
+export async function createGroupThread(
+  title: string,
+  avatar?: string | null,
+  memberIds: string[] = [],
+  isChannel = false
+): Promise<string | null> {
+  const supabase = getSupabase()
+  if (!supabase || !title) return null
+  try {
+    const { data, error } = await supabase.rpc('create_group_thread', {
+      p_title: title,
+      p_avatar: avatar || null,
+      p_member_ids: memberIds,
+      p_is_channel: isChannel,
+    })
+    if (error) {
+      console.warn('[createGroupThread] error:', error.message)
+      return null
+    }
+    return data as string
+  } catch {
+    return null
+  }
+}
+
+/** Обновить группу */
+export async function updateGroupThread(
+  threadId: string,
+  title?: string,
+  avatar?: string | null,
+  isChannel?: boolean
+): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('update_group_thread', {
+      p_thread_id: threadId,
+      p_title: title || null,
+      p_avatar: avatar || null,
+      p_is_channel: isChannel ?? null,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Добавить участников в группу */
+export async function addThreadMembers(threadId: string, userIds: string[]): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId || userIds.length === 0) return false
+  try {
+    const { data, error } = await supabase.rpc('add_thread_members', {
+      p_thread_id: threadId,
+      p_user_ids: userIds,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Удалить участника из группы */
+export async function removeThreadMember(threadId: string, userId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId || !userId) return false
+  try {
+    const { data, error } = await supabase.rpc('remove_thread_member', {
+      p_thread_id: threadId,
+      p_user_id: userId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Назначить / снять роль администратора */
+export async function setThreadMemberRole(
+  threadId: string,
+  userId: string,
+  role: 'admin' | 'member'
+): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId || !userId) return false
+  try {
+    const { data, error } = await supabase.rpc('set_thread_member_role', {
+      p_thread_id: threadId,
+      p_user_id: userId,
+      p_role: role,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Покинуть группу */
+export async function leaveThread(threadId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('leave_thread', {
+      p_thread_id: threadId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Закрепить сообщение в чате */
+export async function pinThreadMessage(threadId: string, messageId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId || !messageId) return false
+  try {
+    const { data, error } = await supabase.rpc('pin_thread_message', {
+      p_thread_id: threadId,
+      p_message_id: messageId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Открепить сообщение в чате */
+export async function unpinThreadMessage(threadId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('unpin_thread_message', {
+      p_thread_id: threadId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Закрепить / открепить чат в списке */
+export async function togglePinChat(threadId: string, isPinned: boolean): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('toggle_pin_chat', {
+      p_thread_id: threadId,
+      p_is_pinned: isPinned,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Архивировать / разархивировать чат */
+export async function toggleArchiveChat(threadId: string, isArchived: boolean): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('toggle_archive_chat', {
+      p_thread_id: threadId,
+      p_is_archived: isArchived,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Заглушить чат */
+export async function muteThread(threadId: string, until?: string | null): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('mute_thread', {
+      p_thread_id: threadId,
+      p_until: until || null,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Очистить историю сообщений у себя */
+export async function clearThreadHistory(threadId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('clear_thread_history', {
+      p_thread_id: threadId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Удалить чат у себя */
+export async function deleteChatForMe(threadId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('delete_chat_for_me', {
+      p_thread_id: threadId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Пометить сообщения в треде прочитанными */
+export async function markThreadRead(threadId: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('mark_thread_read', {
+      p_thread_id: threadId,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/** Поиск сообщений по тексту */
+export async function searchMessages(
+  query: string,
+  threadId?: string | null
+): Promise<any[]> {
+  const supabase = getSupabase()
+  if (!supabase || !query.trim()) return []
+  try {
+    const { data, error } = await supabase.rpc('search_messages', {
+      p_query: query.trim(),
+      p_thread_id: threadId || null,
+    })
+    if (error) {
+      console.warn('[searchMessages] error:', error.message)
+      return []
+    }
+    return (data || []) as any[]
+  } catch {
+    return []
+  }
+}
+
+/** Получить список тредов пользователя с сервера */
+export async function getUserThreads(userId?: string): Promise<any[]> {
+  const supabase = getSupabase()
+  if (!supabase) return []
+  try {
+    const { data, error } = await supabase.rpc('get_user_threads', {
+      p_user_id: userId || null,
+    })
+    if (error) {
+      console.warn('[getUserThreads] error:', error.message)
+      return []
+    }
+    return (data || []) as any[]
+  } catch {
+    return []
+  }
+}
+
+/** Сохранить черновик сообщения */
+export async function saveThreadDraft(
+  threadId: string,
+  text: string,
+  replyToId?: string | null
+): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !threadId) return false
+  try {
+    const { data, error } = await supabase.rpc('save_thread_draft', {
+      p_thread_id: threadId,
+      p_text: text,
+      p_reply_to_id: replyToId || null,
+    })
+    return !error && Boolean(data)
+  } catch {
+    return false
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   ОТЛОЖЕННЫЕ СООБЩЕНИЯ (scheduled_messages)
+   ---------------------------------------------------------------------------- */
+
+export interface ScheduledMessageRecord {
+  id: string
+  thread_key: string
+  conversation_id?: string | null
+  author_id: string
+  sender_id?: string | null
+  recipient_id?: string | null
+  body: string
+  attachment?: any
+  payload: Record<string, any>
+  scheduled_at: string
+  delivered: boolean
+  delivered_at?: string | null
+  created_at: string
+}
+
+/** Получить список неотправленных отложенных сообщений */
+export async function listScheduledMessages(
+  userId: string,
+  threadKey?: string
+): Promise<ScheduledMessageRecord[]> {
+  const supabase = getSupabase()
+  if (!supabase || !userId) return []
+
+  try {
+    let query = supabase
+      .from('scheduled_messages')
+      .select('*')
+      .eq('delivered', false)
+      .eq('author_id', userId)
+      .order('scheduled_at', { ascending: true })
+
+    if (threadKey) {
+      query = query.eq('thread_key', threadKey)
+    }
+
+    const { data, error } = await query
+    if (error) {
+      console.warn('[listScheduledMessages] error:', error.message)
+      return []
+    }
+    return (data || []) as ScheduledMessageRecord[]
+  } catch {
+    return []
+  }
+}
+
+/** Создать отложенное сообщение */
+export async function createScheduledMessage(params: {
+  userId: string
+  threadKey: string
+  body: string
+  scheduledAt: string
+  recipientId?: string | null
+  isSilent?: boolean
+  attachment?: any
+}): Promise<{ ok: boolean; data?: ScheduledMessageRecord; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
+  try {
+    const payload = {
+      author_id: params.userId,
+      sender_id: params.userId,
+      thread_key: params.threadKey,
+      recipient_id: params.recipientId || null,
+      body: params.body,
+      scheduled_at: params.scheduledAt,
+      delivered: false,
+      payload: {
+        is_silent: Boolean(params.isSilent),
+      },
+      attachment: params.attachment || null,
+    }
+
+    const { data, error } = await supabase
+      .from('scheduled_messages')
+      .insert(payload)
+      .select()
+      .single()
+
+    if (error) {
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, data: data as ScheduledMessageRecord }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || String(err) }
+  }
+}
+
+/** Редактировать отложенное сообщение */
+export async function updateScheduledMessage(
+  id: string,
+  body: string,
+  scheduledAt: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !id) return { ok: false, error: 'Параметры не указаны' }
+
+  try {
+    const { error } = await supabase
+      .from('scheduled_messages')
+      .update({
+        body,
+        scheduled_at: scheduledAt,
+      })
+      .eq('id', id)
+
+    return { ok: !error, error: error?.message }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
+}
+
+/** Отменить (удалить) отложенное сообщение */
+export async function cancelScheduledMessage(id: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !id) return false
+
+  try {
+    const { error } = await supabase
+      .from('scheduled_messages')
+      .delete()
+      .eq('id', id)
+
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/** Отправить отложенное сообщение немедленно */
+export async function sendScheduledMessageNow(id: string): Promise<boolean> {
+  const supabase = getSupabase()
+  if (!supabase || !id) return false
+
+  try {
+    // Получаем сообщение
+    const { data: scheduled, error: fetchErr } = await supabase
+      .from('scheduled_messages')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (fetchErr || !scheduled) return false
+
+    // Вставляем в direct_messages
+    const { error: insertErr } = await supabase.from('direct_messages').insert({
+      author_id: scheduled.author_id,
+      recipient_id: scheduled.recipient_id,
+      thread_key: scheduled.thread_key,
+      body: scheduled.body,
+      attachment: scheduled.attachment,
+      sent_at: new Date().toISOString(),
+    })
+
+    if (insertErr) return false
+
+    // Помечаем как delivered
+    await supabase
+      .from('scheduled_messages')
+      .update({ delivered: true, delivered_at: new Date().toISOString() })
+      .eq('id', id)
+
+    return true
+  } catch {
+    return false
+  }
+}

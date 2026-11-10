@@ -16,10 +16,11 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-import { searchProfiles, getRecentProfiles, type ProfileRecord } from '@/lib/supabase/api'
+import { searchProfiles, getRecentProfiles, createGroupThread, type ProfileRecord } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { uploadChatMedia } from '@/lib/ogonek/chat-media'
 
 type Props = {
   onClose: () => void
@@ -145,26 +146,39 @@ export function NewChatModal({
     )
   }
 
-  // Загрузка фото группы
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Загрузка фото группы в Storage-бакет chat-media
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      onNotify('Размер изображения не должен превышать 5 МБ')
+    if (file.size > 10 * 1024 * 1024) {
+      onNotify('Размер изображения не должен превышать 10 МБ')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setCustomPhotoUrl(reader.result)
-        onNotify('Фото группы загружено')
+
+    onNotify('Загрузка фото группы в хранилище...')
+    try {
+      const res = await uploadChatMedia(file, 'groups', state.auth?.activeAccountId || 'local-user', {
+        kind: 'image',
+        fileName: file.name,
+      })
+      if (res.ok && res.descriptor?.url) {
+        setCustomPhotoUrl(res.descriptor.url)
+        onNotify('Фото группы загружено в хранилище')
+      } else {
+        const localUrl = URL.createObjectURL(file)
+        setCustomPhotoUrl(localUrl)
+        onNotify('Фото группы выбрано')
       }
+    } catch {
+      const localUrl = URL.createObjectURL(file)
+      setCustomPhotoUrl(localUrl)
+      onNotify('Фото группы выбрано')
     }
-    reader.readAsDataURL(file)
   }
 
   // Финальное создание группы
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     const title = groupTitle.trim()
     if (!title) {
       onNotify('Введи название группы')
@@ -176,7 +190,20 @@ export function NewChatModal({
     }
 
     playSuccess(soundEnabled)
-    const newGroupId = createGroupChat(
+
+    // Пробуем создать группу на сервере в Supabase threads
+    let serverThreadId: string | null = null
+    try {
+      serverThreadId = await createGroupThread(
+        title,
+        customPhotoUrl || null,
+        selectedMemberIds
+      )
+    } catch (err) {
+      console.warn('createGroupThread fallback to local store:', err)
+    }
+
+    const newGroupId = serverThreadId || createGroupChat(
       title,
       selectedMemberIds,
       groupColor,

@@ -20,6 +20,7 @@ import {
   PhoneMissed,
   Pin,
   Reply,
+  ShieldAlert,
   SmilePlus,
   Sparkles,
   Tag,
@@ -87,6 +88,7 @@ type Props = {
   searchQuery?: string
   soundEnabled?: boolean
   onNotify?: (message: string) => void
+  onReport?: (messageId: string) => void
 }
 
 export function ChatMessageBubble({
@@ -115,6 +117,7 @@ export function ChatMessageBubble({
   searchQuery = '',
   soundEnabled = true,
   onNotify,
+  onReport,
 }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
@@ -423,6 +426,18 @@ export function ChatMessageBubble({
                           className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
                         >
                           <Trash2 size={13} /> Удалить для всех
+                        </button>
+                      )}
+                      {!isMine && onReport && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onReport(message.id)
+                            setMenuOpen(false)
+                          }}
+                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-amber-400 hover:bg-amber-500/10"
+                        >
+                          <ShieldAlert size={13} /> Пожаловаться
                         </button>
                       )}
                     </div>
@@ -776,11 +791,18 @@ export function ChatMessageBubble({
                 {message.editedAtISO && <span className="text-[11px] italic">изм.</span>}
                 <span suppressHydrationWarning>{formatChatTime(message.createdAtISO)}</span>
                 {isMine && (
-                  <span className="ml-0.5 shrink-0">
+                  <span className="ml-0.5 shrink-0 inline-flex items-center gap-0.5">
                     {message.status === 'sending' ? (
                       <Clock size={12} className="opacity-70 animate-spin" />
                     ) : message.read || message.status === 'read' ? (
-                      <CheckCheck size={14} className="text-[#66ffd9]" />
+                      <>
+                        <CheckCheck size={14} className="text-[#66ffd9]" />
+                        {isGroup && Array.isArray((message as any).read_by) && (message as any).read_by.length > 0 && (
+                          <span className="text-[10px] font-bold text-[#66ffd9]">
+                            {(message as any).read_by.length}
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <Check size={13} className="opacity-80" />
                     )}

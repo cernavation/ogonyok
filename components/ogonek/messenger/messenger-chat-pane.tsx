@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Archive,
   ArrowDown,
   ArrowLeft,
   Check,
@@ -46,6 +47,7 @@ import {
 } from '@/lib/ogonek/messenger'
 import { resolveEmojiChar } from '@/lib/ogonek/reactions'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import type {
   ChatAttachment,
   ChatMessage,
@@ -59,9 +61,24 @@ import {
   markDirectMessagesAsRead,
   subscribeToDirectMessages,
   createCallSession,
+  pinThreadMessage,
+  unpinThreadMessage,
+  updateGroupThread,
+  addThreadMembers,
+  removeThreadMember,
+  setThreadMemberRole,
+  leaveThread,
+  clearThreadHistory,
+  listScheduledMessages,
+  createScheduledMessage,
+  cancelScheduledMessage,
+  updateScheduledMessage,
+  sendScheduledMessageNow,
   type ProfileRecord,
 } from '@/lib/supabase/api'
 import { getSupabase } from '@/lib/supabase/browser'
+import { uploadChatMedia, MAX_IMAGE_SIZE_BYTES, MAX_DOCUMENT_SIZE_BYTES } from '@/lib/ogonek/chat-media'
+import { reportTarget } from '@/lib/ogonek/social'
 import { ChatAvatar } from './chat-avatar'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
@@ -75,6 +92,8 @@ import { ChatGifModal } from './chat-gif-modal'
 import { ChatPollCreatorModal } from './chat-poll-creator-modal'
 import { ChatScheduleModal } from './chat-schedule-modal'
 import { ChatTagsModal } from './chat-tags-modal'
+import { ChatGroupSettingsModal, type GroupMemberItem } from './chat-group-settings-modal'
+import { ChatScheduledListModal, type ScheduledMessageItem } from './chat-scheduled-list-modal'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
 import { FriendDetailModal } from '../friend-detail-modal'
@@ -158,6 +177,12 @@ export function MessengerChatPane({
     attachment: ChatAttachment | null
     note: string
   } | null>(null)
+  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false)
+  const [scheduledListOpen, setScheduledListOpen] = useState(false)
+  const [scheduledItems, setScheduledItems] = useState<ScheduledMessageItem[]>([])
+  const [typingUser, setTypingUser] = useState<string | null>(null)
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const lastTypingBroadcastRef = useRef<number>(0)
 
   // Вложения в черновике
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null)
@@ -200,6 +225,99 @@ export function MessengerChatPane({
     title = peerProfile?.username ? `@${peerProfile.username}` : 'Собеседник'
   }
 
+  const loadScheduled = async () => {
+    try {
+      const res = await listScheduledMessages(currentUserId, friendId || undefined)
+      if (Array.isArray(res)) {
+        setScheduledItems(
+          res.map((it) => ({
+            id: it.id,
+            threadKey: it.thread_key || friendId || '',
+            text: it.body,
+            scheduledAtISO: it.scheduled_at,
+            isSilent: Boolean(it.payload?.is_silent),
+            delivered: it.delivered,
+          }))
+        )
+      }
+    } catch (e) {
+      console.warn('Failed to list scheduled messages:', e)
+    }
+  }
+
+  const handleReportMessage = async (messageId: string) => {
+    const reason = window.prompt('Укажите причину жалобы (спам, оскорбление, мошенничество):', 'спам')
+    if (!reason) return
+    const res = await reportTarget({
+      targetType: 'message',
+      targetId: messageId,
+      reason,
+    })
+    if (res.ok) {
+      onNotify('Жалоба отправлена модераторам')
+    } else {
+      onNotify(`Не удалось отправить жалобу: ${res.error || 'Ошибка'}`)
+    }
+  }
+
+  const handleDraftChange = (newDraft: string) => {
+    if (!friendId) return
+    setChatDraft(friendId, newDraft)
+
+    const now = Date.now()
+    if (now - lastTypingBroadcastRef.current > 2000) {
+      lastTypingBroadcastRef.current = now
+      const supabase = getSupabase()
+      if (supabase) {
+        const threadKey = getDirectThreadKey(currentUserId, friendId)
+        const myName =
+          currentUser?.displayName ||
+          state.profile.displayName ||
+          state.profile.username ||
+          'Соратник'
+        const typingChannel = supabase.channel(`typing_${threadKey}`)
+        typingChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            typingChannel.send({
+              type: 'broadcast',
+              event: 'typing',
+              payload: { username: myName, userId: currentUserId },
+            }).finally(() => {
+              supabase.removeChannel(typingChannel)
+            })
+          }
+        })
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!friendId || !currentUserId || isGroup || isSaved) return
+    const supabase = getSupabase()
+    if (!supabase) return
+
+    const threadKey = getDirectThreadKey(currentUserId, friendId)
+    const channel = supabase.channel(`chat_${threadKey}_typing_listen`)
+
+    channel.on('broadcast', { event: 'typing' }, (payload: any) => {
+      const p = payload?.payload
+      if (p && p.userId !== currentUserId) {
+        setTypingUser(p.username || 'Собеседник')
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = setTimeout(() => {
+          setTypingUser(null)
+        }, 3500)
+      }
+    })
+
+    channel.subscribe()
+
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+      supabase.removeChannel(channel)
+    }
+  }, [friendId, currentUserId, isGroup, isSaved])
+
   useEffect(() => {
     if (targetPeerId && !friend && !isGroup && !isSaved) {
       getProfile(targetPeerId).then((p) => {
@@ -223,6 +341,13 @@ export function MessengerChatPane({
   const allMessages = thread?.messages ?? []
   const totalMessagesCount = allMessages.length
   const draft = thread?.draft ?? ''
+  const unreadCountVal = thread ? unreadCount(thread) : 0
+
+  const firstUnreadId = useMemo(() => {
+    if (!unreadCountVal || !allMessages.length) return null
+    const idx = Math.max(0, totalMessagesCount - unreadCountVal)
+    return allMessages[idx]?.id ?? null
+  }, [unreadCountVal, allMessages, totalMessagesCount])
 
   // Подгрузка истории
   const messages = useMemo(() => {
@@ -539,50 +664,83 @@ export function MessengerChatPane({
     )
   }
 
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
 
-    if (file.size > 50 * 1024 * 1024) {
-      onNotify('Файл слишком велик (максимум 50 МБ)')
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      onNotify('Изображение не должно превышать 10 МБ')
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
+    onNotify('Сжатие и загрузка фото в хранилище...')
+    try {
+      const res = await uploadChatMedia(
+        file,
+        thread?.id || friendId || 'direct-thread',
+        currentUserId || 'me',
+        {
+          kind: 'image',
+          fileName: file.name,
+        }
+      )
+
+      if (!res.ok || !res.descriptor) {
+        onNotify(`Ошибка загрузки: ${res.error || 'Не удалось загрузить фото'}`)
+        return
+      }
+
       setMediaAttachment({
         type: 'image',
-        url: reader.result as string,
+        url: res.descriptor.url,
         name: file.name,
-        sizeBytes: file.size,
+        sizeBytes: res.descriptor.size,
       })
-      onNotify('Фото прикреплено')
+      onNotify('Фото успешно загружено в защищённое хранилище')
+    } catch (err: any) {
+      onNotify(`Ошибка загрузки: ${err?.message || err}`)
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleDocumentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     e.target.value = ''
     if (!file) return
 
-    if (file.size > 50 * 1024 * 1024) {
-      onNotify('Файл слишком велик (максимум 50 МБ)')
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      onNotify('Файл не должен превышать 25 МБ')
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
+    onNotify('Загрузка файла в хранилище...')
+    try {
+      const isVideo = file.type.startsWith('video/')
+      const res = await uploadChatMedia(
+        file,
+        thread?.id || friendId || 'direct-thread',
+        currentUserId || 'me',
+        {
+          kind: isVideo ? 'video' : 'file',
+          fileName: file.name,
+        }
+      )
+
+      if (!res.ok || !res.descriptor) {
+        onNotify(`Ошибка загрузки: ${res.error || 'Не удалось загрузить файл'}`)
+        return
+      }
+
       setMediaAttachment({
-        type: file.type.startsWith('video/') ? 'video' : 'file',
-        url: reader.result as string,
+        type: isVideo ? 'video' : 'file',
+        url: res.descriptor.url,
         name: file.name,
-        sizeBytes: file.size,
+        sizeBytes: res.descriptor.size,
       })
-      onNotify('Файл прикреплен')
+      onNotify('Файл успешно загружен в защищённое хранилище')
+    } catch (err: any) {
+      onNotify(`Ошибка загрузки: ${err?.message || err}`)
     }
-    reader.readAsDataURL(file)
   }
 
   // Если диалог не выбран — красивое пустое состояние на весь экран
@@ -697,7 +855,11 @@ export function MessengerChatPane({
             </div>
 
             <span className="text-[12px] sm:text-[14px] text-[var(--text-2)] truncate leading-tight block">
-              {isSaved ? (
+              {typingUser ? (
+                <span className="text-[var(--accent)] font-semibold animate-pulse flex items-center gap-1">
+                  <span>✍️</span> {typingUser} печатает…
+                </span>
+              ) : isSaved ? (
                 'Личные заметки и сохранённое'
               ) : isGroup ? (
                 `${thread?.groupMeta?.memberIds.length ?? 3} участников, 2 в сети`
@@ -790,6 +952,40 @@ export function MessengerChatPane({
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                   >
                     <Tag size={15} /> Теги диалога
+                  </button>
+                  {isGroup && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGroupSettingsOpen(true)
+                        setMenuOpen(false)
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                    >
+                      <Info size={15} /> Управление группой
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      loadScheduled()
+                      setScheduledListOpen(true)
+                      setMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                  >
+                    <Clock size={15} /> Отложенные сообщения
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleThreadPin(friendId)
+                      setMenuOpen(false)
+                      onNotify('Чат архивирован')
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                  >
+                    <Archive size={15} /> В архив
                   </button>
                   <button
                     type="button"
@@ -937,42 +1133,51 @@ export function MessengerChatPane({
                       const isMineMsg = msg.authorId === 'me' || (Boolean(currentUserId) && msg.authorId === currentUserId)
 
                       return (
-                        <ChatMessageBubble
-                          key={msg.id}
-                          message={msg}
-                          isMine={isMineMsg}
-                          resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
-                          customEmojis={state.customEmojis}
-                          onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
-                          onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
-                          onReply={(m) => setReplyingTo(m)}
-                          onEdit={(m) => {
-                            setEditingMessage(m)
-                            setChatDraft(friendId, m.text)
-                            textareaRef.current?.focus()
-                          }}
-                          onPin={(id) => togglePinChatMessage(friendId, id)}
-                          onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
-                          onJumpToReply={scrollToMessage}
-                          onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
-                          onTranscribe={(id, transcript) => transcribeVoiceMessage(friendId, id, transcript)}
-                          onVotePoll={(id, pIdx) => voteInPoll(friendId, id, pIdx)}
-                          onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
-                          isSelectionMode={isSelectionMode}
-                          isSelected={selectedMessageIds.includes(msg.id)}
-                          onToggleSelect={(id) => {
-                            setSelectedMessageIds((ids) =>
-                              ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
-                            )
-                          }}
-                          isGroup={isGroup}
-                          showAuthorHeader={isGroup}
-                          isFirstInGroup={isFirstInGroup}
-                          isLastInGroup={isLastInGroup}
-                          searchQuery={searchQuery}
-                          soundEnabled={soundEnabled}
-                          onNotify={onNotify}
-                        />
+                        <React.Fragment key={msg.id}>
+                          {msg.id === firstUnreadId && (
+                            <div className="w-full flex items-center justify-center my-3 sticky top-12 z-10 pointer-events-none">
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] text-white px-3.5 py-1 text-[11px] font-bold shadow-md animate-pulse pointer-events-auto">
+                                Новые сообщения ({unreadCountVal})
+                              </span>
+                            </div>
+                          )}
+                          <ChatMessageBubble
+                            message={msg}
+                            isMine={isMineMsg}
+                            resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
+                            customEmojis={state.customEmojis}
+                            onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
+                            onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
+                            onReply={(m) => setReplyingTo(m)}
+                            onEdit={(m) => {
+                              setEditingMessage(m)
+                              setChatDraft(friendId, m.text)
+                              textareaRef.current?.focus()
+                            }}
+                            onPin={(id) => togglePinChatMessage(friendId, id)}
+                            onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
+                            onJumpToReply={scrollToMessage}
+                            onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
+                            onTranscribe={(id, transcript) => transcribeVoiceMessage(friendId, id, transcript)}
+                            onVotePoll={(id, pIdx) => voteInPoll(friendId, id, pIdx)}
+                            onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
+                            isSelectionMode={isSelectionMode}
+                            isSelected={selectedMessageIds.includes(msg.id)}
+                            onToggleSelect={(id) => {
+                              setSelectedMessageIds((ids) =>
+                                ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
+                              )
+                            }}
+                            isGroup={isGroup}
+                            showAuthorHeader={isGroup}
+                            isFirstInGroup={isFirstInGroup}
+                            isLastInGroup={isLastInGroup}
+                            searchQuery={searchQuery}
+                            soundEnabled={soundEnabled}
+                            onNotify={onNotify}
+                            onReport={handleReportMessage}
+                          />
+                        </React.Fragment>
                       )
                     })}
                   </div>
@@ -988,10 +1193,15 @@ export function MessengerChatPane({
         <button
           type="button"
           onClick={scrollToBottom}
-          className="absolute right-6 bottom-24 z-20 w-11 h-11 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center shadow-2xl hover:bg-[var(--bg-hover)] active:scale-95 transition-all"
+          className="absolute right-6 bottom-24 z-20 w-11 h-11 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center shadow-2xl hover:bg-[var(--bg-hover)] active:scale-95 transition-all relative"
           aria-label="Вниз к новым сообщениям"
         >
           <ArrowDown size={18} />
+          {unreadCountVal > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] rounded-full bg-[var(--accent)] text-white text-[10px] font-extrabold flex items-center justify-center px-1 shadow-sm">
+              {unreadCountVal > 99 ? '99+' : unreadCountVal}
+            </span>
+          )}
         </button>
       )}
 
@@ -1273,7 +1483,7 @@ export function MessengerChatPane({
                 <textarea
                   ref={textareaRef}
                   value={draft}
-                  onChange={(e) => setChatDraft(friendId, e.target.value)}
+                  onChange={(e) => handleDraftChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Написать сообщение..."
                   rows={1}
@@ -1426,6 +1636,125 @@ export function MessengerChatPane({
           friendId={friendId}
           onClose={() => setFriendDetailOpen(false)}
           onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Модальное окно настроек группы */}
+      {groupSettingsOpen && friendId && (
+        <ChatGroupSettingsModal
+          threadId={thread?.id || friendId}
+          title={title}
+          avatar={thread?.groupMeta?.avatarEmoji || null}
+          isChannel={thread?.isChannel || false}
+          currentUserRole={thread?.currentUserRole || 'member'}
+          members={
+            (thread?.groupMeta?.memberIds || []).map((mId) => {
+              const mFriend = getFriend(mId)
+              return {
+                userId: mId,
+                role: mId === currentUserId ? (thread?.currentUserRole || 'member') : 'member',
+                displayName: mFriend?.name || mId,
+                username: mFriend?.username || mId,
+                avatar: mFriend?.avatarColor || null,
+              }
+            })
+          }
+          onUpdateGroup={async (newTitle, newAvatar, newIsChannel) => {
+            const ok = await updateGroupThread(
+              thread?.id || friendId,
+              newTitle,
+              newAvatar || undefined,
+              newIsChannel
+            )
+            if (ok) {
+              onNotify('Группа обновлена')
+            } else {
+              onNotify('Ошибка обновления группы')
+            }
+          }}
+          onAddMembers={async (userIds) => {
+            const ok = await addThreadMembers(thread?.id || friendId, userIds)
+            if (ok) {
+              onNotify('Участники добавлены')
+            } else {
+              onNotify('Ошибка добавления участников')
+            }
+          }}
+          onRemoveMember={async (userId) => {
+            const ok = await removeThreadMember(thread?.id || friendId, userId)
+            if (ok) {
+              onNotify('Участник удалён')
+            } else {
+              onNotify('Ошибка удаления')
+            }
+          }}
+          onSetRole={async (userId, role) => {
+            const ok = await setThreadMemberRole(thread?.id || friendId, userId, role)
+            if (ok) {
+              onNotify('Роль обновлена')
+            } else {
+              onNotify('Ошибка назначения роли')
+            }
+          }}
+          onLeaveGroup={async () => {
+            const ok = await leaveThread(thread?.id || friendId)
+            if (ok) {
+              onNotify('Вы вышли из группы')
+              setGroupSettingsOpen(false)
+              if (onBack) onBack()
+            } else {
+              onNotify('Ошибка выхода из группы')
+            }
+          }}
+          onClearHistory={async () => {
+            const ok = await clearThreadHistory(thread?.id || friendId)
+            if (ok) {
+              onNotify('История чата очищена')
+              setGroupSettingsOpen(false)
+            } else {
+              onNotify('Ошибка очистки истории')
+            }
+          }}
+          onClose={() => setGroupSettingsOpen(false)}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Модальное окно отложенных сообщений */}
+      {scheduledListOpen && (
+        <ChatScheduledListModal
+          threadKey={friendId || 'direct'}
+          scheduledMessages={scheduledItems}
+          tier={normalizeTier(state.profile.tier || state.profile.subscription_tier)}
+          onSendNow={async (id) => {
+            const ok = await sendScheduledMessageNow(id)
+            if (ok) {
+              onNotify('Отправлено')
+              loadScheduled()
+            } else {
+              onNotify('Не удалось отправить')
+            }
+          }}
+          onEdit={async (id, newText, newIso) => {
+            const res = await updateScheduledMessage(id, newText, newIso)
+            if (res.ok) {
+              onNotify('Сообщение изменено')
+              loadScheduled()
+            } else {
+              onNotify(res.error || 'Не удалось изменить')
+            }
+          }}
+          onCancel={async (id) => {
+            const ok = await cancelScheduledMessage(id)
+            if (ok) {
+              onNotify('Отложенное сообщение отменено')
+              loadScheduled()
+            } else {
+              onNotify('Не удалось отменить')
+            }
+          }}
+          onClose={() => setScheduledListOpen(false)}
           soundEnabled={soundEnabled}
         />
       )}

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       return validated.response
     }
 
-    const { q, limit } = validated.data
+    const { q, limit, offset } = validated.data
     const apiKey = process.env.GIPHY_API_KEY
 
     if (!apiKey) {
@@ -32,8 +32,8 @@ export async function GET(request: Request) {
     }
 
     const endpoint = q
-      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${limit}&rating=g`
-      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${limit}&rating=g`
+      ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${offset}&rating=g`
+      : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=${limit}&offset=${offset}&rating=g`
 
     const res = await fetch(endpoint, { signal: AbortSignal.timeout(6000) })
     if (!res.ok) {

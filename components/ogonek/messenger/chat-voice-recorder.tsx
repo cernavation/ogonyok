@@ -5,14 +5,23 @@ import { useEffect, useRef, useState } from 'react'
 
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessageMedia } from '@/lib/ogonek/types'
+import { uploadChatMedia } from '@/lib/ogonek/chat-media'
 
 type Props = {
   onSendVoice: (media: ChatMessageMedia) => void
   onCancel: () => void
   soundEnabled?: boolean
+  threadId?: string
+  currentUserId?: string
 }
 
-export function ChatVoiceRecorder({ onSendVoice, onCancel, soundEnabled = true }: Props) {
+export function ChatVoiceRecorder({
+  onSendVoice,
+  onCancel,
+  soundEnabled = true,
+  threadId,
+  currentUserId,
+}: Props) {
   const [seconds, setSeconds] = useState(0)
   const [micBlocked, setMicBlocked] = useState(false)
   const [liveBars, setLiveBars] = useState<number[]>(() => Array.from({ length: 18 }).map(() => 4))
@@ -216,20 +225,34 @@ export function ChatVoiceRecorder({ onSendVoice, onCancel, soundEnabled = true }
     }
 
     if (recorder && recorder.state !== 'inactive') {
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const mimeType = recorder.mimeType || 'audio/webm'
         const audioBlob = new Blob(chunksRef.current, { type: mimeType })
 
-        // Конвертируем реальный аудио Blob в Base64 Data URL для моментального воспроизведения и передачи
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64Url = typeof reader.result === 'string' ? reader.result : 'mock-audio.webm'
-          finalizeAndSend(base64Url)
+        try {
+          // Загрузка в Storage-бакет chat-media
+          const res = await uploadChatMedia(
+            audioBlob,
+            threadId || 'direct-thread',
+            currentUserId || 'local-user',
+            {
+              kind: 'voice',
+              fileName: 'voice.webm',
+              durationSec: seconds || 1,
+            }
+          )
+
+          if (res.ok && res.descriptor?.url) {
+            finalizeAndSend(res.descriptor.url)
+          } else {
+            // Фолбэк на blob URL для воспроизведения
+            const blobUrl = URL.createObjectURL(audioBlob)
+            finalizeAndSend(blobUrl)
+          }
+        } catch {
+          const blobUrl = URL.createObjectURL(audioBlob)
+          finalizeAndSend(blobUrl)
         }
-        reader.onerror = () => {
-          finalizeAndSend('mock-audio.webm')
-        }
-        reader.readAsDataURL(audioBlob)
       }
 
       try {

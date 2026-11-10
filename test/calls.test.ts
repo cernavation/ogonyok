@@ -147,7 +147,7 @@ test('Реальные голосовые сообщения, живая вол�
     assert.ok(recorderCode.includes('createAnalyser'), 'Используется Web Audio AnalyserNode')
     assert.ok(recorderCode.includes('MediaRecorder'), 'Используется MediaRecorder для записи')
     assert.ok(recorderCode.includes('liveBars'), 'Поддерживается стейт liveBars для живой волны')
-    assert.ok(recorderCode.includes('readAsDataURL'), 'Конвертирует запись в base64 data URL')
+    assert.ok(recorderCode.includes('uploadChatMedia'), 'Загружает голосовую запись в защищенное хранилище chat-media')
   })
 
   await t.test('chat-voice-player.tsx содержит HTML5 audio элемент и интерактивную перемотку', () => {

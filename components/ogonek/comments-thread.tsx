@@ -1,7 +1,7 @@
 'use client'
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, Heart, MessageCircle, Reply, Send, Sparkles, Trash2 } from 'lucide-react'
+import { ChevronDown, Film, Heart, MessageCircle, Reply, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useCallback, useId, useMemo, useState, type ReactNode } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
@@ -17,6 +17,8 @@ import {
 import type { CommentPersona } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from './tooltip'
+import { ChatGifModal } from './messenger/chat-gif-modal'
+import { safeImageSrc } from '@/lib/ogonek/safe-url'
 
 type Props = {
   /** Цель обсуждения: "day:12" | "day:12:pride:0" */
@@ -91,6 +93,7 @@ export function CommentsThread({
   const [persona, setPersona] = useState<CommentPersona>('me')
   const [replyToId, setReplyToId] = useState<string | null>(null)
   const [replyDraft, setReplyDraft] = useState('')
+  const [gifModalTarget, setGifModalTarget] = useState<'main' | 'reply' | null>(null)
 
   const comments = useMemo(
     () => state.comments?.[target] ?? [],
@@ -227,6 +230,37 @@ export function CommentsThread({
     </div>
   )
 
+  /** Отображение текста комментария с поддержкой безопасных GIF */
+  const renderCommentBody = (rawText: string) => {
+    const gifRegex = /(https?:\/\/[^\s]+(?:\.gif|\/giphy\.gif|giphy\.com\/media\/[^\s]+))/i
+    const match = rawText.match(gifRegex)
+    if (match) {
+      const gifUrl = match[1]
+      const textWithoutGif = rawText.replace(gifUrl, '').trim()
+      const safeSrc = safeImageSrc(gifUrl)
+      return (
+        <div className="space-y-2 mt-0.5">
+          {textWithoutGif && (
+            <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] whitespace-pre-wrap break-words">
+              {textWithoutGif}
+            </p>
+          )}
+          {safeSrc && (
+            <div className="rounded-xl overflow-hidden border border-[var(--line)] max-w-xs max-h-48">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={safeSrc} alt="GIF" className="w-full h-full object-cover" loading="lazy" />
+            </div>
+          )}
+        </div>
+      )
+    }
+    return (
+      <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
+        {rawText}
+      </p>
+    )
+  }
+
   /** Рекурсивный рендер комментария с ответами */
   const renderComment = (node: CommentNode, depth: number): ReactNode => {
     const isReplying = replyToId === node.id
@@ -253,9 +287,7 @@ export function CommentsThread({
               </Tooltip>
             </div>
 
-            <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
-              {node.text}
-            </p>
+            {renderCommentBody(node.text)}
 
             {node.template && (
               <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[var(--muted)] border border-[var(--line)] rounded-full px-2 py-[1px]">
@@ -351,16 +383,26 @@ export function CommentsThread({
                       className="w-full resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#1d9bf0] transition-colors"
                     />
                     <div className="flex items-center justify-between gap-2 mt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplyToId(null)
-                          setReplyDraft('')
-                        }}
-                        className="text-[12px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                      >
-                        Отмена
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setGifModalTarget('reply')}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--muted)] hover:text-[#1d9bf0] transition-colors"
+                          aria-label="Добавить GIF к ответу"
+                        >
+                          <Film size={13} /> GIF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyToId(null)
+                            setReplyDraft('')
+                          }}
+                          className="text-[12px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+                        >
+                          Отмена
+                        </button>
+                      </div>
                       <button
                         type="button"
                         onClick={() => submitReply(node.id)}
@@ -489,6 +531,17 @@ export function CommentsThread({
                     }
                     className="flex-1 resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#ff6b35] transition-colors"
                   />
+                  <Tooltip content="Выбрать GIF" side="top">
+                    <button
+                      type="button"
+                      onClick={() => setGifModalTarget('main')}
+                      className="flex-none inline-flex items-center justify-center rounded-full text-[var(--muted)] hover:text-[#ff6b35] hover:bg-[#ff6b35]/10 transition-colors"
+                      style={{ width: 34, height: 34 }}
+                      aria-label="Выбрать GIF для комментария"
+                    >
+                      <Film size={16} />
+                    </button>
+                  </Tooltip>
                   <Tooltip content="Отправить (Enter)" side="top">
                     <button
                       type="button"
@@ -526,6 +579,22 @@ export function CommentsThread({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Модальное окно выбора GIF для комментариев */}
+      {gifModalTarget && (
+        <ChatGifModal
+          onClose={() => setGifModalTarget(null)}
+          onSelectGif={(url) => {
+            if (gifModalTarget === 'main') {
+              setDraft((prev) => (prev ? `${prev} ${url}` : url))
+            } else if (gifModalTarget === 'reply') {
+              setReplyDraft((prev) => (prev ? `${prev} ${url}` : url))
+            }
+            setGifModalTarget(null)
+          }}
+          soundEnabled={soundEnabled}
+        />
+      )}
     </div>
   )
 }

@@ -135,6 +135,7 @@ export const TranscribeSchema = z.object({
 export const GiphyQuerySchema = z.object({
   q: z.string().max(200, 'Поисковый запрос слишком длинный').optional().default(''),
   limit: z.coerce.number().min(1).max(50).optional().default(24),
+  offset: z.coerce.number().min(0).max(500).optional().default(0),
 })
 
 /** Лидерборд */

@@ -1,0 +1,73 @@
+==============================================================================
+STAGE 08 QA VERIFICATION: ENTERPRISE MESSENGER & STORAGE ARCHITECTURE
+==============================================================================
+
+--- Suite 1: Migration 080_messenger.sql & Relational Model ---
+  [PASS] 080_messenger.sql file exists on disk
+  [PASS] Table public.threads declared in schema
+  [PASS] Table public.thread_members declared in schema
+  [PASS] Table public.chat_folders declared in schema
+  [PASS] Table public.thread_drafts declared in schema
+  [PASS] direct_messages has column 'thread_id'
+  [PASS] direct_messages has column 'reply_to_id'
+  [PASS] direct_messages has column 'forward_from'
+  [PASS] direct_messages has column 'media'
+  [PASS] direct_messages has column 'is_pinned'
+  [PASS] direct_messages has column 'is_edited'
+  [PASS] direct_messages has column 'edited_at'
+  [PASS] direct_messages has column 'deleted_for_all'
+  [PASS] direct_messages has column 'mentions'
+  [PASS] direct_messages has column 'delivered_to'
+  [PASS] direct_messages has column 'read_by'
+  [PASS] Storage bucket chat-media configured as private with 25MB limit
+  [PASS] RPC public.get_or_create_direct_thread declared (security definer)
+  [PASS] RPC public.create_group_thread declared (security definer)
+  [PASS] RPC public.update_group_thread declared (security definer)
+  [PASS] RPC public.add_thread_members declared (security definer)
+  [PASS] RPC public.remove_thread_member declared (security definer)
+  [PASS] RPC public.set_thread_member_role declared (security definer)
+  [PASS] RPC public.leave_thread declared (security definer)
+  [PASS] RPC public.pin_thread_message declared (security definer)
+  [PASS] RPC public.unpin_thread_message declared (security definer)
+  [PASS] RPC public.toggle_pin_chat declared (security definer)
+  [PASS] RPC public.toggle_archive_chat declared (security definer)
+  [PASS] RPC public.mute_thread declared (security definer)
+  [PASS] RPC public.clear_thread_history declared (security definer)
+  [PASS] RPC public.delete_chat_for_me declared (security definer)
+  [PASS] RPC public.mark_thread_read declared (security definer)
+  [PASS] RPC public.search_messages declared (security definer)
+  [PASS] RPC public.get_user_threads declared (security definer)
+  [PASS] RPC public.save_thread_draft declared (security definer)
+  [PASS] 080_messenger.sql registered in night/SQL_ORDER.md
+
+--- Suite 2: Base64 Elimination & Row Size Verification ---
+  [PASS] Descriptor JSON size is strictly < 2 KB (actual: 288 B)
+  [PASS] Descriptor JSON size is < 400 B for fast row fetch (actual: 288 B)
+  [PASS] Storage reduction over Base64 is > 99.5% (actual: 99.94%)
+  [PASS] scripts/migrate-chat-media.mjs exists on disk
+  [PASS] migrate-chat-media.mjs runs dry-run by default without destroying data
+
+--- Suite 3: Three-User Matrix (u_a, u_b, u_c) Lifecycle ---
+  [PASS] u_a successfully creates group with u_b and u_c
+  [PASS] u_a posts message with media descriptor
+  [PASS] Message pinned in thread (threads.pinned_message_id)
+  [PASS] u_b reacts with 🔥 to u_a's message
+  [PASS] u_c replies to u_a's message (reply_to_id preserved)
+  [PASS] u_a edits message without arbitrary time limits (is_edited = true)
+  [PASS] Ordinary member u_c is blocked from posting when is_channel = true
+  [PASS] Admin u_b CAN post in channel mode
+  [PASS] Removed member u_c cannot post any messages
+  [PASS] u_a deletes message for everyone (deleted_for_all = true, text wiped)
+
+--- Suite 4: Giphy Integration & Attribution ---
+  [PASS] chat-gif-modal.tsx has official "Powered by GIPHY" attribution badge
+  [PASS] chat-gif-modal.tsx implements offset pagination ("Загрузить ещё")
+  [PASS] comments-thread.tsx integrates ChatGifModal for GIF comments
+
+--- Suite 5: Scheduled Messages Architecture ---
+  [PASS] chat-scheduled-list-modal.tsx renders tier limit indicator
+  [PASS] Supports Send Now, Edit, and Cancel operations
+
+==============================================================================
+STAGE 08 QA SUMMARY: Total: 56 | Passed: 56 | Failed: 0
+==============================================================================

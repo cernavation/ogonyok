@@ -220,6 +220,8 @@ export type OgonekProfile = {
   /** Уровень сложности дневника: 1..5 гордостей и благодарностей в день (Правило 1 ТЗ) */
   level?: number
   difficultyLevel?: number
+  /** Тариф пользователя: 'free' | 'pro' | 'ultra' (ЭТАП 4) */
+  tier?: 'free' | 'pro' | 'ultra' | 'premium'
   /** Дата последней смены уровня (ISO string, смена заблокирована на 30 дней) */
   levelChangedAtISO?: string | null
   /** Показывать ли уровень сложности в публичном профиле */
@@ -815,6 +817,7 @@ export type ChatFolder = {
 
 /** Состояние одной переписки с другом или группой */
 export type ChatThreadState = {
+  id?: string
   messages: ChatMessage[]
   /** Когда я последний раз открывал переписку (ISO) — база непрочитанных */
   readAtISO: string | null
@@ -830,6 +833,10 @@ export type ChatThreadState = {
   archived?: boolean
   /** ID закреплённого сообщения в шапке чата */
   pinnedMessageId?: string | null
+  /** Режим канала (только админы могут писать) */
+  isChannel?: boolean
+  /** Роль текущего пользователя в группе */
+  currentUserRole?: 'owner' | 'admin' | 'member'
   /** Кто сейчас печатает */
   typingUserIds?: string[]
   /** Метаданные группы (если это групповой чат) */

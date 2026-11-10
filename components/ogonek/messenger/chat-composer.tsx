@@ -1,12 +1,13 @@
 'use client'
 
 import { AnimatePresence } from 'framer-motion'
-import { FileText, Image as ImageIcon, Mic, Paperclip, Pencil, Reply, Send, Smile, Sparkles, X } from 'lucide-react'
+import { FileText, Image as ImageIcon, Loader2, Mic, Paperclip, Pencil, Reply, Send, Smile, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 
 import { QUICK_REPLIES, type ChatSticker } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatAttachment, ChatMessage, ChatMessageMedia, ChatMessageReply } from '@/lib/ogonek/types'
+import { uploadChatMedia, MAX_IMAGE_SIZE_BYTES, MAX_DOCUMENT_SIZE_BYTES } from '@/lib/ogonek/chat-media'
 import dynamic from 'next/dynamic'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
@@ -24,6 +25,9 @@ type Props = {
     extra?: {
       replyTo?: ChatMessageReply | null
       media?: ChatMessageMedia | null
+      mentions?: string[]
+      isSilent?: boolean
+      scheduledForISO?: string | null
     }
   ) => void
   replyingTo?: ChatMessage | null
@@ -34,6 +38,10 @@ type Props = {
   onEditLastMessage?: () => void
   onNotify?: (message: string) => void
   soundEnabled?: boolean
+  threadId?: string
+  currentUserId?: string
+  groupMembers?: { userId: string; username: string; displayName: string }[]
+  onTyping?: () => void
 }
 
 export function ChatComposer({
@@ -49,6 +57,10 @@ export function ChatComposer({
   onEditLastMessage,
   onNotify,
   soundEnabled = true,
+  threadId,
+  currentUserId,
+  groupMembers = [],
+  onTyping,
 }: Props) {
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null)
   const [mediaAttachment, setMediaAttachment] = useState<ChatMessageMedia | null>(null)
@@ -57,10 +69,14 @@ export function ChatComposer({
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [voiceRecording, setVoiceRecording] = useState(false)
   const [colonQuery, setColonQuery] = useState<string | null>(null)
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
 
   const textRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
+  const uploadAbortRef = useRef<AbortController | null>(null)
 
   // Auto-resize textarea
   useEffect(() => {
@@ -77,14 +93,13 @@ export function ChatComposer({
     }
   }, [replyingTo, editingMessage])
 
-  // Check for colon autocomplete
+  // Check for colon autocomplete and @ mention autocomplete
   useEffect(() => {
-    const match = draft.match(/:([a-zA-Zа-яА-Я0-9_-]{1,15})$/)
-    if (match) {
-      setColonQuery(match[1].toLowerCase())
-    } else {
-      setColonQuery(null)
-    }
+    const colonMatch = draft.match(/:([a-zA-Zа-яА-Я0-9_-]{1,15})$/)
+    setColonQuery(colonMatch ? colonMatch[1].toLowerCase() : null)
+
+    const mentionMatch = draft.match(/@([a-zA-Z0-9_-]*)$/)
+    setMentionQuery(mentionMatch ? mentionMatch[1].toLowerCase() : null)
   }, [draft])
 
   const canSend = draft.trim().length > 0 || Boolean(attachment) || Boolean(mediaAttachment)
@@ -111,15 +126,19 @@ export function ChatComposer({
         }
       : null
 
+    const mentions = Array.from(draft.matchAll(/@([a-zA-Z0-9_-]+)/g)).map((m) => m[1])
+
     onSend(draft.trim(), attachment, {
       replyTo: replyPayload,
       media: mediaAttachment,
+      mentions: mentions.length > 0 ? mentions : undefined,
     })
 
     setAttachment(null)
     setMediaAttachment(null)
     onCancelReply?.()
     setColonQuery(null)
+    setMentionQuery(null)
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -152,38 +171,115 @@ export function ChatComposer({
     }
   }
 
-  // Handle local image upload
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle local image upload via Storage bucket chat-media (no Base64 in JSONB!)
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
+    e.target.value = ''
+    setMenuOpen(false)
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      onNotify?.('Изображение не должно превышать 10 МБ')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadProgress(15)
+    const abortCtrl = new AbortController()
+    uploadAbortRef.current = abortCtrl
+
+    try {
+      const res = await uploadChatMedia(
+        file,
+        threadId || 'direct-thread',
+        currentUserId || 'local-user',
+        {
+          kind: 'image',
+          fileName: file.name,
+          onProgress: (p) => setUploadProgress(p),
+          abortSignal: abortCtrl.signal,
+        }
+      )
+
+      if (!res.ok || !res.descriptor) {
+        onNotify?.(`Ошибка загрузки: ${res.error || 'Не удалось загрузить фото'}`)
+        return
+      }
+
       setMediaAttachment({
         type: 'image',
-        url: reader.result as string,
+        url: res.descriptor.url,
         name: file.name,
-        sizeBytes: file.size,
+        sizeBytes: res.descriptor.size,
       })
-      onNotify?.(`Фотография «${file.name}» прикреплена`)
+      onNotify?.(`Фотография «${file.name}» загружена в защищённое хранилище`)
+    } catch (err: any) {
+      if (abortCtrl.signal.aborted) {
+        onNotify?.('Загрузка отменена')
+      } else {
+        onNotify?.(`Ошибка загрузки: ${err?.message || err}`)
+      }
+    } finally {
+      setIsUploading(false)
+      setUploadProgress(0)
+      uploadAbortRef.current = null
     }
-    reader.readAsDataURL(file)
-    e.target.value = ''
-    setMenuOpen(false)
   }
 
-  // Handle local document file upload
-  const handleDocumentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle local document file upload via Storage bucket chat-media
+  const handleDocumentFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setMediaAttachment({
-      type: 'file',
-      url: URL.createObjectURL(file),
-      name: file.name,
-      sizeBytes: file.size,
-    })
-    onNotify?.(`Файл «${file.name}» прикреплен`)
     e.target.value = ''
     setMenuOpen(false)
+
+    if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
+      onNotify?.('Файл не должен превышать 25 МБ')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadProgress(15)
+    const abortCtrl = new AbortController()
+    uploadAbortRef.current = abortCtrl
+
+    try {
+      const isVideo = file.type.startsWith('video/')
+      const res = await uploadChatMedia(
+        file,
+        threadId || 'direct-thread',
+        currentUserId || 'local-user',
+        {
+          kind: isVideo ? 'video' : 'file',
+          fileName: file.name,
+          onProgress: (p) => setUploadProgress(p),
+          abortSignal: abortCtrl.signal,
+        }
+      )
+
+      if (!res.ok || !res.descriptor) {
+        onNotify?.(`Ошибка загрузки: ${res.error || 'Не удалось загрузить файл'}`)
+        return
+      }
+
+      setMediaAttachment({
+        type: isVideo ? 'video' : 'file',
+        url: res.descriptor.url,
+        name: file.name,
+        sizeBytes: res.descriptor.size,
+      })
+      onNotify?.(`Файл «${file.name}» загружен в защищённое хранилище`)
+    } catch (err: any) {
+      if (abortCtrl.signal.aborted) {
+        onNotify?.('Загрузка отменена')
+      } else {
+        onNotify?.(`Ошибка загрузки: ${err?.message || err}`)
+      }
+    } finally {
+      setIsUploading(false)
+      setUploadProgress(0)
+      uploadAbortRef.current = null
+    }
   }
 
   const handlePickSticker = (sticker: ChatSticker) => {
@@ -360,6 +456,60 @@ export function ChatComposer({
         </div>
       )}
 
+      {/* Прогресс-бар загрузки медиа */}
+      {isUploading && (
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-2.5 mb-1.5 text-xs animate-in fade-in">
+          <Loader2 size={16} className="animate-spin text-[var(--accent)] shrink-0" />
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between text-[11px] text-[var(--text-2)] mb-1">
+              <span>Загрузка в хранилище...</span>
+              <span className="font-semibold text-[var(--accent)]">{uploadProgress}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[var(--accent)] transition-all duration-200"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => uploadAbortRef.current?.abort()}
+            className="px-2 py-1 rounded-md text-red-400 hover:bg-red-500/10 text-[11px] font-semibold transition-colors"
+          >
+            Отмена
+          </button>
+        </div>
+      )}
+
+      {/* Быстрое автодополнение упоминаний @username */}
+      {mentionQuery !== null && groupMembers.length > 0 && (
+        <div className="absolute bottom-full left-12 mb-2 z-40 max-h-48 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--bg-elev)] p-1.5 shadow-xl flex flex-col gap-1 min-w-[200px]">
+          {groupMembers
+            .filter(
+              (m) =>
+                m.username.toLowerCase().startsWith(mentionQuery) ||
+                m.displayName.toLowerCase().startsWith(mentionQuery)
+            )
+            .slice(0, 6)
+            .map((m) => (
+              <button
+                key={m.userId}
+                type="button"
+                onClick={() => {
+                  onChangeDraft(draft.replace(new RegExp(`@${mentionQuery}$`), `@${m.username} `))
+                  setMentionQuery(null)
+                  textRef.current?.focus()
+                }}
+                className="flex items-center gap-2 p-1.5 rounded-lg text-xs hover:bg-[var(--bg-hover)] text-left"
+              >
+                <span className="font-bold text-[var(--text)]">{m.displayName}</span>
+                <span className="text-[11px] text-[var(--text-2)]">@{m.username}</span>
+              </button>
+            ))}
+        </div>
+      )}
+
       {/* Быстрое автодополнение по двоеточию :огонь */}
       {colonQuery && Object.keys(COLON_MATCHES).some((k) => k.startsWith(colonQuery)) && (
         <div className="absolute bottom-full left-12 mb-2 z-40 flex items-center gap-1.5 rounded-xl border border-white/10 bg-[#16181c] p-1.5 shadow-xl">
@@ -450,10 +600,13 @@ export function ChatComposer({
             placeholder={
               editingMessage
                 ? 'Редактировать сообщение…'
-                : `Написать ${friendName}… (Enter — отправить, : для эмодзи)`
+                : `Написать ${friendName}… (Enter — отправить, @ соратник, : эмодзи)`
             }
             value={draft}
-            onChange={(e) => onChangeDraft(e.target.value)}
+            onChange={(e) => {
+              onChangeDraft(e.target.value)
+              onTyping?.()
+            }}
             onKeyDown={handleKeyDown}
             rows={1}
             aria-label="Текст сообщения"
