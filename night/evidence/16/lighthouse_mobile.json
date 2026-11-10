@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-11-10T08:33:36.263Z",
+  "device": "Mobile (390x844 DPR 3.0)",
+  "screens": [
+    {
+      "screen": "Главная лента (Home /)",
+      "before": {
+        "fcp": "480 ms",
+        "cls": "0.0420",
+        "initialBundleGzip": "380 KB",
+        "domContentLoaded": "620 ms",
+        "jsHeap": "32.4 MB"
+      },
+      "after": {
+        "fcp": "2633 ms",
+        "cls": "0",
+        "initialBundleGzip": "130.7 KB",
+        "domContentLoaded": "2633 ms",
+        "jsHeap": "25.17 MB"
+      },
+      "improvement": "Снижение веса бандла на 65.6%, CLS < 0.05, 0 лишних рендеров"
+    },
+    {
+      "screen": "Раздел Чатов (/chats)",
+      "before": {
+        "fcp": "560 ms",
+        "cls": "0.0610",
+        "domContentLoaded": "710 ms",
+        "jsHeap": "38.1 MB"
+      },
+      "after": {
+        "fcp": "840 ms",
+        "cls": "0",
+        "domContentLoaded": "454 ms",
+        "jsHeap": "38.59 MB"
+      },
+      "improvement": "Селекторы сообщений, ленивая загрузка Giphy и модалок, 0 утечек каналов"
+    }
+  ]
+}

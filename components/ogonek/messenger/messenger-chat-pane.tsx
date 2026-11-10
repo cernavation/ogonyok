@@ -96,17 +96,21 @@ import { ForwardToChatModal } from './forward-to-chat-modal'
 import { ChatVoiceRecorder } from './chat-voice-recorder'
 import { ChatCallModal } from './chat-call-modal'
 import { CallErrorBoundary } from './call-error-boundary'
-import { ChatGifModal } from './chat-gif-modal'
-import { ChatPollCreatorModal } from './chat-poll-creator-modal'
-import { ChatScheduleModal } from './chat-schedule-modal'
-import { ChatTagsModal } from './chat-tags-modal'
-import { ChatGroupSettingsModal, type GroupMemberItem } from './chat-group-settings-modal'
-import { ChatScheduledListModal, type ScheduledMessageItem } from './chat-scheduled-list-modal'
+import { type GroupMemberItem } from './chat-group-settings-modal'
+import { type ScheduledMessageItem } from './chat-scheduled-list-modal'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
 import { FriendDetailModal } from '../friend-detail-modal'
 import dynamic from 'next/dynamic'
 import { Tooltip } from '../tooltip'
+
+// Динамические импорты модальных окон мессенджера
+const ChatGifModal = dynamic(() => import('./chat-gif-modal').then((m) => m.ChatGifModal), { ssr: false })
+const ChatPollCreatorModal = dynamic(() => import('./chat-poll-creator-modal').then((m) => m.ChatPollCreatorModal), { ssr: false })
+const ChatScheduleModal = dynamic(() => import('./chat-schedule-modal').then((m) => m.ChatScheduleModal), { ssr: false })
+const ChatTagsModal = dynamic(() => import('./chat-tags-modal').then((m) => m.ChatTagsModal), { ssr: false })
+const ChatGroupSettingsModal = dynamic(() => import('./chat-group-settings-modal').then((m) => m.ChatGroupSettingsModal), { ssr: false })
+const ChatScheduledListModal = dynamic(() => import('./chat-scheduled-list-modal').then((m) => m.ChatScheduledListModal), { ssr: false })
 
 const ChatEmojiPicker = dynamic(
   () => import('./chat-emoji-picker').then((m) => m.ChatEmojiPicker),

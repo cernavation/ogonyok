@@ -7,7 +7,7 @@ import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { isGroupThread, sortThreadIds, totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
-import { useOgonekStore, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekSelector, useOgonekActions, shallowEqual, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
 import { getSupabase } from '@/lib/supabase/browser'
 import { subscribeToDirectMessages } from '@/lib/supabase/api'
 import { useCallStore } from '@/lib/ogonek/use-call-store'
@@ -41,8 +41,24 @@ export function MessagesView({
   currentUserId,
   currentUser,
 }: Props) {
+  const { threads, activeFriendId, folders, activeFolderId, signedIn, subscriptionTier } = useOgonekSelector(
+    (s) => ({
+      threads: s.chatThreads ?? {},
+      activeFriendId:
+        typeof s.chatActiveFriendId === 'string' &&
+        s.chatActiveFriendId !== 'undefined' &&
+        s.chatActiveFriendId !== 'null'
+          ? s.chatActiveFriendId
+          : null,
+      folders: s.chatFolders ?? [],
+      activeFolderId: s.chatActiveFolderId ?? 'all',
+      signedIn: Boolean(s.auth?.signedIn),
+      subscriptionTier: s.profile?.subscription_tier,
+    }),
+    shallowEqual
+  )
+
   const {
-    state,
     markAllThreadsRead,
     setActiveChatFriend,
     startChatWithFriend,
@@ -50,22 +66,13 @@ export function MessagesView({
     setChatFolder,
     deleteChatFolder,
     setChatActiveFolderId,
-  } = useOgonekStore()
+  } = useOgonekActions()
 
   const { startCall } = useCallStore(currentUserId)
 
   const [newChatOpen, setNewChatOpen] = useState(false)
 
-  const threads = state?.chatThreads ?? {}
   const threadIds = useMemo(() => Object.keys(threads || {}), [threads])
-  const activeFriendId =
-    typeof state?.chatActiveFriendId === 'string' &&
-    state.chatActiveFriendId !== 'undefined' &&
-    state.chatActiveFriendId !== 'null'
-      ? state.chatActiveFriendId
-      : null
-  const folders = state?.chatFolders ?? []
-  const activeFolderId = state?.chatActiveFolderId ?? 'all'
 
   const unreadTotal = useMemo(() => totalUnread(threads), [threads])
   const onlineCount = useMemo(
@@ -109,7 +116,7 @@ export function MessagesView({
     Boolean(activeFriendId) &&
     (Boolean(getFriend(activeFriendId!)) || isGroupThread(threads[activeFriendId!], activeFriendId!))
 
-  if (!currentUserId && !currentUser && !state?.auth?.signedIn) {
+  if (!currentUserId && !currentUser && !signedIn) {
     return (
       <div className="view-messages flex-1 flex flex-col p-4 bg-[var(--bg)] divide-y divide-[var(--border)]/40">
         <ListRowSkeleton />
@@ -165,7 +172,7 @@ export function MessagesView({
             onDeleteCustomFolder={deleteChatFolder}
             soundEnabled={soundEnabled}
             onStartCall={(peerId, isVideo, peerName, peerAvatar) => {
-              const userTier = normalizeTier(state?.profile?.subscription_tier)
+              const userTier = normalizeTier(subscriptionTier)
               startCall({
                 peerId,
                 isVideo,

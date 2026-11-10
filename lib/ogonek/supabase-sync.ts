@@ -547,36 +547,52 @@ export class SupabaseRestClient {
 
   private async request<T>(
     path: string,
-    opts: { method?: string; body?: unknown; headers?: Record<string, string> } = {}
+    opts: { method?: string; body?: unknown; headers?: Record<string, string> } = {},
+    retries = 3,
+    backoffMs = 300
   ): Promise<RestResponse<T>> {
-    const url = `${this.config.url}${path}`
-    try {
-      const res = await fetch(url, {
-        method: opts.method ?? 'GET',
-        headers: this.headers(opts.headers),
-        body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
-      })
-      const text = await res.text()
-      let data: unknown = null
-      if (text) {
-        try {
-          data = JSON.parse(text)
-        } catch {
-          data = text
+    let attempt = 0
+    while (attempt <= retries) {
+      attempt++
+      const url = `${this.config.url}${path}`
+      try {
+        const res = await fetch(url, {
+          method: opts.method ?? 'GET',
+          headers: this.headers(opts.headers),
+          body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+        })
+        const text = await res.text()
+        let data: unknown = null
+        if (text) {
+          try {
+            data = JSON.parse(text)
+          } catch {
+            data = text
+          }
+        }
+        if (!res.ok) {
+          // При временных сбоях (5xx, 429) выполняем экспоненциальный retry
+          if ((res.status >= 500 || res.status === 429) && attempt <= retries) {
+            await new Promise((r) => setTimeout(r, backoffMs * Math.pow(2, attempt - 1)))
+            continue
+          }
+          return { ok: false, status: res.status, data: null, error: extractError(data, `HTTP ${res.status}`) }
+        }
+        return { ok: true, status: res.status, data: (data as T) ?? null, error: null }
+      } catch (err) {
+        if (attempt <= retries) {
+          await new Promise((r) => setTimeout(r, backoffMs * Math.pow(2, attempt - 1)))
+          continue
+        }
+        return {
+          ok: false,
+          status: 0,
+          data: null,
+          error: err instanceof Error ? err.message : 'Нет соединения с Supabase',
         }
       }
-      if (!res.ok) {
-        return { ok: false, status: res.status, data: null, error: extractError(data, `HTTP ${res.status}`) }
-      }
-      return { ok: true, status: res.status, data: (data as T) ?? null, error: null }
-    } catch (err) {
-      return {
-        ok: false,
-        status: 0,
-        data: null,
-        error: err instanceof Error ? err.message : 'Нет соединения с Supabase',
-      }
     }
+    return { ok: false, status: 0, data: null, error: 'Исчерпаны попытки отправки' }
   }
 
   /** SELECT строк таблицы (query вида `select=*&user_id=eq.xxx`) */
@@ -1247,8 +1263,15 @@ function mergeRows<T extends RowWithClientId>(
       continue
     }
     const localRow = result[at]
-    if (isLocallyDirty(table, remote.client_id, localRow, meta)) continue
-    if (!isRemoteNewer(table, remote.client_id, remote.client_updated_at, meta)) continue
+    if (isLocallyDirty(table, remote.client_id, localRow, meta)) {
+      console.log(`[SyncConflict] Table ${table} id ${remote.client_id}: local row has pending edits; local change wins`)
+      continue
+    }
+    if (!isRemoteNewer(table, remote.client_id, remote.client_updated_at, meta)) {
+      console.log(`[SyncConflict] Table ${table} id ${remote.client_id}: local row is newer or equal (${localRow.client_updated_at} >= ${remote.client_updated_at}); local wins`)
+      continue
+    }
+    console.log(`[SyncConflict] Table ${table} id ${remote.client_id}: remote row is newer (${remote.client_updated_at}); remote wins`)
     result[at] = remote
     changed += 1
     if (remote.client_updated_at) meta.remoteTimestamps[key] = remote.client_updated_at
@@ -1753,15 +1776,22 @@ export async function pushSnapshot(
     fingerprintsByTable.set(table, map)
   }
 
+  const BATCH_SIZE = 50
   for (const table of TABLE_ORDER) {
     const rows = plan.upserts[table]
     if (!rows || rows.length === 0) continue
     const payload = rows.map((row) => withUser(row, table, userId, timestamp))
-    const res = await client.upsert(table, payload, ON_CONFLICT[table])
-    if (!res.ok) {
-      return { ok: false, pushed, deleted, error: res.error ?? `Не удалось записать ${table}`, meta: nextMeta }
+    
+    // Пакетная отправка (batching по 50 записей) для предотвращения таймаутов
+    for (let i = 0; i < payload.length; i += BATCH_SIZE) {
+      const chunk = payload.slice(i, i + BATCH_SIZE)
+      const res = await client.upsert(table, chunk, ON_CONFLICT[table])
+      if (!res.ok) {
+        return { ok: false, pushed, deleted, error: res.error ?? `Не удалось записать ${table}`, meta: nextMeta }
+      }
+      pushed += chunk.length
     }
-    pushed += payload.length
+
     const map = fingerprintsByTable.get(table)
     if (map) {
       for (const row of entries[table]) {

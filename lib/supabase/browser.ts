@@ -127,6 +127,27 @@ export function getSupabase(): SupabaseClient | null {
         },
       },
     })
+
+    // Автоматическое переподключение Realtime при восстановлении сети или пробуждении из сна
+    if (typeof window !== 'undefined') {
+      const handleReconnect = () => {
+        try {
+          if (navigator.onLine && browserClient?.realtime) {
+            console.log('[Supabase Realtime] Автоматическое переподключение после смены сети / выхода из сна')
+            browserClient.realtime.connect()
+          }
+        } catch (err) {
+          console.warn('[Supabase Realtime] Ошибка авто-переподключения:', err)
+        }
+      }
+
+      window.addEventListener('online', handleReconnect)
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          handleReconnect()
+        }
+      })
+    }
   }
   return browserClient
 }

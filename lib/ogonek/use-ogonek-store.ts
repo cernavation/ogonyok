@@ -643,6 +643,51 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       client_updated_at: nowISO,
     }
 
+    // 1. Быстрое атомарное сохранение через единый RPC save_day (решение проблемы N+1 в одной транзакции)
+    try {
+      const singleRpcPayload = {
+        ...dayRow,
+        prides: (day.prides || []).map((p, idx) => ({
+          client_id: `${clientId}_p_${idx + 1}`,
+          num: String(p.num || idx + 1).padStart(2, '0'),
+          text: p.text || '',
+          scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
+          overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
+          visibility: p.visibility || day.visibility || 'public',
+          groupIds: p.groupIds || [],
+        })),
+        gratitudes: (day.gratitudes || []).map((g, idx) => {
+          const isObj = typeof g === 'object' && g !== null
+          return {
+            client_id: `${clientId}_g_${idx + 1}`,
+            num: isObj && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+            text: typeof g === 'string' ? g : (isObj ? g.text : '') || '',
+            rating: isObj && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
+            visibility: isObj && g.visibility ? g.visibility : day.visibility || 'public',
+            groupIds: isObj ? (g.groupIds || []) : [],
+          }
+        }),
+      }
+
+      const { data: rpcData, error: rpcError } = await supabase.rpc('save_day', {
+        p_payload: singleRpcPayload,
+      })
+
+      if (!rpcError && rpcData?.ok) {
+        // Успешно сохранено одним запросом!
+        const allDays = getSnapshot().days
+        const newStreak = calculateStreak(allDays)
+        await supabase
+          .from('profiles')
+          .update({ streak_count: newStreak, updated_at: nowISO })
+          .eq('id', uid)
+        return { ok: true }
+      }
+    } catch (rpcErr) {
+      console.warn('[Ogonek] save_day RPC fallback to legacy upsert:', rpcErr)
+    }
+
+    // 2. Фолбэк на прямой upsert (если RPC ещё не накат в базе)
     const prideRows = (day.prides || []).map((p, idx) => ({
       user_id: uid,
       day_client_id: clientId,

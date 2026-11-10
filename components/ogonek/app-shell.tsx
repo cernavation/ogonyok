@@ -22,20 +22,12 @@ import { Toast, type ToastMessage } from './toast'
 import { OfflineBanner } from './offline-banner'
 import { TooltipProvider } from './tooltip'
 import { SupabaseSyncBootstrap } from './supabase-sync-bootstrap'
-import { AnalyticsView } from './views/analytics-view'
 import { ExploreView } from './views/explore-view'
 import { HomeView } from './views/home-view'
 import { ComradesView } from './views/comrades-view'
 import { IntentionsView } from './views/intentions-view'
-import { MessagesView } from './views/messages-view'
 import { ProfileView } from './views/profile-view'
-import { SettingsView } from './views/settings-view'
-import { VaultView } from './views/vault-view'
-import { LeaderboardView } from './views/leaderboard-view'
-import { PremiumView } from './views/premium-view'
-import { GuestLanding } from './landing/guest-landing'
 import { ChatWindow } from './messenger/chat-window'
-import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
 import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
@@ -51,7 +43,15 @@ import {
   playMissedCallSound,
 } from '@/lib/ogonek/notification-sound'
 
-// Динамические импорты тяжелых модальных окон (Zero Initial Lag, 120 FPS сплиттинг)
+// Динамические импорты тяжелых экранов и модальных окон (Zero Initial Lag, код-сплиттинг бандла)
+const AnalyticsView = dynamic(() => import('./views/analytics-view').then((m) => m.AnalyticsView), { ssr: false })
+const MessagesView = dynamic(() => import('./views/messages-view').then((m) => m.MessagesView), { ssr: false })
+const SettingsView = dynamic(() => import('./views/settings-view').then((m) => m.SettingsView), { ssr: false })
+const VaultView = dynamic(() => import('./views/vault-view').then((m) => m.VaultView), { ssr: false })
+const LeaderboardView = dynamic(() => import('./views/leaderboard-view').then((m) => m.LeaderboardView), { ssr: false })
+const PremiumView = dynamic(() => import('./views/premium-view').then((m) => m.PremiumView), { ssr: false })
+const GuestLanding = dynamic(() => import('./landing/guest-landing').then((m) => m.GuestLanding), { ssr: false })
+const FullscreenMessenger = dynamic(() => import('./messenger/fullscreen-messenger').then((m) => m.FullscreenMessenger), { ssr: false })
 const Composer = dynamic(() => import('./composer').then((m) => m.Composer), { ssr: false })
 const AuthModal = dynamic(() => import('./auth').then((m) => m.AuthModal), { ssr: false })
 const ChatCallModal = dynamic(() => import('./messenger/chat-call-modal').then((m) => m.ChatCallModal), { ssr: false })

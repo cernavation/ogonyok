@@ -6,12 +6,38 @@ export function ServiceWorkerRegister() {
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&
-      'serviceWorker' in navigator
+      'serviceWorker' in navigator &&
+      process.env.NODE_ENV === 'production'
     ) {
-      // Register after page load for optimal TTI
+      // Регистрация Service Worker после полной загрузки страницы для максимального TTI
       const handleLoad = () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {
-          // Ignore registration failures in development or unsupported contexts
+        navigator.serviceWorker
+          .register('/sw.js')
+          .then((reg) => {
+            // Проверка обновлений при каждом открытии страницы
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('[SW] Обнаружена новая версия приложения. Активируем...')
+                    newWorker.postMessage({ type: 'SKIP_WAITING' })
+                  }
+                })
+              }
+            })
+          })
+          .catch(() => {
+            // Игнорируем ошибки в dev-режиме или при неподдерживаемых контекстах
+          })
+
+        // При смене контроллера (активации нового SW) гарантируем доставку свежих ресурсов
+        let refreshing = false
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true
+            console.log('[SW] Новый Service Worker активирован.')
+          }
         })
       }
 

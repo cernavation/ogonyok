@@ -1,0 +1,26 @@
+{
+  "testSuite": "Realtime Singleton & Channel Leaks Audit (Stage 16)",
+  "timestamp": "2026-11-10T08:32:44.276Z",
+  "channelsTested": 50,
+  "initialChannels": 0,
+  "finalChannels": 0,
+  "leaksDetected": 0,
+  "allPassed": true,
+  "asserts": [
+    {
+      "test": "1. Синглтон Supabase клиента (ровно одно WebSocket-соединение)",
+      "passed": true,
+      "detail": "Экземпляры идентичны (client1 === client2)"
+    },
+    {
+      "test": "2. Отсутствие утечек каналов при 50 последовательных переключениях чатов",
+      "passed": true,
+      "detail": "Каналов до: 0, каналов после: 0 (дельта = 0)"
+    },
+    {
+      "test": "3. Обработчики online и visibilitychange зарегистрированы для авто-переподключения",
+      "passed": true,
+      "detail": "Слушатели online и visibilitychange вызывают browserClient.realtime.connect()"
+    }
+  ]
+}

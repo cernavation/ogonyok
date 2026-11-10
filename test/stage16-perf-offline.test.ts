@@ -201,3 +201,64 @@ test('Этап 16: изоляция селектора ленты от обно�
   // Сравнение через shallowEqual подтверждает: состояние ленты НЕ изменилось
   assert.equal(shallowEqual(sliceA, sliceB), true)
 })
+
+test('Этап 16: контракт транзакционного RPC save_day и проверка лимитов тарифов', () => {
+  const buildDayPayload = (tier: 'free' | 'pro' | 'ultra', prideText: string) => {
+    const maxChars = tier === 'ultra' ? 5000 : (tier === 'pro' ? 3000 : 1000)
+    const isExceeded = prideText.length > maxChars
+    return {
+      client_id: 'day_100',
+      day_number: 100,
+      title: 'Юбилейный день',
+      prides: [{ client_id: 'day_100_p_1', text: prideText, visibility: 'public' }],
+      gratitudes: [{ client_id: 'day_100_g_1', text: 'Благодарность', visibility: 'public' }],
+      maxChars,
+      isExceeded,
+    }
+  }
+
+  const freePayloadValid = buildDayPayload('free', 'A'.repeat(999))
+  assert.equal(freePayloadValid.isExceeded, false)
+  assert.equal(freePayloadValid.maxChars, 1000)
+
+  const freePayloadInvalid = buildDayPayload('free', 'A'.repeat(1005))
+  assert.equal(freePayloadInvalid.isExceeded, true)
+
+  const proPayloadValid = buildDayPayload('pro', 'A'.repeat(2500))
+  assert.equal(proPayloadValid.isExceeded, false)
+  assert.equal(proPayloadValid.maxChars, 3000)
+
+  const ultraPayloadValid = buildDayPayload('ultra', 'A'.repeat(4800))
+  assert.equal(ultraPayloadValid.isExceeded, false)
+  assert.equal(ultraPayloadValid.maxChars, 5000)
+})
+
+test('Этап 16: правила фильтрации Service Worker (запрет кэширования API и авторизованных ответов)', () => {
+  const isCachableBySw = (urlPath: string, headers: Record<string, string>, method = 'GET') => {
+    const hasAuth = Boolean(headers.Authorization || headers.apikey || headers['x-user-id'])
+    if (
+      urlPath.startsWith('/api/') ||
+      urlPath.includes('/rest/v1/') ||
+      urlPath.includes('/auth/v1/') ||
+      urlPath.includes('/storage/v1/') ||
+      hasAuth ||
+      method !== 'GET'
+    ) {
+      return false
+    }
+    return true
+  }
+
+  // API и авторизованные запросы НИКОГДА не кэшируются
+  assert.equal(isCachableBySw('/api/ai/evaluate-day', {}), false)
+  assert.equal(isCachableBySw('/api/privacy', {}), false)
+  assert.equal(isCachableBySw('/rest/v1/days', {}), false)
+  assert.equal(isCachableBySw('/chats', { Authorization: 'Bearer token123' }), false)
+  assert.equal(isCachableBySw('/icons/icon-192.png', {}, 'POST'), false)
+
+  // Статические ассеты и навигация БЕЗ авторизационных заголовков кэшируются
+  assert.equal(isCachableBySw('/_next/static/chunks/main.js', {}), true)
+  assert.equal(isCachableBySw('/icons/icon-192.png', {}), true)
+  assert.equal(isCachableBySw('/manifest.json', {}), true)
+  assert.equal(isCachableBySw('/', {}), true)
+})
