@@ -3,6 +3,7 @@
 import {
   BookmarkPlus,
   Check,
+  Clock,
   Flame,
   Globe,
   Heart,
@@ -19,11 +20,12 @@ import {
   Users,
   Zap,
 } from 'lucide-react'
+import Image from 'next/image'
 import { motion, useReducedMotion } from 'framer-motion'
 import { memo, useMemo, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { playClick } from '@/lib/ogonek/sound'
-import { resolvePhotoUrl } from '@/lib/ogonek/photos'
+import { resolvePhotoUrl, generateShimmerBlurDataUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
 import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
@@ -430,6 +432,8 @@ function DayCardComponent({
               <img
                 src={effectiveAvatarSrc}
                 alt={displayName}
+                width={40}
+                height={40}
                 className="w-10 h-10 rounded-full object-cover border border-[var(--line)]"
               />
             ) : (
@@ -512,6 +516,15 @@ function DayCardComponent({
                 >
                   День #{day.id}
                 </span>
+                {day.isOfflinePending && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    title="Запись сохранена на этом устройстве и будет отправлена при появлении связи"
+                  >
+                    <Clock size={11} className="animate-spin text-amber-400" />
+                    Сохранено локально, отправится при появлении сети
+                  </span>
+                )}
                 {(() => {
                   const dayNum = Number((day as any).day_number || (day as any).dayNumber || day.id) || 1
                   if (dayNum > 0 && dayNum % 100 === 0) {
@@ -757,12 +770,12 @@ function DayCardComponent({
               </div>
             )}
 
-            {/* Photos */}
+            {/* Photos with fixed aspect ratio to eliminate layout shifts (CLS < 0.1) */}
             {photoUrls.length > 0 && (
               <div className="mt-3">
                 <div
                   className={`overflow-hidden rounded-2xl border border-[var(--line)] ${
-                    photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
+                    photoUrls.length === 1 ? 'aspect-[16/9] max-h-[380px]' : 'grid grid-cols-2 gap-0.5 aspect-[16/9] max-h-[380px]'
                   }`}
                 >
                   {photoUrls.map((url, i) => (
@@ -770,14 +783,18 @@ function DayCardComponent({
                       key={url}
                       type="button"
                       onClick={() => setMediaIndex(i)}
-                      className="block w-full focus:outline-none"
+                      className="relative block w-full h-full focus:outline-none bg-[var(--surface2)] overflow-hidden"
                       aria-label={`Открыть фото ${i + 1}`}
                     >
-                      <img
+                      <Image
                         src={url}
                         alt="Фото дня"
-                        loading="lazy"
-                        className="w-full max-h-[380px] object-cover"
+                        fill
+                        sizes="(max-width: 768px) 100vw, 600px"
+                        placeholder="blur"
+                        blurDataURL={generateShimmerBlurDataUrl(600, 338)}
+                        className="object-cover transition-opacity duration-300"
+                        unoptimized={url.startsWith('blob:') || url.startsWith('data:')}
                       />
                     </button>
                   ))}

@@ -25,7 +25,12 @@ import { getInitials } from '@/lib/ogonek/initials'
 import { totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import {
+  useOgonekSelector,
+  useCurrentUser,
+  useOgonekActions,
+  shallowEqual,
+} from '@/lib/ogonek/use-ogonek-store'
 import { getSocialCounts } from '@/lib/ogonek/social'
 import { useUnreadCounts } from '@/lib/ogonek/use-unread-counts'
 import { Tooltip } from './tooltip'
@@ -332,10 +337,21 @@ export function Sidebar({
   className,
   isCollapsed: propIsCollapsed,
 }: Props) {
-  const { state, signOut, currentUser } = useOgonekStore()
-  const currentUid = currentUser?.id || state.auth?.activeAccountId
+  const { profile, activeAccountId, chatThreads, soundEnabled } = useOgonekSelector(
+    (s) => ({
+      profile: s.profile,
+      activeAccountId: s.auth?.activeAccountId,
+      chatThreads: s.chatThreads,
+      soundEnabled: s.soundEnabled,
+    }),
+    shallowEqual
+  )
+  const currentUser = useCurrentUser()
+  const { signOut } = useOgonekActions()
+
+  const currentUid = currentUser?.id || activeAccountId
   const { counts: unreadCounts } = useUnreadCounts(currentUid)
-  const unreadChats = unreadCounts.chats > 0 ? unreadCounts.chats : totalUnread(state.chatThreads ?? {})
+  const unreadChats = unreadCounts.chats > 0 ? unreadCounts.chats : totalUnread(chatThreads ?? {})
   const unreadComrades = unreadCounts.comrades > 0 ? unreadCounts.comrades : 0
   const unreadNotifications = unreadCounts.notifications
   const [socialCounts, setSocialCounts] = useState({ incomingRequests: 0 })
@@ -345,13 +361,13 @@ export function Sidebar({
   const isCollapsed = Boolean(propIsCollapsed ?? (view === 'messages'))
 
   useEffect(() => {
-    const uid = currentUser?.id || state.auth?.activeAccountId
+    const uid = currentUser?.id || activeAccountId
     if (uid) {
       getSocialCounts(uid).then((counts) => {
         setSocialCounts({ incomingRequests: counts.incomingRequests })
       }).catch(() => null)
     }
-  }, [currentUser?.id, state.auth?.activeAccountId])
+  }, [currentUser?.id, activeAccountId])
 
   useEffect(() => {
     if (!isMenuOpen) return
@@ -371,8 +387,8 @@ export function Sidebar({
     }
   }, [isMenuOpen])
 
-  const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
-  const username = currentUser?.username || state.profile.username || 'user'
+  const displayName = currentUser?.displayName || profile.displayName || 'Пользователь'
+  const username = currentUser?.username || profile.username || 'user'
   const initials = getInitials(displayName, username)
   const isAuthor =
     !username ||
@@ -383,7 +399,7 @@ export function Sidebar({
     displayName.toLowerCase().includes('черняк')
   const avatarImage =
     currentUser?.avatarImage ||
-    state.profile.avatarImage ||
+    profile.avatarImage ||
     (isAuthor ? '/author-avatar.png' : null)
 
   const handleSignOut = () => {
@@ -395,7 +411,7 @@ export function Sidebar({
   const renderNavItem = ({ id, label }: NavItemDef) => {
     const isActive = view === id
     const handleClick = () => {
-      playClick(state.soundEnabled)
+      playClick(soundEnabled)
       if (id === 'intentions') {
         onFocusIntentions()
       } else {
@@ -489,7 +505,7 @@ export function Sidebar({
               : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 gap-2.5 mx-auto xl:mx-0'
           }`}
           onClick={() => {
-            playClick(state.soundEnabled)
+            playClick(soundEnabled)
             onNavigate('home')
           }}
           role="button"
@@ -524,7 +540,7 @@ export function Sidebar({
                 : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
             }`}
             onClick={() => {
-              playClick(state.soundEnabled)
+              playClick(soundEnabled)
               onCompose()
             }}
             aria-label="Записать день"
@@ -570,7 +586,7 @@ export function Sidebar({
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left"
                 onClick={() => {
-                  playClick(state.soundEnabled)
+                  playClick(soundEnabled)
                   setIsMenuOpen(false)
                   if (onOpenProfile) onOpenProfile()
                   else onNavigate('profile')
@@ -583,7 +599,7 @@ export function Sidebar({
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] text-[var(--text)] rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left"
                 onClick={() => {
-                  playClick(state.soundEnabled)
+                  playClick(soundEnabled)
                   setIsMenuOpen(false)
                   onNavigate('settings')
                 }}
@@ -597,7 +613,7 @@ export function Sidebar({
                 type="button"
                 className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] font-semibold text-rose-500 rounded-full hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-150 text-left"
                 onClick={() => {
-                  playClick(state.soundEnabled)
+                  playClick(soundEnabled)
                   handleSignOut()
                 }}
               >
@@ -615,7 +631,7 @@ export function Sidebar({
               : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3 xl:pl-1 xl:pr-3 xl:py-2 justify-center xl:justify-start rounded-full mx-auto xl:mx-0'
           }`}
           onClick={() => {
-            playClick(state.soundEnabled)
+            playClick(soundEnabled)
             setIsMenuOpen(!isMenuOpen)
           }}
           aria-haspopup="menu"

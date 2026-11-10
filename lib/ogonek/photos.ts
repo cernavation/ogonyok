@@ -134,34 +134,75 @@ export function revokePhotoUrl(url: string | null): void {
 }
 
 /**
+ * Генерирует data-URL SVG шиммера для плавного placeholder без скачков верстки (CLS = 0)
+ */
+export function generateShimmerBlurDataUrl(width = 700, height = 475): string {
+  const shimmerSvg = `
+<svg width="${width}" height="${height}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="shimmer-g">
+      <stop stop-color="#18181b" offset="20%" />
+      <stop stop-color="#27272a" offset="50%" />
+      <stop stop-color="#18181b" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${width}" height="${height}" fill="#18181b" />
+  <rect id="r" width="${width}" height="${height}" fill="url(#shimmer-g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${width}" to="${width}" dur="1.2s" repeatCount="indefinite" />
+</svg>`
+
+  if (typeof window === 'undefined') {
+    return `data:image/svg+xml;base64,${Buffer.from(shimmerSvg).toString('base64')}`
+  }
+  return `data:image/svg+xml;base64,${window.btoa(shimmerSvg)}`
+}
+
+/**
  * Загружает фото дня в Supabase Storage (канонический бакет ogonyok-media)
- * и возвращает постоянный публичный URL.
+ * с предварительным клиентским сжатием до 1920px и возвращает постоянный публичный URL.
  */
 export async function uploadDayPhotoToStorage(
   fileOrBlob: File | Blob,
   fileName?: string
-): Promise<{ ok: boolean; url?: string; error?: string }> {
+): Promise<{ ok: boolean; url?: string; error?: string; width?: number; height?: number }> {
   try {
     const { getSupabase } = await import('@/lib/supabase/browser')
     const { BUCKET_OGONYOK_MEDIA } = await import('@/lib/supabase/buckets')
+    const { compressImageOnClient } = await import('@/lib/ogonek/chat-media')
     const supabase = getSupabase()
     if (!supabase) return { ok: false, error: 'База данных не подключена' }
 
-    const ext = fileOrBlob.type ? fileOrBlob.type.split('/')[1] || 'jpg' : 'jpg'
+    // 1. Клиентское сжатие изображения (макс 1920px, WebP/JPEG ~0.85)
+    let uploadTarget: Blob = fileOrBlob
+    let imgWidth = 1920
+    let imgHeight = 1080
+
+    if (fileOrBlob.type && fileOrBlob.type.startsWith('image/')) {
+      try {
+        const compressed = await compressImageOnClient(fileOrBlob, 1920, 0.85)
+        uploadTarget = compressed.blob
+        imgWidth = compressed.width
+        imgHeight = compressed.height
+      } catch (compErr) {
+        console.warn('[Photos] Client compression skipped, uploading original:', compErr)
+      }
+    }
+
+    const ext = uploadTarget.type ? uploadTarget.type.split('/')[1] || 'jpg' : 'jpg'
     const cleanName = fileName ? fileName.replace(/[^a-zA-Z0-9._-]/g, '_') : `photo.${ext}`
     const storagePath = `photos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${cleanName}`
 
     const { error: uploadError } = await supabase.storage
       .from(BUCKET_OGONYOK_MEDIA)
-      .upload(storagePath, fileOrBlob, {
-        contentType: fileOrBlob.type || 'image/jpeg',
+      .upload(storagePath, uploadTarget, {
+        contentType: uploadTarget.type || 'image/jpeg',
         cacheControl: '31536000',
         upsert: true,
       })
 
     if (!uploadError) {
       const { data } = supabase.storage.from(BUCKET_OGONYOK_MEDIA).getPublicUrl(storagePath)
-      return { ok: true, url: data.publicUrl }
+      return { ok: true, url: data.publicUrl, width: imgWidth, height: imgHeight }
     }
 
     return { ok: false, error: uploadError.message }

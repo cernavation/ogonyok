@@ -33,7 +33,12 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import {
+  useOgonekSelector,
+  useCurrentUser,
+  useOgonekActions,
+  shallowEqual,
+} from '@/lib/ogonek/use-ogonek-store'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import {
@@ -127,9 +132,18 @@ export function MessengerChatPane({
   onNotify,
   soundEnabled = true,
 }: Props) {
+  // Этап 16: Селектор среза чата изолирует мессенджер от ленты, записей и черновиков
+  const { auth, chatThreads, customEmojis, profile } = useOgonekSelector(
+    (s) => ({
+      auth: s.auth,
+      chatThreads: s.chatThreads,
+      customEmojis: s.customEmojis,
+      profile: s.profile,
+    }),
+    shallowEqual
+  )
+  const currentUser = useCurrentUser()
   const {
-    state,
-    currentUser,
     sendChatMessage,
     receiveIncomingChatMessage,
     updateIncomingChatMessage,
@@ -148,7 +162,11 @@ export function MessengerChatPane({
     transcribeVoiceMessage,
     voteInPoll,
     toggleMessageLabel,
-  } = useOgonekStore()
+  } = useOgonekActions()
+
+  if (typeof window !== 'undefined') {
+    (window as any).__OGONEK_CHAT_RENDER_COUNT__ = ((window as any).__OGONEK_CHAT_RENDER_COUNT__ || 0) + 1
+  }
 
   // Состояние чата
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
@@ -199,7 +217,7 @@ export function MessengerChatPane({
 
   const [peerProfile, setPeerProfile] = useState<ProfileRecord | null>(null)
 
-  const currentUserId = currentUserIdProp || state.auth?.activeAccountId || currentUser?.id || 'local-user'
+  const currentUserId = currentUserIdProp || auth?.activeAccountId || currentUser?.id || 'local-user'
 
   const targetPeerId = useMemo(() => {
     if (!friendId) return null
@@ -210,7 +228,7 @@ export function MessengerChatPane({
     return friendId
   }, [friendId, currentUserId])
 
-  const thread = friendId ? threadOf(state.chatThreads ?? {}, friendId) : null
+  const thread = friendId ? threadOf(chatThreads ?? {}, friendId) : null
   const isGroup = friendId ? isGroupThread(thread ?? undefined, friendId) : false
   const isSaved = friendId === 'saved-messages'
   const friend = targetPeerId && !isGroup && !isSaved ? getFriend(targetPeerId) : null
@@ -275,8 +293,8 @@ export function MessengerChatPane({
         const threadKey = getDirectThreadKey(currentUserId, friendId)
         const myName =
           currentUser?.displayName ||
-          state.profile.displayName ||
-          state.profile.username ||
+          profile.displayName ||
+          profile.username ||
           'Соратник'
         const typingChannel = supabase.channel(`typing_${threadKey}`)
         typingChannel.subscribe((status) => {
@@ -581,7 +599,7 @@ export function MessengerChatPane({
 
   const handleStartCall = async (video: boolean) => {
     playClick(soundEnabled)
-    const userTier = normalizeTier(state.profile.subscription_tier)
+    const userTier = normalizeTier(profile.subscription_tier)
     const limits = getTierLimits(userTier)
 
     if (video && !limits.videoCalls) {
@@ -630,10 +648,10 @@ export function MessengerChatPane({
 
       const callerName =
         currentUser?.displayName ||
-        state.profile.displayName ||
-        state.profile.username ||
+        profile.displayName ||
+        profile.username ||
         'Соратник'
-      const callerAvatar = currentUser?.avatarImage || state.profile.avatarImage || null
+      const callerAvatar = currentUser?.avatarImage || profile.avatarImage || null
 
       receiverChannel.subscribe((status) => {
         if (status === 'SUBSCRIBED') {
@@ -1168,8 +1186,8 @@ export function MessengerChatPane({
                           <ChatMessageBubble
                             message={msg}
                             isMine={isMineMsg}
-                            resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
-                            customEmojis={state.customEmojis}
+                            resolveChar={(emojiId) => resolveEmojiChar(emojiId, customEmojis)}
+                            customEmojis={customEmojis}
                             onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
                             onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
                             onReply={(m) => setReplyingTo(m)}
@@ -1750,7 +1768,7 @@ export function MessengerChatPane({
         <ChatScheduledListModal
           threadKey={friendId || 'direct'}
           scheduledMessages={scheduledItems}
-          tier={normalizeTier(state.profile.tier || state.profile.subscription_tier)}
+          tier={normalizeTier(profile.tier || profile.subscription_tier)}
           onSendNow={async (id) => {
             const ok = await sendScheduledMessageNow(id)
             if (ok) {

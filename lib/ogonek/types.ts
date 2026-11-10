@@ -133,6 +133,8 @@ export type Day = {
   user_id?: string
   userId?: string
   author?: any
+  /** Индикатор ожидания фоновой синхронизации (сохранено в оффлайне) */
+  isOfflinePending?: boolean
 }
 
 /** Пользовательский смайлик/эмодзи, созданный в конструкторе реакций */

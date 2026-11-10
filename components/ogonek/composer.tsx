@@ -8,7 +8,11 @@ import { savePhoto, resolvePhotoUrl, uploadDayPhotoToStorage } from '@/lib/ogone
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OgonekGroup, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import {
+  useOgonekSelector,
+  useOgonekActions,
+  shallowEqual,
+} from '@/lib/ogonek/use-ogonek-store'
 import { getTierLimits, TIER_NAMES, normalizeTier } from '@/lib/ogonek/permissions'
 import { dispatchUpgradeModal } from '@/components/ogonek/billing/upgrade-modal'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
@@ -286,10 +290,16 @@ export function Composer({
     return true
   })
 
-  // ── ЭТАП 9: приватность дня и каждой гордости отдельно ──────────────────
-  const { postMyStory, state: storeState } = useOgonekStore()
-  const myAvatarSrc = usePhotoUrl(storeState.profile.avatarImage)
-  const defaultVis: VisibilityLevel = storeState.privacy?.defaultDayVisibility || 'public'
+  // ── ЭТАП 9 & 16: селектор среза профиля и приватности (изоляция от чатов) ────
+  const { profile, defaultVis } = useOgonekSelector(
+    (s) => ({
+      profile: s.profile,
+      defaultVis: (s.privacy?.defaultDayVisibility || 'public') as VisibilityLevel,
+    }),
+    shallowEqual
+  )
+  const { postMyStory } = useOgonekActions()
+  const myAvatarSrc = usePhotoUrl(profile.avatarImage)
 
   /** Приватность всего дня */
   const [dayVisibility, setDayVisibility] = useState<VisibilityLevel>(() => {
@@ -537,9 +547,9 @@ export function Composer({
   const filledGratitudes = gratitudes.filter((g) => g.trim().length > 0)
   const totalFilled = filledPrides.length + filledGratitudes.length
 
-  const userLevel = storeState.profile?.level || 3
-  const userTier = storeState.profile?.subscription_tier || 'free'
-  const validUntil = storeState.profile?.subscription_valid_until
+  const userLevel = profile?.level || 3
+  const userTier = profile?.subscription_tier || 'free'
+  const validUntil = profile?.subscription_valid_until
   const tierLimits = getTierLimits(userTier, validUntil)
   const maxChars = tierLimits.maxCharsPerEntry
 
@@ -1275,11 +1285,11 @@ export function Composer({
             scale={evaluations[storyModalIndex]?.scale}
             dayId={editingDay?.id ?? null}
             dayLabel={storyDayLabel}
-            displayName={storeState.profile.displayName}
-            username={storeState.profile.username}
-            avatarColor={storeState.profile.avatarColor}
+            displayName={profile.displayName}
+            username={profile.username}
+            avatarColor={profile.avatarColor}
             avatarSrc={myAvatarSrc}
-            verified={storeState.profile.verified}
+            verified={profile.verified}
             defaultVisibility={normalizeVisibility(prideVis[storyModalIndex] ?? dayVisibility)}
             onPublish={postMyStory}
             onClose={() => setStoryModalIndex(null)}

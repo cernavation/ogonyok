@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
-import { getSupabase } from '../supabase/browser'
+import { useSyncExternalStoreWithSelector } from 'use-sync-external-store/shim/with-selector'
+import { enqueueOfflineDay, processOfflineQueue } from './offline-queue.ts'
+import { getSupabase } from '../supabase/browser.ts'
 import { getTierLimits } from './permissions.ts'
 import {
   updateProfileInDb,
@@ -880,6 +882,30 @@ function emitChange() {
   listeners.forEach((listener) => listener())
 }
 
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    processOfflineQueue(async (queuedDay) => {
+      const res = await syncDayToSupabase(queuedDay)
+      if (res.ok) {
+        const current = getSnapshot()
+        const updatedDays = current.days.map((d) =>
+          d.id === queuedDay.id ? { ...d, isOfflinePending: false } : d
+        )
+        cachedState = { ...current, days: updatedDays }
+        saveStore(cachedState)
+        emitChange()
+      }
+      return res
+    }).then(({ synced }) => {
+      if (synced > 0) {
+        console.log(`[Ogonek] Offline sync complete: ${synced} entries synced.`)
+      }
+    }).catch((err) => {
+      console.warn('[Ogonek] Offline sync error:', err)
+    })
+  })
+}
+
 /** Результат операции входа/регистрации/переключения аккаунта */
 export type AuthResult = {
   ok: boolean
@@ -964,60 +990,128 @@ export function getCachedProfile(): OgonekStoreState['profile'] {
   return getSnapshot().profile
 }
 
+import { shallowEqual } from './perf-storage.ts'
+export { shallowEqual }
+
 /**
- * Селектор стора, возвращающий примитив или стабильный объект.
+ * Селектор стора с shallow-сравнением через useSyncExternalStoreWithSelector.
  * Предотвращает лишние ре-рендеры дерева компонентов при нерелевантных обновлениях.
  */
-export function useOgonekSelector<T>(selector: (state: OgonekStoreState) => T): T {
-  return useSyncExternalStore(
+export function useOgonekSelector<T>(
+  selector: (state: OgonekStoreState) => T,
+  isEqual: (a: T, b: T) => boolean = shallowEqual
+): T {
+  return useSyncExternalStoreWithSelector(
     subscribe,
-    () => selector(getSnapshot()),
-    () => selector(getServerSnapshot())
+    getSnapshot,
+    getServerSnapshot,
+    selector,
+    isEqual
+  )
+}
+
+/** Срез состояния ленты: исключает chatThreads, чаты и черновики, предотвращая ре-рендер ленты при сообщениях */
+export interface FeedSlice {
+  days: Day[]
+  profile: OgonekStoreState['profile']
+  auth: OgonekStoreState['auth']
+  followingIds: string[]
+  exploreFollowingIds: string[]
+  feedDensity: OgonekStoreState['feedDensity']
+}
+
+export function useFeedSlice(): FeedSlice {
+  return useOgonekSelector(
+    (s) => ({
+      days: s.days,
+      profile: s.profile,
+      auth: s.auth,
+      followingIds: s.followingIds ?? [],
+      exploreFollowingIds: s.exploreFollowingIds ?? [],
+      feedDensity: s.feedDensity,
+    }),
+    shallowEqual
+  )
+}
+
+/** Селектор текущего авторизованного пользователя (мемоизированный синглтон) */
+export function useCurrentUser(): CurrentUser {
+  return useOgonekSelector((s) => getMemoizedCurrentUser(s), Object.is)
+}
+
+/** Срез сайдбара: только профиль, авторизация и сводка тредов */
+export function useSidebarSlice() {
+  return useOgonekSelector(
+    (s) => ({
+      activeAccountId: s.auth?.activeAccountId,
+      profile: s.profile,
+      chatThreads: s.chatThreads,
+    }),
+    shallowEqual
+  )
+}
+
+/** Срез композера: черновик, профиль и настройки приватности */
+export function useComposerSlice() {
+  return useOgonekSelector(
+    (s) => ({
+      composerDraft: s.composerDraft,
+      profile: s.profile,
+      privacy: s.privacy,
+    }),
+    shallowEqual
+  )
+}
+
+/** Срез чата для конкретного собеседника */
+export function useChatSlice(friendId?: string | null) {
+  return useOgonekSelector(
+    (s) => ({
+      auth: s.auth,
+      profile: s.profile,
+      thread: friendId && s.chatThreads ? s.chatThreads[friendId] : undefined,
+      customEmojis: s.customEmojis,
+    }),
+    shallowEqual
   )
 }
 
 /** Примитивный селектор: общее количество дней */
 export function useDayCount(): number {
-  return useOgonekSelector((s) => s.days?.length || 0)
+  return useOgonekSelector((s) => s.days?.length || 0, Object.is)
 }
 
 /** Примитивный селектор: текущий стрик */
 export function useProfileStreak(): number {
-  return useOgonekSelector((s) => Number(s.profile?.streak_count || s.profile?.streak || 0))
+  return useOgonekSelector((s) => Number(s.profile?.streak_count || s.profile?.streak || 0), Object.is)
 }
 
 /** Примитивный селектор: никнейм автора */
 export function useProfileUsername(): string {
-  return useOgonekSelector((s) => s.profile?.username || 'user')
+  return useOgonekSelector((s) => s.profile?.username || 'user', Object.is)
 }
 
 /** Примитивный селектор: отображаемое имя автора */
 export function useProfileDisplayName(): string {
-  return useOgonekSelector((s) => s.profile?.displayName || 'Пользователь')
+  return useOgonekSelector((s) => s.profile?.displayName || 'Пользователь', Object.is)
 }
 
 /** Примитивный селектор: стабильная ссылка на аватар профиля */
 export function useProfileAvatar(): string | null {
-  return useOgonekSelector((s) => s.profile?.avatarImage || null)
+  return useOgonekSelector((s) => s.profile?.avatarImage || null, Object.is)
 }
 
 /** Примитивный селектор: статус авторизации */
 export function useIsSignedIn(): boolean {
-  return useOgonekSelector((s) => Boolean(s.auth?.signedIn))
+  return useOgonekSelector((s) => Boolean(s.auth?.signedIn), Object.is)
 }
 
 /** Примитивный селектор: ID активного аккаунта */
 export function useActiveAccountId(): string | null {
-  return useOgonekSelector((s) => s.auth?.activeAccountId || null)
+  return useOgonekSelector((s) => s.auth?.activeAccountId || null, Object.is)
 }
 
-export function useOgonekStore() {
-  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
-
-  const currentUser: CurrentUser = useMemo(() => {
-    return getMemoizedCurrentUser(state)
-  }, [state.auth.signedIn, state.auth.activeAccountId, state.auth.accounts, state.profile])
-
+export function useOgonekActions() {
   const updateStore = useCallback((updater: (prev: OgonekStoreState) => OgonekStoreState) => {
     const current = getSnapshot()
     const next = updater(current)
@@ -1152,9 +1246,37 @@ export function useOgonekStore() {
       })
 
       if (createdDay) {
-        syncDayToSupabase(createdDay).catch((err) =>
-          console.error('[Ogonek] Error syncing new day to Supabase:', err)
-        )
+        const targetDay: Day = createdDay
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+        if (isOffline) {
+          const offlinePendingDay: Day = { ...targetDay, isOfflinePending: true }
+          enqueueOfflineDay(offlinePendingDay)
+          updateStore((prev) => ({
+            ...prev,
+            days: prev.days.map((d) => (d.id === offlinePendingDay.id ? offlinePendingDay : d)),
+          }))
+        } else {
+          syncDayToSupabase(targetDay)
+            .then((res) => {
+              if (!res.ok) {
+                const offlinePendingDay: Day = { ...targetDay, isOfflinePending: true }
+                enqueueOfflineDay(offlinePendingDay)
+                updateStore((prev) => ({
+                  ...prev,
+                  days: prev.days.map((d) => (d.id === offlinePendingDay.id ? offlinePendingDay : d)),
+                }))
+              }
+            })
+            .catch((err) => {
+              console.error('[Ogonek] Error syncing new day to Supabase:', err)
+              const offlinePendingDay: Day = { ...targetDay, isOfflinePending: true }
+              enqueueOfflineDay(offlinePendingDay)
+              updateStore((prev) => ({
+                ...prev,
+                days: prev.days.map((d) => (d.id === offlinePendingDay.id ? offlinePendingDay : d)),
+              }))
+            })
+        }
       }
     },
     [updateStore]
@@ -5338,9 +5460,7 @@ export function useOgonekStore() {
   }, [updateStore])
 
   return {
-    state,
-    currentUser,
-    isHydrated: typeof window !== 'undefined',
+    updateStore,
     resetMessengerState,
     addDay,
     addNewDay,
@@ -5499,5 +5619,25 @@ export function useOgonekStore() {
     removeAccount,
     loadDaysFromCloud,
     provisionDemoAccountSecrets,
+  }
+}
+
+/**
+ * Единый хук стора (обратная совместимость).
+ * Для горячих компонентов рекомендуется использовать селекторы (useFeedSlice, useChatSlice)
+ * совместно с useOgonekActions(), чтобы избежать лишних ре-рендеров.
+ */
+export function useOgonekStore() {
+  const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const currentUser: CurrentUser = useMemo(() => {
+    return getMemoizedCurrentUser(state)
+  }, [state.auth.signedIn, state.auth.activeAccountId, state.auth.accounts, state.profile])
+  const actions = useOgonekActions()
+
+  return {
+    state,
+    currentUser,
+    isHydrated: typeof window !== 'undefined',
+    ...actions,
   }
 }

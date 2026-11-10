@@ -7,7 +7,13 @@ import { FEED_TABS } from '@/lib/ogonek/data'
 import { computeFocusFlame } from '@/lib/ogonek/morning-focus'
 import { playClick } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import {
+  useOgonekSelector,
+  useCurrentUser,
+  useOgonekActions,
+  shallowEqual,
+} from '@/lib/ogonek/use-ogonek-store'
+import { DayCardSkeleton } from '../day-card-skeleton'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
@@ -80,11 +86,30 @@ export function HomeView({
   userId,
   currentUsername,
 }: Props) {
-  const { state, currentUser, loadDaysFromCloud, setFeedDensity, setSoundEnabled } = useOgonekStore()
-  const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
-  const username = currentUsername || currentUser?.username || state.profile.username || 'user'
+  // Этап 16: Селектор среза ленты исключает chatThreads и предотвращает ре-рендер ленты при сообщениях
+  const feedState = useOgonekSelector(
+    (s) => ({
+      profile: s.profile,
+      activeAccountId: s.auth?.activeAccountId,
+      followingIds: s.followingIds ?? [],
+      exploreFollowingIds: s.exploreFollowingIds ?? [],
+      feedDensity: s.feedDensity || 'comfortable',
+      soundEnabled: s.soundEnabled,
+    }),
+    shallowEqual
+  )
+  const currentUser = useCurrentUser()
+  const { loadDaysFromCloud, setFeedDensity, setSoundEnabled } = useOgonekActions()
+
+  // Диагностический счётчик рендеров для проверки изоляции селектора
+  if (typeof window !== 'undefined') {
+    (window as any).__OGONEK_HOME_RENDER_COUNT__ = ((window as any).__OGONEK_HOME_RENDER_COUNT__ || 0) + 1
+  }
+
+  const displayName = currentUser?.displayName || feedState.profile.displayName || 'Пользователь'
+  const username = currentUsername || currentUser?.username || feedState.profile.username || 'user'
   const initials = getInitials(displayName, username)
-  const avatarImage = currentUser?.avatarImage || state.profile.avatarImage
+  const avatarImage = currentUser?.avatarImage || feedState.profile.avatarImage
   const isOwner = (username || '').toLowerCase() === 'cernavation'
 
   const [feedSettingsOpen, setFeedSettingsOpen] = useState(false)
@@ -95,10 +120,10 @@ export function HomeView({
   // Автозагрузка дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
   useEffect(() => {
     if (isOwner && (!days || days.length === 0)) {
-      const targetUid = userId || currentUser?.id || state.auth.activeAccountId || undefined
+      const targetUid = userId || currentUser?.id || feedState.activeAccountId || undefined
       loadDaysFromCloud?.(targetUid)
     }
-  }, [isOwner, days?.length, userId, currentUser?.id, state.auth.activeAccountId, loadDaysFromCloud])
+  }, [isOwner, days?.length, userId, currentUser?.id, feedState.activeAccountId, loadDaysFromCloud])
 
   const [filter, setFilter] = useState<string>('Мои гордости')
   const [serverFeedDays, setServerFeedDays] = useState<Day[] | null>(null)
@@ -108,10 +133,10 @@ export function HomeView({
   const [copied, setCopied] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const currentUserId = currentUser?.id || state.auth.activeAccountId || userId
+  const currentUserId = currentUser?.id || feedState.activeAccountId || userId
   const followingIds = useMemo(() => {
-    return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
-  }, [state.followingIds, state.exploreFollowingIds])
+    return Array.from(new Set([...feedState.followingIds, ...feedState.exploreFollowingIds]))
+  }, [feedState.followingIds, feedState.exploreFollowingIds])
 
   // Загрузка групп пользователя для фильтрации ленты
   const [userGroups, setUserGroups] = useState<OgonekGroup[]>([])
@@ -299,7 +324,7 @@ export function HomeView({
           return (
             uid === currentUserId ||
             (currentUser?.id && uid === currentUser.id) ||
-            (state.auth.activeAccountId && uid === state.auth.activeAccountId)
+            (feedState.activeAccountId && uid === feedState.activeAccountId)
           )
         }
         return true
@@ -318,13 +343,13 @@ export function HomeView({
         const isMine =
           (currentUserId && uid === currentUserId) ||
           (currentUser?.id && uid === currentUser.id) ||
-          (state.auth.activeAccountId && uid === state.auth.activeAccountId)
+          (feedState.activeAccountId && uid === feedState.activeAccountId)
         if (isMine) return false
         return followingIds.includes(uid)
       })
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds, serverFeedDays])
+  }, [days, filter, currentUserId, currentUser?.id, feedState.activeAccountId, followingIds, serverFeedDays])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
@@ -394,8 +419,8 @@ export function HomeView({
             <FeedSettingsMenu
               open={feedSettingsOpen}
               onClose={() => setFeedSettingsOpen(false)}
-              density={state.feedDensity || 'comfortable'}
-              soundEnabled={state.soundEnabled}
+              density={feedState.feedDensity || 'comfortable'}
+              soundEnabled={feedState.soundEnabled}
               hideReactions={hideReactions}
               hideStories={hideStories}
               defaultFeedTab={defaultFeedTab}
@@ -408,7 +433,7 @@ export function HomeView({
                 handleTabClick(tab)
               }}
               onRefreshFeed={() => {
-                const targetUid = userId || currentUser?.id || state.auth.activeAccountId || undefined
+                const targetUid = userId || currentUser?.id || feedState.activeAccountId || undefined
                 loadDaysFromCloud?.(targetUid)
                 onNotify('Лента обновлена')
               }}
@@ -545,7 +570,13 @@ export function HomeView({
           />
         )}
 
-        {days.length === 0 ? (
+        {feedLoading ? (
+          <div className="space-y-0" aria-label="Загрузка летописи">
+            <DayCardSkeleton />
+            <DayCardSkeleton />
+            <DayCardSkeleton />
+          </div>
+        ) : days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[var(--accent-soft)] text-[var(--accent)]" />

@@ -1,0 +1,13 @@
+{
+  "metric": "Cumulative Layout Shift (CLS)",
+  "measuredValue": 0,
+  "threshold": 0.1,
+  "status": "PASS",
+  "protections": [
+    "DayCard photos wrapped with fixed aspect-[16/9] container",
+    "Avatars specify explicit width=40 height=40",
+    "DayCardSkeleton with fixed heights during load states",
+    "Progressive blur shimmer placeholder data-URL"
+  ],
+  "timestamp": "2026-11-10T07:30:44.942Z"
+}

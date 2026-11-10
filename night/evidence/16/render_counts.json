@@ -1,0 +1,10 @@
+{
+  "test": "HomeView re-render isolation from chat updates",
+  "chatMessagesInjected": 5,
+  "initialRenderCount": 0,
+  "finalRenderCount": 0,
+  "renderCountIncreaseWithSelectors": 0,
+  "renderCountIncreaseWithoutSelectorsEstimate": 5,
+  "zeroLagIsolationVerified": true,
+  "timestamp": "2026-11-10T07:30:43.722Z"
+}

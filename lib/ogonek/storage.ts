@@ -82,14 +82,38 @@ class BrowserLocalStorageAdapter implements StorageAdapter {
       window.localStorage.setItem(key, value)
     } catch (err: unknown) {
       if (err instanceof Error && (err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
-        console.warn('Storage quota exceeded. Attempting to clear composer drafts.')
+        console.warn('[Storage] Quota exceeded. Applying soft degradation strategy...')
         try {
-          // Attempt to strip large drafts if quota is exceeded
+          // Стратегия 1: Сброс черновика композера
           const parsed = JSON.parse(value) as Partial<OgonekStoreState>
           parsed.composerDraft = null
-          window.localStorage.setItem(key, JSON.stringify(parsed))
-        } catch {
-          // Failed fallback
+          let candidate = JSON.stringify(parsed)
+          try {
+            window.localStorage.setItem(key, candidate)
+            return
+          } catch {
+            // Если квота всё ещё превышена, переходим к следующему шагу
+          }
+
+          // Стратегия 2: Сохраняем в локальном кэше только последние 30 дней
+          if (Array.isArray(parsed.days) && parsed.days.length > 30) {
+            parsed.days = parsed.days.slice(0, 30)
+            candidate = JSON.stringify(parsed)
+            try {
+              window.localStorage.setItem(key, candidate)
+              return
+            } catch {
+              // Переход к шагу 3
+            }
+          }
+
+          // Стратегия 3: Очистка временных чатов и историй
+          parsed.chatThreads = {}
+          parsed.myStories = []
+          candidate = JSON.stringify(parsed)
+          window.localStorage.setItem(key, candidate)
+        } catch (innerErr) {
+          console.warn('[Storage] Soft degradation completed with warning:', innerErr)
         }
       }
     }
@@ -1034,21 +1058,22 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
   }
 }
 
+export { sanitizeStateForStorage, flushSaveStore } from './perf-storage'
+import { scheduleDebouncedSave } from './perf-storage'
+
 export function saveStore(
   state: OgonekStoreState,
   adapter: StorageAdapter = defaultStorageAdapter
 ): void {
-  try {
-    const serialized = JSON.stringify(state)
-    adapter.setItem(STORAGE_KEY, serialized)
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(
-        new CustomEvent<OgonekStoreState>('ogonek-store-updated', { detail: state })
-      )
-    }
-  } catch (err) {
-    console.error('Failed to save store:', err)
+  // 1. Немедленно уведомляем слушателей о новом состоянии в памяти
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent<OgonekStoreState>('ogonek-store-updated', { detail: state })
+    )
   }
+
+  // 2. Дебаунс 300мс для физической сериализации и записи в localStorage
+  scheduleDebouncedSave(state, adapter, STORAGE_KEY)
 }
 
 export function exportStoreAsJson(state: OgonekStoreState): string {
