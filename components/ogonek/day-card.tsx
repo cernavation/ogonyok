@@ -248,7 +248,7 @@ function DayCardComponent({
       return
     }
 
-    onNotify?.('⚡ ИИ оценивает твой день...')
+    onNotify?.('⚡ ИИ анализирует твой день...')
     const startTime = Date.now()
     try {
       const res = await fetch('/api/evaluate', {

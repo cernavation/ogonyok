@@ -300,7 +300,7 @@ export function EvaluationCeremonyModal({
               </div>
             </div>
             <p className="text-base font-bold text-white tracking-wide mt-2">
-              ⚡ ИИ оценивает твой день...
+              ⚡ ИИ анализирует твой день...
             </p>
             <span className="text-xs text-zinc-400">
               Калибровка побед и преодолений по шкале 1–10★

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
+  Award,
   Cake,
   Calendar,
   Camera,
@@ -68,6 +69,7 @@ import { AchievementsPanel } from '../achievements/achievements-panel'
 import { ProfileImageCropperModal } from '../profile/profile-image-cropper-modal'
 import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 import { FollowListModal, type FollowTabId } from '../follow-list-modal'
+import { ProfileMilestonesTab } from '../profile/profile-milestones-tab'
 import { Button, Card, Badge } from '../ui'
 
 interface Props {
@@ -81,10 +83,11 @@ interface Props {
   soundEnabled: boolean
 }
 
-type ProfileTabId = 'days' | 'gratitudes' | 'calendar' | 'achievements' | 'friends'
+type ProfileTabId = 'days' | 'milestones' | 'gratitudes' | 'calendar' | 'achievements' | 'friends'
 
 const PROFILE_TABS: { id: ProfileTabId; label: string; icon: LucideIcon }[] = [
   { id: 'days', label: 'Записи', icon: Calendar },
+  { id: 'milestones', label: 'Мои вехи', icon: Award },
   { id: 'gratitudes', label: 'Благодарности', icon: Heart },
   { id: 'calendar', label: 'Календарь', icon: Flame },
   { id: 'friends', label: 'Соратники', icon: Users },
@@ -1250,6 +1253,18 @@ export function ProfileView({
               </div>
             )}
           </div>
+        )}
+
+        {/* TAB: МОИ ВЕХИ */}
+        {activeTab === 'milestones' && (
+          <ProfileMilestonesTab
+            userId={targetUserId || undefined}
+            isOwnProfile={isOwnProfile}
+            tier={normalizeTier(displayProfile.subscription_tier, (displayProfile as any).subscription_valid_until)}
+            daysCount={days.length}
+            onNotify={onNotify}
+            soundEnabled={storeState.soundEnabled}
+          />
         )}
 
         {/* TAB 2: БЛАГОДАРНОСТИ */}

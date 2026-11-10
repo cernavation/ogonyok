@@ -41,6 +41,7 @@ import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/og
 import { getSupabase } from '@/lib/supabase/browser'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { MessageSquare, Phone, PhoneOff, Video } from 'lucide-react'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import { TelegramToastStack, dispatchTelegramToast } from './notifications/telegram-toast-stack'
 import { NotificationCenterModal } from './notifications/notification-center-modal'
 import {
@@ -57,6 +58,7 @@ const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.Hotke
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
+const MilestoneModal = dynamic(() => import('./milestones/milestone-modal').then((m) => m.MilestoneModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -72,6 +74,7 @@ export function AppShell() {
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
   const [notificationCenterOpen, setNotificationCenterOpen] = useState(false)
+  const [activeMilestoneNumber, setActiveMilestoneNumber] = useState<number | null>(null)
 
   // Аудио и видео звонки: глобальный стейт
   const [incomingCall, setIncomingCall] = useState<{
@@ -779,13 +782,36 @@ export function AppShell() {
         updateDayWithPayload(editingDayId, payload)
         notify(`День #${editingDayId} успешно сохранён!`)
       } else {
+        const nextDayNumber = getNextDayId()
         addNewDay(payload, dateISO)
         notify('День сохранён в локальное хранилище. Стрик продолжается!')
+
+        // Этап 11: Проверка живого рубежа (100, 200, 300... дней)
+        if (nextDayNumber > 0 && nextDayNumber % 100 === 0) {
+          const userTier = state.profile.subscription_tier || 'free'
+          if (userTier === 'free') {
+            dispatchTelegramToast({
+              id: `milestone-toast-${nextDayNumber}-${Date.now()}`,
+              type: 'system',
+              title: `🔥 Поздравляем! ${nextDayNumber} дней подряд`,
+              body: `Хочешь увидеть, как ты изменился за эти ${nextDayNumber} дней? Премиум`,
+            })
+            // Фоновая запись факта вехи в базу (milestones_shown)
+            fetch('/api/milestones/evaluate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ milestoneNumber: nextDayNumber }),
+            }).catch(() => {})
+          } else {
+            // Pro / Ultra: торжественный аналитический экран
+            setActiveMilestoneNumber(nextDayNumber)
+          }
+        }
       }
       setComposer(false)
       setEditingDay(null)
     },
-    [updateDayWithPayload, addNewDay, notify]
+    [updateDayWithPayload, addNewDay, notify, getNextDayId, state.profile.subscription_tier]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(
@@ -1368,6 +1394,21 @@ export function AppShell() {
           onNotify={notify}
           currentUserId={currentUser?.id || state.auth?.activeAccountId}
         />
+
+        {activeMilestoneNumber !== null && (
+          <MilestoneModal
+            isOpen={activeMilestoneNumber !== null}
+            milestoneNumber={activeMilestoneNumber}
+            tier={normalizeTier(state.profile.subscription_tier)}
+            onClose={() => setActiveMilestoneNumber(null)}
+            onNotify={notify}
+            soundEnabled={state.soundEnabled}
+            onUpgrade={() => {
+              setActiveMilestoneNumber(null)
+              notify('Для перехода на Премиум выберите тариф в настройках')
+            }}
+          />
+        )}
 
         <Toast message={toast} />
       </main>

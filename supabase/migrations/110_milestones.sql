@@ -2,7 +2,7 @@
 -- 110_milestones.sql: ВЕХИ (100, 200, 300... ДНЕЙ) И ТОКЕНЫ ИИ
 -- ============================================================================
 -- 1. Добавление колонок расхода токенов в ai_evaluations (без текста записей)
--- 2. Таблица milestones_shown (хранение показанных юбилеев и снимков аналитики)
+-- 2. Таблица milestones_shown(user_id, day_number, tier_at_time, shown_at, payload)
 -- 3. RLS политики: владелец видит всё, сохранённые в Свод (Vault) видны всем соратникам
 -- 4. RPC функции: record_milestone_shown, save_milestone_to_vault, get_user_milestones
 -- ============================================================================
@@ -17,18 +17,21 @@ ALTER TABLE public.ai_evaluations
 CREATE TABLE IF NOT EXISTS public.milestones_shown (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  day_number integer NOT NULL CHECK (day_number > 0),
   milestone_number integer NOT NULL CHECK (milestone_number > 0),
+  tier_at_time text NOT NULL DEFAULT 'free',
   shown_at timestamptz NOT NULL DEFAULT now(),
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb,
   snapshot_json jsonb NOT NULL DEFAULT '{}'::jsonb,
   user_review_text text,
   saved_to_vault boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT uq_milestones_shown_user_milestone UNIQUE (user_id, milestone_number)
+  CONSTRAINT uq_milestones_shown_user_day UNIQUE (user_id, day_number)
 );
 
 CREATE INDEX IF NOT EXISTS idx_milestones_shown_user
-  ON public.milestones_shown(user_id, milestone_number);
+  ON public.milestones_shown(user_id, day_number);
 
 CREATE INDEX IF NOT EXISTS idx_milestones_shown_vault
   ON public.milestones_shown(saved_to_vault)
@@ -54,8 +57,9 @@ USING (saved_to_vault = true);
 
 -- 4. RPC: Запись о показанной вехе (идемпотентно upsert)
 CREATE OR REPLACE FUNCTION public.record_milestone_shown(
-  p_milestone_number integer,
-  p_snapshot jsonb DEFAULT '{}'::jsonb,
+  p_day_number integer,
+  p_tier_at_time text DEFAULT 'free',
+  p_payload jsonb DEFAULT '{}'::jsonb,
   p_review_text text DEFAULT NULL
 )
 RETURNS public.milestones_shown
@@ -73,24 +77,32 @@ BEGIN
 
   INSERT INTO public.milestones_shown (
     user_id,
+    day_number,
     milestone_number,
+    tier_at_time,
     shown_at,
+    payload,
     snapshot_json,
     user_review_text,
     updated_at
   )
   VALUES (
     v_user_id,
-    p_milestone_number,
+    p_day_number,
+    p_day_number,
+    COALESCE(p_tier_at_time, 'free'),
     now(),
-    p_snapshot,
+    p_payload,
+    p_payload,
     p_review_text,
     now()
   )
-  ON CONFLICT (user_id, milestone_number)
+  ON CONFLICT (user_id, day_number)
   DO UPDATE SET
     shown_at = now(),
-    snapshot_json = CASE WHEN p_snapshot = '{}'::jsonb THEN milestones_shown.snapshot_json ELSE p_snapshot END,
+    tier_at_time = EXCLUDED.tier_at_time,
+    payload = CASE WHEN p_payload = '{}'::jsonb THEN milestones_shown.payload ELSE p_payload END,
+    snapshot_json = CASE WHEN p_payload = '{}'::jsonb THEN milestones_shown.snapshot_json ELSE p_payload END,
     user_review_text = COALESCE(p_review_text, milestones_shown.user_review_text),
     updated_at = now()
   RETURNING * INTO v_rec;
@@ -99,9 +111,30 @@ BEGIN
 END;
 $$;
 
+-- Перегрузка для обратной совместимости
+CREATE OR REPLACE FUNCTION public.record_milestone_shown(
+  p_milestone_number integer,
+  p_snapshot jsonb DEFAULT '{}'::jsonb,
+  p_review_text text DEFAULT NULL
+)
+RETURNS public.milestones_shown
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  RETURN public.record_milestone_shown(
+    p_milestone_number,
+    'free',
+    p_snapshot,
+    p_review_text
+  );
+END;
+$$;
+
 -- RPC: Сохранение / удаление вехи из Свода (Vault)
 CREATE OR REPLACE FUNCTION public.save_milestone_to_vault(
-  p_milestone_number integer,
+  p_day_number integer,
   p_saved boolean DEFAULT true,
   p_review_text text DEFAULT NULL
 )
@@ -123,19 +156,21 @@ BEGIN
     saved_to_vault = p_saved,
     user_review_text = COALESCE(p_review_text, user_review_text),
     updated_at = now()
-  WHERE user_id = v_user_id AND milestone_number = p_milestone_number
+  WHERE user_id = v_user_id AND (day_number = p_day_number OR milestone_number = p_day_number)
   RETURNING * INTO v_rec;
 
   IF NOT FOUND THEN
     INSERT INTO public.milestones_shown (
       user_id,
+      day_number,
       milestone_number,
       saved_to_vault,
       user_review_text
     )
     VALUES (
       v_user_id,
-      p_milestone_number,
+      p_day_number,
+      p_day_number,
       p_saved,
       p_review_text
     )
@@ -146,7 +181,7 @@ BEGIN
 END;
 $$;
 
--- RPC: Получение всех вех пользователя
+-- RPC: Получение всех вех пользователя («Мои вехи»)
 CREATE OR REPLACE FUNCTION public.get_user_milestones(p_user_id uuid DEFAULT NULL)
 RETURNS SETOF public.milestones_shown
 LANGUAGE plpgsql
@@ -165,16 +200,17 @@ BEGIN
     RETURN QUERY
     SELECT * FROM public.milestones_shown
     WHERE user_id = v_target_id
-    ORDER BY milestone_number ASC;
+    ORDER BY day_number ASC;
   ELSE
     RETURN QUERY
     SELECT * FROM public.milestones_shown
     WHERE user_id = v_target_id AND saved_to_vault = true
-    ORDER BY milestone_number ASC;
+    ORDER BY day_number ASC;
   END IF;
 END;
 $$;
 
+GRANT EXECUTE ON FUNCTION public.record_milestone_shown(integer, text, jsonb, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.record_milestone_shown(integer, jsonb, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.save_milestone_to_vault(integer, boolean, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_milestones(uuid) TO authenticated;

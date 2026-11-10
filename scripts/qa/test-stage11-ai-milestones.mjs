@@ -143,11 +143,12 @@ async function run() {
   const letter = ultraReview.review.letterToSelf
   const paragraphs = letter.split('\n\n').filter((p) => p.trim().length > 0)
 
-  // Правило 5: ровно 3 абзаца
-  assert(paragraphs.length === 3, `Письмо состоит ровно из 3 абзацев (факт: ${paragraphs.length})`)
-  assert(paragraphs[0].startsWith('Исток.'), 'Абзац 1 начинается с «Исток.»')
-  assert(paragraphs[1].startsWith('Горнило.'), 'Абзац 2 начинается с «Горнило.»')
-  assert(paragraphs[2].startsWith('Вектор.'), 'Абзац 3 начинается с «Вектор.»')
+  // Правило 5: ровно 4 раздела
+  assert(paragraphs.length === 4, `Письмо состоит ровно из 4 разделов (факт: ${paragraphs.length})`)
+  assert(paragraphs[0].includes('Как ты изменился'), 'Раздел 1: «Как ты изменился»')
+  assert(paragraphs[1].includes('Что стало твоей силой'), 'Раздел 2: «Что стало твоей силой»')
+  assert(paragraphs[2].includes('Кто и что тебя вдохновляет'), 'Раздел 3: «Кто и что тебя вдохновляет»')
+  assert(paragraphs[3].includes('Что дальше'), 'Раздел 4: «Что дальше»')
 
   // Длина: 150-250 слов
   const wordCount = letter.split(/\s+/).filter(Boolean).length

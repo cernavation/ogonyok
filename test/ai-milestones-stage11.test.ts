@@ -62,20 +62,21 @@ describe('Этап 11: ИИ-слой и вехи (AI Layer & Milestones)', () =>
         dayHighlights: [{ dayNumber: 1, prides: ['Старт'], gratitudes: ['Семье'], score: 7.5 }],
       })
 
-      // Правило 1: Без галлюцинаций
-      assert.ok(prompt.includes('НИКАКИХ ВЫДУМОК (ГАЛЛЮЦИНАЦИЙ)'))
-      // Правило 2: Уважительное признание потерь
-      assert.ok(prompt.includes('ЕСЛИ В ЗАПИСЯХ ВСТРЕЧАЕТСЯ ПОТЕРЯ, ТРАГЕДИЯ ИЛИ СРЫВ'))
-      assert.ok(prompt.includes('а не лозунгами «ты молодец, давай ещё»'))
-      // Правило 3: Без диагнозов
-      assert.ok(prompt.includes('НИКАКИХ МЕДИЦИНСКИХ ИЛИ ПСИХОЛОГИЧЕСКИХ ДИАГНОЗОВ'))
-      // Правило 4: Без дежурных восторгов
-      assert.ok(prompt.includes('БЕЗ ДЕЖУРНЫХ ВОСТОРГОВ'))
-      // Правило 5: 150-250 слов, 3 абзаца (Исток, Горнило, Вектор)
-      assert.ok(prompt.includes('строго от 150 до 250 слов, ровно 3 абзаца'))
-      assert.ok(prompt.includes('Абзац 1 (Исток)'))
-      assert.ok(prompt.includes('Абзац 2 (Горнило)'))
-      assert.ok(prompt.includes('Абзац 3 (Вектор)'))
+      // Правило 1: Утверждать только то, что есть в записях
+      assert.ok(prompt.includes('УТВЕРЖДАТЬ МОЖНО ТОЛЬКО ТО, ЧТО ПРЯМО ЕСТЬ В ЗАПИСЯХ'))
+      // Правило 2: Бережное отражение потерь с обязательной формулой
+      assert.ok(prompt.includes('похоже, для тебя это важно, и это видно по твоим записям'))
+      assert.ok(prompt.includes('КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНО утверждать от лица умершего'))
+      // Правило 3: Без медицинских и психиатрических диагнозов
+      assert.ok(prompt.includes('НИКАКИХ ДИАГНОЗОВ И ОЦЕНОК ПСИХИЧЕСКОГО СОСТОЯНИЯ'))
+      // Правило 4: Без льстивых выдумок
+      assert.ok(prompt.includes('БЕЗ ЛЬСТИВЫХ ВЫДУМОК И БЕЗ СРАВНЕНИЯ С ДРУГИМИ ЛЮДЬМИ'))
+      // Правило 5: 150-250 слов, 4 раздела
+      assert.ok(prompt.includes('ОБЪЁМ 150-250 СЛОВ СТРОГО'))
+      assert.ok(prompt.includes('Как ты изменился'))
+      assert.ok(prompt.includes('Что стало твоей силой'))
+      assert.ok(prompt.includes('Кто и что тебя вдохновляет'))
+      assert.ok(prompt.includes('Что дальше'))
     })
   })
 
@@ -231,18 +232,19 @@ describe('Этап 11: ИИ-слой и вехи (AI Layer & Milestones)', () =>
       assert.ok(stats.topTags.some((t) => t.tag === '#Спорт' || t.tag === '#Фокус'))
     })
 
-    it('generateUltraFallbackText создаёт строго 3 абзаца (Исток, Горнило, Вектор) объёмом 150-250 слов', () => {
+    it('generateUltraFallbackText создаёт строго 4 раздела объёмом 150-250 слов', () => {
       const stats = computeMilestoneStats(100, [
         { dayNumber: 1, prides: ['Старт'], gratitudes: ['Семье'], score: 8.0 },
       ])
       const ultraReview = generateUltraFallbackText(stats, 100)
 
       const paragraphs = ultraReview.letterToSelf.split('\n\n')
-      assert.equal(paragraphs.length, 3, 'Письмо должно состоять ровно из 3 абзацев')
+      assert.equal(paragraphs.length, 4, 'Письмо должно состоять ровно из 4 разделов')
 
-      assert.ok(paragraphs[0].startsWith('Исток.'), 'Первый абзац должен начинаться с Истока')
-      assert.ok(paragraphs[1].startsWith('Горнило.'), 'Второй абзац должен начинаться с Горнила')
-      assert.ok(paragraphs[2].startsWith('Вектор.'), 'Третий абзац должен начинаться с Вектора')
+      assert.ok(paragraphs[0].includes('Как ты изменился'), 'Раздел 1 должен быть Как ты изменился')
+      assert.ok(paragraphs[1].includes('Что стало твоей силой'), 'Раздел 2 должен быть Что стало твоей силой')
+      assert.ok(paragraphs[2].includes('Кто и что тебя вдохновляет'), 'Раздел 3 должен быть Кто и что тебя вдохновляет')
+      assert.ok(paragraphs[3].includes('Что дальше'), 'Раздел 4 должен быть Что дальше')
 
       const wordCount = ultraReview.letterToSelf.split(/\s+/).filter(Boolean).length
       assert.ok(wordCount >= 150 && wordCount <= 260, `Объём письма должен быть 150-250 слов (факт: ${wordCount})`)

@@ -38,6 +38,9 @@ export interface DayEvaluationResult {
   score?: number
   cached?: boolean
   provider?: string
+  is_approximate?: boolean
+  approximate?: boolean
+  note?: string
   tokens?: {
     promptTokens: number
     completionTokens: number
@@ -212,6 +215,9 @@ export function fallbackHeuristicDayEvaluation(
     verdict,
     score: averageScore,
     provider: 'heuristic-offline',
+    is_approximate: true,
+    approximate: true,
+    note: 'Приблизительная оценка',
     tokens: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
   }
 }
@@ -496,41 +502,49 @@ export async function evaluateDayWithAI(
       }
     }
   } else {
-    // Шаг 3.1: Пробуем Gemini
-    try {
-      const geminiRes = await callGemini(promptText, timeoutMs)
-      const parsed = parseAndValidateDayJson(geminiRes.text, tier)
-      if (parsed) {
-        evaluation = parsed
-        providerName = 'gemini'
-        tokenUsage = geminiRes.tokens
-      } else {
-        console.warn('[AI_VALIDATION]: Gemini JSON failed Zod schema, attempting DeepSeek')
-      }
-    } catch (geminiError: any) {
-      console.warn(`[AI_FALLBACK]: Gemini failed (${geminiError?.message}), attempting DeepSeek`)
-    }
-
-    // Шаг 3.2: Если Gemini не дал валидный ответ -> пробуем DeepSeek
-    if (!evaluation) {
+    // Шаг 3.1: Пробуем Gemini (с 1 ретраем при невалидном JSON или ошибке)
+    for (let attempt = 1; attempt <= 2 && !evaluation; attempt++) {
       try {
-        const deepseekRes = await callDeepSeek(promptText, timeoutMs)
-        const parsed = parseAndValidateDayJson(deepseekRes.text, tier)
+        const geminiRes = await callGemini(promptText, timeoutMs)
+        const parsed = parseAndValidateDayJson(geminiRes.text, tier)
         if (parsed) {
           evaluation = parsed
-          providerName = 'deepseek'
-          tokenUsage = deepseekRes.tokens
-        } else {
-          console.warn('[AI_VALIDATION]: DeepSeek JSON failed Zod schema')
+          providerName = 'gemini'
+          tokenUsage = geminiRes.tokens
+        } else if (attempt === 1) {
+          console.warn('[AI_VALIDATION]: Gemini JSON failed Zod schema, retrying once')
         }
-      } catch (deepseekError: any) {
-        console.warn(`[AI_FALLBACK]: DeepSeek failed (${deepseekError?.message})`)
+      } catch (geminiError: any) {
+        if (attempt === 1) {
+          console.warn(`[AI_FALLBACK]: Gemini attempt 1 failed (${geminiError?.message})`)
+        }
       }
     }
 
-    // Шаг 3.3: Если оба провайдера упали — оффлайн-эвристический разбор (никогда не возвращаем 500)
+    // Шаг 3.2: Если Gemini не дал валидный ответ -> пробуем DeepSeek (с 1 ретраем)
     if (!evaluation) {
-      console.warn('[AI_OFFLINE_FALLBACK]: Both providers failed, using offline heuristic analysis')
+      for (let attempt = 1; attempt <= 2 && !evaluation; attempt++) {
+        try {
+          const deepseekRes = await callDeepSeek(promptText, timeoutMs)
+          const parsed = parseAndValidateDayJson(deepseekRes.text, tier)
+          if (parsed) {
+            evaluation = parsed
+            providerName = 'deepseek'
+            tokenUsage = deepseekRes.tokens
+          } else if (attempt === 1) {
+            console.warn('[AI_VALIDATION]: DeepSeek JSON failed Zod schema, retrying once')
+          }
+        } catch (deepseekError: any) {
+          if (attempt === 1) {
+            console.warn(`[AI_FALLBACK]: DeepSeek attempt 1 failed (${deepseekError?.message})`)
+          }
+        }
+      }
+    }
+
+    // Шаг 3.3: Если оба провайдера упали — оффлайн-эвристический разбор с пометкой «приблизительная оценка»
+    if (!evaluation) {
+      console.warn('[AI_OFFLINE_FALLBACK]: Both providers failed, using offline heuristic analysis with approximate badge')
       evaluation = fallbackHeuristicDayEvaluation('', prides, gratitudes, tier)
       providerName = 'heuristic-offline'
     }

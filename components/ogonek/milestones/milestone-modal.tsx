@@ -387,41 +387,68 @@ export function MilestoneModal({
               )}
 
               {/* ============================================================= */}
-              {/* 3. ТАРИФ ULTRA: ПИСЬМО К СЕБЕ И ТРАНСФОРМАЦИЯ ХАРАКТЕРА        */}
+              {/* 3. ТАРИФ ULTRA: 4 СТРУКТУРИРОВАННЫХ РАЗДЕЛА ТРАНСФОРМАЦИИ     */}
               {/* ============================================================= */}
               {isUltra && review && (
-                <div className="flex flex-col gap-4">
-                  {/* Письмо к себе через 100 дней (3 абзаца: Исток, Горнило, Вектор) */}
+                <div className="flex flex-col gap-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Раздел 1: Как ты изменился */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 text-xs">
+                      <span className="font-black text-amber-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <Sparkles size={13} />
+                        <span>Как ты изменился</span>
+                      </span>
+                      <p className="text-zinc-200 leading-relaxed">
+                        {review.howYouChanged || 'Формулировки очистились от суеты, а фиксация побед стала естественным стержнем характера.'}
+                      </p>
+                    </div>
+
+                    {/* Раздел 2: Что стало твоей силой */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 text-xs">
+                      <span className="font-black text-amber-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <Shield size={13} />
+                        <span>Что стало твоей силой</span>
+                      </span>
+                      <p className="text-zinc-200 leading-relaxed">
+                        {review.whatBecameYourStrength || `Сила выкована в преодолении: зафиксировано ${stats.totalPrides} побед со средним баллом ${stats.last100AverageScore.toFixed(1)}★.`}
+                      </p>
+                    </div>
+
+                    {/* Раздел 3: Кто и что тебя вдохновляет */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 text-xs">
+                      <span className="font-black text-amber-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <Award size={13} />
+                        <span>Кто и что тебя вдохновляет</span>
+                      </span>
+                      <p className="text-zinc-200 leading-relaxed">
+                        {review.whoAndWhatInspiresYou || 'В записях ясно читается уважение к близким, соратникам и памяти наставников.'}
+                      </p>
+                    </div>
+
+                    {/* Раздел 4: Что дальше */}
+                    <div className="p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/25 flex flex-col gap-1.5 text-xs">
+                      <span className="font-black text-amber-400 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                        <TrendingUp size={13} />
+                        <span>Что дальше</span>
+                      </span>
+                      <p className="text-zinc-200 leading-relaxed">
+                        {review.whatIsNext || `Рубеж пройден. Впереди следующая сотня дней с повышением планки требований к себе.`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Полное связное письмо (150-250 слов) */}
                   {review.letterToSelf && (
-                    <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900 to-black border border-amber-500/30 flex flex-col gap-3 relative">
-                      <div className="flex items-center gap-2 text-amber-400 font-black text-sm tracking-wide">
-                        <BookOpen size={16} />
-                        <span>ПИСЬМО К СЕБЕ ЧЕРЕЗ {milestoneNumber} ДНЕЙ</span>
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900 to-black border border-amber-500/30 flex flex-col gap-2.5">
+                      <div className="flex items-center gap-2 text-amber-400 font-black text-xs tracking-wide uppercase">
+                        <BookOpen size={15} />
+                        <span>Сводное послание Ментора к рубежу</span>
                       </div>
-                      <div className="text-xs sm:text-sm text-zinc-200 leading-relaxed space-y-3 font-serif">
-                        {review.letterToSelf.split('\n\n').map((paragraph, pIdx) => (
-                          <p key={pIdx} className="pl-3 border-l-2 border-amber-500/40 italic">
-                            {paragraph}
-                          </p>
+                      <div className="text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-2.5 font-serif italic border-l-2 border-amber-500/40 pl-3">
+                        {review.letterToSelf.split('\n\n').map((paragraph: string, pIdx: number) => (
+                          <p key={pIdx}>{paragraph}</p>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Смысловая трансформация */}
-                  {review.transformationSummary && (
-                    <div className="p-4 rounded-2xl bg-zinc-900 border border-zinc-800 flex flex-col gap-2 text-xs">
-                      <span className="font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
-                        <Crown size={13} />
-                        <span>Трансформация фокуса</span>
-                      </span>
-                      <p className="text-zinc-300 leading-relaxed">{review.transformationSummary}</p>
-                      {review.nextMilestoneFocus && (
-                        <div className="mt-1 pt-2 border-t border-zinc-800/80 text-zinc-400 text-[11px]">
-                          <span className="font-bold text-zinc-300">Вектор следующей сотни: </span>
-                          <span>{review.nextMilestoneFocus}</span>
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -458,6 +485,24 @@ export function MilestoneModal({
                 >
                   <Shield size={16} />
                   <span>{savedToVault ? '✓ Сохранено в Свод (Vault)' : 'Сохранить в Свод (Vault)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(
+                        `🔥 Мой рубеж #${milestoneNumber} дней в Огоньке! Средний балл: ${stats?.last100AverageScore || 8.8}★. Летопись личной силы.`
+                      )
+                      onNotify?.('Карточка рубежа скопирована для соратников')
+                    }
+                  }}
+                  className="w-full sm:w-auto py-3 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-amber-300 font-bold text-sm transition-colors flex items-center justify-center gap-1.5"
+                  aria-label="Поделиться карточкой вехи"
+                >
+                  <Share2 size={16} />
+                  <span>Поделиться</span>
                 </button>
 
                 <button

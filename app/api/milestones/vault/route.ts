@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   try {
     const supabase = getServerSupabase()
     const { data, error } = await supabase.rpc('save_milestone_to_vault', {
-      p_milestone_number: milestoneNumber,
+      p_day_number: milestoneNumber,
       p_saved: savedToVault,
       p_review_text: userReviewText || null,
     })
