@@ -6,16 +6,18 @@ import { createPortal } from 'react-dom'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto, resolvePhotoUrl, uploadDayPhotoToStorage } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
+import type { AttachedPhotoTarget, ComposerDraft, ComposerPayload, Day, Mode, OgonekGroup, OvercomeLevel, VisibilityLevel } from '@/lib/ogonek/types'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getTierLimits } from '@/lib/ogonek/permissions'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { listUserGroups } from '@/lib/ogonek/groups'
 import dynamic from 'next/dynamic'
 import { ModalShell } from './modal-shell'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
+import { EntryAudiencePicker } from './entry-audience-picker'
 
 const PublishPrideStoryModal = dynamic(
   () => import('./publish-pride-story-modal').then((m) => m.PublishPrideStoryModal),
@@ -334,6 +336,49 @@ export function Composer({
     return {}
   })
 
+  // ЭТАП 9: доступные группы пользователя и аудитории записей
+  const [availableGroups, setAvailableGroups] = useState<OgonekGroup[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    listUserGroups().then((groups) => {
+      if (!cancelled && Array.isArray(groups)) {
+        setAvailableGroups(groups)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  /** Выбранные группы для каждой гордости (0..5) */
+  const [prideGroups, setPrideGroups] = useState<Record<number, string[]>>(() => {
+    if (editingDay && Array.isArray(editingDay.prides)) {
+      const map: Record<number, string[]> = {}
+      editingDay.prides.forEach((p, idx) => {
+        if (p.groupIds && Array.isArray(p.groupIds)) {
+          map[idx] = p.groupIds
+        }
+      })
+      return map
+    }
+    return initialDraft?.prideGroupIds || {}
+  })
+
+  /** Выбранные группы для каждой благодарности (0..5) */
+  const [gratitudeGroups, setGratitudeGroups] = useState<Record<number, string[]>>(() => {
+    if (editingDay && Array.isArray(editingDay.gratitudes)) {
+      const map: Record<number, string[]> = {}
+      editingDay.gratitudes.forEach((g, idx) => {
+        if (typeof g === 'object' && Array.isArray(g.groupIds)) {
+          map[idx] = g.groupIds
+        }
+      })
+      return map
+    }
+    return initialDraft?.gratitudeGroupIds || {}
+  })
+
   /** Модалка торжественной ИИ-оценки дня */
   const [showCeremonyModal, setShowCeremonyModal] = useState(false)
 
@@ -388,7 +433,9 @@ export function Composer({
         lastSavedISO: new Date().toISOString(),
         visibility: dayVisibility,
         prideVisibilities: prideVis,
+        prideGroupIds: prideGroups,
         gratitudeVisibilities: gratitudeVis,
+        gratitudeGroupIds: gratitudeGroups,
       }
 
       // 1. Синхронное резервное сохранение
@@ -402,7 +449,7 @@ export function Composer({
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [prides, gratitudes, preview, attachedTargets, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis])
+  }, [prides, gratitudes, preview, attachedTargets, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, prideGroups, gratitudeVis, gratitudeGroups])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -599,18 +646,26 @@ export function Composer({
     })
 
     const prideVisibilities: Record<number, VisibilityLevel> = {}
+    const prideGroupIds: Record<number, string[]> = {}
     let visIdx = 0
     prides.forEach((p, origIdx) => {
       if (p.trim().length === 0) return
       prideVisibilities[visIdx] = normalizeVisibility(prideVis[origIdx] ?? dayVisibility)
+      if (prideGroups[origIdx]?.length) {
+        prideGroupIds[visIdx] = prideGroups[origIdx]
+      }
       visIdx++
     })
 
     const gratitudeVisibilities: Record<number, VisibilityLevel> = {}
+    const gratitudeGroupIds: Record<number, string[]> = {}
     let gVisIdx = 0
     gratitudes.forEach((g, origIdx) => {
       if (g.trim().length === 0) return
       gratitudeVisibilities[gVisIdx] = normalizeVisibility(gratitudeVis[origIdx] ?? dayVisibility)
+      if (gratitudeGroups[origIdx]?.length) {
+        gratitudeGroupIds[gVisIdx] = gratitudeGroups[origIdx]
+      }
       gVisIdx++
     })
 
@@ -638,7 +693,9 @@ export function Composer({
       aiVerdict: verdict,
       visibility: dayVisibility,
       prideVisibilities,
+      prideGroupIds,
       gratitudeVisibilities,
+      gratitudeGroupIds,
     }
   }
 
@@ -655,7 +712,9 @@ export function Composer({
       lastSavedISO: new Date().toISOString(),
       visibility: dayVisibility,
       prideVisibilities: prideVis,
+      prideGroupIds: prideGroups,
       gratitudeVisibilities: gratitudeVis,
+      gratitudeGroupIds: gratitudeGroups,
     })
     onClose()
   }
@@ -775,42 +834,69 @@ export function Composer({
 
   const currentSlotVis: VisibilityLevel =
     (tab === 'pride' ? prideVis[activeSlot] : gratitudeVis[activeSlot]) || dayVisibility || 'public'
+  const currentSlotGroups: string[] =
+    (tab === 'pride' ? prideGroups[activeSlot] : gratitudeGroups[activeSlot]) || []
 
-  const handleSetCurrentItemVis = (level: VisibilityLevel) => {
+  const handleChangeAudience = (level: VisibilityLevel, groupIds: string[]) => {
     playClick(soundEnabled)
     if (tab === 'pride') {
       setPrideVis((prev) => ({ ...prev, [activeSlot]: level }))
+      setPrideGroups((prev) => ({ ...prev, [activeSlot]: groupIds }))
     } else {
       setGratitudeVis((prev) => ({ ...prev, [activeSlot]: level }))
+      setGratitudeGroups((prev) => ({ ...prev, [activeSlot]: groupIds }))
     }
-    onNotify?.(
-      level === 'public'
-        ? `${tab === 'pride' ? 'Гордость' : 'Благодарность'} #${activeSlot + 1} видна всем 🌐`
-        : `${tab === 'pride' ? 'Гордость' : 'Благодарность'} #${activeSlot + 1} скрыта (только себе) 🔒`
-    )
+    const itemLabel = tab === 'pride' ? 'Гордость' : 'Благодарность'
+    const num = activeSlot + 1
+    if (level === 'public') {
+      onNotify?.(`${itemLabel} #${num} видна всем 🌐`)
+    } else if (level === 'friends') {
+      onNotify?.(`${itemLabel} #${num} видна соратникам 👥`)
+    } else if (level === 'groups') {
+      const gNames = groupIds
+        .map((gid) => availableGroups.find((g) => g.id === gid)?.name)
+        .filter(Boolean)
+        .join(', ')
+      onNotify?.(`${itemLabel} #${num} видна группе: ${gNames || 'выбранным'} 🛡️`)
+    } else {
+      onNotify?.(`${itemLabel} #${num} скрыта (только себе) 🔒`)
+    }
   }
 
-  const handleApplyToAll = () => {
+  const handleApplyAudienceToAll = () => {
     playClick(soundEnabled)
     const targetLevel: VisibilityLevel = currentSlotVis === 'private' ? 'private' : 'public'
-    const updated: Record<number, VisibilityLevel> = {
-      0: targetLevel,
-      1: targetLevel,
-      2: targetLevel,
-      3: targetLevel,
-      4: targetLevel,
+    const finalLevel: VisibilityLevel = currentSlotVis
+    const targetGroups = currentSlotGroups
+    const updatedVis: Record<number, VisibilityLevel> = {
+      0: finalLevel,
+      1: finalLevel,
+      2: finalLevel,
+      3: finalLevel,
+      4: finalLevel,
+    }
+    const updatedGroups: Record<number, string[]> = {
+      0: targetGroups,
+      1: targetGroups,
+      2: targetGroups,
+      3: targetGroups,
+      4: targetGroups,
     }
     if (tab === 'pride') {
-      setPrideVis((prev) => ({ ...prev, ...updated }))
+      setPrideVis((prev) => ({ ...prev, ...updatedVis }))
+      setPrideGroups((prev) => ({ ...prev, ...updatedGroups }))
     } else {
-      setGratitudeVis((prev) => ({ ...prev, ...updated }))
+      setGratitudeVis((prev) => ({ ...prev, ...updatedVis }))
+      setGratitudeGroups((prev) => ({ ...prev, ...updatedGroups }))
     }
-    onNotify?.(
-      targetLevel === 'private'
-        ? `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь личные 🔒`
-        : `Все 5 ${tab === 'pride' ? 'гордостей' : 'благодарностей'} теперь публичные 🌐`
-    )
+    onNotify?.(`Настройки аудитории применены ко всем 5 ${tab === 'pride' ? 'гордостям' : 'благодарностям'}`)
   }
+
+  const handleSetCurrentItemVis = (level: VisibilityLevel) => {
+    handleChangeAudience(level, currentSlotGroups)
+  }
+
+  const handleApplyToAll = handleApplyAudienceToAll
 
   const handleToggleAllVisibility = handleApplyToAll
 
@@ -914,7 +1000,6 @@ export function Composer({
             const isActive = activeSlot === slot
             const slotVis: VisibilityLevel =
               (tab === 'pride' ? prideVis[slot] : gratitudeVis[slot]) || dayVisibility || 'public'
-            const isItemPrivate = slotVis === 'private'
             return (
               <button
                 key={slot}
@@ -930,12 +1015,27 @@ export function Composer({
                     ? 'bg-[var(--bg-elev)] text-[var(--text)] border border-[var(--accent)]'
                     : 'bg-[var(--bg-elev)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
                 }`}
-                title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'}${isItemPrivate ? ' (🔒 лично)' : ''}`}
+                title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'} (${slotVis})`}
               >
                 <span>{slot + 1}</span>
-                {isItemPrivate && (
-                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 text-[8px]">
+                {slotVis === 'private' && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-zinc-900 border border-zinc-700 flex items-center justify-center text-zinc-300 text-[8px]" title="Лично">
                     🔒
+                  </span>
+                )}
+                {slotVis === 'friends' && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-amber-950 border border-amber-600/50 flex items-center justify-center text-amber-300 text-[8px]" title="Соратникам">
+                    👥
+                  </span>
+                )}
+                {slotVis === 'groups' && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-purple-950 border border-purple-600/50 flex items-center justify-center text-purple-300 text-[8px]" title="Группы">
+                    🛡️
+                  </span>
+                )}
+                {slotVis === 'public' && (
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-sky-950 border border-sky-600/50 flex items-center justify-center text-sky-300 text-[8px]" title="Всем">
+                    🌐
                   </span>
                 )}
               </button>
@@ -944,45 +1044,16 @@ export function Composer({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Пилюля выбора: [ 🌐 Публично | 🔒 Лично ] (компактный размер h-8 px-3 text-xs rounded-full) */}
-          <div className="inline-flex items-center h-8 p-0.5 rounded-full bg-[var(--surface-subtle,#16181c)] border border-[var(--line)]">
-            <button
-              type="button"
-              onClick={() => handleSetCurrentItemVis('public')}
-              className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
-                currentSlotVis === 'public'
-                  ? 'bg-blue-500/20 text-[#1d9bf0] font-semibold shadow-sm'
-                  : 'text-[var(--muted)] hover:text-[var(--text)]'
-              }`}
-              title="Сделать этот пункт публичным"
-            >
-              <Globe size={13} />
-              <span>Публично</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSetCurrentItemVis('private')}
-              className={`h-7 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all ${
-                currentSlotVis === 'private'
-                  ? 'bg-[var(--bg-hover)] text-[var(--text)] font-semibold shadow-sm'
-                  : 'text-[var(--muted)] hover:text-[var(--text)]'
-              }`}
-              title="Сделать этот пункт личным"
-            >
-              <Lock size={13} />
-              <span>Лично</span>
-            </button>
-          </div>
-
-          {/* Рядом компактная кнопка-ссылка: Применить ко всем */}
-          <button
-            type="button"
-            onClick={handleApplyToAll}
-            className="text-[11px] text-[#71767b] hover:text-[#1d9bf0] transition-colors whitespace-nowrap px-1 py-1"
-            title={`Применить "${currentSlotVis === 'private' ? 'Лично' : 'Публично'}" ко всем 5 пунктам`}
-          >
-            Применить ко всем
-          </button>
+          {/* Селектор аудитории: компактный чип Лично / Соратникам / Группы / Всем с выпадающим меню */}
+          <EntryAudiencePicker
+            visibility={currentSlotVis}
+            selectedGroupIds={currentSlotGroups}
+            availableGroups={availableGroups}
+            onChange={handleChangeAudience}
+            onApplyToAll={handleApplyAudienceToAll}
+            soundEnabled={soundEnabled}
+            compact
+          />
         </div>
       </div>
 

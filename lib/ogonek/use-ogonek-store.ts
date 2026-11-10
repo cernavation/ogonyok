@@ -662,6 +662,7 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
       text: typeof g === 'string' ? g : g?.text || '',
       rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
+      visibility: typeof g === 'object' && g?.visibility ? g.visibility : day.visibility || 'public',
       client_updated_at: nowISO,
     }))
 
@@ -678,6 +679,38 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
     if (dayRes.error) {
       console.error('[Ogonek] Error upserting day to Supabase:', dayRes.error)
       return { ok: false, error: dayRes.error.message }
+    }
+
+    // Синхронизируем аудитории групп для записей с visibility = 'groups'
+    try {
+      const prideSyncPromises = prideRows.map((p, idx) => {
+        const origPride = (day.prides || [])[idx]
+        if (p.visibility === 'groups' && origPride && Array.isArray(origPride.groupIds) && origPride.groupIds.length > 0) {
+          return supabase.rpc('update_entry_audience', {
+            p_entry_kind: 'pride',
+            p_entry_id: p.client_id,
+            p_visibility: 'groups',
+            p_group_ids: origPride.groupIds,
+          })
+        }
+        return Promise.resolve()
+      })
+      const gratSyncPromises = gratitudeRows.map((g, idx) => {
+        const origGrat = (day.gratitudes || [])[idx]
+        const gObj = typeof origGrat === 'object' ? origGrat : null
+        if (g.visibility === 'groups' && gObj && Array.isArray(gObj.groupIds) && gObj.groupIds.length > 0) {
+          return supabase.rpc('update_entry_audience', {
+            p_entry_kind: 'gratitude',
+            p_entry_id: g.client_id,
+            p_visibility: 'groups',
+            p_group_ids: gObj.groupIds,
+          })
+        }
+        return Promise.resolve()
+      })
+      await Promise.allSettled([...prideSyncPromises, ...gratSyncPromises])
+    } catch (audErr) {
+      console.error('[Ogonek] Error syncing entry audiences:', audErr)
     }
 
     // Обновляем streak_count в profiles
@@ -1044,6 +1077,7 @@ export function useOgonekStore() {
             visibility: normalizeVisibility(
               payload.prideVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
             ),
+            groupIds: payload.prideGroupIds?.[idx] || [],
           }
         })
 
@@ -1053,6 +1087,7 @@ export function useOgonekStore() {
           visibility: normalizeVisibility(
             payload.gratitudeVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
           ),
+          groupIds: payload.gratitudeGroupIds?.[idx] || [],
         }))
 
         // Расчёт или передача точного балла дня (например 8.8)
@@ -1224,18 +1259,21 @@ export function useOgonekStore() {
                 payload.visibility ??
                 DEFAULT_VISIBILITY
             ),
+            groupIds: payload.prideGroupIds?.[idx] ?? existingPride?.groupIds ?? [],
           }
         })
 
         const updatedGratitudes: (string | GratitudeEntry)[] = payload.gratitudes.map((text, idx) => {
           const existingGrat = targetDay.gratitudes[idx]
           const prevVis = typeof existingGrat === 'object' && existingGrat?.visibility ? existingGrat.visibility : undefined
+          const prevGroups = typeof existingGrat === 'object' && Array.isArray(existingGrat?.groupIds) ? existingGrat.groupIds : []
           return {
             num: String(idx + 1).padStart(2, '0'),
             text,
             visibility: normalizeVisibility(
               payload.gratitudeVisibilities?.[idx] ?? prevVis ?? payload.visibility ?? DEFAULT_VISIBILITY
             ),
+            groupIds: payload.gratitudeGroupIds?.[idx] ?? prevGroups,
           }
         })
 

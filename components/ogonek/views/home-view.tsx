@@ -19,6 +19,8 @@ import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { getFeed } from '@/lib/ogonek/social'
+import { listUserGroups, getGroupFeed } from '@/lib/ogonek/groups'
+import type { OgonekGroup } from '@/lib/ogonek/types'
 
 const FocusHistoryModal = dynamic(
   () => import('../focus-history-modal').then((m) => m.FocusHistoryModal),
@@ -105,14 +107,95 @@ export function HomeView({
     return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
   }, [state.followingIds, state.exploreFollowingIds])
 
-  // Load server-side social feed when Comrades / Subscriptions tab is selected
+  // Загрузка групп пользователя для фильтрации ленты
+  const [userGroups, setUserGroups] = useState<OgonekGroup[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    listUserGroups(currentUserId).then((groups) => {
+      if (!cancelled && Array.isArray(groups)) {
+        setUserGroups(groups)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId])
+
+  // Load server-side social feed when Comrades / Subscriptions / Group tab is selected
   useEffect(() => {
     let cancelled = false
     const isFriends = filter === 'Соратники' || filter === 'Друзья'
     const isFollowing = filter === 'Подписки'
+    const isGroupFilter = filter.startsWith('Группа: ')
 
-    if (!isFriends && !isFollowing) {
+    if (!isFriends && !isFollowing && !isGroupFilter) {
       setServerFeedDays(null)
+      return
+    }
+
+    if (isGroupFilter) {
+      const gName = filter.slice('Группа: '.length)
+      const targetGroup = userGroups.find((g) => g.name === gName)
+      if (targetGroup) {
+        setFeedLoading(true)
+        getGroupFeed(targetGroup.id)
+          .then((entries) => {
+            if (cancelled) return
+            const groupedMap = new Map<string, Day>()
+            entries.forEach((e, idx) => {
+              const key = e.dayId || `group_${targetGroup.id}_${e.userId}_${e.createdAtISO.slice(0, 10)}`
+              if (!groupedMap.has(key)) {
+                groupedMap.set(key, {
+                  id: Number(e.dayId) || (idx + 1),
+                  title: `${targetGroup.name} · Запись`,
+                  tags: [targetGroup.name, 'Группа'],
+                  prides: [],
+                  gratitudes: [],
+                  dateISO: e.createdAtISO,
+                  visibility: 'groups',
+                  user_id: e.userId,
+                  author: {
+                    id: e.userId,
+                    username: e.authorUsername || 'user',
+                    displayName: e.authorName || 'Соратник',
+                    avatarUrl: e.authorAvatar || undefined,
+                  },
+                })
+              }
+              const d = groupedMap.get(key)!
+              if (e.entryKind === 'pride') {
+                d.prides.push({
+                  num: String(d.prides.length + 1).padStart(2, '0'),
+                  text: e.text,
+                  scale: e.scale,
+                  score: e.scale,
+                  overcome: e.overcome as any,
+                  visibility: 'groups',
+                  groupIds: [targetGroup.id],
+                })
+              } else {
+                d.gratitudes.push({
+                  num: String(d.gratitudes.length + 1).padStart(2, '0'),
+                  text: e.text,
+                  rating: e.scale,
+                  visibility: 'groups',
+                  groupIds: [targetGroup.id],
+                })
+              }
+            })
+            setServerFeedDays(Array.from(groupedMap.values()))
+          })
+          .catch((err) => {
+            console.warn('[HomeView] getGroupFeed error:', err)
+            if (!cancelled) setServerFeedDays([])
+          })
+          .finally(() => {
+            if (!cancelled) setFeedLoading(false)
+          })
+      } else {
+        setServerFeedDays([])
+      }
       return
     }
 
@@ -173,7 +256,7 @@ export function HomeView({
     return () => {
       cancelled = true
     }
-  }, [filter])
+  }, [filter, userGroups])
 
   const handleCopyInvite = () => {
     playClick(soundEnabled)
@@ -215,6 +298,9 @@ export function HomeView({
         }
         return true
       })
+    }
+    if (filter.startsWith('Группа: ')) {
+      return serverFeedDays || []
     }
     if (filter === 'Соратники' || filter === 'Друзья' || filter === 'Подписки') {
       if (serverFeedDays !== null) {
@@ -295,7 +381,7 @@ export function HomeView({
 
         {/* Tabs with Twitter Blue underline indicator */}
         <div className="tabs" role="tablist" aria-label="Фильтры ленты">
-          {FEED_TABS.map((tab) => {
+          {[...FEED_TABS, ...userGroups.map((g) => `Группа: ${g.name}`)].map((tab) => {
             const isSelected = filter === tab
             return (
               <button
@@ -482,6 +568,15 @@ export function HomeView({
               </div>
             )}
           </>
+        ) : filter.startsWith('Группа: ') ? (
+          <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-500/10 text-purple-400 mb-1" aria-hidden="true">
+              <Users size={24} />
+            </span>
+            <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
+              В этой группе пока нет опубликованных записей. Опубликуйте гордость или благодарность из композера с выбором этой группы!
+            </p>
+          </div>
         ) : filter === 'Друзья' || filter === 'Подписки' ? (
           <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mb-1" aria-hidden="true">

@@ -13,11 +13,14 @@ import {
   AlertTriangle,
   X,
   Loader2,
+  Users,
 } from 'lucide-react'
 import { VisibilitySwitcher } from './visibility-switcher'
+import { EntryAudiencePicker } from './entry-audience-picker'
+import { listUserGroups, updateEntryAudience } from '@/lib/ogonek/groups'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { playClick } from '@/lib/ogonek/sound'
-import type { Day, VisibilityLevel } from '@/lib/ogonek/types'
+import type { Day, VisibilityLevel, OgonekGroup } from '@/lib/ogonek/types'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 import { EvaluationCeremonyModal } from './evaluation-ceremony-modal'
@@ -56,6 +59,42 @@ export function DayOptionsModal({
   const [isDeleting, setIsDeleting] = useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [showAudienceEditor, setShowAudienceEditor] = useState(false)
+  const [availableGroups, setAvailableGroups] = useState<OgonekGroup[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    listUserGroups().then((groups) => {
+      if (!cancelled && Array.isArray(groups)) {
+        setAvailableGroups(groups)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleUpdatePrideAudience = async (prideIdx: number, vis: VisibilityLevel, groupIds: string[]) => {
+    const pride = (day.prides || [])[prideIdx]
+    if (!pride) return
+    const updatedPrides = (day.prides || []).map((p, idx) => {
+      if (idx === prideIdx) {
+        return { ...p, visibility: vis, groupIds }
+      }
+      return p
+    })
+    const updatedDay: Day = { ...day, prides: updatedPrides }
+    updateDay(updatedDay)
+    const prideClientId = `${day.id}_p_${prideIdx + 1}`
+    await updateEntryAudience({
+      entryKind: 'pride',
+      entryId: (pride as any).id || prideClientId,
+      visibility: vis,
+      groupIds,
+    })
+    syncDayToSupabase(updatedDay).catch(() => {})
+    onNotify?.(`Аудитория гордости #${prideIdx + 1} обновлена`)
+  }
 
   const handleOpenAiCeremony = () => {
     playClick(soundEnabled)
@@ -247,6 +286,18 @@ export function DayOptionsModal({
               </button>
             )}
 
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                setShowAudienceEditor(!showAudienceEditor)
+              }}
+              className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+            >
+              <Users size={16} className="text-purple-400" />
+              <span>Кому видно (аудитория)</span>
+            </button>
+
             {/* Пункт «Удалить этот день» с красной иконкой */}
             <button
               type="button"
@@ -260,6 +311,36 @@ export function DayOptionsModal({
               <span className="font-semibold">Удалить этот день</span>
             </button>
           </div>
+
+          {/* Редактор аудиторий по отдельным гордостям */}
+          {showAudienceEditor && (
+            <div className="p-3 rounded-2xl flex flex-col gap-2.5 bg-black/60 border border-purple-500/30">
+              <span className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                <Users size={13} /> Настройка аудитории записей
+              </span>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {(day.prides || []).map((p, idx) => {
+                  const effectiveVis = p.visibility || day.visibility || 'public'
+                  const groupIds = p.groupIds || []
+                  return (
+                    <div key={idx} className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-2">
+                      <span className="text-xs text-zinc-300 truncate max-w-[150px]">
+                        #{idx + 1} {p.text}
+                      </span>
+                      <EntryAudiencePicker
+                        visibility={effectiveVis}
+                        selectedGroupIds={groupIds}
+                        availableGroups={availableGroups}
+                        onChange={(newVis, newGroups) => handleUpdatePrideAudience(idx, newVis, newGroups)}
+                        soundEnabled={soundEnabled}
+                        compact
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Блок приватности дня */}
           <div className="p-3 rounded-2xl flex flex-col gap-2" style={{ background: '#0d0e10', border: '1px solid #2f3336' }}>

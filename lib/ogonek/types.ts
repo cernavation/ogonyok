@@ -49,12 +49,36 @@ export type OvercomeLevel = 0 | 1 | 2 | 3
 /**
  * Уровень видимости записи (день или отдельная гордость).
  *  - 'public'  — публично в глобальную ленту
- *  - 'friends' — только друзьям
+ *  - 'friends' — только соратникам
  *  - 'private' — лично для меня
+ *  - 'groups'  — только выбранным группам (ЭТАП 9)
  */
-export type VisibilityLevel = 'public' | 'friends' | 'private'
+export type VisibilityLevel = 'public' | 'friends' | 'private' | 'groups'
+
+export type GroupKind = 'family' | 'sport' | 'friends' | 'custom'
+export type GroupMemberRole = 'owner' | 'admin' | 'member'
+export type GroupMemberStatus = 'invited' | 'active'
+
+export type OgonekGroup = {
+  id: string
+  ownerId: string
+  name: string
+  kind: GroupKind
+  description: string
+  avatar: string
+  color: string
+  inviteCode?: string | null
+  inviteExpiresAt?: string | null
+  role?: GroupMemberRole
+  status?: GroupMemberStatus
+  membersCount?: number
+  threadId?: string | null
+  createdAtISO: string
+}
 
 export type PrideEntry = {
+  id?: string
+  client_id?: string
   num: string
   text: string
   scale: number // 1..10
@@ -62,13 +86,19 @@ export type PrideEntry = {
   overcome: OvercomeLevel // 0..3
   /** Приватность конкретной гордости (ЭТАП 9). Отсутствует → как у дня */
   visibility?: VisibilityLevel
+  /** Привязанные группы для видимости 'groups' (ЭТАП 9) */
+  groupIds?: string[]
 }
 
 export type GratitudeEntry = {
+  id?: string
+  client_id?: string
   num?: string
   text: string
   rating?: number // 1..10
   visibility?: VisibilityLevel
+  /** Привязанные группы для видимости 'groups' (ЭТАП 9) */
+  groupIds?: string[]
 }
 
 export function getGratitudeText(g: string | GratitudeEntry): string {
@@ -304,8 +334,12 @@ export type ComposerPayload = {
   visibility?: VisibilityLevel
   /** Приватность каждой гордости по индексу (после удаления пустых) */
   prideVisibilities?: Record<number, VisibilityLevel>
+  /** Выбранные группы для каждой гордости по индексу (ЭТАП 9) */
+  prideGroupIds?: Record<number, string[]>
   /** Приватность каждой благодарности по индексу (после удаления пустых) */
   gratitudeVisibilities?: Record<number, VisibilityLevel>
+  /** Выбранные группы для каждой благодарности по индексу (ЭТАП 9) */
+  gratitudeGroupIds?: Record<number, string[]>
 }
 
 export type ComposerDraft = {
@@ -320,8 +354,12 @@ export type ComposerDraft = {
   visibility?: VisibilityLevel
   /** Черновик приватности гордостей по индексу */
   prideVisibilities?: Record<number, VisibilityLevel>
+  /** Черновик групп для гордостей (ЭТАП 9) */
+  prideGroupIds?: Record<number, string[]>
   /** Черновик приватности благодарностей по индексу */
   gratitudeVisibilities?: Record<number, VisibilityLevel>
+  /** Черновик групп для благодарностей (ЭТАП 9) */
+  gratitudeGroupIds?: Record<number, string[]>
 }
 
 /* ────────────────────────────────────────────────────────────────────────

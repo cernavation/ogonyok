@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Sparkles,
   Star,
+  Users,
   Zap,
 } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -519,33 +520,52 @@ function DayCardComponent({
                 )}
                 {firstPride && (() => {
                   const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
+                  const isGroups = effectiveVisibility === 'groups'
+                  const isFriends = effectiveVisibility === 'friends'
                   const isPub = effectiveVisibility === 'public'
                   return (
                     <button
                       type="button"
                       onClick={() => {
                         playClick(soundEnabled)
-                        const actualFirstIdx = (day.prides || []).indexOf(firstPride)
-                        const nextVis = isPub ? 'private' : 'public'
-                        setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
-                        onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
+                        if (isMine) {
+                          setOptionsModalOpen(true)
+                        }
                       }}
                       className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
-                        isPub
+                        isGroups
+                          ? 'text-purple-300 bg-purple-500/15 border-purple-500/30 hover:bg-purple-500/25'
+                          : isFriends
+                          ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 hover:bg-amber-500/25'
+                          : isPub
                           ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
                           : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
                       }`}
                       title={
-                        isPub
-                          ? '🌐 Публично (видят все) — нажми для переключения'
-                          : '🔒 Лично (видит только автор) — нажми для переключения'
+                        isGroups
+                          ? '👥 Группа (видна участникам группы)'
+                          : isFriends
+                          ? '👥 Соратникам (видна взаимным соратникам)'
+                          : isPub
+                          ? '🌐 Всем (видна в общей ленте)'
+                          : '🔒 Лично (видна только автору)'
                       }
                       aria-label="Видимость гордости"
                     >
-                      {isPub ? (
+                      {isGroups ? (
+                        <>
+                          <Users size={11} className="text-purple-400" />
+                          <span>Группа</span>
+                        </>
+                      ) : isFriends ? (
+                        <>
+                          <Users size={11} className="text-amber-400" />
+                          <span>Соратникам</span>
+                        </>
+                      ) : isPub ? (
                         <>
                           <Globe size={11} className="text-sky-400" />
-                          <span>Публично</span>
+                          <span>Всем</span>
                         </>
                       ) : (
                         <>
@@ -587,6 +607,8 @@ function DayCardComponent({
                         {otherPrides.map((p, pIdx) => {
                           const actualIndex = (day.prides || []).indexOf(p)
                           const effectiveVisibility = day.visibility === 'private' ? 'private' : (p.visibility || day.visibility || 'public')
+                          const isGroups = effectiveVisibility === 'groups'
+                          const isFriends = effectiveVisibility === 'friends'
                           const isPub = effectiveVisibility === 'public'
                           return (
                             <div key={p.num || pIdx} className="flex items-start gap-2 text-[15px] leading-6 font-normal text-[var(--text)] py-1">
@@ -606,26 +628,44 @@ function DayCardComponent({
                                 type="button"
                                 onClick={() => {
                                   playClick(soundEnabled)
-                                  const nextVis = isPub ? 'private' : 'public'
-                                  setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
-                                  onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
+                                  if (isMine) {
+                                    setOptionsModalOpen(true)
+                                  }
                                 }}
                                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
-                                  isPub
+                                  isGroups
+                                    ? 'text-purple-300 bg-purple-500/15 border-purple-500/30 hover:bg-purple-500/25'
+                                    : isFriends
+                                    ? 'text-amber-300 bg-amber-500/15 border-amber-500/30 hover:bg-amber-500/25'
+                                    : isPub
                                     ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
                                     : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
                                 }`}
                                 title={
-                                  isPub
-                                    ? '🌐 Публично (видят все) — нажми для переключения'
-                                    : '🔒 Лично (видит только автор) — нажми для переключения'
+                                  isGroups
+                                    ? '👥 Группа (видна участникам группы)'
+                                    : isFriends
+                                    ? '👥 Соратникам (видна взаимным соратникам)'
+                                    : isPub
+                                    ? '🌐 Всем (видна в общей ленте)'
+                                    : '🔒 Лично (видна только автору)'
                                 }
                                 aria-label="Видимость гордости"
                               >
-                                {isPub ? (
+                                {isGroups ? (
+                                  <>
+                                    <Users size={10} className="text-purple-400" />
+                                    <span>Группа</span>
+                                  </>
+                                ) : isFriends ? (
+                                  <>
+                                    <Users size={10} className="text-amber-400" />
+                                    <span>Соратникам</span>
+                                  </>
+                                ) : isPub ? (
                                   <>
                                     <Globe size={10} className="text-sky-400" />
-                                    <span>Публично</span>
+                                    <span>Всем</span>
                                   </>
                                 ) : (
                                   <>

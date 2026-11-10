@@ -1,12 +1,12 @@
 'use client'
 
-import { Check, Globe, Lock, Users } from 'lucide-react'
+import { Check, Globe, Lock, Shield, Users } from 'lucide-react'
 import { playClick } from '@/lib/ogonek/sound'
 import type { VisibilityLevel } from '@/lib/ogonek/types'
 import { VISIBILITY_LEVELS, visibilityMeta } from '@/lib/ogonek/visibility'
 import { Tooltip } from './tooltip'
 
-const ICONS = { globe: Globe, users: Users, lock: Lock } as const
+const ICONS = { globe: Globe, users: Users, lock: Lock, shield: Shield } as const
 
 type Props = {
   value: VisibilityLevel

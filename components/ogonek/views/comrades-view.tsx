@@ -43,6 +43,7 @@ import {
 } from '@/lib/ogonek/social'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
+import { GroupsSection } from '@/components/ogonek/groups-section'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from '../tooltip'
@@ -748,9 +749,6 @@ export function ComradesView({
           }`}
         >
           Группы
-          <span className="text-[10px] uppercase font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
-            Скоро
-          </span>
         </button>
       </div>
 
@@ -1027,22 +1025,18 @@ export function ComradesView({
         )}
 
         {/* ============================================================== */}
-        {/* ВКЛАДКА 5: ГРУППЫ (ЗАГОТОВКА ЭТАПА 9) */}
+        {/* ВКЛАДКА 5: ГРУППЫ (ЭТАП 9) */}
         {/* ============================================================== */}
         {activeTab === 'groups' && (
-          <div className="flex flex-col items-center text-center py-10 px-4 max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center mb-4 border border-amber-500/20 shadow-inner">
-              <ShieldAlert size={32} />
-            </div>
-            <h2 className="text-xl font-bold mb-2">Группы и закрытые круги силы</h2>
-            <p className="text-sm text-[var(--muted)] leading-relaxed mb-6">
-              Скоро: закрытые чаты, общие челленджи и командная дисциплина. Вы сможете создавать группы до 25 (Премиум)
-              или 100 участников (Ultra).
-            </p>
-            <Button variant="outline" onClick={() => onNavigate('premium')}>
-              Узнать о лимитах групп в тарифах
-            </Button>
-          </div>
+          <GroupsSection
+            currentUserId={currentUserId}
+            userTier={(state.profile as any)?.subscription_tier || 'free'}
+            comrades={comrades}
+            onOpenChat={onOpenChat}
+            onNavigate={onNavigate}
+            onNotify={onNotify}
+            soundEnabled={soundEnabled}
+          />
         )}
       </div>
 

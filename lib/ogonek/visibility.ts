@@ -12,7 +12,7 @@
 
 import type { VisibilityLevel } from './types'
 
-export type VisibilityIconName = 'globe' | 'users' | 'lock'
+export type VisibilityIconName = 'globe' | 'users' | 'lock' | 'shield'
 
 export type VisibilityMeta = {
   id: VisibilityLevel
@@ -25,7 +25,7 @@ export type VisibilityMeta = {
   icon: VisibilityIconName
   /** Акцентный цвет уровня */
   color: string
-  /** 0 — самый открытый, 2 — самый закрытый (для сравнения) */
+  /** 0 — самый открытый, 3 — самый закрытый (для сравнения) */
   rank: number
 }
 
@@ -49,6 +49,15 @@ export const VISIBILITY_LEVELS: VisibilityMeta[] = [
     rank: 1,
   },
   {
+    id: 'groups',
+    label: 'Только выбранным группам',
+    shortLabel: 'Группам',
+    description: 'Запись увидят только участники выбранных вами групп',
+    icon: 'shield',
+    color: '#a855f7',
+    rank: 1.5,
+  },
+  {
     id: 'private',
     label: 'Лично для меня',
     shortLabel: 'Лично',
@@ -63,7 +72,7 @@ export const DEFAULT_VISIBILITY: VisibilityLevel = 'public'
 
 /** Безопасно приводит любое значение к допустимому уровню приватности */
 export function normalizeVisibility(value: unknown): VisibilityLevel {
-  return value === 'public' || value === 'friends' || value === 'private'
+  return value === 'public' || value === 'friends' || value === 'groups' || value === 'private'
     ? value
     : DEFAULT_VISIBILITY
 }
