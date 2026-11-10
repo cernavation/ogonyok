@@ -2541,12 +2541,12 @@ kbd {
 }
 
 .epm-goal-chip:hover {
-  background: rgba(255, 107, 53, 0.18);
+  background: var(--accent-soft);
 }
 
 .epm-goal-chip.is-active {
-  background: rgba(255, 107, 53, 0.25);
-  border-color: #ff6b35;
+  background: var(--accent-soft);
+  border-color: var(--accent);
   color: #fff;
 }
 
@@ -4632,7 +4632,7 @@ kbd {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #FF5C00;
+  background: var(--accent);
   color: #fff;
   border: 2px solid var(--bg);
   display: grid;
@@ -6646,7 +6646,7 @@ kbd {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .xh-search.is-focused .xh-search__field {
-  border-color: #ff6b35;
+  border-color: var(--accent);
   background: #0d0e10;
 }
 .xh-search__icon {
@@ -6858,7 +6858,7 @@ kbd {
   color: var(--text);
 }
 .xh-section__icon {
-  color: #ff6b35;
+  color: var(--accent);
 }
 .xh-section__icon--gold {
   color: #ffd76a;
@@ -7056,7 +7056,7 @@ kbd {
   margin-bottom: 9px;
 }
 .xh-trend__title svg {
-  color: #ff6b35;
+  color: var(--accent);
 }
 .xh-trend__row {
   display: flex;
@@ -7238,13 +7238,13 @@ kbd {
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 .xh-like:hover {
-  color: #ff6b35;
-  border-color: rgba(255, 107, 53, 0.5);
+  color: var(--accent);
+  border-color: var(--accent-hover);
 }
 .xh-like.is-active {
-  color: #ff6b35;
-  border-color: rgba(255, 107, 53, 0.6);
-  background: rgba(255, 107, 53, 0.12);
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 /* ── Топ лидеров по стрикам ──────────────────────────────────────────── */
@@ -7567,11 +7567,11 @@ html[data-theme='apple-light'] .xh-follow {
   transition: color 0.13s ease, background 0.13s ease;
 }
 .xh-icon-btn:hover {
-  color: #ff6b35;
-  background: rgba(255, 107, 53, 0.12);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 .xh-icon-btn.is-like {
-  color: #ff6b35;
+  color: var(--accent);
 }
 .xh-icon-btn.is-save {
   color: #1d9bf0;
@@ -7654,7 +7654,7 @@ html[data-theme='apple-light'] .xh-follow {
   color: var(--text);
 }
 .xh-results__label svg {
-  color: #ff6b35;
+  color: var(--accent);
 }
 .xh-results__chips {
   display: flex;
@@ -7749,8 +7749,8 @@ html[data-theme='apple-light'] .xh-follow {
   font-style: normal;
   font-size: 13px;
   font-weight: 800;
-  color: #ffad5a;
-  background: rgba(255, 107, 53, 0.16);
+  color: var(--accent);
+  background: var(--accent-soft);
   border-radius: 999px;
   padding: 1px 7px;
 }
@@ -7790,12 +7790,13 @@ html[data-theme='apple-light'] .xh-follow {
   background: #1a8cd8;
 }
 .xh-btn--soft {
-  color: #ffad5a;
-  background: rgba(255, 107, 53, 0.1);
-  border-color: rgba(255, 107, 53, 0.4);
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
 }
 .xh-btn--soft:hover:not(:disabled) {
-  background: rgba(255, 107, 53, 0.2);
+  background: var(--accent-soft);
+  opacity: 0.9;
 }
 .xh-btn--ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.06);
@@ -7803,11 +7804,11 @@ html[data-theme='apple-light'] .xh-follow {
 }
 .xh-btn--like {
   color: #fff;
-  background: #ff6b35;
-  border-color: #ff6b35;
+  background: var(--accent);
+  border-color: var(--accent);
 }
 .xh-btn--like:hover:not(:disabled) {
-  background: #ff7f4f;
+  background: var(--accent-hover);
 }
 .xh-btn--saved {
   color: #fff;
@@ -9991,38 +9992,6 @@ html[data-theme='x-black'] .msgr__placeholder-stats .is-online {
 }
 
 /* Токены акцентов определены в styles/tokens.css */
-
-/* Акцент перекрашивает элементы по всему приложению */
-html[data-accent] .text-\[\#1d9bf0\],
-html[data-accent] .text-\[\#5cb8f5\],
-html[data-accent] .text-\[\#FF5C00\],
-html[data-accent] .text-\[\#ff7a18\],
-html[data-accent] .text-\[\#FF6A1A\],
-html[data-accent] .text-orange-500 {
-  color: var(--accent) !important;
-}
-
-html[data-accent] .bg-\[\#1d9bf0\],
-html[data-accent] .bg-\[\#FF5C00\],
-html[data-accent] .bg-\[\#ff7a18\],
-html[data-accent] .bg-\[\#FF6A1A\],
-html[data-accent] .bg-orange-500 {
-  background-color: var(--accent) !important;
-}
-
-html[data-accent] .border-\[\#1d9bf0\],
-html[data-accent] .border-\[\#FF5C00\],
-html[data-accent] .border-\[\#ff7a18\],
-html[data-accent] .border-\[\#FF6A1A\],
-html[data-accent] .border-orange-500 {
-  border-color: var(--accent) !important;
-}
-
-html[data-accent] .hover\:bg-\[\#1d9bf0\]:hover,
-html[data-accent] .hover\:bg-\[\#FF5C00\]:hover,
-html[data-accent] .hover\:bg-\[\#ff7a18\]:hover {
-  background-color: var(--accent-hover, var(--accent)) !important;
-}
 
 /* Плавный переход при смене оформления отключён для мгновенного отклика как в X.com */
 html,

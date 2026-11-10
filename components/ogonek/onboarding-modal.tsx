@@ -186,7 +186,7 @@ export function OnboardingModal({
         {/* Header with step dots */}
         <div className="px-6 pt-5 pb-3 flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800/80">
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center font-bold">
+            <span className="w-8 h-8 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center font-bold">
               ✦
             </span>
             <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
@@ -201,7 +201,7 @@ export function OnboardingModal({
                   key={s}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     step === s
-                      ? 'w-6 bg-[#FF5C00]'
+                      ? 'w-6 bg-[var(--accent)]'
                       : step > s
                       ? 'w-2 bg-emerald-500'
                       : 'w-2 bg-zinc-200 dark:bg-zinc-800'
@@ -233,7 +233,7 @@ export function OnboardingModal({
                 className="flex flex-col gap-4 text-left"
               >
                 <div className="text-center mb-1">
-                  <div className="w-14 h-14 rounded-2xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center mx-auto mb-3 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mx-auto mb-3 shadow-sm">
                     <User size={28} />
                   </div>
                   <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50 tracking-tight">
@@ -256,7 +256,7 @@ export function OnboardingModal({
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase())}
                       placeholder="alex_fire"
-                      className="w-full pl-8 pr-10 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:border-[#FF5C00] focus:outline-none text-zinc-900 dark:text-zinc-50 text-sm font-medium transition-colors"
+                      className="w-full pl-8 pr-10 py-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:border-[var(--accent)] focus:outline-none text-zinc-900 dark:text-zinc-50 text-sm font-medium transition-colors"
                       maxLength={20}
                       autoFocus
                     />
@@ -328,7 +328,7 @@ export function OnboardingModal({
                         }}
                         className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between ${
                           active
-                            ? 'border-[#FF5C00] bg-[#FF5C00]/10 text-zinc-900 dark:text-zinc-50 shadow-sm'
+                            ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-zinc-900 dark:text-zinc-50 shadow-sm'
                             : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'
                         }`}
                       >
@@ -345,7 +345,7 @@ export function OnboardingModal({
                             {lvl.quota} · {lvl.desc}
                           </p>
                         </div>
-                        {active && <Check size={18} className="text-[#FF5C00] shrink-0" />}
+                        {active && <Check size={18} className="text-[var(--accent)] shrink-0" />}
                       </button>
                     )
                   })}
@@ -395,7 +395,7 @@ export function OnboardingModal({
                           <div
                             key={i}
                             className={`h-1 rounded-full transition-all duration-200 ${
-                              i === tourIndex ? 'w-5 bg-[#FF5C00]' : 'w-2 bg-zinc-200 dark:bg-zinc-800'
+                              i === tourIndex ? 'w-5 bg-[var(--accent)]' : 'w-2 bg-zinc-200 dark:bg-zinc-800'
                             }`}
                           />
                         ))}
@@ -434,7 +434,7 @@ export function OnboardingModal({
                 className="flex flex-col gap-3"
               >
                 <div className="text-center mb-1">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center mx-auto mb-2">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mx-auto mb-2">
                     <Sparkles size={24} />
                   </div>
                   <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
@@ -454,7 +454,7 @@ export function OnboardingModal({
                     value={prideText}
                     onChange={(e) => setPrideText(e.target.value)}
                     placeholder="Например: Сделал первый шаг и зафиксировал цель не сдаваться 700 дней"
-                    className="w-full p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:border-[#FF5C00] focus:outline-none text-zinc-900 dark:text-zinc-50 text-sm min-h-[90px] resize-none"
+                    className="w-full p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:border-[var(--accent)] focus:outline-none text-zinc-900 dark:text-zinc-50 text-sm min-h-[90px] resize-none"
                     autoFocus
                   />
                 </div>

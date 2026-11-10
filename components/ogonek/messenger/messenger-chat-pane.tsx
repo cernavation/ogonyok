@@ -923,6 +923,8 @@ export function MessengerChatPane({
               onClick={() => setMenuOpen((v) => !v)}
               className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
               aria-label="Меню чата"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
               title="Дополнительно"
             >
               <MoreVertical size={16} />

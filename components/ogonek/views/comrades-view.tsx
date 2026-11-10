@@ -452,6 +452,8 @@ export function ComradesView({
                   onClick={() => setActiveMenuUserId(activeMenuUserId === person.id ? null : person.id)}
                   className="p-2 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-white/10 transition"
                   aria-label="Действия"
+                  aria-haspopup="true"
+                  aria-expanded={activeMenuUserId === person.id}
                 >
                   <MoreHorizontal size={18} />
                 </button>
@@ -585,6 +587,8 @@ export function ComradesView({
                   onClick={() => setActiveMenuUserId(activeMenuUserId === person.id ? null : person.id)}
                   className="p-2 rounded-lg text-[var(--muted)] hover:text-[var(--text)] hover:bg-white/10 transition"
                   aria-label="Опции пользователя"
+                  aria-haspopup="true"
+                  aria-expanded={activeMenuUserId === person.id}
                 >
                   <MoreHorizontal size={18} />
                 </button>
@@ -699,7 +703,7 @@ export function ComradesView({
         >
           Заявки
           {socialCounts.incomingRequests > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-[#ff5c00] text-white text-[11px] font-bold">
+            <span className="px-1.5 py-0.2 rounded-full bg-[var(--accent)] text-white text-[11px] font-bold">
               {socialCounts.incomingRequests}
             </span>
           )}

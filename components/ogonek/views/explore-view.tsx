@@ -468,7 +468,7 @@ export function ExploreView({
             {ownResults.length > 0 && (
               <section className="flex flex-col gap-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-2)] flex items-center gap-1.5">
-                  <Flame size={13} className="text-[#ff6b35]" /> Записи летописи ({ownResults.length})
+                  <Flame size={13} className="text-[var(--accent)]" /> Записи летописи ({ownResults.length})
                 </span>
                 <div className="flex flex-col gap-4">
                   {ownResults.map((day) => (

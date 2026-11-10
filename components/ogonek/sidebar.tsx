@@ -434,7 +434,7 @@ export function Sidebar({
             <span
               className={
                 isCollapsed
-                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
+                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center shadow'
                   : 'nav-item__badge'
               }
               aria-label={`${unreadChats} непрочитанных сообщений`}
@@ -446,7 +446,7 @@ export function Sidebar({
             <span
               className={
                 isCollapsed
-                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
+                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center shadow'
                   : 'nav-item__badge'
               }
               aria-label={`${unreadComrades || socialCounts.incomingRequests} входящих заявок`}
@@ -458,7 +458,7 @@ export function Sidebar({
             <span
               className={
                 isCollapsed
-                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
+                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center shadow'
                   : 'nav-item__badge'
               }
               aria-label={`${unreadNotifications} непрочитанных уведомлений`}

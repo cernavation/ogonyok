@@ -387,6 +387,8 @@ export function ChatMessageBubble({
                   className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
                   title="Ещё"
                   aria-label="Меню сообщения"
+                  aria-haspopup="true"
+                  aria-expanded={menuOpen}
                 >
                   <MoreHorizontal size={14} />
                 </button>

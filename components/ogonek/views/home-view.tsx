@@ -17,6 +17,7 @@ import { EveningReview } from '../evening-review'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
+import { FeedSettingsMenu } from '../feed-settings-menu'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { getFeed } from '@/lib/ogonek/social'
 import { listUserGroups, getGroupFeed } from '@/lib/ogonek/groups'
@@ -79,12 +80,17 @@ export function HomeView({
   userId,
   currentUsername,
 }: Props) {
-  const { state, currentUser, loadDaysFromCloud } = useOgonekStore()
+  const { state, currentUser, loadDaysFromCloud, setFeedDensity, setSoundEnabled } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUsername || currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
   const avatarImage = currentUser?.avatarImage || state.profile.avatarImage
   const isOwner = (username || '').toLowerCase() === 'cernavation'
+
+  const [feedSettingsOpen, setFeedSettingsOpen] = useState(false)
+  const [hideReactions, setHideReactions] = useState(false)
+  const [hideStories, setHideStories] = useState(false)
+  const [defaultFeedTab, setDefaultFeedTab] = useState('Мои гордости')
 
   // Автозагрузка дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
   useEffect(() => {
@@ -366,17 +372,50 @@ export function HomeView({
       {/* Sticky glassy feed header */}
       <header className="feed-header">
         {/* Title row */}
-        <div className="feed-title">
+        <div className="feed-title relative">
           <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Главная</h1>
-          <Tooltip content="Настройки ленты" side="left">
-            <button
-              type="button"
-              className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] transition-colors"
-              aria-label="Настройки ленты"
-            >
-              <MoreHorizontal size={20} />
-            </button>
-          </Tooltip>
+          <div className="relative">
+            <Tooltip content="Настройки ленты" side="left">
+              <button
+                type="button"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setFeedSettingsOpen((prev) => !prev)
+                }}
+                className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] transition-colors focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                aria-label="Настройки ленты"
+                aria-haspopup="true"
+                aria-expanded={feedSettingsOpen}
+              >
+                <MoreHorizontal size={20} />
+              </button>
+            </Tooltip>
+
+            <FeedSettingsMenu
+              open={feedSettingsOpen}
+              onClose={() => setFeedSettingsOpen(false)}
+              density={state.feedDensity || 'comfortable'}
+              soundEnabled={state.soundEnabled}
+              hideReactions={hideReactions}
+              hideStories={hideStories}
+              defaultFeedTab={defaultFeedTab}
+              onSetDensity={(d) => setFeedDensity?.(d)}
+              onSetSound={(s) => setSoundEnabled?.(s)}
+              onToggleHideReactions={() => setHideReactions((prev) => !prev)}
+              onToggleHideStories={() => setHideStories((prev) => !prev)}
+              onSetDefaultFeedTab={(tab) => {
+                setDefaultFeedTab(tab)
+                handleTabClick(tab)
+              }}
+              onRefreshFeed={() => {
+                const targetUid = userId || currentUser?.id || state.auth.activeAccountId || undefined
+                loadDaysFromCloud?.(targetUid)
+                onNotify('Лента обновлена')
+              }}
+              onOpenSettings={() => onNavigate?.('settings')}
+              onNotify={onNotify}
+            />
+          </div>
         </div>
 
         {/* Tabs with Twitter Blue underline indicator */}
@@ -400,12 +439,14 @@ export function HomeView({
       </header>
 
       {/* Сторис друзей — Instagram-кружочки вверху ленты */}
-      <StoriesBar
-        variant="feed"
-        onNotify={onNotify}
-        soundEnabled={soundEnabled}
-        onOpenProfile={onOpenProfile}
-      />
+      {!hideStories && (
+        <StoriesBar
+          variant="feed"
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+          onOpenProfile={onOpenProfile}
+        />
+      )}
 
       {/* Inline composer — X.com canonical layout */}
       {onCompose && (
@@ -506,8 +547,8 @@ export function HomeView({
 
         {days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
-            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
-              <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] mx-auto mb-2" aria-hidden="true">
+              <Flame size={28} className="fill-[var(--accent-soft)] text-[var(--accent)]" />
             </span>
             <h2 className="empty-state__title text-lg font-bold mt-2">Твой огонёк готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
@@ -579,8 +620,8 @@ export function HomeView({
           </div>
         ) : filter === 'Друзья' || filter === 'Подписки' ? (
           <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
-            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mb-1" aria-hidden="true">
-              <Users size={24} className="text-[#ff6b35]" />
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] mb-1" aria-hidden="true">
+              <Users size={24} className="text-[var(--accent)]" />
             </span>
             <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
               Здесь будут победы ваших соратников. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!

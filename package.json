@@ -52,12 +52,14 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24",
     "@types/pixelmatch": "^5.2.6",
     "@types/pngjs": "^6.0.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axe-core": "^4.14.0",
     "pg-mem": "^3.0.14",
     "pixelmatch": "^8.0.0",
     "playwright-core": "^1.64.1",

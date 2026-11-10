@@ -101,7 +101,7 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
               )}
               {id === 'messages' && unreadChats > 0 && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow"
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center shadow"
                   aria-label={`${unreadChats} непрочитанных`}
                 >
                   {unreadChats > 99 ? '99+' : unreadChats}
@@ -109,7 +109,7 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
               )}
               {id === 'comrades' && (unreadComrades > 0 || socialCounts.incomingRequests > 0) && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow"
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[var(--accent)] text-white text-[10px] font-bold flex items-center justify-center shadow"
                   aria-label={`${unreadComrades || socialCounts.incomingRequests} входящих заявок`}
                 >
                   {(unreadComrades || socialCounts.incomingRequests) > 99 ? '99+' : (unreadComrades || socialCounts.incomingRequests)}

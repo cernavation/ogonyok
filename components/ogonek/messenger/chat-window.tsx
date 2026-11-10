@@ -388,6 +388,8 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
               onClick={() => setMenuOpen((v) => !v)}
               title="Дополнительные действия"
               aria-label="Меню действий"
+              aria-haspopup="true"
+              aria-expanded={menuOpen}
             >
               <MoreVertical size={18} />
             </button>

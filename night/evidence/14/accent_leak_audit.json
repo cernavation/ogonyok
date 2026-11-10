@@ -1,0 +1,126 @@
+{
+  "totalCombinations": 15,
+  "passedCombinations": 15,
+  "auditResults": [
+    {
+      "theme": "x-black",
+      "accent": "blue",
+      "screenshot": "theme_x-black_blue.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "x-black",
+      "accent": "violet",
+      "screenshot": "theme_x-black_violet.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "x-black",
+      "accent": "emerald",
+      "screenshot": "theme_x-black_emerald.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "x-black",
+      "accent": "rose",
+      "screenshot": "theme_x-black_rose.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "x-black",
+      "accent": "gold",
+      "screenshot": "theme_x-black_gold.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "apple-light",
+      "accent": "blue",
+      "screenshot": "theme_apple-light_blue.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "apple-light",
+      "accent": "violet",
+      "screenshot": "theme_apple-light_violet.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "apple-light",
+      "accent": "emerald",
+      "screenshot": "theme_apple-light_emerald.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "apple-light",
+      "accent": "rose",
+      "screenshot": "theme_apple-light_rose.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "apple-light",
+      "accent": "gold",
+      "screenshot": "theme_apple-light_gold.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "dim",
+      "accent": "blue",
+      "screenshot": "theme_dim_blue.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "dim",
+      "accent": "violet",
+      "screenshot": "theme_dim_violet.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "dim",
+      "accent": "emerald",
+      "screenshot": "theme_dim_emerald.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "dim",
+      "accent": "rose",
+      "screenshot": "theme_dim_rose.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    },
+    {
+      "theme": "dim",
+      "accent": "gold",
+      "screenshot": "theme_dim_gold.png",
+      "leaksCount": 0,
+      "leaks": [],
+      "passed": true
+    }
+  ]
+}

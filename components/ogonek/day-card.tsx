@@ -540,6 +540,8 @@ function DayCardComponent({
                   icon={<MoreHorizontal size={18} />}
                   label="Опции дня"
                   size="sm"
+                  aria-haspopup="true"
+                  aria-expanded={optionsModalOpen}
                   onClick={() => setOptionsModalOpen(true)}
                 />
               </div>
@@ -840,6 +842,8 @@ function DayCardComponent({
                 label="Ещё"
                 tooltip="Ещё"
                 variant="default"
+                aria-haspopup="true"
+                aria-expanded={optionsModalOpen}
                 onClick={() => setOptionsModalOpen(true)}
               />
             </div>
