@@ -103,7 +103,7 @@ export function RightRail({
         )}
       </section>
 
-      {/* Блок 3: Друзья — нативный виджет без лишней внешней обёртки */}
+      {/* Блок 3: Соратники — нативный виджет без лишней внешней обёртки */}
       {onNotify && (
         <ActiveFriendsWidget
           onNavigate={onNavigate}

@@ -106,7 +106,7 @@ export function NotificationCenterModal({
       )
       onNotify('Заявка в соратники принята!')
     } else {
-      onNotify(res.error || 'Ошибка принятия заявки')
+      onNotify(res.error || 'Не удалось принять заявку. Проверьте интернет и повторите попытку.')
     }
   }
 

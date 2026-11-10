@@ -47,7 +47,8 @@ import { GroupsSection } from '@/components/ogonek/groups-section'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from '../tooltip'
-import { Button } from '../ui'
+import { Button, ListRowSkeleton } from '../ui'
+import { humanizeError } from '@/lib/ogonek/human-error'
 
 type TabId = 'comrades' | 'requests' | 'search' | 'following' | 'groups'
 
@@ -216,7 +217,7 @@ export function ComradesView({
       )
       refreshCounts()
     } else {
-      onNotify(res.error || 'Не удалось отправить заявку')
+      onNotify(humanizeError(res.error, 'Не удалось отправить заявку в соратники. Попробуйте позже.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
   }
@@ -245,7 +246,7 @@ export function ComradesView({
       )
       refreshCounts()
     } else {
-      onNotify(res.error || 'Ошибка обработки заявки')
+      onNotify(humanizeError(res.error, 'Не удалось обработать заявку. Попробуйте снова.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
   }
@@ -264,7 +265,7 @@ export function ComradesView({
       )
       refreshCounts()
     } else {
-      onNotify(res.error || 'Ошибка отмены заявки')
+      onNotify(humanizeError(res.error, 'Не удалось отменить заявку. Попробуйте позже.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
   }
@@ -284,7 +285,7 @@ export function ComradesView({
       )
       refreshCounts()
     } else {
-      onNotify(res.error || 'Ошибка удаления')
+      onNotify(humanizeError(res.error, 'Не удалось удалить соратника. Попробуйте позже.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
     setActiveMenuUserId(null)
@@ -305,7 +306,7 @@ export function ComradesView({
       setSearchResults((prev) => prev.filter((p) => p.id !== targetUser.id))
       refreshCounts()
     } else {
-      onNotify(res.error || 'Ошибка блокировки')
+      onNotify(humanizeError(res.error, 'Не удалось заблокировать пользователя. Попробуйте позже.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
     setActiveMenuUserId(null)
@@ -324,7 +325,7 @@ export function ComradesView({
       )
       refreshCounts()
     } else {
-      onNotify(res.error || 'Ошибка изменения подписки')
+      onNotify(humanizeError(res.error, 'Не удалось изменить статус подписки. Попробуйте позже.'))
     }
     setActionInProgress((prev) => ({ ...prev, [targetUser.id]: false }))
     setActiveMenuUserId(null)
@@ -346,7 +347,7 @@ export function ComradesView({
       setReportModalData(null)
       setReportDetails('')
     } else {
-      onNotify(res.error || 'Ошибка отправки жалобы')
+      onNotify(humanizeError(res.error, 'Не удалось отправить жалобу. Попробуйте позже.'))
     }
   }
 
@@ -777,9 +778,10 @@ export function ComradesView({
             )}
 
             {loadingComrades ? (
-              <div className="flex items-center justify-center py-16 text-[var(--muted)] gap-2">
-                <Loader2 size={20} className="animate-spin text-[var(--primary)]" />
-                <span>Загрузка соратников...</span>
+              <div className="flex flex-col gap-2 p-2">
+                <ListRowSkeleton />
+                <ListRowSkeleton />
+                <ListRowSkeleton />
               </div>
             ) : filteredComrades.length > 0 ? (
               <div className="flex flex-col gap-2.5">
@@ -793,7 +795,7 @@ export function ComradesView({
                 </div>
                 <h2 className="text-xl font-bold mb-2">Соратников пока нет</h2>
                 <p className="text-sm text-[var(--muted)] leading-relaxed mb-6">
-                  Соратник видит записи с видимостью «Соратникам», может писать и звонить. Добавьте друзей для
+                  Соратник видит записи с видимостью «Соратникам», может писать и звонить. Добавьте соратников для
                   совместной летописи побед.
                 </p>
 
@@ -911,9 +913,9 @@ export function ComradesView({
             </div>
 
             {loadingRequests ? (
-              <div className="flex items-center justify-center py-16 text-[var(--muted)] gap-2">
-                <Loader2 size={20} className="animate-spin text-[var(--primary)]" />
-                <span>Загрузка заявок...</span>
+              <div className="flex flex-col gap-2 p-2">
+                <ListRowSkeleton />
+                <ListRowSkeleton />
               </div>
             ) : requestsSubTab === 'incoming' ? (
               incomingRequests.length > 0 ? (
@@ -979,9 +981,10 @@ export function ComradesView({
                 </Button>
               </div>
             ) : searching && searchResults.length === 0 ? (
-              <div className="flex items-center justify-center py-16 text-[var(--muted)] gap-2">
-                <Loader2 size={20} className="animate-spin text-[var(--primary)]" />
-                <span>Поиск по всей базе пользователей...</span>
+              <div className="flex flex-col gap-2 p-2">
+                <ListRowSkeleton />
+                <ListRowSkeleton />
+                <ListRowSkeleton />
               </div>
             ) : searchResults.length > 0 ? (
               <div className="flex flex-col gap-2.5">
@@ -1010,8 +1013,9 @@ export function ComradesView({
             </div>
 
             {loadingComrades ? (
-              <div className="flex items-center justify-center py-16 text-[var(--muted)]">
-                <Loader2 size={20} className="animate-spin text-[var(--primary)]" />
+              <div className="flex flex-col gap-2 p-2">
+                <ListRowSkeleton />
+                <ListRowSkeleton />
               </div>
             ) : comrades.length > 0 ? (
               <div className="flex flex-col gap-2.5">

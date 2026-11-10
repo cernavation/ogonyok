@@ -339,14 +339,14 @@ export function MessengerDialogList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Поиск людей и сообщений..."
-            className="flex-1 min-w-0 bg-transparent text-[13px] text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
+            className="flex-1 min-w-0 h-full min-h-[40px] bg-transparent text-[13px] text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
             aria-label="Поиск"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="text-[var(--text-2)] hover:text-[var(--text)] p-1 ml-1 shrink-0"
+              className="text-[var(--text-2)] hover:text-[var(--text)] w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full ml-1 shrink-0 transition-colors"
               aria-label="Очистить поиск"
             >
               <X size={15} />

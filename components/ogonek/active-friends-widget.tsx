@@ -59,28 +59,28 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
       <header className="af-widget__head">
         <h2 id="active-friends-title">
           <Users size={17} className="text-[var(--accent)]" aria-hidden="true" />
-          Друзья
+          Соратники
         </h2>
         <span className="af-widget__badge">
-          {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} друзей`}
+          {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} соратников`}
         </span>
       </header>
 
       {active.length === 0 ? (
         <div className="p-4 rounded-xl bg-[var(--surface2)] border border-[var(--line)] text-center my-2">
-          <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
+          <div className="w-8 h-8 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
           </div>
           <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет соратников</p>
           <p className="text-[11px] text-[var(--muted)] mb-3 leading-snug">
-            Пригласи друзей вести дневник вместе, делиться гордостями и держать огонь.
+            Пригласи соратников вести дневник вместе, делиться гордостями и держать огонь.
           </p>
 
           <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold hover:opacity-90 transition-all shadow-sm active:scale-95"
+              className="w-full min-h-[40px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold hover:opacity-90 transition-all shadow-sm active:scale-95"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}</span>

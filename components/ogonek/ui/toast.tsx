@@ -6,11 +6,17 @@ import { Check, Flame, AlertCircle, Info, X } from 'lucide-react'
 
 export type ToastType = 'success' | 'flame' | 'error' | 'info'
 
+export interface ToastAction {
+  label: string
+  onClick: () => void
+}
+
 export interface ToastProps {
   id?: string
   message: string
   description?: string
   type?: ToastType
+  action?: ToastAction
   onClose?: () => void
 }
 
@@ -18,12 +24,13 @@ export function Toast({
   message,
   description,
   type = 'flame',
+  action,
   onClose,
 }: ToastProps) {
   if (!message) return null
 
   const icons = {
-    flame: <Flame className="w-5 h-5 text-[#FF5C00] shrink-0 fill-[#FF5C00]/20" />,
+    flame: <Flame className="w-5 h-5 text-[var(--accent)] shrink-0 fill-[var(--accent)]/20" />,
     success: <Check className="w-5 h-5 text-emerald-500 shrink-0" />,
     error: <AlertCircle className="w-5 h-5 text-rose-500 shrink-0" />,
     info: <Info className="w-5 h-5 text-zinc-400 shrink-0" />,
@@ -46,6 +53,15 @@ export function Toast({
           <p className="text-xs text-zinc-400 mt-0.5 truncate">{description}</p>
         )}
       </div>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[var(--accent)] text-white hover:opacity-90 active:scale-95 transition-all shrink-0"
+        >
+          {action.label}
+        </button>
+      )}
       {onClose && (
         <button
           onClick={onClose}

@@ -119,13 +119,13 @@ export function ChatThreadList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск диалогов или людей..."
-            className="w-full rounded-xl border border-[var(--border)] bg-[var(--surface2)] py-2 pl-9 pr-8 text-xs text-[var(--text)] placeholder-[var(--text-2)] outline-none transition-colors focus:border-[var(--accent)]"
+            className="w-full min-h-[40px] rounded-xl border border-[var(--border)] bg-[var(--surface2)] py-2.5 pl-9 pr-8 text-xs text-[var(--text)] placeholder-[var(--text-2)] outline-none transition-colors focus:border-[var(--accent)]"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
-              className="absolute right-2.5 text-[#71767b] hover:text-white"
+              className="absolute right-1 w-9 h-9 min-w-[36px] min-h-[36px] flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
               aria-label="Очистить поиск"
             >
               <X size={15} />

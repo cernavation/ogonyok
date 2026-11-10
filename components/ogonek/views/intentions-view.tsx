@@ -159,7 +159,7 @@ export function IntentionsView({
                     setDraftFocus(next)
                   }}
                   placeholder={PLACEHOLDERS[i]}
-                  className="flex-1 min-w-0 bg-transparent text-[var(--text)] text-[15px] font-medium outline-none placeholder:text-[var(--text-2)] disabled:opacity-75"
+                  className="flex-1 min-w-0 h-10 min-h-[40px] bg-transparent text-[var(--text)] text-[15px] font-medium outline-none placeholder:text-[var(--text-2)] disabled:opacity-75"
                   aria-label={`Намерение ${i + 1}: ${PLACEHOLDERS[i]}`}
                 />
                 {saved && val.trim().length > 0 && (

@@ -1,0 +1,292 @@
+{
+  "timestamp": "2026-11-10T06:44:34.658Z",
+  "horizontalOverflows": [],
+  "clippedTexts": [],
+  "elementCollisions": [],
+  "smallTouchTargets": [
+    {
+      "screen": "explore",
+      "theme": "x-black",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Живой поиск по сообществу",
+          "width": 295,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "messages",
+      "theme": "x-black",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск",
+          "width": 307,
+          "height": 20
+        }
+      ]
+    },
+    {
+      "screen": "vault",
+      "theme": "x-black",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск по доказательствам",
+          "width": 301,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "intentions",
+      "theme": "x-black",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Намерение 1: Главный шаг дня",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 2: Для себя",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 3: Если останется время",
+          "width": 267,
+          "height": 23
+        }
+      ]
+    },
+    {
+      "screen": "explore",
+      "theme": "apple-light",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Живой поиск по сообществу",
+          "width": 295,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "messages",
+      "theme": "apple-light",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск",
+          "width": 307,
+          "height": 20
+        }
+      ]
+    },
+    {
+      "screen": "vault",
+      "theme": "apple-light",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск по доказательствам",
+          "width": 301,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "intentions",
+      "theme": "apple-light",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Намерение 1: Главный шаг дня",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 2: Для себя",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 3: Если останется время",
+          "width": 267,
+          "height": 23
+        }
+      ]
+    },
+    {
+      "screen": "explore",
+      "theme": "dim",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Живой поиск по сообществу",
+          "width": 295,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "messages",
+      "theme": "dim",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск",
+          "width": 307,
+          "height": 20
+        }
+      ]
+    },
+    {
+      "screen": "vault",
+      "theme": "dim",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Поиск по доказательствам",
+          "width": 301,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "screen": "intentions",
+      "theme": "dim",
+      "items": [
+        {
+          "tag": "input",
+          "label": "Намерение 1: Главный шаг дня",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 2: Для себя",
+          "width": 267,
+          "height": 23
+        },
+        {
+          "tag": "input",
+          "label": "Намерение 3: Если останется время",
+          "width": 267,
+          "height": 23
+        }
+      ]
+    }
+  ],
+  "tokenAnomalies": {
+    "radii": {
+      "3.35544e+07px": 1980,
+      "9999px": 1278,
+      "50%": 72,
+      "8px": 72,
+      "16px": 432,
+      "999px": 138,
+      "12px": 639,
+      "24px": 27,
+      "2px": 12,
+      "3px": 6,
+      "10px": 24
+    },
+    "paddings": {
+      "20px 18px 16px 22px": 30,
+      "4px 12px 4px 4px": 27,
+      "13px 16px": 360,
+      "0px 20px": 48,
+      "8px 0px 0px": 126,
+      "10px 8px": 30,
+      "0px 16px": 69,
+      "4px 10px": 108,
+      "17px 22px 10px": 9,
+      "14px 16px": 198,
+      "12px 0px 10px": 9,
+      "2px 16px 4px": 9,
+      "2px": 36,
+      "12px 16px": 225,
+      "8px 0px": 9,
+      "10px 16px": 36,
+      "0px 0px 0px 8px": 9,
+      "2px 10px": 36,
+      "21px 24px": 6,
+      "10px 12px": 105,
+      "16px": 579,
+      "2px 0px 0px": 9,
+      "2px 8px": 72,
+      "4px 0px": 63,
+      "10px 0px 0px": 9,
+      "0px 4px 0px 0px": 18,
+      "4px 0px 0px": 81,
+      "14px 12px 12px": 81,
+      "0px 4px": 90,
+      "3px 9px": 81,
+      "8px 12px": 162,
+      "4px": 108,
+      "0px 0px 96px": 45,
+      "20px 24px 0px": 6,
+      "11px 16px": 9,
+      "8px": 9,
+      "6px 12px": 99,
+      "0px 8px": 9,
+      "20px": 57,
+      "40px 16px": 9,
+      "10px": 27,
+      "0px 14px": 87,
+      "8px 16px": 21,
+      "32px": 27,
+      "10px 20px": 27,
+      "0px 24px": 33,
+      "0px 0px 8px": 9,
+      "6px 16px": 36,
+      "14px 8px": 30,
+      "4px 0px 12px": 9,
+      "4px 14px": 18,
+      "16px 0px": 18,
+      "4px 8px": 9,
+      "12px": 9,
+      "12px 14px": 90,
+      "24px": 39,
+      "12px 0px 0px": 9,
+      "32px 24px 24px": 6,
+      "4px 12px": 9,
+      "8px 20px": 18,
+      "2px 6px": 9,
+      "28px": 18,
+      "0px 0px 20px": 27,
+      "24px 0px 0px": 27,
+      "2px 14px": 9,
+      "4px 20px 20px": 6,
+      "32px 24px 0px": 6,
+      "0px 0px 80px": 18,
+      "8px 14px": 15,
+      "2px 0px": 9,
+      "4px 9px": 12,
+      "10px 0px": 27,
+      "80px 16px": 9,
+      "20px 10px": 60,
+      "13px": 720,
+      "0px 0px 123px": 27,
+      "13px 17px": 3,
+      "21px 16px": 3,
+      "20px 16px 0px": 3,
+      "14px 4px": 15,
+      "32px 16px 24px": 3,
+      "14px": 144,
+      "4px 16px 20px": 3,
+      "32px 16px 0px": 3,
+      "6px 8px": 9
+    },
+    "margins": {}
+  },
+  "screenshotsCaptured": 94
+}

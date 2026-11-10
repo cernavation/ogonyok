@@ -144,7 +144,7 @@ export function MilestoneModal({
       if (json.success) {
         setSavedToVault(nextSaved)
         playSuccess(soundEnabled)
-        onNotify?.(nextSaved ? '⚡ Веха сохранена в Evidence Vault' : 'Веха убрана из Свода')
+        onNotify?.(nextSaved ? '⚡ Веха сохранена в Сейф доказательств' : 'Веха убрана из Сейфа')
         onSavedToVault?.(milestoneNumber, userReview.trim())
       } else {
         onNotify?.(json.error || 'Не удалось сохранить веху')
@@ -481,10 +481,10 @@ export function MilestoneModal({
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 hover:bg-amber-500/30'
                       : 'bg-gradient-to-r from-amber-500 to-orange-500 text-black hover:from-amber-400 hover:to-orange-400 shadow-lg shadow-orange-500/20'
                   }`}
-                  aria-label={savedToVault ? 'Веха сохранена в Evidence Vault' : 'Сохранить веху в Evidence Vault'}
+                  aria-label={savedToVault ? 'Веха сохранена в Сейф доказательств' : 'Сохранить веху в Сейф доказательств'}
                 >
                   <Shield size={16} />
-                  <span>{savedToVault ? '✓ Сохранено в Свод (Vault)' : 'Сохранить в Свод (Vault)'}</span>
+                  <span>{savedToVault ? '✓ Сохранено в Сейф доказательств' : 'Сохранить в Сейф доказательств'}</span>
                 </button>
 
                 <button
@@ -516,7 +516,7 @@ export function MilestoneModal({
 
               {savedToVault && (
                 <p className="text-center text-[11px] text-amber-400/80 -mt-2">
-                  Веха закреплена золотой карточкой в твоём профиле и Evidence Vault.
+                  Веха закреплена золотой карточкой в твоём профиле и Сейфе доказательств.
                 </p>
               )}
             </div>

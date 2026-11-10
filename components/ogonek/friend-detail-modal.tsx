@@ -88,12 +88,12 @@ export function FriendDetailModal({ friendId, onClose, onNotify, soundEnabled = 
     playClick(soundEnabled)
     if (isFriend) {
       removeFriend(friend.id)
-      onNotify(`@${friend.username} убран из друзей`)
+      onNotify(`@${friend.username} убран из соратников`)
       return
     }
     addFriend(friend.id)
     playSuccess(soundEnabled)
-    onNotify(`@${friend.username} теперь в друзьях ✓`)
+    onNotify(`@${friend.username} теперь в соратниках ✓`)
   }
 
   const handleRequest = () => {
@@ -222,7 +222,7 @@ export function FriendDetailModal({ friendId, onClose, onNotify, soundEnabled = 
             onClick={handleFriend}
           >
             {isFriend ? <UserMinus size={15} /> : <UserPlus size={15} />}
-            {isFriend ? 'Убрать из друзей' : 'Добавить в друзья'}
+            {isFriend ? 'Убрать из соратников' : 'Добавить в соратники'}
           </button>
 
           <button

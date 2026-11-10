@@ -326,7 +326,7 @@ export function NewChatModal({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Поиск по имени, @нику или городу..."
-                  className="w-full bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
+                  className="w-full h-full min-h-[40px] bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
                   autoFocus
                 />
                 {loadingProfiles && (
@@ -413,7 +413,7 @@ export function NewChatModal({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Поиск по имени или @нику..."
-                  className="w-full bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
+                  className="w-full h-full min-h-[40px] bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
                   autoFocus
                 />
                 {loadingProfiles && (

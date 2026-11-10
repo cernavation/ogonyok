@@ -958,7 +958,7 @@ export function ProfileView({
           />
         </div>
 
-        {/* Вкладки на всю ширину (Записи | Благодарности | Календарь | Друзья) */}
+        {/* Вкладки на всю ширину (Записи | Вехи | Благодарности | Календарь | Соратники) */}
         <div className="flex items-center border-b border-[var(--border)] -mx-4 sm:-mx-6 mb-4" role="tablist" aria-label="Вкладки профиля">
           {tabs.map((t) => {
             const active = activeTab === t.id

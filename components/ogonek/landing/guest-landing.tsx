@@ -71,7 +71,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     },
     {
       q: 'Сколько стоит использование Огонька?',
-      a: 'Огонёк полностью бесплатен для личного ведения дневника, хранения побед в Evidence Vault, общения в чатах соратников и аналитики. Без скрытых подписок и без навязчивой рекламы.',
+      a: 'Огонёк полностью бесплатен для личного ведения дневника, хранения побед в Сейфе доказательств, общения в чатах соратников и аналитики. Без скрытых подписок и без навязчивой рекламы.',
     },
     {
       q: 'Как устроена авторизация через Google?',
@@ -96,7 +96,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     },
     {
       icon: Shield,
-      title: 'Evidence Vault',
+      title: 'Сейф доказательств',
       desc: 'Сейф артефактов: прикрепляй фото, чеки, скриншоты, отзывы и сертификаты как железные пруфы.',
     },
     {
@@ -335,7 +335,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                   <BarChart3 size={15} /> Аналитика & ИИ
                 </div>
                 <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <Shield size={15} /> Evidence Vault
+                  <Shield size={15} /> Сейф доказательств
                 </div>
               </div>
 
@@ -445,7 +445,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               </div>
               <h3 className="text-lg font-bold tracking-tight">Честность и опора на факты</h3>
               <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Никакого токсичного позитива и пустых аффирмаций. Ты прикрепляешь пруфы в Evidence Vault и видишь реальные артефакты своего прогресса и преодоления за годы.
+                Никакого токсичного позитива и пустых аффирмаций. Ты прикрепляешь пруфы в Сейф доказательств и видишь реальные артефакты своего прогресса и преодоления за годы.
               </p>
             </div>
           </div>
@@ -477,7 +477,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               {
                 step: '03',
                 title: 'Собираешь доказательства',
-                desc: 'Прикрепляешь скриншоты, отзывы клиентов, сертификаты и файлы в личный Evidence Vault.',
+                desc: 'Прикрепляешь скриншоты, отзывы клиентов, сертификаты и файлы в личный Сейф доказательств.',
               },
               {
                 step: '04',
@@ -584,7 +584,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               </div>
               <h3 className="text-lg font-bold tracking-tight">Разработчики и создатели</h3>
               <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Лучшее лекарство от синдрома самозванца. Сохраняй реальные коммиты, успешные архитектурные решения и победы над сложными багами в личный Evidence Vault.
+                Лучшее лекарство от синдрома самозванца. Сохраняй реальные коммиты, успешные архитектурные решения и победы над сложными багами в личный Сейф доказательств.
               </p>
             </div>
 

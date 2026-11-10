@@ -18,7 +18,8 @@ import { AppLockScreen } from './security'
 import { Sidebar } from './sidebar'
 import { ScrollPill } from './scroll-pill'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
-import { Toast } from './toast'
+import { Toast, type ToastMessage } from './toast'
+import { OfflineBanner } from './offline-banner'
 import { TooltipProvider } from './tooltip'
 import { SupabaseSyncBootstrap } from './supabase-sync-bootstrap'
 import { AnalyticsView } from './views/analytics-view'
@@ -70,7 +71,7 @@ export function AppShell() {
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
   const [onboardingOpen, setOnboardingOpen] = useState(false)
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<ToastMessage>('')
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
@@ -158,14 +159,15 @@ export function AppShell() {
     )
   )
 
-  const notify = useCallback((message: string) => {
+  const notify = useCallback((message: ToastMessage) => {
     setToast(message)
     if (toastTimerRef.current) {
       clearTimeout(toastTimerRef.current)
     }
+    const duration = typeof message === 'object' && message.action ? 5000 : 2400
     toastTimerRef.current = setTimeout(() => {
       setToast('')
-    }, 2400)
+    }, duration)
   }, [])
 
   const canLock = hasUnlockMethod(state.security)
@@ -813,7 +815,7 @@ export function AppShell() {
         date: new Date().toLocaleDateString('ru-RU'),
         pinned: true,
       })
-      notify('⚡ Сохранено в Evidence Vault')
+      notify('⚡ Сохранено в Сейф доказательств')
     },
     [addEvidenceItem, notify]
   )
@@ -1478,6 +1480,7 @@ export function AppShell() {
         )}
 
         <Toast message={toast} />
+        <OfflineBanner />
       </main>
 
       {/* ЭТАП 18: полноэкранный шлюз авторизации, когда пользователь вышел */}

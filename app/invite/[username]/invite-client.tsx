@@ -106,7 +106,7 @@ export function InviteClient({ profile }: { profile: ProfileData }) {
         showToast('Заявка в соратники отправлена!')
       }
     } else {
-      showToast(res.error || 'Ошибка отправки заявки')
+      showToast(res.error || 'Не удалось отправить заявку в соратники. Попробуйте позже.')
     }
   }
 

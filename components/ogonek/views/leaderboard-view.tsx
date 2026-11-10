@@ -223,13 +223,13 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
           </div>
         )}
 
-        {/* Tabs: Друзья / Все */}
+        {/* Tabs: Соратники / Все */}
         <div className="flex rounded-full bg-[var(--bg-elev)] p-1 border border-[var(--line)] gap-2" role="tablist">
           <button
             type="button"
             role="tab"
             aria-selected={tab === 'friends'}
-            className={`flex-1 py-2 text-[14px] font-bold rounded-full transition-all duration-150 min-h-[38px] ${
+            className={`flex-1 py-2 text-[14px] font-bold rounded-full transition-all duration-150 min-h-[40px] ${
               tab === 'friends'
                 ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm'
                 : 'text-[var(--text-2)] hover:text-[var(--text)]'
@@ -239,13 +239,13 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
               setTab('friends')
             }}
           >
-            Друзья
+            Соратники
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={tab === 'all'}
-            className={`flex-1 py-2 text-[14px] font-bold rounded-full transition-all duration-150 min-h-[38px] ${
+            className={`flex-1 py-2 text-[14px] font-bold rounded-full transition-all duration-150 min-h-[40px] ${
               tab === 'all'
                 ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm'
                 : 'text-[var(--text-2)] hover:text-[var(--text)]'

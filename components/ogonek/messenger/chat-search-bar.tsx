@@ -48,7 +48,7 @@ export function ChatSearchBar({
           }
         }}
         placeholder="Поиск по сообщениям..."
-        className="flex-1 bg-transparent text-xs text-white placeholder-[#71767b] outline-none"
+        className="flex-1 min-h-[40px] bg-transparent text-xs text-[var(--text)] placeholder-[var(--text-2)] outline-none"
       />
 
       {query && (

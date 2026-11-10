@@ -163,7 +163,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenNotifications, streak
                   { id: 'settings' as ViewId, label: 'Настройки' },
                   { id: 'premium' as ViewId, label: 'Премиум' },
                   { id: 'leaderboard' as ViewId, label: 'Рейтинг' },
-                  { id: 'vault' as ViewId, label: 'Evidence Vault' },
+                  { id: 'vault' as ViewId, label: 'Сейф доказательств' },
                   { id: 'analytics' as ViewId, label: 'Аналитика' },
                   { id: 'intentions' as ViewId, label: 'Намерения' },
                 ].map(({ id, label }) => (

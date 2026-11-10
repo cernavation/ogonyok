@@ -481,7 +481,7 @@ function DayCardComponent({
                   </span>
                 )}
                 {dayVisibility !== 'public' && (
-                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
+                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для соратников'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
                     <Lock size={13} />
                   </span>
                 )}

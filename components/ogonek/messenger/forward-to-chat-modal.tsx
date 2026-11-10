@@ -79,7 +79,7 @@ export function ForwardToChatModal({
 
   const handleSend = () => {
     if (selected.length === 0) {
-      onNotify('Выбери хотя бы одного друга')
+      onNotify('Выбери хотя бы одного соратника')
       return
     }
 
@@ -159,12 +159,12 @@ export function ForwardToChatModal({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Найти друга по имени, @username или городу"
-            aria-label="Поиск друга"
+            placeholder="Найти соратника по имени, @username или городу"
+            aria-label="Поиск соратника"
           />
         </div>
 
-        <div className="forward-list" role="listbox" aria-label="Друзья">
+        <div className="forward-list" role="listbox" aria-label="Соратники">
           {list.length === 0 && (
             <p className="empty-state__desc" style={{ padding: '14px 4px' }}>
               Никого не найдено. Попробуй другое имя.

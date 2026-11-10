@@ -341,12 +341,12 @@ export function StoriesBar({
   const shellClass = variant === 'rail' ? 'stories-rail' : 'stories-feed'
 
   return (
-    <section className={shellClass} aria-label="Сторис друзей">
+    <section className={shellClass} aria-label="Сторис соратников">
       {variant === 'rail' && (
         <header className="stories-rail__head">
           <h2 className="stories-rail__title">
-            <Sparkles size={17} className="text-[#ff8a50]" aria-hidden="true" />
-            Сторис друзей
+            <Sparkles size={17} className="text-[var(--accent)]" aria-hidden="true" />
+            Сторис соратников
           </h2>
           <span className="stories-rail__badge">
             {unviewedCount > 0 ? `${unviewedCount} новых` : 'все просмотрены'}

@@ -150,14 +150,14 @@ export function CallsHistoryView({
           </div>
 
           {/* Поиск */}
-          <div className="flex-1 relative">
-            <Search size={14} className="absolute left-3 top-2.5 text-[var(--text-3)]" />
+          <div className="flex-1 relative flex items-center">
+            <Search size={14} className="absolute left-3 text-[var(--text-3)]" />
             <input
               type="text"
               placeholder="Поиск по имени..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[var(--surface2)] border border-[var(--border)] rounded-xl pl-8 pr-3 py-1.5 text-xs text-[var(--text)] placeholder-[var(--text-3)] focus:outline-none"
+              className="w-full min-h-[40px] bg-[var(--surface2)] border border-[var(--border)] rounded-xl pl-8 pr-3 py-2 text-xs text-[var(--text)] placeholder-[var(--text-3)] focus:outline-none"
             />
           </div>
         </div>

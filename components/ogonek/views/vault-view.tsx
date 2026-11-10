@@ -25,7 +25,7 @@ type Props = {
   onTogglePin?: (id: string) => void
   onAddEvidence?: (item: Omit<EvidenceItem, 'id'>) => void
   onDeleteEvidence?: (id: string) => void
-  onNotify?: (msg: string) => void
+  onNotify?: (msg: any) => void
   soundEnabled?: boolean
 }
 
@@ -115,7 +115,7 @@ export function VaultView({
         pinned: true,
       })
       playSuccess(soundEnabled)
-      onNotify?.('Факт силы добавлен в Evidence Vault')
+      onNotify?.('Факт силы добавлен в Сейф доказательств')
     }
 
     setNewTitle('')
@@ -130,7 +130,7 @@ export function VaultView({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
             onClick={() => onNavigate('home')}
             aria-label="Вернуться на главную"
           >
@@ -138,7 +138,7 @@ export function VaultView({
           </button>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">
-              Evidence Vault
+              Сейф доказательств
             </h1>
             <p className="text-[13px] text-[var(--muted)] font-normal">
               {evidenceItems.length} фактов силы
@@ -153,13 +153,13 @@ export function VaultView({
             if (isFree) {
               dispatchUpgradeModal({
                 feature: 'vault',
-                reason: 'Evidence Vault доступен на тарифах Премиум и Ultra',
+                reason: 'Сейф доказательств доступен на тарифах Премиум и Ultra',
               })
               return
             }
             setIsAdding(!isAdding)
           }}
-          className="min-h-[36px] px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
+          className="min-h-[40px] px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
         >
           {isAdding ? <X size={15} /> : <Plus size={15} />}
           <span>{isAdding ? 'Отмена' : 'Добавить факт'}</span>
@@ -168,7 +168,7 @@ export function VaultView({
 
       {/* Search Pill + Category Pills */}
       <div className="p-4 border-b border-[var(--line)] flex flex-col gap-3">
-        <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-full bg-[var(--bg-elev)] border border-[var(--line)] focus-within:border-[var(--accent)] transition-colors">
+        <div className="flex items-center gap-2.5 px-3.5 py-1.5 min-h-[44px] rounded-full bg-[var(--bg-elev)] border border-[var(--line)] focus-within:border-[var(--accent)] transition-colors">
           <Search size={16} className="text-[var(--text-2)] flex-none" />
           <input
             type="search"
@@ -176,13 +176,13 @@ export function VaultView({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Искать в доказательствах..."
             aria-label="Поиск по доказательствам"
-            className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[var(--text)] placeholder:text-[var(--text-2)]"
+            className="flex-1 min-h-[40px] h-full bg-transparent border-0 outline-none text-[14px] text-[var(--text)] placeholder:text-[var(--text-2)]"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch('')}
-              className="w-7 h-7 min-w-[28px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+              className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
               aria-label="Очистить поиск"
             >
               <X size={14} />
@@ -202,7 +202,7 @@ export function VaultView({
                   playClick(soundEnabled)
                   setSelectedCategory(cat)
                 }}
-                className={`min-h-[34px] px-3.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors ${
+                className={`min-h-[40px] px-4 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors ${
                   active
                     ? 'bg-[var(--text)] text-[var(--bg)]'
                     : 'bg-[var(--bg-elev)] text-[var(--text-2)] hover:text-[var(--text)] border border-[var(--border)]'
@@ -336,7 +336,7 @@ export function VaultView({
           <div className="p-4 border-b border-[var(--border)] bg-[var(--bg-elev)]/50">
             <div className="flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-2">
               <Sparkles size={14} />
-              <span>Режим предпросмотра Evidence Vault</span>
+              <span>Режим предпросмотра Сейфа доказательств</span>
             </div>
             <p className="text-xs text-[var(--text-2)] leading-relaxed">
               Ниже показано, как выглядит Свод личной силы для фиксации ключевых моментов стойкости и побед.
@@ -392,7 +392,7 @@ export function VaultView({
               <Lock size={22} />
             </div>
             <h3 className="text-lg font-black text-[var(--text)] mb-1">
-              Разблокируйте Evidence Vault
+              Разблокируйте Сейф доказательств
             </h3>
             <p className="text-xs sm:text-[13px] text-[var(--text-2)] max-w-md mx-auto leading-relaxed mb-4">
               Свод личной силы сохраняет неопровержимые доказательства твоих побед и вех. Доступно на тарифах Премиум и Ultra.
@@ -403,10 +403,10 @@ export function VaultView({
                 playClick(soundEnabled)
                 dispatchUpgradeModal({ feature: 'vault', force: true })
               }}
-              className="h-10 px-6 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition-transform active:scale-95"
+              className="min-h-[40px] px-6 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-xs font-bold inline-flex items-center gap-2 shadow-sm transition-transform active:scale-95"
             >
               <Sparkles size={14} />
-              <span>Разблокировать Свод Силы</span>
+              <span>Разблокировать Сейф доказательств</span>
             </button>
           </div>
         </div>
@@ -444,23 +444,33 @@ export function VaultView({
                       }}
                       title={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
                       aria-label={isPinned ? 'Открепить факт силы' : 'Закрепить факт силы'}
-                      className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
+                      className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors"
                     >
-                      <Pin size={15} fill={isPinned ? 'currentColor' : 'none'} className={isPinned ? 'text-[var(--accent)]' : ''} />
+                      <Pin size={16} fill={isPinned ? 'currentColor' : 'none'} className={isPinned ? 'text-[var(--accent)]' : ''} />
                     </button>
                     {onDeleteEvidence && (
                       <button
                         type="button"
                         onClick={() => {
                           playClick(soundEnabled)
+                          const deletedItem = item
                           onDeleteEvidence(item.id)
-                          onNotify?.('Факт силы удалён')
+                          onNotify?.({
+                            text: `«${deletedItem.title.slice(0, 22)}» удалено`,
+                            action: {
+                              label: 'Отменить',
+                              onClick: () => {
+                                onAddEvidence?.(deletedItem)
+                                onNotify?.('Факт восстановлен')
+                              },
+                            },
+                          })
                         }}
                         title="Удалить факт силы"
                         aria-label="Удалить факт силы"
-                        className="w-9 h-9 min-w-[34px] min-h-[34px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                        className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-red-500 hover:bg-red-500/10 transition-colors"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={16} />
                       </button>
                     )}
                   </div>
@@ -482,7 +492,7 @@ export function VaultView({
             <Pin size={20} className="rotate-45" />
           </div>
           <p className="text-[16px] font-bold text-[var(--text)] mb-3">
-            {query ? 'Ничего не найдено' : 'В Evidence Vault пока пусто'}
+            {query ? 'Ничего не найдено' : 'В Сейфе доказательств пока пусто'}
           </p>
           <button
             type="button"
@@ -490,7 +500,7 @@ export function VaultView({
               if (query) setSearch('')
               else setIsAdding(true)
             }}
-            className="h-9 px-5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[14px] font-extrabold transition-colors inline-flex items-center gap-1.5"
+            className="min-h-[40px] px-5 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[14px] font-extrabold transition-colors inline-flex items-center gap-1.5"
           >
             <Plus size={16} />
             <span>{query ? 'Сбросить поиск' : 'Добавить факт силы'}</span>

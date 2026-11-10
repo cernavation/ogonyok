@@ -7,7 +7,7 @@
  * Отображает историю вех (100, 200, 300 дней...):
  * - Free: без отчётов, только факт («300 дней»), превью-размытие отчёта с кнопкой апгрейда.
  * - Pro / Ultra: исторические отчёты с цифрами, траекторией и глубоким разбором.
- * - Кнопка сохранения в Evidence Vault и шеринга красивой карточки.
+ * - Кнопка сохранения в Сейф доказательств и шеринга красивой карточки.
  * ============================================================================
  */
 
@@ -136,7 +136,7 @@ export function ProfileMilestonesTab({
                 {isVaulted && (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
                     <Shield size={11} className="text-amber-400" />
-                    В Evidence Vault
+                    В Сейфе доказательств
                   </span>
                 )}
               </div>

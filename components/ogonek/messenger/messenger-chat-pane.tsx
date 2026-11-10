@@ -1766,7 +1766,7 @@ export function MessengerChatPane({
               onNotify('Сообщение изменено')
               loadScheduled()
             } else {
-              onNotify(res.error || 'Не удалось изменить')
+              onNotify(res.error || 'Не удалось сохранить изменения. Попробуйте повторить.')
             }
           }}
           onCancel={async (id) => {
@@ -1775,7 +1775,7 @@ export function MessengerChatPane({
               onNotify('Отложенное сообщение отменено')
               loadScheduled()
             } else {
-              onNotify('Не удалось отменить')
+              onNotify('Не удалось отменить отложенное сообщение. Попробуйте позже.')
             }
           }}
           onClose={() => setScheduledListOpen(false)}

@@ -139,7 +139,7 @@ export function UserProfileClient({
       if (res.id) setFriendshipId(res.id)
       showToast(res.message || 'Заявка отправлена')
     } else {
-      showToast(res.error || 'Ошибка отправки заявки')
+      showToast(res.error || 'Не удалось отправить заявку в соратники. Попробуйте позже.')
     }
   }
 
@@ -152,7 +152,7 @@ export function UserProfileClient({
       setFriendshipStatus(accept ? 'accepted' : 'none')
       showToast(res.message || (accept ? 'Заявка принята!' : 'Заявка отклонена'))
     } else {
-      showToast(res.error || 'Ошибка обработки заявки')
+      showToast(res.error || 'Не удалось обработать заявку. Попробуйте позже.')
     }
   }
 
@@ -165,7 +165,7 @@ export function UserProfileClient({
       setFriendshipId(null)
       showToast('Заявка отменена')
     } else {
-      showToast(res.error || 'Ошибка отмены')
+      showToast(res.error || 'Не удалось отменить заявку. Попробуйте позже.')
     }
   }
 
@@ -180,7 +180,7 @@ export function UserProfileClient({
       showToast('Пользователь удалён из соратников')
       setMenuOpen(false)
     } else {
-      showToast(res.error || 'Ошибка удаления')
+      showToast(res.error || 'Не удалось удалить пользователя из соратников. Попробуйте позже.')
     }
   }
 
@@ -195,7 +195,7 @@ export function UserProfileClient({
       showToast(`Пользователь @${profile.username} заблокирован`)
       setMenuOpen(false)
     } else {
-      showToast(res.error || 'Ошибка блокировки')
+      showToast(res.error || 'Не удалось заблокировать пользователя. Попробуйте позже.')
     }
   }
 
@@ -207,7 +207,7 @@ export function UserProfileClient({
       setIsFollowing(Boolean(res.following))
       showToast(res.message || 'Статус подписки обновлён')
     } else {
-      showToast(res.error || 'Ошибка подписки')
+      showToast(res.error || 'Не удалось обновить статус подписки. Попробуйте позже.')
     }
   }
 

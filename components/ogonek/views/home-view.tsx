@@ -438,7 +438,7 @@ export function HomeView({
         </div>
       </header>
 
-      {/* Сторис друзей — Instagram-кружочки вверху ленты */}
+      {/* Сторис соратников — Instagram-кружочки вверху ленты */}
       {!hideStories && (
         <StoriesBar
           variant="feed"
@@ -618,13 +618,13 @@ export function HomeView({
               В этой группе пока нет опубликованных записей. Опубликуйте гордость или благодарность из композера с выбором этой группы!
             </p>
           </div>
-        ) : filter === 'Друзья' || filter === 'Подписки' ? (
+        ) : filter === 'Соратники' || filter === 'Подписки' ? (
           <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] mb-1" aria-hidden="true">
               <Users size={24} className="text-[var(--accent)]" />
             </span>
             <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
-              Здесь будут победы ваших соратников. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!
+              Здесь будут победы ваших соратников. Поделитесь ссылкой с соратниками, чтобы держать огонь вместе!
             </p>
             <button
               type="button"

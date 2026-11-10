@@ -16,6 +16,7 @@ import { ChatThreadList } from '../messenger/chat-thread-list'
 import { ChatWindow } from '../messenger/chat-window'
 import { NewChatModal } from '../messenger/new-chat-modal'
 import { MessengerErrorBoundary } from '../messenger/messenger-error-boundary'
+import { ListRowSkeleton } from '../ui/list-row'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -110,9 +111,10 @@ export function MessagesView({
 
   if (!currentUserId && !currentUser && !state?.auth?.signedIn) {
     return (
-      <div className="view-messages flex-1 flex flex-col items-center justify-center p-8 bg-[var(--bg)] text-center select-none">
-        <div className="w-10 h-10 border-2 border-[var(--border)] border-t-[var(--accent)] rounded-full animate-spin mb-3 shadow-lg" />
-        <p className="text-sm font-medium text-[var(--text-2)]">Загрузка мессенджера...</p>
+      <div className="view-messages flex-1 flex flex-col p-4 bg-[var(--bg)] divide-y divide-[var(--border)]/40">
+        <ListRowSkeleton />
+        <ListRowSkeleton />
+        <ListRowSkeleton />
       </div>
     )
   }

@@ -145,7 +145,7 @@ export function GroupsSection({
         setSelectedComradeIds([])
         await loadGroups()
       } else {
-        onNotify(res.error || 'Ошибка создания группы')
+        onNotify(res.error || 'Не удалось создать группу. Проверьте название и лимиты тарифа.')
       }
     } finally {
       setIsSubmitting(false)
@@ -179,7 +179,7 @@ export function GroupsSection({
         setInviteSelectedComradeId('')
         await loadGroups()
       } else {
-        onNotify(res.error || 'Ошибка отправки приглашения')
+        onNotify(res.error || 'Не удалось отправить приглашение. Попробуйте позже.')
       }
     } finally {
       setInviting(false)
@@ -195,7 +195,7 @@ export function GroupsSection({
       setSelectedGroup(null)
       await loadGroups()
     } else {
-      onNotify(res.error || 'Ошибка при выходе из группы')
+      onNotify(res.error || 'Не удалось выйти из группы. Попробуйте позже.')
     }
   }
 
@@ -207,7 +207,7 @@ export function GroupsSection({
       onNotify(`Участник ${memberName} исключён из группы`)
       await loadGroups()
     } else {
-      onNotify(res.error || 'Ошибка исключения')
+      onNotify(res.error || 'Не удалось удалить участника из группы. Попробуйте позже.')
     }
   }
 

@@ -32,8 +32,8 @@ type SheetItem = { id: ViewId; label: string; hint: string; icon: LucideIcon }
 const SECTIONS: SheetItem[] = [
   { id: 'home', label: 'Главная', hint: 'Лента дней и стрик', icon: Home },
   { id: 'explore', label: 'Поиск', hint: 'Люди, теги, достижения', icon: Search },
-  { id: 'messages', label: 'Чаты', hint: 'Друзья и поддержка', icon: MessageCircle },
-  { id: 'vault', label: 'Evidence Vault', hint: 'Факты твоей силы', icon: Zap },
+  { id: 'messages', label: 'Чаты', hint: 'Соратники и поддержка', icon: MessageCircle },
+  { id: 'vault', label: 'Сейф доказательств', hint: 'Факты твоей силы', icon: Zap },
   { id: 'intentions', label: 'Намерения', hint: 'Утренний фокус и сверка', icon: Target },
   { id: 'analytics', label: 'Аналитика', hint: 'Динамика и карта огня', icon: BarChart3 },
   { id: 'profile', label: 'Профиль', hint: 'Ачивки, сторис, медиа', icon: User },
@@ -43,7 +43,7 @@ const SECTIONS: SheetItem[] = [
 /**
  * ЭТАП 20 — МОБИЛЬНАЯ КАРТА РАЗДЕЛОВ («Ещё»).
  * На узких экранах сайдбар и правая колонка скрыты, поэтому этот bottom-sheet
- * делает все разделы досягаемыми: Evidence Vault, Намерения, Профиль и
+ * делает все разделы досягаемыми: Сейф доказательств, Намерения, Профиль и
  * Настройки больше не теряются. Каждый пункт реально переключает вид.
  */
 export function MobileNavSheet({ view, onNavigate, onCompose, onClose }: Props) {

@@ -52,7 +52,7 @@ interface NavItemDef {
 
 /**
  * ЕДИНЫЙ КАНОНИЧЕСКИЙ СПИСОК X.COM:
- * Главная, Поиск, Соратники, Чаты, Профиль, Evidence Vault, Статистика, Рейтинг, Намерения, Настройки.
+ * Главная, Поиск, Соратники, Чаты, Профиль, Сейф доказательств, Статистика, Рейтинг, Намерения, Настройки.
  */
 const UNIFIED_NAV: NavItemDef[] = [
   { id: 'home', label: 'Главная' },
@@ -61,7 +61,7 @@ const UNIFIED_NAV: NavItemDef[] = [
   { id: 'comrades', label: 'Соратники' },
   { id: 'messages', label: 'Чаты' },
   { id: 'profile', label: 'Профиль' },
-  { id: 'vault', label: 'Evidence Vault' },
+  { id: 'vault', label: 'Сейф доказательств' },
   { id: 'premium', label: 'Премиум' },
   { id: 'analytics', label: 'Статистика' },
   { id: 'leaderboard', label: 'Рейтинг' },
