@@ -137,7 +137,7 @@ export function PremiumView({
           Улучшите свой опыт в Огоньке
         </h2>
         <p className="text-[15px] sm:text-[16px] text-[var(--text-2)] mt-2 max-w-xl">
-          Выберите подходящий тариф: от базового доступа до синей галочки верификации и расширенной AI-оценки от Google Gemini.
+          Выберите подходящий тариф: от базового доступа до синей галочки верификации и расширенной ИИ-оценки от Огонёк ИИ.
         </p>
 
         {/* Billing Switcher (Ежемесячно / Ежегодно) */}
@@ -292,7 +292,7 @@ export function PremiumView({
               <BadgeCheck size={19} className="text-[#1d9bf0]" />
             </h3>
             <p className="text-xs text-[var(--text-2)] mt-1 min-h-[32px]">
-              Официальный статус, Gemini AI-оценка и расширенные лимиты
+              Официальный статус, ИИ-оценка дня и расширенные лимиты
             </p>
 
             {/* Price: 25 MDL / $1.5 в месяц */}
@@ -325,7 +325,7 @@ export function PremiumView({
                   <Sparkles size={12} />
                 </span>
                 <span>
-                  <b>Google Gemini AI:</b> 1 авто-оценка в день и мудрые советы
+                  <b>Огонёк ИИ:</b> 1 авто-оценка в день и мудрые советы
                 </span>
               </li>
               <li className="flex items-start gap-2.5">

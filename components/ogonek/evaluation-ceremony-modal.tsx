@@ -264,7 +264,7 @@ export function EvaluationCeremonyModal({
         <div className="flex items-center justify-between relative z-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] text-xs font-bold border border-[var(--accent)]/20">
             <Sparkles size={13} />
-            <span>AI-Церемония Оценки · День #{dayNumber}</span>
+            <span>Огонёк ИИ · Церемония Оценки · День #{dayNumber}</span>
           </div>
 
           {!isFinished && (
@@ -300,7 +300,7 @@ export function EvaluationCeremonyModal({
               </div>
             </div>
             <p className="text-base font-bold text-white tracking-wide mt-2">
-              ⚡ ИИ анализирует масштаб побед...
+              ⚡ ИИ оценивает твой день...
             </p>
             <span className="text-xs text-zinc-400">
               Калибровка побед и преодолений по шкале 1–10★

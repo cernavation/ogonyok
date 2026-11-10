@@ -117,7 +117,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     {
       icon: Mic,
       title: 'Голосовые заметки',
-      desc: 'Наговаривай победы на ходу. Google Gemini автоматически расшифрует голос в структурированный текст.',
+      desc: 'Наговаривай победы на ходу. Огонёк ИИ автоматически расшифрует голос в структурированный текст.',
     },
     {
       icon: BarChart3,
@@ -380,7 +380,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                   <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#FF5C00]/10 to-amber-500/5 border border-[#FF5C00]/20 flex items-center gap-2 text-xs">
                     <Sparkles size={14} className="text-[#FF5C00] shrink-0" />
                     <span className="text-zinc-300 text-[11px]">
-                      <strong>Google Gemini:</strong> День максимального фокуса. Преодоление внутреннего сопротивления дало ключевой прирост опоры.
+                      <strong>Огонёк ИИ:</strong> День максимального фокуса. Преодоление внутреннего сопротивления дало ключевой прирост опоры.
                     </span>
                   </div>
                 </div>

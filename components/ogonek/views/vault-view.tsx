@@ -1,10 +1,20 @@
 'use client'
 
-import { ArrowLeft, Check, Pin, Plus, Search, Trash2, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { ArrowLeft, Check, Flame, Pin, Plus, Search, Trash2, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { EvidenceItem, ViewId } from '@/lib/ogonek/types'
+
+const MilestoneVaultCard = dynamic(
+  () => import('../milestones/milestone-vault-card').then((m) => m.MilestoneVaultCard),
+  { ssr: false }
+)
+const MilestoneModal = dynamic(
+  () => import('../milestones/milestone-modal').then((m) => m.MilestoneModal),
+  { ssr: false }
+)
 
 type Props = {
   evidenceItems?: EvidenceItem[]
@@ -28,6 +38,25 @@ export function VaultView({
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Все')
   const [isAdding, setIsAdding] = useState(false)
+  const [milestones, setMilestones] = useState<any[]>([])
+  const [activeMilestoneNumber, setActiveMilestoneNumber] = useState<number | null>(null)
+
+  useEffect(() => {
+    let active = true
+    fetch('/api/milestones/vault')
+      .then((res) => res.json())
+      .then((json) => {
+        if (!active) return
+        if (json.success && Array.isArray(json.milestones)) {
+          setMilestones(json.milestones.filter((m: any) => m.saved_to_vault))
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   // Form fields for adding new fact of strength
   const [newTitle, setNewTitle] = useState('')
@@ -264,6 +293,29 @@ export function VaultView({
         </div>
       )}
 
+      {/* Юбилейные Вехи Свода (Vault Milestones) */}
+      {milestones.length > 0 && (
+        <div className="px-4 py-4 flex flex-col gap-3 border-b border-[var(--border)] bg-amber-500/[0.03]">
+          <div className="flex items-center gap-2 text-amber-400 text-xs font-black uppercase tracking-wider">
+            <Flame size={14} className="fill-amber-400" />
+            <span>Золотые Вехи Свода</span>
+          </div>
+          <div className="flex flex-col gap-3">
+            {milestones.map((m) => (
+              <MilestoneVaultCard
+                key={m.milestone_number}
+                milestoneNumber={m.milestone_number}
+                data={m.snapshot_json}
+                onOpenDetails={() => {
+                  playClick(soundEnabled)
+                  setActiveMilestoneNumber(m.milestone_number)
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Flat List like X Feed */}
       {filteredItems.length > 0 ? (
         <div className="divide-y divide-[var(--border)]">
@@ -351,6 +403,17 @@ export function VaultView({
             <span>{query ? 'Сбросить поиск' : 'Добавить факт силы'}</span>
           </button>
         </div>
+      )}
+
+      {activeMilestoneNumber !== null && (
+        <MilestoneModal
+          isOpen={activeMilestoneNumber !== null}
+          milestoneNumber={activeMilestoneNumber}
+          tier="ultra"
+          onClose={() => setActiveMilestoneNumber(null)}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
       )}
     </div>
   )

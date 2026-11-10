@@ -63,6 +63,10 @@ const ShareCardModal = dynamic(
   () => import('./share-card-modal').then((m) => m.ShareCardModal),
   { ssr: false }
 )
+const MilestoneModal = dynamic(
+  () => import('./milestones/milestone-modal').then((m) => m.MilestoneModal),
+  { ssr: false }
+)
 
 const reactionVariants = {
   idle: { scale: 1 },
@@ -111,6 +115,7 @@ function DayCardComponent({
   const [forwardPride, setForwardPride] = useState<ChatAttachment | null>(null)
   const [mediaIndex, setMediaIndex] = useState<number | null>(null)
   const [expandedDetails, setExpandedDetails] = useState(false)
+  const [milestoneModalOpen, setMilestoneModalOpen] = useState(false)
   const reduce = useReducedMotion()
 
   const dayVisibility = normalizeVisibility(day.visibility)
@@ -243,7 +248,7 @@ function DayCardComponent({
       return
     }
 
-    onNotify?.('⚡ Ментор анализирует масштаб побед...')
+    onNotify?.('⚡ ИИ оценивает твой день...')
     const startTime = Date.now()
     try {
       const res = await fetch('/api/evaluate', {
@@ -492,6 +497,27 @@ function DayCardComponent({
                 >
                   День #{day.id}
                 </span>
+                {(() => {
+                  const dayNum = Number((day as any).day_number || (day as any).dayNumber || day.id) || 1
+                  if (dayNum > 0 && dayNum % 100 === 0) {
+                    return (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          playClick(soundEnabled)
+                          setMilestoneModalOpen(true)
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/25 via-orange-500/20 to-amber-500/25 border border-amber-500/50 text-amber-300 text-[11px] font-black tracking-wide shadow-sm hover:from-amber-500/40 hover:to-orange-500/40 transition-colors cursor-pointer"
+                        aria-label={`Юбилейная веха #${dayNum}. Нажмите для просмотра разбора`}
+                      >
+                        <Flame size={12} className="text-amber-400 fill-amber-400 animate-pulse" />
+                        <span>ВЕХА #{dayNum}</span>
+                      </button>
+                    )
+                  }
+                  return null
+                })()}
               </div>
 
               <div className="flex items-center gap-1 flex-none">
@@ -882,6 +908,17 @@ function DayCardComponent({
           initialIndex={mediaIndex}
           onClose={() => setMediaIndex(null)}
           title={`День #${day.id} · ${dateStr}`}
+        />
+      )}
+
+      {milestoneModalOpen && (
+        <MilestoneModal
+          isOpen={milestoneModalOpen}
+          milestoneNumber={Number((day as any).day_number || (day as any).dayNumber || day.id) || 100}
+          tier={normalizeTier(state.profile?.subscription_tier)}
+          onClose={() => setMilestoneModalOpen(false)}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
         />
       )}
     </>

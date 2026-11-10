@@ -206,7 +206,7 @@ export function ChatMessageBubble({
       if (data?.transcript) {
         onTranscribe?.(message.id, data.transcript)
         setTranscriptOpen(true)
-        onNotify?.('Голосовое расшифровано через Gemini AI')
+        onNotify?.('Голосовое расшифровано через Огонёк ИИ')
       } else {
         onNotify?.('Не удалось расшифровать')
       }
@@ -623,12 +623,12 @@ export function ChatMessageBubble({
                     >
                       <Sparkles size={12} className={transcribing ? 'animate-spin' : ''} />
                       {transcribing
-                        ? 'Расшифровываю с Gemini...'
+                        ? 'Расшифровываю с ИИ...'
                         : message.transcript
                         ? transcriptOpen
                           ? 'Скрыть текст'
-                          : 'Текст речи (AI)'
-                        : 'Расшифровать (Gemini)'}
+                          : 'Текст речи (ИИ)'
+                        : 'Расшифровать (ИИ)'}
                     </button>
                   </div>
 
@@ -638,7 +638,7 @@ export function ChatMessageBubble({
                       <div className="flex items-center justify-between mb-1 text-[10px] text-white/50 font-medium tracking-wide">
                         <span className="flex items-center gap-1">
                           <Sparkles size={11} className="text-[var(--accent)]" />
-                          <span>Gemini AI Расшифровка</span>
+                          <span>Огонёк ИИ Расшифровка</span>
                         </span>
                         <button
                           type="button"

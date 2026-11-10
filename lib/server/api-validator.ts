@@ -108,8 +108,11 @@ export function validateSearchParams<T>(
 /** Оценка дня через ИИ */
 export const EvaluateDaySchema = z.object({
   prides: z.array(z.string().max(5000, 'Длина гордости не более 5000 символов')).max(10, 'Максимум 10 гордостей').optional(),
+  gratitudes: z.array(z.union([z.string().max(5000), z.object({ text: z.string().max(5000) })])).max(10, 'Максимум 10 благодарностей').optional(),
   items: z.array(z.string().max(5000, 'Длина пункта не более 5000 символов')).max(10, 'Максимум 10 пунктов').optional(),
   dayId: z.union([z.string().max(100), z.number()]).optional(),
+  dayNumber: z.number().int().optional(),
+  type: z.string().max(50).optional(),
   userId: z.string().max(100).optional(),
   date: z.string().max(50).optional(),
 })

@@ -1,5 +1,5 @@
 /**
- * Модуль безопасного парсинга и конфигурации ответов Gemini AI.
+ * Модуль безопасного парсинга и конфигурации ответов Огонёк ИИ.
  * Гарантирует извлечение валидного JSON даже при наличии вводных слов,
  * префиксов ментора (например, "Calibrated...", "Mentor analysis:") или markdown-обёрток.
  */
@@ -13,7 +13,7 @@ export const AI_GENERATION_CONFIG = {
 export function extractAndParseJson(rawText: string): any {
   const trimmed = (rawText || '').trim()
   if (!trimmed) {
-    throw new Error('Пустой ответ от Gemini API')
+    throw new Error('Пустой ответ от ИИ API')
   }
 
   // 1. Попытка прямого парсинга
@@ -41,5 +41,5 @@ export function extractAndParseJson(rawText: string): any {
     } catch {}
   }
 
-  throw new Error(`Ответ Gemini не является валидным JSON: "${trimmed.slice(0, 120)}"`)
+  throw new Error(`Ответ ИИ не является валидным JSON: "${trimmed.slice(0, 120)}"`)
 }
