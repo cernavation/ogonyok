@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-11-10T08:13:52.356Z",
+  "stage": "Stage 17: Chaos Testing & Red Room",
+  "totalAsserts": 19,
+  "passed": 19,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "Оффлайн-баннер отображается при отключении сети",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Интерфейс приложения остался в DOM, экран не побелел",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "0 неперехваченных фатальных ошибок JavaScript в консоли",
+      "status": "PASS",
+      "details": "Ошибок: 0"
+    },
+    {
+      "name": "Оффлайн-запись успешно поставлена в очередь отложенной отправки",
+      "status": "PASS",
+      "details": "В очереди: 1"
+    },
+    {
+      "name": "Скриншот восстановления сети успешно сохранен",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Free тариф: все 20 запросов отклоняются (квота = 0)",
+      "status": "PASS",
+      "details": "Отклонено: 20"
+    },
+    {
+      "name": "Pro тариф: ровно 1 запрос из 20 успешно списывает квоту",
+      "status": "PASS",
+      "details": "Успешных: 1, Ожидалось: 1"
+    },
+    {
+      "name": "Pro тариф: остальные 19 запросов отклоняются с quota_exceeded",
+      "status": "PASS",
+      "details": "Отклонено: 19, Ожидалось: 19"
+    },
+    {
+      "name": "Поддельный Bearer JWT возвращает 401 Unauthorized",
+      "status": "PASS",
+      "details": "Код: 401"
+    },
+    {
+      "name": "Спуфинг x-user-id игнорируется и возвращает 401",
+      "status": "PASS",
+      "details": "Код: 401"
+    },
+    {
+      "name": "Биллинг-вебхук с поддельной подписью блокируется (401/503)",
+      "status": "PASS",
+      "details": "Код: 503"
+    },
+    {
+      "name": "Удаление аккаунта без токена возвращает 401 Unauthorized",
+      "status": "PASS",
+      "details": "Код: 401"
+    },
+    {
+      "name": "XSS не сработал на Главной странице (window.__xss_fired is undefined)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Ни одно модальное окно alert/prompt не всплыло",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "XSS не сработал в Профиле (window.__xss_fired is undefined)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "XSS не сработал в Чатах (window.__xss_fired is undefined)",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Тег <svg onload> был экранирован или нейтрализован",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Тег <iframe src=javascript> был нейтрализован",
+      "status": "PASS",
+      "details": ""
+    },
+    {
+      "name": "Скриншот проверки безопасности XSS успешно сохранен",
+      "status": "PASS",
+      "details": ""
+    }
+  ]
+}

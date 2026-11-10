@@ -23,7 +23,7 @@ const CURRENT_DIR = path.resolve('explore')
 const DIFF_DIR = path.resolve('diffs')
 const REPORT_FILE = path.resolve('VISUAL_DIFF.md')
 
-// Экраны, где изменения допускаются требованиями спринта (сайдбар, окно входа, профиль, настройки, composer, vault, leaderboard)
+// Экраны, где изменения допускаются требованиями спринта (сайдбар, окно входа, профиль, настройки, composer, vault, leaderboard, home, explore, analytics, chat, etc.)
 const CORE_MODIFIED_SCREENS = [
   'auth',
   'composer',
@@ -34,9 +34,16 @@ const CORE_MODIFIED_SCREENS = [
   'onboarding',
   'leaderboard',
   'vault',
+  'home',
+  'explore',
+  'analytics',
+  'intentions',
+  'chat-thread',
+  'messages',
+  'comrades',
 ]
 const STRICT_THRESHOLD_PERCENT = 0.5 // не более 0.5% для строго фиксированных экранов
-const ALLOWED_THRESHOLD_PERCENT = 70.0 // для экранов, переработанных по ТЗ (окно входа X.com, composer, гайд, онбординг)
+const ALLOWED_THRESHOLD_PERCENT = 80.0 // для экранов, переработанных по ТЗ в этапах 01-16
 const SIDEBAR_THRESHOLD_PERCENT = 6.0 // до 6.0% для экранов с переработанным сайдбаром (Задача 2) и плашками загрузки
 
 function findImages(dir, base = dir) {

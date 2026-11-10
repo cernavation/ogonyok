@@ -311,8 +311,8 @@
       "tier": "free",
       "tagName": "button",
       "role": "button",
-      "text": "Evidence Vault",
-      "accessibleName": "Evidence Vault",
+      "text": "Сейф доказательств",
+      "accessibleName": "Сейф доказательств",
       "hasAccessibleName": true,
       "status": "WORKING",
       "ariaHasPopup": "none"
@@ -995,8 +995,8 @@
       "tier": "pro",
       "tagName": "button",
       "role": "button",
-      "text": "Evidence Vault",
-      "accessibleName": "Evidence Vault",
+      "text": "Сейф доказательств",
+      "accessibleName": "Сейф доказательств",
       "hasAccessibleName": true,
       "status": "WORKING",
       "ariaHasPopup": "none"
@@ -1679,8 +1679,8 @@
       "tier": "ultra",
       "tagName": "button",
       "role": "button",
-      "text": "Evidence Vault",
-      "accessibleName": "Evidence Vault",
+      "text": "Сейф доказательств",
+      "accessibleName": "Сейф доказательств",
       "hasAccessibleName": true,
       "status": "WORKING",
       "ariaHasPopup": "none"

@@ -737,6 +737,11 @@ export function AppShell() {
     }
     const handleCloseAuth = () => setAuthModal(null)
     const handleCloseOnboarding = () => setOnboardingOpen(false)
+    const handleOpenMilestone = (e: Event) => {
+      const custom = e as CustomEvent<number>
+      setActiveMilestoneNumber(typeof custom.detail === 'number' ? custom.detail : 100)
+    }
+    const handleCloseMilestone = () => setActiveMilestoneNumber(null)
 
     window.addEventListener('ogonek:open-onboarding', handleOpenOnboarding)
     window.addEventListener('ogonek:close-onboarding', handleCloseOnboarding)
@@ -745,6 +750,8 @@ export function AppShell() {
     window.addEventListener('ogonek:close-composer', handleCloseComposerEvent)
     window.addEventListener('ogonek:open-auth', handleOpenAuth)
     window.addEventListener('ogonek:close-auth', handleCloseAuth)
+    window.addEventListener('ogonek:open-milestone', handleOpenMilestone)
+    window.addEventListener('ogonek:close-milestone', handleCloseMilestone)
 
     return () => {
       window.removeEventListener('ogonek:open-onboarding', handleOpenOnboarding)
@@ -754,6 +761,8 @@ export function AppShell() {
       window.removeEventListener('ogonek:close-composer', handleCloseComposerEvent)
       window.removeEventListener('ogonek:open-auth', handleOpenAuth)
       window.removeEventListener('ogonek:close-auth', handleCloseAuth)
+      window.removeEventListener('ogonek:open-milestone', handleOpenMilestone)
+      window.removeEventListener('ogonek:close-milestone', handleCloseMilestone)
     }
   }, [navigate])
 

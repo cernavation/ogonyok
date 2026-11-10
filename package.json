@@ -5,7 +5,7 @@
   "packageManager": "npm@10.8.2",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "node scripts/build.mjs",
     "start": "next start",
     "lint": "tsc --noEmit",
     "test:unit": "node --experimental-strip-types --test test/*.test.ts",
@@ -28,6 +28,10 @@
     "setup": "node scripts/setup.mjs",
     "check-google": "node scripts/check-google.mjs",
     "verify-live": "node scripts/verify-live.mjs",
+    "qa:two-users": "node scripts/qa/two-users.mjs",
+    "qa:chaos": "node scripts/qa/test-chaos-room.mjs",
+    "qa:e2e": "node scripts/qa/test-e2e-full-flow.mjs",
+    "qa:all": "npm run lint && npm run test:unit && npm run build && npm run qa:two-users && node scripts/qa/test-tier-enforcement.mjs && node scripts/qa/test-stage05-limits.mjs && node scripts/qa/test-chaos-room.mjs && node scripts/qa/test-e2e-full-flow.mjs && node scripts/qa/button-crawler.mjs && node scripts/qa/test-axe-audit.mjs",
     "predeploy": "npm run verify:all",
     "verify:all": "node scripts/verify-all.mjs"
   },

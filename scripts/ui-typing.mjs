@@ -81,7 +81,7 @@ export const CONFIG = {
       title: 'Настройки: кастомный акцент / ник',
       path: '/?view=settings',
       action: 'open-settings-appearance',
-      selector: 'input[placeholder*="#FF5C00"]:visible',
+      selector: 'input[aria-label*="HEX"], input[maxLength="7"], input[placeholder*="#"]',
       testText: '#1D9BF0',
     },
     {
@@ -103,7 +103,12 @@ function getBrowsersToRun() {
 
 async function launchBrowser(browserType) {
   if (browserType === 'webkit') {
-    return await webkit.launch({ headless: true })
+    try {
+      return await webkit.launch({ headless: true })
+    } catch {
+      console.log('  ⚠️ WebKit binary not available, skipping WebKit pass')
+      return null
+    }
   }
   try {
     return await chromium.launch({ channel: 'chrome', headless: true })
@@ -141,6 +146,24 @@ async function prepareAuth(context) {
         signedIn: true,
         hasOnboarded: true,
         activeAccountId: 'acc-owner',
+        accounts: [
+          {
+            id: 'acc-owner',
+            email: 'owner@ogonek.local',
+            snapshot: {
+              username: 'owner',
+              displayName: 'Владелец',
+              subscription_tier: 'ultra',
+            },
+          },
+        ],
+      }
+      st.profile = {
+        id: 'acc-owner',
+        username: 'owner',
+        displayName: 'Владелец',
+        avatarColor: '#1d9bf0',
+        subscription_tier: 'ultra',
       }
       if (!st.days || !Array.isArray(st.days) || st.days.length <= 2) {
         st.days = [
@@ -253,6 +276,7 @@ export async function runTypingSuite() {
   for (const browserType of browsersToRun) {
     console.log(`\n▶ Движок: ${browserType.toUpperCase()}`)
     const browser = await launchBrowser(browserType)
+    if (!browser) continue
 
     for (const vp of viewportsToRun) {
       console.log(`  📱 Вьюпорт: ${vp.name} (${vp.width}×${vp.height})`)
@@ -362,7 +386,7 @@ export async function runTypingSuite() {
             await page.goto(CONFIG.baseUrl + '/?view=settings', { waitUntil: 'networkidle' })
             await page.waitForSelector('aside.sidebar, .sidebar', { timeout: 8000 }).catch(() => {})
             await page.waitForTimeout(300)
-            const secBtn = await page.$('button[role="tab"]:has-text("Внешний вид"), button:has-text("Внешний вид")')
+            const secBtn = await page.$('nav button:has-text("Внешний вид"), button:visible:has-text("Внешний вид")')
             if (secBtn) await secBtn.click().catch(() => {})
             await page.waitForTimeout(200)
             const issues = await testFieldTyping(page, scene.selector, scene.testText, scene.title)

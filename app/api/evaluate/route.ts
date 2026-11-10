@@ -16,4 +16,5 @@ const DEEPSEEK_CONFIG = {
   temperature: 0.5,
 }
 
+/** Защищён через applyRateLimit (429 Too Many Requests) в evaluate-day */
 export { POST } from '@/app/api/ai/evaluate-day/route'

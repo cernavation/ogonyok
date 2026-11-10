@@ -1,6 +1,6 @@
 # Отчёт автоматического аудита интерактивных элементов (Этап 14)
 
-**Дата проверки:** 2026-11-10T06:32:16.695Z
+**Дата проверки:** 2026-11-10T08:08:36.697Z
 
 ### Итоговая статистика:
 - **Всего интерактивных элементов проверено:** 294
@@ -38,7 +38,7 @@
 | messages | desktop | free | `<button>` | Соратники | Соратники | ✅ OK |
 | messages | desktop | free | `<button>` | Чаты | Чаты | ✅ OK |
 | messages | desktop | free | `<button>` | Профиль | Профиль | ✅ OK |
-| messages | desktop | free | `<button>` | Evidence Vault | Evidence Vault | ✅ OK |
+| messages | desktop | free | `<button>` | Сейф доказательств | Сейф доказательств | ✅ OK |
 | messages | desktop | free | `<button>` | Премиум | Премиум | ✅ OK |
 | messages | desktop | free | `<button>` | Статистика | Статистика | ✅ OK |
 | messages | desktop | free | `<button>` | Рейтинг | Рейтинг | ✅ OK |

@@ -1,3 +1,7 @@
+/**
+ * CRON маршрут доставки запланированных сообщений.
+ * Защищён проверкой CRON_SECRET и заголовком Authorization: Bearer.
+ */
 import { handleScheduledDelivery } from '../../../../lib/server/cron-delivery.ts'
 
 export async function GET(request: Request) {

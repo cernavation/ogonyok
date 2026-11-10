@@ -2,7 +2,7 @@
 
 **Стандарт:** WCAG 2.1 AA & WCAG 2.0 A/AA
 **Экранов проверено:** 10
-**Дата аудита:** 2026-11-10T06:37:29.759Z
+**Дата аудита:** 2026-11-10T08:09:03.963Z
 
 ### Сводка по экранам:
 
@@ -15,7 +15,7 @@
 | explore | `/?view=explore` | 1 | 24 | ⚠️ Minor notes |
 | messages | `/?view=messages` | 1 | 22 | ⚠️ Minor notes |
 | premium | `/premium` | 0 | 19 | ✅ PASS |
-| vault | `/?view=vault` | 2 | 24 | ⚠️ Minor notes |
+| vault | `/?view=vault` | 2 | 25 | ⚠️ Minor notes |
 | analytics | `/?view=analytics` | 1 | 23 | ⚠️ Minor notes |
 | privacy | `/privacy` | 1 | 21 | ⚠️ Minor notes |
 

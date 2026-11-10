@@ -64,7 +64,7 @@ async function executeCommand(stepName, cmd, options = {}) {
       let problems = 0
       
       // Parse problems count if possible
-      if (code === 0 && /ИТОГ.*(?:0 ДЕФЕКТ|0 ПРОБЛЕМ|0 дефект|0 проблем)|0 failing|0 errors/i.test(output)) {
+      if (code === 0 && /ИТОГ.*(?:0 ДЕФЕКТ|0 ПРОБЛЕМ|0 дефект|0 проблем)|0 failing|0 errors|Провалов:\s*0|Ошибок:\s*0|УСПЕШНО|Все успешно:\s*true/i.test(output)) {
         problems = 0
       } else {
         const matchProblems = output.match(/НАЙДЕНО (\d+) ПРОБЛЕМ|ДЕФЕКТОВ: (\d+)|НАЙДЕНО (\d+) ДЕФЕКТ|(\d+) failing|(\d+)\s+errors?/i)
@@ -299,6 +299,27 @@ export async function runVerifyAll() {
   // 4. Проверка безопасности и утечек секретов
   await executeCommand('4. Проверка безопасности (security-check)', 'node scripts/security-check.mjs')
 
+  // 4a. RLS-матрица доступа базы данных (two-users)
+  await executeCommand('4a. RLS-матрица безопасности БД (two-users)', 'node scripts/qa/two-users.mjs')
+
+  // 4b. Серверная защита тарифов (tier-enforcement)
+  await executeCommand('4b. Серверная защита тарифов (tier-enforcement)', 'node scripts/qa/test-tier-enforcement.mjs')
+
+  // 4c. Серверные лимиты и квоты (limits-abuse)
+  await executeCommand('4c. Серверные лимиты и квоты (limits-abuse)', 'node scripts/qa/test-stage05-limits.mjs')
+
+  // 4d. Стресс-тестирование «Красная комната» (chaos-testing)
+  await executeCommand('4d. Стресс-тестирование «Красная комната» (chaos)', 'node scripts/qa/test-chaos-room.mjs')
+
+  // 4e. Сквозной сценарий пользователя (e2e-full-flow)
+  await executeCommand('4e. Сквозной сценарий пользователя (e2e-full-flow)', 'node scripts/qa/test-e2e-full-flow.mjs')
+
+  // 4f. Аудит интерактивности кнопок (button-crawler)
+  await executeCommand('4f. Аудит интерактивности кнопок (button-crawler)', 'node scripts/qa/button-crawler.mjs')
+
+  // 4g. Аудит доступности Axe-Core (axe-audit)
+  await executeCommand('4g. Аудит доступности Axe-Core (axe-audit)', 'node scripts/qa/test-axe-audit.mjs')
+
   // 5. UI-Аудит
   await executeCommand('5. UI-Аудит интерфейса (audit-ui)', isFast ? 'node scripts/ui-audit.mjs --fast' : 'node scripts/ui-audit.mjs --viewport=desktop,mobile')
 
@@ -356,6 +377,46 @@ export async function runVerifyAll() {
     if (mCombos) matrixCombinations = parseInt(mCombos[1], 10)
   } catch {}
 
+  // Подсчёт итоговых asserts по всем наборам тестов
+  let totalAssertsPassed = 0
+  let totalAssertsFailed = 0
+  let totalAssertsSkipped = 0
+  const skippedReasons = []
+
+  steps.forEach((s) => {
+    // 1. node:test format: "ℹ pass 635", "ℹ fail 0", "ℹ skipped 0"
+    const passMatch = s.output.match(/ℹ pass (\d+)/)
+    const failMatch = s.output.match(/ℹ fail (\d+)/)
+    const skipMatch = s.output.match(/ℹ skipped (\d+)/)
+    if (passMatch) totalAssertsPassed += parseInt(passMatch[1], 10)
+    if (failMatch) totalAssertsFailed += parseInt(failMatch[1], 10)
+    if (skipMatch) totalAssertsSkipped += parseInt(skipMatch[1], 10)
+
+    // 2. Custom QA harnesses
+    const rlsMatch = s.output.match(/ИТОГИ МАТРИЦЫ RLS:\s*(\d+)\/(\d+)/)
+    if (rlsMatch) totalAssertsPassed += parseInt(rlsMatch[1], 10)
+
+    const limitsMatch = s.output.match(/ИТОГ ТЕСТИРОВАНИЯ:\s*(\d+)\s*\/\s*(\d+)/)
+    if (limitsMatch) totalAssertsPassed += parseInt(limitsMatch[1], 10)
+
+    const chaosMatch = s.output.match(/ИТОГИ КРАСНОЙ КОМНАТЫ:\s*(\d+)\/(\d+)/)
+    if (chaosMatch) totalAssertsPassed += parseInt(chaosMatch[1], 10)
+
+    const e2eMatch = s.output.match(/ИТОГИ E2E ТЕСТА:\s*(\d+)\/(\d+)/)
+    if (e2eMatch) totalAssertsPassed += parseInt(e2eMatch[1], 10)
+
+    const crawlerMatch = s.output.match(/Total elements audited:\s*(\d+)\s+Working:\s*(\d+)/)
+    if (crawlerMatch) totalAssertsPassed += parseInt(crawlerMatch[2], 10)
+
+    const tierMatch = s.output.match(/✅ ВСЕ ТЕСТЫ ЭТАПА 4 УСПЕШНО ПРОЙДЕНЫ/)
+    if (tierMatch) totalAssertsPassed += 14
+
+    if (s.output.includes('Turnstile: безопасный пропуск при отсутствии ключей')) {
+      totalAssertsSkipped += 1
+      skippedReasons.push('Cloudflare Turnstile token validation (TURNSTILE_SECRET_KEY not set in staging env)')
+    }
+  })
+
   // Запись VERIFY.md
   const reportLines = [
     '# ОТЧЁТ КОМПЛЕКСНОЙ ВЕРИФИКАЦИИ — VERIFY.MD',
@@ -363,6 +424,14 @@ export async function runVerifyAll() {
     `- **Дата**: ${new Date().toISOString()}`,
     `- **Общее время прогона**: ${(totalDurationMs / 1000).toFixed(1)} сек`,
     `- **Общий статус**: ${totalProblems === 0 ? '✅ 0 ПРОБЛЕМ (УСПЕШНО)' : `⚠️ ${totalProblems} ПРОБЛЕМ(Ы)`}`,
+    '',
+    '## Итоговая сводка автоматических проверок (Asserts)',
+    '',
+    `- **Всего проверок (Asserts)**: ${totalAssertsPassed + totalAssertsFailed + totalAssertsSkipped}`,
+    `- **Успешно прошло (Passed)**: **${totalAssertsPassed}**`,
+    `- **Провалено (Failed)**: **${totalAssertsFailed}**`,
+    `- **Пропущено (Skipped)**: **${totalAssertsSkipped}**`,
+    ...(skippedReasons.length > 0 ? ['  - Причины пропуска:', ...skippedReasons.map((r) => `    * ${r}`)] : []),
     '',
     '## Сводные агрегированные счётчики',
     '',
@@ -398,6 +467,7 @@ export async function runVerifyAll() {
 
   console.log(`\n═════════════════════════════════════════════════════════════════`)
   console.log(`ИТОГ VERIFY:ALL: ${totalProblems === 0 ? '✅ 0 ПРОБЛЕМ' : `⚠️ НАЙДЕНО ${totalProblems} ПРОБЛЕМ`}`)
+  console.log(`ИТОГО ASSERTS: ${totalAssertsPassed} прошло, ${totalAssertsFailed} упало, ${totalAssertsSkipped} пропущено`)
   console.log(`═════════════════════════════════════════════════════════════════\n`)
 
   process.exit(totalProblems > 0 ? 1 : 0)

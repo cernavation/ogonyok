@@ -13,6 +13,7 @@ import crypto from 'node:crypto'
 import { z } from 'zod'
 import { getServerSupabase } from '../../../../lib/supabase/server.ts'
 import { apiErrorResponse } from '../../../../lib/server/api-validator.ts'
+import { applyRateLimit } from '../../../../lib/server/rate-limit.ts'
 
 const BillingWebhookSchema = z.object({
   event_id: z.string().min(1, 'Требуется event_id'),
@@ -25,6 +26,14 @@ const BillingWebhookSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  // Rate limiting для вебхука биллинга (60 запросов в минуту, 429 при превышении)
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'billing-webhook',
+    limit: 60,
+    windowSeconds: 60,
+  })
+  if (rateLimitResponse) return rateLimitResponse
+
   // 1. Проверка наличия секрета вебхука в переменных окружения
   const secret = process.env.BILLING_WEBHOOK_SECRET
   if (!secret) {
