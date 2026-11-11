@@ -1,0 +1,4210 @@
+{
+  "generatedAt": "2026-11-11T15:41:09.003Z",
+  "ok": false,
+  "mode": "guard",
+  "step": "00",
+  "stagingUrl": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co",
+  "lock": {
+    "ok": true,
+    "error": null,
+    "guard": {
+      "mismatches": [],
+      "missingOnDisk": [],
+      "addedOnDisk": []
+    },
+    "baseline": {
+      "mismatches": [],
+      "missingOnDisk": [],
+      "addedOnDisk": []
+    }
+  },
+  "stagingPreflight": {
+    "ok": false,
+    "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co",
+    "checks": [
+      {
+        "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "keyPreview": "sb_publishab...Y4qG (len 46)",
+        "endpoint": "/auth/v1/settings",
+        "ok": false,
+        "status": 401,
+        "message": "Invalid API key"
+      },
+      {
+        "name": "SUPABASE_SERVICE_ROLE_KEY (admin)",
+        "keyPreview": "sb_secret_Au...xctq (len 41)",
+        "endpoint": "/auth/v1/admin/users?page=1&per_page=1",
+        "ok": false,
+        "status": 401,
+        "message": "Invalid API key"
+      },
+      {
+        "name": "REST /profiles",
+        "endpoint": "/rest/v1/profiles?select=id&limit=1",
+        "ok": false,
+        "status": 401,
+        "message": "Invalid API key"
+      }
+    ]
+  },
+  "baselineExists": false,
+  "screensChecked": 25,
+  "errorCount": 279,
+  "warningCount": 15,
+  "issues": [
+    {
+      "checkId": "staging-auth-blocked",
+      "category": "staging",
+      "severity": "error",
+      "screen": "staging",
+      "viewport": "all",
+      "selector": ".env.staging.local",
+      "message": "Staging Supabase недоступен для авто-логина и сидинга: NEXT_PUBLIC_SUPABASE_ANON_KEY=401 (Invalid API key); SUPABASE_SERVICE_ROLE_KEY (admin)=401 (Invalid API key); REST /profiles=401 (Invalid API key)"
+    },
+    {
+      "checkId": "f-baseline-layout-missing",
+      "category": "pixel-diff",
+      "severity": "error",
+      "screen": "global",
+      "viewport": "all",
+      "selector": "baseline/layout.json",
+      "message": "Эталон baseline/layout.json ещё не создан владельцем (GUARD_OWNER=1 npm run guard:baseline)."
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 491,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__b-narrow-text-column__1.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 387,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__d-missing-aria-label__2.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 600,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 387,
+        "y": 710,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 387,
+        "y": 800,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 387,
+        "y": 872,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1210x756",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 600,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__g-contrast-ratio__3.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1210x756",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 387,
+        "y": 684,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__e-console-error__4.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "landing",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:00.783Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__e-console-warning__5.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1210x756__e-http-error__6.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 491,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__b-narrow-text-column__7.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 387,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__d-missing-aria-label__8.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 600,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 387,
+        "y": 710,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 387,
+        "y": 800,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 387,
+        "y": 872,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1210x756",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 600,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__g-contrast-ratio__9.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1210x756",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 387,
+        "y": 684,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__e-console-error__10.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "signin",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:03.863Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__e-console-warning__11.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1210x756__e-http-error__12.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 491,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__b-narrow-text-column__13.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 387,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__d-missing-aria-label__14.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 600,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 387,
+        "y": 761,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(3) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Минимум 8 символов\")",
+      "rect": {
+        "x": 387,
+        "y": 877,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Далее\")",
+      "rect": {
+        "x": 387,
+        "y": 949,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 387,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__g-contrast-ratio__15.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": ".text-xs",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 387,
+        "y": 702,
+        "width": 426,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(3) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 387,
+        "y": 736,
+        "width": 79,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__e-console-error__16.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:06.959Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__e-console-warning__17.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1210x756__e-http-error__18.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center | div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"на главную\" (2 шт.)",
+      "rect": {
+        "x": 264,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1210x756__c-duplicate-accessible-name__19.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 264,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1210x756__d-missing-aria-label__20.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"support@ogonek.app\")",
+      "rect": {
+        "x": 391,
+        "y": 1011,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 607,
+        "y": 1011,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Условия использования\")",
+      "rect": {
+        "x": 706,
+        "y": 1093,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 866,
+        "y": 1093,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "selector": ".space-y-3:nth-child(5) > .text-zinc-500.text-xs",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 264,
+        "y": 1011,
+        "width": 672,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1210x756__g-contrast-ratio__21.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 264,
+        "y": 1093,
+        "width": 232,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1210x756__e-console-error__22.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1210x756__e-http-error__23.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 264,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1210x756__d-missing-aria-label__24.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 264,
+        "y": 1163,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1210x756",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Элемент без aria-label (текст/подпись \"Политика конфиденциальности\")",
+      "rect": {
+        "x": 744,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1210x756",
+      "checkId": "h-forbidden-term-soratniki",
+      "category": "contract",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(4) > p.text-zinc-400",
+      "message": "Запрещённый термин «Соратники» (CONTRACT п. 7): \"При взаимодействии с соратниками в чатах, публикации записей в общую л\"",
+      "rect": {
+        "x": 264,
+        "y": 804,
+        "width": 672,
+        "height": 46
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1210x756__h-forbidden-term-soratniki__25.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1210x756",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 264,
+        "y": 1240,
+        "width": 232,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1210x756__g-contrast-ratio__26.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1210x756",
+      "selector": ".hover\\:text-zinc-300",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 744,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1210x756__e-console-error__27.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1210x756__e-http-error__28.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 606,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__b-narrow-text-column__29.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 502,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__d-missing-aria-label__30.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 715,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 502,
+        "y": 710,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 502,
+        "y": 800,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 502,
+        "y": 872,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 715,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__g-contrast-ratio__31.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 684,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 774,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__e-console-error__32.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:16.841Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__e-console-warning__33.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1440x900__e-http-error__34.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 606,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__b-narrow-text-column__35.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 502,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__d-missing-aria-label__36.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 715,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 502,
+        "y": 710,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 502,
+        "y": 800,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 502,
+        "y": 872,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 715,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__g-contrast-ratio__37.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 684,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 774,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__e-console-error__38.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:19.110Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__e-console-warning__39.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1440x900__e-http-error__40.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 606,
+        "y": 486,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__b-narrow-text-column__41.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 502,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__d-missing-aria-label__42.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 715,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 502,
+        "y": 761,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(3) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Минимум 8 символов\")",
+      "rect": {
+        "x": 502,
+        "y": 877,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Далее\")",
+      "rect": {
+        "x": 502,
+        "y": 949,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 603,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__g-contrast-ratio__43.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": ".text-xs",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 702,
+        "width": 426,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(3) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 736,
+        "width": 79,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": ".px-1",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 816,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(4) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 502,
+        "y": 851,
+        "width": 68,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__e-console-error__44.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:21.356Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__e-console-warning__45.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1440x900__e-http-error__46.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center | div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"на главную\" (2 шт.)",
+      "rect": {
+        "x": 379,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1440x900__c-duplicate-accessible-name__47.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 379,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1440x900__d-missing-aria-label__48.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"support@ogonek.app\")",
+      "rect": {
+        "x": 506,
+        "y": 1011,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 722,
+        "y": 1011,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Условия использования\")",
+      "rect": {
+        "x": 821,
+        "y": 1093,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 981,
+        "y": 1093,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "selector": ".space-y-3:nth-child(5) > .text-zinc-500.text-xs",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 379,
+        "y": 1011,
+        "width": 672,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1440x900__g-contrast-ratio__49.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 379,
+        "y": 1093,
+        "width": 232,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1440x900__e-console-error__50.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1440x900__e-http-error__51.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 379,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1440x900__d-missing-aria-label__52.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 379,
+        "y": 1163,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Элемент без aria-label (текст/подпись \"Политика конфиденциальности\")",
+      "rect": {
+        "x": 859,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1440x900",
+      "checkId": "h-forbidden-term-soratniki",
+      "category": "contract",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(4) > p.text-zinc-400",
+      "message": "Запрещённый термин «Соратники» (CONTRACT п. 7): \"При взаимодействии с соратниками в чатах, публикации записей в общую л\"",
+      "rect": {
+        "x": 379,
+        "y": 804,
+        "width": 672,
+        "height": 46
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1440x900__h-forbidden-term-soratniki__53.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1440x900",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 379,
+        "y": 1240,
+        "width": 232,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1440x900__g-contrast-ratio__54.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1440x900",
+      "selector": ".hover\\:text-zinc-300",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 859,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1440x900__e-console-error__55.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1440x900__e-http-error__56.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 398,
+        "y": 465,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__b-narrow-text-column__57.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 294,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__d-missing-aria-label__58.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 507,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 294,
+        "y": 688,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 294,
+        "y": 778,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 294,
+        "y": 851,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 507,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__g-contrast-ratio__59.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 663,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 753,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__e-console-error__60.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:30.114Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__e-console-warning__61.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__1024x768__e-http-error__62.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 398,
+        "y": 465,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__b-narrow-text-column__63.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 294,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__d-missing-aria-label__64.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 507,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 294,
+        "y": 688,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 294,
+        "y": 778,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 294,
+        "y": 851,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 507,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__g-contrast-ratio__65.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 663,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 753,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__e-console-error__66.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:31.983Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__e-console-warning__67.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__1024x768__e-http-error__68.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 398,
+        "y": 465,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__b-narrow-text-column__69.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 294,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__d-missing-aria-label__70.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 507,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 294,
+        "y": 739,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(3) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Минимум 8 символов\")",
+      "rect": {
+        "x": 294,
+        "y": 855,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Далее\")",
+      "rect": {
+        "x": 294,
+        "y": 927,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 581,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__g-contrast-ratio__71.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": ".text-xs",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 681,
+        "width": 426,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(3) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 294,
+        "y": 714,
+        "width": 79,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__e-console-error__72.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:34.088Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__e-console-warning__73.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__1024x768__e-http-error__74.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center | div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"на главную\" (2 шт.)",
+      "rect": {
+        "x": 171,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1024x768__c-duplicate-accessible-name__75.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 171,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1024x768__d-missing-aria-label__76.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"support@ogonek.app\")",
+      "rect": {
+        "x": 298,
+        "y": 1011,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 514,
+        "y": 1011,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Условия использования\")",
+      "rect": {
+        "x": 613,
+        "y": 1093,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 773,
+        "y": 1093,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "selector": ".space-y-3:nth-child(5) > .text-zinc-500.text-xs",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 171,
+        "y": 1011,
+        "width": 672,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1024x768__g-contrast-ratio__77.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 171,
+        "y": 1093,
+        "width": 232,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1024x768__e-console-error__78.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__1024x768__e-http-error__79.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 171,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1024x768__d-missing-aria-label__80.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 171,
+        "y": 1163,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1024x768",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Элемент без aria-label (текст/подпись \"Политика конфиденциальности\")",
+      "rect": {
+        "x": 651,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "1024x768",
+      "checkId": "h-forbidden-term-soratniki",
+      "category": "contract",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(4) > p.text-zinc-400",
+      "message": "Запрещённый термин «Соратники» (CONTRACT п. 7): \"При взаимодействии с соратниками в чатах, публикации записей в общую л\"",
+      "rect": {
+        "x": 171,
+        "y": 804,
+        "width": 672,
+        "height": 46
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1024x768__h-forbidden-term-soratniki__81.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1024x768",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 171,
+        "y": 1240,
+        "width": 232,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1024x768__g-contrast-ratio__82.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1024x768",
+      "selector": ".hover\\:text-zinc-300",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 651,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1024x768__e-console-error__83.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__1024x768__e-http-error__84.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 296,
+        "y": 513,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__b-narrow-text-column__85.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 192,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__d-missing-aria-label__86.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 405,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 192,
+        "y": 736,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 192,
+        "y": 826,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 192,
+        "y": 899,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 405,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__g-contrast-ratio__87.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 711,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 801,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 975,
+        "width": 426,
+        "height": 33
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__e-console-error__88.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:44.837Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__e-console-warning__89.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__820x1180__e-http-error__90.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 296,
+        "y": 513,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__b-narrow-text-column__91.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 192,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__d-missing-aria-label__92.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 405,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 192,
+        "y": 736,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 192,
+        "y": 826,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 192,
+        "y": 899,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 405,
+        "y": 629,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__g-contrast-ratio__93.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 711,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 801,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 975,
+        "width": 426,
+        "height": 33
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__e-console-error__94.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:46.856Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__e-console-warning__95.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__820x1180__e-http-error__96.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 296,
+        "y": 474,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__b-narrow-text-column__97.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 192,
+        "y": 591,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__d-missing-aria-label__98.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 405,
+        "y": 591,
+        "width": 213,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 192,
+        "y": 749,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(3) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Минимум 8 символов\")",
+      "rect": {
+        "x": 192,
+        "y": 865,
+        "width": 426,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Далее\")",
+      "rect": {
+        "x": 192,
+        "y": 937,
+        "width": 426,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 591,
+        "width": 213,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__g-contrast-ratio__99.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".text-xs",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 690,
+        "width": 426,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(3) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 724,
+        "width": 79,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".px-1",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 804,
+        "width": 426,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(4) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 839,
+        "width": 68,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 192,
+        "y": 1013,
+        "width": 426,
+        "height": 33
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__e-console-error__100.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:48.898Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__e-console-warning__101.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__820x1180__e-http-error__102.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center | div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"на главную\" (2 шт.)",
+      "rect": {
+        "x": 69,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__820x1180__c-duplicate-accessible-name__103.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 69,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__820x1180__d-missing-aria-label__104.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"support@ogonek.app\")",
+      "rect": {
+        "x": 196,
+        "y": 1011,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 412,
+        "y": 1011,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Условия использования\")",
+      "rect": {
+        "x": 511,
+        "y": 1093,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 671,
+        "y": 1093,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "selector": ".space-y-3:nth-child(5) > .text-zinc-500.text-xs",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 69,
+        "y": 1011,
+        "width": 672,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__820x1180__g-contrast-ratio__105.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 69,
+        "y": 1093,
+        "width": 232,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__820x1180__e-console-error__106.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__820x1180__e-http-error__107.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 69,
+        "y": 48,
+        "width": 672,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__820x1180__d-missing-aria-label__108.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 69,
+        "y": 1163,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "820x1180",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Элемент без aria-label (текст/подпись \"Политика конфиденциальности\")",
+      "rect": {
+        "x": 549,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "820x1180",
+      "checkId": "h-forbidden-term-soratniki",
+      "category": "contract",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(4) > p.text-zinc-400",
+      "message": "Запрещённый термин «Соратники» (CONTRACT п. 7): \"При взаимодействии с соратниками в чатах, публикации записей в общую л\"",
+      "rect": {
+        "x": 69,
+        "y": 804,
+        "width": 672,
+        "height": 46
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__820x1180__h-forbidden-term-soratniki__109.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "820x1180",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 69,
+        "y": 1240,
+        "width": 232,
+        "height": 17
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__820x1180__g-contrast-ratio__110.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "820x1180",
+      "selector": ".hover\\:text-zinc-300",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 549,
+        "y": 1240,
+        "width": 192,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__820x1180__e-console-error__111.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__820x1180__e-http-error__112.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "a-horizontal-overflow-container",
+      "category": "layout",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"]",
+      "message": "Горизонтальный скролл в контейнере: scrollWidth=399px > clientWidth=379px",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 379,
+        "height": 844
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__a-horizontal-overflow-container__113.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 91,
+        "y": 251,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__b-narrow-text-column__114.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 37,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__d-missing-aria-label__115.png"
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 199,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 37,
+        "y": 470,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 37,
+        "y": 560,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "landing",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 37,
+        "y": 633,
+        "width": 325,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 199,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__g-contrast-ratio__116.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 445,
+        "width": 325,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 535,
+        "width": 325,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 709,
+        "width": 325,
+        "height": 52
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__e-console-error__117.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:57.569Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__e-console-warning__118.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "landing",
+      "viewport": "390x844",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/landing__390x844__e-http-error__119.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "a-horizontal-overflow-container",
+      "category": "layout",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"]",
+      "message": "Горизонтальный скролл в контейнере: scrollWidth=399px > clientWidth=379px",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 379,
+        "height": 844
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__a-horizontal-overflow-container__120.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 91,
+        "y": 251,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__b-narrow-text-column__121.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 37,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__d-missing-aria-label__122.png"
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 199,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(1) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 37,
+        "y": 470,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Твой пароль\")",
+      "rect": {
+        "x": 37,
+        "y": 560,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "signin",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Войти\")",
+      "rect": {
+        "x": 37,
+        "y": 633,
+        "width": 325,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 199,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__g-contrast-ratio__123.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(1) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 445,
+        "width": 325,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(2) > label",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 535,
+        "width": 325,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 709,
+        "width": 325,
+        "height": 52
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__e-console-error__124.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:40:59.348Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__e-console-warning__125.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "signin",
+      "viewport": "390x844",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/signin__390x844__e-http-error__126.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "a-horizontal-overflow-container",
+      "category": "layout",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"]",
+      "message": "Горизонтальный скролл в контейнере: scrollWidth=399px > clientWidth=379px",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 379,
+        "height": 844
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__a-horizontal-overflow-container__127.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход в Огонёк\"] > div.auth-screen__grid:nth-of-type(2) > section.auth-hero:nth-of-type(1) > p.auth-hero__foot:nth-of-type(2)",
+      "message": "Текстовая колонка уже 28 символов (~26 симв., 217px): \"Local-first: 0 локальных профиля\"",
+      "rect": {
+        "x": 91,
+        "y": 251,
+        "width": 217,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__b-narrow-text-column__128.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Вход\")",
+      "rect": {
+        "x": 37,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__d-missing-aria-label__129.png"
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div[aria-label=\"Вход или регистрация\"] > button.flex-1.py-3:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Регистрация\")",
+      "rect": {
+        "x": 199,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(2) > div.relative.flex > input.w-full.pl-8",
+      "message": "Элемент без aria-label (текст/подпись \"alex_cerna\")",
+      "rect": {
+        "x": 37,
+        "y": 522,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.auth-form.auth-form--screen > form.flex.flex-col > div.flex.flex-col:nth-of-type(3) > div.relative.flex > input.w-full.pl-4",
+      "message": "Элемент без aria-label (текст/подпись \"Минимум 8 символов\")",
+      "rect": {
+        "x": 37,
+        "y": 637,
+        "width": 325,
+        "height": 49
+      }
+    },
+    {
+      "screen": "register",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section.auth-panel:nth-of-type(2) > div.auth-panel__inner > div.auth-form.auth-form--screen > form.flex.flex-col > button.x-primary-btn.w-full",
+      "message": "Элемент без aria-label (текст/подпись \"Далее\")",
+      "rect": {
+        "x": 37,
+        "y": 710,
+        "width": 325,
+        "height": 48
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".border-transparent",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 363,
+        "width": 162,
+        "height": 49
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__g-contrast-ratio__130.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".text-xs",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 463,
+        "width": 325,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(3) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 496,
+        "width": 79,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".px-1",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 576,
+        "width": 325,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".flex-col.gap-1\\.5.flex:nth-child(4) > label > .gap-1\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 612,
+        "width": 68,
+        "height": 20
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": ".mt-4",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 37,
+        "y": 786,
+        "width": 325,
+        "height": 52
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__e-console-error__131.png"
+    },
+    {
+      "checkId": "e-console-warning",
+      "category": "runtime",
+      "severity": "warning",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console warning: GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:41:01.190Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but this should be avoided as it may produce undefined behavior when used concurrently under the same storage key.",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__e-console-warning__132.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "register",
+      "viewport": "390x844",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/register__390x844__e-http-error__133.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center | div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"на главную\" (2 шт.)",
+      "rect": {
+        "x": 16,
+        "y": 48,
+        "width": 347,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__c-duplicate-accessible-name__134.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 16,
+        "y": 48,
+        "width": 347,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__d-missing-aria-label__135.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Тап-зона на мобильном меньше 40×40: 347×20px (\"На главную\")",
+      "rect": {
+        "x": 16,
+        "y": 48,
+        "width": 347,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__d-small-tap-target__136.png"
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"support@ogonek.app\")",
+      "rect": {
+        "x": 144,
+        "y": 1354,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(1)",
+      "message": "Тап-зона на мобильном меньше 40×40: 126×16px (\"support@ogonek.app\")",
+      "rect": {
+        "x": 144,
+        "y": 1354,
+        "width": 126,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 16,
+        "y": 1372,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(5) > p.text-xs.text-zinc-500:nth-of-type(2) > a:nth-of-type(2)",
+      "message": "Тап-зона на мобильном меньше 40×40: 107×16px (\"@ogonek_support\")",
+      "rect": {
+        "x": 16,
+        "y": 1372,
+        "width": 107,
+        "height": 16
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Условия использования\")",
+      "rect": {
+        "x": 16,
+        "y": 1483,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(1)",
+      "message": "Тап-зона на мобильном меньше 40×40: 144×17px (\"Условия использования\")",
+      "rect": {
+        "x": 16,
+        "y": 1483,
+        "width": 144,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 176,
+        "y": 1483,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "screen": "privacy",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-8.border-t > div.flex.items-center > a.text-zinc-400.transition-colors:nth-of-type(2)",
+      "message": "Тап-зона на мобильном меньше 40×40: 70×17px (\"На главную\")",
+      "rect": {
+        "x": 176,
+        "y": 1483,
+        "width": 70,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "390x844",
+      "selector": ".space-y-3:nth-child(5) > .text-zinc-500.text-xs",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 16,
+        "y": 1354,
+        "width": 347,
+        "height": 35
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__g-contrast-ratio__137.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "390x844",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 16,
+        "y": 1454,
+        "width": 232,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__e-console-error__138.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "privacy",
+      "viewport": "390x844",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/privacy__390x844__e-http-error__139.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "b-narrow-text-column",
+      "category": "text",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > span",
+      "message": "Текстовая колонка уже 28 символов (~23 симв., 190px): \"© 2026 Огонёк. Все права защищены.\"",
+      "rect": {
+        "x": 16,
+        "y": 1748,
+        "width": 190,
+        "height": 35
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__b-narrow-text-column__140.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Элемент без aria-label (текст/подпись \"На главную\")",
+      "rect": {
+        "x": 16,
+        "y": 48,
+        "width": 347,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__d-missing-aria-label__141.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "html > body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > a.inline-flex.items-center",
+      "message": "Тап-зона на мобильном меньше 40×40: 347×20px (\"На главную\")",
+      "rect": {
+        "x": 16,
+        "y": 48,
+        "width": 347,
+        "height": 20
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__d-small-tap-target__142.png"
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Элемент без aria-label (текст/подпись \"@ogonek_support\")",
+      "rect": {
+        "x": 16,
+        "y": 1671,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(6) > p.text-zinc-400 > a",
+      "message": "Тап-зона на мобильном меньше 40×40: 115×17px (\"@ogonek_support\")",
+      "rect": {
+        "x": 16,
+        "y": 1671,
+        "width": 115,
+        "height": 17
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Элемент без aria-label (текст/подпись \"Политика конфиденциальности\")",
+      "rect": {
+        "x": 206,
+        "y": 1748,
+        "width": 157,
+        "height": 35
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "d-small-tap-target",
+      "category": "controls",
+      "severity": "error",
+      "selector": "body.antialiased > div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > footer.pt-6.border-t > a.transition-colors",
+      "message": "Тап-зона на мобильном меньше 40×40: 157×35px (\"Политика конфиденциальности\")",
+      "rect": {
+        "x": 206,
+        "y": 1748,
+        "width": 157,
+        "height": 35
+      }
+    },
+    {
+      "screen": "terms",
+      "viewport": "390x844",
+      "checkId": "h-forbidden-term-soratniki",
+      "category": "contract",
+      "severity": "error",
+      "selector": "div.min-h-screen.bg-black:nth-of-type(2) > div.max-w-2xl.mx-auto > section.space-y-6.text-sm > div.space-y-3:nth-of-type(4) > p.text-zinc-400",
+      "message": "Запрещённый термин «Соратники» (CONTRACT п. 7): \"При взаимодействии с соратниками в чатах, публикации записей в общую л\"",
+      "rect": {
+        "x": 16,
+        "y": 1130,
+        "width": 347,
+        "height": 68
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__h-forbidden-term-soratniki__143.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "390x844",
+      "selector": "footer > span",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 16,
+        "y": 1748,
+        "width": 190,
+        "height": 35
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__g-contrast-ratio__144.png"
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "390x844",
+      "selector": ".hover\\:text-zinc-300",
+      "message": "Низкий контраст текста 4.35:1 (min 4.5:1, fg=#71717b, bg=#000000)",
+      "rect": {
+        "x": 206,
+        "y": 1748,
+        "width": 157,
+        "height": 35
+      }
+    },
+    {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "390x844",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__e-console-error__145.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "terms",
+      "viewport": "390x844",
+      "selector": "network",
+      "message": "HTTP 404 (GET http://127.0.0.1:3199/_vercel/insights/script.js)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/terms__390x844__e-http-error__146.png"
+    }
+  ]
+}
