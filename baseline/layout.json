@@ -1,0 +1,104 @@
+{
+  "generatedAt": "2026-11-14T13:02:35.744Z",
+  "viewports": {
+    "1210x756": {
+      "innerWidth": 1210,
+      "innerHeight": 756,
+      "docScrollWidth": 1199,
+      "docClientWidth": 1210,
+      "docScrollHeight": 756,
+      "sidebarNavCount": 0,
+      "sidebar": {
+        "clientWidth": 44,
+        "scrollWidth": 44,
+        "clientHeight": 89,
+        "scrollHeight": 89,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      },
+      "rightRail": {
+        "clientWidth": 350,
+        "scrollWidth": 350,
+        "clientHeight": 756,
+        "scrollHeight": 756,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      }
+    },
+    "1440x900": {
+      "innerWidth": 1440,
+      "innerHeight": 900,
+      "docScrollWidth": 1429,
+      "docClientWidth": 1440,
+      "docScrollHeight": 900,
+      "sidebarNavCount": 0,
+      "sidebar": {
+        "clientWidth": 44,
+        "scrollWidth": 44,
+        "clientHeight": 89,
+        "scrollHeight": 89,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      },
+      "rightRail": {
+        "clientWidth": 350,
+        "scrollWidth": 350,
+        "clientHeight": 900,
+        "scrollHeight": 900,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      }
+    },
+    "1024x768": {
+      "innerWidth": 1024,
+      "innerHeight": 768,
+      "docScrollWidth": 1013,
+      "docClientWidth": 1024,
+      "docScrollHeight": 768,
+      "sidebarNavCount": 0,
+      "sidebar": {
+        "clientWidth": 44,
+        "scrollWidth": 44,
+        "clientHeight": 89,
+        "scrollHeight": 89,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      },
+      "rightRail": {
+        "clientWidth": 350,
+        "scrollWidth": 350,
+        "clientHeight": 768,
+        "scrollHeight": 768,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      }
+    },
+    "820x1180": {
+      "innerWidth": 820,
+      "innerHeight": 1180,
+      "docScrollWidth": 809,
+      "docClientWidth": 820,
+      "docScrollHeight": 1180,
+      "sidebarNavCount": 0,
+      "sidebar": {
+        "clientWidth": 44,
+        "scrollWidth": 44,
+        "clientHeight": 89,
+        "scrollHeight": 89,
+        "hasVerticalScrollbar": false,
+        "hasHorizontalScrollbar": false
+      },
+      "rightRail": null
+    },
+    "390x844": {
+      "innerWidth": 390,
+      "innerHeight": 844,
+      "docScrollWidth": 379,
+      "docClientWidth": 390,
+      "docScrollHeight": 1020,
+      "sidebarNavCount": 0,
+      "sidebar": null,
+      "rightRail": null
+    }
+  }
+}
