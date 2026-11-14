@@ -11,6 +11,7 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { getTierLimits, normalizeTier } from '@/lib/ogonek/permissions'
 import dynamic from 'next/dynamic'
 import { ModalShell } from './modal-shell'
 import { Tooltip } from './tooltip'
@@ -470,8 +471,21 @@ export function Composer({
   const totalFilled = filledPrides.length + filledGratitudes.length
 
   const userLevel = storeState.profile?.level || 3
-  // Validation: require at least level entries to publish (Правило 1 ТЗ)
-  const canPublish = filledPrides.length >= userLevel
+
+  const userTier = normalizeTier(
+    storeState.profile?.subscription_tier,
+    storeState.profile?.subscription_expires_at
+  )
+  const tierLimits = getTierLimits(userTier)
+  const maxChars = tierLimits.maxCharsPerEntry
+
+  // Validation: ensure no pride or gratitude exceeds maxChars
+  const hasOverlongItem = useMemo(() => {
+    return prides.some((p) => p.length > maxChars) || gratitudes.some((g) => g.length > maxChars)
+  }, [prides, gratitudes, maxChars])
+
+  // Validation: require at least level entries to publish (Правило 1 ТЗ) and within char limits
+  const canPublish = filledPrides.length >= userLevel && !hasOverlongItem
   // Can save as draft with any content
   const canDraft = totalFilled > 0
 
@@ -653,7 +667,11 @@ export function Composer({
   }
 
   const handlePublish = async () => {
-    const publishEnabled = editingDay ? totalFilled > 0 : canPublish
+    if (hasOverlongItem) {
+      onNotify?.(`Длина записи превышает лимит тарифа (${maxChars} симв.)`)
+      return
+    }
+    const publishEnabled = editingDay ? totalFilled > 0 && !hasOverlongItem : canPublish
     if (!publishEnabled || isPublishing || isEvaluating) return
 
     // Интерактивная AI-церемония торжественной оценки дня
@@ -716,6 +734,10 @@ export function Composer({
     setCustomPlaceholder(null)
   }, [tab, activeSlot])
   const activeValue = currentValues[activeSlot] || ''
+  const currentLength = activeValue.length
+  const charRatio = maxChars > 0 ? currentLength / maxChars : 0
+  const showCharCounter = charRatio > 0.7
+  const isCharLimitDanger = charRatio >= 0.95
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cursorRef = useRef<number | null>(null)
 
@@ -997,6 +1019,23 @@ export function Composer({
         aria-label={`Пункт ${activeSlot + 1}`}
       />
 
+      {/* Живой счётчик символов (CONTRACT Шаг 05): маленький серый «742/1000», виден только при >70% лимита, краснеет при >=95% */}
+      {showCharCounter && (
+        <div className="flex justify-end -mt-2 mb-2 px-1">
+          <span
+            id="composer-char-counter"
+            className={`text-[11px] font-mono transition-colors ${
+              isCharLimitDanger
+                ? 'text-rose-500 font-bold'
+                : 'text-[var(--text-3)]'
+            }`}
+            aria-live="polite"
+          >
+            {currentLength}/{maxChars}
+          </span>
+        </div>
+      )}
+
       {/* Превью фото, если прикреплено */}
       {preview && (
         <div className="relative w-full my-3 rounded-2xl overflow-hidden bg-black/60 border border-[#2f3336]">
@@ -1116,13 +1155,8 @@ export function Composer({
           </Tooltip>
         </div>
 
-        {/* Справа счётчик */}
+        {/* Справа счётчик пунктов */}
         <div className="flex items-center gap-2">
-          {activeValue.length > 0 && (
-            <span className="text-[12px] text-[var(--text-3)] font-mono">
-              {activeValue.length} симв.
-            </span>
-          )}
           <span className="text-[13px] font-bold text-[var(--text-2)] font-mono">
             {activeSlot + 1}/5
           </span>
