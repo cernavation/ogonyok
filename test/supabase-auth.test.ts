@@ -6,7 +6,9 @@ import {
   emailToUsername,
   validatePassword,
   validateUsername,
-} from '../lib/ogonek/supabase-client.ts'
+  VIRTUAL_EMAIL_DOMAIN,
+  LEGACY_VIRTUAL_EMAIL_DOMAIN,
+} from '../lib/supabase/browser.ts'
 
 describe('Supabase Auth: Валидация никнейма (ЗАДАЧА 3)', () => {
   it('принимает корректный никнейм из 3-20 латинских букв, цифр и _', () => {
@@ -75,12 +77,15 @@ describe('Supabase Auth: Валидация пароля (ЗАДАЧА 3)', () =
 })
 
 describe('Supabase Auth: Маппинг email и понятные ошибки (ЗАДАЧА 3)', () => {
-  it('маппит никнейм в канонический email @ogonek.local', () => {
-    assert.equal(usernameToEmail('cerna'), 'cerna@ogonek.local')
-    assert.equal(usernameToEmail('alex_99'), 'alex_99@ogonek.local')
-    assert.equal(usernameToEmail(''), 'user@ogonek.local')
+  it('маппит никнейм в канонический email @ogonek.app и поддерживает legacy @ogonek.local', () => {
+    assert.equal(VIRTUAL_EMAIL_DOMAIN, 'ogonek.app')
+    assert.equal(LEGACY_VIRTUAL_EMAIL_DOMAIN, 'ogonek.local')
+    assert.equal(usernameToEmail('cerna'), 'cerna@ogonek.app')
+    assert.equal(usernameToEmail('alex_99'), 'alex_99@ogonek.app')
+    assert.equal(usernameToEmail(''), 'user@ogonek.app')
+    assert.equal(emailToUsername('cerna@ogonek.app'), 'cerna')
     assert.equal(emailToUsername('cerna@ogonek.local'), 'cerna')
-    assert.equal(usernameToEmail('cerna', 'ogonek.app'), 'cerna@ogonek.app')
+    assert.equal(usernameToEmail('cerna', LEGACY_VIRTUAL_EMAIL_DOMAIN), 'cerna@ogonek.local')
   })
 
   it('переводит системные ошибки Supabase на дружелюбный русский язык', () => {
