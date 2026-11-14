@@ -33,22 +33,24 @@ export async function consumeServerQuota(
   // 1. Попытка вызова RPC функции в PostgreSQL
   try {
     const supabase = getServerSupabase()
-    const { data, error } = await supabase.rpc('consume_quota', {
-      p_kind: feature,
-      p_limit: limitNumber,
-      p_user_id: userId,
-    })
+    if (supabase) {
+      const { data, error } = await supabase.rpc('consume_quota', {
+        p_kind: feature,
+        p_limit: limitNumber,
+        p_user_id: userId,
+      })
 
-    if (!error && data && typeof data === 'object') {
-      const resp = data as any
-      return {
-        ok: Boolean(resp.ok),
-        feature,
-        limit: limitNumber,
-        tier,
-        remaining: typeof resp.remaining === 'number' ? resp.remaining : 0,
-        current: typeof resp.current === 'number' ? resp.current : 0,
-        error: resp.ok ? undefined : 'quota_exceeded',
+      if (!error && data && typeof data === 'object') {
+        const resp = data as any
+        return {
+          ok: Boolean(resp.ok),
+          feature,
+          limit: limitNumber,
+          tier,
+          remaining: typeof resp.remaining === 'number' ? resp.remaining : 0,
+          current: typeof resp.current === 'number' ? resp.current : 0,
+          error: resp.ok ? undefined : 'quota_exceeded',
+        }
       }
     }
   } catch {

@@ -191,7 +191,7 @@ export function CommunityUserModal({
 
   const isMe = currentUserId === profile.id
   const isAnon = Boolean(profile.is_anonymous || profile.privacy?.is_anonymous)
-  const displayName = isAnon && !isMe ? 'Анонимный соратник' : (profile.display_name || profile.username)
+  const displayName = isAnon && !isMe ? 'Анонимный друг' : (profile.display_name || profile.username)
 
   return (
     <ModalShell title={displayName} onClose={onClose}>

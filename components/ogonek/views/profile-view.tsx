@@ -76,6 +76,7 @@ interface Props {
   onResetProfile: () => void
   onToggleFollow?: (friendId: string) => unknown
   onNotify: (message: string) => void
+  onOpenFriends?: (tab?: any) => void
   soundEnabled: boolean
 }
 
@@ -112,6 +113,7 @@ export function ProfileView({
   onResetProfile,
   onToggleFollow,
   onNotify,
+  onOpenFriends,
   soundEnabled,
 }: Props) {
   const isOwnProfile = !targetUserId ||
@@ -311,7 +313,7 @@ export function ProfileView({
         name: foreignProfile?.display_name || foreignProfile?.username,
         username: foreignProfile?.username,
       })
-      onNotify(`Вы и @${foreignProfile?.username || ''} теперь взаимные соратники! 🤝`)
+      onNotify(`Вы и @${foreignProfile?.username || ''} теперь друзья! 🤝`)
     } else {
       onNotify(nowFollowing ? `Вы читаете @${foreignProfile?.username || ''} ✓` : `Отписка от @${foreignProfile?.username || ''}`)
     }
@@ -835,7 +837,7 @@ export function ProfileView({
             )}
             {isMutualFriend && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 flex-none shadow-sm">
-                🤝 Соратник
+                🤝 Друзья
               </span>
             )}
           </div>
@@ -936,6 +938,9 @@ export function ProfileView({
                 aria-selected={active}
                 onClick={() => {
                   playClick(soundEnabled)
+                  if (t.id === 'friends' && onOpenFriends) {
+                    onOpenFriends('friends')
+                  }
                   setActiveTab(t.id)
                 }}
                 className={`flex-1 py-3.5 px-1 sm:px-2 text-center text-[13px] sm:text-[15px] font-bold border-b-2 transition-colors min-h-[44px] truncate ${
@@ -1160,9 +1165,9 @@ export function ProfileView({
                                   <span className="text-zinc-500 text-xs font-bold flex-none">
                                     {idx + 1}.
                                   </span>
-                                  <span className="flex-1 italic text-xs">Запись доступна только соратникам</span>
-                                  <span className="text-[10px] text-amber-500/80 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-0.5 flex-none" title="Для соратников">
-                                    <Users size={9} /> Для соратников
+                                  <span className="flex-1 italic text-xs">Запись доступна только друзьям</span>
+                                  <span className="text-[10px] text-amber-500/80 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-0.5 flex-none" title="Для друзей">
+                                    <Users size={9} /> Для друзей
                                   </span>
                                 </div>
                               )
@@ -1180,8 +1185,8 @@ export function ProfileView({
                                   </span>
                                 )}
                                 {isPrideFriendsOnly && canViewFriends && (
-                                  <span className="text-[10px] text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-0.5 flex-none" title="Для соратников">
-                                    <Users size={9} /> Соратники
+                                  <span className="text-[10px] text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-0.5 flex-none" title="Для друзей">
+                                    <Users size={9} /> Друзья
                                   </span>
                                 )}
                               </div>

@@ -296,7 +296,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
             const rank = idx + 1
             const isMe = user.is_me
             const isAnonForOther = user.is_anonymous && !isMe
-            const displayName = isAnonForOther ? 'Анонимный соратник' : user.display_name
+            const displayName = isAnonForOther ? 'Анонимный друг' : user.display_name
             const handle = isAnonForOther ? 'hidden' : user.username
             const isFollowing = user.is_following || following.includes(user.user_id)
 
@@ -412,7 +412,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                 Пока нет участников в этом списке
               </h3>
               <p className="text-xs text-[var(--text-2)] mt-1 leading-relaxed">
-                Пригласи соратников или включи участие в настройках, чтобы начать соревнование.
+                Пригласи друзей или включи участие в настройках, чтобы начать соревнование.
               </p>
             </div>
 

@@ -15,7 +15,7 @@ function isGibberish(text: string): boolean {
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('evaluate', ip, 60, 60_000)
+  const rateLimit = await checkRateLimit('evaluate', ip, 60, 60_000)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { success: false, error: 'Слишком много запросов. Подождите минуту.' },

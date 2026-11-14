@@ -51,7 +51,7 @@ const TOUR_SCREENS = [
   {
     icon: MessageSquare,
     color: '#3B82F6',
-    title: 'Мессенджер соратников',
+    title: 'Мессенджер друзей',
     desc: 'Чаты в стиле Telegram Web: личные диалоги, папки, пересылка гордостей и обмен опытом.',
   },
   {

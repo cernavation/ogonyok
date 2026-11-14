@@ -345,7 +345,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
       {/* ── Шапка ─────────────────────────────────────────────────────── */}
       <div className="fm-head">
         <div className="fm-head__title">
-          <h2>Круг соратников</h2>
+          <h2>Круг друзей</h2>
           <p>
             {friendIds.length} друзей · {followingIds.length} подписок ·{' '}
             {incoming.length + outgoing.length} заявок
@@ -405,7 +405,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
         {tab === 'friends' && (
           <div className="fm-list">
             {friends.length === 0
-              ? emptyState('Друзей пока нет', 'Прими заявку или добавь соратника из подписок.')
+              ? emptyState('Друзей пока нет', 'Прими заявку или добавь друга из подписок.')
               : friends.map((friend) => (
                   <PersonRow
                     key={friend.id}

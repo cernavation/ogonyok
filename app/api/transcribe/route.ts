@@ -3,7 +3,7 @@ import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 
 export async function POST(request: Request) {
   const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('transcribe', ip, 30, 60_000)
+  const rateLimit = await checkRateLimit('transcribe', ip, 30, 60_000)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { success: false, error: 'Слишком много запросов на расшифровку. Попробуйте через минуту.' },
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       'Держим огонь! Записал утреннюю пробежку и 5 побед дня 🔥',
       'Отличная мысль, давай встретимся и обсудим запуск!',
       'Принял задачу, сейчас всё сделаем в лучшем виде.',
-      'Привет, соратник! Голосовое получено, огонь горит ярко!',
+      'Привет, друг! Голосовое получено, огонь горит ярко!',
     ]
     const randomFallback = realisticFallbacks[Math.floor(Math.random() * realisticFallbacks.length)]
 

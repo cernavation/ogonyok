@@ -1,5 +1,5 @@
 /**
- * Круг друзей и соратников Огонька.
+ * Круг друзей Огонька.
  *
  * Это демонстрационная социальная карта профиля: люди, с которыми
  * пользователь идёт по пути силы. Данные используются во вкладке «Друзья»
@@ -63,7 +63,7 @@ export function getFriend(id: string): FriendProfile | undefined {
 }
 
 /**
- * Проверить, является ли пользователь взаимным соратником
+ * Проверить, является ли пользователь взаимным другом
  */
 export function isMutualFriend(targetUserId: string, friendIds: string[] = []): boolean {
   if (!targetUserId) return false

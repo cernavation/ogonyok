@@ -18,10 +18,11 @@ import { FriendDetailModal } from './friend-detail-modal'
 type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (message: string) => void
+  onOpenFriends?: () => void
   soundEnabled?: boolean
 }
 
-export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true }: Props) {
+export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, soundEnabled = true }: Props) {
   const { state, toggleFollow, addFriend } = useOgonekStore()
   const [openFriendId, setOpenFriendId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
@@ -56,14 +57,26 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
 
   return (
     <section className="af-widget" aria-labelledby="active-friends-title">
-      <header className="af-widget__head">
-        <h2 id="active-friends-title">
+      <header className="af-widget__head flex items-center justify-between">
+        <h2 id="active-friends-title" className="flex items-center gap-1.5">
           <Users size={17} className="text-[var(--accent)]" aria-hidden="true" />
           Друзья
         </h2>
-        <span className="af-widget__badge">
-          {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} друзей`}
-        </span>
+        <div className="flex items-center gap-2">
+          {onOpenFriends && (
+            <button
+              type="button"
+              onClick={onOpenFriends}
+              className="text-[12px] font-bold text-[var(--accent)] hover:underline cursor-pointer"
+              aria-label="Открыть окно друзей"
+            >
+              Открыть
+            </button>
+          )}
+          <span className="af-widget__badge">
+            {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} друзей`}
+          </span>
+        </div>
       </header>
 
       {active.length === 0 ? (
@@ -71,7 +84,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
           <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
           </div>
-          <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет соратников</p>
+          <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет друзей</p>
           <p className="text-[11px] text-[var(--muted)] mb-3 leading-snug">
             Пригласи друзей вести дневник вместе, делиться гордостями и держать огонь.
           </p>
@@ -88,10 +101,10 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
 
             <button
               type="button"
-              onClick={() => onNavigate('explore')}
+              onClick={onOpenFriends || (() => onNavigate('explore'))}
               className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--line)] text-[var(--text)] text-xs font-medium border border-[var(--line)] transition-all"
             >
-              <Search size={14} /> <span>Найти людей по нику</span>
+              <Search size={14} /> <span>Найти друзей по нику</span>
             </button>
           </div>
         </div>
@@ -164,9 +177,9 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, soundEnabled = true 
           <button
             type="button"
             className="w-full py-2 px-3 rounded-full text-[13px] font-bold text-[var(--text)] bg-[var(--surface2)] hover:bg-[var(--bg-hover)] border border-[var(--border)] transition-colors min-h-[36px]"
-            onClick={() => onNavigate('profile')}
+            onClick={onOpenFriends || (() => onNavigate('profile'))}
           >
-            Все друзья →
+            Все друзья · Открыть →
           </button>
         </div>
       )}

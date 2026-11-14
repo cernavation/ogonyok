@@ -183,8 +183,10 @@ export const fetchProfile = getProfile
  * Поиск профилей по нику или имени напрямую в Supabase public.profiles
  */
 export async function searchProfiles(query: string, currentUserIdOrUsername?: string): Promise<ProfileRecord[]> {
-  const searchQuery = query.trim().replace(/^@/, '')
+  const searchQuery = query.trim().replace(/^@+/, '')
   const qLower = searchQuery.toLowerCase()
+  const spaceless = qLower.replace(/\s+/g, '')
+  const words = qLower.split(/\s+/).filter(Boolean)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUserIdOrUsername || '')
 
   const results: ProfileRecord[] = []
@@ -193,10 +195,20 @@ export async function searchProfiles(query: string, currentUserIdOrUsername?: st
   if (supabase) {
     if (!searchQuery) return getRecentProfiles(20, currentUserIdOrUsername)
     try {
+      let orClause = `username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`
+      if (spaceless && spaceless !== qLower) {
+        orClause += `,username.ilike.%${spaceless}%,display_name.ilike.%${spaceless}%`
+      }
+      for (const w of words) {
+        if (w.length >= 3) {
+          orClause += `,username.ilike.%${w}%,display_name.ilike.%${w}%`
+        }
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .or(`username.ilike.%${searchQuery}%,display_name.ilike.%${searchQuery}%`)
+        .or(orClause)
         .limit(30)
 
       if (!error && Array.isArray(data)) {
@@ -217,9 +229,13 @@ export async function searchProfiles(query: string, currentUserIdOrUsername?: st
 
   if (results.length === 0 && searchQuery) {
     for (const seed of FALLBACK_SEED_PROFILES) {
+      const uName = seed.username.toLowerCase()
+      const dName = seed.display_name.toLowerCase()
       if (
-        seed.username.toLowerCase().includes(qLower) ||
-        seed.display_name.toLowerCase().includes(qLower)
+        uName.includes(qLower) ||
+        dName.includes(qLower) ||
+        (spaceless && (uName.includes(spaceless) || dName.replace(/\s+/g, '').includes(spaceless))) ||
+        (words.length > 1 && words.every((w) => uName.includes(w) || dName.includes(w)))
       ) {
         if (currentUserIdOrUsername) {
           if (isUuid && seed.id === currentUserIdOrUsername) continue
@@ -597,7 +613,7 @@ export async function checkFriendshipFollow(currentUserId: string, targetUserId:
 }
 
 /**
- * Проверить статус взаимной дружбы (соратники):
+ * Проверить статус взаимной дружбы:
  * User A подписан на User B И User B подписан на User A
  */
 export async function checkMutualFriendship(userIdA: string, userIdB: string): Promise<boolean> {
@@ -2078,3 +2094,23 @@ export async function getCallSession(sessionId: string): Promise<CallSessionReco
     return null
   }
 }
+
+// Re-export social service functions
+export {
+  searchSocialUsers,
+  sendFriendRequestApi,
+  acceptFriendRequestApi,
+  declineFriendRequestApi,
+  cancelFriendRequestApi,
+  removeFriendApi,
+  blockUserApi,
+  unblockUserApi,
+  reportUserApi,
+  getFriendsListApi,
+  getFriendRequestsApi,
+  getFriendFeedPosts,
+  subscribeToFriendships,
+  type SocialUser,
+  type FriendshipStatus,
+  type FriendFeedPost,
+} from '../ogonek/social.ts'

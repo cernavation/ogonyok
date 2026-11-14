@@ -108,6 +108,12 @@ export async function POST(request: Request) {
 
   try {
     const supabase = getServerSupabase()
+    if (!supabase) {
+      return NextResponse.json(
+        { error: { code: 'DATABASE_UNAVAILABLE', message: 'База данных недоступна' } },
+        { status: 503 }
+      )
+    }
 
     // Проверяем, существует ли уже профиль с таким ником
     const { data: existingProfile } = await supabase

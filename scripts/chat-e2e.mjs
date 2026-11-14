@@ -69,7 +69,7 @@ async function runChatE2ESuite() {
     await pageA.goto(`${BASE_URL}/chats/fr-voloshin`, { waitUntil: 'domcontentloaded' })
     await pageA.waitForSelector('textarea[placeholder*="Написать"]', { timeout: 10000 })
 
-    const testMsgText = `Привет, соратник! Тестовое сообщение E2E #${Date.now().toString(36)} 🔥`
+    const testMsgText = `Привет, друг! Тестовое сообщение E2E #${Date.now().toString(36)} 🔥`
     await pageA.fill('textarea[placeholder*="Написать"]', testMsgText)
     await pageA.waitForTimeout(300)
 

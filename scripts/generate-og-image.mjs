@@ -163,7 +163,7 @@ async function generateOgImage() {
     <div class="pills">
       <div class="pill-item"><span class="dot">✦</span> Дневник побед</div>
       <div class="pill-item"><span class="dot">✦</span> Evidence Vault</div>
-      <div class="pill-item"><span class="dot">✦</span> Мессенджер соратников</div>
+      <div class="pill-item"><span class="dot">✦</span> Мессенджер друзей</div>
       <div class="pill-item"><span class="dot">✦</span> Офлайн PWA</div>
     </div>
     <div class="url">ogonek.app</div>

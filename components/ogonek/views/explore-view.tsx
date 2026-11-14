@@ -40,6 +40,7 @@ type Props = {
   onNotify: (msg: string) => void
   onSelectDay?: (dayId: number) => void
   onEditDay?: (day: Day) => void
+  onOpenFriends?: (tab?: any) => void
   soundEnabled?: boolean
 }
 
@@ -57,6 +58,7 @@ export function ExploreView({
   onNotify,
   onSelectDay,
   onEditDay,
+  onOpenFriends,
   soundEnabled = true,
 }: Props) {
   const {
@@ -297,6 +299,25 @@ export function ExploreView({
           soundEnabled={soundEnabled}
         />
 
+        {/* Вкладки: Все | Люди (Шаг 06: переход к поиску пользователей) */}
+        <div className="flex items-center gap-2 border-b border-[var(--line)] pb-3" role="tablist" aria-label="Фильтры раздела поиска">
+          <button
+            type="button"
+            className="px-4 py-1.5 rounded-full text-xs font-bold bg-[var(--accent)] text-white shadow-sm"
+          >
+            Все
+          </button>
+          <button
+            type="button"
+            onClick={() => onOpenFriends?.('search')}
+            className="px-4 py-1.5 rounded-full text-xs font-bold bg-[var(--surface2)] hover:bg-[var(--line)] text-[var(--text)] border border-[var(--line)] transition-all flex items-center gap-1.5"
+            aria-label="Вкладка Люди"
+          >
+            <Users size={13} className="text-[var(--accent)]" />
+            <span>Люди</span>
+          </button>
+        </div>
+
         {/* Selected tag filter banner */}
         {activeTag && (
           <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--accent-soft)] border border-[var(--accent)]/30 text-sm">
@@ -522,7 +543,7 @@ export function ExploreView({
                 </div>
                 {communityUsers.length > 0 && (
                   <span className="text-xs font-bold text-[var(--text-2)] px-2.5 py-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)]">
-                    {communityUsers.length} соратников
+                    {communityUsers.length} друзей
                   </span>
                 )}
               </div>

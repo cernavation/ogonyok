@@ -2706,7 +2706,7 @@ export function useOgonekStore() {
   )
 
   /**
-   * Взаимные соратники: гарантирует создание ветки чата с приветственным сообщением
+   * Взаимные друзья: гарантирует создание ветки чата с приветственным сообщением
    */
   const ensureMutualFriendshipChat = useCallback(
     (
@@ -2718,7 +2718,7 @@ export function useOgonekStore() {
         const threads = prev.chatThreads ?? {}
         const existing = threads[friendId]
         const alreadyHasGreeting = existing?.messages?.some((m) =>
-          m.text?.includes('Вы стали друзьями!') || m.text?.includes('Вы стали соратниками!')
+          m.text?.includes('Вы стали друзьями!')
         )
 
         if (alreadyHasGreeting) return prev

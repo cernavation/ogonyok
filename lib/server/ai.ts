@@ -43,17 +43,19 @@ export async function getCachedDayEvaluation(
 ): Promise<DayEvaluationResult | null> {
   try {
     const supabase = getServerSupabase()
-    const { data, error } = await supabase
-      .from('ai_cache')
-      .select('response, provider')
-      .eq('content_hash', contentHash)
-      .maybeSingle()
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('ai_cache')
+        .select('response, provider')
+        .eq('content_hash', contentHash)
+        .maybeSingle()
 
-    if (!error && data?.response) {
-      return {
-        ...(data.response as DayEvaluationResult),
-        cached: true,
-        provider: data.provider || 'cache',
+      if (!error && data?.response) {
+        return {
+          ...(data.response as DayEvaluationResult),
+          cached: true,
+          provider: data.provider || 'cache',
+        }
       }
     }
   } catch {
@@ -84,15 +86,17 @@ export async function setCachedDayEvaluation(
 
   try {
     const supabase = getServerSupabase()
-    await supabase.from('ai_cache').upsert(
-      {
-        content_hash: contentHash,
-        response: result,
-        provider,
-        created_at: new Date().toISOString(),
-      },
-      { onConflict: 'content_hash' }
-    )
+    if (supabase) {
+      await supabase.from('ai_cache').upsert(
+        {
+          content_hash: contentHash,
+          response: result,
+          provider,
+          created_at: new Date().toISOString(),
+        },
+        { onConflict: 'content_hash' }
+      )
+    }
   } catch {
     // Игнорируем ошибку внешнего кэша
   }

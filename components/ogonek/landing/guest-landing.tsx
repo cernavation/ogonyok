@@ -71,7 +71,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     },
     {
       q: 'Сколько стоит использование Огонька?',
-      a: 'Огонёк полностью бесплатен для личного ведения дневника, хранения побед в Evidence Vault, общения в чатах соратников и аналитики. Без скрытых подписок и без навязчивой рекламы.',
+      a: 'Огонёк полностью бесплатен для личного ведения дневника, хранения побед в Evidence Vault, общения в чатах друзей и аналитики. Без скрытых подписок и без навязчивой рекламы.',
     },
     {
       q: 'Как устроена авторизация через Google?',
@@ -101,13 +101,13 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     },
     {
       icon: MessageSquare,
-      title: 'Мессенджер соратников',
+      title: 'Мессенджер друзей',
       desc: 'Полноэкранный мессенджер в стиле X.com и Telegram Web: голосовые, быстрые реакции, папки диалогов.',
     },
     {
       icon: Trophy,
       title: 'Рейтинг силы',
-      desc: 'Лидерборд единомышленников: вдохновляйся стриками соратников без зависти и токсичной конкуренции.',
+      desc: 'Лидерборд единомышленников: вдохновляйся стриками друзей без зависти и токсичной конкуренции.',
     },
     {
       icon: Target,
@@ -326,7 +326,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                   <BookOpen size={15} className="text-[#FF5C00]" /> Лента дней
                 </div>
                 <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <MessageSquare size={15} /> Чаты соратников
+                  <MessageSquare size={15} /> Чаты друзей
                 </div>
                 <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
                   <Trophy size={15} /> Рейтинг силы
@@ -371,7 +371,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                     </div>
                     <div className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/50 flex items-start justify-between text-xs">
                       <span className="text-zinc-200">
-                        3. Сдержал слово и помог соратнику запустить релиз вовремя
+                        3. Сдержал слово и помог другу запустить релиз вовремя
                       </span>
                       <span className="text-[#FF5C00] font-bold shrink-0 ml-2">9.0 ★</span>
                     </div>

@@ -3,7 +3,7 @@ import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
 
 export async function GET(request: Request) {
   const ip = getClientIp(request)
-  const rateLimit = checkRateLimit('giphy', ip, 30, 60_000)
+  const rateLimit = await checkRateLimit('giphy', ip, 30, 60_000)
   if (!rateLimit.allowed) {
     return NextResponse.json(
       { keyConfigured: false, gifs: [], error: 'Слишком много запросов GIF. Подождите минуту.' },

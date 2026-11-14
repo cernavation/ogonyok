@@ -1,6 +1,6 @@
 'use client'
 
-import { Flame, Settings } from 'lucide-react'
+import { Flame, Settings, Users } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
 import { getInitials } from '@/lib/ogonek/initials'
@@ -12,12 +12,13 @@ import type { ViewId } from '@/lib/ogonek/types'
 type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (msg: string) => void
+  onOpenFriends?: () => void
   streak?: number
   streakStatus?: StreakStatus
   hoursLeft?: number | null
 }
 
-export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
+export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Props) {
   const { state, currentUser, signOut } = useOgonekStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   useBodyScrollLock(drawerOpen)
@@ -77,6 +78,19 @@ export function MobileTopBar({ onNavigate, onNotify, streak }: Props) {
             >
               <Flame size={14} className="text-[#ff6b35] fill-[#ff6b35]" />
               <span className="text-[12px] font-bold text-[var(--text)]">{streak}</span>
+            </button>
+          )}
+          {onOpenFriends && (
+            <button
+              type="button"
+              className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors relative"
+              aria-label="Друзья"
+              onClick={onOpenFriends}
+            >
+              <Users size={19} strokeWidth={1.8} />
+              {(state.incomingFriendRequests?.length ?? 0) > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)]" />
+              )}
             </button>
           )}
           <button

@@ -131,7 +131,7 @@ export function formatDigestDate(iso?: string): string {
 }
 
 function firstNameOf(name: string): string {
-  return (name || '').trim().split(/\s+/)[0] || name || 'Соратник'
+  return (name || '').trim().split(/\s+/)[0] || name || 'Друг'
 }
 
 /** Дайджест «опубликованного дня» друга из социальной карты */

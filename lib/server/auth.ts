@@ -44,6 +44,7 @@ export async function getAuthenticatedUser(request: Request): Promise<Authentica
 
   try {
     const supabase = getServerSupabase()
+    if (!supabase) return null
     const { data: { user }, error } = await supabase.auth.getUser(token)
     if (error || !user) {
       return null

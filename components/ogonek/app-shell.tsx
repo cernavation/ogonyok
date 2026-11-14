@@ -49,6 +49,7 @@ const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.Hotke
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
+const FriendsModal = dynamic(() => import('./friends/friends-modal').then((m) => m.FriendsModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -58,6 +59,8 @@ export function AppShell() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
+  const [friendsModalOpen, setFriendsModalOpen] = useState(false)
+  const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'requests' | 'search' | 'following'>('friends')
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [locked, setLocked] = useState(false)
@@ -124,6 +127,7 @@ export function AppShell() {
       composer ||
       authModal ||
       profileModal ||
+      friendsModalOpen ||
       hotkeysModal ||
       lightbox ||
       onboardingOpen ||
@@ -131,6 +135,19 @@ export function AppShell() {
       incomingCall
     )
   )
+
+  const openFriendsModal = useCallback((tab?: 'friends' | 'requests' | 'search' | 'following') => {
+    setFriendsModalTab(tab || 'friends')
+    setFriendsModalOpen(true)
+  }, [])
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      openFriendsModal(e?.detail?.tab)
+    }
+    window.addEventListener('ogonek:open-friends', handler)
+    return () => window.removeEventListener('ogonek:open-friends', handler)
+  }, [openFriendsModal])
 
   const notify = useCallback((message: string) => {
     setToast(message)
@@ -685,6 +702,7 @@ export function AppShell() {
           streakStatus={streakState.status}
           hoursLeft={streakState.hoursLeft}
           onOpenProfile={() => navigate('profile')}
+          onOpenFriends={openFriendsModal}
           onCompose={() => {
             setEditingDay(null)
             setComposer(true)
@@ -701,6 +719,7 @@ export function AppShell() {
           onNotify={notify}
           onSelectDay={handleSelectDay}
           onEditDay={handleEditDay}
+          onOpenFriends={openFriendsModal}
           soundEnabled={state.soundEnabled}
         />
       ),
@@ -773,6 +792,7 @@ export function AppShell() {
           onResetProfile={resetProfile}
           onToggleFollow={toggleFollow}
           onNotify={notify}
+          onOpenFriends={openFriendsModal}
           soundEnabled={state.soundEnabled}
         />
       ),
@@ -926,6 +946,7 @@ export function AppShell() {
                   <MobileTopBar
                     onNavigate={navigate}
                     onNotify={notify}
+                    onOpenFriends={openFriendsModal}
                     streak={streakState.streak}
                     streakStatus={streakState.status}
                     hoursLeft={streakState.hoursLeft}
@@ -951,6 +972,7 @@ export function AppShell() {
                 hoursLeft={streakState.hoursLeft}
                 isDemo={state.isDemo}
                 onNotify={notify}
+                onOpenFriends={openFriendsModal}
                 soundEnabled={state.soundEnabled}
               />
             </div>
@@ -997,6 +1019,22 @@ export function AppShell() {
               storeState={state}
               onClose={() => setProfileModal(false)}
               onNavigate={navigate}
+            />
+          )}
+          {friendsModalOpen && (
+            <FriendsModal
+              initialTab={friendsModalTab}
+              onClose={() => setFriendsModalOpen(false)}
+              onNavigateToUser={(uid) => {
+                setFriendsModalOpen(false)
+                navigate('profile', uid)
+              }}
+              onStartChatWithUser={(uid) => {
+                setFriendsModalOpen(false)
+                navigate('messages')
+              }}
+              onNotify={notify}
+              soundEnabled={state.soundEnabled}
             />
           )}
           {onboardingOpen && (

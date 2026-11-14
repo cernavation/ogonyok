@@ -91,7 +91,7 @@ export function buildFriendSlides(friend: FriendProfile, index = 0): StorySlide[
       emoji: '🤝',
       kicker: 'ПЛЕЧОМ К ПЛЕЧУ',
       headline: `${friend.together}`,
-      detail: `Столько дней мы шли рядом по пути силы. ${friend.mutual} общих соратников`,
+      detail: `Столько дней мы шли рядом по пути силы. ${friend.mutual} общих друзей`,
       ...t1,
     },
     {

@@ -56,23 +56,39 @@ export function buildRateLimitKey(params: {
  * Проверка rate limit через RPC check_rate_limit в PostgreSQL (или in-memory fallback)
  */
 export async function checkRateLimit(
-  key: string,
-  limit: number = 30,
-  windowSeconds: number = 60
+  keyOrRoute: string,
+  limitOrIp?: number | string,
+  windowSecondsOrLimit?: number,
+  windowMsParam?: number
 ): Promise<{ allowed: boolean; remaining: number; retryAfter: number }> {
+  let key: string
+  let limit: number
+  let windowSeconds: number
+
+  if (typeof limitOrIp === 'string') {
+    key = `${keyOrRoute}:${limitOrIp}`
+    limit = windowSecondsOrLimit ?? 30
+    windowSeconds = windowMsParam ? (windowMsParam >= 1000 ? Math.round(windowMsParam / 1000) : windowMsParam) : 60
+  } else {
+    key = keyOrRoute
+    limit = limitOrIp ?? 30
+    windowSeconds = windowSecondsOrLimit ?? 60
+  }
   try {
     const supabase = getServerSupabase()
-    const { data, error } = await supabase.rpc('check_rate_limit', {
-      p_key: key,
-      p_limit: limit,
-      p_window_seconds: windowSeconds,
-    })
+    if (supabase) {
+      const { data, error } = await supabase.rpc('check_rate_limit', {
+        p_key: key,
+        p_limit: limit,
+        p_window_seconds: windowSeconds,
+      })
 
-    if (!error && typeof data === 'boolean') {
-      return {
-        allowed: data,
-        remaining: data ? 1 : 0,
-        retryAfter: data ? 0 : windowSeconds,
+      if (!error && typeof data === 'boolean') {
+        return {
+          allowed: data,
+          remaining: data ? 1 : 0,
+          retryAfter: data ? 0 : windowSeconds,
+        }
       }
     }
   } catch {

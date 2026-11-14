@@ -18,6 +18,7 @@ import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
+import { getFriendFeedPosts } from '@/lib/ogonek/social'
 
 const FocusHistoryModal = dynamic(
   () => import('../focus-history-modal').then((m) => m.FocusHistoryModal),
@@ -47,6 +48,7 @@ type Props = {
   streakStatus?: StreakStatus
   hoursLeft?: number | null
   onOpenProfile?: () => void
+  onOpenFriends?: () => void
   soundEnabled?: boolean
   userId?: string
   currentUsername?: string
@@ -72,6 +74,7 @@ export function HomeView({
   streakStatus,
   hoursLeft,
   onOpenProfile,
+  onOpenFriends,
   soundEnabled = true,
   userId,
   currentUsername,
@@ -95,9 +98,66 @@ export function HomeView({
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [serverFriendDays, setServerFriendDays] = useState<Day[]>([])
+  const [loadingFriendFeed, setLoadingFriendFeed] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const currentUserId = currentUser?.id || state.auth.activeAccountId || userId
+
+  // Загрузка постов друзей с сервера Supabase при выборе вкладки «Друзья»
+  useEffect(() => {
+    if (filter !== 'Друзья') return
+    let cancelled = false
+    const fetchFriendsFeed = async () => {
+      setLoadingFriendFeed(true)
+      try {
+        const posts = await getFriendFeedPosts({ viewerId: currentUserId })
+        if (cancelled) return
+        if (Array.isArray(posts) && posts.length > 0) {
+          const mapped: Day[] = posts.map((p) => ({
+            id: Number(p.id) || 1,
+            user_id: p.userId,
+            day_number: 1,
+            dateISO: p.dayDate || new Date().toISOString(),
+            title: p.title || `День пользователя @${p.username}`,
+            visibility: p.visibility || 'friends',
+            tags: [],
+            prides: p.prides.map((pr, idx) => ({
+              num: String(idx + 1),
+              text: pr.text,
+              scale: Number(pr.scale ?? 8),
+              overcome: 1,
+              category: pr.category,
+              visibility: (p.visibility || 'friends') as any,
+            })),
+            gratitudes: p.gratitudes.map((gr, idx) => ({
+              num: String(idx + 1),
+              text: gr.text,
+              category: gr.category,
+              visibility: (p.visibility || 'friends') as any,
+            })),
+            author: {
+              id: p.userId,
+              username: p.username,
+              displayName: p.displayName,
+              avatarImage: p.avatarUrl || undefined,
+              verified: p.verified,
+              streak: p.streak,
+            } as any,
+          }))
+          setServerFriendDays(mapped)
+        }
+      } catch (err) {
+        console.error('Failed to load friends feed:', err)
+      } finally {
+        if (!cancelled) setLoadingFriendFeed(false)
+      }
+    }
+    fetchFriendsFeed()
+    return () => {
+      cancelled = true
+    }
+  }, [filter, currentUserId])
   const followingIds = useMemo(() => {
     return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
   }, [state.followingIds, state.exploreFollowingIds])
@@ -143,7 +203,22 @@ export function HomeView({
         return true
       })
     }
-    if (filter === 'Друзья' || filter === 'Подписки') {
+    if (filter === 'Друзья') {
+      if (serverFriendDays.length > 0) {
+        return serverFriendDays
+      }
+      return days.filter((d) => {
+        const uid = d.user_id || (d as any).userId
+        if (!uid) return false
+        const isMine =
+          (currentUserId && uid === currentUserId) ||
+          (currentUser?.id && uid === currentUser.id) ||
+          (state.auth.activeAccountId && uid === state.auth.activeAccountId)
+        if (isMine) return false
+        return (state.friendIds ?? []).includes(uid) || followingIds.includes(uid)
+      })
+    }
+    if (filter === 'Подписки') {
       return days.filter((d) => {
         const uid = d.user_id || (d as any).userId
         if (!uid) return false
@@ -156,7 +231,7 @@ export function HomeView({
       })
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds])
+  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds, serverFriendDays, state.friendIds])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
@@ -206,15 +281,21 @@ export function HomeView({
         {/* Title row */}
         <div className="feed-title">
           <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Главная</h1>
-          <Tooltip content="Настройки ленты" side="left">
-            <button
-              type="button"
-              className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] transition-colors"
-              aria-label="Настройки ленты"
-            >
-              <MoreHorizontal size={20} />
-            </button>
-          </Tooltip>
+          {onOpenFriends && (
+            <Tooltip content="Друзья" side="left">
+              <button
+                type="button"
+                onClick={onOpenFriends}
+                className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors relative"
+                aria-label="Друзья"
+              >
+                <Users size={19} />
+                {(state.incomingFriendRequests?.length ?? 0) > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)]" />
+                )}
+              </button>
+            </Tooltip>
+          )}
         </div>
 
         {/* Tabs with Twitter Blue underline indicator */}
@@ -412,7 +493,7 @@ export function HomeView({
               <Users size={24} className="text-[#ff6b35]" />
             </span>
             <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
-              Здесь будут победы ваших соратников. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!
+              Здесь будут победы ваших друзей. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!
             </p>
             <button
               type="button"

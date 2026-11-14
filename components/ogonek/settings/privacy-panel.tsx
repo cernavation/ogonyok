@@ -265,7 +265,7 @@ export function PrivacyPanel({ onNotify }: Props) {
         <div className="segmented privacy-policy__seg" role="radiogroup" aria-label="Приватность записей по умолчанию">
           {[
             { id: 'private' as const, label: '🔒 Только я (Лично)' },
-            { id: 'friends' as const, label: '👥 Для соратников' },
+            { id: 'friends' as const, label: '👥 Для друзей' },
             { id: 'public' as const, label: '🌐 Публично' },
           ].map((opt) => {
             const currentVis = privacy.defaultDayVisibility || 'public'

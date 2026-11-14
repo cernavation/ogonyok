@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
             return {
               user_id: p.id,
               username: p.username || 'user',
-              display_name: isCerna ? (p.display_name || 'Alexei Cerna') : isElon ? (p.display_name || 'Илон Маск') : (p.display_name || 'Соратник'),
+              display_name: isCerna ? (p.display_name || 'Alexei Cerna') : isElon ? (p.display_name || 'Илон Маск') : (p.display_name || 'Друг'),
               avatar_url: p.avatar_image || p.avatar_url || null,
               city: p.city || 'Москва',
               streak,

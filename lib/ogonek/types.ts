@@ -232,10 +232,13 @@ export type OgonekProfile = {
   inLeaderboard?: boolean
   /** Возраст пользователя */
   age?: number | null
-  /** Режим полной анонимности: скрыт из глобального поиска, в подписках/лентах как «Анонимный соратник» */
+  /** Режим полной анонимности: скрыт из глобального поиска, в подписках/лентах как «Анонимный друг» */
   isAnonymous?: boolean
   /** Текущий тариф подписки: 'free' | 'premium' | 'ultra' */
   subscription_tier?: 'free' | 'premium' | 'ultra'
+  /** Дата истечения подписки */
+  subscription_expires_at?: string | null
+  subscription_valid_until?: string | null
   /** Настройки приватности */
   privacy?: { is_anonymous?: boolean; [key: string]: any }
   /** Число дней стрика / летописи */

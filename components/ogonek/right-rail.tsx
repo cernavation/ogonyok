@@ -16,6 +16,7 @@ type Props = {
   hoursLeft?: number | null
   isDemo?: boolean
   onNotify?: (message: string) => void
+  onOpenFriends?: () => void
   soundEnabled?: boolean
   className?: string
 }
@@ -26,6 +27,7 @@ export function RightRail({
   streakStatus = 'safe',
   hoursLeft,
   onNotify,
+  onOpenFriends,
   soundEnabled = true,
   className,
 }: Props) {
@@ -108,6 +110,7 @@ export function RightRail({
         <ActiveFriendsWidget
           onNavigate={onNavigate}
           onNotify={onNotify}
+          onOpenFriends={onOpenFriends}
           soundEnabled={soundEnabled}
         />
       )}

@@ -160,7 +160,7 @@ export function StoriesBar({
     const result: ViewableStory[] = []
     for (const [userId, stories] of byUser.entries()) {
       const author = stories[0].author
-      const name = author?.display_name || author?.username || 'Соратник'
+      const name = author?.display_name || author?.username || 'Друг'
       const username = author?.username || 'user'
       const initials = getInitials(name, username)
       const avatarColor = author?.avatar_color || '#FF5C00'
