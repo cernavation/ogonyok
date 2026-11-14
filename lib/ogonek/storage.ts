@@ -779,6 +779,10 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   evidenceItems: isDemoEnv ? EVIDENCE_ITEMS : [],
   evidenceFavorites: isDemoEnv ? ['ev-1', 'ev-2'] : [],
   soundEnabled: true,
+  soundVolume: 0.8,
+  unreadChatCount: 0,
+  unreadNotificationsCount: 0,
+  notifications: [],
   pinEnabled: false,
   isDemo: isDemoEnv,
   customEmojis: DEFAULT_CUSTOM_EMOJIS,
@@ -967,6 +971,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
           : DEFAULT_STORE_STATE.evidenceFavorites
 
       const soundEnabled = typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true
+      const soundVolume = typeof parsed.soundVolume === 'number' ? Math.max(0, Math.min(1, parsed.soundVolume)) : 0.8
+      const unreadChatCount = typeof parsed.unreadChatCount === 'number' ? parsed.unreadChatCount : 0
+      const unreadNotificationsCount = typeof parsed.unreadNotificationsCount === 'number' ? parsed.unreadNotificationsCount : 0
+      const notifications = Array.isArray(parsed.notifications) ? parsed.notifications : []
       const pinEnabled = typeof parsed.pinEnabled === 'boolean' ? parsed.pinEnabled : false
       const isDemo = typeof parsed.isDemo === 'boolean' ? parsed.isDemo : false
 
@@ -982,6 +990,10 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         evidenceItems,
         evidenceFavorites,
         soundEnabled,
+        soundVolume,
+        unreadChatCount,
+        unreadNotificationsCount,
+        notifications,
         pinEnabled,
         isDemo,
         customEmojis: sanitizeCustomEmojis(parsed.customEmojis),
@@ -1160,6 +1172,10 @@ export function validateAndImportJson(
         ? (parsed.evidenceFavorites as string[])
         : DEFAULT_STORE_STATE.evidenceFavorites,
       soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
+      soundVolume: typeof parsed.soundVolume === 'number' ? Math.max(0, Math.min(1, parsed.soundVolume)) : 0.8,
+      unreadChatCount: typeof parsed.unreadChatCount === 'number' ? parsed.unreadChatCount : 0,
+      unreadNotificationsCount: typeof parsed.unreadNotificationsCount === 'number' ? parsed.unreadNotificationsCount : 0,
+      notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
       pinEnabled: typeof parsed.pinEnabled === 'boolean' ? parsed.pinEnabled : false,
       isDemo: false,
       customEmojis: sanitizeCustomEmojis(parsed.customEmojis),

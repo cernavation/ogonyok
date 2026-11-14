@@ -131,6 +131,7 @@ import type {
   ChatSettings,
   ChatThreads,
   LevelHistoryEntry,
+  OgonekNotification,
   Comment,
   CommentPersona,
   ComposerDraft,
@@ -1882,6 +1883,124 @@ export function useOgonekStore() {
         ...prev,
         soundEnabled: enabled,
       }))
+    },
+    [updateStore]
+  )
+
+  const setSoundVolume = useCallback(
+    (volume: number) => {
+      const clamped = Math.max(0, Math.min(1, volume))
+      updateStore((prev) => ({
+        ...prev,
+        soundVolume: clamped,
+      }))
+    },
+    [updateStore]
+  )
+
+  const setUnreadChatCount = useCallback(
+    (count: number) => {
+      updateStore((prev) => ({
+        ...prev,
+        unreadChatCount: Math.max(0, count),
+      }))
+    },
+    [updateStore]
+  )
+
+  const setUnreadNotificationsCount = useCallback(
+    (count: number) => {
+      updateStore((prev) => ({
+        ...prev,
+        unreadNotificationsCount: Math.max(0, count),
+      }))
+    },
+    [updateStore]
+  )
+
+  const addNotification = useCallback(
+    (notif: Partial<OgonekNotification> & { title: string }) => {
+      const newNotif: OgonekNotification = {
+        id: notif.id || `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        type: notif.type || 'system',
+        title: notif.title,
+        body: notif.body || '',
+        data: notif.data || {},
+        isRead: false,
+        createdAtISO: notif.createdAtISO || new Date().toISOString(),
+      }
+      updateStore((prev) => {
+        const list = [newNotif, ...(prev.notifications || [])].slice(0, 50)
+        return {
+          ...prev,
+          notifications: list,
+          unreadNotificationsCount: (prev.unreadNotificationsCount || 0) + 1,
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  const markNotificationRead = useCallback(
+    async (id: string) => {
+      updateStore((prev) => {
+        const list = (prev.notifications || []).map((n) =>
+          n.id === id ? { ...n, isRead: true } : n
+        )
+        const unread = list.filter((n) => !n.isRead).length
+        return {
+          ...prev,
+          notifications: list,
+          unreadNotificationsCount: unread,
+        }
+      })
+      try {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notification_ids: [id] }),
+        })
+      } catch {}
+    },
+    [updateStore]
+  )
+
+  const markAllNotificationsRead = useCallback(
+    async () => {
+      updateStore((prev) => ({
+        ...prev,
+        notifications: (prev.notifications || []).map((n) => ({ ...n, isRead: true })),
+        unreadNotificationsCount: 0,
+      }))
+      try {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mark_all_read: true }),
+        })
+      } catch {}
+    },
+    [updateStore]
+  )
+
+  const refreshUnreadCounts = useCallback(
+    async () => {
+      try {
+        const res = await fetch('/api/messages/unread')
+        if (res.ok) {
+          const data = await res.json()
+          if (typeof data?.chat_unread === 'number') {
+            updateStore((prev) => ({
+              ...prev,
+              unreadChatCount: data.chat_unread,
+              unreadNotificationsCount:
+                typeof data.notifications_unread === 'number'
+                  ? data.notifications_unread
+                  : prev.unreadNotificationsCount || 0,
+            }))
+          }
+        }
+      } catch {}
     },
     [updateStore]
   )
@@ -5312,6 +5431,14 @@ export function useOgonekStore() {
     addEvidenceItem,
     deleteEvidenceItem,
     setSoundEnabled,
+    setSoundVolume,
+    setUnreadChatCount,
+    setUnreadNotificationsCount,
+    addNotification,
+    markNotificationRead,
+    markAllNotificationsRead,
+    refreshUnreadCounts,
+    updateStore,
     setPinEnabled,
     setTheme,
     setAccent,

@@ -21,7 +21,7 @@ type Props = {
 
 export function BottomNav({ view, onNavigate, onCompose }: Props) {
   const { state, currentUser } = useOgonekStore()
-  const unread = totalUnread(state.chatThreads ?? {})
+  const unread = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
 
   // Determine active state: profile/vault/intentions/analytics/leaderboard/settings/premium map to closest or none
   const activeId: ViewId =
@@ -84,10 +84,10 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
               )}
               {id === 'messages' && unread > 0 && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center"
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none"
                   aria-label={`${unread} непрочитанных`}
                 >
-                  {unread > 9 ? '9+' : unread}
+                  {unread > 99 ? '99+' : unread}
                 </span>
               )}
             </button>

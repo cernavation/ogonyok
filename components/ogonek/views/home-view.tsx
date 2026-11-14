@@ -19,6 +19,7 @@ import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { getFriendFeedPosts } from '@/lib/ogonek/social'
+import { NotificationsPopover } from '../notifications'
 
 const FocusHistoryModal = dynamic(
   () => import('../focus-history-modal').then((m) => m.FocusHistoryModal),
@@ -79,7 +80,7 @@ export function HomeView({
   userId,
   currentUsername,
 }: Props) {
-  const { state, currentUser, loadDaysFromCloud } = useOgonekStore()
+  const { state, currentUser, loadDaysFromCloud, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUsername || currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
@@ -281,21 +282,34 @@ export function HomeView({
         {/* Title row */}
         <div className="feed-title">
           <h1 className="text-xl font-bold tracking-tight text-[var(--text)]">Главная</h1>
-          {onOpenFriends && (
-            <Tooltip content="Друзья" side="left">
-              <button
-                type="button"
-                onClick={onOpenFriends}
-                className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors relative"
-                aria-label="Друзья"
-              >
-                <Users size={19} />
-                {(state.incomingFriendRequests?.length ?? 0) > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)]" />
-                )}
-              </button>
-            </Tooltip>
-          )}
+          <div className="flex items-center gap-1">
+            {onOpenFriends && (
+              <Tooltip content="Друзья" side="bottom">
+                <button
+                  type="button"
+                  onClick={onOpenFriends}
+                  className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors relative"
+                  aria-label="Друзья"
+                >
+                  <Users size={19} />
+                  {(state.incomingFriendRequests?.length ?? 0) > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--accent)]" />
+                  )}
+                </button>
+              </Tooltip>
+            )}
+            <NotificationsPopover
+              notifications={state.notifications || []}
+              unreadCount={state.unreadNotificationsCount || 0}
+              onMarkAllRead={markAllNotificationsRead}
+              onMarkRead={markNotificationRead}
+              onOpenFriends={onOpenFriends}
+              onOpenChat={() => {
+                if (onNavigate) onNavigate('messages')
+              }}
+              onNavigate={onNavigate}
+            />
+          </div>
         </div>
 
         {/* Tabs with Twitter Blue underline indicator */}

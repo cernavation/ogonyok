@@ -28,7 +28,13 @@ import {
   FONT_SCALE_PRESETS,
   THEME_PRESETS,
 } from '@/lib/ogonek/appearance'
-import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import {
+  playClick,
+  playSuccess,
+  playChatMessageSound,
+  playFriendRequestSound,
+  playMissedCallSound,
+} from '@/lib/ogonek/sound'
 import { exportStoreAsJson, validateAndImportJson } from '@/lib/ogonek/storage'
 import type {
   AccentId,
@@ -51,6 +57,7 @@ type Props = {
   onNavigate: (view: ViewId) => void
   onNotify: (msg: string) => void
   onSetSoundEnabled: (enabled: boolean) => void
+  onSetSoundVolume?: (volume: number) => void
   onSetTheme: (theme: ThemeMode) => void
   onSetAccent: (accent: AccentId) => void
   onSetFontScale: (scale: FontScaleId) => void
@@ -128,6 +135,7 @@ export function SettingsView({
   onNavigate,
   onNotify,
   onSetSoundEnabled,
+  onSetSoundVolume,
   onSetTheme,
   onSetAccent,
   onSetFontScale,
@@ -381,6 +389,86 @@ export function SettingsView({
       case 'notifications':
         return (
           <div className="flex flex-col gap-5 p-4 sm:p-5">
+            {/* Настройки звука и уведомлений */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-[var(--text)]">Звуковые эффекты</h3>
+                  <p className="text-xs text-[var(--text-2)] mt-0.5">
+                    Мягкие звуки новых сообщений, заявок в друзья и пропущенных звонков
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={state.soundEnabled}
+                  aria-label="Включить звуковые эффекты"
+                  onClick={() => {
+                    const next = !state.soundEnabled
+                    onSetSoundEnabled(next)
+                    if (next) playChatMessageSound(state.soundVolume, true)
+                  }}
+                  className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
+                    state.soundEnabled ? 'bg-[var(--accent)]' : 'bg-zinc-800'
+                  }`}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                      state.soundEnabled ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {state.soundEnabled && (
+                <div className="flex flex-col gap-3 pt-3 border-t border-[var(--line)]">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-[var(--text)]">Громкость звука</span>
+                    <span className="font-mono text-[var(--muted)]">
+                      {Math.round((state.soundVolume ?? 0.8) * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={state.soundVolume ?? 0.8}
+                    onChange={(e) => {
+                      const vol = parseFloat(e.target.value)
+                      onSetSoundVolume?.(vol)
+                    }}
+                    aria-label="Громкость звука"
+                    className="w-full accent-[var(--accent)] cursor-pointer"
+                  />
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-[var(--muted)] mr-1">Проверить:</span>
+                    <button
+                      type="button"
+                      onClick={() => playChatMessageSound(state.soundVolume, true)}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
+                    >
+                      Сообщение
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => playFriendRequestSound(state.soundVolume, true)}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
+                    >
+                      Заявка
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => playMissedCallSound(state.soundVolume, true)}
+                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
+                    >
+                      Звонок
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <TelegramReminderPanel
               chatId={state.profile.telegramChatId}
               reminderTimes={state.profile.reminderTimes}

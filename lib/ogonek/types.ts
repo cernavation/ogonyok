@@ -845,9 +845,20 @@ export type ChatThreadState = {
   } | null
 }
 
+export type OgonekNotification = {
+  id: string
+  type: 'friend_request' | 'friend_accepted' | 'missed_call' | 'milestone' | 'message' | 'system'
+  title: string
+  body: string
+  data?: Record<string, any>
+  isRead: boolean
+  createdAtISO: string
+}
+
 /** Настройки чатов */
 export type ChatSettings = {
   soundEnabled: boolean
+  soundVolume?: number
   notificationPreview: boolean
   autoTranslate: boolean
   targetLanguage: string
@@ -931,6 +942,10 @@ export type OgonekStoreState = {
   evidenceItems: EvidenceItem[]
   evidenceFavorites: string[]
   soundEnabled: boolean
+  soundVolume?: number
+  unreadChatCount?: number
+  unreadNotificationsCount?: number
+  notifications?: OgonekNotification[]
   pinEnabled: boolean
   isDemo: boolean
   /** Кастомные смайлики, созданные пользователем */

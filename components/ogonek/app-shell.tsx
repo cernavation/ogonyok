@@ -7,7 +7,7 @@ import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
 import { hasUnlockMethod, persistSecurityHint } from '@/lib/ogonek/security'
 import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import type { ComposerPayload, Day, ViewId } from '@/lib/ogonek/types'
+import type { ComposerPayload, Day, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { AppearanceProvider } from './appearance-provider'
 import { AuthScreen } from './auth'
@@ -40,6 +40,14 @@ import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/og
 import { getSupabase } from '@/lib/supabase/client'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { Phone, PhoneOff, Video } from 'lucide-react'
+import { DesktopToastStack, type DesktopToast } from './notifications'
+import {
+  playChatMessageSound,
+  playFriendRequestSound,
+  playMissedCallSound,
+  playMilestoneSound,
+} from '@/lib/ogonek/sound'
+import { totalUnread } from '@/lib/ogonek/messenger'
 
 // Динамические импорты тяжелых модальных окон (Zero Initial Lag, 120 FPS сплиттинг)
 const Composer = dynamic(() => import('./composer').then((m) => m.Composer), { ssr: false })
@@ -82,6 +90,7 @@ export function AppShell() {
     callerAvatar?: string | null
     isVideo: boolean
   } | null>(null)
+  const [desktopToasts, setDesktopToasts] = useState<DesktopToast[]>([])
 
   const {
     state,
@@ -100,6 +109,7 @@ export function AppShell() {
     addEvidenceItem,
     deleteEvidenceItem,
     setSoundEnabled,
+    setSoundVolume,
     setTheme,
     setAccent,
     setFontScale,
@@ -116,6 +126,12 @@ export function AppShell() {
     provisionDemoAccountSecrets,
     continueAsGuest,
     setActiveChatFriend,
+    updateStore,
+    sendChatMessage,
+    setUnreadChatCount,
+    setUnreadNotificationsCount,
+    markNotificationRead,
+    markAllNotificationsRead,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -158,6 +174,328 @@ export function AppShell() {
       setToast('')
     }, 2400)
   }, [])
+
+  // Тосты в стиле Telegram Desktop (максимум 3 в стеке)
+  const showDesktopToast = useCallback((toast: Omit<DesktopToast, 'id' | 'createdAt'>) => {
+    const newToast: DesktopToast = {
+      ...toast,
+      id: `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      createdAt: Date.now(),
+    }
+    setDesktopToasts((prev) => [...prev.slice(-2), newToast])
+  }, [])
+
+  const dismissDesktopToast = useCallback((id: string) => {
+    setDesktopToasts((prev) => prev.filter((t) => t.id !== id))
+  }, [])
+
+  const handleToastReply = useCallback(
+    async (toast: DesktopToast, text: string) => {
+      if (toast.peerId) {
+        sendChatMessage(toast.peerId, text)
+        setUnreadChatCount(Math.max(0, (state.unreadChatCount || 1) - 1))
+      }
+    },
+    [sendChatMessage, setUnreadChatCount, state.unreadChatCount]
+  )
+
+  const handleClickToast = useCallback(
+    (toast: DesktopToast) => {
+      dismissDesktopToast(toast.id)
+      if (toast.type === 'friend_request') {
+        openFriendsModal('requests')
+      } else if (toast.peerId) {
+        setView('messages')
+        updateStore((prev: OgonekStoreState) => ({
+          ...prev,
+          chatActiveFriendId: toast.peerId || null,
+          unreadChatCount: Math.max(0, (prev.unreadChatCount || 1) - 1),
+        }))
+      } else {
+        setView('home')
+      }
+    },
+    [dismissDesktopToast, openFriendsModal, updateStore]
+  )
+
+  // Динамический заголовок вкладки: document.title «(3) Огонёк»
+  useEffect(() => {
+    const updateTitle = () => {
+      const total = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
+      const targetTitle = total > 0 ? `(${total}) Огонёк` : 'Огонёк — Твой личный дневник силы'
+      if (document.title !== targetTitle) {
+        document.title = targetTitle
+      }
+      const titleEl = document.querySelector('title')
+      if (titleEl && titleEl.textContent !== targetTitle) {
+        titleEl.textContent = targetTitle
+      }
+    }
+
+    updateTitle()
+    const t1 = setTimeout(updateTitle, 100)
+    const t2 = setTimeout(updateTitle, 350)
+    const t3 = setTimeout(updateTitle, 800)
+    const interval = setInterval(updateTitle, 1200)
+    return () => {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
+      clearInterval(interval)
+    }
+  }, [state.unreadChatCount, state.chatThreads])
+
+  // Загрузка начальных счетчиков с сервера при монтировании и авторизации
+  useEffect(() => {
+    const myId = currentUser?.id || state.auth?.activeAccountId
+    if (!myId) return
+
+    fetch('/api/messages/unread')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && typeof data.chat_unread === 'number') {
+          setUnreadChatCount(data.chat_unread)
+          if (typeof data.notifications_unread === 'number') {
+            setUnreadNotificationsCount(data.notifications_unread)
+          }
+        }
+      })
+      .catch(() => {})
+
+    fetch('/api/notifications')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.notifications && Array.isArray(data.notifications)) {
+          updateStore((prev: OgonekStoreState) => ({
+            ...prev,
+            notifications: data.notifications,
+            unreadNotificationsCount:
+              typeof data.unread_count === 'number'
+                ? data.unread_count
+                : prev.unreadNotificationsCount || 0,
+          }))
+        }
+      })
+      .catch(() => {})
+  }, [
+    currentUser?.id,
+    state.auth?.activeAccountId,
+    setUnreadChatCount,
+    setUnreadNotificationsCount,
+    updateStore,
+  ])
+
+  // Realtime подписка на личные сообщения и уведомления
+  useEffect(() => {
+    const supabase = getSupabase()
+    const myId = currentUser?.id || state.auth?.activeAccountId
+    if (!supabase || !myId) return
+
+    const channelName = `global_activity_${myId}_${Math.random().toString(36).slice(2, 7)}`
+    const channel = supabase.channel(channelName)
+
+    channel
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `recipient_id=eq.${myId}`,
+        },
+        async (payload) => {
+          const newMsg = payload.new as any
+          if (!newMsg || newMsg.author_id === myId) return
+
+          // Проверяем: открыт ли чат с этим автором прямо сейчас?
+          const isCurrentChatOpen =
+            view === 'messages' && state.chatActiveFriendId === newMsg.author_id
+
+          if (isCurrentChatOpen) {
+            return
+          }
+
+          // Увеличиваем счетчик непрочитанных
+          setUnreadChatCount((state.unreadChatCount || 0) + 1)
+
+          let authorName = 'Друг'
+          let authorAvatar: string | undefined = undefined
+          try {
+            const profile = await getProfile(newMsg.author_id)
+            if (profile) {
+              authorName = profile.display_name || profile.username || 'Друг'
+              authorAvatar = profile.avatar_url || profile.avatar_image || undefined
+            }
+          } catch {}
+
+          const isVoice = newMsg.type === 'voice' || (newMsg.media && newMsg.media.type === 'audio')
+          const isPhoto = newMsg.type === 'image' || (newMsg.media && newMsg.media.type === 'image')
+          const isMissed = newMsg.is_system && newMsg.body?.includes('Пропущенный звонок')
+
+          let previewText = newMsg.body || ''
+          let mediaType: 'voice' | 'photo' | 'text' | 'call' = 'text'
+
+          if (isMissed) {
+            mediaType = 'call'
+            previewText = 'Пропущенный звонок'
+            playMissedCallSound(state.soundVolume, state.soundEnabled)
+          } else if (isVoice) {
+            mediaType = 'voice'
+            previewText = '🎤 Голосовое сообщение'
+            playChatMessageSound(state.soundVolume, state.soundEnabled)
+          } else if (isPhoto) {
+            mediaType = 'photo'
+            previewText = '📷 Фото'
+            playChatMessageSound(state.soundVolume, state.soundEnabled)
+          } else {
+            playChatMessageSound(state.soundVolume, state.soundEnabled)
+          }
+
+          showDesktopToast({
+            type: isMissed ? 'missed_call' : 'chat',
+            title: authorName,
+            body: previewText,
+            avatarUrl: authorAvatar,
+            mediaType,
+            peerId: newMsg.author_id,
+            threadKey: newMsg.thread_key,
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `recipient_id=eq.${myId}`,
+        },
+        () => {
+          fetch('/api/messages/unread')
+            .then((r) => (r.ok ? r.json() : null))
+            .then((data) => {
+              if (data && typeof data.chat_unread === 'number') {
+                setUnreadChatCount(data.chat_unread)
+              }
+            })
+            .catch(() => {})
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${myId}`,
+        },
+        (payload) => {
+          const notif = payload.new as any
+          if (!notif) return
+          setUnreadNotificationsCount((state.unreadNotificationsCount || 0) + 1)
+          if (notif.type === 'friend_request') {
+            playFriendRequestSound(state.soundVolume, state.soundEnabled)
+            showDesktopToast({
+              type: 'friend_request',
+              title: notif.title || 'Новая заявка в друзья',
+              body: notif.body || 'Пользователь хочет добавить вас в друзья',
+              avatarUrl: notif.data?.fromAvatar,
+              mediaType: 'text',
+              peerId: notif.data?.fromUserId,
+            })
+          } else if (notif.type === 'missed_call') {
+            playMissedCallSound(state.soundVolume, state.soundEnabled)
+            showDesktopToast({
+              type: 'missed_call',
+              title: notif.title || 'Пропущенный звонок',
+              body: notif.body || 'Пропущенный вызов',
+              avatarUrl: notif.data?.fromAvatar,
+              mediaType: 'call',
+              peerId: notif.data?.fromUserId,
+            })
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [
+    currentUser?.id,
+    state.auth?.activeAccountId,
+    view,
+    state.chatActiveFriendId,
+    state.unreadChatCount,
+    state.unreadNotificationsCount,
+    state.soundVolume,
+    state.soundEnabled,
+    showDesktopToast,
+    setUnreadChatCount,
+    setUnreadNotificationsCount,
+  ])
+
+  // Событие вех достижения стрика «🔥 Поздравляем! 300 дней»
+  useEffect(() => {
+    const handleMilestone = (e: any) => {
+      const days = e?.detail?.days || 300
+      showDesktopToast({
+        type: 'milestone',
+        title: `🔥 Поздравляем! ${days} дней`,
+        body: 'Твой огонь горит непрерывно! Ты доказал силу дисциплины.',
+        mediaType: 'milestone',
+      })
+      playMilestoneSound(state.soundVolume, state.soundEnabled)
+    }
+
+    const handleIncomingMessage = (e: any) => {
+      const msg = e?.detail
+      if (!msg) return
+      playChatMessageSound(state.soundVolume, state.soundEnabled)
+      showDesktopToast({
+        type: 'chat',
+        title: msg.senderName || 'Собеседник',
+        body: msg.preview || msg.text || 'Новое сообщение',
+        avatarUrl: msg.avatarUrl,
+        mediaType: msg.mediaType || 'text',
+        peerId: msg.senderId,
+        threadKey: msg.threadKey,
+      })
+      setUnreadChatCount((state.unreadChatCount || 0) + 1)
+    }
+
+    const handleMissedCall = (e: any) => {
+      const call = e?.detail
+      if (!call) return
+      playMissedCallSound(state.soundVolume, state.soundEnabled)
+      showDesktopToast({
+        type: 'missed_call',
+        title: call.callerName || 'Пропущенный звонок',
+        body: 'Пропущенный вызов',
+        avatarUrl: call.avatarUrl,
+        mediaType: 'call',
+        peerId: call.callerId,
+      })
+      setUnreadNotificationsCount((state.unreadNotificationsCount || 0) + 1)
+    }
+
+    window.addEventListener('ogonek:show-milestone', handleMilestone)
+    window.addEventListener('ogonek:incoming-message', handleIncomingMessage)
+    window.addEventListener('ogonek:missed-call', handleMissedCall)
+    return () => {
+      window.removeEventListener('ogonek:show-milestone', handleMilestone)
+      window.removeEventListener('ogonek:incoming-message', handleIncomingMessage)
+      window.removeEventListener('ogonek:missed-call', handleMissedCall)
+    }
+  }, [
+    showDesktopToast,
+    state.soundVolume,
+    state.soundEnabled,
+    state.unreadChatCount,
+    state.unreadNotificationsCount,
+    setUnreadChatCount,
+    setUnreadNotificationsCount,
+  ])
 
   const canLock = hasUnlockMethod(state.security)
 
@@ -337,10 +675,21 @@ export function AppShell() {
         }
       }
 
-      // 3. Переводим статус в Supabase в 'rejected'
+      // 3. Переводим статус в Supabase в 'rejected' и фиксируем пропущенный звонок
       if (callData.sessionId) {
-        await updateCallSessionStatus(callData.sessionId, 'rejected')
+        await updateCallSessionStatus(callData.sessionId, 'missed')
       }
+      try {
+        fetch('/api/calls/missed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            caller_id: callData.callerId,
+            receiver_id: currentUser?.id || state.auth?.activeAccountId,
+            call_id: callData.sessionId,
+          }),
+        }).catch(() => {})
+      } catch {}
     }
   }
 
@@ -423,19 +772,32 @@ export function AppShell() {
     notify('Журнал разблокирован')
   }, [notify])
 
-  const navigate = useCallback((next: ViewId, targetUserId?: string | null) => {
-    playClick(state.soundEnabled)
-    setView(next)
-    setViewProfileUserId(next === 'profile' ? (targetUserId || null) : null)
-    if (typeof window !== 'undefined') {
-      let url = next === 'home' ? '/' : `/?view=${next}`
-      if (next === 'profile' && targetUserId) {
-        url += `&userId=${encodeURIComponent(targetUserId)}`
+  const navigate = useCallback(
+    (next: ViewId, targetUserId?: string | null) => {
+      playClick(state.soundEnabled)
+      setView(next)
+      if (next === 'messages') {
+        setUnreadChatCount(0)
       }
-      window.history.pushState(null, '', url)
+      setViewProfileUserId(next === 'profile' ? targetUserId || null : null)
+      if (typeof window !== 'undefined') {
+        let url = next === 'home' ? '/' : `/?view=${next}`
+        if (next === 'profile' && targetUserId) {
+          url += `&userId=${encodeURIComponent(targetUserId)}`
+        }
+        window.history.pushState(null, '', url)
+      }
+      window.scrollTo(0, 0)
+    },
+    [state.soundEnabled, setUnreadChatCount]
+  )
+
+  // При открытии чатов счетчик непрочитанных сбрасывается в 0
+  useEffect(() => {
+    if (view === 'messages') {
+      setUnreadChatCount(0)
     }
-    window.scrollTo(0, 0)
-  }, [state.soundEnabled])
+  }, [view, setUnreadChatCount])
 
   // Синхронизация view с URL (query param ?view=...) и поддержка кнопки «Назад»
   useEffect(() => {
@@ -773,6 +1135,7 @@ export function AppShell() {
           onNavigate={navigate}
           onNotify={notify}
           onSetSoundEnabled={setSoundEnabled}
+          onSetSoundVolume={setSoundVolume}
           onSetTheme={setTheme}
           onSetAccent={setAccent}
           onSetFontScale={setFontScale}
@@ -883,6 +1246,14 @@ export function AppShell() {
           }}
           onNotify={notify}
         />
+        {/* Всплывающие уведомления в стиле Telegram Desktop (максимум 3 в стеке) */}
+        <DesktopToastStack
+          toasts={desktopToasts}
+          onDismiss={dismissDesktopToast}
+          onClickToast={handleClickToast}
+          onSendReply={handleToastReply}
+        />
+
         <Toast message={toast} />
       </TooltipProvider>
     )
@@ -1188,6 +1559,14 @@ export function AppShell() {
             />
           </CallErrorBoundary>
         )}
+
+        {/* Всплывающие уведомления в стиле Telegram Desktop (максимум 3 в стеке) */}
+        <DesktopToastStack
+          toasts={desktopToasts}
+          onDismiss={dismissDesktopToast}
+          onClickToast={handleClickToast}
+          onSendReply={handleToastReply}
+        />
 
         <Toast message={toast} />
       </main>

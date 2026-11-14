@@ -1,6 +1,6 @@
 'use client'
 
-import { triggerHaptic } from './haptics'
+import { triggerHaptic } from './haptics.ts'
 
 let audioCtx: AudioContext | null = null
 
@@ -24,6 +24,45 @@ function getAudioContext(): AudioContext | null {
   }
 
   return audioCtx
+}
+
+/**
+ * Проверка уровня громкости звуковых эффектов (0.0 .. 1.0).
+ */
+export function getSoundVolume(override?: number): number {
+  if (typeof override === 'number' && Number.isFinite(override)) {
+    return Math.max(0, Math.min(1, override))
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('ogonek.v2')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (typeof parsed?.soundVolume === 'number' && Number.isFinite(parsed.soundVolume)) {
+          return Math.max(0, Math.min(1, parsed.soundVolume))
+        }
+      }
+    } catch {
+      // Игнорируем ошибки парсинга
+    }
+  }
+
+  return 0.8
+}
+
+function notifySoundPlayed(soundName: string, detail: Record<string, any> = {}): void {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:sound-played', {
+          detail: { sound: soundName, timestamp: Date.now(), ...detail },
+        })
+      )
+    } catch {
+      // Игнорируем в окружениях без CustomEvent
+    }
+  }
 }
 
 /**
@@ -139,5 +178,174 @@ export function playSuccess(soundEnabled?: boolean): void {
     osc2.stop(now + 0.33)
   } catch {
     // Graceful fallback
+  }
+}
+
+/**
+ * Мягкий звук нового личного сообщения в чате (Web Audio).
+ * Играет только если чат не открыт или вкладка не в фокусе.
+ * Деликатный бархатный всплеск 780Hz -> 1040Hz с мягким спадом.
+ */
+export function playChatMessageSound(volume?: number, soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
+
+  notifySoundPlayed('chat-message')
+  triggerHaptic('light')
+
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const vol = getSoundVolume(volume)
+    if (vol <= 0.001) return
+
+    const now = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(780, now)
+    osc.frequency.exponentialRampToValueAtTime(1040, now + 0.06)
+
+    gain.gain.setValueAtTime(0.001, now)
+    gain.gain.linearRampToValueAtTime(0.12 * vol, now + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16)
+
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+
+    osc.start(now)
+    osc.stop(now + 0.17)
+  } catch {
+    // Autoplay or Web Audio error suppressed
+  }
+}
+
+/**
+ * Звук входящей заявки в друзья (Web Audio).
+ * Радостный мажорный перелив E5 (659Hz) -> G#5 (830Hz) -> B5 (987Hz).
+ */
+export function playFriendRequestSound(volume?: number, soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
+
+  notifySoundPlayed('friend-request')
+  triggerHaptic('success')
+
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const vol = getSoundVolume(volume)
+    if (vol <= 0.001) return
+
+    const now = ctx.currentTime
+    const notes = [659.25, 830.61, 987.77] // E5, G#5, B5
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      const noteStart = now + idx * 0.07
+
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(freq, noteStart)
+
+      gain.gain.setValueAtTime(0.001, noteStart)
+      gain.gain.linearRampToValueAtTime(0.08 * vol, noteStart + 0.015)
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.22)
+
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc.start(noteStart)
+      osc.stop(noteStart + 0.23)
+    })
+  } catch {
+    // Autoplay or Web Audio error suppressed
+  }
+}
+
+/**
+ * Звук пропущенного звонка (Web Audio).
+ * Мягкий нисходящий аккорд-напоминание A5 (880Hz) -> F5 (698Hz) -> D5 (587Hz).
+ */
+export function playMissedCallSound(volume?: number, soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
+
+  notifySoundPlayed('missed-call')
+  triggerHaptic('medium')
+
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const vol = getSoundVolume(volume)
+    if (vol <= 0.001) return
+
+    const now = ctx.currentTime
+    const notes = [880, 698.46, 587.33] // A5, F5, D5
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      const noteStart = now + idx * 0.09
+
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(freq, noteStart)
+
+      gain.gain.setValueAtTime(0.001, noteStart)
+      gain.gain.linearRampToValueAtTime(0.09 * vol, noteStart + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.25)
+
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc.start(noteStart)
+      osc.stop(noteStart + 0.26)
+    })
+  } catch {
+    // Autoplay or Web Audio error suppressed
+  }
+}
+
+/**
+ * Звук триумфа и достижения вехи (Web Audio).
+ * Праздничный восходящий аккорд победы C5 -> E5 -> G5 -> C6.
+ */
+export function playMilestoneSound(volume?: number, soundEnabled?: boolean): void {
+  if (!isSoundEnabled(soundEnabled)) return
+
+  notifySoundPlayed('milestone')
+  triggerHaptic('success')
+
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) return
+
+    const vol = getSoundVolume(volume)
+    if (vol <= 0.001) return
+
+    const now = ctx.currentTime
+    const notes = [523.25, 659.25, 783.99, 1046.5] // C5, E5, G5, C6
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      const noteStart = now + idx * 0.06
+
+      osc.type = idx === 3 ? 'sine' : 'triangle'
+      osc.frequency.setValueAtTime(freq, noteStart)
+
+      gain.gain.setValueAtTime(0.001, noteStart)
+      gain.gain.linearRampToValueAtTime(0.1 * vol, noteStart + 0.02)
+      gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.35)
+
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc.start(noteStart)
+      osc.stop(noteStart + 0.36)
+    })
+  } catch {
+    // Autoplay or Web Audio error suppressed
   }
 }

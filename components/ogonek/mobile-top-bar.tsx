@@ -8,6 +8,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ViewId } from '@/lib/ogonek/types'
+import { NotificationsPopover } from './notifications'
 
 type Props = {
   onNavigate: (view: ViewId) => void
@@ -19,7 +20,7 @@ type Props = {
 }
 
 export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Props) {
-  const { state, currentUser, signOut } = useOgonekStore()
+  const { state, currentUser, signOut, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   useBodyScrollLock(drawerOpen)
 
@@ -93,6 +94,15 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
               )}
             </button>
           )}
+          <NotificationsPopover
+            notifications={state.notifications || []}
+            unreadCount={state.unreadNotificationsCount || 0}
+            onMarkAllRead={markAllNotificationsRead}
+            onMarkRead={markNotificationRead}
+            onOpenFriends={onOpenFriends}
+            onOpenChat={() => onNavigate('messages')}
+            onNavigate={onNavigate}
+          />
           <button
             type="button"
             className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors"

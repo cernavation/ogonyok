@@ -17,6 +17,7 @@ import {
   Mic,
   MoreHorizontal,
   Pencil,
+  PhoneMissed,
   Pin,
   Reply,
   SmilePlus,
@@ -245,6 +246,27 @@ export function ChatMessageBubble({
   const isVoiceOnlyPlaceholder =
     message.media?.type === 'audio' &&
     (!message.text || /^(🎤\s*)?голосовое(\s*сообщение)?$/i.test(message.text.trim()))
+
+  if (
+    message.type === 'system' ||
+    (message as any).is_system ||
+    message.text?.startsWith('Пропущенный звонок') ||
+    message.text?.includes('звонок завершён')
+  ) {
+    const isMissed = message.text?.includes('Пропущенный звонок')
+    return (
+      <div className="flex justify-center my-3 select-none">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--surface2,#202327)]/80 text-[var(--muted,#71767b)] text-[12px] font-medium border border-[var(--line,#2f3336)] shadow-sm">
+          {isMissed ? (
+            <PhoneMissed size={13} className="text-rose-500 shrink-0" />
+          ) : (
+            <Clock size={13} className="text-[var(--accent)] shrink-0" />
+          )}
+          <span>{message.text}</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>

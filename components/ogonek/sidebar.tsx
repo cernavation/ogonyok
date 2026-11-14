@@ -305,7 +305,7 @@ export function Sidebar({
   isCollapsed: propIsCollapsed,
 }: Props) {
   const { state, signOut, currentUser } = useOgonekStore()
-  const unread = totalUnread(state.chatThreads ?? {})
+  const unread = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -374,8 +374,16 @@ export function Sidebar({
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
         >
-          <div className="w-6 h-6 flex items-center justify-center shrink-0 overflow-visible">
+          <div className="w-6 h-6 flex items-center justify-center shrink-0 overflow-visible relative">
             <NavIcon id={id} isActive={isActive} size={24} />
+            {id === 'messages' && unread > 0 && (
+              <span
+                className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10"
+                aria-label={`${unread} непрочитанных`}
+              >
+                {unread > 99 ? '99+' : unread}
+              </span>
+            )}
           </div>
           <span
             className={
@@ -388,18 +396,6 @@ export function Sidebar({
           >
             {label}
           </span>
-          {id === 'messages' && unread > 0 && (
-            <span
-              className={
-                isCollapsed
-                  ? 'absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5c00] text-white text-[10px] font-bold flex items-center justify-center shadow'
-                  : 'nav-item__badge'
-              }
-              aria-label={`${unread} непрочитанных`}
-            >
-              {unread > 99 ? '99+' : unread}
-            </span>
-          )}
         </button>
       </Tooltip>
     )
