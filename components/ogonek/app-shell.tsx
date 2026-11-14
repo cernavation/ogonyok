@@ -166,7 +166,7 @@ export function AppShell() {
           setIncomingCall({
             sessionId: payload.sessionId,
             callerId: payload.callerId,
-            callerName: payload.callerName || 'Соратник',
+            callerName: payload.callerName || 'Друг',
             callerAvatar: payload.callerAvatar || null,
             isVideo: Boolean(payload.isVideo),
           })
@@ -200,7 +200,7 @@ export function AppShell() {
               return {
                 sessionId: session.id,
                 callerId: session.caller_id,
-                callerName: profile?.display_name || profile?.username || 'Соратник',
+                callerName: profile?.display_name || profile?.username || 'Друг',
                 callerAvatar: profile?.avatar_url || null,
                 isVideo: Boolean(session.is_video),
               }

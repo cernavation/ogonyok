@@ -119,7 +119,7 @@ export function ChatFolderModal({
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Например: Соратники, Семья..."
+                    placeholder="Например: Друзья, Семья..."
                     className="flex-1 rounded-xl border border-white/10 bg-black/30 px-3.5 py-2 text-sm text-white placeholder-[#71767b] outline-none focus:border-[#ff7a18]"
                     maxLength={30}
                     autoFocus

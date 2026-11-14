@@ -474,7 +474,7 @@ export function MessengerChatPane({
         currentUser?.displayName ||
         state.profile.displayName ||
         state.profile.username ||
-        'Соратник'
+        'Друг'
       const callerAvatar = currentUser?.avatarImage || state.profile.avatarImage || null
 
       receiverChannel.subscribe((status) => {
@@ -609,7 +609,7 @@ export function MessengerChatPane({
           Выберите диалог или начните новый чат
         </h2>
         <p className="text-sm text-[var(--text-2)] max-w-sm mb-6 leading-relaxed">
-          Общайтесь с соратниками, делитесь карточками гордости, отправляйте голосовые и ставьте огоньки к победам.
+          Общайтесь с друзьями, делитесь карточками гордости, отправляйте голосовые и ставьте огоньки к победам.
         </p>
       </div>
     )
@@ -642,24 +642,11 @@ export function MessengerChatPane({
             <button
               type="button"
               onClick={onBack}
-              className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 -ml-1"
+              className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors shrink-0 -ml-1"
               aria-label="Назад к списку чатов"
               title="Назад к списку чатов"
             >
               <ArrowLeft size={20} />
-            </button>
-          )}
-
-          {onNavigateHome && (
-            <button
-              type="button"
-              onClick={onNavigateHome}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border)] transition-colors shrink-0"
-              aria-label="Назад в ленту"
-              title="Назад в ленту"
-            >
-              <ArrowLeft size={14} />
-              <span className="hidden sm:inline">Назад в ленту</span>
             </button>
           )}
 

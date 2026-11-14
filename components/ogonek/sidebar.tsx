@@ -415,23 +415,28 @@ export function Sidebar({
       aria-label="Боковая панель"
     >
       <div className="flex flex-col gap-1 w-full items-center xl:items-stretch">
-        {/* Brand mark */}
+        {/* Brand mark — в чатах логотип статичен (навигация в ленту вынесена в пункт «Главная»); в остальных разделах остаётся каноничным */}
         <div
-          className={`brand cursor-pointer group min-h-[40px] flex items-center hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
+          className={`brand ${view === 'messages' ? 'select-none' : 'cursor-pointer group hover:bg-white/[0.08] active:scale-[0.98]'} min-h-[40px] flex items-center transition-all duration-150 rounded-full ${
             isCollapsed
               ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto'
               : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 gap-2.5 mx-auto xl:mx-0'
           }`}
-          onClick={() => {
-            playClick(state.soundEnabled)
-            onNavigate('home')
-          }}
-          role="button"
-          tabIndex={0}
-          title="Огонёк"
+          onClick={
+            view === 'messages'
+              ? undefined
+              : () => {
+                  playClick(state.soundEnabled)
+                  onNavigate('home')
+                }
+          }
+          role={view === 'messages' ? undefined : 'button'}
+          tabIndex={view === 'messages' ? undefined : 0}
+          aria-hidden={view === 'messages' ? 'true' : undefined}
+          title={view === 'messages' ? undefined : 'Огонёк'}
         >
           <span
-            className="brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] group-hover:scale-110 transition-transform duration-200 shrink-0"
+            className={`brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] ${view === 'messages' ? '' : 'group-hover:scale-110'} transition-transform duration-200 shrink-0`}
             aria-hidden="true"
           >
             <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
@@ -448,25 +453,27 @@ export function Sidebar({
           </div>
         </nav>
 
-        {/* Primary CTA — Flame Pill / Round Icon Button */}
-        <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
-          <button
-            type="button"
-            className={`x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
-              isCollapsed
-                ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
-                : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
-            }`}
-            onClick={() => {
-              playClick(state.soundEnabled)
-              onCompose()
-            }}
-            aria-label="Записать день"
-          >
-            <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden" />
-            {!isCollapsed && <span className="compose-btn-label hidden xl:inline">Записать</span>}
-          </button>
-        </Tooltip>
+        {/* Primary CTA — Flame Pill / Round Icon Button (скрыт в чатах во избежание дублирования кнопки «✎ Написать» и появления пустой кнопки в узком рейле) */}
+        {view !== 'messages' && (
+          <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
+            <button
+              type="button"
+              className={`x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
+                isCollapsed
+                  ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
+                  : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
+              }`}
+              onClick={() => {
+                playClick(state.soundEnabled)
+                onCompose()
+              }}
+              aria-label="Записать день"
+            >
+              <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden" />
+              {!isCollapsed && <span className="compose-btn-label hidden xl:inline">Записать</span>}
+            </button>
+          </Tooltip>
+        )}
       </div>
 
       {/* Profile block — карточка пользователя и меню выхода */}

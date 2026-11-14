@@ -91,7 +91,7 @@ export function ChatCallModal({
   const rawUsername = friendUsername || callerUsername
   const handleName = rawUsername
     ? `@${rawUsername.replace(/^@/, '')}`
-    : (friendId && !isFriendIdUuid ? `@${friendId}` : '@соратник')
+    : (friendId && !isFriendIdUuid ? `@${friendId}` : '@друг')
 
   // Очистка и безопасное завершение вызова
   const cleanupAndClose = useCallback(
@@ -730,7 +730,7 @@ export function ChatCallModal({
             </p>
             <p className="text-xs text-white/50 mt-1">
               {callState === 'calling'
-                ? 'Ожидание ответа соратника...'
+                ? 'Ожидание ответа друга...'
                 : callState === 'incoming'
                 ? 'Входящий звонок'
                 : 'Защищённый голосовой поток Огонька'}

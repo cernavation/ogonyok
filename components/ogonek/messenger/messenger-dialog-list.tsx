@@ -60,6 +60,13 @@ function getTargetUserId(id: string, currentUserId?: string | null): string {
   return id
 }
 
+function formatAudioDuration(sec?: number): string | null {
+  if (!sec || sec <= 0) return null
+  const m = Math.floor(sec / 60)
+  const s = Math.floor(sec % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export function MessengerDialogList({
   activeThreadId,
   onSelectThread,
@@ -181,18 +188,6 @@ export function MessengerDialogList({
       {/* 1. Верхняя панель: Заголовок «Чаты» 20px/800, пилюля-фильтр «Все ▾» и кнопка «Написать» */}
       <div className="h-[64px] px-3.5 sm:px-4 flex items-center justify-between border-b border-[var(--border)] shrink-0 gap-2 min-w-0 w-full">
         <div className="flex items-center gap-2 min-w-0">
-          {onNavigateHome && (
-            <button
-              type="button"
-              onClick={onNavigateHome}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] border border-[var(--border)] transition-colors shrink-0 -ml-1"
-              aria-label="Назад в ленту"
-              title="Назад в ленту"
-            >
-              <ArrowLeft size={15} />
-              <span>Назад в ленту</span>
-            </button>
-          )}
           <h1 className="text-[19px] sm:text-[20px] font-[800] text-[var(--text)] tracking-tight shrink-0">Чаты</h1>
         </div>
 
@@ -367,7 +362,7 @@ export function MessengerDialogList({
             <p className="text-[13px] text-[var(--text-2)] max-w-xs mb-4">
               {searchQuery
                 ? 'Попробуй изменить поисковый запрос'
-                : 'Выбери соратника из списка или создай группу для совместного стрика'}
+                : 'Выбери друга из списка или создай группу для совместного стрика'}
             </p>
             {!searchQuery && (
               <button
@@ -486,22 +481,30 @@ export function MessengerDialogList({
                               )}
                             </span>
                           )}
-                          {last.media?.type === 'audio' && (
+                          {last.media?.type === 'audio' ? (
                             <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
-                              <Mic size={13} /> Голосовое
+                              <Mic size={13} />
+                              <span>
+                                {formatAudioDuration(
+                                  last.media.durationSec || (last.media as { duration?: number }).duration
+                                ) || 'Голосовое сообщение'}
+                              </span>
                             </span>
+                          ) : (
+                            <>
+                              {last.media?.type === 'image' && (
+                                <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
+                                  <ImageIcon size={13} /> Фото
+                                </span>
+                              )}
+                              {last.media?.type === 'file' && (
+                                <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
+                                  <FileText size={13} /> Файл
+                                </span>
+                              )}
+                              <span className="truncate">{last.text || summarizeMessage(last)}</span>
+                            </>
                           )}
-                          {last.media?.type === 'image' && (
-                            <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
-                              <ImageIcon size={13} /> Фото
-                            </span>
-                          )}
-                          {last.media?.type === 'file' && (
-                            <span className="flex items-center gap-1 text-[var(--accent)] shrink-0">
-                              <FileText size={13} /> Файл
-                            </span>
-                          )}
-                          <span className="truncate">{last.text || summarizeMessage(last)}</span>
                         </span>
                       ) : (
                         <span className="text-[var(--text-2)] italic text-[13px]">Нет сообщений</span>

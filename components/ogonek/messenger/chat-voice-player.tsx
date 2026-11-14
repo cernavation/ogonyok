@@ -203,18 +203,35 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
 
       {/* Интерактивная форма волны звука */}
       <div className="flex flex-1 flex-col gap-1">
-        <div className="flex h-7 items-center gap-[2px]">
+        <div
+          role="slider"
+          tabIndex={0}
+          aria-label="Перемотка голосового сообщения"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress * 100)}
+          onClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            if (rect.width > 0) {
+              const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+              handleSeek(fraction)
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowRight') handleSeek(Math.min(1, progress + 0.05))
+            if (e.key === 'ArrowLeft') handleSeek(Math.max(0, progress - 0.05))
+          }}
+          className="flex h-7 items-center gap-[2px] cursor-pointer"
+        >
           {waveform.map((bar, idx) => {
             const barFraction = idx / waveform.length
             const isPlayed = barFraction <= progress
             const heightPx = Math.max(4, Math.round((bar / 100) * 26))
 
             return (
-              <button
+              <div
                 key={idx}
-                type="button"
-                onClick={() => handleSeek(barFraction)}
-                className="flex-1 group py-2 focus:outline-none cursor-pointer"
+                className="flex-1 py-2"
                 title={`Перемотать на ${formatTime(currentDuration * barFraction)}`}
               >
                 <div
@@ -229,7 +246,7 @@ export function ChatVoicePlayer({ media, isMine, soundEnabled = true }: Props) {
                   }`}
                   style={{ height: `${heightPx}px` }}
                 />
-              </button>
+              </div>
             )
           })}
         </div>

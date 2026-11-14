@@ -240,6 +240,10 @@ export function ChatMessageBubble({
     checkOnlyEmojis(message.text)
 
   const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
+  const hasMedia = Boolean(message.media?.type === 'image' || message.media?.type === 'video')
+  const isVoiceOnlyPlaceholder =
+    message.media?.type === 'audio' &&
+    (!message.text || /^(🎤\s*)?голосовое(\s*сообщение)?$/i.test(message.text.trim()))
 
   return (
     <>
@@ -267,7 +271,7 @@ export function ChatMessageBubble({
           </button>
         )}
 
-        <div className={`relative max-w-[85%] sm:max-w-[72%] flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+        <div className={`relative ${hasMedia ? 'max-w-[420px] w-full' : 'max-w-[85%] sm:max-w-[72%]'} flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
           {/* Панель быстрых действий на hover */}
           {!isSelectionMode && (
             <div
@@ -470,6 +474,8 @@ export function ChatMessageBubble({
             <div
               onDoubleClick={() => onToggleReaction('fire')}
               className={`relative overflow-hidden px-4 py-2.5 text-[14px] leading-relaxed shadow-sm transition-all select-text ${
+                hasMedia ? 'max-w-[420px] w-full' : ''
+              } ${
                 isMine
                   ? 'rounded-[20px] rounded-br-[6px] bg-[var(--accent)] text-[var(--accent-text)]'
                   : 'rounded-[20px] rounded-bl-[6px] bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)]'
@@ -677,8 +683,8 @@ export function ChatMessageBubble({
               )}
 
               {/* Текст сообщения (или перевод) */}
-              {message.text && (
-                <div className="whitespace-pre-wrap break-words">
+              {message.text && !isVoiceOnlyPlaceholder && (
+                <div className={`whitespace-pre-wrap break-words ${hasMedia ? 'pt-1.5 pb-0.5' : ''}`}>
                   <p>{renderHighlightedText(showTranslated && translatedText ? translatedText : message.text)}</p>
 
                   {/* Плашка перевода */}

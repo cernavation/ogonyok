@@ -2718,14 +2718,14 @@ export function useOgonekStore() {
         const threads = prev.chatThreads ?? {}
         const existing = threads[friendId]
         const alreadyHasGreeting = existing?.messages?.some((m) =>
-          m.text?.includes('Вы стали соратниками!')
+          m.text?.includes('Вы стали друзьями!') || m.text?.includes('Вы стали соратниками!')
         )
 
         if (alreadyHasGreeting) return prev
 
         const greetingMsg = makeChatMessage({
           authorId: friendId,
-          text: 'Вы стали соратниками! 🤝 Теперь вам взаимно доступны личные записи и прямой диалог.',
+          text: 'Вы стали друзьями! 🤝 Теперь вам взаимно доступны личные записи и прямой диалог.',
         })
 
         const nextThread = existing

@@ -14,6 +14,7 @@ import { MessengerErrorBoundary } from './messenger-error-boundary'
 import { AppearanceProvider } from '../appearance-provider'
 import { TooltipProvider } from '../tooltip'
 import { Toast } from '../toast'
+import { BottomNav } from '../bottom-nav'
 
 type Props = {
   initialThreadId?: string
@@ -215,7 +216,6 @@ export function FullscreenMessenger({
                 activeThreadId={activeThreadId || null}
                 onSelectThread={handleSelectThread}
                 onNewChat={() => setIsNewChatOpen(true)}
-                onNavigateHome={handleNavigateHome}
                 soundEnabled={state?.soundEnabled ?? true}
                 className="w-full h-full"
               />
@@ -226,8 +226,7 @@ export function FullscreenMessenger({
               <MessengerChatPane
                 friendId={activeThreadId || null}
                 currentUserId={resolvedUserId}
-                onBack={handleBackToList}
-                onNavigateHome={handleNavigateHome}
+                onBack={undefined}
                 onNotify={notify}
                 soundEnabled={state?.soundEnabled ?? true}
               />
@@ -237,15 +236,36 @@ export function FullscreenMessenger({
           {/* TABLET & MOBILE (< 1024px): Master-Detail views via CSS responsive display */}
           <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
             {!activeThreadId ? (
-              // View 1: Dialog List with single unified Header with Home and New Chat
+              // View 1: Dialog List with BottomNav for mobile navigation to feed
               <div className="w-full h-full flex flex-col relative min-w-0">
-                <MessengerDialogList
-                  activeThreadId={null}
-                  onSelectThread={handleSelectThread}
-                  onNewChat={() => setIsNewChatOpen(true)}
-                  onNavigateHome={handleNavigateHome}
-                  soundEnabled={state?.soundEnabled ?? true}
-                  className="w-full h-full"
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <MessengerDialogList
+                    activeThreadId={null}
+                    onSelectThread={handleSelectThread}
+                    onNewChat={() => setIsNewChatOpen(true)}
+                    soundEnabled={state?.soundEnabled ?? true}
+                    className="w-full h-full pb-14"
+                  />
+                </div>
+                <BottomNav
+                  view="messages"
+                  onNavigate={(v) => {
+                    if (onNavigate) {
+                      onNavigate(v)
+                    } else {
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: v }))
+                      }
+                      router.push(v === 'home' ? '/' : `/?view=${v}`)
+                    }
+                  }}
+                  onCompose={() => {
+                    if (onCompose) {
+                      onCompose()
+                    } else {
+                      window.dispatchEvent(new CustomEvent('ogonek:compose'))
+                    }
+                  }}
                 />
               </div>
             ) : (
@@ -255,7 +275,6 @@ export function FullscreenMessenger({
                   friendId={activeThreadId}
                   currentUserId={resolvedUserId}
                   onBack={handleBackToList}
-                  onNavigateHome={handleNavigateHome}
                   onNotify={notify}
                   soundEnabled={state?.soundEnabled ?? true}
                 />

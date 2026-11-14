@@ -1,0 +1,22 @@
+[
+  {
+    "screen": "messages_list",
+    "selector": "body"
+  },
+  {
+    "screen": "messages_chat",
+    "selector": "body"
+  },
+  {
+    "screen": "messages_group",
+    "selector": "body"
+  },
+  {
+    "screen": "empty_messages",
+    "selector": "body"
+  },
+  {
+    "screen": "modal_call",
+    "selector": "body"
+  }
+]
