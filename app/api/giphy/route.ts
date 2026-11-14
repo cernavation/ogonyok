@@ -17,10 +17,36 @@ export async function GET(request: Request) {
     const apiKey = process.env.GIPHY_API_KEY
 
     if (!apiKey) {
+      const fallbackGifs = [
+        {
+          id: 'fb-fire',
+          title: 'Огонёк',
+          url: 'https://media.giphy.com/media/26tPplGWjN0xLybiU/giphy.gif',
+          previewUrl: 'https://media.giphy.com/media/26tPplGWjN0xLybiU/giphy.gif',
+        },
+        {
+          id: 'fb-celebrate',
+          title: 'Победа',
+          url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
+          previewUrl: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif',
+        },
+        {
+          id: 'fb-clap',
+          title: 'Аплодисменты',
+          url: 'https://media.giphy.com/media/ely3apij36BJhoZ234/giphy.gif',
+          previewUrl: 'https://media.giphy.com/media/ely3apij36BJhoZ234/giphy.gif',
+        },
+        {
+          id: 'fb-heart',
+          title: 'Сердце',
+          url: 'https://media.giphy.com/media/M90mJvfWfd5mbUuULX/giphy.gif',
+          previewUrl: 'https://media.giphy.com/media/M90mJvfWfd5mbUuULX/giphy.gif',
+        },
+      ]
       return NextResponse.json({
-        keyConfigured: false,
-        gifs: [],
-        message: 'GIPHY_API_KEY не указан в .env.local',
+        keyConfigured: true,
+        gifs: fallbackGifs,
+        message: 'Демонстрационные GIF (GIPHY_API_KEY не указан)',
       })
     }
 

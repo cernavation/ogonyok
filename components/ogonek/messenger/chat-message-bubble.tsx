@@ -787,11 +787,18 @@ export function ChatMessageBubble({
                 {message.editedAtISO && <span className="text-[11px] italic">изм.</span>}
                 <span suppressHydrationWarning>{formatChatTime(message.createdAtISO)}</span>
                 {isMine && (
-                  <span className="ml-0.5 shrink-0">
+                  <span className="ml-0.5 shrink-0 inline-flex items-center gap-0.5">
                     {message.status === 'sending' ? (
                       <Clock size={12} className="opacity-70 animate-spin" />
-                    ) : message.read || message.status === 'read' ? (
-                      <CheckCheck size={14} className="text-[#66ffd9]" />
+                    ) : message.read || message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
+                      <>
+                        <CheckCheck size={14} className="text-[#66ffd9]" />
+                        {isGroup && message.readBy && message.readBy.length > 0 && (
+                          <span className="text-[10px] font-bold text-[#66ffd9]" title={`Прочитано: ${message.readBy.length}`}>
+                            {message.readBy.length}
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <Check size={13} className="opacity-80" />
                     )}

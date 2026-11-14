@@ -19,8 +19,11 @@ import {
   toggleFriendshipFollow,
   checkFriendshipFollow,
   getFollowing,
+  createChatGroupInDb,
+  updateChatGroupInDb,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
+import { canScheduleMessage } from './permissions.ts'
 
 export type CurrentUser = {
   id: string
@@ -3848,6 +3851,18 @@ export function useOgonekStore() {
 
       const isScheduled = Boolean(extra?.scheduledForISO && new Date(extra.scheduledForISO).getTime() > Date.now())
 
+      // Проверка лимитов на отложенные сообщения по тарифу (free: 3, pro: 20, ultra: 100)
+      if (isScheduled) {
+        const thread = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+        const scheduledCount = (thread.scheduledMessages ?? []).length
+        const currentTier = getSnapshot().profile?.subscription_tier ?? 'free'
+        const limitCheck = canScheduleMessage(currentTier, scheduledCount)
+        if (!limitCheck.allowed) {
+          console.warn(`[Ogonek] Scheduled limit exceeded: ${scheduledCount}/${limitCheck.max} for ${currentTier}`)
+          return null
+        }
+      }
+
       const message = makeChatMessage({
         authorId: MY_CHAT_ID,
         text: clean,
@@ -4029,7 +4044,8 @@ export function useOgonekStore() {
       memberIds: string[],
       avatarColor = 'linear-gradient(135deg, #ff7a18 0%, #af002d 100%)',
       avatarEmoji = '👥',
-      description = ''
+      description = '',
+      avatarImage?: string | null
     ): string => {
       const cleanTitle = (title || 'Новая группа').trim().slice(0, 100)
       const groupId = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
@@ -4038,11 +4054,14 @@ export function useOgonekStore() {
         title: cleanTitle,
         avatarColor,
         avatarEmoji,
-        avatarImage: null,
+        avatarImage: avatarImage ?? null,
         memberIds: Array.from(new Set([MY_CHAT_ID, ...memberIds])),
+        adminIds: [MY_CHAT_ID],
+        adminsOnly: false,
         createdAtISO: new Date().toISOString(),
         createdBy: MY_CHAT_ID,
         description,
+        role: 'owner',
       }
 
       const initialMessage = makeChatMessage({
@@ -4070,7 +4089,286 @@ export function useOgonekStore() {
         }
       })
 
+      // Синхронизация создания группы в Supabase в фоновом режиме
+      createChatGroupInDb({
+        id: groupId,
+        title: cleanTitle,
+        avatarColor,
+        avatarEmoji,
+        avatarImage: avatarImage ?? null,
+        creatorId: MY_CHAT_ID,
+        memberIds,
+        description,
+      }).catch(() => {})
+
       return groupId
+    },
+    [updateStore]
+  )
+
+  /** Обновление метаданных группы */
+  const updateGroupMeta = useCallback(
+    (groupId: string, patch: Partial<ChatGroupMeta>) => {
+      if (!groupId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, groupId)
+        if (!thread.groupMeta) return prev
+
+        const updatedMeta: ChatGroupMeta = {
+          ...thread.groupMeta,
+          ...patch,
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              ...thread,
+              groupMeta: updatedMeta,
+            },
+          },
+        }
+      })
+
+      updateChatGroupInDb(groupId, patch).catch(() => {})
+    },
+    [updateStore]
+  )
+
+  /** Добавить участников в группу */
+  const addGroupMembers = useCallback(
+    (groupId: string, newMemberIds: string[]) => {
+      if (!groupId || !newMemberIds.length) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, groupId)
+        if (!thread.groupMeta) return prev
+
+        const updatedMembers = Array.from(new Set([...thread.groupMeta.memberIds, ...newMemberIds]))
+        const updatedMeta: ChatGroupMeta = {
+          ...thread.groupMeta,
+          memberIds: updatedMembers,
+        }
+
+        const sysMsg = makeChatMessage({
+          authorId: MY_CHAT_ID,
+          text: `В группу добавлено участников: ${newMemberIds.length} 👤`,
+          system: true,
+        })
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              ...thread,
+              groupMeta: updatedMeta,
+              messages: [...thread.messages, sysMsg],
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Исключить участника из группы */
+  const removeGroupMember = useCallback(
+    (groupId: string, memberId: string) => {
+      if (!groupId || !memberId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, groupId)
+        if (!thread.groupMeta) return prev
+
+        const updatedMembers = thread.groupMeta.memberIds.filter((id) => id !== memberId)
+        const updatedAdmins = (thread.groupMeta.adminIds || []).filter((id) => id !== memberId)
+        const updatedMeta: ChatGroupMeta = {
+          ...thread.groupMeta,
+          memberIds: updatedMembers,
+          adminIds: updatedAdmins,
+        }
+
+        const sysMsg = makeChatMessage({
+          authorId: MY_CHAT_ID,
+          text: `Участник был исключён из группы`,
+          system: true,
+        })
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              ...thread,
+              groupMeta: updatedMeta,
+              messages: [...thread.messages, sysMsg],
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Назначить / снять роль администратора в группе */
+  const setGroupMemberRole = useCallback(
+    (groupId: string, memberId: string, role: 'admin' | 'member') => {
+      if (!groupId || !memberId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, groupId)
+        if (!thread.groupMeta) return prev
+
+        const currentAdmins = thread.groupMeta.adminIds || [thread.groupMeta.createdBy]
+        const updatedAdmins = role === 'admin'
+          ? Array.from(new Set([...currentAdmins, memberId]))
+          : currentAdmins.filter((id) => id !== memberId)
+
+        const updatedMeta: ChatGroupMeta = {
+          ...thread.groupMeta,
+          adminIds: updatedAdmins,
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              ...thread,
+              groupMeta: updatedMeta,
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Выйти из группы */
+  const leaveGroup = useCallback(
+    (groupId: string) => {
+      if (!groupId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, groupId)
+        if (!thread.groupMeta) return prev
+
+        const updatedMembers = thread.groupMeta.memberIds.filter((id) => id !== MY_CHAT_ID)
+        const updatedMeta: ChatGroupMeta = {
+          ...thread.groupMeta,
+          memberIds: updatedMembers,
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [groupId]: {
+              ...thread,
+              groupMeta: updatedMeta,
+            },
+          },
+          chatActiveFriendId: prev.chatActiveFriendId === groupId ? null : prev.chatActiveFriendId,
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Мут чата с поддержкой таймера (1ч, 8ч, 1 нед, навсегда, включить звук) */
+  const muteChatThread = useCallback(
+    (friendId: string, durationHours?: number | null) => {
+      if (!friendId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+
+        let isMuted = true
+        let muteUntilISO: string | null = null
+
+        if (durationHours === 0) {
+          isMuted = false
+          muteUntilISO = null
+        } else if (durationHours === null || durationHours === undefined) {
+          isMuted = true
+          muteUntilISO = null
+        } else if (durationHours > 0) {
+          isMuted = true
+          muteUntilISO = new Date(Date.now() + durationHours * 3600 * 1000).toISOString()
+        }
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              muted: isMuted,
+              muteUntilISO,
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Редактировать отложенное сообщение */
+  const editScheduledMessage = useCallback(
+    (friendId: string, messageId: string, patch: { text?: string; scheduledForISO?: string }) => {
+      if (!friendId || !messageId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const scheduled = (thread.scheduledMessages ?? []).map((m) => {
+          if (m.id === messageId) {
+            return {
+              ...m,
+              text: patch.text !== undefined ? patch.text : m.text,
+              scheduledForISO: patch.scheduledForISO !== undefined ? patch.scheduledForISO : m.scheduledForISO,
+            }
+          }
+          return m
+        })
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              scheduledMessages: scheduled,
+            },
+          },
+        }
+      })
+    },
+    [updateStore]
+  )
+
+  /** Отменить отложенное сообщение */
+  const cancelScheduledMessage = useCallback(
+    (friendId: string, messageId: string) => {
+      if (!friendId || !messageId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        const thread = threadOf(threads, friendId)
+        const scheduled = (thread.scheduledMessages ?? []).filter((m) => m.id !== messageId)
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...thread,
+              scheduledMessages: scheduled,
+            },
+          },
+        }
+      })
     },
     [updateStore]
   )
@@ -5536,6 +5834,14 @@ export function useOgonekStore() {
     deleteChatMessages,
     togglePinChatMessage,
     createGroupChat,
+    updateGroupMeta,
+    addGroupMembers,
+    removeGroupMember,
+    setGroupMemberRole,
+    leaveGroup,
+    muteChatThread,
+    editScheduledMessage,
+    cancelScheduledMessage,
     setChatFolder,
     deleteChatFolder,
     setChatActiveFolderId,

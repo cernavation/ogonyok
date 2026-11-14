@@ -26,6 +26,7 @@ import {
   Sparkles,
   Tag,
   Trash2,
+  Users,
   Video,
   Volume2,
   VolumeX,
@@ -78,6 +79,19 @@ import { ChatTagsModal } from './chat-tags-modal'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
 import { FriendDetailModal } from '../friend-detail-modal'
+import { GroupManagementModal } from './group-management-modal'
+import { ChatMuteModal } from './chat-mute-modal'
+import { ChatScheduledMessagesModal } from './chat-scheduled-messages-modal'
+import {
+  uploadChatMedia,
+  extractFirstUrl,
+  buildLinkPreview,
+  detectChatMediaType,
+  type ChatMediaType,
+} from '@/lib/ogonek/chat-media-service'
+import { canScheduleMessage } from '@/lib/ogonek/permissions'
+import type { ChatLinkPreview } from '@/lib/ogonek/types'
+import { Loader2, RefreshCw } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { Tooltip } from '../tooltip'
 
@@ -122,6 +136,14 @@ export function MessengerChatPane({
     toggleThreadMute,
     toggleThreadPin,
     toggleThreadArchive,
+    updateGroupMeta,
+    addGroupMembers,
+    removeGroupMember,
+    setGroupMemberRole,
+    leaveGroup,
+    muteChatThread,
+    editScheduledMessage,
+    cancelScheduledMessage,
     translateChatMessage,
     transcribeVoiceMessage,
     voteInPoll,
@@ -142,6 +164,9 @@ export function MessengerChatPane({
   const [showScrollBottom, setShowScrollBottom] = useState(false)
 
   // Модальные окна
+  const [groupModalOpen, setGroupModalOpen] = useState(false)
+  const [muteModalOpen, setMuteModalOpen] = useState(false)
+  const [scheduledModalOpen, setScheduledModalOpen] = useState(false)
   const [callModalOpen, setCallModalOpen] = useState(false)
   const [callIsVideo, setCallIsVideo] = useState(false)
   const [activeCallSessionId, setActiveCallSessionId] = useState<string | null>(null)
@@ -159,15 +184,26 @@ export function MessengerChatPane({
     note: string
   } | null>(null)
 
-  // Вложения в черновике
+  // Вложения в черновике и загрузка медиа (без Base64)
   const [attachment, setAttachment] = useState<ChatAttachment | null>(null)
   const [mediaAttachment, setMediaAttachment] = useState<ChatMessageMedia | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [linkPreview, setLinkPreview] = useState<ChatLinkPreview | null>(null)
+  const [linkDismissed, setLinkDismissed] = useState(false)
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [typingName, setTypingName] = useState<string | null>(null)
 
   const bodyRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const outgoingCallChannelRef = useRef<any>(null)
+  const threadChannelRef = useRef<any>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const lastFileRef = useRef<File | null>(null)
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const typingBroadcastTimerRef = useRef<number>(0)
 
   const [peerProfile, setPeerProfile] = useState<ProfileRecord | null>(null)
 
@@ -236,6 +272,172 @@ export function MessengerChatPane({
     return allMessages.find((m) => m.id === thread.pinnedMessageId) ?? null
   }, [allMessages, thread?.pinnedMessageId])
 
+  // Административные права в группе
+  const isCreator = thread?.groupMeta?.createdBy === currentUserId || thread?.groupMeta?.createdBy === 'me'
+  const adminIds = thread?.groupMeta?.adminIds || (isCreator ? [currentUserId] : [])
+  const isMeAdmin = !isGroup || isCreator || adminIds.includes(currentUserId) || thread?.groupMeta?.role === 'admin' || thread?.groupMeta?.role === 'owner'
+
+  // Непрочитанные сообщения для разделителя и кнопки «Вниз»
+  const unreadCountNumber = useMemo(() => {
+    if (!thread || !thread.messages) return 0
+    const readAtMs = thread.readAtISO ? new Date(thread.readAtISO).getTime() : 0
+    return thread.messages.filter(
+      (m) => m.authorId !== 'me' && !m.system && new Date(m.createdAtISO).getTime() > readAtMs
+    ).length
+  }, [thread])
+
+  const firstUnreadMessageId = useMemo(() => {
+    if (!thread || !thread.messages) return null
+    const readAtMs = thread.readAtISO ? new Date(thread.readAtISO).getTime() : 0
+    const firstUnread = thread.messages.find(
+      (m) => m.authorId !== 'me' && !m.system && new Date(m.createdAtISO).getTime() > readAtMs
+    )
+    return firstUnread ? firstUnread.id : null
+  }, [thread])
+
+  // Автоматическое определение ссылки в черновике
+  useEffect(() => {
+    if (linkDismissed || !draft) return
+    const url = extractFirstUrl(draft)
+    if (url && (!linkPreview || linkPreview.url !== url)) {
+      setLinkPreview(buildLinkPreview(url))
+    } else if (!url && linkPreview) {
+      setLinkPreview(null)
+    }
+  }, [draft, linkDismissed, linkPreview])
+
+  // Загрузка медиа в хранилище chat-media (без Base64)
+  const processAndUploadMedia = async (file: File, explicitType?: ChatMediaType) => {
+    lastFileRef.current = file
+    abortControllerRef.current = new AbortController()
+    setUploadProgress(10)
+    setUploadError(null)
+
+    const tempUrl = typeof window !== 'undefined' ? URL.createObjectURL(file) : ''
+    setMediaAttachment({
+      type: explicitType || (file.type.startsWith('video/') ? 'video' : file.type.startsWith('image/') ? 'image' : 'file'),
+      url: tempUrl,
+      name: file.name,
+      sizeBytes: file.size,
+    })
+
+    try {
+      const res = await uploadChatMedia(file, {
+        userId: currentUserId || 'me',
+        threadId: friendId || 'general',
+        fileName: file.name,
+        mediaType: explicitType,
+        signal: abortControllerRef.current.signal,
+        onProgress: (p) => setUploadProgress(p.percent),
+      })
+
+      if (res.ok && res.url) {
+        setMediaAttachment({
+          type: res.type,
+          url: res.url,
+          name: res.name,
+          sizeBytes: res.sizeBytes,
+        })
+        setUploadProgress(null)
+        setUploadError(null)
+        onNotify?.(`${res.type === 'image' ? 'Фото' : 'Файл'} «${file.name}» загружен`)
+      } else {
+        setUploadProgress(null)
+        setUploadError(res.error || 'Ошибка загрузки')
+        onNotify?.(res.error || 'Ошибка загрузки файла')
+      }
+    } catch (err: any) {
+      setUploadProgress(null)
+      setUploadError(err?.message || 'Сбой сети при отправке')
+    }
+  }
+
+  const cancelUpload = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setUploadProgress(null)
+    setUploadError(null)
+    setMediaAttachment(null)
+    onNotify?.('Загрузка отменена')
+  }
+
+  const retryUpload = () => {
+    if (lastFileRef.current) {
+      processAndUploadMedia(lastFileRef.current)
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) {
+          e.preventDefault()
+          processAndUploadMedia(file, 'image')
+          return
+        }
+      }
+    }
+
+    const text = e.clipboardData?.getData('text')
+    if (text) {
+      const url = extractFirstUrl(text)
+      if (url) {
+        setLinkDismissed(false)
+        setLinkPreview(buildLinkPreview(url))
+      }
+    }
+  }
+
+  const broadcastTyping = () => {
+    const now = Date.now()
+    if (now - typingBroadcastTimerRef.current > 2000) {
+      typingBroadcastTimerRef.current = now
+      const ch = threadChannelRef.current
+      if (ch) {
+        ch.send({
+          type: 'broadcast',
+          event: 'typing',
+          payload: { userId: currentUserId, name: currentUser?.displayName || currentUser?.username || 'Собеседник' },
+        }).catch?.(() => {})
+      }
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isDraggingOver) setIsDraggingOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+    setIsDraggingOver(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+    const files = e.dataTransfer.files
+    if (files && files.length > 0) {
+      const file = files[0]
+      if (file.type.startsWith('image/')) {
+        handleImageFile(file)
+      } else {
+        handleDocumentFile(file)
+      }
+    }
+  }
+
   // Загрузка сообщений из базы Supabase при открытии диалога
   useEffect(() => {
     if (!friendId || !currentUserId || isGroup || isSaved) return
@@ -276,6 +478,7 @@ export function MessengerChatPane({
 
     // 1. Создаем НОВЫЙ канал
     const channel = supabase.channel(channelName)
+    threadChannelRef.current = channel
 
     // 2. СНАЧАЛА вешаем обработчик
     channel.on(
@@ -311,6 +514,16 @@ export function MessengerChatPane({
       }
     )
 
+    channel.on('broadcast', { event: 'typing' }, (payload: any) => {
+      if (payload?.payload?.userId && payload.payload.userId !== currentUserId) {
+        setTypingName(payload.payload.name || 'Собеседник')
+        if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
+        typingTimerRef.current = setTimeout(() => {
+          setTypingName(null)
+        }, 3000)
+      }
+    })
+
     // 3. И ТОЛЬКО ПОТОМ вызываем subscribe()!
     channel.subscribe((status) => {
       if (status === 'SUBSCRIBED') {
@@ -320,6 +533,8 @@ export function MessengerChatPane({
 
     // 4. ОБЯЗАТЕЛЬНЫЙ CLEANUP ПРИ СМЕНЕ ЧАТА ИЛИ РАЗМОНТИРОВАНИИ:
     return () => {
+      threadChannelRef.current = null
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
       supabase.removeChannel(channel)
     }
   }, [friendId, currentUserId, isGroup, isSaved, receiveIncomingChatMessage, updateIncomingChatMessage])
@@ -425,6 +640,8 @@ export function MessengerChatPane({
     setChatDraft(friendId, '')
     setAttachment(null)
     setMediaAttachment(null)
+    setLinkPreview(null)
+    setLinkDismissed(false)
     setReplyingTo(null)
     setShowQuickChips(false)
   }
@@ -434,8 +651,16 @@ export function MessengerChatPane({
       e.preventDefault()
       handleSend()
     } else if (e.key === 'Escape') {
-      if (replyingTo) setReplyingTo(null)
-      if (editingMessage) {
+      if (uploadProgress !== null) {
+        cancelUpload()
+      } else if (linkPreview) {
+        setLinkPreview(null)
+        setLinkDismissed(true)
+      } else if (mediaAttachment) {
+        setMediaAttachment(null)
+      } else if (replyingTo) {
+        setReplyingTo(null)
+      } else if (editingMessage) {
         setEditingMessage(null)
         if (friendId) setChatDraft(friendId, '')
       }
@@ -539,9 +764,10 @@ export function MessengerChatPane({
     )
   }
 
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  // Загрузка фото или видео (в бакет chat-media, без Base64)
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    const file = e instanceof File ? e : e.target.files?.[0]
+    if (!(e instanceof File) && e.target) e.target.value = ''
     if (!file) return
 
     if (file.size > 50 * 1024 * 1024) {
@@ -549,22 +775,13 @@ export function MessengerChatPane({
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      setMediaAttachment({
-        type: 'image',
-        url: reader.result as string,
-        name: file.name,
-        sizeBytes: file.size,
-      })
-      onNotify('Фото прикреплено')
-    }
-    reader.readAsDataURL(file)
+    processAndUploadMedia(file, file.type.startsWith('video/') ? 'video' : 'image')
   }
 
-  const handleDocumentFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
+  // Загрузка документа или файла (в бакет chat-media, без Base64)
+  const handleDocumentFile = (e: React.ChangeEvent<HTMLInputElement> | File) => {
+    const file = e instanceof File ? e : e.target.files?.[0]
+    if (!(e instanceof File) && e.target) e.target.value = ''
     if (!file) return
 
     if (file.size > 50 * 1024 * 1024) {
@@ -572,17 +789,7 @@ export function MessengerChatPane({
       return
     }
 
-    const reader = new FileReader()
-    reader.onload = () => {
-      setMediaAttachment({
-        type: file.type.startsWith('video/') ? 'video' : 'file',
-        url: reader.result as string,
-        name: file.name,
-        sizeBytes: file.size,
-      })
-      onNotify('Файл прикреплен')
-    }
-    reader.readAsDataURL(file)
+    processAndUploadMedia(file, file.type.startsWith('video/') ? 'video' : 'file')
   }
 
   // Если диалог не выбран — красивое пустое состояние на весь экран
@@ -618,7 +825,23 @@ export function MessengerChatPane({
   const presence = friend ? presenceMeta(friend.presence) : null
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[var(--bg)] relative overflow-hidden select-text min-w-0">
+    <div
+      className="flex-1 h-full flex flex-col bg-[var(--bg)] relative overflow-hidden select-text min-w-0"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Драг-энд-дроп оверлей */}
+      {isDraggingOver && (
+        <div className="absolute inset-0 z-50 bg-[var(--bg)]/90 backdrop-blur-sm border-2 border-dashed border-[var(--accent)] flex flex-col items-center justify-center gap-3 p-6 pointer-events-none animate-in fade-in">
+          <div className="w-16 h-16 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center shadow-inner">
+            <Paperclip size={32} />
+          </div>
+          <p className="text-base font-bold text-[var(--text)]">Перетащите файл сюда</p>
+          <p className="text-xs text-[var(--text-2)]">Фото, видео или документ для отправки в чат</p>
+        </div>
+      )}
+
       {/* Скрытые файловые инпуты */}
       <input
         ref={imageInputRef}
@@ -684,7 +907,12 @@ export function MessengerChatPane({
             </div>
 
             <span className="text-[12px] sm:text-[14px] text-[var(--text-2)] truncate leading-tight block">
-              {isSaved ? (
+              {typingName ? (
+                <span className="text-[var(--accent)] font-semibold inline-flex items-center gap-1 animate-pulse">
+                  <span>{typingName} печатает</span>
+                  <span className="tracking-widest">…</span>
+                </span>
+              ) : isSaved ? (
                 'Личные заметки и сохранённое'
               ) : isGroup ? (
                 `${thread?.groupMeta?.memberIds.length ?? 3} участников, 2 в сети`
@@ -759,14 +987,35 @@ export function MessengerChatPane({
                   <button
                     type="button"
                     onClick={() => {
-                      toggleThreadMute(friendId)
+                      setMuteModalOpen(true)
                       setMenuOpen(false)
-                      onNotify(thread?.muted ? 'Звук включён' : 'Уведомления отключены')
                     }}
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                   >
                     {thread?.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
-                    {thread?.muted ? 'Включить звук' : 'Без звука'}
+                    {thread?.muted ? 'Настройки звука (выкл)' : 'Отключить звук…'}
+                  </button>
+                  {isGroup && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGroupModalOpen(true)
+                        setMenuOpen(false)
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                    >
+                      <Users size={15} /> Управление группой
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScheduledModalOpen(true)
+                      setMenuOpen(false)
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                  >
+                    <Clock size={15} /> Запланированные {((thread?.scheduledMessages ?? []).length > 0) ? `(${thread?.scheduledMessages?.length})` : ''}
                   </button>
                   <button
                     type="button"
@@ -924,42 +1173,55 @@ export function MessengerChatPane({
                       const isMineMsg = msg.authorId === 'me' || (Boolean(currentUserId) && msg.authorId === currentUserId)
 
                       return (
-                        <ChatMessageBubble
-                          key={msg.id}
-                          message={msg}
-                          isMine={isMineMsg}
-                          resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
-                          customEmojis={state.customEmojis}
-                          onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
-                          onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
-                          onReply={(m) => setReplyingTo(m)}
-                          onEdit={(m) => {
-                            setEditingMessage(m)
-                            setChatDraft(friendId, m.text)
-                            textareaRef.current?.focus()
-                          }}
-                          onPin={(id) => togglePinChatMessage(friendId, id)}
-                          onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
-                          onJumpToReply={scrollToMessage}
-                          onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
-                          onTranscribe={(id, transcript) => transcribeVoiceMessage(friendId, id, transcript)}
-                          onVotePoll={(id, pIdx) => voteInPoll(friendId, id, pIdx)}
-                          onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
-                          isSelectionMode={isSelectionMode}
-                          isSelected={selectedMessageIds.includes(msg.id)}
-                          onToggleSelect={(id) => {
-                            setSelectedMessageIds((ids) =>
-                              ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
-                            )
-                          }}
-                          isGroup={isGroup}
-                          showAuthorHeader={isGroup}
-                          isFirstInGroup={isFirstInGroup}
-                          isLastInGroup={isLastInGroup}
-                          searchQuery={searchQuery}
-                          soundEnabled={soundEnabled}
-                          onNotify={onNotify}
-                        />
+                        <React.Fragment key={msg.id}>
+                          {msg.id === firstUnreadMessageId && (
+                            <div
+                              className="w-full flex items-center gap-3 my-3 select-none pointer-events-none"
+                              data-testid="unread-divider"
+                            >
+                              <div className="flex-1 h-[1px] bg-[var(--accent)]/40" />
+                              <span className="text-[11px] font-bold text-[var(--accent)] bg-[var(--accent-soft)] px-3 py-0.5 rounded-full border border-[var(--accent)]/30 uppercase tracking-wider">
+                                Новые сообщения
+                              </span>
+                              <div className="flex-1 h-[1px] bg-[var(--accent)]/40" />
+                            </div>
+                          )}
+                          <ChatMessageBubble
+                            message={msg}
+                            isMine={isMineMsg}
+                            resolveChar={(emojiId) => resolveEmojiChar(emojiId, state.customEmojis)}
+                            customEmojis={state.customEmojis}
+                            onToggleReaction={(emojiId) => toggleChatReaction(friendId, msg.id, emojiId)}
+                            onForward={(m) => setForwardModalData({ attachment: m.attachment, note: m.text })}
+                            onReply={(m) => setReplyingTo(m)}
+                            onEdit={(m) => {
+                              setEditingMessage(m)
+                              setChatDraft(friendId, m.text)
+                              textareaRef.current?.focus()
+                            }}
+                            onPin={(id) => togglePinChatMessage(friendId, id)}
+                            onDelete={(id, forEveryone) => deleteChatMessage(friendId, id, forEveryone)}
+                            onJumpToReply={scrollToMessage}
+                            onTranslate={(id, text) => translateChatMessage(friendId, id, 'ru', text)}
+                            onTranscribe={(id, transcript) => transcribeVoiceMessage(friendId, id, transcript)}
+                            onVotePoll={(id, pIdx) => voteInPoll(friendId, id, pIdx)}
+                            onToggleLabel={(id, label) => toggleMessageLabel(friendId, id, label)}
+                            isSelectionMode={isSelectionMode}
+                            isSelected={selectedMessageIds.includes(msg.id)}
+                            onToggleSelect={(id) => {
+                              setSelectedMessageIds((ids) =>
+                                ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
+                              )
+                            }}
+                            isGroup={isGroup}
+                            showAuthorHeader={isGroup}
+                            isFirstInGroup={isFirstInGroup}
+                            isLastInGroup={isLastInGroup}
+                            searchQuery={searchQuery}
+                            soundEnabled={soundEnabled}
+                            onNotify={onNotify}
+                          />
+                        </React.Fragment>
                       )
                     })}
                   </div>
@@ -975,10 +1237,18 @@ export function MessengerChatPane({
         <button
           type="button"
           onClick={scrollToBottom}
-          className="absolute right-6 bottom-24 z-20 w-11 h-11 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center shadow-2xl hover:bg-[var(--bg-hover)] active:scale-95 transition-all"
+          className="absolute right-6 bottom-24 z-20 w-11 h-11 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] flex items-center justify-center shadow-2xl hover:bg-[var(--bg-hover)] active:scale-95 transition-all relative"
           aria-label="Вниз к новым сообщениям"
         >
           <ArrowDown size={18} />
+          {unreadCountNumber > 0 && (
+            <span
+              className="absolute -top-1.5 -right-1.5 min-w-[20px] h-[20px] px-1 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-[10px] font-extrabold flex items-center justify-center shadow-md animate-in zoom-in-75"
+              data-testid="scroll-bottom-badge"
+            >
+              {unreadCountNumber > 99 ? '99+' : unreadCountNumber}
+            </span>
+          )}
         </button>
       )}
 
@@ -1055,40 +1325,93 @@ export function MessengerChatPane({
             </div>
           )}
 
-          {/* Превью медиа-файла */}
-          {mediaAttachment && (
-            <div className="relative mb-1 p-2 rounded-xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between gap-3">
+          {/* Превью ссылки */}
+          {linkPreview && !linkDismissed && (
+            <div className="relative mb-1 p-2 rounded-xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between gap-3 animate-in fade-in">
               <div className="flex items-center gap-2.5 min-w-0">
-                {mediaAttachment.type === 'image' ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={mediaAttachment.url}
-                    alt=""
-                    className="w-10 h-10 rounded-lg object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center">
-                    <FileText size={20} />
-                  </div>
-                )}
+                <div className="w-9 h-9 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center shrink-0">
+                  <Sparkles size={18} />
+                </div>
                 <div className="min-w-0">
-                  <p className="truncate text-xs font-semibold text-[var(--text)]">
-                    {mediaAttachment.name || 'Медиафайл'}
-                  </p>
-                  <p className="text-[10px] text-[var(--text-2)]">
-                    {mediaAttachment.sizeBytes
-                      ? `${Math.round(mediaAttachment.sizeBytes / 1024)} КБ`
-                      : 'Готово к отправке'}
-                  </p>
+                  <p className="text-[10px] uppercase font-bold text-[var(--accent)] leading-tight">Ссылка</p>
+                  <p className="truncate text-xs font-semibold text-[var(--text)]">{linkPreview.title || linkPreview.url}</p>
+                  <p className="truncate text-[10px] text-[var(--text-2)]">{linkPreview.url}</p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setMediaAttachment(null)}
+                onClick={() => {
+                  setLinkDismissed(true)
+                  setLinkPreview(null)
+                }}
                 className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)]"
+                aria-label="Закрыть превью ссылки"
               >
                 <X size={15} />
               </button>
+            </div>
+          )}
+
+          {/* Превью медиа-файла */}
+          {mediaAttachment && (
+            <div className="relative mb-1 p-2.5 rounded-xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {mediaAttachment.type === 'image' ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={mediaAttachment.url}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center shrink-0">
+                      <FileText size={20} />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-[var(--text)]">
+                      {mediaAttachment.name || 'Медиафайл'}
+                    </p>
+                    <p className="text-[10px] text-[var(--text-2)]">
+                      {uploadProgress !== null
+                        ? `Загрузка... ${uploadProgress}%`
+                        : uploadError
+                        ? `Ошибка: ${uploadError}`
+                        : mediaAttachment.sizeBytes
+                        ? `${Math.round(mediaAttachment.sizeBytes / 1024)} КБ`
+                        : 'Готово к отправке'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  {uploadError && (
+                    <button
+                      type="button"
+                      onClick={retryUpload}
+                      className="px-2 py-1 rounded-md text-[11px] font-semibold text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+                    >
+                      Повторить
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={cancelUpload}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)]"
+                    aria-label="Отменить или удалить медиа"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
+              {uploadProgress !== null && (
+                <div className="w-full bg-[var(--bg-hover)] rounded-full h-1 overflow-hidden">
+                  <div
+                    className="bg-[var(--accent)] h-full transition-all duration-200"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -1113,8 +1436,15 @@ export function MessengerChatPane({
           )}
 
           {/* Строка ввода или запись голоса */}
-          {voiceRecording ? (
+          {isGroup && thread?.groupMeta?.adminsOnly && !isMeAdmin ? (
+            <div className="w-full py-3 px-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-center text-xs text-[var(--text-2)] font-medium flex items-center justify-center gap-2 select-none shadow-sm">
+              <span>🔒</span>
+              <span>В этой группе только администраторы могут отправлять сообщения</span>
+            </div>
+          ) : voiceRecording ? (
             <ChatVoiceRecorder
+              userId={currentUserId}
+              threadId={friendId}
               onSendVoice={(voiceMedia) => {
                 setVoiceRecording(false)
                 sendChatMessage(friendId, '', null, { media: voiceMedia })
@@ -1260,8 +1590,12 @@ export function MessengerChatPane({
                 <textarea
                   ref={textareaRef}
                   value={draft}
-                  onChange={(e) => setChatDraft(friendId, e.target.value)}
+                  onChange={(e) => {
+                    setChatDraft(friendId, e.target.value)
+                    broadcastTyping()
+                  }}
                   onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
                   placeholder="Написать сообщение..."
                   rows={1}
                   className="flex-1 min-w-0 bg-transparent text-[15px] leading-relaxed text-[var(--text)] placeholder:text-[var(--text-2)] resize-none outline-none max-h-[160px]"
@@ -1414,6 +1748,62 @@ export function MessengerChatPane({
           onClose={() => setFriendDetailOpen(false)}
           onNotify={onNotify}
           soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Модальное окно управления группой */}
+      {groupModalOpen && thread?.groupMeta && (
+        <GroupManagementModal
+          groupId={friendId}
+          groupMeta={thread.groupMeta}
+          onUpdateGroup={(patch) => updateGroupMeta(friendId, patch)}
+          onAddMembers={(memberIds) => addGroupMembers(friendId, memberIds)}
+          onRemoveMember={(memberId) => removeGroupMember(friendId, memberId)}
+          onSetMemberRole={(memberId, role) => setGroupMemberRole(friendId, memberId, role)}
+          onLeaveGroup={() => {
+            leaveGroup(friendId)
+            setGroupModalOpen(false)
+            onBack?.()
+          }}
+          onClose={() => setGroupModalOpen(false)}
+          soundEnabled={soundEnabled}
+          onNotify={onNotify}
+        />
+      )}
+
+      {/* Модальное окно отключения звука */}
+      {muteModalOpen && (
+        <ChatMuteModal
+          isMuted={Boolean(thread?.muted)}
+          muteUntilISO={thread?.muteUntilISO}
+          onMute={(hours) => {
+            muteChatThread(friendId, hours)
+            if (hours === 0) {
+              onNotify('Уведомления включены')
+            } else if (hours === null) {
+              onNotify('Уведомления отключены навсегда')
+            } else {
+              onNotify(`Уведомления отключены на ${hours} ч.`)
+            }
+            setMuteModalOpen(false)
+          }}
+          onClose={() => setMuteModalOpen(false)}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Модальное окно запланированных сообщений */}
+      {scheduledModalOpen && (
+        <ChatScheduledMessagesModal
+          friendId={friendId}
+          friendName={title}
+          scheduledMessages={thread?.scheduledMessages || []}
+          tier={state.profile?.subscription_tier || 'free'}
+          onEditMessage={(msgId, patch) => editScheduledMessage(friendId, msgId, patch)}
+          onCancelMessage={(msgId) => cancelScheduledMessage(friendId, msgId)}
+          onClose={() => setScheduledModalOpen(false)}
+          soundEnabled={soundEnabled}
+          onNotify={onNotify}
         />
       )}
     </div>

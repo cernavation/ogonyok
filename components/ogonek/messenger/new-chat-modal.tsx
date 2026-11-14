@@ -20,6 +20,7 @@ import { searchProfiles, getRecentProfiles, type ProfileRecord } from '@/lib/sup
 import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { uploadChatMedia } from '@/lib/ogonek/chat-media-service'
 
 type Props = {
   onClose: () => void
@@ -145,22 +146,32 @@ export function NewChatModal({
     )
   }
 
-  // Загрузка фото группы
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Загрузка фото группы (загрузка в бакет chat-media без Base64)
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 5 * 1024 * 1024) {
       onNotify('Размер изображения не должен превышать 5 МБ')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setCustomPhotoUrl(reader.result)
+    try {
+      const res = await uploadChatMedia(file, {
+        userId: currentUserId || 'me',
+        threadId: 'group-create',
+        fileName: file.name,
+        mediaType: 'image',
+      })
+      if (res.ok && res.url) {
+        setCustomPhotoUrl(res.url)
         onNotify('Фото группы загружено')
+      } else {
+        onNotify(res.error || 'Ошибка загрузки фото группы')
       }
+    } catch {
+      onNotify('Не удалось загрузить фото')
+    } finally {
+      e.target.value = ''
     }
-    reader.readAsDataURL(file)
   }
 
   // Финальное создание группы

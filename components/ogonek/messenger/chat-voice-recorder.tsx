@@ -6,13 +6,23 @@ import { useEffect, useRef, useState } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessageMedia } from '@/lib/ogonek/types'
 
+import { uploadChatMedia } from '@/lib/ogonek/chat-media-service'
+
 type Props = {
+  userId?: string
+  threadId?: string
   onSendVoice: (media: ChatMessageMedia) => void
   onCancel: () => void
   soundEnabled?: boolean
 }
 
-export function ChatVoiceRecorder({ onSendVoice, onCancel, soundEnabled = true }: Props) {
+export function ChatVoiceRecorder({
+  userId,
+  threadId,
+  onSendVoice,
+  onCancel,
+  soundEnabled = true,
+}: Props) {
   const [seconds, setSeconds] = useState(0)
   const [micBlocked, setMicBlocked] = useState(false)
   const [liveBars, setLiveBars] = useState<number[]>(() => Array.from({ length: 18 }).map(() => 4))
@@ -220,16 +230,19 @@ export function ChatVoiceRecorder({ onSendVoice, onCancel, soundEnabled = true }
         const mimeType = recorder.mimeType || 'audio/webm'
         const audioBlob = new Blob(chunksRef.current, { type: mimeType })
 
-        // Конвертируем реальный аудио Blob в Base64 Data URL для моментального воспроизведения и передачи
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64Url = typeof reader.result === 'string' ? reader.result : 'mock-audio.webm'
-          finalizeAndSend(base64Url)
-        }
-        reader.onerror = () => {
-          finalizeAndSend('mock-audio.webm')
-        }
-        reader.readAsDataURL(audioBlob)
+        // Шаг 08: Загружаем аудио Blob в бакет chat-media без Base64 (вместо устаревшего readAsDataURL)
+        uploadChatMedia(audioBlob, {
+          userId: userId || 'me',
+          threadId: threadId || 'general',
+          fileName: `voice-${Date.now()}.webm`,
+          mediaType: 'audio',
+        })
+          .then((result) => {
+            finalizeAndSend(result.url)
+          })
+          .catch(() => {
+            finalizeAndSend('mock-audio.webm')
+          })
       }
 
       try {

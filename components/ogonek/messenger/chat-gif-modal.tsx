@@ -131,6 +131,19 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
             </div>
           )}
         </div>
+
+        {/* Официальный бейдж GIPHY per developer terms */}
+        <div className="pt-2.5 pb-0.5 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--text-2)] shrink-0">
+          <span className="flex items-center gap-1.5 font-medium">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#00ff99]" />
+            Поиск анимаций
+          </span>
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 select-none">
+            <span className="font-extrabold tracking-wider text-[10px] text-white">
+              Powered by <span className="text-[#00ff99]">GIPHY</span>
+            </span>
+          </div>
+        </div>
       </motion.div>
     </div>
   )

@@ -694,6 +694,7 @@ export type ChatLinkPreview = {
   description?: string
   image?: string
   siteName?: string
+  domain?: string
 }
 
 /** Тип содержимого сообщения */
@@ -777,6 +778,8 @@ export type ChatMessage = {
   media?: ChatMessageMedia | null
   /** Ссылка с превью */
   linkPreview?: ChatLinkPreview | null
+  /** Список ID участников, прочитавших сообщение (для групп) */
+  readBy?: string[]
 }
 
 /** Метаданные группового чата */
@@ -791,6 +794,8 @@ export type ChatGroupMeta = {
   createdBy: string
   description?: string
   role?: 'owner' | 'admin' | 'member'
+  adminIds?: string[]
+  adminsOnly?: boolean
 }
 
 /** Папка для группировки чатов (Telegram Folders) */

@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { ChevronDown, Heart, MessageCircle, Reply, Send, Sparkles, Trash2 } from 'lucide-react'
 import { useCallback, useId, useMemo, useState, type ReactNode } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
+import { ChatGifModal } from './messenger/chat-gif-modal'
 import {
   MAX_COMMENT_LENGTH,
   SUPPORT_PERSONAS,
@@ -91,6 +92,7 @@ export function CommentsThread({
   const [persona, setPersona] = useState<CommentPersona>('me')
   const [replyToId, setReplyToId] = useState<string | null>(null)
   const [replyDraft, setReplyDraft] = useState('')
+  const [gifOpen, setGifOpen] = useState(false)
 
   const comments = useMemo(
     () => state.comments?.[target] ?? [],
@@ -253,9 +255,33 @@ export function CommentsThread({
               </Tooltip>
             </div>
 
-            <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
-              {node.text}
-            </p>
+            {node.text.includes('![](') || (node.text.includes('http') && node.text.includes('.gif')) ? (
+              <div className="space-y-1.5 mt-0.5">
+                {node.text.replace(/!\[\]\([^)]+\)/g, '').trim() && (
+                  <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] whitespace-pre-wrap break-words">
+                    {node.text.replace(/!\[\]\([^)]+\)/g, '').trim()}
+                  </p>
+                )}
+                {(() => {
+                  const match = node.text.match(/!\[\]\(([^)]+)\)/) || node.text.match(/(https?:\/\/[^\s]+(?:\.gif|\/giphy\.gif)[^\s]*)/i)
+                  const url = match ? match[1] : null
+                  if (!url) return null
+                  return (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={url}
+                      alt="GIF"
+                      className="max-h-48 rounded-xl object-contain border border-white/10"
+                      loading="lazy"
+                    />
+                  )
+                })()}
+              </div>
+            ) : (
+              <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
+                {node.text}
+              </p>
+            )}
 
             {node.template && (
               <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[var(--muted)] border border-[var(--line)] rounded-full px-2 py-[1px]">
@@ -489,6 +515,20 @@ export function CommentsThread({
                     }
                     className="flex-1 resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#ff6b35] transition-colors"
                   />
+                  <Tooltip content="Выбрать GIF-анимацию" side="top">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setGifOpen(true)
+                      }}
+                      aria-label="Выбрать GIF"
+                      className="flex-none inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] hover:text-[#ffad5a] hover:border-[#ff6b35] transition-colors text-[11px] font-extrabold"
+                      style={{ width: 34, height: 34 }}
+                    >
+                      GIF
+                    </button>
+                  </Tooltip>
                   <Tooltip content="Отправить (Enter)" side="top">
                     <button
                       type="button"
@@ -507,6 +547,18 @@ export function CommentsThread({
                   </Tooltip>
                 </div>
               </div>
+
+              {/* Модалка выбора GIF с официальным бейджем GIPHY */}
+              {gifOpen && (
+                <ChatGifModal
+                  onSelectGif={(gifUrl) => {
+                    setDraft((prev) => (prev ? `${prev}\n![](${gifUrl})` : `![](${gifUrl})`))
+                    notify('GIF-анимация прикреплена к комментарию')
+                  }}
+                  onClose={() => setGifOpen(false)}
+                  soundEnabled={soundEnabled}
+                />
+              )}
 
               {/* Дерево комментариев / пустое состояние */}
               {total === 0 ? (

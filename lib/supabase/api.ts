@@ -1628,22 +1628,33 @@ export async function sendDirectMessageToDb(params: {
   poll?: any
   type?: string
 }): Promise<{ ok: boolean; message?: DirectMessageRecord; error?: string }> {
-  const supabase = getSupabase()
-  if (!supabase) return { ok: false, error: 'База данных не подключена' }
-
   try {
-    const symmetricKey = getDirectThreadKey(params.authorId || params.userId, params.recipientId)
-    const finalThreadKey = params.threadKey || symmetricKey
-    const nowISO = new Date().toISOString()
+    // Защита от Base64: файлы должны быть в бакете chat-media, а в БД — только URL
+    if (params.body && (params.body.includes('data:image/') || params.body.includes('data:audio/'))) {
+      return { ok: false, error: 'Base64 запрещён в тексте сообщения. Используйте загрузку в chat-media.' }
+    }
+    if (params.media?.url && typeof params.media.url === 'string' && params.media.url.startsWith('data:')) {
+      return { ok: false, error: 'Base64 запрещён в медиа-вложениях. Загружайте файлы в хранилище chat-media.' }
+    }
+
+    const supabase = getSupabase()
+    if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
     const isUuid = (str?: string | null) =>
       typeof str === 'string' &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
+    const isGroup = params.recipientId.startsWith('group-') || Boolean(params.threadKey?.startsWith('group'))
+    const symmetricKey = getDirectThreadKey(params.authorId || params.userId, params.recipientId)
+    const finalThreadKey = params.threadKey || (isGroup ? `group:${params.recipientId}` : symmetricKey)
+    const finalRecipientId = isGroup ? null : (isUuid(params.recipientId) ? params.recipientId : null)
+    const nowISO = new Date().toISOString()
 
     const payload = {
       client_id: params.clientId || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       user_id: isUuid(params.userId) ? params.userId : null,
       author_id: params.authorId,
-      recipient_id: params.recipientId,
+      recipient_id: finalRecipientId,
       thread_key: finalThreadKey,
       body: params.body,
       attachment: params.attachment || null,
@@ -1656,6 +1667,12 @@ export async function sendDirectMessageToDb(params: {
       is_read: false,
       is_system: false,
       sent_at: nowISO,
+    }
+
+    // Проверка размера строки (лимит 2 КБ по контракту)
+    const rowSizeBytes = new TextEncoder().encode(JSON.stringify(payload)).length
+    if (rowSizeBytes > 2048) {
+      return { ok: false, error: `Размер строки сообщения (${rowSizeBytes} байт) превышает лимит 2 КБ` }
     }
 
     const { data, error } = await supabase
@@ -2093,6 +2110,131 @@ export async function getCallSession(sessionId: string): Promise<CallSessionReco
   } catch {
     return null
   }
+}
+
+/**
+ * Сохранить новую группу чата в Supabase
+ */
+export async function createChatGroupInDb(group: {
+  id?: string
+  title: string
+  avatarColor?: string
+  avatarEmoji?: string
+  avatarImage?: string | null
+  creatorId: string
+  adminsOnly?: boolean
+  description?: string
+  memberIds: string[]
+}): Promise<{ ok: boolean; groupId?: string; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: true, groupId: group.id || `group-${Date.now()}` }
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(group.creatorId)
+    if (!isUuid) return { ok: true, groupId: group.id || `group-${Date.now()}` }
+
+    const { data, error } = await supabase
+      .from('chat_groups')
+      .insert({
+        title: group.title,
+        avatar_color: group.avatarColor || '#ff7a18',
+        avatar_emoji: group.avatarEmoji || '🔥',
+        avatar_image: group.avatarImage || null,
+        creator_id: group.creatorId,
+        admins_only: Boolean(group.adminsOnly),
+        description: group.description || '',
+      })
+      .select('id')
+      .single()
+
+    if (error) return { ok: false, error: error.message }
+    const groupId = data?.id
+
+    // Добавляем создателя как владельца (owner)
+    if (groupId) {
+      const membersToInsert = Array.from(new Set([group.creatorId, ...group.memberIds]))
+        .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+        .map((userId) => ({
+          group_id: groupId,
+          user_id: userId,
+          role: userId === group.creatorId ? 'owner' : 'member',
+        }))
+
+      if (membersToInsert.length > 0) {
+        await supabase.from('chat_group_members').insert(membersToInsert)
+      }
+    }
+
+    return { ok: true, groupId }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Ошибка создания группы' }
+  }
+}
+
+/**
+ * Обновить метаданные группы в Supabase
+ */
+export async function updateChatGroupInDb(
+  groupId: string,
+  patch: {
+    title?: string
+    avatarColor?: string
+    avatarEmoji?: string
+    avatarImage?: string | null
+    adminsOnly?: boolean
+    description?: string
+  }
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !groupId) return { ok: true }
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupId)
+    if (!isUuid) return { ok: true }
+
+    const updateData: any = { updated_at: new Date().toISOString() }
+    if (patch.title !== undefined) updateData.title = patch.title
+    if (patch.avatarColor !== undefined) updateData.avatar_color = patch.avatarColor
+    if (patch.avatarEmoji !== undefined) updateData.avatar_emoji = patch.avatarEmoji
+    if (patch.avatarImage !== undefined) updateData.avatar_image = patch.avatarImage
+    if (patch.adminsOnly !== undefined) updateData.admins_only = patch.adminsOnly
+    if (patch.description !== undefined) updateData.description = patch.description
+
+    const { error } = await supabase.from('chat_groups').update(updateData).eq('id', groupId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Ошибка обновления группы' }
+  }
+}
+
+/**
+ * Сохранить папки чатов в Supabase
+ */
+export async function saveChatFoldersToDb(
+  userId: string,
+  folders: Array<{ id: string; title: string; icon?: string; chatIds: string[] }>
+): Promise<void> {
+  const supabase = getSupabase()
+  if (!supabase || !userId) return
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+    if (!isUuid) return
+
+    for (const folder of folders) {
+      await supabase.from('chat_folders').upsert(
+        {
+          user_id: userId,
+          title: folder.title,
+          icon: folder.icon || 'folder',
+          chat_ids: folder.chatIds || [],
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      )
+    }
+  } catch {}
 }
 
 // Re-export social service functions
