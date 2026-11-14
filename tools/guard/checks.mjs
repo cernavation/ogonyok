@@ -637,7 +637,7 @@ export async function runDomChecks(page, { screen, viewport, layoutBaseline = nu
         if ((tag === 'BUTTON' || el.getAttribute('role') === 'button') && !el.disabled && !isFormSubmit(el)) {
           const rProps = getReactProps(el)
           const hasHandler =
-            Boolean(rProps?.onClick || rProps?.onPointerDown || rProps?.onMouseDown || el.onclick) ||
+            Boolean(rProps?.onClick || el.onclick) ||
             el.hasAttribute('aria-controls') ||
             el.hasAttribute('aria-haspopup') ||
             Boolean(el.closest('a[href], label'))

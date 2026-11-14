@@ -1,0 +1,118 @@
+{
+  "desktopChat": {
+    "textareaInfo": [
+      {
+        "aria": "Текст сообщения",
+        "placeholder": "Написать сообщение...",
+        "w": 430,
+        "h": 36,
+        "x": 695,
+        "y": 701
+      },
+      {
+        "aria": "Текст сообщения",
+        "placeholder": "Написать сообщение...",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      }
+    ],
+    "visibleTextareaIdx": 0,
+    "msgResult": {
+      "sentAttempted": true,
+      "messageRenderedLocallyAfterEnter": true,
+      "valueRemainingInBox": 0
+    }
+  },
+  "mobileChatBounds": {
+    "vw": 390,
+    "textarea": {
+      "x": 231,
+      "y": 787,
+      "width": 202,
+      "height": 36,
+      "top": 787,
+      "right": 433,
+      "bottom": 823,
+      "left": 231
+    },
+    "mic": {
+      "x": 441,
+      "y": 785,
+      "width": 36,
+      "height": 40,
+      "top": 785,
+      "right": 477,
+      "bottom": 825,
+      "left": 441
+    },
+    "backBtns": [
+      {
+        "label": "Назад к списку чатов",
+        "rect": {
+          "x": 12,
+          "y": 15.5,
+          "width": 40,
+          "height": 40,
+          "top": 15.5,
+          "right": 52,
+          "bottom": 55.5,
+          "left": 12
+        }
+      },
+      {
+        "label": "Назад в ленту",
+        "rect": {
+          "x": 64,
+          "y": 15.5,
+          "width": 40,
+          "height": 40,
+          "top": 15.5,
+          "right": 104,
+          "bottom": 55.5,
+          "left": 64
+        }
+      },
+      {
+        "label": "Аудиозвонок",
+        "rect": {
+          "x": 258,
+          "y": 15.5,
+          "width": 36,
+          "height": 40,
+          "top": 15.5,
+          "right": 294,
+          "bottom": 55.5,
+          "left": 258
+        }
+      },
+      {
+        "label": "Видеозвонок",
+        "rect": {
+          "x": 298,
+          "y": 15.5,
+          "width": 36,
+          "height": 40,
+          "top": 15.5,
+          "right": 334,
+          "bottom": 55.5,
+          "left": 298
+        }
+      },
+      {
+        "label": "Меню чата",
+        "rect": {
+          "x": 338,
+          "y": 15.5,
+          "width": 36,
+          "height": 40,
+          "top": 15.5,
+          "right": 374,
+          "bottom": 55.5,
+          "left": 338
+        }
+      }
+    ]
+  }
+}

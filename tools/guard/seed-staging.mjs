@@ -47,13 +47,12 @@ async function upsertProfile(admin, userId, account, streakCount) {
   const nowISO = new Date().toISOString()
   const payload = {
     id: userId,
+    client_id: userId,
     username: account.username,
     display_name: account.displayName,
-    name: account.displayName,
     bio: account.username === 'guard_empty' ? '' : 'Тестовый профиль для автоматической проверки стража Огонька.',
     streak: streakCount,
     streak_count: streakCount,
-    is_public: true,
     updated_at: nowISO,
   }
   const { error } = await admin.from('profiles').upsert(payload, { onConflict: 'id' })
@@ -70,8 +69,8 @@ async function seedPrimaryDays(admin, userId) {
       title: 'Первый шаг — вышел на утреннюю пробежку и закрыл план по коду',
       tags: ['спорт', 'фокус'],
       prides: [
-        { text: 'Пробежал 5 км без остановок даже под дождём', scale: 8, overcome: 7 },
-        { text: 'Закрыл сложный баг с синхронизацией чатов', scale: 9, overcome: 6 },
+        { text: 'Пробежал 5 км без остановок даже под дождём', scale: 8, overcome: 2 },
+        { text: 'Закрыл сложный баг с синхронизацией чатов', scale: 9, overcome: 3 },
       ],
       gratitudes: [{ text: 'Благодарен команде за честную обратную связь', rating: 9 }],
     },
@@ -80,7 +79,7 @@ async function seedPrimaryDays(admin, userId) {
       title: 'Держу ритм второй день подряд — без лишних отвлечений',
       tags: ['дисциплина', 'работа'],
       prides: [
-        { text: 'Провёл глубокую сессию на 3 часа без телефона', scale: 8, overcome: 5 },
+        { text: 'Провёл глубокую сессию на 3 часа без телефона', scale: 8, overcome: 2 },
       ],
       gratitudes: [{ text: 'Благодарен за спокойный вечер с книгой', rating: 10 }],
     },
@@ -89,7 +88,7 @@ async function seedPrimaryDays(admin, userId) {
       title: 'Маленькие победы складываются в устойчивую привычку',
       tags: ['здоровье', 'рост'],
       prides: [
-        { text: 'Приготовил полезный ужин вместо фастфуда', scale: 7, overcome: 4 },
+        { text: 'Приготовил полезный ужин вместо фастфуда', scale: 7, overcome: 1 },
       ],
       gratitudes: [{ text: 'Благодарен другу Алексею за поддержку вечером', rating: 9 }],
     },

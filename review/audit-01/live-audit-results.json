@@ -1,0 +1,1370 @@
+{
+  "baseUrl": "http://127.0.0.1:3199",
+  "routes": [
+    {
+      "id": "home-auth",
+      "path": "/",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/home-auth_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:01.659Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Показать пароль",
+            "w": 36,
+            "h": 36
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Личная летопись гордости и благодарности Данные и пароли остаются только на устро"
+      }
+    },
+    {
+      "id": "landing-param",
+      "path": "/?view=landing",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/landing-param_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:03.138Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/?view=landing",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Показать пароль",
+            "w": 36,
+            "h": 36
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Личная летопись гордости и благодарности Данные и пароли остаются только на устро"
+      }
+    },
+    {
+      "id": "chats-unauth",
+      "path": "/chats",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/chats-unauth_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Чаты — Огонёк",
+        "url": "/chats",
+        "h1": "Чаты",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [
+          {
+            "tag": "span",
+            "cls": "truncate max-w-[110px]",
+            "text": "Все",
+            "hasTitle": false,
+            "scrollW": 25,
+            "clientW": 25,
+            "scrollH": 21,
+            "clientH": 21
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Назад в ленту",
+            "w": 136,
+            "h": 31
+          },
+          {
+            "tag": "button",
+            "label": "Фильтр диалогов",
+            "w": 75,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "label": "Написать сообщение",
+            "w": 179,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "label": "Назад в ленту",
+            "w": 155,
+            "h": 38
+          }
+        ],
+        "missingAriaButtons": [
+          {
+            "tag": "div",
+            "cls": "brand cursor-pointer group min-h-[40px] flex items-center ho",
+            "title": "Огонёк",
+            "outer": "<div class=\"brand cursor-pointer group min-h-[40px] flex items-center hover:bg-white/[0.08] active:scale-[0.98] transiti"
+          }
+        ],
+        "overlapPairs": [],
+        "soratnikMatches": [
+          "соратника",
+          "соратниками"
+        ],
+        "duplicateLabels": [
+          {
+            "label": "назад в ленту",
+            "count": 2
+          }
+        ],
+        "bodySnippet": "ПО Назад в ленту Чаты Все 💬 Начни первый чат Выбери соратника из списка или создай группу для совместного стрика Написать сообщение Назад в ленту 💬 Выберите диалог или начните новый чат Общайтесь с соратниками, делитесь карточками гордост"
+      }
+    },
+    {
+      "id": "chat-thread-unauth",
+      "path": "/chats/cerna",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/chat-thread-unauth_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "WebSocket connection to 'wss://hlpvwxmfkmhwzmgdjmtu.supabase.co/realtime/v1/websocket?apikey=sb_publishable_UeMvfJr4G_93wLl5bUL3qg_nXVUY4qG&eventsPerSecond=10&vsn=2.0.0' failed: HT",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "WebSocket connection to 'wss://hlpvwxmfkmhwzmgdjmtu.supabase.co/realtime/v1/websocket?apikey=sb_publishable_UeMvfJr4G_93wLl5bUL3qg_nXVUY4qG&eventsPerSecond=10&vsn=2.0.0' failed: HT"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:06.205Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/profiles?select=*&username=eq.cerna"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?recipient_id=eq.local-user&author_id=eq.cerna&is_read=eq.false"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?recipient_id=eq.local-user&author_id=eq.cerna&is_read=eq.false"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_local-user%2Cthread_key.eq.cerna%2Cthread_key.eq.local-user%2Cand%28author_id.eq.local-user%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.local-user%29%29&order=sent_at.asc&limit=100"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/profiles?select=*&username=eq.cerna"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_local-user%2Cthread_key.eq.cerna%2Cthread_key.eq.local-user%2Cand%28author_id.eq.local-user%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.local-user%29%29&order=sent_at.asc&limit=100"
+        }
+      ],
+      "dom": {
+        "title": "Диалог — Огонёк",
+        "url": "/chats/cerna",
+        "h1": "Чаты",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [
+          {
+            "tag": "span",
+            "cls": "truncate max-w-[110px]",
+            "text": "Все",
+            "hasTitle": false,
+            "scrollW": 25,
+            "clientW": 25,
+            "scrollH": 21,
+            "clientH": 21
+          },
+          {
+            "tag": "span",
+            "cls": "text-[16px] sm:text-[20px] font-[800] text-[var(--text)] tru",
+            "text": "cerna",
+            "hasTitle": false,
+            "scrollW": 53,
+            "clientW": 53,
+            "scrollH": 25,
+            "clientH": 25
+          },
+          {
+            "tag": "span",
+            "cls": "text-[12px] sm:text-[14px] text-[var(--text-2)] truncate lea",
+            "text": "в сети",
+            "hasTitle": false,
+            "scrollW": 295,
+            "clientW": 295,
+            "scrollH": 16,
+            "clientH": 16
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Назад в ленту",
+            "w": 136,
+            "h": 31
+          },
+          {
+            "tag": "button",
+            "label": "Фильтр диалогов",
+            "w": 75,
+            "h": 36
+          },
+          {
+            "tag": "button",
+            "label": "Написать сообщение",
+            "w": 179,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "label": "Назад в ленту",
+            "w": 135,
+            "h": 31
+          },
+          {
+            "tag": "button",
+            "label": "Держим огонь 🔥",
+            "w": 137,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Горжусь тобой! 💪",
+            "w": 143,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Иду рядом 🤝",
+            "w": 114,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Что нового на пути?",
+            "w": 153,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Так держать! ⚡",
+            "w": 128,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Обнимаю 🫂",
+            "w": 106,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Увидимся на марафоне!",
+            "w": 180,
+            "h": 32
+          },
+          {
+            "tag": "button",
+            "label": "Записать голосовое сообщение",
+            "w": 36,
+            "h": 36
+          }
+        ],
+        "missingAriaButtons": [
+          {
+            "tag": "div",
+            "cls": "brand cursor-pointer group min-h-[40px] flex items-center ho",
+            "title": "Огонёк",
+            "outer": "<div class=\"brand cursor-pointer group min-h-[40px] flex items-center hover:bg-white/[0.08] active:scale-[0.98] transiti"
+          }
+        ],
+        "overlapPairs": [],
+        "soratnikMatches": [
+          "соратника"
+        ],
+        "duplicateLabels": [
+          {
+            "label": "назад в ленту",
+            "count": 2
+          }
+        ],
+        "bodySnippet": "ПО Назад в ленту Чаты Все 💬 Начни первый чат Выбери соратника из списка или создай группу для совместного стрика Написать сообщение Назад в ленту ОГ cerna в сети ОГ cerna Начало переписки в Огоньке. Это начало вашей истории. Отправьте «Дер"
+      }
+    },
+    {
+      "id": "privacy",
+      "path": "/privacy",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/privacy_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Политика конфиденциальности — Огонёк",
+        "url": "/privacy",
+        "h1": "Политика конфиденциальности",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 1159,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": true,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "label": "На главную",
+            "w": 672,
+            "h": 20
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "На главную ✦ Огонёк Политика конфиденциальности Последнее обновление: 24 октября 2026 г. Главный принцип Огонька: твои победы принадлежат только тебе Записи дневника по умолчанию строго приватны. Никто, кроме тебя, не имеет доступа к твоим "
+      }
+    },
+    {
+      "id": "terms",
+      "path": "/terms",
+      "viewport": "1210x756",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/terms_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Условия использования — Огонёк",
+        "url": "/terms",
+        "h1": "Условия использования",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 1306,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": true,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "label": "На главную",
+            "w": 672,
+            "h": 20
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [
+          "соратниками"
+        ],
+        "duplicateLabels": [],
+        "bodySnippet": "На главную ✦ Огонёк Условия использования Редакция действует с 24 октября 2026 г. Кратко и по делу Огонёк создан для фиксации личных достижений, гордостей и благодарностей. Твой контент остаётся твоей собственностью. Мы не продаём твои данн"
+      }
+    },
+    {
+      "id": "premium-route",
+      "path": "/premium",
+      "viewport": "1210x756",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/premium-route_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/premium"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/premium",
+        "h1": "Страница ушла в историю",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    },
+    {
+      "id": "settings-route",
+      "path": "/settings",
+      "viewport": "1210x756",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/settings-route_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/settings"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/settings",
+        "h1": "Страница ушла в историю",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    },
+    {
+      "id": "unknown-404",
+      "path": "/nonexistent-audit-route",
+      "viewport": "1210x756",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/unknown-404_desktop_1210x756.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/nonexistent-audit-route"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/nonexistent-audit-route",
+        "h1": "Страница ушла в историю",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    },
+    {
+      "id": "home-auth",
+      "path": "/",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/home-auth_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:14.725Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Local-first: 0 локальных профиля Вход и регистрация Вход Регистрация Никнейм @ Па"
+      }
+    },
+    {
+      "id": "landing-param",
+      "path": "/?view=landing",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/landing-param_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:16.217Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/?view=landing",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Local-first: 0 локальных профиля Вход и регистрация Вход Регистрация Никнейм @ Па"
+      }
+    },
+    {
+      "id": "chats-unauth",
+      "path": "/chats",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/chats-unauth_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Чаты — Огонёк",
+        "url": "/chats",
+        "h1": "Чаты",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [
+          {
+            "tag": "span",
+            "cls": "truncate max-w-[110px]",
+            "text": "Все",
+            "hasTitle": false,
+            "scrollW": 25,
+            "clientW": 25,
+            "scrollH": 21,
+            "clientH": 21
+          }
+        ],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [
+          "соратника"
+        ],
+        "duplicateLabels": [],
+        "bodySnippet": "Назад в ленту Чаты Все 💬 Начни первый чат Выбери соратника из списка или создай группу для совместного стрика Написать сообщение"
+      }
+    },
+    {
+      "id": "chat-thread-unauth",
+      "path": "/chats/cerna",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/chat-thread-unauth_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "Failed to load resource: the server responded with a status of 401 ()",
+        "WebSocket connection to 'wss://hlpvwxmfkmhwzmgdjmtu.supabase.co/realtime/v1/websocket?apikey=sb_publishable_UeMvfJr4G_93wLl5bUL3qg_nXVUY4qG&eventsPerSecond=10&vsn=2.0.0' failed: HT"
+      ],
+      "consoleWarnings": [
+        "GoTrueClient@sb-hlpvwxmfkmhwzmgdjmtu-auth-token:1 (2.118.0) 2026-11-11T15:53:19.576Z Multiple GoTrueClient instances detected in the same browser context. It is not an error, but t"
+      ],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/profiles?select=*&username=eq.cerna"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_local-user%2Cthread_key.eq.cerna%2Cthread_key.eq.local-user%2Cand%28author_id.eq.local-user%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.local-user%29%29&order=sent_at.asc&limit=100"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?recipient_id=eq.local-user&author_id=eq.cerna&is_read=eq.false"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_local-user%2Cthread_key.eq.cerna%2Cthread_key.eq.local-user%2Cand%28author_id.eq.local-user%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.local-user%29%29&order=sent_at.asc&limit=100"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/profiles?select=*&username=eq.cerna"
+        },
+        {
+          "status": 401,
+          "url": "https://hlpvwxmfkmhwzmgdjmtu.supabase.co/rest/v1/direct_messages?recipient_id=eq.local-user&author_id=eq.cerna&is_read=eq.false"
+        }
+      ],
+      "dom": {
+        "title": "Диалог — Огонёк",
+        "url": "/chats/cerna",
+        "h1": "Чаты",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [
+          {
+            "tag": "div",
+            "cls": "flex-1 h-full flex flex-col bg-[var(--bg)] relative overflow",
+            "id": null,
+            "scrollWidth": 494,
+            "clientWidth": 390,
+            "text": "Назад в лентуОГcernaв сетиОГcernaНачало переписки в Огоньке."
+          },
+          {
+            "tag": "div",
+            "cls": "w-full border-t border-[var(--border)] bg-[var(--bg)] px-3 s",
+            "id": null,
+            "scrollWidth": 494,
+            "clientWidth": 390,
+            "text": "Держим огонь 🔥Горжусь тобой! 💪Иду рядом 🤝Что нового на пу"
+          },
+          {
+            "tag": "div",
+            "cls": "w-full max-w-[820px] mx-auto flex flex-col gap-1.5",
+            "id": null,
+            "scrollWidth": 482,
+            "clientWidth": 366,
+            "text": "Держим огонь 🔥Горжусь тобой! 💪Иду рядом 🤝Что нового на пу"
+          },
+          {
+            "tag": "div",
+            "cls": "flex items-end gap-2 w-full",
+            "id": null,
+            "scrollWidth": 482,
+            "clientWidth": 366,
+            "text": "GIF"
+          }
+        ],
+        "truncatedTexts": [
+          {
+            "tag": "span",
+            "cls": "text-[16px] sm:text-[20px] font-[800] text-[var(--text)] tru",
+            "text": "cerna",
+            "hasTitle": false,
+            "scrollW": 43,
+            "clientW": 43,
+            "scrollH": 20,
+            "clientH": 20
+          },
+          {
+            "tag": "span",
+            "cls": "text-[12px] sm:text-[14px] text-[var(--text-2)] truncate lea",
+            "text": "в сети",
+            "hasTitle": false,
+            "scrollW": 78,
+            "clientW": 78,
+            "scrollH": 16,
+            "clientH": 16
+          }
+        ],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Аудиозвонок",
+            "w": 36,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "label": "Видеозвонок",
+            "w": 36,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "label": "Меню чата",
+            "w": 36,
+            "h": 40
+          },
+          {
+            "tag": "button",
+            "label": "Записать голосовое сообщение",
+            "w": 36,
+            "h": 40
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОГ cerna в сети ОГ cerna Начало переписки в Огоньке. Это начало вашей истории. Отправьте «Держим огонь 🔥» или поделитесь победой! Держим огонь 🔥 Горжусь тобой! 💪 Иду рядом 🤝 Что нового на пути? Так держать! ⚡ Обнимаю 🫂 Увидимся на мара"
+      }
+    },
+    {
+      "id": "privacy",
+      "path": "/privacy",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/privacy_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Политика конфиденциальности — Огонёк",
+        "url": "/privacy",
+        "h1": "Политика конфиденциальности",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 1549,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": true,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "label": "На главную",
+            "w": 347,
+            "h": 20
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "На главную ✦ Огонёк Политика конфиденциальности Последнее обновление: 24 октября 2026 г. Главный принцип Огонька: твои победы принадлежат только тебе Записи дневника по умолчанию строго приватны. Никто, кроме тебя, не имеет доступа к твоим "
+      }
+    },
+    {
+      "id": "terms",
+      "path": "/terms",
+      "viewport": "390x844",
+      "httpStatus": 200,
+      "screenshot": "review/audit-01/terms_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Условия использования — Огонёк",
+        "url": "/terms",
+        "h1": "Условия использования",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 1831,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": true,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "a",
+            "label": "На главную",
+            "w": 347,
+            "h": 20
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [
+          "соратниками"
+        ],
+        "duplicateLabels": [],
+        "bodySnippet": "На главную ✦ Огонёк Условия использования Редакция действует с 24 октября 2026 г. Кратко и по делу Огонёк создан для фиксации личных достижений, гордостей и благодарностей. Твой контент остаётся твоей собственностью. Мы не продаём твои данн"
+      }
+    },
+    {
+      "id": "premium-route",
+      "path": "/premium",
+      "viewport": "390x844",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/premium-route_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/premium"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/premium",
+        "h1": "Страница ушла в историю",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    },
+    {
+      "id": "settings-route",
+      "path": "/settings",
+      "viewport": "390x844",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/settings-route_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/settings"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/settings",
+        "h1": "Страница ушла в историю",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    },
+    {
+      "id": "unknown-404",
+      "path": "/nonexistent-audit-route",
+      "viewport": "390x844",
+      "httpStatus": 404,
+      "screenshot": "review/audit-01/unknown-404_mobile_390x844.png",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpErrors": [
+        {
+          "status": 404,
+          "url": "/nonexistent-audit-route"
+        },
+        {
+          "status": 404,
+          "url": "/_vercel/insights/script.js"
+        }
+      ],
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/nonexistent-audit-route",
+        "h1": "Страница ушла в историю",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "ОШИБКА 404 Страница ушла в историю Этого адреса больше нет или он никогда не существовал. Твои победы, стрик и дневник в полной безопасности. На главную"
+      }
+    }
+  ],
+  "interactions": [
+    {
+      "step": "auth-register-tab",
+      "viewport": "desktop",
+      "screenshot": "review/audit-01/auth-register_desktop_1210x756.png",
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 1210,
+        "vh": 756,
+        "scrollW": 1199,
+        "scrollH": 756,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [
+          {
+            "tag": "button",
+            "label": "Показать пароль",
+            "w": 36,
+            "h": 36
+          }
+        ],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Личная летопись гордости и благодарности Данные и пароли остаются только на устро"
+      }
+    },
+    {
+      "step": "chats-unauth-interactive",
+      "viewport": "desktop",
+      "visibleButtonsCount": 17,
+      "chatButtonsSample": [
+        {
+          "idx": 0,
+          "text": "Главная",
+          "aria": "Главная",
+          "title": ""
+        },
+        {
+          "idx": 1,
+          "text": "Поиск",
+          "aria": "Поиск",
+          "title": ""
+        },
+        {
+          "idx": 2,
+          "text": "Чаты",
+          "aria": "Чаты",
+          "title": ""
+        },
+        {
+          "idx": 3,
+          "text": "Профиль",
+          "aria": "Профиль",
+          "title": ""
+        },
+        {
+          "idx": 4,
+          "text": "Evidence Vault",
+          "aria": "Evidence Vault",
+          "title": ""
+        },
+        {
+          "idx": 5,
+          "text": "Премиум",
+          "aria": "Премиум",
+          "title": ""
+        },
+        {
+          "idx": 6,
+          "text": "Статистика",
+          "aria": "Статистика",
+          "title": ""
+        },
+        {
+          "idx": 7,
+          "text": "Рейтинг",
+          "aria": "Рейтинг",
+          "title": ""
+        },
+        {
+          "idx": 8,
+          "text": "Намерения",
+          "aria": "Намерения",
+          "title": ""
+        },
+        {
+          "idx": 9,
+          "text": "Настройки",
+          "aria": "Настройки",
+          "title": ""
+        },
+        {
+          "idx": 10,
+          "text": "",
+          "aria": "Записать день",
+          "title": ""
+        },
+        {
+          "idx": 11,
+          "text": "ПО",
+          "aria": "",
+          "title": "Пользователь"
+        },
+        {
+          "idx": 12,
+          "text": "Назад в ленту",
+          "aria": "Назад в ленту",
+          "title": "Назад в ленту"
+        },
+        {
+          "idx": 13,
+          "text": "Все",
+          "aria": "Фильтр диалогов",
+          "title": ""
+        },
+        {
+          "idx": 14,
+          "text": "",
+          "aria": "Написать сообщение или создать группу",
+          "title": "Написать"
+        },
+        {
+          "idx": 15,
+          "text": "Написать сообщение",
+          "aria": "",
+          "title": ""
+        },
+        {
+          "idx": 16,
+          "text": "Назад в ленту",
+          "aria": "Назад в ленту",
+          "title": ""
+        }
+      ],
+      "newChatOpened": false,
+      "newChatDom": null,
+      "threadClicked": false,
+      "threadDom": null
+    },
+    {
+      "step": "auth-register-tab",
+      "viewport": "mobile",
+      "screenshot": "review/audit-01/auth-register_mobile_390x844.png",
+      "dom": {
+        "title": "Огонёк — Твой личный дневник силы",
+        "url": "/",
+        "h1": "Дневник силы,который держит слово",
+        "vw": 390,
+        "vh": 844,
+        "scrollW": 379,
+        "scrollH": 844,
+        "pageOverflowX": -11,
+        "hasVerticalScroll": false,
+        "overflowContainers": [],
+        "truncatedTexts": [],
+        "smallTapTargets": [],
+        "missingAriaButtons": [],
+        "overlapPairs": [],
+        "soratnikMatches": [],
+        "duplicateLabels": [],
+        "bodySnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Local-first: 0 локальных профиля Вход и регистрация Вход Регистрация Шаг 1 из 3 —"
+      }
+    },
+    {
+      "step": "chats-unauth-interactive",
+      "viewport": "mobile",
+      "visibleButtonsCount": 4,
+      "chatButtonsSample": [
+        {
+          "idx": 0,
+          "text": "Назад в ленту",
+          "aria": "Назад в ленту",
+          "title": "Назад в ленту"
+        },
+        {
+          "idx": 1,
+          "text": "Все",
+          "aria": "Фильтр диалогов",
+          "title": ""
+        },
+        {
+          "idx": 2,
+          "text": "",
+          "aria": "Написать сообщение или создать группу",
+          "title": "Написать"
+        },
+        {
+          "idx": 3,
+          "text": "Написать сообщение",
+          "aria": "",
+          "title": ""
+        }
+      ],
+      "newChatOpened": false,
+      "newChatDom": null,
+      "threadClicked": false,
+      "threadDom": null
+    }
+  ],
+  "chaos": [
+    {
+      "test": "auth-long-rtl-emoji-and-offline-dblclick",
+      "viewport": "desktop",
+      "inputLengthsFilled": [
+        5760,
+        516
+      ],
+      "authReqCountAfterDblClick": 0,
+      "overflowXAfterLongInput": -11,
+      "postSubmitSnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Личная летопись гордости и благодарности Данные и пароли остаются только на устройстве Стрики, ачивки, аналитика и мессенджер внутри Local-fi",
+      "screenshots": [
+        "review/audit-01/chaos-auth-long-rtl-emoji_desktop.png",
+        "review/audit-01/chaos-auth-offline-dblclick_desktop.png"
+      ]
+    },
+    {
+      "test": "auth-long-rtl-emoji-and-offline-dblclick",
+      "viewport": "mobile",
+      "inputLengthsFilled": [
+        5760,
+        516
+      ],
+      "authReqCountAfterDblClick": 0,
+      "overflowXAfterLongInput": -11,
+      "postSubmitSnippet": "Огонёк Дневник силы, который держит слово Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за прогрессом. Начните прямо сейчас. Local-first: 0 локальных профиля Вход и регистрация Вход Регистрация Шаг 1 из 3 — Аккаунт Никнейм @ От 3 до 20 символов: латиница, цифры и _ ",
+      "screenshots": [
+        "review/audit-01/chaos-auth-long-rtl-emoji_mobile.png",
+        "review/audit-01/chaos-auth-offline-dblclick_mobile.png"
+      ]
+    }
+  ],
+  "apiProbes": [
+    {
+      "method": "GET",
+      "path": "/api/leaderboard?scope=friends&period=today",
+      "status": 200,
+      "bodyPreview": "{\"source\":\"live_db\",\"scope\":\"friends\",\"period\":\"today\",\"users\":[{\"user_id\":\"cernavation-seed\",\"username\":\"cernavation\",\"display_name\":\"Alexei Cerna\",\"avatar_url\":null,\"city\":\"Москва\",\"streak\":720,\"total_prides\":3600,\"total_gratitudes\":3600,"
+    },
+    {
+      "method": "GET",
+      "path": "/api/streak/sync",
+      "status": 200,
+      "bodyPreview": "{\"success\":true,\"snapshot\":{\"streak\":1,\"best\":1,\"status\":\"safe\",\"hoursLeft\":105,\"deadline\":\"2026-10-27T21:59:59.999Z\",\"lastEntryDay\":\"2026-10-23\",\"missedRun\":0,\"filledDays\":[],\"totalDaysCount\":1,\"updatedAtISO\":\"2026-10-23T13:30:05.355Z\"}}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/telegram/status",
+      "status": 200,
+      "bodyPreview": "{\"configured\":false,\"chatIdConfigured\":false,\"message\":\"TELEGRAM_BOT_TOKEN не задан в .env.local\"}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/transcribe",
+      "status": 200,
+      "bodyPreview": "{\"success\":true,\"source\":\"fallback\",\"transcript\":\"Принял задачу, сейчас всё сделаем в лучшем виде.\",\"notice\":\"Для прямой ИИ-расшифровки через Google Gemini укажите GEMINI_API_KEY в .env.local\"}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/translate",
+      "status": 200,
+      "bodyPreview": "{\"success\":true,\"source\":\"fallback\",\"translation\":\"[Translated to English]: Привет друг\",\"notice\":\"Для ИИ-перевода через Gemini укажите GEMINI_API_KEY в .env.local\"}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/evaluate",
+      "status": 200,
+      "bodyPreview": "{\"success\":true,\"source\":\"deepseek\",\"model\":\"deepseek-chat\",\"score\":7.5,\"breakdown\":\"День отмечен одним конкретным физическим достижением — пробежкой 5 км, что говорит о дисциплине и преодолении.\",\"verdict\":\"Ты вышел на дистанцию и закрыл е"
+    },
+    {
+      "method": "POST",
+      "path": "/api/achievements/regulate",
+      "status": 400,
+      "bodyPreview": "{\"error\":\"Опиши тему достижения, чтобы получить регламент.\"}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/cron/deliver-scheduled",
+      "status": 500,
+      "bodyPreview": "{\"success\":false,\"error\":\"Invalid API key\"}"
+    }
+  ]
+}

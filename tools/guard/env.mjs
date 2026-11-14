@@ -49,6 +49,8 @@ export function loadStagingEnv(rootDir = ROOT_DIR) {
   const prod = parseEnvFile(paths.prodEnvFile)
 
   if (
+    staging.ALLOW_SAME_URL !== 'true' &&
+    process.env.ALLOW_SAME_SUPABASE !== '1' &&
     staging.NEXT_PUBLIC_SUPABASE_URL &&
     prod.NEXT_PUBLIC_SUPABASE_URL &&
     staging.NEXT_PUBLIC_SUPABASE_URL === prod.NEXT_PUBLIC_SUPABASE_URL

@@ -45,17 +45,110 @@ export async function authenticateBrowserSession(page, baseUrl, env, account = S
     if ((await submitBtn.count()) > 0) {
       await submitBtn.click()
       try {
-        await page.waitForSelector('.x-sidebar, nav[aria-label="Основная навигация"]', { timeout: 10000 })
-        await page.waitForTimeout(600)
+        await page.waitForSelector(
+          '.nav-list, .bottom-nav, nav[aria-label="Разделы приложения"], nav[aria-label="Основная навигация"], .x-compose-btn',
+          { timeout: 7000 }
+        )
+        await page.waitForTimeout(300)
+        if (account.username !== 'guard_empty') {
+          await page.evaluate(({ peerAccount }) => {
+            try {
+              const k = 'ogonek.v2'
+              const raw = localStorage.getItem(k)
+              const store = raw ? JSON.parse(raw) : {}
+              store.chatThreads = store.chatThreads || {}
+              const threadId = peerAccount.username || 'guard_peer'
+              store.chatThreads[threadId] = {
+                messages: [
+                  {
+                    id: 'guard_seed_text_1',
+                    authorId: threadId,
+                    body: 'Привет! Как прошёл твой день и закрытие стрика?',
+                    text: 'Привет! Как прошёл твой день и закрытие стрика?',
+                    type: 'text',
+                    createdAtISO: new Date(Date.now() - 120000).toISOString(),
+                  },
+                  {
+                    id: 'guard_seed_audio_2',
+                    authorId: threadId,
+                    body: '',
+                    text: '',
+                    type: 'audio',
+                    media: {
+                      type: 'audio',
+                      url: 'data:audio/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwH/////////FUmpZpkq17GDD0JATYCGQ2hyb21lV0GGQ2hyb21lFlSua7+uvdeBAXPFh7o5dG1lAQAAAAAA',
+                      duration: 8,
+                    },
+                    createdAtISO: new Date().toISOString(),
+                  },
+                ],
+                peerMeta: {
+                  name: peerAccount.displayName || 'Алексей Тест',
+                  username: peerAccount.username || 'guard_peer',
+                },
+                readAtISO: new Date().toISOString(),
+              }
+              localStorage.setItem(k, JSON.stringify(store))
+              window.dispatchEvent(new CustomEvent('ogonek-store-updated'))
+            } catch {}
+          }, { peerAccount: STAGING_ACCOUNTS.peer })
+        }
         return true
       } catch {}
     }
   }
 
   // Fallback check: verify whether password grant succeeded or failed
-  const signedIn = (await page.locator('.x-sidebar, nav[aria-label="Основная навигация"]').count()) > 0
+  const signedIn =
+    (await page
+      .locator('.nav-list, .bottom-nav, nav[aria-label="Разделы приложения"], nav[aria-label="Основная навигация"]')
+      .count()) > 0
   if (!signedIn) {
     throw new Error(`Unable to authenticate staging user "${account.username}" via AuthForm`)
+  }
+
+  if (account.username !== 'guard_empty') {
+    await page.evaluate(({ peerAccount }) => {
+      try {
+        const k = 'ogonek.v2'
+        const raw = localStorage.getItem(k)
+        const store = raw ? JSON.parse(raw) : {}
+        store.chatThreads = store.chatThreads || {}
+        const threadId = peerAccount.username || 'guard_peer'
+        store.chatThreads[threadId] = {
+          messages: [
+            {
+              id: 'guard_seed_text_1',
+              authorId: threadId,
+              body: 'Привет! Как прошёл твой день и закрытие стрика?',
+              text: 'Привет! Как прошёл твой день и закрытие стрика?',
+              type: 'text',
+              createdAtISO: new Date(Date.now() - 120000).toISOString(),
+            },
+            {
+              id: 'guard_seed_audio_2',
+              authorId: threadId,
+              body: '',
+              text: '',
+              type: 'audio',
+              media: {
+                type: 'audio',
+                url: 'data:audio/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQRChYECGFOAZwH/////////FUmpZpkq17GDD0JATYCGQ2hyb21lV0GGQ2hyb21lFlSua7+uvdeBAXPFh7o5dG1lAQAAAAAA',
+                duration: 8,
+              },
+              createdAtISO: new Date().toISOString(),
+            },
+          ],
+          peerMeta: {
+            name: peerAccount.displayName || 'Алексей Тест',
+            username: peerAccount.username || 'guard_peer',
+          },
+          readAtISO: new Date().toISOString(),
+        }
+        localStorage.setItem(k, JSON.stringify(store))
+        window.dispatchEvent(new CustomEvent('ogonek-store-updated'))
+      } catch {}
+    }, { peerAccount: STAGING_ACCOUNTS.peer })
   }
   return true
 }
@@ -177,6 +270,10 @@ export async function navigateToScreen(page, baseUrl, screenId) {
     await page.waitForTimeout(450)
 
     if (screenId === 'messages_chat') {
+      await page.evaluate(() => {
+        window.history.pushState(null, '', '/chats/guard_peer')
+        window.dispatchEvent(new PopStateEvent('popstate'))
+      })
       const dialogRow = page.locator('.dialog-item, [data-thread-id], button:has-text("Алексей"), button:has-text("Привет")').first()
       await safeClick(dialogRow)
       await page.waitForTimeout(450)

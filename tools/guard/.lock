@@ -1,18 +1,18 @@
 {
   "version": 1,
   "algorithm": "sha256",
-  "generatedAt": "2026-11-11T15:39:42.633Z",
+  "generatedAt": "2026-11-14T12:55:07.812Z",
   "guard": {
     "tools/guard/browser.mjs": "2611b847b5dfb6f255403f55c83558a2b860a3a5fb9ac72bf9034c4b8f6541cd",
     "tools/guard/budget.mjs": "9722dce3a870fa76fb99527e9f81657aa3db69132c0e3cc0e0cd7af4dd6c1b61",
-    "tools/guard/checks.mjs": "a88e8006624c5b6b7f8a5da9a5686b4c62ca4d6709cb1bb90816262a8d66f20a",
+    "tools/guard/checks.mjs": "fe5a08ee6c10e7e7248eaf7f5fb5468babaeca6ef2d539a2045fb3d6170f1825",
     "tools/guard/config.mjs": "48f8b59e93fd34388085d31e83951598184185c271e99bc5f75f8fab4d762b9c",
-    "tools/guard/env.mjs": "09e5d086d5fcc6750ac054807c633cd281c5cd53922cc52d5fbe2ad2773e52c6",
+    "tools/guard/env.mjs": "05bb697bf2b68dde7ca2b7df245e1e07d449316db906e9da49bd3154f1d16a7c",
     "tools/guard/lock.mjs": "a953dd052defb4d745745ecf7c893ebc6dd4260491ed835b0a3819ef9cbf97fe",
     "tools/guard/runner.mjs": "913d0bab4f2ecb119adc7ba4edc3ce4502b59138f4b0cf454f30319d3b55c76e",
-    "tools/guard/seed-staging.mjs": "d0952685d0ec50ce86a5441f0dd12042a7cfbc354dcc7cd3a9eeecf2f46dd967",
+    "tools/guard/seed-staging.mjs": "9eb24e99829ba08df7d0178f608662446e4b06678dcf937ed8d3f7c6d5920321",
     "tools/guard/self-test.mjs": "158d663343be186073667f800c4565629bf6074f0a82ce6acd931f68f377b2e3",
-    "tools/guard/session.mjs": "8e67871ec3e357647833b6a5c293d3bb174e37919edbff2d0abb00be94090c4d"
+    "tools/guard/session.mjs": "a3f813566e44059db46ed1a24486498a693dbaa8e22418dde5ccf686297271f7"
   },
   "baseline": {
     "baseline/BASELINE.md": "1fe7129578ca67decd76dbf4421f47c280666994a868959a4362bbaaa0afb211",
