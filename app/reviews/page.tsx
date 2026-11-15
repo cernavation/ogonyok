@@ -8,6 +8,29 @@ import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
 import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
 import { ALL_REVIEWS, REVIEWS_CATEGORIES, type ReviewItem } from '@/components/ogonek/landing/reviews-data'
 
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+  return name.slice(0, 2).toUpperCase()
+}
+
+function getCategoryGradient(cat: string): string {
+  switch (cat) {
+    case 'mindset':
+      return 'from-[#f56900] to-[#b33d00]'
+    case 'work':
+      return 'from-[#0071e3] to-[#0047a0]'
+    case 'sport':
+      return 'from-[#00c7be] to-[#007a75]'
+    case 'creative':
+      return 'from-[#af52de] to-[#682494]'
+    case 'family':
+      return 'from-[#ff9500] to-[#b36800]'
+    default:
+      return 'from-[#5856d6] to-[#3634a3]'
+  }
+}
+
 export default function ReviewsPage() {
   const containerRef = useScrollReveal()
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -52,8 +75,8 @@ export default function ReviewsPage() {
             <span className="apple-shimmer-text">которые держат слово.</span>
           </h1>
 
-          <p className="apple-body fade-up delay-250 max-w-[680px] mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            32 проверенные истории от предпринимателей, спортсменов, врачей, художников и родителей. О том, как 5 минут вечерней тишины меняют характер и возвращают веру в себя.
+          <p className="apple-body fade-up delay-250 max-w-[660px] mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            32 проверенные истории о&nbsp;том, как 5&nbsp;минут вечерней тишины меняют характер и&nbsp;возвращают веру в&nbsp;себя.
           </p>
 
           {/* Search bar */}
@@ -139,11 +162,11 @@ export default function ReviewsPage() {
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] font-mono text-[#f5f5f7]">
+                        <span className="px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/10 text-[11px] font-mono text-[#f5f5f7] whitespace-nowrap shrink-0">
                           🔥 {rev.streakDays} дней
                         </span>
                         {rev.badge && (
-                          <span className="px-2 py-0.5 rounded-full bg-[#f56900]/20 text-[#f56900] text-[10px] font-semibold uppercase">
+                          <span className="px-2 py-0.5 rounded-full bg-[#f56900]/20 text-[#f56900] text-[10px] font-semibold uppercase whitespace-nowrap shrink-0">
                             {rev.badge}
                           </span>
                         )}
@@ -163,17 +186,21 @@ export default function ReviewsPage() {
 
                   {/* Author Row */}
                   <div className="flex items-center gap-3.5 pt-5 border-t border-white/[0.06] mt-auto">
-                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 border border-white/10 relative bg-[#222]">
-                      <img
-                        src={rev.avatar}
-                        alt={rev.author}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                        onError={(e) => {
-                          // Fallback to initials if image fails
-                          ;(e.target as HTMLElement).style.display = 'none'
-                        }}
-                      />
+                    <div className="w-11 h-11 rounded-full overflow-hidden shrink-0 border border-white/10 relative flex items-center justify-center font-semibold text-xs text-white shadow-inner bg-[#222]">
+                      {rev.avatar.startsWith('/media/') ? (
+                        <img
+                          src={rev.avatar}
+                          alt={rev.author}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${getCategoryGradient(rev.category)}`}>
+                          <span className="font-semibold text-[13px] tracking-wider text-white">
+                            {getInitials(rev.author)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0">
                       <div className="text-[14px] font-semibold text-[#f5f5f7] truncate flex items-center gap-1.5">

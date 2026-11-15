@@ -129,13 +129,13 @@ export default function PlatformPage() {
                   </svg>
                 </div>
                 <h3 className="text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
-                  Шкала преодоления 1–10★
+                  Шкала преодоления <span className="whitespace-nowrap">1–10★</span>
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[#86868b]">
                   Оценка того, насколько тяжело далась победа. День на 9★ требует отдыха, а не самобичевания. Это экологичный компас твоих сил.
                 </p>
               </div>
-              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#86868b]">
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#00c7be] tracking-wider">
                 ТРЕЗВЫЙ АНАЛИЗ ЭНЕРГИИ
               </div>
             </div>
