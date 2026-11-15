@@ -15,7 +15,7 @@
 import crypto from 'node:crypto'
 import { z } from 'zod'
 import { getServerSupabase } from '../supabase/server.ts'
-import { consumeServerQuota } from './quota.ts'
+import { consumeServerQuota, refundServerQuota } from './quota.ts'
 import { getEffectiveTier } from './tier.ts'
 import { getTierLimits, type SubscriptionTier } from '../ogonek/permissions.ts'
 import { OGONEK_SYSTEM_PROMPT } from './prompts/system.ts'
@@ -406,6 +406,8 @@ export interface EvaluateDayParams {
   tier?: SubscriptionTier
   timeoutMs?: number
   mockProvider?: (prides: string[], gratitudes: string[]) => Promise<DayEvaluationResult>
+  enforceQuota?: boolean
+  skipQuota?: boolean
 }
 
 export type EvaluateDayResponse =
@@ -421,10 +423,34 @@ export type EvaluateDayResponse =
       }
     }
 
+// Защита от параллельных гонок: сериализация одновременных запросов для одного пользователя
+const userEvaluationLocks = new Map<string, Promise<any>>()
+
 /**
- * Главная серверная функция оценки дня
+ * Главная серверная функция оценки дня с мьютексом от race condition
  */
 export async function evaluateDayWithAI(
+  params: EvaluateDayParams
+): Promise<EvaluateDayResponse> {
+  const lockKey = params.userId || 'anon'
+  const prevLock = userEvaluationLocks.get(lockKey) || Promise.resolve()
+
+  const currentExecution = prevLock
+    .catch(() => {})
+    .then(() => executeEvaluateDayWithAI(params))
+
+  userEvaluationLocks.set(lockKey, currentExecution)
+
+  try {
+    return await currentExecution
+  } finally {
+    if (userEvaluationLocks.get(lockKey) === currentExecution) {
+      userEvaluationLocks.delete(lockKey)
+    }
+  }
+}
+
+async function executeEvaluateDayWithAI(
   params: EvaluateDayParams
 ): Promise<EvaluateDayResponse> {
   const {
@@ -478,7 +504,26 @@ export async function evaluateDayWithAI(
     }
   }
 
-  // 3. Вызываем ИИ (до списания квоты) с каскадом: Gemini -> DeepSeek -> Heuristic
+  // 3. Атомарно бронируем/списываем квоту ДО вызова внешних ИИ-провайдеров
+  // Это исключает обход лимита параллельными одновременными запросами
+  const shouldConsumeQuota = !params.skipQuota && (!mockProvider || Boolean(params.enforceQuota))
+  if (shouldConsumeQuota) {
+    const quotaRes = await consumeServerQuota(userId, 'aiEvaluationsPerDay', tier)
+    if (!quotaRes.ok) {
+      return {
+        success: false,
+        error: {
+          code: 'quota_exceeded',
+          feature: 'aiEvaluationsPerDay',
+          limit: quotaRes.limit,
+          tier: quotaRes.tier,
+          message: 'Превышена суточная квота ИИ-оценок для вашего тарифа',
+        },
+      }
+    }
+  }
+
+  // 4. Вызываем ИИ с каскадом: Gemini -> DeepSeek -> Heuristic
   let evaluation: DayEvaluationResult | null = null
   let providerName = 'gemini'
   let tokenUsage = { promptTokens: 0, completionTokens: 0, totalTokens: 0 }
@@ -499,7 +544,7 @@ export async function evaluateDayWithAI(
       }
     }
   } else {
-    // 3.1: Пробуем Gemini (с 1 ретраем)
+    // 4.1: Пробуем Gemini (с 1 ретраем)
     for (let attempt = 1; attempt <= 2 && !evaluation; attempt++) {
       try {
         const geminiRes = await callGemini(promptText, timeoutMs)
@@ -518,7 +563,7 @@ export async function evaluateDayWithAI(
       }
     }
 
-    // 3.2: Если Gemini не ответил -> пробуем DeepSeek (с 1 ретраем)
+    // 4.2: Если Gemini не ответил -> пробуем DeepSeek (с 1 ретраем)
     if (!evaluation) {
       for (let attempt = 1; attempt <= 2 && !evaluation; attempt++) {
         try {
@@ -539,28 +584,11 @@ export async function evaluateDayWithAI(
       }
     }
 
-    // 3.3: Если оба провайдера недоступны — оффлайн-эвристический разбор
+    // 4.3: Если оба провайдера недоступны — оффлайн-эвристический разбор
     if (!evaluation) {
       console.warn('[AI_OFFLINE_FALLBACK]: Both providers failed, using offline heuristic analysis with approximate badge')
       evaluation = fallbackHeuristicDayEvaluation('', prides, gratitudes, tier)
       providerName = 'heuristic-offline'
-    }
-  }
-
-  // 4. Атомарно списываем квоту (если не мок)
-  if (!mockProvider) {
-    const quotaRes = await consumeServerQuota(userId, 'aiEvaluationsPerDay', tier)
-    if (!quotaRes.ok) {
-      return {
-        success: false,
-        error: {
-          code: 'quota_exceeded',
-          feature: 'aiEvaluationsPerDay',
-          limit: quotaRes.limit,
-          tier: quotaRes.tier,
-          message: 'Превышена суточная квота ИИ-оценок для вашего тарифа',
-        },
-      }
     }
   }
 

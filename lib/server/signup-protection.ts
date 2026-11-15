@@ -124,7 +124,8 @@ export function validatePasswordSecurity(password: string): { valid: boolean; er
  */
 export function validateFormTiming(
   formStartTime?: number | string | null,
-  minSeconds = 3
+  minSeconds = 3,
+  maxSeconds = 1800
 ): { valid: boolean; error?: string } {
   if (!formStartTime) {
     return { valid: false, error: 'Отсутствует метка времени формы' }
@@ -140,6 +141,13 @@ export function validateFormTiming(
     return {
       valid: false,
       error: `Форма заполнена слишком быстро (${(elapsedMs / 1000).toFixed(1)} сек, минимум ${minSeconds} сек)`,
+    }
+  }
+
+  if (elapsedMs > maxSeconds * 1000) {
+    return {
+      valid: false,
+      error: `Время сессии формы истекло (максимум ${Math.round(maxSeconds / 60)} минут)`,
     }
   }
 

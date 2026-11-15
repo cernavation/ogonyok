@@ -592,19 +592,38 @@ export function ProfileView({
     }
     if (displayProfile.website) {
       const rawWeb = displayProfile.website.trim()
-      const href = rawWeb.startsWith('http://') || rawWeb.startsWith('https://') ? rawWeb : `https://${rawWeb}`
-      items.push(
-        <a
-          key="website"
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-[var(--accent)] hover:underline shrink-0"
-        >
-          <span>🔗</span>
-          <span className="truncate max-w-[220px]">{rawWeb.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
-        </a>
-      )
+      let safeHref: string | null = null
+      try {
+        const candidate = rawWeb.startsWith('http://') || rawWeb.startsWith('https://') ? rawWeb : `https://${rawWeb}`
+        const parsed = new URL(candidate)
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          safeHref = parsed.toString()
+        }
+      } catch {
+        safeHref = null
+      }
+
+      if (safeHref) {
+        items.push(
+          <a
+            key="website"
+            href={safeHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[var(--accent)] hover:underline shrink-0"
+          >
+            <span>🔗</span>
+            <span className="truncate max-w-[220px]">{rawWeb.replace(/^https?:\/\//, '').replace(/\/$/, '')}</span>
+          </a>
+        )
+      } else {
+        items.push(
+          <span key="website" className="inline-flex items-center gap-1.5 text-[var(--text-3)] shrink-0">
+            <span>🔗</span>
+            <span className="truncate max-w-[220px]">{rawWeb}</span>
+          </span>
+        )
+      }
     }
     return items
   }, [displayProfile.city, displayProfile.age, displayProfile.website])

@@ -84,3 +84,15 @@ export async function consumeServerQuota(
     current: current + 1,
   }
 }
+
+/**
+ * Возврат списанной квоты при непредвиденном критическом сбое сервиса
+ */
+export function refundServerQuota(userId: string, feature: keyof TierLimits): void {
+  const today = new Date().toISOString().slice(0, 10)
+  const key = `${userId}:${feature}:${today}`
+  const current = localUsageCounters.get(key) || 0
+  if (current > 0) {
+    localUsageCounters.set(key, current - 1)
+  }
+}
