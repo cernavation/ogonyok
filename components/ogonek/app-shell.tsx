@@ -60,6 +60,7 @@ const HotkeysModal = dynamic(() => import('./hotkeys-modal').then((m) => m.Hotke
 const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { ssr: false })
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
+const OnboardingTour = dynamic(() => import('./tour/onboarding-tour').then((m) => m.OnboardingTour), { ssr: false })
 const FriendsModal = dynamic(() => import('./friends/friends-modal').then((m) => m.FriendsModal), { ssr: false })
 const PremiumModal = dynamic(() => import('./premium-modal').then((m) => m.PremiumModal), { ssr: false })
 const UpgradeModal = dynamic(() => import('./upgrade-modal').then((m) => m.UpgradeModal), { ssr: false })
@@ -79,6 +80,7 @@ export function AppShell() {
   const [friendsModalOpen, setFriendsModalOpen] = useState(false)
   const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'requests' | 'search' | 'following'>('friends')
   const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
   const [premiumModalOpen, setPremiumModalOpen] = useState(false)
   const [upgradeModal, setUpgradeModal] = useState<{
     isOpen: boolean
@@ -176,6 +178,7 @@ export function AppShell() {
       hotkeysModal ||
       lightbox ||
       onboardingOpen ||
+      tourOpen ||
       incomingCall ||
       premiumModalOpen ||
       upgradeModal.isOpen
@@ -815,6 +818,24 @@ export function AppShell() {
     setEditingDay(null)
   }, [])
 
+  const handleCompleteTour = useCallback(() => {
+    setTourOpen(false)
+    updateProfile({ tour_completed: true, onboarding_completed: true })
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ogonek:tour-completed', 'true')
+    }
+    notify('Интерактивный тур завершён! Твой путь начинается.')
+    setComposer(true)
+  }, [updateProfile, notify])
+
+  const handleCloseTour = useCallback(() => {
+    setTourOpen(false)
+    updateProfile({ tour_completed: true, onboarding_completed: true })
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ogonek:tour-completed', 'true')
+    }
+  }, [updateProfile])
+
   /* ── ЭТАП 15: экран блокировки, автоблокировка и ручная блокировка ─────── */
 
   // До гидратации CSS держал контент под чёрной заглушкой — снимаем флаг
@@ -1072,7 +1093,9 @@ export function AppShell() {
 
   // Onboarding event listener & automation events
   useEffect(() => {
-    const handleOpenOnboarding = () => setOnboardingOpen(true)
+    const handleOpenOnboarding = () => setTourOpen(true)
+    const handleOpenTour = () => setTourOpen(true)
+    const handleCloseTourEvent = () => setTourOpen(false)
     const handleNavigate = (e: Event) => {
       const custom = e as CustomEvent<ViewId>
       if (custom.detail) navigate(custom.detail)
@@ -1087,10 +1110,15 @@ export function AppShell() {
       setAuthModal(custom.detail || 'signin')
     }
     const handleCloseAuth = () => setAuthModal(null)
-    const handleCloseOnboarding = () => setOnboardingOpen(false)
+    const handleCloseOnboarding = () => {
+      setOnboardingOpen(false)
+      setTourOpen(false)
+    }
 
     window.addEventListener('ogonek:open-onboarding', handleOpenOnboarding)
     window.addEventListener('ogonek:close-onboarding', handleCloseOnboarding)
+    window.addEventListener('ogonek:open-tour', handleOpenTour)
+    window.addEventListener('ogonek:close-tour', handleCloseTourEvent)
     window.addEventListener('ogonek:navigate', handleNavigate)
     window.addEventListener('ogonek:open-composer', handleOpenComposer)
     window.addEventListener('ogonek:close-composer', handleCloseComposerEvent)
@@ -1100,6 +1128,8 @@ export function AppShell() {
     return () => {
       window.removeEventListener('ogonek:open-onboarding', handleOpenOnboarding)
       window.removeEventListener('ogonek:close-onboarding', handleCloseOnboarding)
+      window.removeEventListener('ogonek:open-tour', handleOpenTour)
+      window.removeEventListener('ogonek:close-tour', handleCloseTourEvent)
       window.removeEventListener('ogonek:navigate', handleNavigate)
       window.removeEventListener('ogonek:open-composer', handleOpenComposer)
       window.removeEventListener('ogonek:close-composer', handleCloseComposerEvent)
@@ -1107,6 +1137,27 @@ export function AppShell() {
       window.removeEventListener('ogonek:close-auth', handleCloseAuth)
     }
   }, [navigate])
+
+  // Auto-launch interactive tour for new users or when explicitly requested via ?tour=1
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('tour') === '1') {
+      setTourOpen(true)
+      return
+    }
+
+    const isTourDone =
+      state.profile.tour_completed ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem('ogonek:tour-completed') === 'true')
+
+    if (state.auth.signedIn && !isTourDone) {
+      const timer = setTimeout(() => {
+        setTourOpen(true)
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [state.auth.signedIn, state.profile.tour_completed])
 
   // Key 'p' to open profile modal (legacy — keep for hotkey compat)
   useEffect(() => {
@@ -1652,6 +1703,23 @@ export function AppShell() {
               }}
               onNotify={notify}
               soundEnabled={state.soundEnabled}
+            />
+          )}
+
+          {/* Интерактивный тур с прожектором и маскотом (Шаг 15) */}
+          {tourOpen && (
+            <OnboardingTour
+              isOpen={tourOpen}
+              onClose={handleCloseTour}
+              onComplete={handleCompleteTour}
+              soundEnabled={state.soundEnabled}
+              onRequestComposer={(open) => setComposer(open)}
+              onRequestNavigate={(targetView) => navigate(targetView)}
+              onRequestDrawer={(open) => {
+                window.dispatchEvent(
+                  new CustomEvent('ogonek:toggle-mobile-drawer', { detail: { open } })
+                )
+              }}
             />
           )}
 

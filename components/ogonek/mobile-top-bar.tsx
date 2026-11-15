@@ -2,7 +2,7 @@
 
 import { Flame, Settings, Users } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
@@ -23,6 +23,18 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
   const { state, currentUser, signOut, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const [drawerOpen, setDrawerOpen] = useState(false)
   useBodyScrollLock(drawerOpen)
+
+  useEffect(() => {
+    const handleToggleDrawer = (e: any) => {
+      if (typeof e.detail?.open === 'boolean') {
+        setDrawerOpen(e.detail.open)
+      } else {
+        setDrawerOpen((prev) => !prev)
+      }
+    }
+    window.addEventListener('ogonek:toggle-mobile-drawer', handleToggleDrawer)
+    return () => window.removeEventListener('ogonek:toggle-mobile-drawer', handleToggleDrawer)
+  }, [])
 
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUser?.username || state.profile.username || 'user'
@@ -70,9 +82,10 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
 
         {/* Right: Streak badge + Settings icon */}
         <div className="flex items-center gap-1.5">
-          {streak != null && streak > 0 && (
+          {streak != null && (
             <button
               type="button"
+              data-tour="nav-streak"
               onClick={() => onNavigate('leaderboard')}
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--surface-subtle,#1d1f23)] border border-[var(--border)] active:scale-95 transition-transform"
               aria-label={`Текущий стрик: ${streak} дней`}
@@ -84,6 +97,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
           {onOpenFriends && (
             <button
               type="button"
+              data-tour="nav-friends"
               className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors relative"
               aria-label="Друзья"
               onClick={onOpenFriends}
@@ -105,6 +119,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
           />
           <button
             type="button"
+            data-tour="nav-settings"
             className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--text)] active:opacity-70 transition-colors"
             aria-label="Настройки"
             onClick={() => onNavigate('settings')}
@@ -161,16 +176,17 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
               <nav className="flex flex-col gap-1 flex-1">
                 {[
                   { id: 'profile' as ViewId, label: 'Мой профиль' },
-                  { id: 'settings' as ViewId, label: 'Настройки' },
-                  { id: 'premium' as ViewId, label: 'Премиум' },
+                  { id: 'settings' as ViewId, label: 'Настройки', tour: 'nav-settings' },
+                  { id: 'premium' as ViewId, label: 'Премиум', tour: 'nav-premium' },
                   { id: 'leaderboard' as ViewId, label: 'Рейтинг' },
-                  { id: 'vault' as ViewId, label: 'Evidence Vault' },
-                  { id: 'analytics' as ViewId, label: 'Аналитика' },
+                  { id: 'vault' as ViewId, label: 'Evidence Vault', tour: 'nav-vault' },
+                  { id: 'analytics' as ViewId, label: 'Аналитика', tour: 'nav-analytics' },
                   { id: 'intentions' as ViewId, label: 'Намерения' },
-                ].map(({ id, label }) => (
+                ].map(({ id, label, tour }) => (
                   <button
                     key={id}
                     type="button"
+                    data-tour={tour}
                     className="w-full text-left px-3 py-3 rounded-xl text-[15px] text-[var(--text)] hover:bg-[var(--bg-hover)] active:bg-[var(--bg-hover)] transition-colors"
                     onClick={() => {
                       onNavigate(id)

@@ -439,6 +439,8 @@ export const DEFAULT_PROFILE: OgonekProfile = {
   isAnonymous: false,
   subscription_tier: 'free',
   privacy: {},
+  tour_completed: false,
+  onboarding_completed: false,
 }
 
 /** Валидирует и восстанавливает профиль пользователя из хранилища */
@@ -483,6 +485,8 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     subscription_expires_at: typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : (typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : null),
     subscription_valid_until: typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : (typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : null),
     privacy: typeof p.privacy === 'object' && p.privacy !== null ? p.privacy : {},
+    tour_completed: typeof p.tour_completed === 'boolean' ? p.tour_completed : Boolean((p as any)?.onboarding_completed),
+    onboarding_completed: typeof p.onboarding_completed === 'boolean' ? p.onboarding_completed : Boolean((p as any)?.tour_completed),
   }
 }
 

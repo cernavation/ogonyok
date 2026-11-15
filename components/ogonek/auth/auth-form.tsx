@@ -260,6 +260,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                 display_name: nameToUse,
                 avatar_color: selectedAvatarColor,
                 subscription_tier: 'free',
+                tour_completed: false,
+                onboarding_completed: false,
                 updated_at: new Date().toISOString(),
               },
               { onConflict: 'id' }
@@ -270,6 +272,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       }
 
       finish(userId, `Добро пожаловать в Огонёк, @${cleanNick}!`)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ogonek:open-tour'))
+      }
     } catch (err: any) {
       setError(err?.message || 'Ошибка при регистрации аккаунта')
     } finally {

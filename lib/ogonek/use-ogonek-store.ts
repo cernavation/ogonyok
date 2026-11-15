@@ -2767,6 +2767,10 @@ export function useOgonekStore() {
             if (nextProfile.age !== undefined && nextProfile.age !== null) {
               payload.age = nextProfile.age
             }
+            if (nextProfile.tour_completed !== undefined) {
+              payload.tour_completed = nextProfile.tour_completed
+              payload.settings.tour_completed = nextProfile.tour_completed
+            }
             updateProfileInDb(activeId, payload).catch((err: any) => {
               console.warn('[Ogonek] Upsert profile error:', err)
             })
@@ -5488,6 +5492,7 @@ export function useOgonekStore() {
       let dbBio: string | null = null
       let dbAge: number | null = null
       let dbIsAnon: boolean | null = null
+      let dbTourCompleted: boolean | null = null
 
       try {
         const client = getSupabase()
@@ -5514,6 +5519,13 @@ export function useOgonekStore() {
             if (dbProfile.bio) dbBio = dbProfile.bio
             if (typeof dbProfile.age === 'number') dbAge = dbProfile.age
             if (typeof dbProfile.is_anonymous === 'boolean') dbIsAnon = dbProfile.is_anonymous
+            if (typeof dbProfile.tour_completed === 'boolean') {
+              dbTourCompleted = dbProfile.tour_completed
+            } else if (typeof dbProfile.settings?.tour_completed === 'boolean') {
+              dbTourCompleted = dbProfile.settings.tour_completed
+            } else if (typeof dbProfile.onboarding_completed === 'boolean') {
+              dbTourCompleted = dbProfile.onboarding_completed
+            }
           }
         }
       } catch (err) {
@@ -5593,6 +5605,8 @@ export function useOgonekStore() {
             website: dbWebsite !== null ? dbWebsite : (existing ? baseProfile.website : ''),
             age: dbAge !== null ? dbAge : (existing ? baseProfile.age : null),
             isAnonymous: dbIsAnon !== null ? dbIsAnon : (existing ? baseProfile.isAnonymous : false),
+            tour_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.tour_completed) : false),
+            onboarding_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.onboarding_completed) : false),
           }),
           // Для нового пользователя (не cernavation) лента чистая и готова к первому дню
           days: isOwner

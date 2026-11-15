@@ -305,6 +305,7 @@ export function HomeView({
               <Tooltip content="Друзья" side="bottom">
                 <button
                   type="button"
+                  data-tour="nav-friends"
                   onClick={onOpenFriends}
                   className="muted w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors relative"
                   aria-label="Друзья"

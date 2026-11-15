@@ -60,6 +60,7 @@ export function RightRail({
 
       {/* Блок 2: Стрик и дедлайн — 1-слойная карточка (без вложенных подложек) */}
       <section
+        data-tour="nav-streak"
         className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] p-4 transition-colors"
         aria-labelledby="streak-title"
       >

@@ -50,6 +50,7 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
             <button
               key={id}
               type="button"
+              data-tour={id === 'messages' ? 'nav-messages' : undefined}
               className="flex-1 flex flex-col items-center justify-center h-full relative text-[var(--text)] active:scale-[0.98] transition-all duration-150"
               style={{ color: active ? 'var(--text)' : 'var(--muted)' }}
               aria-label={label}

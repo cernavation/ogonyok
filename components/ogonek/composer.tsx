@@ -1170,6 +1170,7 @@ export function Composer({
             <button
               type="button"
               role="tab"
+              data-tour="composer-gratitude"
               aria-selected={tab === 'gratitude'}
               onClick={() => handleSwitchTab('gratitude')}
               className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
@@ -1207,6 +1208,7 @@ export function Composer({
         <button
           type="button"
           id="composer-publish-btn"
+          data-tour="composer-save"
           onClick={handlePublish}
           disabled={isPublishing || (editingDay ? totalFilled === 0 || hasOverlongItem : !canPublish)}
           title={
@@ -1261,26 +1263,24 @@ export function Composer({
         </div>
 
         <div className="relative flex items-center gap-2">
-          {/* Оценка слота и звёзды преодоления (CONTRACT Шаг 11) */}
-          {currentSlotScore !== null && (
-            <span
-              id="composer-slot-score-badge"
-              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20"
-              title={`Оценка: ${currentSlotScore}${evaluations[activeSlot]?.overcome ? `, преодоление: уровень ${evaluations[activeSlot].overcome}` : ''}`}
-            >
-              🔥 {currentSlotScore}
-              {evaluations[activeSlot]?.overcome && evaluations[activeSlot].overcome > 0 && (
-                <span className="text-[10px] text-amber-400 font-normal">
-                  {'★'.repeat(evaluations[activeSlot].overcome)}
-                </span>
-              )}
+          {/* Оценка слота и звёзды преодоления (CONTRACT Шаг 11 & Шаг 15) */}
+          <span
+            id="composer-slot-score-badge"
+            data-tour="composer-stars"
+            className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20"
+            title={`Оценка: ${currentSlotScore ?? 8}${evaluations[activeSlot]?.overcome ? `, преодоление: уровень ${evaluations[activeSlot].overcome}` : ''}`}
+          >
+            🔥 {currentSlotScore ?? 8}
+            <span className="text-[10px] text-amber-400 font-normal">
+              {'★'.repeat(evaluations[activeSlot]?.overcome && evaluations[activeSlot].overcome > 0 ? evaluations[activeSlot].overcome : 1)}
             </span>
-          )}
+          </span>
 
           {/* Маленькая чип-кнопка «Лично ▾» (CONTRACT Шаг 09: рядом с оценкой, без увеличения высоты строки) */}
           <button
             type="button"
             id="composer-audience-chip"
+            data-tour="composer-audience"
             onClick={() => {
               playClick(soundEnabled)
               setAudienceMenuOpen(!audienceMenuOpen)
@@ -1445,6 +1445,7 @@ export function Composer({
       <textarea
         ref={textareaRef}
         id="composer-slot-textarea"
+        data-tour="composer-pride"
         rows={4}
         value={activeValue}
         onChange={(e) => handleActiveChange(e.target.value)}
@@ -1667,6 +1668,22 @@ export function Composer({
               aria-label="Нужна идея?"
             >
               <HelpCircle className="w-4 h-4 text-[#71767b]" />
+            </button>
+          </Tooltip>
+
+          {/* ИИ-оценка по тарифам (Шаг 15) */}
+          <Tooltip content="ИИ-оценка по тарифам">
+            <button
+              type="button"
+              data-tour="composer-ai-eval"
+              id="composer-ai-eval-btn"
+              onClick={handleEvaluateAi}
+              disabled={isEvaluating}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent,#FF6A1A)] hover:text-white hover:bg-[var(--accent,#FF6A1A)]/20 transition-colors min-h-[40px] min-w-[40px]"
+              title="ИИ-оценка по тарифам"
+              aria-label="ИИ-оценка по тарифам"
+            >
+              <Sparkles className={`w-4 h-4 ${isEvaluating ? 'animate-spin' : ''}`} />
             </button>
           </Tooltip>
         </div>

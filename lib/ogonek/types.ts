@@ -262,6 +262,9 @@ export type OgonekProfile = {
   /** Число дней стрика / летописи */
   streak_count?: number
   streak?: number
+  /** Флаг прохождения интерактивного тура (Шаг 15) */
+  tour_completed?: boolean
+  onboarding_completed?: boolean
 }
 
 /** Статусы сессии аудио/видео звонка */

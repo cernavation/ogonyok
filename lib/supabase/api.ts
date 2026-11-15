@@ -29,6 +29,8 @@ export interface ProfileRecord {
   settings?: { level?: number; [key: string]: any }
   age?: number | null
   verified?: boolean
+  tour_completed?: boolean
+  onboarding_completed?: boolean
   subscription_tier?: 'free' | 'premium' | 'ultra'
   avatar_color?: string | null
   created_at?: string
@@ -69,6 +71,8 @@ export function mapProfileRecord(row: any): ProfileRecord {
     streak: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
     streak_count: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
     is_anonymous: row.is_anonymous === true || row.privacy?.is_anonymous === true,
+    tour_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
+    onboarding_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
   } as ProfileRecord
 }
 
@@ -1268,6 +1272,13 @@ export async function updateProfileInDb(
     if (patch.level_changed_at !== undefined) updates.level_changed_at = patch.level_changed_at
     if (patch.age !== undefined) updates.age = patch.age
     if (patch.verified !== undefined) updates.verified = patch.verified
+    if (patch.tour_completed !== undefined) {
+      updates.tour_completed = patch.tour_completed
+      updates.settings = {
+        ...(patch.settings ?? updates.settings ?? {}),
+        tour_completed: patch.tour_completed,
+      }
+    }
     if (patch.is_anonymous !== undefined) updates.is_anonymous = patch.is_anonymous
     if (patch.privacy !== undefined) updates.privacy = patch.privacy
     if (patch.settings !== undefined) updates.settings = patch.settings

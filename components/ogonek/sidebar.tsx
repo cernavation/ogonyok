@@ -361,10 +361,24 @@ export function Sidebar({
       }
     }
 
+    const tourAttr =
+      id === 'messages'
+        ? 'nav-messages'
+        : id === 'vault'
+        ? 'nav-vault'
+        : id === 'analytics'
+        ? 'nav-analytics'
+        : id === 'premium'
+        ? 'nav-premium'
+        : id === 'settings'
+        ? 'nav-settings'
+        : undefined
+
     return (
       <Tooltip key={id} content={label} side="right">
         <button
           type="button"
+          data-tour={tourAttr}
           className={`nav-item group relative flex items-center hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
             isCollapsed
               ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'

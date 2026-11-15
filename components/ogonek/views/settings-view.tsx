@@ -16,6 +16,7 @@ import {
   Palette,
   Pipette,
   RotateCcw,
+  Sparkles,
   Sun,
   SunDim,
   Type,
@@ -653,12 +654,13 @@ export function SettingsView({
 
               <button
                 type="button"
+                id="settings-guide-restart-tour-btn"
                 onClick={() => {
-                  window.dispatchEvent(new CustomEvent('ogonek:open-onboarding'))
+                  window.dispatchEvent(new CustomEvent('ogonek:open-tour'))
                 }}
                 className="x-primary-btn mt-3 py-2.5 px-4 rounded-full text-[14px] font-bold text-center"
               >
-                Открыть интерактивный гайд
+                Пройти интерактивный тур заново
               </button>
             </div>
           </div>
@@ -687,6 +689,28 @@ export function SettingsView({
           </p>
         </div>
       </header>
+
+      {/* Banner: Интерактивный обучающий тур */}
+      <div className="p-4 border-b border-[var(--border)] bg-[var(--bg-elev)] flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Sparkles size={16} className="text-[var(--accent)]" /> Обучающий тур
+          </h2>
+          <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+            Пройди интерактивный тур по ключевым возможностям Огонька за 1 минуту
+          </p>
+        </div>
+        <button
+          type="button"
+          id="settings-restart-tour-btn"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('ogonek:open-tour'))
+          }}
+          className="x-primary-btn shrink-0 py-2 px-4 rounded-full text-[13px] font-bold text-center"
+        >
+          Пройти тур заново
+        </button>
+      </div>
 
       {/* Main Settings Container: вертикальная вёрстка в колонку (X.com standard внутри 600px) */}
       <div className="w-full divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
