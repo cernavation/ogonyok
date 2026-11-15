@@ -246,6 +246,7 @@ export async function signUpWithUsername(params: {
   password: string
   displayName?: string
   level?: number
+  avatarColor?: string
 }): Promise<{ ok: boolean; user?: User | any; session?: Session | null; error?: string }> {
   const cleanNick = (params.username || '')
     .trim()
@@ -317,6 +318,7 @@ export async function signUpWithUsername(params: {
           display_name: displayName,
           level,
           streak: 0,
+          avatar_color: params.avatarColor || '#FF6A1A',
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'id' }

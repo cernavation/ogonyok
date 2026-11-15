@@ -4,11 +4,8 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   Flame,
-  Calendar,
   Users,
   Sparkles,
-  BarChart3,
-  BookOpen,
   Shield,
   ArrowRight,
   MessageSquare,
@@ -18,18 +15,21 @@ import {
   Moon,
   ExternalLink,
   ChevronDown,
-  ChevronRight,
-  Mic,
-  Lock,
-  WifiOff,
-  Download,
   Target,
-  Heart,
-  Briefcase,
-  Code2,
-  Compass,
+  BookOpen,
+  Video,
+  Lock,
+  Layers,
+  Star,
+  Bot,
 } from 'lucide-react'
-import { isSupabaseConfigured } from '@/lib/supabase/client'
+import {
+  TIER_PRICES,
+  TIER_FEATURES_LIST,
+  TIER_NAMES,
+  TIER_BADGES,
+  type SubscriptionTier,
+} from '@/lib/ogonek/permissions'
 import { AuthModal } from '../auth/auth-modal'
 
 type Props = {
@@ -37,13 +37,15 @@ type Props = {
   onNotify?: (msg: string) => void
 }
 
+type ShowcaseTab = 'diary' | 'chats' | 'ai' | 'vault' | 'mobile'
+
 export function GuestLanding({ onEnterDemo, onNotify }: Props) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-  const [authModal, setAuthModal] = useState<boolean>(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(0)
+  const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
+  const [billingPeriod, setBillingPeriod] = useState<'month' | 'year'>('month')
+  const [activeShowcase, setActiveShowcase] = useState<ShowcaseTab>('diary')
 
   const isDark = theme === 'dark'
-  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === '1'
 
   const handleDemoClick = () => {
     if (onEnterDemo) {
@@ -60,121 +62,107 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     }
   }
 
-  const faqItems = [
+  const handleSelectFreeTier = () => {
+    setAuthModal('register')
+  }
+
+  const handleSelectProTier = () => {
+    setAuthModal('register')
+  }
+
+  const handleSelectUltraTier = () => {
+    setAuthModal('register')
+  }
+
+  const showcaseTabs: { id: ShowcaseTab; label: string; icon: any; file: string; desc: string }[] = [
     {
-      q: 'Кто может читать мои записи в дневнике?',
-      a: 'Только ты. Каждая запись защищена на уровне базы данных (Row Level Security в Supabase). Никто, кроме владельца аккаунта, не имеет доступа к твоим победам и благодарностям, если ты сам явно не решишь опубликовать конкретный пост в общую ленту.',
+      id: 'diary',
+      label: 'Дневник побед',
+      icon: BookOpen,
+      file: '/landing/screen-diary.png',
+      desc: 'Главный экран: 1–5 записей вечером, шкала преодоления 1–10★ и статус стрика',
     },
     {
-      q: 'Сбросится ли мой стрик, если я пропущу день или заболею?',
-      a: 'Никогда. В отличие от токсичных трекеров, где один пропуск стирает год работы, в Огоньке стрик равен общему количеству закрытых дней дневника. Твой накопленный опыт и победы принадлежат тебе навсегда.',
+      id: 'chats',
+      label: 'Чаты и друзья',
+      icon: MessageSquare,
+      file: '/landing/screen-chats.png',
+      desc: 'Защищённый мессенджер: голосовые, пруфы побед, взаимные стрики и звонки',
     },
     {
-      q: 'Сколько стоит использование Огонька?',
-      a: 'Огонёк полностью бесплатен для личного ведения дневника, хранения побед в Evidence Vault, общения в чатах друзей и аналитики. Без скрытых подписок и без навязчивой рекламы.',
+      id: 'ai',
+      label: 'ИИ-разбор',
+      icon: Bot,
+      file: '/landing/screen-ai-eval.png',
+      desc: 'Бескомпромиссный разбор сопротивления и отчёты юбилейных вех 100/200/300 дней',
     },
     {
-      q: 'Как устроена авторизация через Google?',
-      a: 'Вход выполняется в один клик через официальный OAuth 2.0 от Supabase. Мы не получаем доступ к твоим паролям или почте — только подтверждение твоей личности, имя и аватар для профиля.',
+      id: 'vault',
+      label: 'Evidence Vault',
+      icon: Shield,
+      file: '/landing/screen-vault.png',
+      desc: 'Личный сейф артефактов: фото, чеки, контракты и сертификаты побед навсегда',
     },
     {
-      q: 'Можно ли забрать свои данные, если я решу уйти?',
-      a: 'Да, в любой момент. В разделе «Настройки → Резервные копии» доступен экспорт всей истории, файлов и заметок в открытый формат JSON в один клик.',
+      id: 'mobile',
+      label: 'Мобильная версия',
+      icon: Target,
+      file: '/landing/screen-mobile.png',
+      desc: 'Полнофункциональный PWA на iPhone и Android с нижней навигацией и быстрым вводом',
     },
   ]
 
-  const featureCards = [
+  const faqItems = [
     {
-      icon: BookOpen,
-      title: 'Дневник побед',
-      desc: 'Шкала преодоления от 1 до 10. Фиксируй только реальные свершения вместо бесконечных списков дел.',
+      q: 'Кто может читать мои записи в дневнике?',
+      a: 'Только ты. Каждая запись защищена на уровне базы данных строгой политикой Row Level Security (RLS) в Supabase. У каждой отдельной записи есть своя аудитория («Лично / Друзьям / Всем / Группе»). По умолчанию все записи сохраняются со статусом «Лично». Никто, включая администраторов, не имеет доступа к твоим закрытым победам.',
     },
     {
-      icon: Heart,
-      title: 'Благодарности',
-      desc: 'Фокус на ценности каждого прожитого дня, поддержке близких и важных мелочах.',
+      q: 'Сбросится ли мой стрик, если я пропущу день или заболею?',
+      a: 'Никогда. В отличие от токсичных трекеров, где один пропущенный день сжигает месяцы усилий, в Огоньке стрик равен общему количеству закрытых дней дневника. Пропуск ничего не обнуляет: дата и номер привязываются к твоей последней записи. Твой накопленный опыт и самоуважение принадлежат тебе навсегда.',
     },
     {
-      icon: Shield,
-      title: 'Evidence Vault',
-      desc: 'Сейф артефактов: прикрепляй фото, чеки, скриншоты, отзывы и сертификаты как железные пруфы.',
+      q: 'Как работает ИИ с моими данными и записями?',
+      a: 'Нейросеть подключается строго по твоему прямому действию («Оценить с ИИ» или в юбилейных отчётах). Запросы передаются через изолированный серверный шлюз без сохранения персональных данных. ИИ никогда не обучается на твоих личных текстах. В отчётах числа и динамику вычисляет строгий детерминированный код, а ИИ лишь бережно и объективно формулирует выводы.',
     },
     {
-      icon: MessageSquare,
-      title: 'Мессенджер друзей',
-      desc: 'Полноэкранный мессенджер в стиле X.com и Telegram Web: голосовые, быстрые реакции, папки диалогов.',
+      q: 'Что происходит с записями и Evidence Vault, если подписка закончится?',
+      a: 'Все твои ранее созданные записи, фотографии, прикреплённые документы и артефакты Evidence Vault остаются доступны навсегда. Мы никогда не удаляем и не блокируем уже накопленный опыт. При окончании оплаченного периода аккаунт просто переходит на базовый тариф с сохранением всей истории.',
     },
     {
-      icon: Trophy,
-      title: 'Рейтинг силы',
-      desc: 'Лидерборд единомышленников: вдохновляйся стриками друзей без зависти и токсичной конкуренции.',
-    },
-    {
-      icon: Target,
-      title: 'Фокус утра',
-      desc: '3 главных удара дня и настройка намерений. Начинай утро с кристальной ясности цели.',
-    },
-    {
-      icon: Mic,
-      title: 'Голосовые заметки',
-      desc: 'Наговаривай победы на ходу. ИИ автоматически расшифрует голос в структурированный текст.',
-    },
-    {
-      icon: BarChart3,
-      title: 'Аналитика 700+ дней',
-      desc: 'Интерактивная карта активности, динамика стрика, статистика силы и отчёты лучших недель.',
-    },
-    {
-      icon: Lock,
-      title: 'Приватность Signal',
-      desc: 'Row Level Security: твои записи заперты ключом твоей сессии. Никакой продажи данных брокерам.',
-    },
-    {
-      icon: WifiOff,
-      title: 'Работа офлайн (PWA)',
-      desc: 'Пиши в самолёте, метро или на даче. Приложение мгновенно синхронизирует данные при появлении сети.',
-    },
-    {
-      icon: Download,
-      title: 'Экспорт в PDF и JSON',
-      desc: 'Твои данные принадлежат только тебе. Резервная копия летописи скачивается в один клик.',
-    },
-    {
-      icon: Sparkles,
-      title: 'Без рекламы и спама',
-      desc: 'Чистый премиальный опыт. Никаких баннеров, трекеров внимания или навязанных уведомлений.',
+      q: 'Можно ли забрать свои данные, если я решу экспортировать их?',
+      a: 'Да, в любой момент. В разделе «Настройки → Резервные копии» доступен мгновенный экспорт всей летописи, заметок, оценок и метаданных в открытый структурированный формат JSON и читаемый отчёт в один клик.',
     },
   ]
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-200 flex flex-col justify-between selection:bg-[#FF5C00]/30 ${
+      className={`min-h-screen transition-colors duration-200 flex flex-col justify-between selection:bg-[var(--accent,#FF6A1A)]/30 ${
         isDark ? 'bg-black text-white' : 'bg-[#FAFAFA] text-zinc-900'
       }`}
       data-landing-theme={theme}
     >
-      {/* ── 1. НАВИГАЦИОННАЯ ШАПКА С РАЗМЫТИЕМ (X.COM STYLE) ────────────────── */}
+      {/* ── 1. НАВИГАЦИОННАЯ ШАПКА ────────────────────────────────────────── */}
       <header
         className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors px-4 sm:px-8 py-3.5 flex items-center justify-between ${
-          isDark
-            ? 'bg-black/85 border-zinc-800/80'
-            : 'bg-white/85 border-zinc-200/80'
+          isDark ? 'bg-black/85 border-zinc-800/80' : 'bg-white/85 border-zinc-200/80'
         }`}
       >
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[#FF5C00] to-amber-500 flex items-center justify-center text-white shadow-md shadow-[#FF5C00]/20 font-bold group-hover:scale-105 transition-transform">
+          <Link href="/" aria-label="Огонёк — главная страница" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[var(--accent,#FF6A1A)] to-amber-500 flex items-center justify-center text-white shadow-md shadow-[var(--accent,#FF6A1A)]/20 font-bold group-hover:scale-105 transition-transform">
               ✦
             </div>
             <span className="font-extrabold text-lg tracking-tight">Огонёк</span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-5 text-xs font-semibold text-zinc-400">
-            <a href="#about" className="hover:text-white transition-colors">О проекте</a>
-            <a href="#how" className="hover:text-white transition-colors">Как это работает</a>
-            <a href="#features" className="hover:text-white transition-colors">Функции</a>
-            <a href="#for-whom" className="hover:text-white transition-colors">Для кого</a>
-            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
+          <nav className="hidden lg:flex items-center gap-5 text-xs font-semibold text-zinc-400" aria-label="Навигация лендинга">
+            <a href="#how" aria-label="Перейти к разделу Как это работает" className="hover:text-white transition-colors">Как это работает</a>
+            <a href="#showcase" aria-label="Перейти к разделу Витрина интерфейса" className="hover:text-white transition-colors">Витрина</a>
+            <a href="#friends" aria-label="Перейти к разделу Друзья и группы" className="hover:text-white transition-colors">Друзья и группы</a>
+            <a href="#ai-mentor" aria-label="Перейти к разделу ИИ-оценка и ментор" className="hover:text-white transition-colors">ИИ-оценка</a>
+            <a href="#pricing" aria-label="Перейти к разделу Тарифные планы" className="hover:text-white transition-colors">Тарифы</a>
+            <a href="#faq" aria-label="Перейти к разделу Частые вопросы" className="hover:text-white transition-colors">FAQ</a>
           </nav>
         </div>
 
@@ -183,7 +171,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
           <button
             type="button"
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className={`p-2 rounded-full transition-colors ${
+            className={`p-2 rounded-full transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer ${
               isDark
                 ? 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                 : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-200'
@@ -197,54 +185,57 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
           <button
             type="button"
             onClick={handleDemoClick}
-            className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors border ${
+            aria-label="Открыть приложение в демо-режиме"
+            className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors border min-h-[40px] cursor-pointer ${
               isDark
                 ? 'border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white bg-zinc-900/60'
                 : 'border-zinc-200 hover:border-zinc-300 text-zinc-700 hover:text-zinc-950 bg-white'
             }`}
           >
-            <Sparkles size={13} className="text-[#FF5C00]" />
+            <Sparkles size={13} className="text-[var(--accent,#FF6A1A)]" />
             <span>Демо</span>
           </button>
 
-          {/* Альтернативный вход */}
+          {/* Вход */}
           <button
             type="button"
-            onClick={() => setAuthModal(true)}
-            className={`text-xs font-semibold px-3 py-2 rounded-xl transition-colors ${
+            onClick={() => setAuthModal('signin')}
+            aria-label="Войти в существующий аккаунт"
+            className={`text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors min-h-[40px] cursor-pointer ${
               isDark
-                ? 'text-zinc-400 hover:text-white hover:bg-zinc-800/80'
-                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                ? 'text-zinc-300 hover:text-white hover:bg-zinc-800/80'
+                : 'text-zinc-700 hover:text-zinc-950 hover:bg-zinc-100'
             }`}
           >
             Вход
           </button>
 
-          {/* Главная кнопка в шапке */}
+          {/* Регистрация */}
           <button
             type="button"
-            onClick={() => setAuthModal(true)}
-            className="flex items-center gap-2 py-2 px-3.5 rounded-xl bg-[#FF5C00] hover:bg-[#FF5C00]/90 text-white font-bold text-xs transition-all shadow-sm active:scale-95 cursor-pointer"
+            onClick={() => setAuthModal('register')}
+            aria-label="Начать вести дневник бесплатно"
+            className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-black font-extrabold text-xs transition-all shadow-sm active:scale-95 min-h-[40px] cursor-pointer"
           >
             <span>Начать</span>
           </button>
         </div>
       </header>
 
-      {/* ── 2. HERO СЕКЦИЯ (ГИГАНТСКАЯ ТИПОГРАФИКА + GLOW ЭФФЕКТ) ───────────── */}
+      {/* ── 2. HERO СЕКЦИЯ ───────────────────────────────────────────────── */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-20 flex flex-col gap-16 sm:gap-24">
-        <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
-          {/* Бейдж */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#FF5C00]/10 border border-[#FF5C00]/30 text-[#FF5C00] shadow-sm">
-            <Flame size={14} className="text-[#FF5C00]" />
+        <section aria-label="Главный экран Огонька" className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
+          {/* Бейдж стрика */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 border border-[var(--accent,#FF6A1A)]/30 text-[var(--accent,#FF6A1A)] shadow-sm whitespace-nowrap">
+            <Flame size={14} className="text-[var(--accent,#FF6A1A)]" />
             <span>Личный дневник силы · Стрик никогда не сгорает</span>
           </div>
 
-          {/* Гигантский заголовок */}
+          {/* Заголовок */}
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05]">
             Твой личный дневник силы.{' '}
             <br />
-            <span className="bg-gradient-to-r from-[#FF5C00] via-[#FF7A18] to-amber-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[var(--accent,#FF6A1A)] via-amber-500 to-amber-300 bg-clip-text text-transparent">
               Без фальши и токсичности.
             </span>
           </h1>
@@ -258,408 +249,585 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
             Пиши по 1–5 побед и благодарностей в день. Стрик считается по закрытым дням летописи, а не дням подряд: пропуск ничего не обнуляет. За 700 дней ты соберёшь несокрушимый фундамент веры в себя.
           </p>
 
-          {/* Блок целевых действий */}
+          {/* Блок целевых кнопок */}
           <div className="w-full max-w-md pt-2 flex flex-col gap-3">
             <button
               type="button"
-              onClick={() => setAuthModal(true)}
-              className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-bold text-base transition-all shadow-xl active:scale-[0.98] border cursor-pointer ${
+              onClick={() => setAuthModal('register')}
+              aria-label="Начать вести дневник бесплатно"
+              className={`w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl font-bold text-base transition-all shadow-xl active:scale-[0.98] border min-h-[48px] cursor-pointer ${
                 isDark
                   ? 'bg-white hover:bg-zinc-100 text-zinc-950 border-white/20'
                   : 'bg-zinc-950 hover:bg-zinc-800 text-white border-zinc-950'
               }`}
             >
-              <span>Начать вести бесплатно</span>
+              <span>Начать бесплатно</span>
               <ArrowRight size={18} />
             </button>
 
             <button
               type="button"
               onClick={handleDemoClick}
-              className={`w-full py-3 px-6 rounded-2xl font-semibold text-sm transition-all border flex items-center justify-center gap-2 cursor-pointer ${
+              aria-label="Попробовать демонстрационный режим без регистрации"
+              className={`w-full py-3 px-6 rounded-2xl font-semibold text-sm transition-all border flex items-center justify-center gap-2 min-h-[44px] cursor-pointer ${
                 isDark
                   ? 'bg-zinc-900/80 hover:bg-zinc-800/80 text-zinc-200 border-zinc-800'
                   : 'bg-white hover:bg-zinc-100 text-zinc-800 border-zinc-200'
               }`}
             >
-              <Sparkles size={16} className="text-[#FF5C00]" />
-              <span>Попробовать демо-режим (без регистрации)</span>
+              <Sparkles size={16} className="text-[var(--accent,#FF6A1A)]" />
+              <span>Попробовать демо (без регистрации)</span>
             </button>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-500 pt-1">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-zinc-400 pt-1">
               <span className="flex items-center gap-1">
                 <Check size={14} className="text-emerald-500" /> Вход по никнейму
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Check size={14} className="text-emerald-500" /> Ваши записи приватны
+                <Check size={14} className="text-emerald-500" /> Защита RLS и Signal Privacy
               </span>
-            </div>
-          </div>
-        </div>
-
-        {/* ── ИНТЕРАКТИВНЫЙ МАКЕТ С ЛЁГКИМ СВЕЧЕНИЕМ АКЦЕНТА ──────────────── */}
-        <div className="relative w-full max-w-4xl mx-auto pt-4">
-          {/* Свечение акцента */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-[#FF5C00]/25 via-amber-500/20 to-[#FF5C00]/25 rounded-[32px] blur-2xl opacity-60 pointer-events-none" />
-
-          <div className="relative rounded-3xl border border-zinc-800/90 bg-[#09090b] shadow-2xl overflow-hidden p-3 sm:p-5 text-white">
-            {/* Окно браузера */}
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800/80 mb-4 px-2">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-rose-500/80" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
-                <span className="text-xs text-zinc-500 ml-2 font-mono">ogonek.app/journal</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-[#FF5C00]/20 text-[#FF5C00] text-xs font-bold flex items-center gap-1">
-                  <Flame size={12} /> Стрик: 705 дней закрыто
-                </span>
-              </div>
-            </div>
-
-            {/* Каркас */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-              <div className="hidden md:flex md:col-span-3 flex-col gap-2 border-r border-zinc-800/60 pr-3">
-                <div className="p-2.5 rounded-xl bg-white/5 font-semibold text-xs flex items-center gap-2 text-white">
-                  <BookOpen size={15} className="text-[#FF5C00]" /> Лента дней
-                </div>
-                <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <MessageSquare size={15} /> Чаты друзей
-                </div>
-                <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <Trophy size={15} /> Рейтинг силы
-                </div>
-                <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <BarChart3 size={15} /> Аналитика & ИИ
-                </div>
-                <div className="p-2.5 rounded-xl hover:bg-white/5 font-medium text-xs flex items-center gap-2 text-zinc-400">
-                  <Shield size={15} /> Evidence Vault
-                </div>
-              </div>
-
-              <div className="md:col-span-9 flex flex-col gap-3">
-                <div className="p-4 rounded-2xl bg-zinc-900/90 border border-zinc-800/80 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-[#FF5C00] text-white flex items-center justify-center font-bold text-xs">
-                        ✦
-                      </div>
-                      <div>
-                        <div className="font-bold text-xs">День #705 · Пятница</div>
-                        <div className="text-[10px] text-zinc-400">24 октября 2026 · Закрыт вовремя</div>
-                      </div>
-                    </div>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[11px] font-bold border border-emerald-500/20">
-                      Норма выполнена (3/3)
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 pt-1">
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/50 flex items-start justify-between text-xs">
-                      <span className="text-zinc-200">
-                        1. Вышел на абсолютно новую стадию переговоров с поставщиком по ключевому проекту
-                      </span>
-                      <span className="text-[#FF5C00] font-bold shrink-0 ml-2">9.5 ★</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/50 flex items-start justify-between text-xs">
-                      <span className="text-zinc-200">
-                        2. Пробежал 10 км под дождём, когда внутренний голос уговаривал отложить
-                      </span>
-                      <span className="text-[#FF5C00] font-bold shrink-0 ml-2">9.8 ★</span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-black/40 border border-zinc-800/50 flex items-start justify-between text-xs">
-                      <span className="text-zinc-200">
-                        3. Сдержал слово и помог другу запустить релиз вовремя
-                      </span>
-                      <span className="text-[#FF5C00] font-bold shrink-0 ml-2">9.0 ★</span>
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 rounded-xl bg-gradient-to-r from-[#FF5C00]/10 to-amber-500/5 border border-[#FF5C00]/20 flex items-center gap-2 text-xs">
-                    <Sparkles size={14} className="text-[#FF5C00] shrink-0" />
-                    <span className="text-zinc-300 text-[11px]">
-                      <strong>Огонёк ИИ:</strong> День максимального фокуса. Преодоление внутреннего сопротивления дало ключевой прирост опоры.
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── 3. СЕКЦИЯ 3 КЛЮЧЕВЫХ СМЫСЛОВ («ЗАЧЕМ ЭТО НУЖНО») ─────────────── */}
-        <section id="about" className="space-y-8 pt-6">
-          <div className="text-center max-w-2xl mx-auto space-y-3">
-            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Зачем вести Огонёк?
-            </h2>
-            <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              3 фундаментальных отличия от всех существующих трекеров привычек и дневников.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center font-bold">
-                <Flame size={24} />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight">Стрик, который никогда не сгорает</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                В обычных приложениях один пропуск из-за болезни стирает месяцы усилий и вызывает апатию. В Огоньке стрик — это общее количество закрытых дней. Твой накопленный опыт навсегда остаётся с тобой.
-              </p>
-            </div>
-
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
-                <Target size={24} />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight">5 побед вместо 100 задач</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Бесконечные списки задач рождают чувство вины и выгорание. Огонёк разворачивает внимание на то, что реально преодолено сегодня. Оценивай масштаб преодоления от 1 до 10.
-              </p>
-            </div>
-
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
-                <Shield size={24} />
-              </div>
-              <h3 className="text-lg font-bold tracking-tight">Честность и опора на факты</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Никакого токсичного позитива и пустых аффирмаций. Ты прикрепляешь пруфы в Evidence Vault и видишь реальные артефакты своего прогресса и преодоления за годы.
-              </p>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Check size={14} className="text-emerald-500" /> Без спама и рекламы
+              </span>
             </div>
           </div>
         </section>
 
-        {/* ── 4. СЕКЦИЯ 4 ШАГОВ («КАК ЭТО РАБОТАЕТ») ───────────────────────── */}
-        <section id="how" className="space-y-8 pt-6">
+        {/* ── 3. «КАК ЭТО РАБОТАЕТ» В 3 ШАГА ───────────────────────────────── */}
+        <section id="how" aria-label="Как это работает в 3 шага" className="space-y-8 pt-4">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
               Как это работает
             </h2>
             <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Простой 4-шаговый цикл формирования несокрушимого характера.
+              Простой и честный 3-шаговый цикл формирования несокрушимого характера.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {[
-              {
-                step: '01',
-                title: 'День закрывается вечером',
-                desc: 'Перед сном открываешь Огонёк и фиксируешь от 1 до 5 главных побед и благодарностей дня.',
-              },
-              {
-                step: '02',
-                title: 'Ты видишь динамику',
-                desc: 'Карта активности за 700+ дней, аналитика силы, инсайты и отчёты лучших продуктивных недель.',
-              },
-              {
-                step: '03',
-                title: 'Собираешь доказательства',
-                desc: 'Прикрепляешь скриншоты, отзывы клиентов, сертификаты и файлы в личный Evidence Vault.',
-              },
-              {
-                step: '04',
-                title: 'Растёшь без выгорания',
-                desc: 'Формируется железобетонная самооценка, основанная на реальных фактах, а не на эмоциях.',
-              },
-            ].map((st) => (
-              <div
-                key={st.step}
-                className={`p-6 rounded-3xl border flex flex-col justify-between gap-6 ${
-                  isDark
-                    ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
-                    : 'bg-white border-zinc-200/90 shadow-sm'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-black text-[#FF5C00] font-mono">{st.step}</span>
-                  <div className="w-2 h-2 rounded-full bg-[#FF5C00]/40" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-bold text-base tracking-tight">{st.title}</h3>
-                  <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                    {st.desc}
-                  </p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Шаг 1 */}
+            <div
+              className={`p-7 rounded-3xl border flex flex-col justify-between gap-6 ${
+                isDark
+                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
+                  : 'bg-white border-zinc-200/90 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black text-[var(--accent,#FF6A1A)] font-mono">01</span>
+                <div className="w-10 h-10 rounded-2xl bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] flex items-center justify-center font-bold">
+                  <BookOpen size={20} />
                 </div>
               </div>
-            ))}
+              <div className="space-y-2">
+                <h3 className="font-bold text-lg tracking-tight">Фиксация побед и благодарностей</h3>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Каждый вечер записывай от 1 до 5 главных побед и моментов искренней благодарности. Никаких бесконечных списков дел: только реальные поступки, завершённые сегодня.
+                </p>
+              </div>
+            </div>
+
+            {/* Шаг 2 */}
+            <div
+              className={`p-7 rounded-3xl border flex flex-col justify-between gap-6 ${
+                isDark
+                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
+                  : 'bg-white border-zinc-200/90 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black text-[var(--accent,#FF6A1A)] font-mono">02</span>
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
+                  <Bot size={20} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-lg tracking-tight">Преодоление и разбор ИИ</h3>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Оценивай масштаб преодоления по честной шкале от 1 до 10★. ИИ-ментор анализирует преодолённое сопротивление и даёт трезвый тактический разбор без пустой лести.
+                </p>
+              </div>
+            </div>
+
+            {/* Шаг 3 */}
+            <div
+              className={`p-7 rounded-3xl border flex flex-col justify-between gap-6 ${
+                isDark
+                  ? 'bg-zinc-950/70 border-zinc-800 hover:border-zinc-700'
+                  : 'bg-white border-zinc-200/90 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black text-[var(--accent,#FF6A1A)] font-mono">03</span>
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+                  <Shield size={20} />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="font-bold text-lg tracking-tight">Сохранение стрика и Evidence Vault</h3>
+                <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                  Стрик растёт по сумме закрытых дней и никогда не сгорает из-за пропусков. Прикрепляй скриншоты, чеки и фото в личный сейф артефактов как железные доказательства силы.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* ── 5. ИНТЕРАКТИВНАЯ ВИТРИНА ФУНКЦИЙ (СЕТКА 3×4 = 12 КАРТОЧЕК) ──── */}
-        <section id="features" className="space-y-8 pt-6">
+        {/* ── 4. РЕАЛЬНЫЕ СКРИНШОТЫ ПРИЛОЖЕНИЯ (SHOWCASE) ─────────────────── */}
+        <section id="showcase" aria-label="Реальные скриншоты приложения" className="space-y-6 pt-4">
           <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] whitespace-nowrap">
+              ✦ Живой интерфейс
+            </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Всё, что внутри
+              Интерфейс уровня X и Telegram
             </h2>
             <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              12 продуманных инструментов для жизни, работы и внутренней дисциплины.
+              Никаких картинок-заглушек. Реальные рабочие экраны приложения на десктопе и мобильном.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {featureCards.map((feat, idx) => {
-              const Icon = feat.icon
+          {/* Вкладки переключения экранов */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            {showcaseTabs.map((tab) => {
+              const Icon = tab.icon
+              const isActive = activeShowcase === tab.id
               return (
-                <div
-                  key={idx}
-                  className={`p-6 rounded-3xl border transition-all flex flex-col gap-3 group ${
-                    isDark
-                      ? 'bg-zinc-950/60 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
-                      : 'bg-white border-zinc-200/90 hover:border-zinc-300 shadow-sm'
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveShowcase(tab.id)}
+                  aria-label={`Показать экран: ${tab.label}`}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all min-h-[44px] cursor-pointer border ${
+                    isActive
+                      ? 'bg-[var(--accent,#FF6A1A)] text-black font-extrabold border-[var(--accent,#FF6A1A)] shadow-lg shadow-[var(--accent,#FF6A1A)]/20'
+                      : isDark
+                      ? 'bg-zinc-900/80 text-zinc-400 hover:text-white border-zinc-800 hover:border-zinc-700'
+                      : 'bg-white text-zinc-600 hover:text-zinc-950 border-zinc-200'
                   }`}
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[#FF5C00]/10 text-[#FF5C00] flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Icon size={20} />
-                  </div>
-                  <h3 className="font-bold text-base tracking-tight">{feat.title}</h3>
-                  <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                    {feat.desc}
-                  </p>
-                </div>
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </button>
               )
             })}
           </div>
+
+          {/* Витрина скриншота */}
+          <div className="relative w-full max-w-4xl mx-auto pt-3">
+            <div className="absolute -inset-2 bg-gradient-to-r from-[var(--accent,#FF6A1A)]/20 via-amber-500/15 to-[var(--accent,#FF6A1A)]/20 rounded-[36px] blur-2xl opacity-60 pointer-events-none" />
+
+            <div className="relative rounded-3xl border border-zinc-800 bg-[#09090b] shadow-2xl overflow-hidden p-3 sm:p-5 text-white">
+              {/* Окно браузера */}
+              <div className="flex items-center justify-between pb-3.5 border-b border-zinc-800/80 mb-3 px-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-rose-500/80" />
+                  <span className="w-3 h-3 rounded-full bg-amber-500/80" />
+                  <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                  <span className="text-xs text-zinc-400 ml-2 font-mono hidden sm:inline">ogonek.app</span>
+                </div>
+                <div className="text-xs text-zinc-400 font-medium">
+                  {showcaseTabs.find((t) => t.id === activeShowcase)?.desc}
+                </div>
+              </div>
+
+              {/* Реальный скриншот */}
+              <div className="rounded-2xl overflow-hidden bg-black border border-zinc-900 flex items-center justify-center">
+                {activeShowcase === 'mobile' ? (
+                  <div className="py-6 px-4 flex justify-center">
+                    <div className="max-w-[340px] rounded-[32px] overflow-hidden border-4 border-zinc-800 shadow-2xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/landing/screen-mobile.png"
+                        alt="Огонёк на мобильном экране 390x844"
+                        className="w-full h-auto object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={showcaseTabs.find((t) => t.id === activeShowcase)?.file || '/landing/screen-diary.png'}
+                    alt={showcaseTabs.find((t) => t.id === activeShowcase)?.label || 'Скриншот Огонька'}
+                    className="w-full h-auto object-cover max-h-[560px]"
+                    loading="lazy"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </section>
 
-        {/* ── 6. СЕКЦИЯ «ДЛЯ КОГО» (3 КАРТОЧКИ) ────────────────────────────── */}
-        <section id="for-whom" className="space-y-8 pt-6">
+        {/* ── 5. БЛОК «ДРУЗЬЯ И ГРУППЫ» ───────────────────────────────────── */}
+        <section id="friends" aria-label="Друзья и закрытые группы" className="space-y-8 pt-4">
           <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 whitespace-nowrap">
+              <Users size={13} /> Сообщество единомышленников
+            </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Для кого создан Огонёк
+              Друзья и закрытые группы
             </h2>
             <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Для людей, которые ценят результаты, честность и внутреннюю тишину.
+              Расти в окружении сильных людей. Без зависти, спама и алгоритмических манипуляций.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Briefcase size={22} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`p-7 rounded-3xl border flex flex-col gap-3.5 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-11 h-11 rounded-2xl bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] flex items-center justify-center font-bold">
+                <Flame size={22} />
               </div>
-              <h3 className="text-lg font-bold tracking-tight">Предприниматели и лидеры</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Каждый день несёт стресс и неопределённость. Огонёк помогает держать фокус на главных сделках, фиксировать ключевые прорывы и сохранять холодную голову в моменты кризисов.
+              <h3 className="font-bold text-lg tracking-tight">Взаимные стрики друзей</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                Следи за закрытием дней близких друзей в ленте и профилях. Взаимная поддержка вдохновляет не останавливаться и честно фиксировать свои свершения каждый вечер.
               </p>
             </div>
 
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <Code2 size={22} />
+            <div className={`p-7 rounded-3xl border flex flex-col gap-3.5 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-11 h-11 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">
+                <Layers size={22} />
               </div>
-              <h3 className="text-lg font-bold tracking-tight">Разработчики и создатели</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Лучшее лекарство от синдрома самозванца. Сохраняй реальные коммиты, успешные архитектурные решения и победы над сложными багами в личный Evidence Vault.
+              <h3 className="font-bold text-lg tracking-tight">Закрытые группы по интересам</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                Создавай узкие сообщества («Семья», «Спортсмены», «Команда»). Каждой отдельной записи можно назначать аудиторию, делясь победами только с теми, кому доверяешь.
               </p>
             </div>
 
-            <div
-              className={`p-7 rounded-3xl border flex flex-col gap-4 ${
-                isDark
-                  ? 'bg-zinc-950/70 border-zinc-800'
-                  : 'bg-white border-zinc-200/90 shadow-sm'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                <Compass size={22} />
+            <div className={`p-7 rounded-3xl border flex flex-col gap-3.5 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-11 h-11 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold">
+                <MessageSquare size={22} />
               </div>
-              <h3 className="text-lg font-bold tracking-tight">Те, кто устал выгорать</h3>
-              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Выход из порочного круга «я сделал недостаточно». Огонёк даёт твёрдое доказательство того, сколько ты уже преодолел, возвращая спокойствие и самоуважение.
+              <h3 className="font-bold text-lg tracking-tight">Приватные чаты без спама</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                Полноэкранный мессенджер в стиле Telegram Web: голосовые заметки с визуализацией волны, быстрые ответы, черновики для каждого чата и прикрепление артефактов.
+              </p>
+            </div>
+
+            <div className={`p-7 rounded-3xl border flex flex-col gap-3.5 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                <Video size={22} />
+              </div>
+              <h3 className="font-bold text-lg tracking-tight">P2P аудио и видеозвонки</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                Звони друзьям в один клик прямо из диалога с надёжным P2P-соединением и TURN-сервером. Режим «картинка в картинке» позволяет свободно перемещаться по приложению.
               </p>
             </div>
           </div>
         </section>
 
-        {/* ── 7. БЛОК FAQ (5 АККОРДЕОНОВ) ──────────────────────────────────── */}
-        <section id="faq" className="space-y-8 pt-6 max-w-3xl mx-auto w-full">
-          <div className="text-center space-y-3">
+        {/* ── 6. БЛОК «ИИ-ОЦЕНКА И МЕНТОР СИЛЫ» ────────────────────────────── */}
+        <section id="ai-mentor" aria-label="ИИ-оценка и ментор личной силы" className="space-y-8 pt-4">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+              <Bot size={13} /> Трезвый взгляд на личный прогресс
+            </div>
             <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Частые вопросы
+              Бескомпромиссная ИИ-оценка
             </h2>
             <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Всё, что важно знать о безопасности, данных и правилах Огонька.
+              Никаких пустых комплиментов и банальных аффирмаций. Только честный разбор преодолённого сопротивления.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={`p-7 rounded-3xl border flex flex-col gap-4 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] flex items-center justify-center font-bold">
+                <Target size={24} />
+              </div>
+              <h3 className="text-lg font-bold tracking-tight">Шкала преодоления 1–10★</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                Балл ставится не за механический факт выполнения, а за величину сопротивления, которое ты преодолел: лень, страх, прокрастинацию или усталость.
+              </p>
+            </div>
+
+            <div className={`p-7 rounded-3xl border flex flex-col gap-4 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
+                <Sparkles size={24} />
+              </div>
+              <h3 className="text-lg font-bold tracking-tight">Тактический вердикт дня</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                ИИ-ментор анализирует баланс гордостей и благодарностей дня, подсвечивает точки роста и формулирует трезвый вывод без пустой воды.
+              </p>
+            </div>
+
+            <div className={`p-7 rounded-3xl border flex flex-col gap-4 ${isDark ? 'bg-zinc-950/70 border-zinc-800' : 'bg-white border-zinc-200 shadow-sm'}`}>
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
+                <Trophy size={24} />
+              </div>
+              <h3 className="text-lg font-bold tracking-tight">Юбилейные вехи 100/200/300 дней</h3>
+              <p className={`text-sm leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                Каждые 100 закрытых дней летописи — глубокий аналитический отчёт. Все числа считает надёжный код, а ИИ формулирует выводы строго по твоим записям.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 7. БЛОК ТАРИФОВ (ИЗ PERMISSIONS.TS) ───────────────────────────── */}
+        <section id="pricing" aria-label="Тарифные планы" className="space-y-8 pt-4">
+          <div className="text-center max-w-2xl mx-auto space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] whitespace-nowrap">
+              ✦ Прозрачные условия
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Простые и честные тарифы
+            </h2>
+            <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Базовые функции бесплатны навсегда. Платные тарифы открывают расширенные возможности ИИ и медиа.
+            </p>
+
+            {/* Переключатель Месяц / Год */}
+            <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-zinc-900 border border-zinc-800 mt-2">
+              <button
+                type="button"
+                onClick={() => setBillingPeriod('month')}
+                aria-label="Оплата помесячно"
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all min-h-[36px] cursor-pointer ${
+                  billingPeriod === 'month'
+                    ? 'bg-zinc-800 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                Месяц
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingPeriod('year')}
+                aria-label="Оплата за год со скидкой 20 процентов"
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 min-h-[36px] cursor-pointer ${
+                  billingPeriod === 'year'
+                    ? 'bg-zinc-800 text-white shadow-sm'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                <span>Год</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-[var(--accent,#FF6A1A)] text-black text-[10px] font-black">
+                  -20%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 min-[1100px]:grid-cols-3 gap-6 items-stretch max-w-xl min-[1100px]:max-w-none mx-auto w-full">
+            {/* Карточка 1: Базовый */}
+            <div
+              className={`rounded-3xl p-7 border flex flex-col justify-between transition-all relative ${
+                isDark ? 'border-zinc-800 bg-zinc-950/70' : 'border-zinc-200 bg-white shadow-sm'
+              }`}
+            >
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">{TIER_NAMES.free}</h3>
+                  <div className="mt-2 text-3xl font-black tracking-tight text-white font-mono">
+                    {billingPeriod === 'year' ? 'Бесплатно' : 'Бесплатно'}
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Для спокойного личного дневника и формирования привычки
+                  </p>
+                </div>
+
+                <div className="border-t border-zinc-800/80 pt-4 space-y-2.5">
+                  {(TIER_FEATURES_LIST.free || []).map((feat) => (
+                    <div
+                      key={feat.id}
+                      className={`flex items-start gap-2.5 text-xs leading-relaxed ${
+                        feat.included ? 'text-zinc-200' : 'text-zinc-400 line-through'
+                      }`}
+                    >
+                      <Check
+                        size={14}
+                        className={`shrink-0 mt-0.5 ${
+                          feat.included ? 'text-emerald-500' : 'text-zinc-500'
+                        }`}
+                      />
+                      <span className={feat.highlight ? 'font-bold text-white' : ''}>
+                        {feat.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  type="button"
+                  onClick={handleSelectFreeTier}
+                  aria-label="Выбрать тариф Базовый"
+                  className={`w-full py-3.5 px-5 rounded-2xl font-bold text-sm transition-all min-h-[44px] cursor-pointer flex items-center justify-center gap-2 ${
+                    isDark
+                      ? 'bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-800'
+                      : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900 border border-zinc-200'
+                  }`}
+                >
+                  <Sparkles size={15} className="text-amber-400" />
+                  <span>Начать бесплатно</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Карточка 2: Премиум */}
+            <div className="rounded-3xl p-7 border border-[var(--accent,#FF6A1A)]/60 bg-gradient-to-b from-[var(--accent,#FF6A1A)]/10 via-zinc-950 to-zinc-950 shadow-xl shadow-[var(--accent,#FF6A1A)]/10 flex flex-col justify-between transition-all relative">
+              {TIER_BADGES.pro && (
+                <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-gradient-to-r from-[var(--accent,#FF6A1A)] to-amber-500 text-white font-extrabold text-[10px] tracking-wider uppercase shadow-md">
+                  {TIER_BADGES.pro}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">{TIER_NAMES.pro}</h3>
+                  <div className="mt-2 text-3xl font-black tracking-tight text-white font-mono">
+                    {billingPeriod === 'year' ? '240 MDL / год' : '25 MDL / мес'}
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Для глубокой работы над собой и ежедневного разбора ИИ
+                  </p>
+                </div>
+
+                <div className="border-t border-zinc-800/80 pt-4 space-y-2.5">
+                  {(TIER_FEATURES_LIST.pro || []).map((feat) => (
+                    <div
+                      key={feat.id}
+                      className={`flex items-start gap-2.5 text-xs leading-relaxed ${
+                        feat.included ? 'text-zinc-200' : 'text-zinc-500 line-through'
+                      }`}
+                    >
+                      <Check
+                        size={14}
+                        className={`shrink-0 mt-0.5 ${
+                          feat.included ? 'text-emerald-500' : 'text-zinc-600'
+                        }`}
+                      />
+                      <span className={feat.highlight ? 'font-bold text-white' : ''}>
+                        {feat.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  type="button"
+                  onClick={handleSelectProTier}
+                  aria-label="Выбрать тариф Премиум"
+                  className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm transition-all min-h-[44px] cursor-pointer flex items-center justify-center gap-2 bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-black shadow-lg shadow-[var(--accent,#FF6A1A)]/20"
+                >
+                  <Star size={15} />
+                  <span>Оформить Премиум</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Карточка 3: Основатель Ultra */}
+            <div className="rounded-3xl p-7 border border-amber-500/60 bg-gradient-to-b from-amber-500/10 via-zinc-950 to-zinc-950 shadow-xl shadow-amber-500/10 flex flex-col justify-between transition-all relative">
+              {TIER_BADGES.ultra && (
+                <div className="absolute -top-3 left-6 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-300 text-black font-extrabold text-[10px] tracking-wider uppercase shadow-md">
+                  {TIER_BADGES.ultra}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-xl font-black tracking-tight">{TIER_NAMES.ultra}</h3>
+                  <div className="mt-2 text-3xl font-black tracking-tight text-white font-mono">
+                    {billingPeriod === 'year' ? '480 MDL / год' : '50 MDL / мес'}
+                  </div>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Полный доступ, Evidence Vault и вклад в развитие проекта
+                  </p>
+                </div>
+
+                <div className="border-t border-zinc-800/80 pt-4 space-y-2.5">
+                  {(TIER_FEATURES_LIST.ultra || []).map((feat) => (
+                    <div
+                      key={feat.id}
+                      className={`flex items-start gap-2.5 text-xs leading-relaxed ${
+                        feat.included ? 'text-zinc-200' : 'text-zinc-500 line-through'
+                      }`}
+                    >
+                      <Check
+                        size={14}
+                        className={`shrink-0 mt-0.5 ${
+                          feat.included ? 'text-emerald-500' : 'text-zinc-600'
+                        }`}
+                      />
+                      <span className={feat.highlight ? 'font-bold text-white' : ''}>
+                        {feat.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-6">
+                <button
+                  type="button"
+                  onClick={handleSelectUltraTier}
+                  aria-label="Выбрать тариф Основатель Ultra"
+                  className="w-full py-3.5 px-5 rounded-2xl font-extrabold text-sm transition-all min-h-[44px] cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black shadow-lg shadow-amber-500/20"
+                >
+                  <Flame size={15} />
+                  <span>Стать Основателем</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Подсказка о безопасности данных после окончания подписки */}
+          <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 max-w-2xl mx-auto text-center text-xs text-zinc-400">
+            <strong className="text-zinc-200">Что будет, если подписка закончится?</strong> Все твои ранее созданные записи, фотографии и артефакты Evidence Vault навсегда сохраняются за тобой. Никакой потери данных.
+          </div>
+        </section>
+
+        {/* ── 8. FAQ ПРО ПРИВАТНОСТЬ ───────────────────────────────────────── */}
+        <section id="faq" aria-label="Частые вопросы про приватность" className="space-y-8 pt-4 max-w-3xl mx-auto w-full">
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)] whitespace-nowrap">
+              <Lock size={13} /> Безопасность и RLS
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+              Частые вопросы про приватность
+            </h2>
+            <p className={`text-sm sm:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Всё о защите данных, шифровании сессий и архитектуре Signal Privacy.
             </p>
           </div>
 
           <div className="space-y-3">
-            {faqItems.map((item, idx) => {
-              const isOpen = openFaq === idx
-              return (
-                <div
-                  key={idx}
-                  className={`rounded-2xl border transition-colors overflow-hidden ${
-                    isDark
-                      ? 'bg-zinc-950/70 border-zinc-800'
-                      : 'bg-white border-zinc-200 shadow-sm'
-                  }`}
+            {faqItems.map((item, idx) => (
+              <details
+                key={idx}
+                className="group rounded-2xl border border-zinc-800 bg-zinc-950/70 overflow-hidden transition-colors"
+                open={idx === 0 ? true : undefined}
+              >
+                <summary
+                  className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer min-h-[48px] select-none list-none text-zinc-100"
+                  aria-label={`Вопрос: ${item.q}`}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base cursor-pointer"
-                  >
-                    <span>{item.q}</span>
-                    <ChevronDown
-                      size={18}
-                      className={`text-[#FF5C00] shrink-0 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/50">
-                      {item.a}
-                    </div>
-                  )}
+                  <span>{item.q}</span>
+                  <ChevronDown
+                    size={18}
+                    className="text-[var(--accent,#FF6A1A)] shrink-0 transition-transform duration-200 group-open:rotate-180"
+                  />
+                </summary>
+                <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-zinc-300 leading-relaxed border-t border-zinc-800/50">
+                  {item.a}
                 </div>
-              )
-            })}
+              </details>
+            ))}
           </div>
         </section>
 
-        {/* ── 8. ФИНАЛЬНЫЙ ПОЛНОШИРИННЫЙ CTA ───────────────────────────────── */}
-        <section className="pt-8">
+        {/* ── 9. ФИНАЛЬНЫЙ CTA ─────────────────────────────────────────────── */}
+        <section aria-label="Финальный призыв к действию" className="pt-4">
           <div className="relative rounded-3xl border border-zinc-800 bg-gradient-to-b from-zinc-950 to-black p-8 sm:p-14 text-center overflow-hidden">
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#FF5C00]/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 bg-[var(--accent,#FF6A1A)]/20 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-2xl mx-auto space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#FF5C00]/10 border border-[#FF5C00]/30 text-[#FF5C00]">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 border border-[var(--accent,#FF6A1A)]/30 text-[var(--accent,#FF6A1A)]">
                 ✦ Начни сегодня
               </div>
 
@@ -667,24 +835,26 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                 Начни вести свой дневник силы уже сегодня.
               </h2>
 
-              <p className="text-zinc-400 text-sm sm:text-base leading-relaxed">
+              <p className="text-zinc-300 text-sm sm:text-base leading-relaxed">
                 Первый закрытый день займёт всего 3 минуты, а через год станет самым ценным активом твоей памяти и характера.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setAuthModal(true)}
-                  className="w-full sm:w-auto flex items-center justify-center gap-2.5 py-3.5 px-7 rounded-2xl bg-[#FF5C00] hover:bg-[#FF5C00]/90 text-white font-bold text-sm shadow-lg shadow-[#FF5C00]/25 transition-all active:scale-95 cursor-pointer"
+                  onClick={() => setAuthModal('register')}
+                  aria-label="Создать аккаунт в Огоньке"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2.5 py-3.5 px-7 rounded-2xl bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-black font-extrabold text-sm shadow-lg shadow-[var(--accent,#FF6A1A)]/25 transition-all active:scale-95 min-h-[44px] cursor-pointer"
                 >
-                  <span>Войти в аккаунт</span>
+                  <span>Создать аккаунт</span>
                   <ArrowRight size={16} />
                 </button>
 
                 <button
                   type="button"
                   onClick={handleDemoClick}
-                  className="w-full sm:w-auto py-3.5 px-6 rounded-2xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:text-white font-semibold text-sm transition-colors cursor-pointer"
+                  aria-label="Попробовать демо без регистрации"
+                  className="w-full sm:w-auto py-3.5 px-6 rounded-2xl border border-zinc-800 hover:border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:text-white font-semibold text-sm transition-colors min-h-[44px] cursor-pointer"
                 >
                   Попробовать демо
                 </button>
@@ -694,32 +864,32 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
         </section>
       </main>
 
-      {/* ── 9. ФУТЕР ПО ТЗ ────────────────────────────────────────────────── */}
+      {/* ── 10. СЕМАНТИЧЕСКИЙ ФУТЕР ───────────────────────────────────────── */}
       <footer
         className={`border-t transition-colors px-4 sm:px-8 py-8 ${
-          isDark
-            ? 'bg-black border-zinc-800 text-zinc-500'
-            : 'bg-white border-zinc-200 text-zinc-500'
+          isDark ? 'bg-black border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-600'
         }`}
       >
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="text-[#FF5C00] font-bold">✦</span>
-            <span className="font-semibold text-zinc-400">Огонёк — Дневник силы и благодарности</span>
-            <span>· © 2026</span>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-center sm:text-left">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+            <span className="text-[var(--accent,#FF6A1A)] font-bold">✦</span>
+            <span className="font-semibold text-zinc-300 whitespace-nowrap">Огонёк — Дневник силы и благодарности</span>
+            <span className="whitespace-nowrap">· © 2026</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-5">
             <Link
               href="/privacy"
-              className="hover:text-zinc-300 transition-colors underline-offset-4 hover:underline"
+              aria-label="Политика конфиденциальности"
+              className="text-zinc-300 hover:text-white transition-colors underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
             >
               Политика конфиденциальности
             </Link>
 
             <Link
               href="/terms"
-              className="hover:text-zinc-300 transition-colors underline-offset-4 hover:underline"
+              aria-label="Условия использования"
+              className="text-zinc-300 hover:text-white transition-colors underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
             >
               Условия использования
             </Link>
@@ -728,7 +898,8 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               href="https://t.me/ogonek_support"
               target="_blank"
               rel="noreferrer"
-              className="hover:text-zinc-300 transition-colors flex items-center gap-1 underline-offset-4 hover:underline"
+              aria-label="Telegram канал поддержки @ogonek_support"
+              className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1 underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
             >
               <span>Поддержка</span>
               <ExternalLink size={12} />
@@ -737,12 +908,13 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
         </div>
       </footer>
 
-      {/* Модальное окно резервного входа */}
+      {/* Модальное окно авторизации */}
       {authModal && (
         <AuthModal
-          onClose={() => setAuthModal(false)}
+          initialMode={authModal}
+          onClose={() => setAuthModal(null)}
           onAuthenticated={() => {
-            setAuthModal(false)
+            setAuthModal(null)
             if (onNotify) onNotify('Вход выполнен!')
           }}
           onNotify={onNotify || (() => {})}

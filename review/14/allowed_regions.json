@@ -1,0 +1,37 @@
+[
+  {
+    "screen": "landing",
+    "x": 0,
+    "y": 0,
+    "width": 3000,
+    "height": 3000
+  },
+  {
+    "screen": "signin",
+    "x": 0,
+    "y": 0,
+    "width": 3000,
+    "height": 3000
+  },
+  {
+    "screen": "register",
+    "x": 0,
+    "y": 0,
+    "width": 3000,
+    "height": 3000
+  },
+  {
+    "screen": "privacy",
+    "x": 0,
+    "y": 0,
+    "width": 3000,
+    "height": 3000
+  },
+  {
+    "screen": "terms",
+    "x": 0,
+    "y": 0,
+    "width": 3000,
+    "height": 3000
+  }
+]

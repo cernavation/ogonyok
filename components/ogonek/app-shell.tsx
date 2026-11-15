@@ -1381,6 +1381,19 @@ export function AppShell() {
     ]
   )
 
+  // Гостевой лендинг для неавторизованных посетителей (?view=landing)
+  if (view === 'landing') {
+    return (
+      <GuestLanding
+        onEnterDemo={() => {
+          continueAsGuest()
+          notify('Включён демонстрационный режим')
+        }}
+        onNotify={notify}
+      />
+    )
+  }
+
   // Если пользователь не вошёл (currentUser === null) — показываем экран авторизации AuthForm, кроме прямого перехода в чаты
   if (!currentUser) {
     if (view === 'messages') {
@@ -1430,18 +1443,6 @@ export function AppShell() {
 
         <Toast message={toast} />
       </TooltipProvider>
-    )
-  }
-
-  if (view === 'landing') {
-    return (
-      <GuestLanding
-        onEnterDemo={() => {
-          continueAsGuest()
-          notify('Включён демонстрационный режим')
-        }}
-        onNotify={notify}
-      />
     )
   }
 

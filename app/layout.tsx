@@ -80,7 +80,7 @@ export default function RootLayout({
         <ServiceWorkerRegister />
         <OfflineBanner />
         {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        {Boolean(process.env.VERCEL) && <Analytics />}
       </body>
     </html>
   )

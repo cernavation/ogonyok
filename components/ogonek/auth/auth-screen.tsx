@@ -37,40 +37,41 @@ export function AuthScreen({ onAuthenticated, onNotify }: Props) {
       <div className="auth-screen__glow" aria-hidden="true" />
 
       <div className="auth-screen__grid">
-        <section className="auth-hero">
+        <section className="auth-hero w-full min-w-0" aria-label="О проекте Огонёк">
           <div className="auth-brand">
-            <span className="auth-flame flex items-center justify-center w-8 h-8 rounded-full bg-[#ff6b35]/10 text-[#ff6b35]" aria-hidden="true">
-              <Flame size={20} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+            <span className="auth-flame flex items-center justify-center w-8 h-8 rounded-full bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)]" aria-hidden="true">
+              <Flame size={20} className="fill-[var(--accent,#FF6A1A)]/20 text-[var(--accent,#FF6A1A)]" />
             </span>
-            <span>Огонёк</span>
+            <span className="font-extrabold text-lg text-[var(--text)]">Огонёк</span>
           </div>
-          <h1 className="auth-hero__title">
+          <h1 className="auth-hero__title text-[var(--text)]">
             Дневник силы,
             <br />
             который держит слово
           </h1>
-          <p className="auth-hero__lead">
+          <p className="auth-hero__lead text-[var(--text-2)]">
             Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за
             прогрессом. {state.auth.accounts.length > 0 ? 'Войдите или зарегистрируйтесь.' : 'Начните прямо сейчас.'}
           </p>
           <ul className="auth-hero__list">
             {HIGHLIGHTS.map(({ icon: Icon, text }) => (
-              <li key={text}>
-                <span className="auth-hero__ico">
+              <li key={text} className="text-[var(--text-2)]">
+                <span className="auth-hero__ico text-[var(--accent,#FF6A1A)]">
                   <Icon size={15} />
                 </span>
                 {text}
               </li>
             ))}
           </ul>
-          <p className="auth-hero__foot">
-            <ShieldCheck size={12} /> Local-first: {state.auth.accounts.length} локальных профиля
-          </p>
+          <div className="auth-hero__foot text-[var(--text-2)] flex items-center gap-1.5 text-xs whitespace-nowrap">
+            <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+            <span>Local-first: {state.auth.accounts.length} локальных профиля</span>
+          </div>
         </section>
 
-        <section className="auth-panel">
+        <section className="auth-panel w-full min-w-0" aria-label="Форма входа и регистрации">
           <div className="auth-panel__inner">
-            <h2 className="auth-panel__title">Вход и регистрация</h2>
+            <h2 className="auth-panel__title text-[var(--text)]">Вход и регистрация</h2>
             <AuthForm
               variant="screen"
               onAuthenticated={onAuthenticated}
