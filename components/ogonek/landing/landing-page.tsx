@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Link from 'next/link'
 import { AppleNavbar } from './apple-navbar'
 import { AppleFooter } from './apple-footer'
 import { MediaSlot } from './media-slot'
@@ -14,50 +15,50 @@ type Props = {
   onAuthenticated?: (accountId: string) => void
 }
 
-/* ── Difficulty levels data ───────────────────────────────────────── */
+/* ── Difficulty levels data (Gripping, truthful copy) ──────────────── */
 const LEVELS = [
   {
     count: '1',
     flames: 1,
-    title: '1 гордость',
-    sub: 'Мягкий старт',
-    desc: 'Одна главная победа за вечер. Идеально для старта и защиты от выгорания.',
+    title: '1 факт',
+    sub: 'Антивыгорание',
+    desc: 'Минимальный рубеж честности. Спасает даже в дни полнейшего шторма и апатии.',
     extreme: false,
     delay: 'delay-100',
   },
   {
     count: '2',
     flames: 2,
-    title: '2 гордости',
-    sub: 'Стандарт',
-    desc: 'Баланс между работой и личной жизнью. Твёрдый шаг вперёд каждый день.',
+    title: '2 факта',
+    sub: 'Стандарт жизни',
+    desc: 'Одно дело для карьеры, одно для тела или дома. Твёрдый шаг вперёд каждый день.',
     extreme: false,
     delay: 'delay-200',
   },
   {
     count: '3',
     flames: 3,
-    title: '3 гордости',
-    sub: 'Режим роста',
-    desc: 'Осознанный фокус на ключевых направлениях. Дисциплина без надрыва.',
+    title: '3 факта',
+    sub: 'Режим прорыва',
+    desc: 'Осознанный фокус на ключевых победах без надрыва нервной системы.',
     extreme: false,
     delay: 'delay-300',
   },
   {
     count: '4',
     flames: 4,
-    title: '4 гордости',
+    title: '4 факта',
     sub: 'Серьёзный темп',
-    desc: 'Высокая интенсивность. Спорт, карьера, проекты и личные обязательства.',
+    desc: 'Для тех, кто тащит масштабные проекты, жесткий спорт и команду.',
     extreme: false,
     delay: 'delay-400',
   },
   {
     count: '5',
     flames: 5,
-    title: '5 гордостей',
-    sub: 'Extreme',
-    desc: 'Предельный уровень концентрации для несокрушимого характера.',
+    title: '5 фактов',
+    sub: 'Extreme Режим',
+    desc: 'Предельная концентрация спецназа. Для закалки несокрушимого характера.',
     extreme: true,
     delay: 'delay-500',
   },
@@ -111,7 +112,7 @@ const SHOWCASE_TABS = [
     id: 'diary',
     label: 'Вечерний дневник',
     tag: 'РИТУАЛ 5 МИНУТ',
-    title: 'Летопись дня #1: честно и без воды',
+    title: 'Летопись дня: честно и без воды',
     desc: '5 структурированных поступков за вечер: пробежка 5 км, спринт в коде, созвон без отвлечений и время с семьёй. Без бесконечных списков.',
     image: 'platform_01_diary.png',
     color: '#00a1b3',
@@ -123,12 +124,12 @@ const SHOWCASE_TABS = [
   },
 ]
 
-/* ── Quotes data ──────────────────────────────────────────────────── */
+/* ── Authentic Community Quotes ───────────────────────────────────── */
 const QUOTES = [
   {
     image: 'quote-1.jpg',
     text: 'Я фиксирую гордости больше 740 дней подряд без единого пропуска. Это единственная привычка, которая вытащила меня из выгорания и дала железобетонную опору.',
-    author: 'Александр Черна',
+    author: 'Александр Церна',
     role: 'Основатель Огонька · 740 дней стрика',
     isFounder: true,
     delay: 'delay-150',
@@ -155,6 +156,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
   const containerRef = useScrollReveal()
   const [authModal, setAuthModal] = useState<AuthMode | null>(null)
   const [activeShowcase, setActiveShowcase] = useState<string>('profile')
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const activeShowcaseItem = SHOWCASE_TABS.find((t) => t.id === activeShowcase) || SHOWCASE_TABS[0]
 
   const openAuth = (mode: AuthMode) => setAuthModal(mode)
@@ -209,8 +211,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0" />
 
         {/* Hero Content positioned over the video stage */}
-        <div className="relative z-20 max-w-[960px] mx-auto text-center flex flex-col items-center">
-          {/* Category Eyebrow Tag (17px weight 600 Signal Orange, 16px margin to H1) */}
+        <div className="relative z-20 max-w-[1080px] mx-auto text-center flex flex-col items-center">
+          {/* Category Eyebrow Tag: Punchy psychological hook */}
           <div className="fade-blur mb-4 inline-flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
@@ -219,30 +221,30 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               />
             </svg>
             <span className="apple-eyebrow">
-              Дневник силы и летопись побед
+              Антидот от самообесценивания
             </span>
           </div>
 
-          {/* Epic Apple Headline (80px display, tight 20px-24px margin to subtitle) */}
-          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)] max-w-[1080px]">
-            <span className="inline-block">Жизнь, которой ты гордишься.</span>{' '}
+          {/* Epic Apple Headline (Wide 2-line structure) */}
+          <h1 className="apple-hero-title fade-blur delay-75 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)] max-w-[1080px]">
+            <span className="inline-block">Хватит обесценивать себя.</span>{' '}
             <br className="hidden md:inline" />
-            <span className="apple-shimmer-text inline-block">Записанная каждый вечер.</span>
+            <span className="apple-shimmer-text inline-block">Твои победы требуют доказательств.</span>
           </h1>
 
-          {/* Subtitle (17px SF Pro Text, 32px-36px margin to buttons) */}
-          <p className="apple-body fade-up delay-250 max-w-[620px] mb-8 sm:mb-9 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
-            Огонёк хранит твои победы, серию закрытых дней и искренние благодарности. Без страха пропусков и чувства вины.
+          {/* Subtitle: Direct emotional trigger */}
+          <p className="apple-body fade-up delay-150 max-w-[680px] mb-8 sm:mb-9 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
+            Каждый вечер мозг врёт тебе, что ты сделал недостаточно. «Огонёк» возвращает твёрдые факты: 5&nbsp;минут вечерней тишины, от&nbsp;1 до&nbsp;5 настоящих поступков — и&nbsp;железное спокойствие перед зеркалом.
           </p>
 
-          {/* Action CTAs (Exact Apple 36px radius, filled blue CTA & ghost text action) */}
-          <div className="fade-scale delay-350 flex items-center justify-center gap-4 flex-wrap">
+          {/* Action CTAs: Apple Blue + Ghost link */}
+          <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
             <button
               type="button"
               onClick={() => openAuth('register')}
               className="apple-btn-primary !px-8 !py-3.5 !text-[15px] shadow-[0_0_24px_rgba(0,113,227,0.4)]"
             >
-              Начать бесплатно
+              Начать свою летопись →
             </button>
             <button
               type="button"
@@ -252,11 +254,16 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               Войти ›
             </button>
           </div>
+
+          {/* Trust subtitle */}
+          <div className="fade-up delay-250 mt-4 text-[12px] font-mono text-[#86868b] tracking-wider">
+            Бесплатно навсегда · Без рекламы · Данные только на твоём чипе
+          </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 2 — «КАК ЭТО РАБОТАЕТ» (Ритуал · Пять минут в день)
+          SECTION 2 — «КАК ЭТО РАБОТАЕТ» (Физиология характера)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="how"
@@ -268,14 +275,17 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="fade-up mb-4">
-            <span className="apple-eyebrow">Ритуал</span>
+            <span className="apple-eyebrow">Физиология характера</span>
           </div>
-          <h2 className="apple-section-title fade-up delay-75 mb-16 sm:mb-20 md:mb-24">
-            Пять минут в день.
+          <h2 className="apple-section-title fade-up delay-75 mb-6 max-w-[920px]">
+            5 минут вечерней тишины, которые выключают внутренний шум.
           </h2>
+          <p className="apple-body fade-up delay-100 max-w-[700px] mb-16 sm:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Эволюция настроила твой мозг замечать только угрозы и ошибки. Если не фиксировать победы осознанно — ты всегда будешь чувствовать себя неудачником, даже закрыв 20 задач за день.
+          </p>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            {/* Left: Large ritual media slot frame with Scale Reveal & Hover Dynamics */}
+            {/* Left: Large ritual media slot frame */}
             <div className="lg:col-span-7 fade-scale delay-150">
               <div className="apple-card apple-card-hover overflow-hidden p-2.5 sm:p-3 bg-[#121214]">
                 <MediaSlot
@@ -289,26 +299,26 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               </div>
             </div>
 
-            {/* Right: 3 elegant sequential steps with Staggered Slide-Left */}
+            {/* Right: 3 actionable steps */}
             <div className="lg:col-span-5 flex flex-col gap-10">
               {[
                 {
                   step: '01',
-                  title: 'Запиши гордости',
-                  desc: 'Каждый вечер зафиксируй от 1 до 5 поступков, за которые тебе не стыдно. Никаких бесконечных списков — только реальные дела.',
+                  title: 'Прижми себя к стене фактами',
+                  desc: 'Никаких «стал лучшей версией». Только железо: пробежал 5 км в холодный дождь, не сорвался на близких, честно признал ошибку перед партнером. 1–5 дел, за которые не стыдно.',
                   delay: 'delay-200',
                 },
                 {
                   step: '02',
-                  title: 'Запиши благодарности',
-                  desc: 'Отметь людей, события или вещи, за которые искренне благодарен. Простой жест, который меняет фокус восприятия.',
-                  delay: 'delay-350',
+                  title: 'Переключи фокус с дефицита',
+                  desc: 'Благодарность — это не эзотерика. Это способ переключить нервную систему с кортизолового стресса на глубокий восстановительный сон.',
+                  delay: 'delay-300',
                 },
                 {
                   step: '03',
-                  title: 'Смотри, как растёшь',
-                  desc: 'Серия дней, статистика, ачивки и ИИ-разбор покажут, как далеко ты продвинулся. Данные принадлежат только тебе.',
-                  delay: 'delay-500',
+                  title: 'Обопрись на твёрдое',
+                  desc: 'Через 30 дней у тебя не абстрактные надежды, а 100 задокументированных фактов преодоления. Ты больше не сможешь соврать себе, что слаб.',
+                  delay: 'delay-400',
                 },
               ].map((item, idx) => (
                 <div
@@ -334,23 +344,25 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 3 — «РЕЖИМЫ ЖИЗНИ» (Apple Interactive Modes Panel)
+          SECTION 3 — «РЕЖИМЫ ЖИЗНИ» (Архитектура баланса)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
         className="relative py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden"
         aria-label="Режимы жизни"
       >
-        {/* Soft Cobalt Stage Orb on Right */}
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10" />
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="fade-up mb-4">
-            <span className="apple-eyebrow">Адаптация</span>
+            <span className="apple-eyebrow">Архитектура баланса</span>
           </div>
-          <h2 className="apple-section-title fade-up delay-75 mb-16 sm:mb-20 md:mb-24">
-            Режимы жизни.
+          <h2 className="apple-section-title fade-up delay-75 mb-6 max-w-[920px]">
+            Победа в бизнесе не должна стоить тебе инфаркта и семьи.
           </h2>
+          <p className="apple-body fade-up delay-100 max-w-[680px] mb-16 sm:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Успех в одной сфере ценой разрушения остальных — это не сила, это побег. «Огонёк» удерживает в балансе 4 ключевые опоры: тело, карьеру, семью и внутренний дух.
+          </p>
 
           <div className="fade-up delay-150">
             <AppleModesPanel />
@@ -359,7 +371,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 4 — «УРОВНИ ЖЁСТКОСТИ» (5 Apple Cards with Micro-Glow)
+          SECTION 4 — «УРОВНИ ЖЁСТКОСТИ» (Честный договор с собой)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="levels"
@@ -368,13 +380,13 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="fade-up mb-4">
-            <span className="apple-eyebrow">Дисциплина</span>
+            <span className="apple-eyebrow">Честный договор с собой</span>
           </div>
           <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
-            Уровни жёсткости.
+            Выбери темп, который удержишь.
           </h2>
           <p className="apple-body fade-up delay-150 max-w-[680px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Выбери ритм, который подходит твоему характеру — от спокойного вечернего ритуала до бескомпромиссной дисциплины.
+            Лучше 1 железный поступок каждый вечер 365 дней подряд, чем неделя героизма и полгода апатии.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
@@ -389,7 +401,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 }`}
               >
                 <div>
-                  {/* Energy Flame Indicator with segmented rhythm */}
+                  {/* Energy Flame Indicator */}
                   <div className="flex items-center gap-1.5 mb-4">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span
@@ -425,7 +437,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 5 — «ЦИФРЫ» (Метрики с титановым шиммером)
+          SECTION 5 — «ЦИФРЫ» (Без воды и инфоцыганства)
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
@@ -433,12 +445,12 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20 md:mb-24">
-            <span className="apple-eyebrow fade-up block mb-4">Факты</span>
+            <span className="apple-eyebrow fade-up block mb-4">Без воды и инфоцыганства</span>
             <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
-              Реальные цифры.
+              Не обещания. Не курсы. Факты.
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              Огонёк вырос из личного опыта основателя (740+ дней непрерывной практики) в сильное сообщество людей, которые выбирают осознанность и держат слово перед собой.
+              Здесь нет марафонов желаний. 126+ практиков каждый вечер садятся в тишине и ведут честный протокол своей жизни.
             </p>
           </div>
 
@@ -453,11 +465,11 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   126+
                 </span>
                 <p className="text-[18px] sm:text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
-                  человек меняют жизнь
+                  человек держат слово
                 </p>
               </div>
               <p className="text-[14px] leading-relaxed text-[#86868b]">
-                Участников уже меняют свою жизнь с нами, ежедневно фиксируют победы и поддерживают внутренний огонь.
+                Практиков перестали обесценивать свою жизнь, каждый вечер фиксируют победы и опираются на факты.
               </p>
             </div>
 
@@ -475,7 +487,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 </p>
               </div>
               <p className="text-[14px] leading-relaxed text-[#86868b]">
-                В общей сумме написали участники — без потери стрика и чувства вины за пропущенные дни.
+                Написанных страниц силы. Стрик не сгорает от пропусков — весь пройденный путь навсегда с тобой.
               </p>
             </div>
 
@@ -483,7 +495,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <div className="apple-card apple-card-hover fade-scale delay-450 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
               <div>
                 <span className="text-[12px] font-semibold text-[#f56900] uppercase tracking-wider block mb-3">
-                  Твёрдые факты
+                  Твёрдые доказательства
                 </span>
                 <span className="apple-shimmer-text block text-[42px] sm:text-[52px] font-bold tracking-tight leading-none mb-3 tabular-nums font-sans whitespace-nowrap">
                   176&nbsp;455
@@ -493,7 +505,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 </p>
               </div>
               <p className="text-[14px] leading-relaxed text-[#86868b]">
-                Записанных гордостей и искренних благодарностей, навсегда сохранённых на устройствах.
+                Реальных дел преодоления и искренней признательности, навсегда сохранённых на устройствах.
               </p>
             </div>
           </div>
@@ -501,7 +513,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 6 — «ЦИТАТЫ» (3 Balanced Apple Cards)
+          SECTION 6 — «ЦИТАТЫ» (Голоса практиков)
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
@@ -509,12 +521,12 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center mb-16 sm:mb-20 md:mb-24">
-            <span className="apple-eyebrow fade-up block mb-4">Опыт</span>
+            <span className="apple-eyebrow fade-up block mb-4">Голоса практиков</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              Слова, проверенные временем.
+              «Я наконец-то перестал жрать себя изнутри перед сном».
             </h2>
             <p className="apple-body fade-up delay-150 max-w-[620px] mx-auto text-[#86868b] text-[17px] leading-relaxed">
-              Истории участников, превративших вечернюю фиксацию побед в&nbsp;фундамент нерушимой уверенности.
+              Живые истории предпринимателей, врачей, спортсменов и родителей, которые вернули веру в свои силы благодаря пяти минутам вечерней летописи.
             </p>
           </div>
 
@@ -562,7 +574,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               href="/reviews"
               className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
             >
-              <span>Читать все 32 отзыва участников сообщества</span>
+              <span>Читать все 32 проверенные истории участников</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -572,7 +584,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 6.5 — «СИСТЕМА В ДЕЙСТВИИ» (Interactive Apple Vitrine)
+          SECTION 6.5 — «СИСТЕМА В ДЕЙСТВИИ» (Интерфейс для спокойствия)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="showcase"
@@ -581,12 +593,12 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-12 sm:mb-16">
-            <span className="apple-eyebrow fade-up block mb-4">Интерфейс</span>
+            <span className="apple-eyebrow fade-up block mb-4">Тактильный интерфейс</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              Платформа в действии.
+              Инструмент, созданный для спокойствия.
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              Не просто концепт, а работающий каждый день инструмент. Загляни внутрь интерфейса, созданного для спокойствия и кристальной ясности.
+              Никакого визуального мусора, баннеров и счётчиков лайков. Только ты, факты и кристально чистый экран.
             </p>
           </div>
 
@@ -665,14 +677,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               href="/platform"
               className="apple-btn-primary !px-8 !py-3.5 !text-[14px]"
             >
-              Подробный тур по платформе ›
+              Подробный тур по возможностям платформы ›
             </a>
           </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 7 — «ПРИВАТНОСТЬ» (Local-First Security Stage)
+          SECTION 7 — «ПРИВАТНОСТЬ» (Манифест священной приватности)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="privacy"
@@ -684,15 +696,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="apple-eyebrow">Приватность</span>
+            <span className="apple-eyebrow">Манифест священной приватности</span>
           </div>
 
-          <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[860px]">
-            Данные и пароли остаются только на твоём устройстве.
+          <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[920px]">
+            Твои сокровенные мысли — не корм для чужих алгоритмов.
           </h2>
 
-          <p className="apple-body fade-up delay-150 max-w-[720px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Огонёк построен по принципу полной локальной независимости (Local-first). Личные победы, заметки и мысли не продаются рекламодателям и не анализируются без твоего ведома.
+          <p className="apple-body fade-up delay-150 max-w-[740px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Никаких рекламных трекеров и продажи данных. Дневник шифруется локально на чипе твоего устройства. Даже создатели Огонька физически не имеют доступа к твоим записям.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
@@ -775,7 +787,348 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 8 — ФИНАЛЬНЫЙ БАННЕР «ВМЕСТЕ ГОРДИТЬСЯ ЛЕГЧЕ»
+          SECTION 8 — «ОТКРЫТЫ И БЕСПЛАТНЫ» (Манифест независимости)
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="open"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] relative overflow-hidden"
+        aria-label="Открытость и бесплатность"
+      >
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#00a1b3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-10" />
+
+        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-[820px] mx-auto mb-16 sm:mb-20">
+            <span className="apple-eyebrow fade-up block mb-4 !text-[#00c7be]">Манифест независимости</span>
+            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
+              Платформа свободна. Навсегда.
+            </h2>
+            <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+              «Огонёк» создавался не как коммерческий пылесос для выкачивания денег из тревожных людей. Это личный спасательный круг. Спокойствие и уважение к себе — это базовое право человека, а не платная подписка.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Pillar 1 */}
+            <div className="apple-card apple-card-hover fade-up delay-150 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#00c7be]/10 border border-[#00c7be]/20 flex items-center justify-center text-[#00c7be] mb-6">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </div>
+                <h3 className="text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  100% бесплатный базовый ритуал
+                </h3>
+                <p className="text-[14px] leading-relaxed text-[#86868b]">
+                  Дневник побед, благодарности, честный стрик и шкала преодоления никогда не спрячутся за платную стену. Каждый человек на планете может вести свою летопись силы даром.
+                </p>
+              </div>
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#00c7be] uppercase tracking-wider">
+                ДОСТУПНО КАЖДОМУ
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="apple-card apple-card-hover fade-up delay-250 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#f56900]/10 border border-[#f56900]/20 flex items-center justify-center text-[#f56900] mb-6">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                </div>
+                <h3 className="text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  0% рекламы, спама и трекеров
+                </h3>
+                <p className="text-[14px] leading-relaxed text-[#86868b]">
+                  Мы не торгуем твоим вниманием, не встраиваем баннеры и не отчитываемся перед инвесторами, требующими навязывать подписки. Твой внутренний покой неприкосновенен.
+                </p>
+              </div>
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#f56900] uppercase tracking-wider">
+                ЧИСТОЕ ПРОСТРАНСТВО
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="apple-card apple-card-hover fade-up delay-350 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/10 border border-[#0071e3]/20 flex items-center justify-center text-[#2997ff] mb-6">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                </div>
+                <h3 className="text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  Local-First независимость
+                </h3>
+                <p className="text-[14px] leading-relaxed text-[#86868b]">
+                  Твои записи хранятся локально на чипе твоего смартфона или ноутбука. Даже если отключится интернет или упадут наши сервера — твой дневник продолжит открываться и работать.
+                </p>
+              </div>
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#2997ff] uppercase tracking-wider">
+                ПОЛНЫЙ КОНТРОЛЬ
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          SECTION 9 — «ТАРИФЫ И ПОДДЕРЖКА» (Честная подписка)
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="pricing"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] relative"
+        aria-label="Тарифы и подписка"
+      >
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 right-1/4 -z-0 opacity-15" />
+
+        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-[800px] mx-auto mb-12 sm:mb-16">
+            <span className="apple-eyebrow fade-up block mb-4">Честные тарифы</span>
+            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
+              Поддержка независимого развития.
+            </h2>
+            <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+              Базовый «Огонёк» бесплатен навсегда. Платные тарифы созданы для тех, кому нужны нейросетевой ИИ-разбор дня, сейф фото-доказательств и кто хочет ускорить развитие проекта.
+            </p>
+
+            {/* Billing Cycle Pill Selector */}
+            <div className="fade-scale delay-150 inline-flex items-center p-1 rounded-full bg-white/[0.06] border border-white/10 mt-8">
+              <button
+                type="button"
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all cursor-pointer ${
+                  billingCycle === 'monthly'
+                    ? 'bg-white text-black font-semibold shadow-md'
+                    : 'text-[#86868b] hover:text-white'
+                }`}
+              >
+                Ежемесячно
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+                  billingCycle === 'yearly'
+                    ? 'bg-[#0071e3] text-white font-semibold shadow-md'
+                    : 'text-[#86868b] hover:text-white'
+                }`}
+              >
+                <span>На год</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">
+                  -20%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* 3 Tier Hardware Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1200px] mx-auto items-stretch">
+            {/* TIER 1: БАЗОВЫЙ (FREE) */}
+            <div className="apple-card apple-card-hover fade-up delay-150 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between border border-white/10">
+              <div>
+                <div className="text-[12px] font-mono text-[#86868b] uppercase tracking-wider mb-2">
+                  БАЗОВЫЙ ПЛАН
+                </div>
+                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Свободный
+                </h3>
+                <p className="text-[14px] text-[#86868b] mb-6">
+                  Для тех, кому нужна точка внутренней опоры и спокойный сон.
+                </p>
+
+                <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                    0 MDL
+                  </span>
+                  <span className="text-[14px] text-[#86868b] ml-2">/ навсегда</span>
+                </div>
+
+                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>До 1 000 символов на запись</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Дневник гордостей и благодарностей</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Стрик, который не сгорает</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Локальное шифрование Web Crypto</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>P2P аудиозвонки без лимитов</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openAuth('register')}
+                className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+              >
+                Начать бесплатно
+              </button>
+            </div>
+
+            {/* TIER 2: ПРЕМИУМ (PRO) — РЕКОМЕНДУЕМЫЙ */}
+            <div className="apple-card apple-card-hover fade-scale delay-200 p-8 sm:p-10 bg-gradient-to-b from-[#1a1e28] to-[#12141a] flex flex-col justify-between border-2 border-[#0071e3] relative shadow-[0_0_40px_rgba(0,113,227,0.25)]">
+              {/* Highlight Badge */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0071e3] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md">
+                ★ Выбор сообщества
+              </div>
+
+              <div>
+                <div className="text-[12px] font-mono text-[#2997ff] uppercase tracking-wider mb-2">
+                  ПРЕМИУМ ПЛАН
+                </div>
+                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Огонёк Pro
+                </h3>
+                <p className="text-[14px] text-[#86868b] mb-6">
+                  Для активной работы над собой: нейросетевой разбор и сейф доказательств.
+                </p>
+
+                <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                    {billingCycle === 'yearly' ? '240 MDL' : '25 MDL'}
+                  </span>
+                  <span className="text-[14px] text-[#86868b] ml-2">
+                    {billingCycle === 'yearly' ? '/ год (~20 MDL/мес)' : '/ месяц'}
+                  </span>
+                </div>
+
+                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8">
+                  <li className="flex items-center gap-3 font-medium text-white">
+                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>До 3 000 символов на запись (в 3 раза больше)</span>
+                  </li>
+                  <li className="flex items-center gap-3 font-medium text-[#2997ff]">
+                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>1 ИИ-оценка летописи в сутки нейросетью</span>
+                  </li>
+                  <li className="flex items-center gap-3 font-medium text-white">
+                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Evidence Vault: 1 фото-доказательство в день</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Зашифрованные видеозвонки HD</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Расширенная аналитика стрика и вех</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openAuth('register')}
+                className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold shadow-[0_0_25px_rgba(0,113,227,0.5)]"
+              >
+                Выбрать Премиум Pro →
+              </button>
+            </div>
+
+            {/* TIER 3: ОСНОВАТЕЛЬ (ULTRA) */}
+            <div className="apple-card apple-card-hover fade-up delay-300 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between border border-white/10">
+              <div>
+                <div className="text-[12px] font-mono text-[#f56900] uppercase tracking-wider mb-2">
+                  КЛУБ ОСНОВАТЕЛЕЙ
+                </div>
+                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Основатель Ultra
+                </h3>
+                <p className="text-[14px] text-[#86868b] mb-6">
+                  Максимальная глубина, золотой статус и прямой вклад в проект.
+                </p>
+
+                <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                    {billingCycle === 'yearly' ? '480 MDL' : '50 MDL'}
+                  </span>
+                  <span className="text-[14px] text-[#86868b] ml-2">
+                    {billingCycle === 'yearly' ? '/ год (~40 MDL/мес)' : '/ месяц'}
+                  </span>
+                </div>
+
+                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
+                  <li className="flex items-center gap-3 font-medium text-white">
+                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>До 5 000 символов на запись</span>
+                  </li>
+                  <li className="flex items-center gap-3 font-medium text-white">
+                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>До 3 фото в сутки в Evidence Vault</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Глубокие отчёты о вехах (100, 200, 300+ дней)</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-[#f56900] font-medium">
+                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Золотой статус ⚡ ULTRA FOUNDER</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>Прямой закрытый чат и приоритет</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openAuth('register')}
+                className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+              >
+                Стать Основателем
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          SECTION 10 — ФИНАЛЬНЫЙ БАННЕР «ВМЕСТЕ ГОРДИТЬСЯ ЛЕГЧЕ»
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
@@ -805,12 +1158,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <div className="apple-ambient-orb w-[500px] h-[500px] bg-[#f56900] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
 
             {/* Overlaid Banner Content */}
-            <div className="relative z-20 max-w-[680px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[36px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
-                Вместе гордиться легче.
+            <div className="relative z-20 max-w-[700px] mx-auto flex flex-col items-center">
+              <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[34px] sm:!text-[50px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+                Сегодня вечером. 5 минут.
+                <br />
+                <span className="apple-shimmer-text">Начни честный разговор с собой.</span>
               </h2>
-              <p className="apple-body fade-up delay-150 !text-white max-w-[560px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
-                Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с&nbsp;близкими и&nbsp;создавай нерушимую уверенность в&nbsp;себе.
+              <p className="apple-body fade-up delay-150 !text-white max-w-[580px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
+                Закрой этот день с уважением к себе. Зафиксируй то, за что не стыдно перед зеркалом. И ложись спать со спокойной душой.
               </p>
               <div className="fade-scale delay-200">
                 <button
@@ -818,7 +1173,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold shadow-[0_0_35px_rgba(0,113,227,0.6)] hover:shadow-[0_0_45px_rgba(0,113,227,0.85)] cursor-pointer"
                 >
-                  Начать бесплатно
+                  Зажечь свой огонёк →
                 </button>
               </div>
             </div>
@@ -827,7 +1182,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 9 — APPLE UNIVERSAL FOOTER
+          SECTION 11 — APPLE UNIVERSAL FOOTER
           ═══════════════════════════════════════════════════════════ */}
       <AppleFooter />
     </div>

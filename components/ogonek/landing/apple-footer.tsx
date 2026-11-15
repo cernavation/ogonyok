@@ -34,6 +34,16 @@ export function AppleFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors">
+                  Манифест открытости
+                </Link>
+              </li>
+              <li>
+                <Link href="/#pricing" className="hover:text-[#f5f5f7] transition-colors">
+                  Тарифы и поддержка
+                </Link>
+              </li>
+              <li>
                 <Link href="/platform#vault" className="hover:text-[#f5f5f7] transition-colors">
                   Сейф доказательств (Vault)
                 </Link>
@@ -41,11 +51,6 @@ export function AppleFooter() {
               <li>
                 <Link href="/platform#analytics" className="hover:text-[#f5f5f7] transition-colors">
                   Шкала преодоления 1–10★
-                </Link>
-              </li>
-              <li>
-                <Link href="/platform#messenger" className="hover:text-[#f5f5f7] transition-colors">
-                  P2P Мессенджер
                 </Link>
               </li>
             </ul>

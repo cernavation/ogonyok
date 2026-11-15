@@ -11,7 +11,8 @@ interface AppleNavbarProps {
 const NAV_ITEMS = [
   { label: 'О платформе', href: '/platform' },
   { label: 'Как это работает', href: '/how-it-works' },
-  { label: 'Сферы жизни', href: '/modes' },
+  { label: 'Открытость', href: '/#open' },
+  { label: 'Тарифы', href: '/#pricing' },
   { label: 'Отзывы (30+)', href: '/reviews' },
   { label: 'Манифест', href: '/manifesto' },
   { label: 'Поддержка', href: '/support' },
