@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
@@ -13,11 +13,15 @@ import {
   AlertTriangle,
   X,
   Loader2,
+  Users,
+  Check,
+  Globe,
+  Lock,
 } from 'lucide-react'
 import { VisibilitySwitcher } from './visibility-switcher'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { playClick } from '@/lib/ogonek/sound'
-import type { Day, VisibilityLevel } from '@/lib/ogonek/types'
+import type { Day, VisibilityLevel, ChatGroupMeta } from '@/lib/ogonek/types'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 import { EvaluationCeremonyModal } from './evaluation-ceremony-modal'
@@ -47,6 +51,7 @@ export function DayOptionsModal({
   const {
     state,
     setDayVisibility,
+    setDayAudience,
     setAllPridesVisibility,
     deleteDay,
     updateDay,
@@ -55,7 +60,38 @@ export function DayOptionsModal({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
+  const [showAudiencePicker, setShowAudiencePicker] = useState(false)
   const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+
+  const userGroups = useMemo(() => {
+    const threads = state.chatThreads ?? {}
+    const list: ChatGroupMeta[] = []
+    Object.values(threads).forEach((t) => {
+      if (t.groupMeta) list.push(t.groupMeta)
+    })
+    return list
+  }, [state.chatThreads])
+
+  const currentAudienceLabel = useMemo(() => {
+    if (day.visibility === 'group') {
+      return day.groupName ? `👥 ${day.groupName}` : '👥 Группе'
+    }
+    if (day.visibility === 'friends') return '👥 Друзьям'
+    if (day.visibility === 'private') return '🔒 Лично'
+    return '🌐 Всем'
+  }, [day.visibility, day.groupName])
+
+  const handleSelectAudience = async (level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
+    playClick(soundEnabled)
+    if (setDayAudience) {
+      await setDayAudience(day.id, level, groupId, groupName)
+    } else {
+      setDayVisibility(day.id, level)
+    }
+    const label = level === 'group' ? `👥 ${groupName || 'Группе'}` : level === 'friends' ? '👥 Друзьям' : level === 'private' ? '🔒 Лично' : '🌐 Всем'
+    onNotify?.(`Аудитория дня #${day.id} изменена на: ${label}`)
+    setShowAudiencePicker(false)
+  }
 
   const handleOpenAiCeremony = () => {
     playClick(soundEnabled)
@@ -216,6 +252,96 @@ export function DayOptionsModal({
               <Sparkles size={16} className="text-amber-500" />
               <span>Оценить с ИИ</span>
             </button>
+
+            {/* Пункт «Кому видно» (CONTRACT Шаг 09: смена аудитории прямо из ленты) */}
+            <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setShowAudiencePicker(!showAudiencePicker)
+                }}
+                className="flex items-center justify-between w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Users size={16} className="text-[#1d9bf0]" />
+                  <span>Кому видно</span>
+                </div>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-[var(--text-2)] flex items-center gap-1">
+                  {currentAudienceLabel} ▾
+                </span>
+              </button>
+
+              {showAudiencePicker && (
+                <div className="p-2 rounded-xl bg-black/40 border border-[#2f3336] flex flex-col gap-1 mb-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAudience('private')}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                      day.visibility === 'private' ? 'bg-white/15 text-white font-bold' : 'text-zinc-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Lock size={12} className="text-zinc-400" /> Лично (только мне)
+                    </span>
+                    {day.visibility === 'private' && <Check size={13} className="text-zinc-300" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAudience('friends')}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                      day.visibility === 'friends' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-zinc-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Users size={12} className="text-amber-400" /> Друзьям
+                    </span>
+                    {day.visibility === 'friends' && <Check size={13} className="text-amber-400" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSelectAudience('public')}
+                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                      day.visibility === 'public' ? 'bg-blue-500/20 text-[#1d9bf0] font-bold' : 'text-zinc-300 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Globe size={12} className="text-[#1d9bf0]" /> Всем (глобальная лента)
+                    </span>
+                    {day.visibility === 'public' && <Check size={13} className="text-[#1d9bf0]" />}
+                  </button>
+
+                  {userGroups.length > 0 && (
+                    <>
+                      <div className="my-1 border-t border-[#2f3336]" />
+                      <div className="text-[10px] uppercase font-bold text-zinc-500 px-2 py-0.5">
+                        Группы:
+                      </div>
+                      {userGroups.map((g) => {
+                        const isG = day.visibility === 'group' && (day.groupId === g.id || day.groupName === g.title)
+                        return (
+                          <button
+                            key={g.id}
+                            type="button"
+                            onClick={() => handleSelectAudience('group', g.id, g.title)}
+                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                              isG ? 'bg-purple-500/20 text-purple-300 font-bold' : 'text-zinc-300 hover:bg-white/5'
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <span>{g.avatarEmoji || '👥'}</span> {g.title}
+                            </span>
+                            {isG && <Check size={13} className="text-purple-400" />}
+                          </button>
+                        )
+                      })}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             {onEdit && (
               <button

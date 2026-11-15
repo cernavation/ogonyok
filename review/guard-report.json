@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-14T23:47:07.607Z",
+  "generatedAt": "2026-11-15T00:43:53.113Z",
   "ok": false,
   "mode": "guard",
-  "step": "08",
+  "step": "09",
   "stagingUrl": "https://jryhluhgjricjbkimsfa.supabase.co",
   "lock": {
     "ok": true,
@@ -43,13 +43,13 @@
         "endpoint": "/rest/v1/profiles?select=id&limit=1",
         "ok": true,
         "status": 200,
-        "message": "[{\"id\":\"55da6030-1100-43c6-bd05-c4b2f8f42ca1\"}]"
+        "message": "[{\"id\":\"3124a3f5-335e-4d9f-abc1-d3ab572d58e3\"}]"
       }
     ]
   },
   "baselineExists": true,
   "screensChecked": 150,
-  "errorCount": 3495,
+  "errorCount": 3499,
   "warningCount": 0,
   "issues": [
     {
@@ -5916,7 +5916,7 @@
       "screen": "messages_list",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 2.30% (> 0.30%) вне allowed_regions.json (21071/914760 px)",
+      "message": "Визуальное расхождение 2.30% (> 0.30%) вне allowed_regions.json (21079/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/messages_list.png",
       "rect": null
     },
@@ -6191,7 +6191,7 @@
       "screen": "messages_chat",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 8.38% (> 0.30%) вне allowed_regions.json (76679/914760 px)",
+      "message": "Визуальное расхождение 8.38% (> 0.30%) вне allowed_regions.json (76671/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/messages_chat.png",
       "rect": null
     },
@@ -7437,7 +7437,7 @@
       "screen": "profile",
       "viewport": "1210x756",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A39%3A38.122Z&created_at=gte.2026-11-14T03%3A39%3A38.122Z&order=created_at.desc&limit=100)",
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A36%3A23.771Z&created_at=gte.2026-11-14T04%3A36%3A23.771Z&order=created_at.desc&limit=100)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1210x756__e-http-error__35.png"
     },
     {
@@ -9374,7 +9374,7 @@
       "screen": "leaderboard",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 9.32% (> 0.30%) вне allowed_regions.json (85238/914760 px)",
+      "message": "Визуальное расхождение 9.33% (> 0.30%) вне allowed_regions.json (85352/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/leaderboard.png",
       "rect": null
     },
@@ -13206,10 +13206,10 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 396,
-        "y": 225,
-        "width": 86,
-        "height": 33
+        "x": 395,
+        "y": 224,
+        "width": 87,
+        "height": 34
       }
     },
     {
@@ -13221,10 +13221,10 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
-        "x": 483,
-        "y": 225,
-        "width": 124,
-        "height": 33
+        "x": 482,
+        "y": 224,
+        "width": 125,
+        "height": 34
       }
     },
     {
@@ -13236,9 +13236,9 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(1) > button.x-primary-btn.px-4:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
-        "x": 746,
-        "y": 218,
-        "width": 116,
+        "x": 747,
+        "y": 217,
+        "width": 117,
         "height": 47
       }
     },
@@ -13251,10 +13251,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 347,
-        "y": 290,
-        "width": 33,
-        "height": 33
+        "x": 346,
+        "y": 289,
+        "width": 34,
+        "height": 34
       }
     },
     {
@@ -13266,10 +13266,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"2\")",
       "rect": {
-        "x": 387,
-        "y": 290,
-        "width": 33,
-        "height": 33
+        "x": 385,
+        "y": 289,
+        "width": 34,
+        "height": 34
       }
     },
     {
@@ -13281,10 +13281,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 426,
-        "y": 290,
-        "width": 33,
-        "height": 33
+        "x": 425,
+        "y": 289,
+        "width": 34,
+        "height": 34
       }
     },
     {
@@ -13297,9 +13297,9 @@
       "message": "Элемент без aria-label (текст/подпись \"4\")",
       "rect": {
         "x": 465,
-        "y": 290,
-        "width": 33,
-        "height": 33
+        "y": 289,
+        "width": 34,
+        "height": 34
       }
     },
     {
@@ -13311,10 +13311,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(5)",
       "message": "Элемент без aria-label (текст/подпись \"5\")",
       "rect": {
-        "x": 505,
-        "y": 290,
-        "width": 33,
-        "height": 33
+        "x": 504,
+        "y": 289,
+        "width": 34,
+        "height": 34
       }
     },
     {
@@ -13328,7 +13328,7 @@
       "rect": {
         "x": 549,
         "y": 292,
-        "width": 100,
+        "width": 101,
         "height": 28
       }
     },
@@ -13341,7 +13341,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
-        "x": 649,
+        "x": 650,
         "y": 292,
         "width": 77,
         "height": 28
@@ -13356,8 +13356,8 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 737,
-        "y": 293,
+        "x": 738,
+        "y": 292,
         "width": 126,
         "height": 27
       }
@@ -13448,7 +13448,7 @@
       "screen": "modal_composer",
       "viewport": "1210x756",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A41%3A52.929Z&created_at=gte.2026-11-14T03%3A41%3A52.929Z&order=created_at.desc&limit=100)",
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A38%3A38.310Z&created_at=gte.2026-11-14T04%3A38%3A38.310Z&order=created_at.desc&limit=100)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1210x756__e-http-error__94.png"
     },
     {
@@ -13467,7 +13467,7 @@
       "screen": "modal_composer",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 32.86% (> 0.30%) вне allowed_regions.json (300606/914760 px)",
+      "message": "Визуальное расхождение 32.91% (> 0.30%) вне allowed_regions.json (301051/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/modal_composer.png",
       "rect": null
     },
@@ -16989,7 +16989,7 @@
       "screen": "messages_list",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 1.67% (> 0.30%) вне allowed_regions.json (21620/1296000 px)",
+      "message": "Визуальное расхождение 1.66% (> 0.30%) вне allowed_regions.json (21552/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/messages_list.png",
       "rect": null
     },
@@ -17138,7 +17138,7 @@
       "screen": "messages_chat",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 1.04% (> 0.30%) вне allowed_regions.json (13541/1296000 px)",
+      "message": "Визуальное расхождение 1.04% (> 0.30%) вне allowed_regions.json (13473/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/messages_chat.png",
       "rect": null
     },
@@ -20073,7 +20073,7 @@
       "screen": "leaderboard",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 8.44% (> 0.30%) вне allowed_regions.json (109443/1296000 px)",
+      "message": "Визуальное расхождение 8.46% (> 0.30%) вне allowed_regions.json (109590/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/leaderboard.png",
       "rect": null
     },
@@ -23734,7 +23734,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
-        "x": 595,
+        "x": 596,
         "y": 294,
         "width": 126,
         "height": 34
@@ -23764,7 +23764,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 458,
+        "x": 459,
         "y": 360,
         "width": 34,
         "height": 34
@@ -23871,7 +23871,7 @@
       "rect": {
         "x": 854,
         "y": 363,
-        "width": 128,
+        "width": 127,
         "height": 27
       }
     },
@@ -23892,7 +23892,7 @@
       "screen": "modal_composer",
       "viewport": "1440x900",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A44%3A02.867Z&created_at=gte.2026-11-14T03%3A44%3A02.867Z&order=created_at.desc&limit=100)",
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A40%3A48.253Z&created_at=gte.2026-11-14T04%3A40%3A48.253Z&order=created_at.desc&limit=100)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__e-http-error__183.png"
     },
     {
@@ -23902,7 +23902,7 @@
       "screen": "modal_composer",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 4.60% (> 0.30%) вне allowed_regions.json (59665/1296000 px)",
+      "message": "Визуальное расхождение 4.85% (> 0.30%) вне allowed_regions.json (62842/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/modal_composer.png",
       "rect": null
     },
@@ -25686,7 +25686,7 @@
       "message": "Дубль кнопки/ссылки с одинаковым именем \"читать\" (16 шт.)",
       "rect": {
         "x": 554,
-        "y": 334,
+        "y": 324,
         "width": 77,
         "height": 36
       }
@@ -25758,12 +25758,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
       "rect": {
         "x": 114,
         "y": 320,
         "width": 428,
-        "height": 63
+        "height": 44
       }
     },
     {
@@ -25776,7 +25776,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 554,
-        "y": 334,
+        "y": 324,
         "width": 77,
         "height": 36
       }
@@ -25788,12 +25788,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
       "rect": {
         "x": 114,
-        "y": 416,
+        "y": 397,
         "width": 428,
-        "height": 44
+        "height": 63
       }
     },
     {
@@ -25806,7 +25806,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 554,
-        "y": 420,
+        "y": 411,
         "width": 77,
         "height": 36
       }
@@ -26316,8 +26316,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 170,
-        "y": 345,
-        "width": 356,
+        "y": 346,
+        "width": 82,
         "height": 17
       }
     },
@@ -26331,8 +26331,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 170,
-        "y": 442,
-        "width": 82,
+        "y": 422,
+        "width": 356,
         "height": 17
       }
     },
@@ -26628,7 +26628,7 @@
       "screen": "explore",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 23.58% (> 0.30%) вне allowed_regions.json (185411/786432 px)",
+      "message": "Визуальное расхождение 21.90% (> 0.30%) вне allowed_regions.json (172242/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/explore.png",
       "rect": null
     },
@@ -26759,7 +26759,7 @@
       "screen": "messages_list",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 2.96% (> 0.30%) вне allowed_regions.json (23259/786432 px)",
+      "message": "Визуальное расхождение 2.96% (> 0.30%) вне allowed_regions.json (23240/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/messages_list.png",
       "rect": null
     },
@@ -26890,7 +26890,7 @@
       "screen": "messages_chat",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 1.80% (> 0.30%) вне allowed_regions.json (14178/786432 px)",
+      "message": "Визуальное расхождение 1.80% (> 0.30%) вне allowed_regions.json (14159/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/messages_chat.png",
       "rect": null
     },
@@ -26991,7 +26991,7 @@
       "category": "controls",
       "severity": "error",
       "selector": "div[aria-label=\"Новый чат или группа\"] > div.w-full.border > div.flex.flex-col > div.flex-1.overflow-y-auto:nth-of-type(2) > button.w-full.px-4:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova\")",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
       "rect": {
         "x": 273,
         "y": 203,
@@ -27006,7 +27006,7 @@
       "category": "controls",
       "severity": "error",
       "selector": "div[aria-label=\"Новый чат или группа\"] > div.w-full.border > div.flex.flex-col > div.flex-1.overflow-y-auto:nth-of-type(2) > button.w-full.px-4:nth-of-type(2)",
-      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova\")",
       "rect": {
         "x": 273,
         "y": 272,
@@ -27471,7 +27471,7 @@
       "screen": "messages_group",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 9.87% (> 0.30%) вне allowed_regions.json (77582/786432 px)",
+      "message": "Визуальное расхождение 9.83% (> 0.30%) вне allowed_regions.json (77336/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/messages_group.png",
       "rect": null
     },
@@ -29731,7 +29731,7 @@
       "screen": "leaderboard",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 6.83% (> 0.30%) вне allowed_regions.json (53748/786432 px)",
+      "message": "Визуальное расхождение 6.87% (> 0.30%) вне allowed_regions.json (54001/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/leaderboard.png",
       "rect": null
     },
@@ -33346,8 +33346,8 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 301,
-        "y": 229,
+        "x": 300,
+        "y": 228,
         "width": 87,
         "height": 34
       }
@@ -33362,8 +33362,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
         "x": 388,
-        "y": 229,
-        "width": 125,
+        "y": 228,
+        "width": 126,
         "height": 34
       }
     },
@@ -33376,8 +33376,8 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(1) > button.x-primary-btn.px-4:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
-        "x": 655,
-        "y": 222,
+        "x": 656,
+        "y": 221,
         "width": 118,
         "height": 48
       }
@@ -33391,7 +33391,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 251,
+        "x": 250,
         "y": 294,
         "width": 34,
         "height": 34
@@ -33406,7 +33406,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"2\")",
       "rect": {
-        "x": 291,
+        "x": 290,
         "y": 294,
         "width": 34,
         "height": 34
@@ -33421,7 +33421,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 331,
+        "x": 330,
         "y": 294,
         "width": 34,
         "height": 34
@@ -33436,7 +33436,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(4)",
       "message": "Элемент без aria-label (текст/подпись \"4\")",
       "rect": {
-        "x": 371,
+        "x": 370,
         "y": 294,
         "width": 34,
         "height": 34
@@ -33497,8 +33497,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
         "x": 646,
-        "y": 298,
-        "width": 127,
+        "y": 297,
+        "width": 128,
         "height": 27
       }
     },
@@ -33518,7 +33518,7 @@
       "screen": "modal_composer",
       "viewport": "1024x768",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A44%3A43.633Z&created_at=gte.2026-11-14T03%3A44%3A43.633Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A41%3A28.656Z&created_at=gte.2026-11-14T04%3A41%3A28.656Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -33527,7 +33527,7 @@
       "screen": "modal_composer",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 3.59% (> 0.30%) вне allowed_regions.json (28215/786432 px)",
+      "message": "Визуальное расхождение 6.76% (> 0.30%) вне allowed_regions.json (53141/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/modal_composer.png",
       "rect": null
     },
@@ -35061,24 +35061,6 @@
       }
     },
     {
-      "checkId": "e-console-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "home",
-      "viewport": "820x1180",
-      "selector": "document",
-      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()"
-    },
-    {
-      "checkId": "e-http-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "home",
-      "viewport": "820x1180",
-      "selector": "network",
-      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)"
-    },
-    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -35915,6 +35897,24 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -35932,7 +35932,7 @@
       "screen": "messages_list",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 1.51% (> 0.30%) вне allowed_regions.json (14599/967600 px)",
+      "message": "Визуальное расхождение 1.51% (> 0.30%) вне allowed_regions.json (14580/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/messages_list.png",
       "rect": null
     },
@@ -36042,7 +36042,7 @@
       "screen": "messages_chat",
       "viewport": "820x1180",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A45%3A02.776Z&created_at=gte.2026-11-14T03%3A45%3A02.776Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A41%3A46.973Z&created_at=gte.2026-11-14T04%3A41%3A46.973Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -36051,7 +36051,7 @@
       "screen": "messages_chat",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 0.45% (> 0.30%) вне allowed_regions.json (4350/967600 px)",
+      "message": "Визуальное расхождение 0.44% (> 0.30%) вне allowed_regions.json (4304/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/messages_chat.png",
       "rect": null
     },
@@ -37932,7 +37932,7 @@
       "screen": "leaderboard",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 9.38% (> 0.30%) вне allowed_regions.json (90782/967600 px)",
+      "message": "Визуальное расхождение 9.39% (> 0.30%) вне allowed_regions.json (90903/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/leaderboard.png",
       "rect": null
     },
@@ -40422,8 +40422,8 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 199,
-        "y": 435,
+        "x": 198,
+        "y": 434,
         "width": 87,
         "height": 34
       }
@@ -40438,8 +40438,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
         "x": 286,
-        "y": 435,
-        "width": 125,
+        "y": 434,
+        "width": 126,
         "height": 34
       }
     },
@@ -40453,8 +40453,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
         "x": 553,
-        "y": 428,
-        "width": 117,
+        "y": 427,
+        "width": 118,
         "height": 48
       }
     },
@@ -40467,8 +40467,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 150,
-        "y": 501,
+        "x": 149,
+        "y": 500,
         "width": 34,
         "height": 34
       }
@@ -40482,8 +40482,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"2\")",
       "rect": {
-        "x": 190,
-        "y": 501,
+        "x": 188,
+        "y": 500,
         "width": 34,
         "height": 34
       }
@@ -40497,8 +40497,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 229,
-        "y": 501,
+        "x": 228,
+        "y": 500,
         "width": 34,
         "height": 34
       }
@@ -40512,8 +40512,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(4)",
       "message": "Элемент без aria-label (текст/подпись \"4\")",
       "rect": {
-        "x": 269,
-        "y": 501,
+        "x": 268,
+        "y": 500,
         "width": 34,
         "height": 34
       }
@@ -40527,8 +40527,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(5)",
       "message": "Элемент без aria-label (текст/подпись \"5\")",
       "rect": {
-        "x": 309,
-        "y": 501,
+        "x": 308,
+        "y": 500,
         "width": 34,
         "height": 34
       }
@@ -40543,8 +40543,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Публично\")",
       "rect": {
         "x": 353,
-        "y": 504,
-        "width": 101,
+        "y": 503,
+        "width": 102,
         "height": 28
       }
     },
@@ -40558,7 +40558,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
         "x": 455,
-        "y": 504,
+        "y": 503,
         "width": 78,
         "height": 28
       }
@@ -40572,8 +40572,8 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 543,
-        "y": 504,
+        "x": 544,
+        "y": 503,
         "width": 127,
         "height": 27
       }
@@ -40594,7 +40594,7 @@
       "screen": "modal_composer",
       "viewport": "820x1180",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A45%3A19.186Z&created_at=gte.2026-11-14T03%3A45%3A19.186Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A42%3A03.401Z&created_at=gte.2026-11-14T04%3A42%3A03.401Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -40603,7 +40603,7 @@
       "screen": "modal_composer",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 1.87% (> 0.30%) вне allowed_regions.json (18097/967600 px)",
+      "message": "Визуальное расхождение 3.23% (> 0.30%) вне allowed_regions.json (31290/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/modal_composer.png",
       "rect": null
     },
@@ -41637,7 +41637,7 @@
       "screen": "modal_call",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 45.09% (> 0.30%) вне allowed_regions.json (436245/967600 px)",
+      "message": "Визуальное расхождение 45.09% (> 0.30%) вне allowed_regions.json (436243/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/modal_call.png",
       "rect": null
     },
@@ -41793,11 +41793,11 @@
       "checkId": "b-clipped-text",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
       "message": "Обрезан текст (191px > 178px): \"@cernavation · Moldova · 🔥 720\"",
       "rect": {
         "x": 89,
-        "y": 454,
+        "y": 377,
         "width": 178,
         "height": 17
       }
@@ -41808,11 +41808,11 @@
       "checkId": "b-narrow-text-column",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
       "message": "Текстовая колонка уже 28 символов (~21 симв., 178px): \"@cernavation · Moldova · 🔥 720\"",
       "rect": {
         "x": 89,
-        "y": 454,
+        "y": 377,
         "width": 178,
         "height": 17
       }
@@ -41823,11 +41823,11 @@
       "checkId": "b-narrow-text-column",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.line-clamp-1:nth-of-type(3)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.line-clamp-1:nth-of-type(3)",
       "message": "Текстовая колонка уже 28 символов (~21 симв., 178px): \"Entrepreneur · founder · athlete · marathon runner · champio\"",
       "rect": {
         "x": 89,
-        "y": 476,
+        "y": 399,
         "width": 178,
         "height": 17
       }
@@ -41857,7 +41857,7 @@
       "message": "Дубль кнопки/ссылки с одинаковым именем \"читать\" (16 шт.)",
       "rect": {
         "x": 279,
-        "y": 355,
+        "y": 364,
         "width": 77,
         "height": 40
       }
@@ -41914,12 +41914,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
       "rect": {
         "x": 33,
         "y": 353,
         "width": 234,
-        "height": 44
+        "height": 63
       }
     },
     {
@@ -41932,7 +41932,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 279,
-        "y": 355,
+        "y": 364,
         "width": 77,
         "height": 40
       }
@@ -41944,12 +41944,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
       "rect": {
         "x": 33,
-        "y": 430,
+        "y": 449,
         "width": 234,
-        "height": 63
+        "height": 44
       }
     },
     {
@@ -41962,7 +41962,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 279,
-        "y": 441,
+        "y": 451,
         "width": 77,
         "height": 40
       }
@@ -42427,8 +42427,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 89,
-        "y": 378,
-        "width": 82,
+        "y": 377,
+        "width": 178,
         "height": 17
       }
     },
@@ -42442,8 +42442,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 89,
-        "y": 454,
-        "width": 178,
+        "y": 475,
+        "width": 82,
         "height": 17
       }
     },
@@ -42664,7 +42664,7 @@
       "screen": "explore",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 34.36% (> 0.30%) вне allowed_regions.json (113095/329160 px)",
+      "message": "Визуальное расхождение 34.90% (> 0.30%) вне allowed_regions.json (114881/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/explore.png",
       "rect": null
     },
@@ -42905,7 +42905,7 @@
       "screen": "messages_chat",
       "viewport": "390x844",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A45%3A37.319Z&created_at=gte.2026-11-14T03%3A45%3A37.319Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A42%3A21.442Z&created_at=gte.2026-11-14T04%3A42%3A21.442Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -42914,7 +42914,7 @@
       "screen": "messages_chat",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 0.80% (> 0.30%) вне allowed_regions.json (2641/329160 px)",
+      "message": "Визуальное расхождение 0.80% (> 0.30%) вне allowed_regions.json (2633/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/messages_chat.png",
       "rect": null
     },
@@ -44405,7 +44405,7 @@
       "screen": "leaderboard",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 17.95% (> 0.30%) вне allowed_regions.json (59088/329160 px)",
+      "message": "Визуальное расхождение 17.94% (> 0.30%) вне allowed_regions.json (59047/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/leaderboard.png",
       "rect": null
     },
@@ -46730,10 +46730,10 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none",
       "message": "Горизонтальный скролл в контейнере: scrollWidth=572px > clientWidth=368px",
       "rect": {
-        "x": 12,
-        "y": 466,
-        "width": 366,
-        "height": 366
+        "x": 11,
+        "y": 465,
+        "width": 367,
+        "height": 367
       }
     },
     {
@@ -46881,7 +46881,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
         "x": 77,
-        "y": 489,
+        "y": 488,
         "width": 87,
         "height": 40
       }
@@ -46896,7 +46896,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
         "x": 164,
-        "y": 489,
+        "y": 488,
         "width": 125,
         "height": 40
       }
@@ -46910,10 +46910,10 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(1) > button.x-primary-btn.px-4:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
-        "x": 426,
-        "y": 485,
+        "x": 427,
+        "y": 484,
         "width": 117,
-        "height": 47
+        "height": 48
       }
     },
     {
@@ -46925,7 +46925,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 31,
+        "x": 30,
         "y": 557,
         "width": 40,
         "height": 40
@@ -47015,9 +47015,9 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
-        "x": 364,
+        "x": 365,
         "y": 557,
-        "width": 77,
+        "width": 78,
         "height": 40
       }
     },
@@ -47030,9 +47030,9 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 452,
+        "x": 453,
         "y": 557,
-        "width": 126,
+        "width": 127,
         "height": 40
       }
     },
@@ -47052,7 +47052,7 @@
       "screen": "modal_composer",
       "viewport": "390x844",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-14T23%3A45%3A52.664Z&created_at=gte.2026-11-14T03%3A45%3A52.664Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T00%3A42%3A36.857Z&created_at=gte.2026-11-14T04%3A42%3A36.857Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -47061,7 +47061,7 @@
       "screen": "modal_composer",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 10.35% (> 0.30%) вне allowed_regions.json (34071/329160 px)",
+      "message": "Визуальное расхождение 10.19% (> 0.30%) вне allowed_regions.json (33536/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/modal_composer.png",
       "rect": null
     },
@@ -48064,7 +48064,7 @@
       "checkId": "d-small-tap-target",
       "category": "controls",
       "severity": "error",
-      "selector": "#base-ui-_r_4v_",
+      "selector": "#base-ui-_r_4t_",
       "message": "Тап-зона на мобильном меньше 40×40: 36×40px (\"Записать голосовое сообщение\")",
       "rect": {
         "x": 441,
@@ -49458,6 +49458,26 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__e-console-error__18.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__e-http-error__19.png"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -49482,7 +49502,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__b-narrow-text-column__18.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__b-narrow-text-column__20.png"
     },
     {
       "screen": "empty_vault",
@@ -49528,7 +49548,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__d-missing-aria-label__19.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__d-missing-aria-label__21.png"
     },
     {
       "screen": "empty_vault",
@@ -49709,7 +49729,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__g-contrast-ratio__20.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__g-contrast-ratio__22.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -49838,7 +49858,7 @@
       "screen": "empty_vault",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 2.82% (> 0.30%) вне allowed_regions.json (36508/1296000 px)",
+      "message": "Визуальное расхождение 3.47% (> 0.30%) вне allowed_regions.json (45025/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/empty_vault.png",
       "rect": null
     },
@@ -49856,7 +49876,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__a-horizontal-overflow-container__21.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__a-horizontal-overflow-container__23.png"
     },
     {
       "screen": "empty_messages",
@@ -49872,7 +49892,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__d-missing-aria-label__22.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__d-missing-aria-label__24.png"
     },
     {
       "screen": "empty_messages",
@@ -49914,7 +49934,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-clipped-text__23.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-clipped-text__25.png"
     },
     {
       "screen": "empty_home",
@@ -49945,7 +49965,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-narrow-text-column__24.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-narrow-text-column__26.png"
     },
     {
       "screen": "empty_home",
@@ -49976,7 +49996,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__c-duplicate-accessible-name__25.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__c-duplicate-accessible-name__27.png"
     },
     {
       "screen": "empty_home",
@@ -49992,7 +50012,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__d-missing-aria-label__26.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__d-missing-aria-label__28.png"
     },
     {
       "screen": "empty_home",
@@ -50173,7 +50193,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__g-contrast-ratio__27.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__g-contrast-ratio__29.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -50236,6 +50256,26 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1024x768",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__e-console-error__30.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1024x768",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__e-http-error__31.png"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -50260,7 +50300,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__b-narrow-text-column__28.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__b-narrow-text-column__32.png"
     },
     {
       "screen": "empty_vault",
@@ -50306,7 +50346,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__d-missing-aria-label__29.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__d-missing-aria-label__33.png"
     },
     {
       "screen": "empty_vault",
@@ -50487,7 +50527,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__g-contrast-ratio__30.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__g-contrast-ratio__34.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -50634,7 +50674,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1024x768__d-missing-aria-label__31.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1024x768__d-missing-aria-label__35.png"
     },
     {
       "screen": "empty_messages",
@@ -50676,7 +50716,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__b-clipped-text__32.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__b-clipped-text__36.png"
     },
     {
       "screen": "empty_home",
@@ -50707,7 +50747,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__c-duplicate-accessible-name__33.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__c-duplicate-accessible-name__37.png"
     },
     {
       "screen": "empty_home",
@@ -50723,7 +50763,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__d-missing-aria-label__34.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__d-missing-aria-label__38.png"
     },
     {
       "screen": "empty_home",
@@ -50870,7 +50910,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__b-narrow-text-column__35.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__b-narrow-text-column__39.png"
     },
     {
       "screen": "empty_vault",
@@ -50886,7 +50926,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__d-missing-aria-label__36.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__d-missing-aria-label__40.png"
     },
     {
       "screen": "empty_vault",
@@ -51022,7 +51062,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__g-contrast-ratio__37.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__g-contrast-ratio__41.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -51094,7 +51134,7 @@
         "width": 179,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__820x1180__d-missing-aria-label__38.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__820x1180__d-missing-aria-label__42.png"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -51121,7 +51161,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__b-clipped-text__39.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__b-clipped-text__43.png"
     },
     {
       "screen": "empty_home",
@@ -51152,7 +51192,7 @@
         "width": 135,
         "height": 51
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__d-missing-aria-label__40.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__d-missing-aria-label__44.png"
     },
     {
       "screen": "empty_home",
@@ -51269,7 +51309,7 @@
         "width": 357,
         "height": 44
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__a-horizontal-overflow-container__41.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__a-horizontal-overflow-container__45.png"
     },
     {
       "screen": "empty_vault",
@@ -51285,7 +51325,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__b-narrow-text-column__42.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__b-narrow-text-column__46.png"
     },
     {
       "screen": "empty_vault",
@@ -51301,7 +51341,7 @@
         "width": 152,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-missing-aria-label__43.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-missing-aria-label__47.png"
     },
     {
       "screen": "empty_vault",
@@ -51317,7 +51357,7 @@
         "width": 301,
         "height": 21
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-small-tap-target__44.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-small-tap-target__48.png"
     },
     {
       "screen": "empty_vault",
@@ -51423,7 +51463,7 @@
         "width": 97,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__g-contrast-ratio__45.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__g-contrast-ratio__49.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -51495,7 +51535,7 @@
         "width": 307,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-small-tap-target__46.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-small-tap-target__50.png"
     },
     {
       "screen": "empty_messages",
@@ -51511,7 +51551,7 @@
         "width": 179,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-missing-aria-label__47.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-missing-aria-label__51.png"
     },
     {
       "checkId": "f-pixel-diff-exceeded",

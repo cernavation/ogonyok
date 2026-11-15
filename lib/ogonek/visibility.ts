@@ -57,13 +57,22 @@ export const VISIBILITY_LEVELS: VisibilityMeta[] = [
     color: '#8b98a5',
     rank: 2,
   },
+  {
+    id: 'group',
+    label: 'Конкретной группе',
+    shortLabel: 'Группе',
+    description: 'Запись видна только участникам выбранной группы',
+    icon: 'users',
+    color: '#a855f7',
+    rank: 1.5,
+  },
 ]
 
 export const DEFAULT_VISIBILITY: VisibilityLevel = 'public'
 
 /** Безопасно приводит любое значение к допустимому уровню приватности */
 export function normalizeVisibility(value: unknown): VisibilityLevel {
-  return value === 'public' || value === 'friends' || value === 'private'
+  return value === 'public' || value === 'friends' || value === 'private' || value === 'group'
     ? value
     : DEFAULT_VISIBILITY
 }

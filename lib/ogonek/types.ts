@@ -50,7 +50,7 @@ export type OvercomeLevel = 0 | 1 | 2 | 3
  *  - 'friends' — только друзьям
  *  - 'private' — лично для меня
  */
-export type VisibilityLevel = 'public' | 'friends' | 'private'
+export type VisibilityLevel = 'public' | 'friends' | 'private' | 'group'
 
 export type PrideEntry = {
   num: string
@@ -60,6 +60,12 @@ export type PrideEntry = {
   overcome: OvercomeLevel // 0..3
   /** Приватность конкретной гордости (ЭТАП 9). Отсутствует → как у дня */
   visibility?: VisibilityLevel
+  /** ID группы для видимости 'group' (ЭТАП 9) */
+  groupId?: string | null
+  /** Название группы для бейджа */
+  groupName?: string
+  /** Список ID групп для мульти-групповой видимости */
+  targetGroupIds?: string[]
 }
 
 export type GratitudeEntry = {
@@ -67,6 +73,12 @@ export type GratitudeEntry = {
   text: string
   rating?: number // 1..10
   visibility?: VisibilityLevel
+  /** ID группы для видимости 'group' (ЭТАП 9) */
+  groupId?: string | null
+  /** Название группы для бейджа */
+  groupName?: string
+  /** Список ID групп для мульти-групповой видимости */
+  targetGroupIds?: string[]
 }
 
 export function getGratitudeText(g: string | GratitudeEntry): string {
@@ -94,6 +106,12 @@ export type Day = {
   status?: DayStatus
   /** Приватность всего дня (ЭТАП 9). Отсутствует → 'public' */
   visibility?: VisibilityLevel
+  /** ID группы для видимости 'group' (ЭТАП 9) */
+  groupId?: string | null
+  /** Название группы для бейджа */
+  groupName?: string
+  /** Список ID групп для мульти-групповой видимости */
+  targetGroupIds?: string[]
   aiScore?: number
   score?: number // точный float балл дня (например 8.8)
   aiVerdict?: string
@@ -296,10 +314,20 @@ export type ComposerPayload = {
   aiBreakdown?: string
   /** Приватность всего дня (ЭТАП 9) */
   visibility?: VisibilityLevel
+  /** ID группы для видимости дня */
+  groupId?: string | null
+  groupName?: string
+  targetGroupIds?: string[]
   /** Приватность каждой гордости по индексу (после удаления пустых) */
   prideVisibilities?: Record<number, VisibilityLevel>
+  /** ID группы для каждой гордости по индексу */
+  prideGroupIds?: Record<number, string | null>
+  prideGroupNames?: Record<number, string | undefined>
   /** Приватность каждой благодарности по индексу (после удаления пустых) */
   gratitudeVisibilities?: Record<number, VisibilityLevel>
+  /** ID группы для каждой благодарности по индексу */
+  gratitudeGroupIds?: Record<number, string | null>
+  gratitudeGroupNames?: Record<number, string | undefined>
 }
 
 export type ComposerDraft = {
@@ -312,10 +340,17 @@ export type ComposerDraft = {
   lastSavedISO: string
   /** Черновик приватности дня (ЭТАП 9) */
   visibility?: VisibilityLevel
+  groupId?: string | null
+  groupName?: string
+  targetGroupIds?: string[]
   /** Черновик приватности гордостей по индексу */
   prideVisibilities?: Record<number, VisibilityLevel>
+  prideGroupIds?: Record<number, string | null>
+  prideGroupNames?: Record<number, string | undefined>
   /** Черновик приватности благодарностей по индексу */
   gratitudeVisibilities?: Record<number, VisibilityLevel>
+  gratitudeGroupIds?: Record<number, string | null>
+  gratitudeGroupNames?: Record<number, string | undefined>
 }
 
 /* ────────────────────────────────────────────────────────────────────────

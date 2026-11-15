@@ -9,7 +9,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { StreakStatus } from '@/lib/ogonek/streak'
-import type { Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
+import type { ChatGroupMeta, Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { Button } from '../ui'
 import { DayCard } from '../day-card'
@@ -96,12 +96,22 @@ export function HomeView({
   }, [isOwner, days?.length, userId, currentUser?.id, state.auth.activeAccountId, loadDaysFromCloud])
 
   const [filter, setFilter] = useState<string>('Мои гордости')
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string | null>(null)
   const [visibleCount, setVisibleCount] = useState<number>(CHUNK_SIZE)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [serverFriendDays, setServerFriendDays] = useState<Day[]>([])
   const [loadingFriendFeed, setLoadingFriendFeed] = useState(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const userGroups = useMemo(() => {
+    const threads = state.chatThreads ?? {}
+    const list: ChatGroupMeta[] = []
+    Object.values(threads).forEach((t) => {
+      if (t.groupMeta) list.push(t.groupMeta)
+    })
+    return list
+  }, [state.chatThreads])
 
   const currentUserId = currentUser?.id || state.auth.activeAccountId || userId
 
@@ -205,10 +215,7 @@ export function HomeView({
       })
     }
     if (filter === 'Друзья') {
-      if (serverFriendDays.length > 0) {
-        return serverFriendDays
-      }
-      return days.filter((d) => {
+      let baseList = serverFriendDays.length > 0 ? serverFriendDays : days.filter((d) => {
         const uid = d.user_id || (d as any).userId
         if (!uid) return false
         const isMine =
@@ -218,6 +225,17 @@ export function HomeView({
         if (isMine) return false
         return (state.friendIds ?? []).includes(uid) || followingIds.includes(uid)
       })
+
+      if (selectedGroupFilter) {
+        baseList = baseList.filter((d) => {
+          if (d.groupId === selectedGroupFilter || d.groupName === selectedGroupFilter) return true
+          const inPrides = d.prides?.some((p) => p.groupId === selectedGroupFilter || p.groupName === selectedGroupFilter)
+          if (inPrides) return true
+          const inGrats = (d.gratitudes as any)?.some((g: any) => typeof g === 'object' && (g.groupId === selectedGroupFilter || g.groupName === selectedGroupFilter))
+          return inGrats
+        })
+      }
+      return baseList
     }
     if (filter === 'Подписки') {
       return days.filter((d) => {
@@ -331,6 +349,41 @@ export function HomeView({
           })}
         </div>
       </header>
+
+      {/* Фильтр по группе внутри вкладки «Друзья» (CONTRACT Шаг 09) */}
+      {filter === 'Друзья' && userGroups.length > 0 && (
+        <div className="flex items-center gap-1.5 px-4 py-2 border-b border-[var(--line)] overflow-x-auto no-scrollbar bg-[var(--surface-subtle,#16181c)]/40">
+          <button
+            type="button"
+            onClick={() => setSelectedGroupFilter(null)}
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+              selectedGroupFilter === null
+                ? 'bg-[var(--accent)] text-white shadow-sm'
+                : 'bg-white/5 text-[var(--muted)] hover:text-white'
+            }`}
+          >
+            Все друзья
+          </button>
+          {userGroups.map((g) => {
+            const isSelected = selectedGroupFilter === g.id || selectedGroupFilter === g.title
+            return (
+              <button
+                key={g.id}
+                type="button"
+                onClick={() => setSelectedGroupFilter(isSelected ? null : g.id)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
+                  isSelected
+                    ? 'bg-purple-600 text-white shadow-sm'
+                    : 'bg-white/5 text-[var(--muted)] hover:text-white'
+                }`}
+              >
+                <span>{g.avatarEmoji || '👥'}</span>
+                <span>{g.title}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Сторис друзей — Instagram-кружочки вверху ленты */}
       <StoriesBar

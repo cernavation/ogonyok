@@ -564,6 +564,8 @@ export function mapCloudDayToDay(row: any): Day {
           scale: Number(p.scale ?? 0),
           overcome: (Number(p.overcome) || 0) as OvercomeLevel,
           visibility: (p.visibility || row.visibility || 'public') as VisibilityLevel,
+          groupId: p.group_id || null,
+          targetGroupIds: Array.isArray(p.target_group_ids) ? p.target_group_ids : [],
         }))
     : []
 
@@ -574,6 +576,9 @@ export function mapCloudDayToDay(row: any): Day {
           num: g.num ? String(g.num) : undefined,
           text: g.text || '',
           rating: Number(g.rating ?? 10),
+          visibility: (g.visibility || row.visibility || 'public') as VisibilityLevel,
+          groupId: g.group_id || null,
+          targetGroupIds: Array.isArray(g.target_group_ids) ? g.target_group_ids : [],
         }))
     : []
 
@@ -585,6 +590,8 @@ export function mapCloudDayToDay(row: any): Day {
     dateISO: row.date_iso || new Date().toISOString(),
     status: row.status === 'missed' ? 'missed' : 'normal',
     visibility: (row.visibility || 'public') as VisibilityLevel,
+    groupId: row.group_id || null,
+    targetGroupIds: Array.isArray(row.target_group_ids) ? row.target_group_ids : [],
     user_id: row.user_id,
     userId: row.user_id,
     attached_targets: row.attached_targets || null,
@@ -629,6 +636,8 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
       visibility: day.visibility || 'public',
+      group_id: day.groupId || null,
+      target_group_ids: Array.isArray(day.targetGroupIds) ? day.targetGroupIds : [],
       attached_targets: day.attached_targets || (day as any).attachedTargets || null,
       client_updated_at: nowISO,
     }
@@ -643,19 +652,33 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
       overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
       visibility: p.visibility || day.visibility || 'public',
+      group_id: p.groupId || (p.visibility === 'group' ? day.groupId : null) || null,
+      target_group_ids: Array.isArray(p.targetGroupIds) && p.targetGroupIds.length > 0
+        ? p.targetGroupIds
+        : (Array.isArray(day.targetGroupIds) ? day.targetGroupIds : []),
       client_updated_at: nowISO,
     }))
 
-    const gratitudeRows = (day.gratitudes || []).map((g, idx) => ({
-      user_id: uid,
-      day_client_id: clientId,
-      client_id: `${clientId}_g_${idx + 1}`,
-      position: idx,
-      num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
-      text: typeof g === 'string' ? g : g?.text || '',
-      rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
-      client_updated_at: nowISO,
-    }))
+    const gratitudeRows = (day.gratitudes || []).map((g, idx) => {
+      const gVis = (typeof g === 'object' && g.visibility) || day.visibility || 'public'
+      const gGroup = (typeof g === 'object' && g.groupId) || (gVis === 'group' ? day.groupId : null) || null
+      const gTargets = (typeof g === 'object' && Array.isArray(g.targetGroupIds) && g.targetGroupIds.length > 0)
+        ? g.targetGroupIds
+        : (Array.isArray(day.targetGroupIds) ? day.targetGroupIds : [])
+      return {
+        user_id: uid,
+        day_client_id: clientId,
+        client_id: `${clientId}_g_${idx + 1}`,
+        position: idx,
+        num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+        text: typeof g === 'string' ? g : g?.text || '',
+        rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
+        visibility: gVis,
+        group_id: gGroup,
+        target_group_ids: gTargets,
+        client_updated_at: nowISO,
+      }
+    })
 
     const [dayRes] = await Promise.all([
       supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' }),
@@ -1035,6 +1058,9 @@ export function useOgonekStore() {
             visibility: normalizeVisibility(
               payload.prideVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
             ),
+            groupId: payload.prideGroupIds?.[idx] ?? payload.groupId ?? null,
+            groupName: payload.prideGroupNames?.[idx] ?? payload.groupName,
+            targetGroupIds: payload.targetGroupIds,
           }
         })
 
@@ -1044,6 +1070,9 @@ export function useOgonekStore() {
           visibility: normalizeVisibility(
             payload.gratitudeVisibilities?.[idx] ?? payload.visibility ?? DEFAULT_VISIBILITY
           ),
+          groupId: payload.gratitudeGroupIds?.[idx] ?? payload.groupId ?? null,
+          groupName: payload.gratitudeGroupNames?.[idx] ?? payload.groupName,
+          targetGroupIds: payload.targetGroupIds,
         }))
 
         // Расчёт или передача точного балла дня (например 8.8)
@@ -1071,6 +1100,9 @@ export function useOgonekStore() {
           dateISO: computedDate,
           status: 'normal',
           visibility: normalizeVisibility(payload.visibility),
+          groupId: payload.groupId || null,
+          groupName: payload.groupName,
+          targetGroupIds: payload.targetGroupIds || [],
           score: exactDayScore,
           aiScore: exactDayScore,
           aiVerdict: payload.aiVerdict,
@@ -1217,18 +1249,27 @@ export function useOgonekStore() {
                 payload.visibility ??
                 DEFAULT_VISIBILITY
             ),
+            groupId: payload.prideGroupIds?.[idx] ?? payload.groupId ?? existingPride?.groupId ?? null,
+            groupName: payload.prideGroupNames?.[idx] ?? payload.groupName ?? existingPride?.groupName,
+            targetGroupIds: payload.targetGroupIds ?? existingPride?.targetGroupIds,
           }
         })
 
         const updatedGratitudes: (string | GratitudeEntry)[] = payload.gratitudes.map((text, idx) => {
           const existingGrat = targetDay.gratitudes[idx]
           const prevVis = typeof existingGrat === 'object' && existingGrat?.visibility ? existingGrat.visibility : undefined
+          const prevGroup = typeof existingGrat === 'object' && existingGrat?.groupId ? existingGrat.groupId : undefined
+          const prevGroupName = typeof existingGrat === 'object' && existingGrat?.groupName ? existingGrat.groupName : undefined
+          const prevTargets = typeof existingGrat === 'object' && existingGrat?.targetGroupIds ? existingGrat.targetGroupIds : undefined
           return {
             num: String(idx + 1).padStart(2, '0'),
             text,
             visibility: normalizeVisibility(
               payload.gratitudeVisibilities?.[idx] ?? prevVis ?? payload.visibility ?? DEFAULT_VISIBILITY
             ),
+            groupId: payload.gratitudeGroupIds?.[idx] ?? payload.groupId ?? prevGroup ?? null,
+            groupName: payload.gratitudeGroupNames?.[idx] ?? payload.groupName ?? prevGroupName,
+            targetGroupIds: payload.targetGroupIds ?? prevTargets,
           }
         })
 
@@ -1260,6 +1301,9 @@ export function useOgonekStore() {
           visibility: payload.visibility
             ? normalizeVisibility(payload.visibility)
             : targetDay.visibility,
+          groupId: payload.groupId !== undefined ? payload.groupId : targetDay.groupId,
+          groupName: payload.groupName !== undefined ? payload.groupName : targetDay.groupName,
+          targetGroupIds: payload.targetGroupIds !== undefined ? payload.targetGroupIds : targetDay.targetGroupIds,
         }
 
         savedDay = updatedDay
@@ -3598,6 +3642,64 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /** Меняет аудиторию дня (Лично / Друзьям / Всем / Группе) */
+  const setDayAudience = useCallback(
+    async (dayId: number, level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
+      const next = normalizeVisibility(level)
+      const cleanGroupId = level === 'group' ? (groupId || null) : null
+      const cleanGroupName = level === 'group' ? groupName : undefined
+
+      updateStore((prev) => ({
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id === dayId
+            ? {
+                ...d,
+                visibility: next,
+                groupId: cleanGroupId,
+                groupName: cleanGroupName,
+                prides: d.prides.map((p) => ({
+                  ...p,
+                  visibility: next,
+                  groupId: cleanGroupId,
+                  groupName: cleanGroupName,
+                })),
+                gratitudes: d.gratitudes.map((g) =>
+                  typeof g === 'string'
+                    ? { text: g, visibility: next, groupId: cleanGroupId, groupName: cleanGroupName }
+                    : { ...g, visibility: next, groupId: cleanGroupId, groupName: cleanGroupName }
+                ),
+              }
+            : d
+        ),
+      }))
+
+      try {
+        const supabase = getSupabase()
+        const uid = getSnapshot().auth?.activeAccountId
+        if (supabase && uid) {
+          await Promise.allSettled([
+            supabase
+              .from('days')
+              .update({ visibility: next, group_id: cleanGroupId })
+              .match({ user_id: uid, client_id: String(dayId) }),
+            supabase
+              .from('prides')
+              .update({ visibility: next, group_id: cleanGroupId })
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+            supabase
+              .from('gratitudes')
+              .update({ visibility: next, group_id: cleanGroupId })
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+          ])
+        }
+      } catch (err) {
+        console.error('[Ogonek] Error updating day audience in Supabase:', err)
+      }
+    },
+    [updateStore]
+  )
+
   /** Меняет приватность конкретной гордости дня */
   const setPrideVisibility = useCallback(
     async (dayId: number, index: number, level: VisibilityLevel) => {
@@ -5865,6 +5967,7 @@ export function useOgonekStore() {
     clearPrideRating,
     clearGratitudeRating,
     setDayVisibility,
+    setDayAudience,
     setPrideVisibility,
     setAllPridesVisibility,
     addComment,

@@ -66,6 +66,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
           {onOpenFriends && (
             <button
               type="button"
+              id="btn-open-friends-modal"
               onClick={onOpenFriends}
               className="text-[12px] font-bold text-[var(--accent)] hover:underline cursor-pointer"
               aria-label="Открыть окно друзей"

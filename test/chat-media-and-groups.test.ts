@@ -33,16 +33,17 @@ test('Step 08: Chat Media - No Base64, size < 2KB, link preview', async (t) => {
   })
 
   await t.test('detectChatMediaType detects correct media types', () => {
-    assert.strictEqual(detectChatMediaType('image/png', 'photo.png'), 'image')
-    assert.strictEqual(detectChatMediaType('video/mp4', 'clip.mp4'), 'video')
-    assert.strictEqual(detectChatMediaType('audio/ogg', 'voice.ogg'), 'audio')
-    assert.strictEqual(detectChatMediaType('application/pdf', 'doc.pdf'), 'file')
+    assert.strictEqual(detectChatMediaType({ type: 'image/png', name: 'photo.png' }), 'image')
+    assert.strictEqual(detectChatMediaType({ type: 'video/mp4', name: 'clip.mp4' }), 'video')
+    assert.strictEqual(detectChatMediaType({ type: 'audio/ogg', name: 'voice.ogg' }), 'audio')
+    assert.strictEqual(detectChatMediaType({ type: 'application/pdf', name: 'doc.pdf' }), 'file')
   })
 
   await t.test('sendDirectMessageToDb rejects Base64 attachments', async () => {
     const fakeBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
     const res = await sendDirectMessageToDb({
       userId: '00000000-0000-0000-0000-000000000001',
+      authorId: '00000000-0000-0000-0000-000000000001',
       recipientId: '00000000-0000-0000-0000-000000000002',
       body: 'Тест',
       media: {

@@ -20,11 +20,19 @@ import {
   Loader2,
   RefreshCw,
   AlertCircle,
+  ChevronLeft,
+  Plus,
+  Settings,
+  MessageCircle,
+  Trash2,
+  Edit2,
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { canCreateGroup, canAddGroupMember } from '@/lib/ogonek/permissions'
+import type { ChatGroupMeta } from '@/lib/ogonek/types'
 import {
   type SocialUser,
   type FriendshipStatus,
@@ -43,7 +51,7 @@ import {
 import { buildInviteUrl } from '@/lib/ogonek/profile-share'
 import { QrModal } from './qr-modal'
 
-export type FriendsTab = 'friends' | 'requests' | 'search' | 'following'
+export type FriendsTab = 'friends' | 'requests' | 'search' | 'following' | 'groups'
 
 interface Props {
   initialTab?: FriendsTab
@@ -64,12 +72,35 @@ export function FriendsModal({
 }: Props) {
   useBodyScrollLock(true)
 
-  const { state, currentUser, addFriend: storeAddFriend, removeFriend: storeRemoveFriend } = useOgonekStore()
+  const {
+    state,
+    currentUser,
+    addFriend: storeAddFriend,
+    removeFriend: storeRemoveFriend,
+    createGroupChat,
+    updateGroupMeta,
+    addGroupMembers,
+    removeGroupMember,
+  } = useOgonekStore()
   const viewerId = currentUser?.id || state.auth.activeAccountId || null
   const currentUsername = currentUser?.username || state.profile.username || 'user'
   const currentDisplayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
 
   const [activeTab, setActiveTab] = useState<FriendsTab>(initialTab)
+
+  // Состояния для групп (Шаг 09)
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
+  const [groupSubTab, setGroupSubTab] = useState<'feed' | 'members'>('feed')
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false)
+  const [isEditingGroup, setIsEditingGroup] = useState(false)
+  const [isInvitingMember, setIsInvitingMember] = useState(false)
+  const [newGroupTitle, setNewGroupTitle] = useState('')
+  const [newGroupDescription, setNewGroupDescription] = useState('')
+  const [newGroupEmoji, setNewGroupEmoji] = useState('👥')
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([])
+  const [editGroupTitle, setEditGroupTitle] = useState('')
+  const [editGroupDescription, setEditGroupDescription] = useState('')
+  const [editGroupEmoji, setEditGroupEmoji] = useState('👥')
 
   // Данные списков
   const [friends, setFriends] = useState<SocialUser[]>([])
@@ -97,6 +128,129 @@ export function FriendsModal({
 
   const searchInputRef = useRef<HTMLInputElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
+
+  const chatGroups = useMemo(() => {
+    const threads = state.chatThreads ?? {}
+    const list: ChatGroupMeta[] = []
+    Object.values(threads).forEach((t) => {
+      if (t.groupMeta) list.push(t.groupMeta)
+    })
+    return list
+  }, [state.chatThreads])
+
+  const selectedGroup = useMemo(() => {
+    if (!selectedGroupId) return null
+    return chatGroups.find((g) => g.id === selectedGroupId) || null
+  }, [chatGroups, selectedGroupId])
+
+  const ownedGroupsCount = useMemo(() => {
+    const myId = viewerId || 'cernavation'
+    return chatGroups.filter((g) => g.createdBy === myId || g.role === 'owner').length
+  }, [chatGroups, viewerId])
+
+  const groupFeedDays = useMemo(() => {
+    if (!selectedGroupId) return []
+    return (state.days || []).filter((d) => {
+      if (d.groupId === selectedGroupId) return true
+      if (d.targetGroupIds && d.targetGroupIds.includes(selectedGroupId)) return true
+      const hasPride = d.prides?.some((p) => p.groupId === selectedGroupId || (p.targetGroupIds && p.targetGroupIds.includes(selectedGroupId)))
+      if (hasPride) return true
+      const hasGrat = (d.gratitudes as any)?.some((g: any) => typeof g === 'object' && (g.groupId === selectedGroupId || (g.targetGroupIds && g.targetGroupIds.includes(selectedGroupId))))
+      return hasGrat
+    })
+  }, [state.days, selectedGroupId])
+
+  const handleStartCreateGroup = () => {
+    playClick(soundEnabled)
+    const tier = state.profile?.subscription_tier || (state.profile as any)?.subscriptionTier || 'free'
+    const check = canCreateGroup(tier, ownedGroupsCount)
+    if (!check.allowed) {
+      onNotify(check.error || 'Достигнут лимит созданных групп для вашего тарифа')
+      return
+    }
+    setNewGroupTitle('')
+    setNewGroupDescription('')
+    setNewGroupEmoji('👥')
+    setSelectedMemberIds([])
+    setIsCreatingGroup(true)
+  }
+
+  const handleConfirmCreateGroup = () => {
+    playClick(soundEnabled)
+    const cleanTitle = newGroupTitle.trim()
+    if (!cleanTitle) {
+      onNotify('Введите название группы')
+      return
+    }
+    const gid = createGroupChat(
+      cleanTitle,
+      selectedMemberIds,
+      'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+      newGroupEmoji || '👥',
+      newGroupDescription
+    )
+    playSuccess(soundEnabled)
+    onNotify(`Группа «${cleanTitle}» успешно создана! 🎉`)
+    setIsCreatingGroup(false)
+    setSelectedGroupId(gid)
+  }
+
+  const handleStartEditGroup = () => {
+    if (!selectedGroup) return
+    playClick(soundEnabled)
+    setEditGroupTitle(selectedGroup.title)
+    setEditGroupDescription(selectedGroup.description || '')
+    setEditGroupEmoji(selectedGroup.avatarEmoji || '👥')
+    setIsEditingGroup(true)
+  }
+
+  const handleSaveEditGroup = () => {
+    if (!selectedGroup) return
+    playClick(soundEnabled)
+    const cleanTitle = editGroupTitle.trim()
+    if (!cleanTitle) {
+      onNotify('Название группы не может быть пустым')
+      return
+    }
+    updateGroupMeta(selectedGroup.id, {
+      title: cleanTitle,
+      description: editGroupDescription,
+      avatarEmoji: editGroupEmoji || '👥',
+    })
+    playSuccess(soundEnabled)
+    onNotify('Настройки группы сохранены')
+    setIsEditingGroup(false)
+  }
+
+  const handleOpenGroupChat = (groupId: string) => {
+    playClick(soundEnabled)
+    if (onStartChatWithUser) {
+      onStartChatWithUser(groupId)
+    }
+    onClose()
+  }
+
+  const handleAddMemberToGroup = (memberId: string) => {
+    if (!selectedGroup) return
+    playClick(soundEnabled)
+    const tier = state.profile?.subscription_tier || (state.profile as any)?.subscriptionTier || 'free'
+    const check = canAddGroupMember(tier, selectedGroup.memberIds.length)
+    if (!check.allowed) {
+      onNotify(check.error || 'Достигнут лимит участников группы')
+      return
+    }
+    addGroupMembers(selectedGroup.id, [memberId])
+    playSuccess(soundEnabled)
+    onNotify('Участник добавлен в группу!')
+    setIsInvitingMember(false)
+  }
+
+  const handleRemoveMemberFromGroup = (memberId: string) => {
+    if (!selectedGroup) return
+    playClick(soundEnabled)
+    removeGroupMember(selectedGroup.id, memberId)
+    onNotify('Участник удалён из группы')
+  }
 
   // Загрузка друзей и заявок
   const loadSocialData = useCallback(async () => {
@@ -348,6 +502,7 @@ export function FriendsModal({
 
           <button
             type="button"
+            id="btn-close-friends-modal"
             onClick={onClose}
             className="w-9 h-9 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-[var(--bg-hover,#1d1f23)] transition-colors"
             aria-label="Закрыть окно"
@@ -443,6 +598,31 @@ export function FriendsModal({
             }`}
           >
             <span>Подписки</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            id="friends-tab-groups"
+            aria-selected={activeTab === 'groups'}
+            onClick={() => {
+              playClick(soundEnabled)
+              setActiveTab('groups')
+              setSelectedGroupId(null)
+            }}
+            className={`flex-1 py-3.5 px-3 text-center text-sm font-bold border-b-2 transition-colors whitespace-nowrap min-h-[44px] flex items-center justify-center gap-1.5 ${
+              activeTab === 'groups'
+                ? 'border-[var(--accent,#ff5722)] text-[var(--text,#fff)]'
+                : 'border-transparent text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]'
+            }`}
+          >
+            <Users size={15} />
+            <span>Группы</span>
+            {chatGroups.length > 0 && (
+              <span className="text-xs px-1.5 py-0.2 rounded-full bg-[var(--surface2,#202327)] text-[var(--muted,#71767b)] font-normal">
+                {chatGroups.length}
+              </span>
+            )}
           </button>
         </nav>
 
@@ -834,6 +1014,321 @@ export function FriendsModal({
               </button>
             </div>
           )}
+
+          {/* ────────────────── ТАБ 5: ГРУППЫ (Шаг 09) ────────────────── */}
+          {activeTab === 'groups' && (
+            <div className="space-y-4">
+              {!selectedGroup ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-bold text-[var(--text,#fff)]">Группы</h3>
+                      <p className="text-xs text-[var(--muted,#71767b)]">
+                        Закрытые круги для общения, чатов и записей дня
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      id="btn-create-group"
+                      onClick={handleStartCreateGroup}
+                      className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] hover:opacity-90 text-white transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                      <Plus size={14} />
+                      <span>Создать группу</span>
+                    </button>
+                  </div>
+
+                  {chatGroups.length === 0 ? (
+                    <div className="py-12 px-4 text-center flex flex-col items-center">
+                      <div className="w-14 h-14 rounded-full bg-purple-500/15 text-purple-400 flex items-center justify-center mb-3">
+                        <Users size={28} />
+                      </div>
+                      <h4 className="text-base font-bold text-[var(--text,#fff)] mb-1">
+                        У тебя пока нет групп
+                      </h4>
+                      <p className="text-xs text-[var(--muted,#71767b)] max-w-sm mb-4">
+                        Создавай группы для семьи, спортивных команд или друзей. У каждой гордости в композере можно выбирать группу как аудиторию!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleStartCreateGroup}
+                        className="px-5 py-2.5 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] text-white hover:opacity-90 transition-all flex items-center gap-2"
+                      >
+                        <Plus size={14} />
+                        <span>Создать первую группу</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {chatGroups.map((g) => {
+                        const isOwner = g.createdBy === viewerId || g.role === 'owner'
+                        return (
+                          <div
+                            key={g.id}
+                            className="p-3.5 rounded-2xl bg-[var(--surface-subtle,#1c1f23)] border border-[var(--line,#2f3336)] flex items-center justify-between gap-3 hover:border-purple-500/40 transition-colors"
+                          >
+                            <div
+                              className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                              onClick={() => {
+                                playClick(soundEnabled)
+                                setSelectedGroupId(g.id)
+                                setGroupSubTab('feed')
+                              }}
+                            >
+                              <div
+                                className="w-11 h-11 rounded-full flex items-center justify-center text-lg shrink-0 shadow-sm"
+                                style={{ background: g.avatarColor || '#a855f7' }}
+                              >
+                                {g.avatarEmoji || '👥'}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="text-sm font-bold text-[var(--text,#fff)] truncate">
+                                    {g.title}
+                                  </h4>
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300">
+                                    {isOwner ? 'Владелец' : 'Участник'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-[var(--muted,#71767b)] truncate mt-0.5">
+                                  {g.description || `${g.memberIds.length} участников`}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                id={`btn-open-group-${g.id}`}
+                                data-testid="btn-open-group"
+                                onClick={() => {
+                                  playClick(soundEnabled)
+                                  setSelectedGroupId(g.id)
+                                  setGroupSubTab('feed')
+                                }}
+                                className="px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--surface2,#202327)] text-[var(--text,#fff)] hover:bg-[var(--line,#2f3336)] transition-all"
+                              >
+                                Открыть
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenGroupChat(g.id)}
+                                className="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-600/20 text-purple-300 border border-purple-500/30 hover:bg-purple-600/30 transition-all flex items-center gap-1"
+                                title="Открыть чат группы"
+                              >
+                                <MessageCircle size={13} />
+                                <span className="hidden sm:inline">Чат</span>
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setSelectedGroupId(null)
+                      }}
+                      className="text-xs font-bold text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-white/5 transition-colors"
+                    >
+                      <ChevronLeft size={16} />
+                      <span>Все группы</span>
+                    </button>
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        id="btn-open-group-chat"
+                        onClick={() => handleOpenGroupChat(selectedGroup.id)}
+                        className="px-3 py-1.5 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] text-white hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
+                      >
+                        <MessageCircle size={13} />
+                        <span>Открыть чат</span>
+                      </button>
+                      {(selectedGroup.createdBy === viewerId || selectedGroup.role === 'owner') && (
+                        <button
+                          type="button"
+                          onClick={handleStartEditGroup}
+                          className="p-1.5 rounded-full text-[var(--muted,#71767b)] hover:text-white hover:bg-white/10 transition-colors"
+                          title="Настройки группы"
+                          aria-label="Настройки группы"
+                        >
+                          <Settings size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[var(--surface-subtle,#1c1f23)] border border-[var(--line,#2f3336)] flex items-start gap-3.5">
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-2xl shrink-0 shadow-md"
+                      style={{ background: selectedGroup.avatarColor || '#a855f7' }}
+                    >
+                      {selectedGroup.avatarEmoji || '👥'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-[var(--text,#fff)] truncate">
+                          {selectedGroup.title}
+                        </h3>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300">
+                          {selectedGroup.memberIds.length} участников
+                        </span>
+                      </div>
+                      <p className="text-xs text-[var(--muted,#71767b)] mt-1 leading-relaxed">
+                        {selectedGroup.description || 'Группа для совместных записей и общения в Огоньке.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center border-b border-[var(--line,#2f3336)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setGroupSubTab('feed')
+                      }}
+                      className={`flex-1 py-2 text-xs font-bold border-b-2 transition-colors flex items-center justify-center gap-1.5 ${
+                        groupSubTab === 'feed'
+                          ? 'border-[var(--accent,#ff5722)] text-[var(--text,#fff)]'
+                          : 'border-transparent text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]'
+                      }`}
+                    >
+                      <span>Лента записей</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10">
+                        {groupFeedDays.length}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setGroupSubTab('members')
+                      }}
+                      className={`flex-1 py-2 text-xs font-bold border-b-2 transition-colors flex items-center justify-center gap-1.5 ${
+                        groupSubTab === 'members'
+                          ? 'border-[var(--accent,#ff5722)] text-[var(--text,#fff)]'
+                          : 'border-transparent text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]'
+                      }`}
+                    >
+                      <span>Участники</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/10">
+                        {selectedGroup.memberIds.length}
+                      </span>
+                    </button>
+                  </div>
+
+                  {groupSubTab === 'feed' && (
+                    <div className="space-y-3">
+                      {groupFeedDays.length === 0 ? (
+                        <div className="py-8 text-center flex flex-col items-center">
+                          <Flame size={24} className="text-zinc-600 mb-2" />
+                          <h4 className="text-sm font-bold text-zinc-300">В этой группе пока нет записей</h4>
+                          <p className="text-xs text-[var(--muted,#71767b)] max-w-xs mt-1">
+                            Создай запись в композере и выбери «👥 {selectedGroup.title}» в выпадающем меню аудитории!
+                          </p>
+                        </div>
+                      ) : (
+                        groupFeedDays.map((d) => (
+                          <div
+                            key={d.id}
+                            className="p-3 rounded-xl bg-[var(--surface-subtle,#1c1f23)] border border-[var(--line,#2f3336)] space-y-2"
+                          >
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-[var(--text,#fff)]">День #{d.id}</span>
+                              <span className="text-[var(--muted,#71767b)]">
+                                {d.dateISO ? new Date(d.dateISO).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : ''}
+                              </span>
+                            </div>
+                            <div className="space-y-1">
+                              {d.prides
+                                ?.filter((p) => p.text && p.text !== '—' && (p.groupId === selectedGroup.id || (p.targetGroupIds && p.targetGroupIds.includes(selectedGroup.id)) || d.groupId === selectedGroup.id))
+                                .map((p, idx) => (
+                                  <div key={idx} className="text-xs text-zinc-200 flex items-start gap-1.5">
+                                    <span className="text-amber-500 font-bold">🔥</span>
+                                    <span>{p.text}</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {groupSubTab === 'members' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[var(--muted,#71767b)] font-semibold">
+                          Всего участников: {selectedGroup.memberIds.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            playClick(soundEnabled)
+                            setIsInvitingMember(true)
+                          }}
+                          className="px-3 py-1 rounded-full text-xs font-bold bg-white/10 hover:bg-white/15 text-[var(--text,#fff)] flex items-center gap-1 transition-colors"
+                        >
+                          <UserPlus size={13} />
+                          <span>Пригласить</span>
+                        </button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {selectedGroup.memberIds.map((mId) => {
+                          const isMemberOwner = mId === selectedGroup.createdBy
+                          const isMe = mId === viewerId
+                          const friendInfo = friends.find((f) => f.id === mId)
+                          const mName = isMe
+                            ? (currentDisplayName || `@${currentUsername}`)
+                            : (friendInfo?.displayName || friendInfo?.username || `@${mId.slice(0, 8)}`)
+
+                          return (
+                            <div
+                              key={mId}
+                              className="p-2.5 rounded-xl bg-[var(--surface-subtle,#1c1f23)] border border-[var(--line,#2f3336)] flex items-center justify-between gap-2"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center font-bold text-xs text-zinc-300">
+                                  {mName.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-xs font-bold text-[var(--text,#fff)] truncate">
+                                    {mName} {isMe && '(Ты)'}
+                                  </div>
+                                  <span className="text-[10px] text-[var(--muted,#71767b)]">
+                                    {isMemberOwner ? '👑 Создатель группы' : 'Участник'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {(selectedGroup.createdBy === viewerId || selectedGroup.role === 'owner') && !isMemberOwner && !isMe && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveMemberFromGroup(mId)}
+                                  className="text-xs text-rose-400 hover:text-rose-300 p-1.5 rounded-lg hover:bg-rose-500/10 transition-colors"
+                                  title="Удалить из группы"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -886,6 +1381,261 @@ export function FriendsModal({
                 className="px-4 py-1.5 rounded-full text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-colors"
               >
                 Отправить жалобу
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка создания группы (Шаг 09) */}
+      {isCreatingGroup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          onClick={() => setIsCreatingGroup(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-6 shadow-2xl flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+              <h3 className="text-base font-bold text-[var(--text,#fff)]">Создать группу</h3>
+              <button
+                type="button"
+                onClick={() => setIsCreatingGroup(false)}
+                className="text-[var(--muted,#71767b)] hover:text-white p-1 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Название группы:
+                </label>
+                <input
+                  type="text"
+                  id="input-group-title"
+                  value={newGroupTitle}
+                  onChange={(e) => setNewGroupTitle(e.target.value)}
+                  placeholder="например: Семья, Спортсмены..."
+                  className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[var(--accent,#ff5722)] focus:outline-none"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Иконка группы:
+                </label>
+                <div className="flex items-center gap-2">
+                  {['👥', '🔥', '🏃', '❤️', '🏆', '⚡', '🌟', '🎯'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setNewGroupEmoji(emoji)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-all ${
+                        newGroupEmoji === emoji
+                          ? 'border-[var(--accent,#ff5722)] bg-[var(--accent,#ff5722)]/20 scale-110'
+                          : 'border-transparent bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Описание:
+                </label>
+                <textarea
+                  value={newGroupDescription}
+                  onChange={(e) => setNewGroupDescription(e.target.value)}
+                  placeholder="О чём эта группа..."
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[var(--accent,#ff5722)] focus:outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--line,#2f3336)]">
+              <button
+                type="button"
+                onClick={() => setIsCreatingGroup(false)}
+                className="px-4 py-2 rounded-full text-xs font-medium text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                id="btn-confirm-create-group"
+                onClick={handleConfirmCreateGroup}
+                className="px-5 py-2 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] hover:opacity-90 text-white transition-all shadow-sm"
+              >
+                Создать
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка настроек группы (Шаг 09) */}
+      {isEditingGroup && selectedGroup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          onClick={() => setIsEditingGroup(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-6 shadow-2xl flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+              <h3 className="text-base font-bold text-[var(--text,#fff)]">Настройки группы</h3>
+              <button
+                type="button"
+                onClick={() => setIsEditingGroup(false)}
+                className="text-[var(--muted,#71767b)] hover:text-white p-1 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Название:
+                </label>
+                <input
+                  type="text"
+                  value={editGroupTitle}
+                  onChange={(e) => setEditGroupTitle(e.target.value)}
+                  className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[var(--accent,#ff5722)] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Иконка:
+                </label>
+                <div className="flex items-center gap-2">
+                  {['👥', '🔥', '🏃', '❤️', '🏆', '⚡', '🌟', '🎯'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setEditGroupEmoji(emoji)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-all ${
+                        editGroupEmoji === emoji
+                          ? 'border-[var(--accent,#ff5722)] bg-[var(--accent,#ff5722)]/20 scale-110'
+                          : 'border-transparent bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[var(--muted,#71767b)] block mb-1">
+                  Описание:
+                </label>
+                <textarea
+                  value={editGroupDescription}
+                  onChange={(e) => setEditGroupDescription(e.target.value)}
+                  rows={2}
+                  className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[var(--accent,#ff5722)] focus:outline-none resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--line,#2f3336)]">
+              <button
+                type="button"
+                onClick={() => setIsEditingGroup(false)}
+                className="px-4 py-2 rounded-full text-xs font-medium text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEditGroup}
+                className="px-5 py-2 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] hover:opacity-90 text-white transition-all shadow-sm"
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка приглашения участника (Шаг 09) */}
+      {isInvitingMember && selectedGroup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          onClick={() => setIsInvitingMember(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-6 shadow-2xl flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+              <h3 className="text-base font-bold text-[var(--text,#fff)]">Добавить в группу</h3>
+              <button
+                type="button"
+                onClick={() => setIsInvitingMember(false)}
+                className="text-[var(--muted,#71767b)] hover:text-white p-1 rounded-full"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {friends.filter((f) => !selectedGroup.memberIds.includes(f.id)).length === 0 ? (
+                <div className="py-6 text-center text-xs text-[var(--muted,#71767b)]">
+                  Все твои друзья уже добавлены в эту группу
+                </div>
+              ) : (
+                friends
+                  .filter((f) => !selectedGroup.memberIds.includes(f.id))
+                  .map((f) => (
+                    <div
+                      key={f.id}
+                      className="p-2.5 rounded-xl bg-[var(--surface2,#202327)] flex items-center justify-between gap-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-300">
+                          {(f.displayName || f.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-[var(--text,#fff)] truncate">
+                            {f.displayName}
+                          </div>
+                          <div className="text-[10px] text-[var(--muted,#71767b)] truncate">
+                            @{f.username}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleAddMemberToGroup(f.id)}
+                        className="px-3 py-1 rounded-full text-xs font-bold bg-[var(--accent,#ff5722)] text-white hover:opacity-90 transition-all shrink-0"
+                      >
+                        Добавить
+                      </button>
+                    </div>
+                  ))
+              )}
+            </div>
+
+            <div className="flex items-center justify-end pt-2 border-t border-[var(--line,#2f3336)]">
+              <button
+                type="button"
+                onClick={() => setIsInvitingMember(false)}
+                className="px-4 py-2 rounded-full text-xs font-medium text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]"
+              >
+                Закрыть
               </button>
             </div>
           </div>

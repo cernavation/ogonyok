@@ -390,6 +390,14 @@ function DayCardComponent({
                 >
                   День #{day.id}
                 </span>
+                {(day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName) && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                    title={`Аудитория: группа «${day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName}»`}
+                  >
+                    👥 {day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName}
+                  </span>
+                )}
               </div>
 
               <div className="flex items-center gap-1 flex-none">
@@ -397,6 +405,7 @@ function DayCardComponent({
                   icon={<MoreHorizontal size={18} />}
                   label="Опции дня"
                   size="sm"
+                  data-testid="day-options-btn"
                   onClick={() => setOptionsModalOpen(true)}
                 />
               </div>

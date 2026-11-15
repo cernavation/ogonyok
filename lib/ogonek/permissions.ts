@@ -228,6 +228,48 @@ export function canScheduleMessage(
 }
 
 /**
+ * Лимит на создание групп (сообществ) по тарифу (free 1, pro 5, ultra 20)
+ */
+export function canCreateGroup(
+  rawTier: unknown,
+  currentOwnedGroups: number,
+  validUntil?: string | null
+): { allowed: boolean; max: number; error?: string } {
+  const limits = getTierLimits(rawTier, validUntil)
+  const max = limits.maxGroupsOwned
+  if (currentOwnedGroups >= max) {
+    const tier = normalizeTier(rawTier, validUntil)
+    return {
+      allowed: false,
+      max,
+      error: `Достигнут лимит созданных групп для тарифа ${TIER_NAMES[tier]}: ${currentOwnedGroups} / ${max}`,
+    }
+  }
+  return { allowed: true, max }
+}
+
+/**
+ * Лимит участников в группе по тарифу владельца (free 5, pro 25, ultra 100)
+ */
+export function canAddGroupMember(
+  rawTier: unknown,
+  currentMembersCount: number,
+  validUntil?: string | null
+): { allowed: boolean; max: number; error?: string } {
+  const limits = getTierLimits(rawTier, validUntil)
+  const max = limits.maxGroupMembers
+  if (currentMembersCount >= max) {
+    const tier = normalizeTier(rawTier, validUntil)
+    return {
+      allowed: false,
+      max,
+      error: `Достигнут лимит участников группы для тарифа ${TIER_NAMES[tier]}: ${currentMembersCount} / ${max}`,
+    }
+  }
+  return { allowed: true, max }
+}
+
+/**
  * Лимит на ИИ-оценку летописи
  */
 export function canRequestAiEvaluation(

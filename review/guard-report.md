@@ -1,11 +1,11 @@
-# Guard Report — 2026-11-14T23:47:07.607Z
+# Guard Report — 2026-11-15T00:43:53.113Z
 
 - **Статус**: FAIL (exit 1)
-- **Режим**: guard | **Шаг**: `08` | **Окружение**: https://jryhluhgjricjbkimsfa.supabase.co
+- **Режим**: guard | **Шаг**: `09` | **Окружение**: https://jryhluhgjricjbkimsfa.supabase.co
 - **Проверка .lock**: OK
 - **Staging ключи**: OK
 - **Baseline**: Найден
-- **Экранов проверено**: 150 | **Найдено проблем**: 3495
+- **Экранов проверено**: 150 | **Найдено проблем**: 3499
 
 ## Сводка по категориям проверок
 | Код проверки | Кол-во |
@@ -15,8 +15,8 @@
 | `b-narrow-text-column` | 201 |
 | `f-pixel-diff-exceeded` | 150 |
 | `d-dead-button-click-probe` | 143 |
-| `e-console-error` | 73 |
-| `e-http-error` | 48 |
+| `e-console-error` | 75 |
+| `e-http-error` | 50 |
 | `b-clipped-text` | 46 |
 | `d-small-tap-target` | 45 |
 | `d-missing-accessible-name` | 35 |
