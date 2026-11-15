@@ -32,6 +32,7 @@ import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
 import { PremiumView } from './views/premium-view'
 import { GuestLanding } from './landing/guest-landing'
+import { LandingPage } from './landing/landing-page'
 import { ChatWindow } from './messenger/chat-window'
 import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
@@ -1461,39 +1462,12 @@ export function AppShell() {
       )
     }
     return (
-      <TooltipProvider>
-        <AppearanceProvider
-          theme={state.theme}
-          accent={state.accent}
-          fontScale={state.fontScale}
-          feedDensity={state.feedDensity}
-        />
-        <AuthScreen
-          onAuthenticated={() => {
-            navigate('home')
-          }}
-          onNotify={notify}
-        />
-
-        {/* Модальное окно тарифов Премиум при открытии через /premium (CONTRACT Шаг 12) */}
-        {premiumModalOpen && (
-          <PremiumModal
-            isOpen={premiumModalOpen}
-            onClose={() => setPremiumModalOpen(false)}
-            onNotify={notify}
-          />
-        )}
-
-        {/* Всплывающие уведомления в стиле Telegram Desktop (максимум 3 в стеке) */}
-        <DesktopToastStack
-          toasts={desktopToasts}
-          onDismiss={dismissDesktopToast}
-          onClickToast={handleClickToast}
-          onSendReply={handleToastReply}
-        />
-
-        <Toast message={toast} />
-      </TooltipProvider>
+      <LandingPage
+        onAuthenticated={(accountId) => {
+          navigate('home')
+        }}
+        onNotify={notify}
+      />
     )
   }
 

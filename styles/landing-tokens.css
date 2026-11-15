@@ -1,0 +1,262 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   ЛЕНДИНГ ОГОНЁК — APPLE-STYLE DESIGN TOKENS
+   Scoped under .landing so they NEVER leak into the main app UI.
+   Source of truth: DESIGN.md (Apple España / Refero extraction).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.landing {
+  /* ── Colors ───────────────────────────────────────────────────────── */
+  --color-obsidian: #1d1d1f;
+  --color-frost-white: #f5f5f7;
+  --color-pure-black: #000000;
+  --color-paper-white: #ffffff;
+  --color-carbon: #111111;
+  --color-platinum: #86868b;
+  --color-graphite: #333336;
+  --color-silver-mist: #cccccc;
+  --color-smoke: #424245;
+  --color-apple-blue: #0071e3;
+  --color-link-blue: #0066cc;
+  --color-halo-blue: #2997ff;
+  --color-signal-orange: #f56900;
+  --color-iris-violet: #8668ff;
+  --color-reef-teal: #00a1b3;
+
+  /* ── Typography — Font Families ──────────────────────────────────── */
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* ── Typography — Scale ──────────────────────────────────────────── */
+  --text-caption: 10px;
+  --leading-caption: 1.83;
+  --tracking-caption: -0.37px;
+
+  --text-body: 14px;
+  --leading-body: 1.43;
+  --tracking-body: -0.22px;
+
+  --text-body-lg: 17px;
+  --leading-body-lg: 1.47;
+  --tracking-body-lg: -0.022em;
+
+  --text-heading-sm: 19px;
+  --leading-heading-sm: 1.21;
+  --tracking-heading-sm: -0.28px;
+
+  --text-heading: 24px;
+  --leading-heading: 1.17;
+  --tracking-heading: -0.24px;
+
+  --text-heading-lg: 32px;
+  --leading-heading-lg: 1.14;
+  --tracking-heading-lg: -0.32px;
+
+  --text-display: 56px;
+  --leading-display: 1.07;
+  --tracking-display: -0.84px;
+
+  --text-hero: 80px;
+  --leading-hero: 1.05;
+  --tracking-hero: -0.24px;
+
+  /* ── Typography — Weights ────────────────────────────────────────── */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ── Spacing ─────────────────────────────────────────────────────── */
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-60: 60px;
+  --spacing-76: 76px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-104: 104px;
+  --spacing-160: 160px;
+
+  /* ── Layout ──────────────────────────────────────────────────────── */
+  --page-max-width: 1440px;
+  --section-gap: 96px;
+  --card-padding: 28px;
+
+  /* ── Border Radius ───────────────────────────────────────────────── */
+  --radius-lg: 10px;
+  --radius-cards: 28px;
+  --radius-buttons: 36px;
+  --radius-pill: 980px;
+  --radius-nav: 980px;
+
+  /* ── Surfaces ────────────────────────────────────────────────────── */
+  --surface-pure-black: #000000;
+  --surface-carbon: #111111;
+  --surface-obsidian: #1d1d1f;
+  --surface-graphite: #333336;
+  --surface-frost-white: #f5f5f7;
+  --surface-paper-white: #ffffff;
+
+  /* ── Global overrides inside landing scope ────────────────────────── */
+  color: var(--color-frost-white);
+  background: var(--color-pure-black);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scroll-reveal animation (respects prefers-reduced-motion) ─────── */
+@media (prefers-reduced-motion: no-preference) {
+  .landing .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .landing .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing .fade-up {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── Nav blur backdrop ─────────────────────────────────────────────── */
+.landing-nav {
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* ── Apple-style pill button ───────────────────────────────────────── */
+.landing .pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-body);
+  line-height: 1.24;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+  border: none;
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.landing .pill-btn:active {
+  transform: scale(0.97);
+}
+
+.landing .pill-btn--primary {
+  background: var(--color-apple-blue);
+  color: var(--color-paper-white);
+}
+
+.landing .pill-btn--primary:hover {
+  opacity: 0.88;
+}
+
+.landing .pill-btn--ghost {
+  background: transparent;
+  color: var(--color-halo-blue);
+}
+
+.landing .pill-btn--ghost:hover {
+  opacity: 0.7;
+}
+
+.landing .pill-btn--white {
+  background: var(--color-paper-white);
+  color: var(--color-pure-black);
+}
+
+.landing .pill-btn--white:hover {
+  opacity: 0.88;
+}
+
+/* ── Eyebrow label ─────────────────────────────────────────────────── */
+.landing .eyebrow {
+  font-size: var(--text-body-lg);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-body-lg);
+  color: var(--color-signal-orange);
+  line-height: 1.24;
+}
+
+/* ── Section headline ──────────────────────────────────────────────── */
+.landing .section-headline {
+  font-size: clamp(36px, 5vw, var(--text-display));
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+  color: var(--color-frost-white);
+}
+
+/* ── Body text ─────────────────────────────────────────────────────── */
+.landing .body-text {
+  font-size: var(--text-body-lg);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-body-lg);
+  letter-spacing: var(--tracking-body-lg);
+  color: var(--color-platinum);
+}
+
+/* ── Apple-style card ──────────────────────────────────────────────── */
+.landing .apple-card {
+  border-radius: var(--radius-cards);
+  padding: var(--card-padding);
+  background: var(--surface-obsidian);
+}
+
+/* ── Media slot placeholder ────────────────────────────────────────── */
+.landing .media-slot-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  border: 2px dashed var(--color-graphite);
+  border-radius: var(--radius-cards);
+  background: var(--surface-carbon);
+  color: var(--color-smoke);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ── Mode switcher pill buttons ────────────────────────────────────── */
+.landing .mode-pill {
+  padding: 8px 20px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  background: var(--surface-graphite);
+  color: var(--color-frost-white);
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+  border: none;
+}
+
+.landing .mode-pill.active {
+  background: var(--color-apple-blue);
+  color: var(--color-paper-white);
+}
+
+.landing .mode-pill:hover:not(.active) {
+  background: var(--color-smoke);
+}
