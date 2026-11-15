@@ -1,4 +1,4 @@
-import { getInitials } from './initials'
+import { getInitials } from './initials.ts'
 import type {
   AccountProfileSnapshot,
   AuthAccount,

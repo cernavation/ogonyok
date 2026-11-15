@@ -21,8 +21,10 @@ import {
   getFollowing,
   createChatGroupInDb,
   updateChatGroupInDb,
+  saveDayBundleRpc,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
+import { enqueueOfflineMutation } from './offline-queue.ts'
 import { canScheduleMessage } from './permissions.ts'
 
 export type CurrentUser = {
@@ -431,7 +433,7 @@ function ensureSanitizedMessengerState(state: OgonekStoreState): OgonekStoreStat
   }
 }
 
-function getSnapshot(): OgonekStoreState {
+export function getSnapshot(): OgonekStoreState {
   if (typeof window === 'undefined') {
     return DEFAULT_STORE_STATE
   }
@@ -446,7 +448,7 @@ function getSnapshot(): OgonekStoreState {
   return cachedState
 }
 
-function getServerSnapshot(): OgonekStoreState {
+export function getServerSnapshot(): OgonekStoreState {
   return DEFAULT_STORE_STATE
 }
 
@@ -680,6 +682,41 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       }
     })
 
+    // Шаг 17: Оптимизация — сохранение дня со всеми записями и стриком одним атомарным RPC
+    const allDays = getSnapshot().days
+    const newStreak = calculateStreak(allDays)
+    const maxDayNum = allDays.reduce((max, d) => Math.max(max, d.id), day.id)
+    const finalStreak = Math.max(newStreak, maxDayNum, allDays.length)
+
+    const bundlePayload = {
+      day: dayRow,
+      prides: prideRows,
+      gratitudes: gratitudeRows,
+      streak: finalStreak,
+    }
+
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+    if (isOffline) {
+      enqueueOfflineMutation('save_day_bundle', bundlePayload)
+      return { ok: true }
+    }
+
+    try {
+      const rpcRes = await saveDayBundleRpc(bundlePayload)
+      if (rpcRes.ok) {
+        return { ok: true }
+      }
+      if (rpcRes.error && !rpcRes.error.toLowerCase().includes('function') && !rpcRes.error.toLowerCase().includes('not found')) {
+        // Сетевая ошибка или таймаут
+        enqueueOfflineMutation('save_day_bundle', bundlePayload)
+        return { ok: false, error: rpcRes.error }
+      }
+    } catch {
+      // Исключение RPC вызова
+      enqueueOfflineMutation('save_day_bundle', bundlePayload)
+    }
+
+    // Фолбэк на раздельный upsert при отсутствии функции save_day_bundle в тестовом окружении
     const [dayRes] = await Promise.all([
       supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' }),
       prideRows.length > 0
@@ -692,14 +729,10 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
 
     if (dayRes.error) {
       console.error('[Ogonek] Error upserting day to Supabase:', dayRes.error)
+      enqueueOfflineMutation('save_day_bundle', bundlePayload)
       return { ok: false, error: dayRes.error.message }
     }
 
-    // Обновляем streak_count в profiles
-    const allDays = getSnapshot().days
-    const newStreak = calculateStreak(allDays)
-    const maxDayNum = allDays.reduce((max, d) => Math.max(max, d.id), day.id)
-    const finalStreak = Math.max(newStreak, maxDayNum, allDays.length)
     await supabase
       .from('profiles')
       .update({
@@ -827,7 +860,7 @@ export async function autoSyncCernavationDaysToCloud(days: Day[], uid?: string) 
 
 const listeners = new Set<() => void>()
 
-function subscribe(callback: () => void): () => void {
+export function subscribe(callback: () => void): () => void {
   listeners.add(callback)
 
   const handleCustom = (e: Event) => {
@@ -1182,9 +1215,14 @@ export function useOgonekStore() {
         }
       })
 
+      const uid = getSnapshot().auth?.activeAccountId
+      if (typeof navigator !== 'undefined' && !navigator.onLine && uid) {
+        enqueueOfflineMutation('delete_day', { userId: uid, clientId: String(dayId) })
+        return
+      }
+
       try {
         const supabase = getSupabase()
-        const uid = getSnapshot().auth?.activeAccountId
         if (supabase && uid) {
           const clientId = String(dayId)
           await Promise.allSettled([
@@ -1201,6 +1239,9 @@ export function useOgonekStore() {
         }
       } catch (err) {
         console.error('[Ogonek] Error deleting day from Supabase:', err)
+        if (uid) {
+          enqueueOfflineMutation('delete_day', { userId: uid, clientId: String(dayId) })
+        }
       }
     },
     [updateStore]

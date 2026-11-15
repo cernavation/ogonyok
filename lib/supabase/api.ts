@@ -2371,6 +2371,84 @@ export async function getBlockedProfiles(viewerId?: string): Promise<{ ok: boole
   }
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   ЭТАП 17 — ОПТИМИЗАЦИЯ СОХРАНЕНИЯ ДНЯ ОДНИМ RPC И ПАГИНАЦИЯ
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export interface SaveDayBundlePayload {
+  day: Record<string, any>
+  prides: Record<string, any>[]
+  gratitudes: Record<string, any>[]
+  streak?: number
+}
+
+/**
+ * Сохранение дня со всеми гордостями, благодарностями и стриком за 1 RPC вызов
+ * вместо 4 разрозненных запросов к БД.
+ */
+export async function saveDayBundleRpc(
+  payload: SaveDayBundlePayload
+): Promise<{ ok: boolean; data?: any; error?: string }> {
+  try {
+    const supabase = getSupabase()
+    if (!supabase) return { ok: false, error: 'Supabase client unavailable' }
+
+    const { data, error } = await supabase.rpc('save_day_bundle', {
+      p_day: payload.day,
+      p_prides: payload.prides,
+      p_gratitudes: payload.gratitudes,
+      p_streak: payload.streak ?? null,
+    })
+
+    if (error) {
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, data }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'RPC invocation failed' }
+  }
+}
+
+export interface DayPaginationOptions {
+  limit?: number
+  cursor?: number
+  offset?: number
+}
+
+/**
+ * Пагинированная выборка дней пользователя с лимитом и курсором
+ */
+export async function getUserDaysPaginated(
+  userId: string,
+  options: DayPaginationOptions = {}
+): Promise<{ days: PublicDayRecord[]; hasMore: boolean; nextCursor?: number }> {
+  const supabase = getSupabase()
+  if (!supabase) return { days: [], hasMore: false }
+  const limit = options.limit ?? 20
+
+  let query = supabase
+    .from('days')
+    .select('id,user_id,day_number,day_date,visibility,title,closed_at,created_at')
+    .eq('user_id', userId)
+    .order('day_number', { ascending: false })
+    .limit(limit + 1)
+
+  if (typeof options.cursor === 'number') {
+    query = query.lt('day_number', options.cursor)
+  } else if (typeof options.offset === 'number') {
+    query = query.range(options.offset, options.offset + limit)
+  }
+
+  const { data, error } = await query
+  if (error || !Array.isArray(data)) return { days: [], hasMore: false }
+
+  const hasMore = data.length > limit
+  const days = hasMore ? data.slice(0, limit) : data
+  const nextCursor = days.length > 0 ? days[days.length - 1].day_number : undefined
+
+  return { days, hasMore, nextCursor }
+}
+
 // Re-export social service functions
 export {
   searchSocialUsers,

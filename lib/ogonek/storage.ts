@@ -1,6 +1,6 @@
-import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation'
-import { sanitizeSubmission } from './achievement-moderation'
-import { DEFAULT_AUTH_STATE, sanitizeAuthState } from './accounts'
+import { regulateAchievement, isAchievementCategoryId } from './achievement-regulation.ts'
+import { sanitizeSubmission } from './achievement-moderation.ts'
+import { DEFAULT_AUTH_STATE, sanitizeAuthState } from './accounts.ts'
 import {
   DEFAULT_ACCENT,
   DEFAULT_FEED_DENSITY,
@@ -11,25 +11,25 @@ import {
   isFontScaleId,
   isThemeId,
   readPersistedAppearance,
-} from './appearance'
-import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data'
+} from './appearance.ts'
+import { EVIDENCE_ITEMS, INITIAL_DAYS } from './data.ts'
 import {
   DEFAULT_FOLLOWING_IDS,
   DEFAULT_FRIEND_IDS,
   DEFAULT_INCOMING_FRIEND_REQUEST_IDS,
   DEFAULT_OUTGOING_FRIEND_REQUEST_IDS,
   FRIEND_PROFILES,
-} from './friends'
-import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content'
-import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus'
-import { DEFAULT_MONTHLY_KPIS, sanitizeMonthlyKpis } from './kpi'
-import { buildDemoThreads, sanitizeChatThreads, DEFAULT_CHAT_FOLDERS, DEFAULT_CHAT_SETTINGS } from './messenger'
-import { DEFAULT_CUSTOM_EMOJIS } from './reactions'
-import { DEFAULT_PRIVACY, sanitizePrivacySettings } from './privacy'
-import { DEFAULT_SECURITY_STATE, sanitizeSecurityState } from './security'
-import { DEFAULT_STREAK_SETTINGS, sanitizeStreakSettings } from './streak'
-import { buildDemoMyStories } from './stories'
-import { normalizeVisibility } from './visibility'
+} from './friends.ts'
+import { COMMUNITY_POST_IDS, COMMUNITY_USER_IDS } from './explore-content.ts'
+import { sanitizeMorningFocusHistory, migrateIntentionsToHistory, buildDemoMorningFocus } from './morning-focus.ts'
+import { DEFAULT_MONTHLY_KPIS, sanitizeMonthlyKpis } from './kpi.ts'
+import { buildDemoThreads, sanitizeChatThreads, DEFAULT_CHAT_FOLDERS, DEFAULT_CHAT_SETTINGS } from './messenger.ts'
+import { DEFAULT_CUSTOM_EMOJIS } from './reactions.ts'
+import { DEFAULT_PRIVACY, sanitizePrivacySettings } from './privacy.ts'
+import { DEFAULT_SECURITY_STATE, sanitizeSecurityState } from './security.ts'
+import { DEFAULT_STREAK_SETTINGS, sanitizeStreakSettings } from './streak.ts'
+import { buildDemoMyStories } from './stories.ts'
+import { normalizeVisibility } from './visibility.ts'
 import type {
   AchievementEvidenceFile,
   AchievementEvidenceRequirement,
@@ -1058,7 +1058,24 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
   }
 }
 
-export function saveStore(
+let pendingSaveState: OgonekStoreState | null = null
+let pendingSaveTimer: ReturnType<typeof setTimeout> | null = null
+let pendingAdapter: StorageAdapter = defaultStorageAdapter
+
+/** Принудительный сброс отложенного сохранения стора в localStorage */
+export function flushPendingSave(): void {
+  if (pendingSaveTimer) {
+    clearTimeout(pendingSaveTimer)
+    pendingSaveTimer = null
+  }
+  if (pendingSaveState) {
+    saveStoreImmediate(pendingSaveState, pendingAdapter)
+    pendingSaveState = null
+  }
+}
+
+/** Немедленная синхронная запись стора в storage без debounce */
+export function saveStoreImmediate(
   state: OgonekStoreState,
   adapter: StorageAdapter = defaultStorageAdapter
 ): void {
@@ -1073,6 +1090,42 @@ export function saveStore(
   } catch (err) {
     console.error('Failed to save store:', err)
   }
+}
+
+/**
+ * ЭТАП 17: Debounced сохранение стора в localStorage (200мс).
+ * Исключает блокировку основного потока сериализацией сотен дней на каждое нажатие клавиши.
+ */
+export function saveStore(
+  state: OgonekStoreState,
+  adapter: StorageAdapter = defaultStorageAdapter,
+  immediate: boolean = false
+): void {
+  if (immediate) {
+    flushPendingSave()
+    saveStoreImmediate(state, adapter)
+    return
+  }
+
+  pendingSaveState = state
+  pendingAdapter = adapter
+
+  if (pendingSaveTimer) {
+    clearTimeout(pendingSaveTimer)
+  }
+
+  pendingSaveTimer = setTimeout(() => {
+    pendingSaveTimer = null
+    if (pendingSaveState) {
+      saveStoreImmediate(pendingSaveState, pendingAdapter)
+      pendingSaveState = null
+    }
+  }, 200)
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => flushPendingSave())
+  window.addEventListener('pagehide', () => flushPendingSave())
 }
 
 export function exportStoreAsJson(state: OgonekStoreState): string {
