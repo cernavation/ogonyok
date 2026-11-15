@@ -384,7 +384,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 onClick={() => openAuth('register')}
                 className={`apple-card apple-card-hover fade-up ${lvl.delay} p-5 sm:p-5.5 flex flex-col justify-between cursor-pointer group ${
                   lvl.extreme
-                    ? 'apple-card-extreme border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210]'
+                    ? 'apple-card-extreme border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210] sm:col-span-2 lg:col-span-1'
                     : 'bg-[#161617]'
                 }`}
               >
