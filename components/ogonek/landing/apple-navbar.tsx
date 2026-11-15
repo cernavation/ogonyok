@@ -9,13 +9,13 @@ interface AppleNavbarProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'О платформе', href: '/platform' },
-  { label: 'Примеры гордостей', href: '/examples' },
-  { label: 'ИИ-наставник', href: '/ai' },
-  { label: 'Как это работает', href: '/how-it-works' },
+  { label: 'Платформа', href: '/platform' },
+  { label: 'Примеры', href: '/examples' },
+  { label: 'ИИ-разбор', href: '/ai' },
+  { label: 'Ритуал', href: '/how-it-works' },
   { label: 'Открытость', href: '/#open' },
   { label: 'Тарифы', href: '/#pricing' },
-  { label: 'Отзывы (30+)', href: '/reviews' },
+  { label: 'Отзывы', href: '/reviews' },
   { label: 'Манифест', href: '/manifesto' },
   { label: 'Поддержка', href: '/support' },
 ]
@@ -74,14 +74,14 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6" aria-label="Разделы сайта">
+        <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 shrink-0" aria-label="Разделы сайта">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`text-[12px] tracking-tight transition-all duration-200 ${
+                className={`whitespace-nowrap text-[12px] tracking-tight transition-all duration-200 shrink-0 ${
                   isActive
                     ? 'text-[#f5f5f7] font-semibold opacity-100'
                     : 'text-[#d2d2d7] opacity-75 hover:opacity-100 hover:text-white'
