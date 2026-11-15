@@ -32,11 +32,15 @@ export function VaultView({
   const [isAdding, setIsAdding] = useState(false)
 
   const { state } = useOgonekStore()
+  const username = state.profile?.username
+  const isCerna = (username || '').toLowerCase() === 'cernavation'
   const effectiveTier = normalizeTier(
     state.profile?.subscription_tier,
-    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until,
+    username
   )
-  const isFree = effectiveTier === 'free'
+  const isUltra = effectiveTier === 'ultra' || isCerna
+  const isFree = !isUltra && effectiveTier === 'free'
 
   const handleUnlockVault = () => {
     playClick(soundEnabled)

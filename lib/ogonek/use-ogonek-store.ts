@@ -230,6 +230,9 @@ function initSupabaseSessionSync() {
         let bannerImage = cachedState.profile.bannerImage
         let dbProfile: any = null
         let userLevel = cachedState.profile.difficultyLevel || cachedState.profile.level || 1
+        const isCerna = username.toLowerCase() === 'cernavation'
+        let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' = isCerna ? 'ultra' : 'free'
+        let dbSubscriptionExpiresAt: string | null = null
 
         try {
           const res = await client
@@ -242,8 +245,20 @@ function initSupabaseSessionSync() {
             if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
             if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
             userLevel = dbProfile.level || dbProfile.settings?.level || dbProfile.difficulty_level || userLevel
+            if (dbProfile.subscription_tier) {
+              dbSubscriptionTier = dbProfile.subscription_tier
+            }
+            if (dbProfile.subscription_expires_at) {
+              dbSubscriptionExpiresAt = dbProfile.subscription_expires_at
+            } else if (dbProfile.subscription_valid_until) {
+              dbSubscriptionExpiresAt = dbProfile.subscription_valid_until
+            }
           }
         } catch {}
+
+        if (isCerna) {
+          dbSubscriptionTier = 'ultra'
+        }
 
         const nowISO = new Date().toISOString()
         const existing = cachedState.auth.accounts.find((a) => a.id === userId)
@@ -257,6 +272,10 @@ function initSupabaseSessionSync() {
               displayName: dbProfile?.display_name || displayName,
               avatarImage,
               bannerImage,
+              subscription_tier: dbSubscriptionTier,
+              subscription_expires_at: dbSubscriptionExpiresAt,
+              subscription_valid_until: dbSubscriptionExpiresAt,
+              verified: dbProfile?.verified ?? (isCerna ? true : existing.snapshot.verified),
             },
           }
         } else {
@@ -265,12 +284,15 @@ function initSupabaseSessionSync() {
             displayName,
             username,
             email: session.user.email,
-            verified: true,
+            verified: isCerna ? true : (dbProfile?.verified ?? true),
             now: new Date(nowISO),
           })
           account.id = userId
           account.snapshot.avatarImage = avatarImage
           account.snapshot.bannerImage = bannerImage
+          account.snapshot.subscription_tier = dbSubscriptionTier
+          account.snapshot.subscription_expires_at = dbSubscriptionExpiresAt
+          account.snapshot.subscription_valid_until = dbSubscriptionExpiresAt
         }
 
         cachedState = {
@@ -284,6 +306,10 @@ function initSupabaseSessionSync() {
             coverUrl: bannerImage,
             level: userLevel,
             difficultyLevel: userLevel,
+            verified: isCerna ? true : (dbProfile?.verified ?? cachedState.profile.verified),
+            subscription_tier: dbSubscriptionTier,
+            subscription_expires_at: dbSubscriptionExpiresAt,
+            subscription_valid_until: dbSubscriptionExpiresAt,
           }),
           auth: {
             ...cachedState.auth,
@@ -5555,6 +5581,8 @@ export function useOgonekStore() {
       let dbIsAnon: boolean | null = null
       let dbTourCompleted: boolean | null = null
       let dbPrivacy: any = null
+      let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' | null = null
+      let dbSubscriptionExpiresAt: string | null = null
 
       try {
         const client = getSupabase()
@@ -5568,6 +5596,12 @@ export function useOgonekStore() {
             if (dbProfile.privacy) dbPrivacy = dbProfile.privacy
             if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
             if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+            if (dbProfile.subscription_tier) dbSubscriptionTier = dbProfile.subscription_tier
+            if (dbProfile.subscription_expires_at) {
+              dbSubscriptionExpiresAt = dbProfile.subscription_expires_at
+            } else if (dbProfile.subscription_valid_until) {
+              dbSubscriptionExpiresAt = dbProfile.subscription_valid_until
+            }
             dbLevel =
               (typeof dbProfile.level === 'number' && dbProfile.level > 0 ? dbProfile.level : null) ??
               (typeof dbProfile.settings?.level === 'number' && dbProfile.settings.level > 0 ? dbProfile.settings.level : null) ??
@@ -5613,6 +5647,13 @@ export function useOgonekStore() {
           (a) => a.id === accountId || a.snapshot.username?.toLowerCase() === cleanNick
         )
 
+        const isOwner = cleanNick === 'cernavation'
+        const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
+        const effectiveTier: 'free' | 'pro' | 'premium' | 'ultra' = isOwner
+          ? 'ultra'
+          : (dbSubscriptionTier || (existing?.snapshot as any)?.subscription_tier || baseProfile.subscription_tier || 'free')
+        const effectiveExpiresAt = dbSubscriptionExpiresAt || (existing?.snapshot as any)?.subscription_expires_at || (baseProfile as any)?.subscription_expires_at || null
+
         let account: AuthAccount
         if (existing) {
           account = {
@@ -5627,6 +5668,10 @@ export function useOgonekStore() {
               displayName,
               avatarImage: avatarImage || existing.snapshot.avatarImage,
               bannerImage: bannerImage || existing.snapshot.bannerImage,
+              subscription_tier: effectiveTier,
+              subscription_expires_at: effectiveExpiresAt,
+              subscription_valid_until: effectiveExpiresAt,
+              verified: isOwner ? true : (dbVerified !== null ? dbVerified : existing.snapshot.verified),
             },
           }
         } else {
@@ -5635,7 +5680,7 @@ export function useOgonekStore() {
             displayName,
             username: cleanNick,
             email,
-            verified: dbVerified ?? false,
+            verified: isOwner ? true : (dbVerified ?? false),
             now: new Date(nowISO),
           })
           account.id = accountId
@@ -5643,10 +5688,11 @@ export function useOgonekStore() {
           account.lastActiveISO = nowISO
           if (avatarImage) account.snapshot.avatarImage = avatarImage
           if (bannerImage) account.snapshot.bannerImage = bannerImage
+          account.snapshot.subscription_tier = effectiveTier
+          account.snapshot.subscription_expires_at = effectiveExpiresAt
+          account.snapshot.subscription_valid_until = effectiveExpiresAt
         }
 
-        const isOwner = cleanNick === 'cernavation'
-        const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
         const effectiveLevel = isOwner ? 5 : (dbLevel ?? (existing ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1))
 
         return {
@@ -5659,9 +5705,12 @@ export function useOgonekStore() {
             avatarImage: account.snapshot.avatarImage,
             bannerImage: account.snapshot.bannerImage,
             coverUrl: account.snapshot.bannerImage,
-            verified: dbVerified !== null ? dbVerified : (existing ? baseProfile.verified : false),
+            verified: isOwner ? true : (dbVerified !== null ? dbVerified : (existing ? baseProfile.verified : false)),
             level: effectiveLevel,
             difficultyLevel: effectiveLevel,
+            subscription_tier: effectiveTier,
+            subscription_expires_at: effectiveExpiresAt,
+            subscription_valid_until: effectiveExpiresAt,
             monthlyGoal: existing ? baseProfile.monthlyGoal : '',
             bio: dbBio !== null ? dbBio : (account.snapshot.bio || ''),
             city: dbCity !== null ? dbCity : (account.snapshot.city || ''),
@@ -5787,6 +5836,88 @@ export function useOgonekStore() {
         return { ok: false, count: 0, error: error?.message }
       } catch (err: any) {
         return { ok: false, count: 0, error: err?.message }
+      }
+    },
+    [updateStore]
+  )
+
+  /** Загрузка актуального профиля пользователя из Supabase в стор */
+  const loadProfileFromCloud = useCallback(
+    async (overrideUserId?: string) => {
+      const snap = getSnapshot()
+      const uid = overrideUserId || snap.auth.activeAccountId || (snap.profile as any)?.id
+      const username = (snap.profile?.username || '').toLowerCase()
+      const supabase = getSupabase()
+      if (!supabase || (!uid && !username)) return { ok: false }
+
+      try {
+        let q = supabase.from('profiles').select('*')
+        if (uid) {
+          q = q.eq('id', uid)
+        } else {
+          q = q.eq('username', username)
+        }
+        const { data: dbProfile, error } = await q.maybeSingle()
+        if (error || !dbProfile) return { ok: false, error: error?.message }
+
+        const isOwner = (dbProfile.username || username).toLowerCase() === 'cernavation'
+        const effectiveTier: 'free' | 'pro' | 'premium' | 'ultra' = isOwner ? 'ultra' : (dbProfile.subscription_tier || 'free')
+        const effectiveValidUntil = dbProfile.subscription_expires_at || dbProfile.subscription_valid_until || null
+        const effectiveLevel = isOwner ? 5 : (dbProfile.level || 1)
+        const effectiveStreak = isOwner ? Math.max(dbProfile.streak_count || 0, 740) : (dbProfile.streak_count || 0)
+
+        updateStore((prev) => {
+          const updatedProfile = sanitizeProfile({
+            ...prev.profile,
+            displayName: dbProfile.display_name || prev.profile.displayName,
+            username: dbProfile.username || prev.profile.username,
+            avatarImage: dbProfile.avatar_image || prev.profile.avatarImage,
+            bannerImage: dbProfile.banner_image || prev.profile.bannerImage,
+            coverUrl: dbProfile.banner_image || prev.profile.coverUrl,
+            bio: dbProfile.bio ?? prev.profile.bio,
+            city: dbProfile.city ?? prev.profile.city,
+            website: dbProfile.website ?? prev.profile.website,
+            verified: typeof dbProfile.verified === 'boolean' ? dbProfile.verified : (isOwner ? true : prev.profile.verified),
+            level: effectiveLevel,
+            difficultyLevel: effectiveLevel,
+            streak_count: effectiveStreak,
+            streak: effectiveStreak,
+            subscription_tier: effectiveTier,
+            subscription_expires_at: effectiveValidUntil,
+            subscription_valid_until: effectiveValidUntil,
+          })
+
+          const updatedAccounts = prev.auth.accounts.map((a) => {
+            if (a.id === uid || a.snapshot.username?.toLowerCase() === (dbProfile.username || username).toLowerCase()) {
+              return {
+                ...a,
+                snapshot: {
+                  ...a.snapshot,
+                  displayName: updatedProfile.displayName,
+                  avatarImage: updatedProfile.avatarImage,
+                  bannerImage: updatedProfile.bannerImage,
+                  verified: updatedProfile.verified,
+                  subscription_tier: effectiveTier,
+                  subscription_expires_at: effectiveValidUntil,
+                  subscription_valid_until: effectiveValidUntil,
+                },
+              }
+            }
+            return a
+          })
+
+          return {
+            ...prev,
+            profile: updatedProfile,
+            auth: {
+              ...prev.auth,
+              accounts: updatedAccounts,
+            },
+          }
+        })
+        return { ok: true, profile: dbProfile }
+      } catch (err: any) {
+        return { ok: false, error: err?.message }
       }
     },
     [updateStore]
@@ -6081,6 +6212,7 @@ export function useOgonekStore() {
     signOut,
     removeAccount,
     loadDaysFromCloud,
+    loadProfileFromCloud,
     provisionDemoAccountSecrets,
   }
 }

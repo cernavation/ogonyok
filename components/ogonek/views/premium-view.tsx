@@ -49,12 +49,15 @@ export function PremiumView({
   useBodyScrollLock(Boolean(modalTier))
 
   // Текущий тариф считывается из profile.subscription_tier ('free' | 'pro' | 'premium' | 'ultra')
+  const username = state.profile?.username || ''
+  const isCerna = username.toLowerCase().replace(/^@/, '') === 'cernavation'
+
   const rawTier =
     subscriptionTier ||
     state.profile.subscription_tier ||
-    (verified ? 'premium' : 'free')
+    (isCerna ? 'ultra' : (verified ? 'premium' : 'free'))
   const activeTier: 'free' | 'premium' | 'ultra' =
-    rawTier === 'pro' ? 'premium' : (rawTier === 'ultra' ? 'ultra' : rawTier === 'premium' ? 'premium' : 'free')
+    isCerna ? 'ultra' : (rawTier === 'pro' ? 'premium' : (rawTier === 'ultra' ? 'ultra' : rawTier === 'premium' ? 'premium' : 'free'))
 
   // Закрытие модального окна по Escape
   useEffect(() => {
@@ -363,6 +366,13 @@ export function PremiumView({
               : 'border-[var(--line)] hover:border-[#f5b942]/60'
           }`}
         >
+          {/* Top Badge: ТЕКУЩИЙ ПЛАН для Ultra */}
+          {activeTier === 'ultra' && (
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-0.5 rounded-full bg-[#f5b942] text-black text-[11px] font-black uppercase tracking-wider flex items-center gap-1 shadow-md">
+              <Crown size={11} /> ТЕКУЩИЙ ПЛАН
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between gap-2 mb-3">
               <span className="text-xs font-black uppercase tracking-wider text-[#f5b942]">
@@ -431,17 +441,18 @@ export function PremiumView({
           <div className="pt-6 mt-6">
             <button
               type="button"
+              disabled={activeTier === 'ultra'}
               onClick={() => handleSelectTier('ultra')}
-              className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 active:scale-95 ${
+              className={`w-full h-11 rounded-full text-[14px] font-black transition-all flex items-center justify-center gap-1.5 ${
                 activeTier === 'ultra'
-                  ? 'bg-[#f5b942] text-black ring-2 ring-[#f5b942]/50'
-                  : 'bg-[var(--text)] text-[var(--bg)] hover:bg-[#f5b942] hover:text-black'
+                  ? 'bg-[#f5b942] text-black ring-2 ring-[#f5b942]/50 cursor-default'
+                  : 'bg-[var(--text)] text-[var(--bg)] hover:bg-[#f5b942] hover:text-black active:scale-95'
               }`}
             >
               {activeTier === 'ultra' ? (
                 <>
                   <Check size={16} strokeWidth={3} />
-                  <span>Ultra подключён</span>
+                  <span>ТЕКУЩИЙ ПЛАН</span>
                 </>
               ) : (
                 <>

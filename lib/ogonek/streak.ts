@@ -290,7 +290,7 @@ export function computeStreak(
 
   return {
     streak: chainStreak,
-    best,
+    best: Math.max(best, chainStreak),
     lastEntryDay,
     missedRun: Math.max(0, diffToday),
     status,

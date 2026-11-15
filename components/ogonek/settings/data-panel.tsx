@@ -7,7 +7,6 @@ import {
   Download,
   FileJson,
   Loader2,
-  RotateCcw,
   ShieldAlert,
   Trash2,
   Upload,
@@ -166,34 +165,7 @@ export function DataPanel({
         </div>
       </div>
 
-      {/* ── 2. Сброс к демо-данным ──────────────────────────────────────── */}
-      <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between">
-        <div className="min-w-0 pr-3">
-          <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-            <RotateCcw size={16} className="text-amber-500" /> Сброс к демо-данным
-          </h3>
-          <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-            Возвращает локальный дневник в исходное состояние с примерами записей
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (confirm('Сбросить все данные дневника к демо-состоянию?')) {
-              onResetToDefaults()
-              playSuccess(sound)
-              onNotify('Данные сброшены к демо')
-            }
-          }}
-          className="h-8 px-4 rounded-full border border-amber-500/40 text-amber-500 hover:bg-amber-500/10 text-xs font-bold inline-flex items-center gap-1.5 transition-colors shrink-0"
-        >
-          <RotateCcw size={13} />
-          <span>Сбросить</span>
-        </button>
-      </div>
-
-      {/* ── 3. Опасная зона: Удаление аккаунта ───────────────────────────── */}
+      {/* ── 2. Опасная зона: Удаление аккаунта ───────────────────────────── */}
       <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 flex flex-col gap-3">
         <div className="flex items-start justify-between">
           <div className="min-w-0 pr-3">

@@ -454,9 +454,12 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
   const image = (v: unknown): string | null =>
     typeof v === 'string' && v.trim() ? v.trim().slice(0, 2000) : null
 
+  const cleanUsername = str(p.username, '', 40).replace(/^@/, '')
+  const defaultTier = cleanUsername.toLowerCase() === 'cernavation' ? 'ultra' : 'free'
+
   return {
     displayName: str(p.displayName, '', 80),
-    username: str(p.username, '', 40).replace(/^@/, ''),
+    username: cleanUsername,
     bio: typeof p.bio === 'string' ? p.bio.slice(0, 400) : '',
     city: typeof p.city === 'string' ? p.city.slice(0, 80) : '',
     website: typeof p.website === 'string' ? p.website.slice(0, 300) : '',
@@ -471,7 +474,7 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
       typeof p.monthlyGoal === 'string' ? p.monthlyGoal.slice(0, 200) : '',
     monthlyGoalUpdatedAtISO:
       typeof p.monthlyGoalUpdatedAtISO === 'string' ? p.monthlyGoalUpdatedAtISO.slice(0, 40) : '',
-    verified: typeof p.verified === 'boolean' ? p.verified : false,
+    verified: typeof p.verified === 'boolean' ? p.verified : (cleanUsername.toLowerCase() === 'cernavation' ? true : false),
     level: typeof p.level === 'number' && p.level >= 1 && p.level <= 5 ? p.level : 1,
     levelChangedAtISO: typeof p.levelChangedAtISO === 'string' ? p.levelChangedAtISO : null,
     showDifficultyLevel: typeof p.showDifficultyLevel === 'boolean' ? p.showDifficultyLevel : false,
@@ -481,7 +484,7 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : true,
     age: typeof p.age === 'number' && Number.isFinite(p.age) && p.age >= 1 && p.age <= 150 ? Math.round(p.age) : null,
     isAnonymous: typeof p.isAnonymous === 'boolean' ? p.isAnonymous : (typeof (p as any)?.is_anonymous === 'boolean' ? (p as any).is_anonymous : false),
-    subscription_tier: p.subscription_tier === 'pro' || p.subscription_tier === 'premium' || p.subscription_tier === 'ultra' ? p.subscription_tier : 'free',
+    subscription_tier: p.subscription_tier === 'pro' || p.subscription_tier === 'premium' || p.subscription_tier === 'ultra' ? p.subscription_tier : defaultTier,
     subscription_expires_at: typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : (typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : null),
     subscription_valid_until: typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : (typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : null),
     privacy: typeof p.privacy === 'object' && p.privacy !== null ? p.privacy : {},

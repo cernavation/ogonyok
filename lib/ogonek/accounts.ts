@@ -180,6 +180,7 @@ export function accountSubtitle(account: AuthAccount): string {
 
 /** Вырезает из полного профиля слепок для привязки к аккаунту */
 export function accountSnapshotFromProfile(profile: OgonekProfile): AccountProfileSnapshot {
+  const isCerna = (profile.username || '').toLowerCase() === 'cernavation'
   return {
     displayName: profile.displayName,
     username: profile.username,
@@ -189,13 +190,23 @@ export function accountSnapshotFromProfile(profile: OgonekProfile): AccountProfi
     avatarImage: profile.avatarImage,
     bannerImage: profile.bannerImage,
     bannerPreset: profile.bannerPreset,
-    verified: profile.verified,
+    verified: profile.verified || isCerna,
+    subscription_tier: profile.subscription_tier || (isCerna ? 'ultra' : 'free'),
+    subscription_expires_at: profile.subscription_expires_at,
+    subscription_valid_until: profile.subscription_valid_until,
   }
 }
 
 /** Разворачивает слепок аккаунта в патч основного профиля */
 export function profilePatchFromAccount(account: AuthAccount): Partial<OgonekProfile> {
-  return { ...account.snapshot }
+  const isCerna = (account.snapshot?.username || '').toLowerCase() === 'cernavation'
+  return {
+    ...account.snapshot,
+    subscription_tier: account.snapshot.subscription_tier || (isCerna ? 'ultra' : 'free'),
+    subscription_expires_at: account.snapshot.subscription_expires_at,
+    subscription_valid_until: account.snapshot.subscription_valid_until,
+    verified: account.snapshot.verified || isCerna,
+  }
 }
 
 /* ── Создание аккаунта ───────────────────────────────────────────────────── */

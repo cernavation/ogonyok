@@ -4584,14 +4584,14 @@ kbd {
 }
 
 .story-ring__name {
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 11px;
+  line-height: 1.25;
   font-weight: 500;
   color: var(--text-2);
-  max-width: 74px;
+  width: 80px;
+  max-width: 80px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   text-align: center;
 }
 

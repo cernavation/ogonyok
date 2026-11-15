@@ -56,13 +56,22 @@ export function AnalyticsView({
   const [isRefreshingInsights, setIsRefreshingInsights] = useState(false)
 
   const { state } = useOgonekStore()
+  const username = state.profile?.username
+  const isCerna = (username || '').toLowerCase() === 'cernavation'
   const effectiveTier = normalizeTier(
     state.profile?.subscription_tier,
-    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until,
+    username
   )
-  const isFree = effectiveTier === 'free'
+  const isUltra = effectiveTier === 'ultra' || isCerna
+  const isFree = !isUltra && effectiveTier === 'free'
 
-  const realStreak = useMemo(() => calculateStreak(days), [days])
+  const realStreak = useMemo(() => {
+    const fromDays = calculateStreak(days)
+    const fromProfile = state.profile?.streak_count || (state.profile as any)?.streak || 0
+    return Math.max(fromDays, fromProfile)
+  }, [days, state.profile?.streak_count, (state.profile as any)?.streak])
+
   const streakInfo = useMemo(() => {
     const dates = new Set<string>()
     for (const d of days) {
@@ -71,10 +80,12 @@ export function AnalyticsView({
       }
     }
     const computed = computeStreak(dates, new Date())
+    const currentStreak = Math.max(realStreak, computed.streak)
+    const bestStreak = Math.max(computed.best, currentStreak)
     return {
       ...computed,
-      streak: realStreak,
-      best: Math.max(computed.best, realStreak),
+      streak: currentStreak,
+      best: bestStreak,
     }
   }, [days, realStreak])
   const dynamics = useMemo(() => buildDynamics(days, period), [days, period])

@@ -275,7 +275,7 @@ export function ExploreView({
             Поиск и участники
           </h1>
           <p className="text-[13px] text-[var(--muted)] font-normal">
-            Реальные пользователи Огонька и теги летописи
+            Люди и сообщества, которые держат свой огонь каждый день
           </p>
         </div>
       </header>
@@ -538,7 +538,7 @@ export function ExploreView({
                     Зарегистрированные участники
                   </h2>
                   <p className="text-xs text-[var(--text-2)] mt-0.5">
-                    Реальные пользователи из базы Supabase
+                    Люди и сообщества, которые держат свой огонь каждый день
                   </p>
                 </div>
                 {communityUsers.length > 0 && (

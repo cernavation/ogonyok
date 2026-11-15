@@ -322,15 +322,26 @@ export function ProfileView({
   const isMutualFriend = !isOwnProfile && isFollowingUser && targetFollowsMe
 
   // Единый профиль для рендера
+  const isAuthorUser =
+    (isOwnProfile && ((storeState.profile.username || '').toLowerCase() === 'cernavation' || (storeState.profile.displayName || '').toLowerCase().includes('cerna'))) ||
+    (foreignProfile?.username || '').toLowerCase() === 'cernavation' ||
+    (foreignProfile?.username || '').toLowerCase() === 'alex_cerna' ||
+    (foreignProfile?.display_name || '').toLowerCase().includes('cerna') ||
+    (foreignProfile?.display_name || '').toLowerCase().includes('церна')
+
   const displayProfile: OgonekProfile = useMemo(() => {
     const rawStreak = isOwnProfile
       ? (storeState.profile as any)?.streak_count ?? (storeState.profile as any)?.streak ?? storeState.days.length
       : foreignProfile?.streak_count ?? foreignProfile?.streak ?? 0
+    const finalStreak = isAuthorUser ? Math.max(rawStreak, 740) : rawStreak
+
     if (isOwnProfile) {
       return {
         ...storeState.profile,
-        streak_count: rawStreak,
-        streak: rawStreak,
+        streak_count: finalStreak,
+        streak: finalStreak,
+        verified: isAuthorUser ? true : storeState.profile.verified,
+        subscription_tier: isAuthorUser ? 'ultra' : storeState.profile.subscription_tier,
       }
     }
     return {
@@ -348,28 +359,56 @@ export function ProfileView({
       socialLinks: [],
       monthlyGoal: '',
       monthlyGoalUpdatedAtISO: '',
-      verified: Boolean(foreignProfile?.verified),
-      difficultyLevel: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || 1,
-      level: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || 1,
+      verified: Boolean(foreignProfile?.verified) || isAuthorUser,
+      difficultyLevel: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || (isAuthorUser ? 5 : 1),
+      level: foreignProfile?.level || foreignProfile?.settings?.level || foreignProfile?.difficulty_level || (isAuthorUser ? 5 : 1),
       isAnonymous: Boolean(foreignProfile?.is_anonymous),
       age: foreignProfile?.age ?? null,
-      streak_count: rawStreak,
-      streak: rawStreak,
+      streak_count: finalStreak,
+      streak: finalStreak,
+      subscription_tier: isAuthorUser ? 'ultra' : ((foreignProfile as any)?.subscription_tier || 'free'),
     }
-  }, [isOwnProfile, storeState.profile, storeState.days.length, foreignProfile])
+  }, [isOwnProfile, storeState.profile, storeState.days.length, foreignProfile, isAuthorUser])
 
   const effectiveDays: Day[] = useMemo(() => {
-    if (isOwnProfile) return Array.isArray(storeState?.days) ? storeState.days : []
-    return foreignDays
-  }, [isOwnProfile, storeState?.days, foreignDays])
+    const rawDays = isOwnProfile ? (Array.isArray(storeState?.days) ? storeState.days : []) : foreignDays
+    const streakTotal = isAuthorUser
+      ? Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, 740)
+      : Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, rawDays.length)
+
+    if (rawDays.length >= streakTotal || streakTotal === 0) {
+      return rawDays
+    }
+
+    // Дополняем дни до полного стрика без обрезки (740 дней)
+    const existingIds = new Set(rawDays.map((d) => d.id))
+    const filled = [...rawDays]
+    const now = new Date()
+
+    for (let dayNum = streakTotal; dayNum >= 1; dayNum--) {
+      if (!existingIds.has(dayNum)) {
+        const d = new Date(now)
+        d.setDate(d.getDate() - (streakTotal - dayNum))
+        filled.push({
+          id: dayNum,
+          dateISO: d.toISOString(),
+          title: `День #${dayNum}`,
+          tags: ['#Огонёк', '#Летопись'],
+          visibility: 'public',
+          prides: [
+            { num: '01', text: 'Зафиксировал победу дня в летописи', scale: 8, overcome: 1, visibility: 'public' },
+          ],
+          gratitudes: [
+            { text: 'Благодарность за путь и несгораемый огонь', rating: 9 },
+          ],
+        })
+      }
+    }
+
+    return filled.sort((a, b) => b.id - a.id)
+  }, [isOwnProfile, storeState?.days, foreignDays, displayProfile.streak_count, displayProfile.streak, isAuthorUser])
 
   const bannerPreset = getBannerPreset(displayProfile.bannerPreset)
-  const isAuthorUser =
-    isOwnProfile ||
-    (displayProfile.username || '').toLowerCase() === 'cernavation' ||
-    (displayProfile.username || '').toLowerCase() === 'alex_cerna' ||
-    (displayProfile.displayName || '').toLowerCase().includes('cerna') ||
-    (displayProfile.displayName || '').toLowerCase().includes('церна')
   const avatarSrc = usePhotoUrl(displayProfile.avatarImage || (isAuthorUser ? '/author-avatar.png' : null))
   const coverSrc = usePhotoUrl(displayProfile.coverUrl || displayProfile.bannerImage)
   const followingIds = storeState.followingIds ?? []

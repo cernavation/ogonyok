@@ -946,6 +946,9 @@ export type AccountProfileSnapshot = {
   bannerImage: string | null
   bannerPreset: string
   verified: boolean
+  subscription_tier?: 'free' | 'pro' | 'premium' | 'ultra'
+  subscription_expires_at?: string | null
+  subscription_valid_until?: string | null
 }
 
 /**

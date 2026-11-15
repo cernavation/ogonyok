@@ -130,6 +130,7 @@ describe('Шаг 18: Аудит безопасности (Security & Penetration
               scale: 9,
               overcome: 1,
               comment: 'Тестовая оценка',
+              breakdown: 'Тестовый разбор',
               verdict: '',
               tags: ['#спорт'],
               prideEvaluations: [{ num: 1, score: 9.0, comment: 'Отлично', overcome: 1, tags: ['#спорт'] }],

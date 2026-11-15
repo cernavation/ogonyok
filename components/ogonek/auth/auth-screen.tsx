@@ -38,19 +38,18 @@ export function AuthScreen({ onAuthenticated, onNotify }: Props) {
 
       <div className="auth-screen__grid">
         <section className="auth-hero w-full min-w-0" aria-label="О проекте Огонёк">
-          <div className="auth-brand">
-            <span className="auth-flame flex items-center justify-center w-8 h-8 rounded-full bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)]" aria-hidden="true">
-              <Flame size={20} className="fill-[var(--accent,#FF6A1A)]/20 text-[var(--accent,#FF6A1A)]" />
+          <div className="auth-brand flex items-center gap-2 mb-2">
+            <span className="auth-flame flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)]" aria-hidden="true">
+              <Flame size={22} className="fill-[var(--accent,#FF6A1A)]/20 text-[var(--accent,#FF6A1A)]" />
             </span>
-            <span className="font-extrabold text-lg text-[var(--text)]">Огонёк</span>
+            <span className="font-extrabold text-xl text-[var(--text)]">Огонёк</span>
           </div>
-          <h1 className="auth-hero__title text-[var(--text)]">
-            Дневник силы,
-            <br />
-            который держит слово
+          <h1 className="auth-hero__title text-[var(--text)] flex items-center gap-3">
+            <span className="text-3xl sm:text-4xl">🔥</span>
+            <span>ОГОНЁК</span>
           </h1>
           <p className="auth-hero__lead text-[var(--text-2)]">
-            Записывайте победы, ведите стрик, собирайте доказательства достижений и следите за
+            Дневник силы и личная летопись побед. Записывайте гордости, держите стрик, собирайте доказательства достижений и следите за
             прогрессом. {state.auth.accounts.length > 0 ? 'Войдите или зарегистрируйтесь.' : 'Начните прямо сейчас.'}
           </p>
           <ul className="auth-hero__list">

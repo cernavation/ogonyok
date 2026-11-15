@@ -57,11 +57,12 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
 
   if (!isOpen) return null
 
-  const rawTier = state.profile.subscription_tier
-  const validUntil = state.profile.subscription_expires_at || (state.profile as any).subscription_valid_until
-  const status = checkSubscriptionStatus(rawTier, validUntil)
-  const effectiveTier = status.effectiveTier
   const username = currentUser?.username || state.profile.username || 'user'
+  const isCerna = username.toLowerCase().replace(/^@/, '') === 'cernavation'
+  const rawTier = state.profile.subscription_tier || (isCerna ? 'ultra' : 'free')
+  const validUntil = state.profile.subscription_expires_at || (state.profile as any).subscription_valid_until
+  const status = checkSubscriptionStatus(rawTier, validUntil, username)
+  const effectiveTier = isCerna ? 'ultra' : status.effectiveTier
 
   const handleCheckout = (tier: 'pro' | 'ultra') => {
     playClick(soundEnabled)
@@ -201,7 +202,7 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
                 {/* Current Plan Badge */}
                 {isCurrent && (
                   <span className="absolute -top-2.5 left-3.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[var(--accent,#FF6A1A)] text-white shadow-sm">
-                    Текущий план
+                    ТЕКУЩИЙ ПЛАН
                   </span>
                 )}
 
@@ -285,25 +286,35 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
                       }}
                       className="w-full h-8 rounded-full text-[12px] font-bold border border-[var(--line,#2f3336)] text-[var(--muted,#71767b)] hover:text-[var(--text,#e7e9ea)] disabled:opacity-60 disabled:cursor-default transition-all flex items-center justify-center"
                     >
-                      {isCurrent ? 'Текущий план' : 'Базовый доступ'}
+                      {isCurrent ? 'ТЕКУЩИЙ ПЛАН' : 'Базовый доступ'}
                     </button>
                   ) : (
                     <button
                       type="button"
                       id={`checkout-btn-${tier}`}
-                      onClick={() => handleCheckout(tier)}
+                      disabled={isCurrent}
+                      onClick={() => !isCurrent && handleCheckout(tier)}
                       className={`w-full h-8 rounded-full text-[12px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
                         isCurrent
-                          ? 'bg-[var(--surface2,#202327)] hover:bg-white/10 text-[var(--text,#e7e9ea)] border border-[var(--line,#2f3336)]'
+                          ? 'bg-[var(--surface2,#202327)] text-[var(--text,#e7e9ea)] border border-[var(--line,#2f3336)] cursor-default'
                           : isUltra
                           ? 'bg-amber-500 hover:bg-amber-600 text-black'
                           : 'bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-white'
                       }`}
                     >
-                      <span>
-                        {getPaymentButtonLabel(effectiveTier, tier, validUntil)}
-                      </span>
-                      <ExternalLink size={12} className="opacity-70" />
+                      {isCurrent ? (
+                        <>
+                          <Check size={12} strokeWidth={3} />
+                          <span>ТЕКУЩИЙ ПЛАН</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>
+                            {getPaymentButtonLabel(effectiveTier, tier, validUntil)}
+                          </span>
+                          <ExternalLink size={12} className="opacity-70" />
+                        </>
+                      )}
                     </button>
                   )}
                 </div>

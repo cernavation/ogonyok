@@ -353,6 +353,19 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
         onChange={(e) => setHoneypot(e.target.value)}
       />
 
+      {/* Фирменный логотип 🔥 и название ОГОНЁК */}
+      <div className="flex flex-col items-center justify-center gap-1 mb-5 text-center">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl">🔥</span>
+          <span className="text-2xl font-black tracking-tight text-[var(--text)] uppercase">
+            ОГОНЁК
+          </span>
+        </div>
+        <p className="text-[12px] text-[var(--text-2)] font-medium">
+          Дневник силы и летопись побед
+        </p>
+      </div>
+
       {/* Вкладки «Вход» / «Регистрация» в стиле X.com */}
       <div className="flex border-b border-[var(--border)] mb-5" role="tablist" aria-label="Вход или регистрация">
         <button

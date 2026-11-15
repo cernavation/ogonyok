@@ -385,7 +385,7 @@ export function StoriesBar({
             <span className="story-ring__plus" aria-hidden="true">
               <Plus size={13} strokeWidth={3} />
             </span>
-            <span className="story-ring__name">Моя история</span>
+            <span className="story-ring__name w-20 text-[11px] leading-tight text-center whitespace-nowrap">Моя история</span>
           </button>
         </div>
 
@@ -416,7 +416,7 @@ export function StoriesBar({
                     <Check size={8} strokeWidth={3} />
                   </span>
                 )}
-                <span className="story-ring__name">{firstName(viewable.name)}</span>
+                <span className="story-ring__name w-20 text-[11px] leading-tight text-center whitespace-nowrap">{firstName(viewable.name)}</span>
               </button>
             </div>
           )
@@ -435,7 +435,7 @@ export function StoriesBar({
                 <Eye size={18} className="text-[#1d9bf0]" aria-hidden="true" />
               </span>
             </span>
-            <span className="story-ring__name">Все истории</span>
+            <span className="story-ring__name w-20 text-[11px] leading-tight text-center whitespace-nowrap">Все истории</span>
           </button>
         </div>
       </div>
