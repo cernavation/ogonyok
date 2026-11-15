@@ -136,7 +136,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[960px] mx-auto text-center flex flex-col items-center">
           {/* Subtle Apple Eyebrow Tag */}
-          <div className="fade-up mb-6 inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md">
+          <div className="fade-up mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
@@ -149,14 +149,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </div>
 
           {/* Epic Apple Headline */}
-          <h1 className="apple-hero-title fade-up mb-6">
+          <h1 className="apple-hero-title fade-up mb-6 sm:mb-8">
             Жизнь, которой ты гордишься.
             <br />
             <span className="text-[#f5f5f7]">Записанная.</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="apple-body fade-up max-w-[620px] mb-10 text-[#a1a1a6] text-base sm:text-xl">
+          <p className="apple-body fade-up max-w-[640px] mb-12 sm:mb-16 text-[#a1a1a6] text-base sm:text-xl leading-relaxed">
             Огонёк хранит твои победы, серию дней и благодарности.
             Чтобы ничего не терялось.
           </p>
@@ -166,14 +166,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="apple-btn-primary !px-9 !py-3.5 !text-[16px] shadow-[0_0_30px_rgba(0,113,227,0.35)]"
+              className="apple-btn-primary !px-9 !py-4 !text-[16px] shadow-[0_0_30px_rgba(0,113,227,0.35)]"
             >
               Начать
             </button>
             <button
               type="button"
               onClick={() => openAuth('signin')}
-              className="apple-btn-ghost !px-7 !py-3.5 !text-[16px]"
+              className="apple-btn-ghost !px-7 !py-4 !text-[16px]"
             >
               Войти ›
             </button>
@@ -186,21 +186,21 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="how"
-        className="py-28 sm:py-36 bg-black border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
         aria-label="Как это работает"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-3">
+          <div className="fade-up mb-4">
             <span className="apple-eyebrow">Ритуал</span>
           </div>
-          <h2 className="apple-section-title fade-up mb-16 sm:mb-20">
+          <h2 className="apple-section-title fade-up mb-16 sm:mb-20 md:mb-24">
             Пять минут в день.
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             {/* Left: Large ritual media slot frame in an Obsidian card */}
             <div className="lg:col-span-7 fade-up">
-              <div className="apple-card overflow-hidden p-2 bg-[#121214]">
+              <div className="apple-card overflow-hidden p-2.5 sm:p-3 bg-[#121214]">
                 <MediaSlot
                   name="ritual.jpg"
                   width={1920}
@@ -234,7 +234,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   key={item.step}
                   className={`fade-up ${idx !== 2 ? 'border-b border-white/[0.08] pb-10' : ''}`}
                 >
-                  <div className="flex items-baseline gap-3 mb-2">
+                  <div className="flex items-baseline gap-3.5 mb-2.5">
                     <span className="text-[13px] font-mono text-[#f56900] tracking-wider">
                       {item.step}
                     </span>
@@ -257,14 +257,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
-        className="py-28 sm:py-36 bg-[#0c0c0e] border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
         aria-label="Режимы жизни"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-3">
+          <div className="fade-up mb-4">
             <span className="apple-eyebrow">Адаптация</span>
           </div>
-          <h2 className="apple-section-title fade-up mb-12 sm:mb-16">
+          <h2 className="apple-section-title fade-up mb-16 sm:mb-20 md:mb-24">
             Режимы жизни.
           </h2>
 
@@ -277,25 +277,25 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="levels"
-        className="py-28 sm:py-36 bg-black border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
         aria-label="Уровни жёсткости"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-3">
+          <div className="fade-up mb-4">
             <span className="apple-eyebrow">Дисциплина</span>
           </div>
-          <h2 className="apple-section-title fade-up mb-4">
+          <h2 className="apple-section-title fade-up mb-5 sm:mb-6">
             Уровни жёсткости.
           </h2>
-          <p className="apple-body fade-up max-w-[600px] mb-14 text-[#86868b]">
+          <p className="apple-body fade-up max-w-[640px] mb-16 sm:mb-20 md:mb-24 text-[#86868b] text-base sm:text-lg leading-relaxed">
             Выбери ритм, который подходит твоему характеру — от спокойного вечернего ритуала до бескомпромиссной дисциплины.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
             {LEVELS.map((lvl) => (
               <div
                 key={lvl.count}
-                className={`apple-card fade-up p-6 flex flex-col justify-between min-h-[260px] relative transition-transform hover:-translate-y-1 duration-300 ${
+                className={`apple-card fade-up p-7 flex flex-col justify-between min-h-[300px] relative transition-transform hover:-translate-y-1 duration-300 ${
                   lvl.extreme
                     ? 'border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210]'
                     : 'bg-[#161617]'
@@ -303,7 +303,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               >
                 <div>
                   {/* Energy Flame Indicator */}
-                  <div className="flex items-center gap-1 mb-6">
+                  <div className="flex items-center gap-1.5 mb-6">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span
                         key={i}
@@ -318,20 +318,22 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     ))}
                   </div>
 
-                  <span className="block text-[48px] font-bold tracking-tight text-[#f5f5f7] leading-none mb-3 font-mono">
+                  <span className="block text-[44px] font-bold tracking-tight text-[#f5f5f7] leading-none mb-3 font-mono">
                     {lvl.count}
                   </span>
-                  <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-1 tracking-tight leading-snug">
+                  <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-1.5 tracking-tight leading-snug">
                     {lvl.title}
                   </h3>
-                  <div className="text-[13px] font-medium text-[#f56900] mb-3">
+                  <div className="text-[13px] font-medium text-[#f56900] mb-5">
                     {lvl.sub}
                   </div>
                 </div>
 
-                <p className="text-[13px] leading-relaxed text-[#a1a1a6] border-t border-white/[0.08] pt-3">
-                  {lvl.desc}
-                </p>
+                <div className="border-t border-white/[0.08] pt-4 mt-auto">
+                  <p className="text-[13px] leading-relaxed text-[#a1a1a6]">
+                    {lvl.desc}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -342,41 +344,41 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 5 — «ЦИФРЫ» (Только реальные метрики)
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 bg-[#0c0c0e] border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
         aria-label="Реальные цифры"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="text-center fade-up max-w-[640px] mx-auto mb-16">
-            <span className="apple-eyebrow block mb-3">Факты</span>
-            <h2 className="apple-section-title mb-4">
+          <div className="text-center fade-up max-w-[680px] mx-auto mb-16 sm:mb-20 md:mb-24">
+            <span className="apple-eyebrow block mb-4">Факты</span>
+            <h2 className="apple-section-title mb-5 sm:mb-6">
               Реальные цифры.
             </h2>
-            <p className="apple-body text-[#86868b]">
+            <p className="apple-body text-[#86868b] text-base sm:text-lg leading-relaxed">
               Только проверенный личный опыт создателя Огонька. Никакой выдуманной статистики и заказных исследований.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="apple-card fade-up p-12 text-center bg-[#161617]">
-              <span className="block text-[72px] sm:text-[96px] font-bold tracking-tight leading-none text-[#f5f5f7] mb-4 font-mono">
+            <div className="apple-card fade-up p-10 sm:p-14 text-center bg-[#161617]">
+              <span className="block text-[68px] sm:text-[88px] font-bold tracking-tight leading-none text-[#f5f5f7] mb-5 font-mono">
                 740+
               </span>
-              <p className="text-[20px] font-semibold text-[#f5f5f7] mb-2 tracking-tight">
+              <p className="text-[20px] sm:text-[22px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
                 дней подряд
               </p>
-              <p className="text-[14px] text-[#86868b]">
+              <p className="text-[15px] leading-relaxed text-[#86868b] max-w-sm mx-auto">
                 Непрерывная летопись гордости и благодарности без единого пропуска.
               </p>
             </div>
 
-            <div className="apple-card fade-up p-12 text-center bg-[#161617]">
-              <span className="block text-[72px] sm:text-[96px] font-bold tracking-tight leading-none text-[#f5f5f7] mb-4 font-mono">
+            <div className="apple-card fade-up p-10 sm:p-14 text-center bg-[#161617]">
+              <span className="block text-[68px] sm:text-[88px] font-bold tracking-tight leading-none text-[#f5f5f7] mb-5 font-mono">
                 3 700+
               </span>
-              <p className="text-[20px] font-semibold text-[#f5f5f7] mb-2 tracking-tight">
+              <p className="text-[20px] sm:text-[22px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
                 записанных гордостей
               </p>
-              <p className="text-[14px] text-[#86868b]">
+              <p className="text-[15px] leading-relaxed text-[#86868b] max-w-sm mx-auto">
                 Реальных завершённых поступков, зафиксированных и сохранённых навсегда.
               </p>
             </div>
@@ -388,12 +390,12 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 6 — «ЦИТАТЫ» (3 Apple Cards)
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 bg-black border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
         aria-label="Цитаты"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="text-center fade-up mb-16">
-            <span className="apple-eyebrow block mb-3">Опыт</span>
+          <div className="text-center fade-up mb-16 sm:mb-20 md:mb-24">
+            <span className="apple-eyebrow block mb-4">Опыт</span>
             <h2 className="apple-section-title">
               Слова, проверенные временем.
             </h2>
@@ -403,11 +405,11 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             {QUOTES.map((q, i) => (
               <div
                 key={i}
-                className="apple-card fade-up p-8 flex flex-col justify-between min-h-[300px] bg-[#161617]"
+                className="apple-card fade-up p-8 flex flex-col justify-between min-h-[320px] bg-[#161617]"
               >
                 <div>
                   {/* Subtle typographic quote glyph */}
-                  <span className="text-[36px] font-serif leading-none text-white/20 select-none block mb-4">
+                  <span className="text-[40px] font-serif leading-none text-white/20 select-none block mb-4">
                     “
                   </span>
                   <blockquote className="text-[17px] leading-relaxed text-[#f5f5f7] font-normal tracking-tight mb-8">
@@ -445,26 +447,26 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="privacy"
-        className="py-28 sm:py-36 bg-[#0c0c0e] border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
         aria-label="Приватность и безопасность"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-3 flex items-center gap-2">
+          <div className="fade-up mb-4 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             <span className="apple-eyebrow">Приватность</span>
           </div>
 
-          <h2 className="apple-section-title fade-up mb-6 max-w-[800px]">
+          <h2 className="apple-section-title fade-up mb-5 sm:mb-6 max-w-[840px]">
             Данные и пароли остаются только на твоём устройстве.
           </h2>
 
-          <p className="apple-body fade-up max-w-[700px] mb-14 text-[#86868b]">
+          <p className="apple-body fade-up max-w-[720px] mb-16 sm:mb-20 md:mb-24 text-[#86868b] text-base sm:text-lg leading-relaxed">
             Огонёк построен по принципу полной локальной независимости (Local-first). Личные победы, заметки и мысли не продаются рекламодателям и не анализируются без твоего ведома.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 fade-up">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 fade-up">
             {[
               {
                 icon: (
@@ -505,14 +507,16 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 desc: 'Приватные чаты, голосовые заметки, аудио и видеозвонки P2P для общения с единомышленниками.',
               },
             ].map((card) => (
-              <div key={card.title} className="apple-card p-6 bg-[#161617]">
-                <div className="w-10 h-10 rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#f5f5f7] mb-5">
-                  {card.icon}
+              <div key={card.title} className="apple-card p-7 sm:p-8 bg-[#161617] flex flex-col justify-between min-h-[220px]">
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#f5f5f7] mb-6">
+                    {card.icon}
+                  </div>
+                  <h3 className="text-[18px] font-semibold text-[#f5f5f7] mb-3 tracking-tight leading-snug">
+                    {card.title}
+                  </h3>
                 </div>
-                <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-2 tracking-tight">
-                  {card.title}
-                </h3>
-                <p className="text-[14px] leading-relaxed text-[#a1a1a6]">
+                <p className="text-[14px] leading-relaxed text-[#a1a1a6] mt-auto pt-2">
                   {card.desc}
                 </p>
               </div>
@@ -525,11 +529,11 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 8 — ФИНАЛЬНЫЙ БАННЕР «ВМЕСТЕ ГОРДИТЬСЯ ЛЕГЧЕ»
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 bg-black border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
         aria-label="Финальный призыв к действию"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="apple-card overflow-hidden relative min-h-[460px] sm:min-h-[540px] flex items-center justify-center text-center p-8 sm:p-14 bg-[#121214]">
+          <div className="apple-card overflow-hidden relative min-h-[480px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#121214]">
             {/* Wide 21:9 container for together.jpg */}
             <div className="absolute inset-0 z-0">
               <MediaSlot
@@ -540,16 +544,17 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 alt="Вместе гордиться легче"
                 rounded={false}
                 fill
+                isHero
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/80 z-10" />
             </div>
 
             {/* Overlaid Banner Content */}
             <div className="relative z-20 max-w-[680px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title mb-6 !text-[36px] sm:!text-[56px]">
+              <h2 className="apple-hero-title mb-6 !text-[36px] sm:!text-[56px] leading-[1.08]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body text-white/80 max-w-[500px] mb-10 text-base sm:text-lg">
+              <p className="apple-body text-white/80 max-w-[520px] mb-10 sm:mb-12 text-base sm:text-lg leading-relaxed">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с близкими и создавай нерушимую уверенность в себе.
               </p>
               <button

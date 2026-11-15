@@ -54,7 +54,12 @@
   overflow-x: hidden;
 }
 
-/* ── Typography Utilities ──────────────────────────────────────────── */
+/* ── Typography Utilities (Zero-specificity margin reset so Tailwind mb-* applies cleanly) ── */
+:where(.landing h1, .landing h2, .landing h3, .landing h4, .landing p) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .landing h1,
 .landing h2,
 .landing h3,
@@ -62,22 +67,21 @@
   font-family: var(--font-apple);
   color: var(--color-frost-white);
   font-weight: 700;
-  margin: 0;
 }
 
 .landing .apple-hero-title {
-  font-size: clamp(40px, 6.5vw, 84px);
+  font-size: clamp(38px, 6vw, 80px);
   font-weight: 700;
   letter-spacing: -0.035em;
-  line-height: 1.04;
+  line-height: 1.06;
   color: var(--color-frost-white);
 }
 
 .landing .apple-section-title {
   font-size: clamp(32px, 4.5vw, 56px);
   font-weight: 700;
-  letter-spacing: -0.025em;
-  line-height: 1.08;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
   color: var(--color-frost-white);
 }
 

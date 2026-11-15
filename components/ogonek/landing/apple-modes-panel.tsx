@@ -104,7 +104,7 @@ export function AppleModesPanel() {
         <div className={`apple-panel-wrapper relative flex flex-col gap-3.5 ${isExpanded ? 'is-expanded' : ''}`}>
           
           {/* Top header inside panel with Controls (Arrows + Close) */}
-          <div className="flex items-center justify-between mb-2 px-1">
+          <div className="flex items-center justify-between mb-3 px-1">
             <span className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
               {isExpanded ? 'Режим активен' : 'Выберите сферу жизни'}
             </span>
@@ -160,7 +160,7 @@ export function AppleModesPanel() {
           </div>
 
           {/* List of Mode Items (Pill View or Expanded Card View) */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3.5">
             {MODES.map((mode, idx) => {
               const isActive = activeIndex === idx
 
@@ -169,25 +169,25 @@ export function AppleModesPanel() {
                 return (
                   <div
                     key={mode.id}
-                    className="relative rounded-[24px] bg-[rgba(30,30,32,0.75)] backdrop-blur-xl border border-white/15 p-6 shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-2"
+                    className="relative rounded-[24px] bg-[rgba(30,30,32,0.75)] backdrop-blur-xl border border-white/15 p-7 sm:p-8 shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-2"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#0071e3]" />
-                        <span className="text-[14px] font-semibold tracking-wider uppercase text-[#0071e3]">
+                        <span className="text-[13px] font-semibold tracking-wider uppercase text-[#0071e3]">
                           {mode.label}
                         </span>
                       </div>
-                      <span className="text-[12px] font-mono text-white/40">
+                      <span className="text-[13px] font-mono text-white/40">
                         0{idx + 1} / 0{MODES.length}
                       </span>
                     </div>
 
-                    <div className="text-[15px] leading-relaxed text-[#a1a1a6]">
-                      <strong className="text-white font-semibold block text-[17px] mb-1.5 tracking-tight">
+                    <div>
+                      <strong className="text-white font-semibold block text-[18px] sm:text-[19px] mb-2.5 tracking-tight leading-snug">
                         {mode.oneLiner}
                       </strong>
-                      <p className="text-[14px] leading-relaxed text-[#a1a1a6]">
+                      <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#a1a1a6]">
                         {mode.detail}
                       </p>
                     </div>
@@ -201,21 +201,21 @@ export function AppleModesPanel() {
                   key={mode.id}
                   type="button"
                   onClick={() => handleSelect(idx)}
-                  className="group flex items-center justify-between w-full h-[50px] px-5 rounded-full bg-[rgba(30,30,32,0.5)] hover:bg-[rgba(44,44,46,0.65)] backdrop-blur-md border border-white/[0.08] hover:border-white/20 transition-all duration-300 text-left cursor-pointer"
+                  className="group flex items-center justify-between w-full h-[54px] px-6 rounded-full bg-[rgba(30,30,32,0.5)] hover:bg-[rgba(44,44,46,0.65)] backdrop-blur-md border border-white/[0.08] hover:border-white/20 transition-all duration-300 text-left cursor-pointer"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3.5">
                     {/* Circle with Plus Icon */}
                     <div className="w-5 h-5 rounded-full border border-white/40 group-hover:border-white/80 group-hover:rotate-90 flex items-center justify-center text-white/70 group-hover:text-white transition-all duration-300 shrink-0">
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 5v14M5 12h14" />
                       </svg>
                     </div>
-                    <span className="text-[15px] font-medium text-white tracking-tight">
+                    <span className="text-[15px] sm:text-[16px] font-medium text-white tracking-tight">
                       {mode.label}
                     </span>
                   </div>
 
-                  <span className="text-[12px] font-mono text-white/30 group-hover:text-white/60 transition-colors">
+                  <span className="text-[13px] font-mono text-white/30 group-hover:text-white/60 transition-colors">
                     0{idx + 1}
                   </span>
                 </button>
