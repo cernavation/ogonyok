@@ -815,6 +815,12 @@ export type ChatMessage = {
   linkPreview?: ChatLinkPreview | null
   /** Список ID участников, прочитавших сообщение (для групп) */
   readBy?: string[]
+  /** Метаданные звонка (для системных сообщений о вызовах) */
+  call_meta?: {
+    durationSeconds?: number
+    isVideo?: boolean
+    status?: string
+  } | null
 }
 
 /** Метаданные группового чата */
@@ -1013,6 +1019,23 @@ export type OgonekStoreState = {
   outgoingFriendRequests: string[]
   /** Скрытые/отклонённые рекомендации (id друзей) */
   dismissedSuggestions: string[]
+  /** ID заблокированных пользователей (блок не дозванивается) */
+  blockedUserIds?: string[]
+  /** Активный глобальный звонок (сохраняется при навигации и в PiP) */
+  activeCall?: {
+    sessionId: string
+    callerId?: string
+    receiverId?: string
+    friendId?: string
+    friendName: string
+    friendUsername?: string
+    friendAvatar?: string | null
+    callerName?: string
+    callerAvatar?: string | null
+    isVideo: boolean
+    isIncoming: boolean
+    initialConnected?: boolean
+  } | null
   /* ── ЭТАП 12 — ГЛОБАЛЬНЫЙ ХАБ ИССЛЕДОВАНИЯ ───────────────────────────── */
   /** Каких участников сообщества пользователь читает (id из COMMUNITY_USERS) */
   exploreFollowingIds: string[]

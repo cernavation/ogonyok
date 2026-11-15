@@ -89,7 +89,7 @@ import {
   detectChatMediaType,
   type ChatMediaType,
 } from '@/lib/ogonek/chat-media-service'
-import { canScheduleMessage } from '@/lib/ogonek/permissions'
+import { canScheduleMessage, canMakeVideoCall } from '@/lib/ogonek/permissions'
 import type { ChatLinkPreview } from '@/lib/ogonek/types'
 import { Loader2, RefreshCw } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -122,6 +122,7 @@ export function MessengerChatPane({
   const {
     state,
     currentUser,
+    setActiveCall,
     sendChatMessage,
     receiveIncomingChatMessage,
     updateIncomingChatMessage,
@@ -678,13 +679,30 @@ export function MessengerChatPane({
 
   const handleStartCall = async (video: boolean) => {
     playClick(soundEnabled)
-    setCallIsVideo(video)
 
     const peerId = targetPeerId || friendId
     if (!peerId) {
       setCallModalOpen(true)
       return
     }
+
+    // CONTRACT Шаг 10: Блок пользователя — не дозванивается
+    if (state.blockedUserIds?.includes(peerId)) {
+      onNotify('Невозможно совершить вызов: пользователь заблокирован')
+      return
+    }
+
+    // CONTRACT Шаг 10: Видеозвонок по тарифу (free - только аудио, pro/ultra - видео)
+    let effectiveVideo = video
+    if (video) {
+      const userTier = state?.profile?.subscription_tier || 'free'
+      const userTierValidUntil = state?.profile?.subscription_valid_until
+      if (!canMakeVideoCall(userTier, userTierValidUntil)) {
+        onNotify('Видеозвонки доступны на тарифах Pro и Ultra. Запущен качественный аудиозвонок 📞')
+        effectiveVideo = false
+      }
+    }
+    setCallIsVideo(effectiveVideo)
 
     const newSessionId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
     setActiveCallSessionId(newSessionId)
@@ -712,7 +730,7 @@ export function MessengerChatPane({
               callerId: currentUserId,
               callerName,
               callerAvatar,
-              isVideo: video,
+              isVideo: effectiveVideo,
             },
           })
         }
@@ -723,17 +741,28 @@ export function MessengerChatPane({
     createCallSession({
       caller_id: currentUserId,
       receiver_id: peerId,
-      is_video: video,
+      is_video: effectiveVideo,
     }).then((res) => {
       if (res.session?.id) {
         setActiveCallSessionId(res.session.id)
       }
     }).catch(() => {})
 
-    setCallModalOpen(true)
+    setActiveCall({
+      sessionId: newSessionId,
+      callerId: currentUserId,
+      receiverId: peerId,
+      friendId: peerId,
+      friendName: title,
+      friendUsername: peerProfile?.username || friend?.username,
+      friendAvatar: peerProfile?.avatar_url || friend?.avatarColor,
+      isVideo: effectiveVideo,
+      isIncoming: false,
+    })
   }
 
-  const handleCallFinished = (sec: number, type: 'audio' | 'video') => {
+  const handleCallFinished = (sec: number, type: 'audio' | 'video', finalStatus?: any) => {
+    setActiveCall(null)
     setCallModalOpen(false)
 
     // Отправляем broadcast 'call_ended' на канал получателя если вызов был сброшен
@@ -742,7 +771,7 @@ export function MessengerChatPane({
         outgoingCallChannelRef.current.send({
           type: 'broadcast',
           event: 'call_ended',
-          payload: { sessionId: activeCallSessionId },
+          payload: { sessionId: activeCallSessionId, reason: finalStatus || 'ended' },
         })
       } catch {}
       const supabase = getSupabase()
@@ -753,14 +782,33 @@ export function MessengerChatPane({
     }
 
     if (!friendId) return
-    const m = Math.floor(sec / 60)
-    const s = sec % 60
-    const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`
+    const callLabel = type === 'video' ? 'Видеозвонок' : 'Аудиозвонок'
+    let systemText = ''
+    if (finalStatus === 'missed') {
+      systemText = `❌ Пропущенный ${callLabel.toLowerCase()}`
+    } else if (finalStatus === 'rejected') {
+      systemText = '🚫 Отклонённый вызов'
+    } else if (finalStatus === 'busy') {
+      systemText = '⏳ Вызов не удался (занято)'
+    } else {
+      const m = Math.floor(sec / 60)
+      const s = sec % 60
+      const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`
+      systemText = `📞 ${callLabel} · ${timeStr}`
+    }
+
     sendChatMessage(
       friendId,
-      `${type === 'video' ? 'Видеозвонок' : 'Аудиозвонок'} завершён · ${timeStr}`,
+      systemText,
       null,
-      { type: 'system' }
+      {
+        type: 'system',
+        call_meta: {
+          durationSeconds: sec,
+          isVideo: type === 'video',
+          status: finalStatus || (sec > 0 ? 'ended' : 'missed'),
+        },
+      }
     )
   }
 
@@ -1654,8 +1702,8 @@ export function MessengerChatPane({
         </div>
       </div>
 
-      {/* Модальное окно аудио/видео звонка */}
-      {callModalOpen && (
+      {/* Модальное окно аудио/видео звонка (локальный фоллбэк если нет глобального activeCall) */}
+      {callModalOpen && !state.activeCall && (
         <CallErrorBoundary onReset={() => setCallModalOpen(false)}>
           <ChatCallModal
             isOpen={true}

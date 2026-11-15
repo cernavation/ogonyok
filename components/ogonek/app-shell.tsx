@@ -37,6 +37,7 @@ import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
 import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
+import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
 import { Phone, PhoneOff, Video } from 'lucide-react'
@@ -125,6 +126,7 @@ export function AppShell() {
     lockAppNow,
     provisionDemoAccountSecrets,
     continueAsGuest,
+    setActiveCall,
     setActiveChatFriend,
     updateStore,
     sendChatMessage,
@@ -147,7 +149,6 @@ export function AppShell() {
       hotkeysModal ||
       lightbox ||
       onboardingOpen ||
-      activeGlobalCall ||
       incomingCall
     )
   )
@@ -518,6 +519,23 @@ export function AppShell() {
       .on('broadcast', { event: 'incoming_call' }, (event) => {
         const payload = event?.payload
         if (payload && payload.callerId !== myId) {
+          // CONTRACT Шаг 10: Блок пользователя — не дозванивается
+          if (state.blockedUserIds?.includes(payload.callerId)) {
+            if (payload.sessionId) {
+              const roomChannel = supabase.channel(`call_room_${payload.sessionId}`)
+              roomChannel.subscribe((st) => {
+                if (st === 'SUBSCRIBED') {
+                  roomChannel.send({
+                    type: 'broadcast',
+                    event: 'call_ended',
+                    payload: { sessionId: payload.sessionId, reason: 'busy' },
+                  })
+                }
+              })
+            }
+            return
+          }
+
           setIncomingCall({
             sessionId: payload.sessionId,
             callerId: payload.callerId,
@@ -592,6 +610,17 @@ export function AppShell() {
       supabase.removeChannel(channel)
     }
   }, [currentUser?.id, state.auth?.activeAccountId, state.soundEnabled])
+
+  // CONTRACT Шаг 10: Таймаут 45 секунд для входящего звонка (автоматический сброс в missed)
+  useEffect(() => {
+    if (!incomingCall) return
+    const timer = setTimeout(() => {
+      stopCallSounds()
+      playEndCallSound()
+      setIncomingCall(null)
+    }, CALL_RING_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [incomingCall])
 
   const handleAcceptIncomingCall = async () => {
     stopCallSounds()
@@ -1538,23 +1567,30 @@ export function AppShell() {
         </AnimatePresence>
 
         {/* Активное окно звонка после принятия вызова на уровне Shell с локальным ErrorBoundary */}
-        {activeGlobalCall && (
+        {(activeGlobalCall || state.activeCall) && (
           <CallErrorBoundary onReset={() => setActiveGlobalCall(null)}>
             <ChatCallModal
               isOpen={true}
-              sessionId={activeGlobalCall.sessionId}
-              callerId={activeGlobalCall.callerId}
-              receiverId={currentUser?.id || state.auth?.activeAccountId || undefined}
-              friendId={activeGlobalCall.callerId}
-              friendName={activeGlobalCall.callerName}
-              callerName={activeGlobalCall.callerName}
-              callerAvatar={activeGlobalCall.callerAvatar}
-              friendAvatar={activeGlobalCall.callerAvatar}
-              isVideo={activeGlobalCall.isVideo}
-              isIncoming={true}
-              initialConnected={true}
-              onClose={() => setActiveGlobalCall(null)}
-              onEndCall={() => setActiveGlobalCall(null)}
+              sessionId={state.activeCall?.sessionId || activeGlobalCall?.sessionId}
+              callerId={state.activeCall?.callerId || activeGlobalCall?.callerId}
+              receiverId={state.activeCall?.receiverId || currentUser?.id || state.auth?.activeAccountId || undefined}
+              friendId={state.activeCall?.friendId || activeGlobalCall?.callerId || ''}
+              friendName={state.activeCall?.friendName || activeGlobalCall?.callerName}
+              friendUsername={state.activeCall?.friendUsername}
+              callerName={state.activeCall?.callerName || activeGlobalCall?.callerName}
+              callerAvatar={state.activeCall?.callerAvatar || activeGlobalCall?.callerAvatar}
+              friendAvatar={state.activeCall?.friendAvatar || activeGlobalCall?.callerAvatar}
+              isVideo={state.activeCall ? state.activeCall.isVideo : Boolean(activeGlobalCall?.isVideo)}
+              isIncoming={state.activeCall ? state.activeCall.isIncoming : true}
+              initialConnected={state.activeCall ? state.activeCall.initialConnected : true}
+              onClose={() => {
+                setActiveGlobalCall(null)
+                setActiveCall(null)
+              }}
+              onEndCall={() => {
+                setActiveGlobalCall(null)
+                setActiveCall(null)
+              }}
               soundEnabled={state.soundEnabled}
             />
           </CallErrorBoundary>

@@ -17,6 +17,8 @@ import {
   Mic,
   MoreHorizontal,
   Pencil,
+  Phone,
+  PhoneOff,
   PhoneMissed,
   Pin,
   Reply,
@@ -250,17 +252,25 @@ export function ChatMessageBubble({
   if (
     message.type === 'system' ||
     (message as any).is_system ||
-    message.text?.startsWith('Пропущенный звонок') ||
-    message.text?.includes('звонок завершён')
+    message.text?.startsWith('Пропущенный') ||
+    message.text?.includes('звонок') ||
+    message.text?.includes('вызов') ||
+    message.text?.includes('📞') ||
+    message.text?.includes('❌') ||
+    message.text?.includes('🚫') ||
+    Boolean((message as any).call_meta)
   ) {
-    const isMissed = message.text?.includes('Пропущенный звонок')
+    const isMissed = message.text?.includes('Пропущенный') || message.text?.includes('❌')
+    const isRejected = message.text?.includes('Отклонённый') || message.text?.includes('🚫') || message.text?.includes('занято')
     return (
       <div className="flex justify-center my-3 select-none">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--surface2,#202327)]/80 text-[var(--muted,#71767b)] text-[12px] font-medium border border-[var(--line,#2f3336)] shadow-sm">
           {isMissed ? (
             <PhoneMissed size={13} className="text-rose-500 shrink-0" />
+          ) : isRejected ? (
+            <PhoneOff size={13} className="text-amber-500 shrink-0" />
           ) : (
-            <Clock size={13} className="text-[var(--accent)] shrink-0" />
+            <Phone size={13} className="text-[#00ba7c] shrink-0" />
           )}
           <span>{message.text}</span>
         </div>

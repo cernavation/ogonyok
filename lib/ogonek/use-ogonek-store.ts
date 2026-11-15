@@ -3794,6 +3794,17 @@ export function useOgonekStore() {
      ЭТАП 13 — ВСТРОЕННЫЙ МЕССЕНДЖЕР И БЫСТРЫЕ ЧАТЫ С ДРУЗЬЯМИ
      ══════════════════════════════════════════════════════════════════════ */
 
+  /** Управление активным звонком приложения (глобальное состояние для PiP и навигации) */
+  const setActiveCall = useCallback(
+    (call: OgonekStoreState['activeCall']) => {
+      updateStore((prev) => ({
+        ...prev,
+        activeCall: call,
+      }))
+    },
+    [updateStore]
+  )
+
   /** Открыть/закрыть диалог в разделе «Чаты» (только реальный друг) */
   const setActiveChatFriend = useCallback(
     (friendId: string | null): string | null => {
@@ -3945,6 +3956,11 @@ export function useOgonekStore() {
         scheduledForISO?: string | null
         poll?: ChatPoll | null
         type?: ChatMessageType
+        call_meta?: {
+          durationSeconds?: number
+          isVideo?: boolean
+          status?: string
+        } | null
       }
     ): ChatMessage | null => {
       if (!friendId) return null
@@ -3976,6 +3992,7 @@ export function useOgonekStore() {
         scheduledForISO: extra?.scheduledForISO ?? null,
         poll: extra?.poll ?? null,
         type: extra?.type,
+        call_meta: extra?.call_meta ?? null,
         status: isScheduled ? 'sending' : 'sent',
       })
 
@@ -5916,6 +5933,7 @@ export function useOgonekStore() {
     resetToDefaults,
     getNextDayDate,
     getNextDayId,
+    setActiveCall,
     setActiveChatFriend,
     startChatWithFriend,
     sendChatMessage,

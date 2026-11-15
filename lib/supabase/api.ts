@@ -2000,7 +2000,7 @@ export async function deleteEvidenceVaultItem(itemId: string): Promise<boolean> 
   }
 }
 
-export type CallStatus = 'ringing' | 'accepted' | 'rejected' | 'ended' | 'missed'
+export type CallStatus = 'ringing' | 'connected' | 'accepted' | 'ended' | 'rejected' | 'declined' | 'missed' | 'busy'
 
 export type CallSessionRecord = {
   id: string
@@ -2009,8 +2009,67 @@ export type CallSessionRecord = {
   status: CallStatus
   is_video: boolean
   duration_seconds?: number
+  reconnect_count?: number
+  ice_transport?: string
+  started_at?: string
+  ended_at?: string
   created_at?: string
   updated_at?: string
+}
+
+/**
+ * Проверить возможность звонка (блок не дозванивается, статус busy)
+ */
+export async function canInitiateCall(params: {
+  callerId: string
+  receiverId: string
+}): Promise<{ allowed: boolean; reason?: string; message?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { allowed: true }
+
+  try {
+    const { data, error } = await supabase.rpc('can_initiate_call', {
+      p_caller_id: params.callerId,
+      p_receiver_id: params.receiverId,
+    })
+    if (error) {
+      console.warn('[canInitiateCall] RPC error, allowing as fallback:', error)
+      return { allowed: true }
+    }
+    return data as { allowed: boolean; reason?: string; message?: string }
+  } catch {
+    return { allowed: true }
+  }
+}
+
+/**
+ * Зафиксировать итог звонка в call_sessions и добавить системную строку в чат
+ */
+export async function recordCallResult(params: {
+  sessionId: string
+  finalStatus: 'ended' | 'rejected' | 'missed' | 'busy'
+  durationSeconds?: number
+  isVideo?: boolean
+}): Promise<{ ok: boolean; systemText?: string; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !params.sessionId) return { ok: true }
+
+  try {
+    const { data, error } = await supabase.rpc('record_call_result', {
+      p_session_id: params.sessionId,
+      p_final_status: params.finalStatus,
+      p_duration_seconds: params.durationSeconds || 0,
+      p_is_video: Boolean(params.isVideo),
+    })
+    if (error) {
+      // Fallback на обычный updateCallSessionStatus
+      await updateCallSessionStatus(params.sessionId, params.finalStatus, params.durationSeconds)
+      return { ok: true }
+    }
+    return data as { ok: boolean; systemText?: string }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
 }
 
 /**

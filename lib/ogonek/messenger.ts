@@ -702,6 +702,7 @@ export function makeChatMessage(input: {
   deletedForAll?: boolean
   media?: ChatMessageMedia | null
   linkPreview?: ChatLinkPreview | null
+  call_meta?: { durationSeconds?: number; isVideo?: boolean; status?: string } | null
 }): ChatMessage {
   const text = (input.text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
   const linkUrl = !input.linkPreview && !input.attachment && !input.media ? extractUrl(text) : null
@@ -741,6 +742,7 @@ export function makeChatMessage(input: {
     pinned: input.pinned ?? false,
     media: input.media ?? null,
     linkPreview,
+    call_meta: input.call_meta ?? null,
   }
 }
 

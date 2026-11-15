@@ -797,6 +797,8 @@ export const DEFAULT_STORE_STATE: OgonekStoreState = {
   incomingFriendRequests: isDemoEnv ? DEFAULT_INCOMING_FRIEND_REQUEST_IDS : [],
   outgoingFriendRequests: isDemoEnv ? DEFAULT_OUTGOING_FRIEND_REQUEST_IDS : [],
   dismissedSuggestions: [],
+  blockedUserIds: [],
+  activeCall: null,
   exploreFollowingIds: isDemoEnv ? ['gu-hana', 'gu-adeyemi'] : [],
   exploreLikedPosts: [],
   exploreSavedPosts: isDemoEnv ? ['cp-6', 'cp-11'] : [],
@@ -866,6 +868,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
                 []
               ),
               dismissedSuggestions: sanitizeDismissedSuggestions(parsedV3.dismissedSuggestions),
+              blockedUserIds: Array.isArray(parsedV3.blockedUserIds) ? parsedV3.blockedUserIds : [],
+              activeCall: (parsedV3.activeCall && typeof parsedV3.activeCall === 'object' && 'sessionId' in parsedV3.activeCall) ? parsedV3.activeCall as any : null,
               exploreFollowingIds: sanitizeExploreFollowingIds(parsedV3.exploreFollowingIds),
               exploreLikedPosts: sanitizeExplorePostIds(parsedV3.exploreLikedPosts),
               exploreSavedPosts: sanitizeExplorePostIds(parsedV3.exploreSavedPosts),
@@ -1014,6 +1018,8 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
           []
         ),
         dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
+        blockedUserIds: Array.isArray(parsed.blockedUserIds) ? parsed.blockedUserIds : [],
+        activeCall: (parsed.activeCall && typeof parsed.activeCall === 'object' && 'sessionId' in parsed.activeCall) ? parsed.activeCall as any : null,
         exploreFollowingIds: sanitizeExploreFollowingIds(parsed.exploreFollowingIds),
         exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
         exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
@@ -1196,6 +1202,8 @@ export function validateAndImportJson(
         DEFAULT_OUTGOING_FRIEND_REQUEST_IDS
       ),
       dismissedSuggestions: sanitizeDismissedSuggestions(parsed.dismissedSuggestions),
+      blockedUserIds: Array.isArray(parsed.blockedUserIds) ? parsed.blockedUserIds : [],
+      activeCall: (parsed.activeCall && typeof parsed.activeCall === 'object' && 'sessionId' in parsed.activeCall) ? parsed.activeCall as any : null,
       exploreFollowingIds: sanitizeExploreFollowingIds(parsed.exploreFollowingIds),
       exploreLikedPosts: sanitizeExplorePostIds(parsed.exploreLikedPosts),
       exploreSavedPosts: sanitizeExplorePostIds(parsed.exploreSavedPosts),
