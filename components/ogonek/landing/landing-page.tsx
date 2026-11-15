@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { LandingNav } from './landing-nav'
+import { AppleFooter } from './apple-footer'
 import { MediaSlot } from './media-slot'
 import { AppleModesPanel } from './apple-modes-panel'
 import { useScrollReveal } from './use-scroll-reveal'
@@ -308,10 +309,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           <div className="fade-up mb-4">
             <span className="apple-eyebrow">Дисциплина</span>
           </div>
-          <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
+          <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
             Уровни жёсткости.
           </h2>
-          <p className="apple-body fade-up delay-150 max-w-[640px] mb-16 sm:mb-20 md:mb-24 text-[#86868b] text-base sm:text-lg leading-relaxed">
+          <p className="apple-body fade-up delay-150 max-w-[680px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
             Выбери ритм, который подходит твоему характеру — от спокойного вечернего ритуала до бескомпромиссной дисциплины.
           </p>
 
@@ -319,7 +320,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             {LEVELS.map((lvl) => (
               <div
                 key={lvl.count}
-                className={`apple-card apple-card-hover fade-up ${lvl.delay} p-7 flex flex-col justify-between min-h-[300px] relative ${
+                className={`apple-card apple-card-hover fade-up ${lvl.delay} p-7 flex flex-col justify-between min-h-[290px] relative ${
                   lvl.extreme
                     ? 'apple-card-extreme border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210]'
                     : 'bg-[#161617]'
@@ -327,7 +328,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               >
                 <div>
                   {/* Energy Flame Indicator with segmented rhythm */}
-                  <div className="flex items-center gap-1.5 mb-6">
+                  <div className="flex items-center gap-1.5 mb-5">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <span
                         key={i}
@@ -342,19 +343,19 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     ))}
                   </div>
 
-                  <span className="block text-[44px] font-bold tracking-tight text-[#f5f5f7] leading-none mb-3 font-mono">
+                  <span className="block text-[42px] font-bold tracking-tight text-[#f5f5f7] leading-none mb-3 font-mono">
                     {lvl.count}
                   </span>
-                  <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-1.5 tracking-tight leading-snug">
+                  <h3 className="text-[18px] font-semibold text-[#f5f5f7] mb-1.5 tracking-tight leading-snug">
                     {lvl.title}
                   </h3>
-                  <div className="text-[13px] font-medium text-[#f56900] mb-5">
+                  <div className="text-[13px] font-medium text-[#f56900] mb-4">
                     {lvl.sub}
                   </div>
                 </div>
 
-                <div className="border-t border-white/[0.08] pt-4 mt-auto">
-                  <p className="text-[13px] leading-relaxed text-[#a1a1a6]">
+                <div className="pt-2 mt-auto">
+                  <p className="text-[13px] leading-relaxed text-[#86868b]">
                     {lvl.desc}
                   </p>
                 </div>
@@ -374,19 +375,19 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20 md:mb-24">
             <span className="apple-eyebrow fade-up block mb-4">Факты</span>
-            <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
+            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
               Реальные цифры.
             </h2>
-            <p className="apple-body fade-up delay-150 text-[#86868b] text-base sm:text-lg leading-relaxed">
+            <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
               Огонёк вырос из личного опыта основателя (740+ дней непрерывной практики) в сильное сообщество людей, которые выбирают осознанность и держат слово перед собой.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1200px] mx-auto">
             {/* Card 1: 126+ человек */}
-            <div className="apple-card apple-card-hover fade-scale delay-150 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+            <div className="apple-card apple-card-hover fade-scale delay-150 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between min-h-[280px]">
               <div>
-                <span className="apple-shimmer-text block text-[56px] sm:text-[68px] font-bold tracking-tight leading-none mb-4 font-mono">
+                <span className="apple-shimmer-text block text-[52px] sm:text-[64px] font-bold tracking-tight leading-none mb-3.5 font-mono">
                   126+
                 </span>
                 <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
@@ -399,9 +400,9 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </div>
 
             {/* Card 2: 26 312 дней */}
-            <div className="apple-card apple-card-hover fade-scale delay-300 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+            <div className="apple-card apple-card-hover fade-scale delay-300 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between min-h-[280px]">
               <div>
-                <span className="apple-shimmer-text block text-[48px] sm:text-[60px] font-bold tracking-tight leading-none mb-4 font-mono whitespace-nowrap">
+                <span className="apple-shimmer-text block text-[46px] sm:text-[58px] font-bold tracking-tight leading-none mb-3.5 font-mono whitespace-nowrap">
                   26 312
                 </span>
                 <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
@@ -414,9 +415,9 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </div>
 
             {/* Card 3: 176 455 побед */}
-            <div className="apple-card apple-card-hover fade-scale delay-450 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+            <div className="apple-card apple-card-hover fade-scale delay-450 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between min-h-[280px]">
               <div>
-                <span className="apple-shimmer-text block text-[46px] sm:text-[58px] font-bold tracking-tight leading-none mb-4 font-mono whitespace-nowrap">
+                <span className="apple-shimmer-text block text-[44px] sm:text-[56px] font-bold tracking-tight leading-none mb-3.5 font-mono whitespace-nowrap">
                   176 455
                 </span>
                 <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
@@ -441,28 +442,30 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center mb-16 sm:mb-20 md:mb-24">
             <span className="apple-eyebrow fade-up block mb-4">Опыт</span>
-            <h2 className="apple-section-title fade-up delay-75">
+            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
               Слова, проверенные временем.
             </h2>
+            <p className="apple-body fade-up delay-150 max-w-[640px] mx-auto text-[#86868b] text-[17px] leading-relaxed">
+              Истории людей, которые превратили ежедневную фиксацию побед в фундамент своей уверенности.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {QUOTES.map((q, i) => (
               <div
                 key={i}
-                className={`apple-card apple-card-hover fade-scale ${q.delay} p-8 flex flex-col justify-between min-h-[320px] bg-[#161617]`}
+                className={`apple-card apple-card-hover fade-scale ${q.delay} p-8 flex flex-col justify-between min-h-[340px] bg-[#161617]`}
               >
                 <div>
-                  {/* Subtle typographic quote glyph */}
-                  <span className="text-[40px] font-serif leading-none text-white/20 select-none block mb-4">
+                  <span className="text-[36px] font-serif leading-none text-white/20 select-none block mb-3">
                     “
                   </span>
-                  <blockquote className="text-[17px] leading-relaxed text-[#f5f5f7] font-normal tracking-tight mb-8">
+                  <blockquote className="text-[16px] sm:text-[17px] leading-relaxed text-[#f5f5f7] font-normal tracking-tight mb-8">
                     «{q.text}»
                   </blockquote>
                 </div>
 
-                <div className="flex items-center gap-4 pt-6 border-t border-white/[0.06]">
+                <div className="flex items-center gap-3.5 pt-5 border-t border-white/[0.08]">
                   <MediaSlot
                     name={q.image}
                     width={48}
@@ -484,9 +487,158 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               </div>
             ))}
           </div>
+
+          {/* Link to all 30+ reviews */}
+          <div className="mt-12 text-center fade-up delay-200">
+            <a
+              href="/reviews"
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+            >
+              <span>Читать все 32 отзыва участников сообщества</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
+          </div>
         </div>
       </section>
 
+      {/* ═══════════════════════════════════════════════════════════
+          SECTION 6.5 — «СИСТЕМА В ДЕЙСТВИИ» (Live Platform Proof Showcase)
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="showcase"
+        className="py-28 sm:py-36 md:py-44 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden"
+        aria-label="Платформа в действии"
+      >
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-[780px] mx-auto mb-16 sm:mb-20 md:mb-24">
+            <span className="apple-eyebrow fade-up block mb-4">Интерфейс</span>
+            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
+              Платформа в действии.
+            </h2>
+            <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+              Не просто концепт, а работающий каждый день инструмент. Загляни внутрь интерфейса, созданного для максимального спокойствия и точности.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Showcase Card 1: 740-Day Profile */}
+            <div className="apple-card apple-card-hover fade-up delay-150 overflow-hidden bg-[#161617] p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[#f56900] text-xs font-semibold uppercase tracking-wider mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#f56900]" />
+                  <span>Личный профиль & Стрик</span>
+                </div>
+                <h3 className="text-[22px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  740 дней непрерывной летописи
+                </h3>
+                <p className="text-[14px] text-[#86868b] leading-relaxed mb-6">
+                  Настоящий профиль создателя системы: 740 закрытых дней, 5-й уровень дисциплины и прозрачный календарь побед.
+                </p>
+              </div>
+              <div className="rounded-[20px] overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <MediaSlot
+                  name="platform_02_profile.png"
+                  width={1440}
+                  height={900}
+                  ratio="16:10"
+                  alt="Профиль 740 дней дневника"
+                  rounded={false}
+                />
+              </div>
+            </div>
+
+            {/* Showcase Card 2: Analytics & Insights */}
+            <div className="apple-card apple-card-hover fade-up delay-250 overflow-hidden bg-[#161617] p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[#2997ff] text-xs font-semibold uppercase tracking-wider mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#2997ff]" />
+                  <span>Аналитика & Преодоление</span>
+                </div>
+                <h3 className="text-[22px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Шкала преодоления 1–10★
+                </h3>
+                <p className="text-[14px] text-[#86868b] leading-relaxed mb-6">
+                  Графики динамики и персональные выводы ИИ: фиксация того, как утренние победы поднимают результативность дня.
+                </p>
+              </div>
+              <div className="rounded-[20px] overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <MediaSlot
+                  name="platform_03_analytics.png"
+                  width={1440}
+                  height={900}
+                  ratio="16:10"
+                  alt="Аналитика и динамика преодоления"
+                  rounded={false}
+                />
+              </div>
+            </div>
+
+            {/* Showcase Card 3: Evidence Vault */}
+            <div className="apple-card apple-card-hover fade-up delay-350 overflow-hidden bg-[#161617] p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[#8668ff] text-xs font-semibold uppercase tracking-wider mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#8668ff]" />
+                  <span>Evidence Vault</span>
+                </div>
+                <h3 className="text-[22px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Сейф доказательств силы
+                </h3>
+                <p className="text-[14px] text-[#86868b] leading-relaxed mb-6">
+                  Защищённое хранилище ключевых побед: закрытые полумарафоны, сложные сделки и решения под давлением.
+                </p>
+              </div>
+              <div className="rounded-[20px] overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <MediaSlot
+                  name="platform_04_vault.png"
+                  width={1440}
+                  height={900}
+                  ratio="16:10"
+                  alt="Сейф доказательств Evidence Vault"
+                  rounded={false}
+                />
+              </div>
+            </div>
+
+            {/* Showcase Card 4: Daily Diary Feed */}
+            <div className="apple-card apple-card-hover fade-up delay-450 overflow-hidden bg-[#161617] p-6 sm:p-8 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-[#00a1b3] text-xs font-semibold uppercase tracking-wider mb-3">
+                  <span className="w-2 h-2 rounded-full bg-[#00a1b3]" />
+                  <span>Вечерний ритуал</span>
+                </div>
+                <h3 className="text-[22px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  Летопись дня #1: честно и без воды
+                </h3>
+                <p className="text-[14px] text-[#86868b] leading-relaxed mb-6">
+                  5 структурированных побед за вечер: тренировка, спринт в коде, созвон без отвлечений и время с семьёй.
+                </p>
+              </div>
+              <div className="rounded-[20px] overflow-hidden border border-white/10 shadow-2xl bg-black">
+                <MediaSlot
+                  name="platform_01_diary.png"
+                  width={1440}
+                  height={900}
+                  ratio="16:10"
+                  alt="Интерфейс ежедневного дневника"
+                  rounded={false}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Callout to /platform */}
+          <div className="mt-14 text-center fade-up delay-300">
+            <a
+              href="/platform"
+              className="apple-btn-primary !px-7 !py-3.5 !text-[14px]"
+            >
+              Подробный тур по платформе ›
+            </a>
+          </div>
+        </div>
+      </section>
       {/* ═══════════════════════════════════════════════════════════
           SECTION 7 — «ПРИВАТНОСТЬ» (Local-First Security Stage)
           ═══════════════════════════════════════════════════════════ */}
@@ -503,11 +655,11 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <span className="apple-eyebrow">Приватность</span>
           </div>
 
-          <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[840px]">
+          <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7 max-w-[860px]">
             Данные и пароли остаются только на твоём устройстве.
           </h2>
 
-          <p className="apple-body fade-up delay-150 max-w-[720px] mb-16 sm:mb-20 md:mb-24 text-[#86868b] text-base sm:text-lg leading-relaxed">
+          <p className="apple-body fade-up delay-150 max-w-[720px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
             Огонёк построен по принципу полной локальной независимости (Local-first). Личные победы, заметки и мысли не продаются рекламодателям и не анализируются без твоего ведома.
           </p>
 
@@ -558,21 +710,34 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             ].map((card) => (
               <div
                 key={card.title}
-                className={`apple-card apple-card-hover fade-up ${card.delay} p-7 sm:p-8 bg-[#161617] flex flex-col justify-between min-h-[220px]`}
+                className={`apple-card apple-card-hover fade-up ${card.delay} p-7 sm:p-8 bg-[#161617] flex flex-col justify-between min-h-[250px]`}
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#f5f5f7] mb-6 transition-transform group-hover:scale-110 duration-300">
+                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#f5f5f7] mb-6">
                     {card.icon}
                   </div>
-                  <h3 className="text-[18px] font-semibold text-[#f5f5f7] mb-3 tracking-tight leading-snug">
+                  <h3 className="text-[19px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight leading-snug">
                     {card.title}
                   </h3>
                 </div>
-                <p className="text-[14px] leading-relaxed text-[#a1a1a6] mt-auto pt-2">
+                <p className="text-[14px] leading-relaxed text-[#86868b] mt-auto">
                   {card.desc}
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Privacy Whitepaper Link */}
+          <div className="mt-12 text-center fade-up delay-200">
+            <a
+              href="/privacy"
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+            >
+              <span>Читать манифест приватности и безопасности Local-first</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </a>
           </div>
         </div>
       </section>
@@ -585,7 +750,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         aria-label="Финальный призыв к действию"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="apple-card apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[480px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#121214]">
+          <div className="apple-card apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[500px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#121214]">
             {/* Wide 21:9 container for together.jpg */}
             <div className="absolute inset-0 z-0">
               <MediaSlot
@@ -599,7 +764,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 isHero
                 objectPosition="center 35%"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/75 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/80 z-10" />
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.85)_100%)] z-10 pointer-events-none" />
             </div>
 
@@ -607,18 +772,18 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <div className="apple-ambient-orb w-[500px] h-[500px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
 
             {/* Overlaid Banner Content */}
-            <div className="relative z-20 max-w-[640px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-200 mb-5 sm:mb-6 !text-[36px] sm:!text-[52px] leading-[1.08] drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)]">
+            <div className="relative z-20 max-w-[680px] mx-auto flex flex-col items-center">
+              <h2 className="apple-hero-title fade-blur delay-200 mb-6 !text-[36px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body fade-up delay-300 text-[#f5f5f7]/90 max-w-[500px] mb-8 sm:mb-9 text-base sm:text-[17px] leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
+              <p className="apple-body fade-up delay-300 text-[#f5f5f7]/95 max-w-[540px] mb-9 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с близкими и создавай нерушимую уверенность в себе.
               </p>
               <div className="fade-scale delay-400">
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="apple-btn-primary !px-8 !py-3.5 !text-[15px] shadow-[0_0_35px_rgba(0,113,227,0.4)]"
+                  className="apple-btn-primary !px-9 !py-4 !text-[15px] shadow-[0_0_35px_rgba(0,113,227,0.45)]"
                 >
                   Начать
                 </button>
@@ -629,48 +794,9 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 9 — APPLE-STYLE FOOTER
+          SECTION 9 — APPLE UNIVERSAL FOOTER
           ═══════════════════════════════════════════════════════════ */}
-      <footer
-        className="py-8 bg-[#111111] border-t border-white/[0.08]"
-        aria-label="Подвал сайта"
-      >
-        <div className="max-w-[1024px] mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#86868b]">
-          {/* Logo Brand */}
-          <div className="flex items-center gap-2">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                fill="#86868b"
-              />
-            </svg>
-            <span className="font-medium text-[#d2d2d7]">Огонёк</span>
-          </div>
-
-          {/* Links */}
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              onClick={() => openAuth('signin')}
-              className="text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer border-none bg-transparent"
-            >
-              Войти
-            </button>
-            <button
-              type="button"
-              onClick={() => openAuth('register')}
-              className="text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer border-none bg-transparent"
-            >
-              Регистрация
-            </button>
-          </div>
-
-          {/* Copyright */}
-          <div>
-            © {new Date().getFullYear()} Огонёк. Все права защищены.
-          </div>
-        </div>
-      </footer>
+      <AppleFooter />
     </div>
   )
 }
