@@ -48,6 +48,7 @@ import type {
 import { SecurityPanel } from '../security'
 import { PrivacyPanel, StreakDeadlinePanel } from '../settings'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import { DifficultyLevelPanel } from '../settings/difficulty-level-panel'
 import { TelegramReminderPanel } from '../settings/telegram-reminder-panel'
 import { Button } from '../ui'
@@ -145,6 +146,12 @@ export function SettingsView({
 }: Props) {
   const [activeSection, setActiveSection] = useState<SettingsSection | null>('appearance')
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const isFree =
+    normalizeTier(
+      state.profile?.subscription_tier,
+      state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+    ) === 'free'
 
   const handleExport = () => {
     try {
@@ -270,9 +277,20 @@ export function SettingsView({
                   <div className="relative">
                     <input
                       type="color"
+                      id="settings-custom-color-picker"
                       value={state.accent.startsWith('#') ? state.accent : '#FF5C00'}
                       onChange={(e) => {
-                        onSetAccent(e.target.value as any)
+                        const val = e.target.value
+                        if (isFree) {
+                          window.dispatchEvent(
+                            new CustomEvent('ogonek:open-upgrade', {
+                              detail: { feature: 'accent', requiredTier: 'ultra', force: true },
+                            })
+                          )
+                          onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
+                          return
+                        }
+                        onSetAccent(val as any)
                       }}
                       className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
                       aria-label="Выбрать свой цвет"
@@ -287,15 +305,32 @@ export function SettingsView({
                     </div>
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-[var(--text)]">Свой цвет (HEX)</p>
+                    <p className="text-[13px] font-bold text-[var(--text)] flex items-center gap-1.5">
+                      <span>Свой цвет (HEX)</span>
+                      {isFree && <Lock size={12} className="text-amber-400" />}
+                    </p>
                     <p className="text-[12px] text-[var(--text-2)]">
-                      {state.accent.startsWith('#') ? state.accent.toUpperCase() : 'Выбери любой оттенок'}
+                      {state.accent.startsWith('#') ? state.accent.toUpperCase() : isFree ? 'Доступно на тарифе Ultra' : 'Выбери любой оттенок'}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <HexColorInput currentAccent={state.accent} onSetAccent={onSetAccent} />
+                  <HexColorInput
+                    currentAccent={state.accent}
+                    onSetAccent={(val) => {
+                      if (isFree) {
+                        window.dispatchEvent(
+                          new CustomEvent('ogonek:open-upgrade', {
+                            detail: { feature: 'accent', requiredTier: 'ultra', force: true },
+                          })
+                        )
+                        onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
+                        return
+                      }
+                      onSetAccent(val)
+                    }}
+                  />
                 </div>
               </div>
             </div>

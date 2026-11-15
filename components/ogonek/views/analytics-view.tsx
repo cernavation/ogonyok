@@ -15,7 +15,10 @@ import {
   Zap,
   RefreshCw,
   ArrowUpRight,
+  BarChart2,
 } from 'lucide-react'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import {
   buildDynamics,
   computeBestWeek,
@@ -51,6 +54,13 @@ export function AnalyticsView({
   const [showArchive, setShowArchive] = useState(false)
   const [insightSeed, setInsightSeed] = useState(0)
   const [isRefreshingInsights, setIsRefreshingInsights] = useState(false)
+
+  const { state } = useOgonekStore()
+  const effectiveTier = normalizeTier(
+    state.profile?.subscription_tier,
+    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+  )
+  const isFree = effectiveTier === 'free'
 
   const realStreak = useMemo(() => calculateStreak(days), [days])
   const streakInfo = useMemo(() => {
@@ -184,6 +194,38 @@ export function AnalyticsView({
             </div>
           ))}
         </div>
+
+        {/* Мягкий баннер расширенной аналитики (CONTRACT Шаг 12) */}
+        {isFree && (
+          <div
+            id="analytics-upgrade-banner"
+            className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between gap-3 text-xs"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                <BarChart2 size={16} />
+              </div>
+              <div>
+                <h4 className="font-bold text-[var(--text)]">Когортный анализ и глубокая аналитика</h4>
+                <p className="text-[var(--text-2)] mt-0.5">Доступны на тарифах Премиум и Ultra</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              id="analytics-upgrade-btn"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent('ogonek:open-upgrade', {
+                    detail: { feature: 'analytics', force: true },
+                  })
+                )
+              }}
+              className="px-3.5 py-1.5 rounded-full bg-[var(--accent)] hover:opacity-90 text-white font-bold text-xs transition-opacity shrink-0 shadow-sm"
+            >
+              Подробнее
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )

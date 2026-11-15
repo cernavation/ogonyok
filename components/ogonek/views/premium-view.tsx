@@ -30,7 +30,7 @@ type Props = {
   onNotify: (msg: string) => void
   soundEnabled?: boolean
   verified?: boolean
-  subscriptionTier?: 'free' | 'premium' | 'ultra'
+  subscriptionTier?: 'free' | 'pro' | 'premium' | 'ultra'
 }
 
 type BillingPeriod = 'monthly' | 'yearly'
@@ -48,11 +48,13 @@ export function PremiumView({
   const [modalTier, setModalTier] = useState<'premium' | 'ultra' | null>(null)
   useBodyScrollLock(Boolean(modalTier))
 
-  // Текущий тариф считывается из profile.subscription_tier ('free' | 'premium' | 'ultra')
-  const activeTier: 'free' | 'premium' | 'ultra' =
+  // Текущий тариф считывается из profile.subscription_tier ('free' | 'pro' | 'premium' | 'ultra')
+  const rawTier =
     subscriptionTier ||
     state.profile.subscription_tier ||
     (verified ? 'premium' : 'free')
+  const activeTier: 'free' | 'premium' | 'ultra' =
+    rawTier === 'pro' ? 'premium' : (rawTier === 'ultra' ? 'ultra' : rawTier === 'premium' ? 'premium' : 'free')
 
   // Закрытие модального окна по Escape
   useEffect(() => {

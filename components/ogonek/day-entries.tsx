@@ -14,6 +14,7 @@ import {
 import { gratitudeTarget, prideTarget } from '@/lib/ogonek/reactions'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
+import { canRequestAiEvaluation, normalizeTier } from '@/lib/ogonek/permissions'
 import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
 import { StarRating } from './star-rating'
@@ -91,7 +92,7 @@ function DayEntriesComponent({
   const [activeGratitudeIndex, setActiveGratitudeIndex] = useState<number | null>(null)
   const reduce = useReducedMotion()
   const uid = useId()
-  const { ratePride, rateGratitude, clearPrideRating, clearGratitudeRating } = useOgonekStore()
+  const { state, ratePride, rateGratitude, clearPrideRating, clearGratitudeRating } = useOgonekStore()
 
   const interactive = typeof dayId === 'number'
   const canReact = interactive
@@ -103,6 +104,24 @@ function DayEntriesComponent({
 
   const handleAiEvaluateCurrentTab = async () => {
     if (isEvaluating) return
+
+    // Проверка тарифа: на Free тарифе ИИ-оценка заблокирована (CONTRACT Шаг 12)
+    const userTier = normalizeTier(
+      state.profile?.subscription_tier,
+      state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+    )
+    const check = canRequestAiEvaluation(userTier, 0)
+    if (!check.allowed) {
+      playClick(soundEnabled)
+      window.dispatchEvent(
+        new CustomEvent('ogonek:open-upgrade', {
+          detail: { feature: 'ai_eval', force: true },
+        })
+      )
+      onNotify?.(check.error || 'ИИ-оценка летописи доступна на тарифах Премиум и Ultra')
+      return
+    }
+
     setIsEvaluating(true)
     playClick(soundEnabled)
     try {

@@ -1,7 +1,9 @@
 'use client'
 
-import { ArrowLeft, Check, ChevronRight, Target, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, Clock, Lock, Target, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 import {
   countActiveFocusSteps,
   countFulfilledSteps,
@@ -72,6 +74,32 @@ export function IntentionsView({
   }
 
   const PLACEHOLDERS = ['Главный шаг дня', 'Для себя', 'Если останется время'] as const
+
+  const { state } = useOgonekStore()
+  const effectiveTier = normalizeTier(
+    state.profile?.subscription_tier,
+    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+  )
+  const isFree = effectiveTier === 'free'
+
+  const handleTimerClick = (mode: 'standard' | 'pomodoro' | 'custom') => {
+    if (isFree && (mode === 'pomodoro' || mode === 'custom')) {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:open-upgrade', {
+          detail: { feature: 'intentions_timer', force: true },
+        })
+      )
+      notify?.('Режимы Помодоро и гибкие таймеры доступны на тарифе Премиум')
+      return
+    }
+    notify?.(
+      mode === 'pomodoro'
+        ? 'Таймер 25 минут Помодоро запущен'
+        : mode === 'custom'
+        ? 'Пользовательский таймер запущен'
+        : 'Таймер 15 минут запущен'
+    )
+  }
 
   return (
     <div className="view-intentions min-h-screen pb-20">
@@ -187,6 +215,42 @@ export function IntentionsView({
               </button>
             </div>
           )}
+
+          {/* Таймеры намерений (CONTRACT Шаг 12) */}
+          <div className="mt-4 pt-3 border-t border-[var(--border)] flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-xs text-[var(--text-2)] font-semibold">
+              <Clock size={14} className="text-[var(--accent)]" />
+              <span>Таймер фокуса:</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="intentions-timer-standard-btn"
+                onClick={() => handleTimerClick('standard')}
+                className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)] transition-all"
+              >
+                15 мин
+              </button>
+              <button
+                type="button"
+                id="intentions-timer-pomodoro-btn"
+                onClick={() => handleTimerClick('pomodoro')}
+                className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)] transition-all inline-flex items-center gap-1"
+              >
+                <span>25 мин Помодоро</span>
+                {isFree && <Lock size={11} className="text-amber-400" />}
+              </button>
+              <button
+                type="button"
+                id="intentions-timer-custom-btn"
+                onClick={() => handleTimerClick('custom')}
+                className="px-2.5 py-1 rounded-full text-xs font-semibold bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)] transition-all inline-flex items-center gap-1"
+              >
+                <span>Свой таймер</span>
+                {isFree && <Lock size={11} className="text-amber-400" />}
+              </button>
+            </div>
+          </div>
         </section>
 
         {/* Past intentions history */}

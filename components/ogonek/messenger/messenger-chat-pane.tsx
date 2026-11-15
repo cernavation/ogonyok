@@ -698,6 +698,11 @@ export function MessengerChatPane({
       const userTier = state?.profile?.subscription_tier || 'free'
       const userTierValidUntil = state?.profile?.subscription_valid_until
       if (!canMakeVideoCall(userTier, userTierValidUntil)) {
+        window.dispatchEvent(
+          new CustomEvent('ogonek:open-upgrade', {
+            detail: { feature: 'video_call', force: true },
+          })
+        )
         onNotify('Видеозвонки доступны на тарифах Pro и Ultra. Запущен качественный аудиозвонок 📞')
         effectiveVideo = false
       }

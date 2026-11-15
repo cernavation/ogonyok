@@ -479,7 +479,9 @@ export function sanitizeProfile(value: unknown): OgonekProfile {
     inLeaderboard: typeof p.inLeaderboard === 'boolean' ? p.inLeaderboard : true,
     age: typeof p.age === 'number' && Number.isFinite(p.age) && p.age >= 1 && p.age <= 150 ? Math.round(p.age) : null,
     isAnonymous: typeof p.isAnonymous === 'boolean' ? p.isAnonymous : (typeof (p as any)?.is_anonymous === 'boolean' ? (p as any).is_anonymous : false),
-    subscription_tier: p.subscription_tier === 'premium' || p.subscription_tier === 'ultra' ? p.subscription_tier : 'free',
+    subscription_tier: p.subscription_tier === 'pro' || p.subscription_tier === 'premium' || p.subscription_tier === 'ultra' ? p.subscription_tier : 'free',
+    subscription_expires_at: typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : (typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : null),
+    subscription_valid_until: typeof (p as any)?.subscription_valid_until === 'string' ? (p as any).subscription_valid_until : (typeof p.subscription_expires_at === 'string' ? p.subscription_expires_at : null),
     privacy: typeof p.privacy === 'object' && p.privacy !== null ? p.privacy : {},
   }
 }

@@ -1,10 +1,12 @@
 'use client'
 
-import { ArrowLeft, Check, Pin, Plus, Search, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Crown, Lock, Pin, Plus, Search, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { EvidenceItem, ViewId } from '@/lib/ogonek/types'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { normalizeTier } from '@/lib/ogonek/permissions'
 
 type Props = {
   evidenceItems?: EvidenceItem[]
@@ -28,6 +30,23 @@ export function VaultView({
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('Все')
   const [isAdding, setIsAdding] = useState(false)
+
+  const { state } = useOgonekStore()
+  const effectiveTier = normalizeTier(
+    state.profile?.subscription_tier,
+    state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+  )
+  const isFree = effectiveTier === 'free'
+
+  const handleUnlockVault = () => {
+    playClick(soundEnabled)
+    window.dispatchEvent(
+      new CustomEvent('ogonek:open-upgrade', {
+        detail: { feature: 'vault', requiredTier: 'ultra', force: true },
+      })
+    )
+    onNotify?.('Полный сейф Evidence Vault доступен на тарифе Ultra')
+  }
 
   // Form fields for adding new fact of strength
   const [newTitle, setNewTitle] = useState('')
@@ -267,13 +286,27 @@ export function VaultView({
       {/* Flat List like X Feed */}
       {filteredItems.length > 0 ? (
         <div className="divide-y divide-[var(--border)]">
-          {filteredItems.map((item) => {
+          {filteredItems.map((item, idx) => {
             const isPinned = Boolean(item.pinned)
+            const isItemLocked = isFree && idx > 0
             return (
               <article
                 key={item.id || item.title}
-                className="px-4 py-3.5 hover:bg-[var(--bg-hover)] transition-colors relative"
+                className={`px-4 py-3.5 hover:bg-[var(--bg-hover)] transition-colors relative ${
+                  isItemLocked ? 'select-none' : ''
+                }`}
               >
+                {isItemLocked && (
+                  <div
+                    onClick={handleUnlockVault}
+                    className="absolute inset-0 bg-black/50 backdrop-blur-[2.5px] flex items-center justify-center p-3 cursor-pointer z-10 hover:bg-black/60 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] shadow-lg text-xs font-bold text-[var(--text,#e7e9ea)]">
+                      <Lock size={13} className="text-amber-400" />
+                      <span>Разблокировать в Ultra</span>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[13px] font-bold text-[var(--text-2)] uppercase tracking-wider">
@@ -329,6 +362,31 @@ export function VaultView({
               </article>
             )
           })}
+
+          {isFree && (
+            <div
+              id="vault-free-upgrade-banner"
+              className="m-4 p-4 rounded-2xl bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] flex items-center justify-between gap-3 text-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                  <Crown size={16} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[var(--text,#e7e9ea)]">Неограниченный Evidence Vault</h4>
+                  <p className="text-[var(--muted,#71767b)] mt-0.5">Доступен на тарифе Основатель Ultra</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                id="vault-unlock-btn"
+                onClick={handleUnlockVault}
+                className="px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs transition-colors shrink-0 shadow-sm"
+              >
+                Разблокировать
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State: Icon + 1 line + Button */

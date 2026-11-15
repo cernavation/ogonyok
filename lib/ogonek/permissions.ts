@@ -362,3 +362,157 @@ export function getPaymentButtonLabel(
   }
   return 'Оформить'
 }
+
+/**
+ * ЦЕНЫ ТАРИФОВ (ЭТАПЫ 4 И 13)
+ * Единый источник истины: Free 0 MDL, Pro 25 MDL (240 MDL/год), Ultra 50 MDL (480 MDL/год).
+ */
+export interface TierPriceInfo {
+  monthly: number
+  yearly: number
+  currency: string
+  discountBadge?: string
+  formattedMonthly: string
+  formattedYearly: string
+}
+
+export const TIER_PRICES: Record<SubscriptionTier, TierPriceInfo> = {
+  free: {
+    monthly: 0,
+    yearly: 0,
+    currency: 'MDL',
+    formattedMonthly: '0 MDL',
+    formattedYearly: 'Бесплатно навсегда',
+  },
+  pro: {
+    monthly: 25,
+    yearly: 240,
+    currency: 'MDL',
+    discountBadge: '-20%',
+    formattedMonthly: '25 MDL / мес',
+    formattedYearly: '240 MDL / год',
+  },
+  ultra: {
+    monthly: 50,
+    yearly: 480,
+    currency: 'MDL',
+    discountBadge: '-20%',
+    formattedMonthly: '50 MDL / мес',
+    formattedYearly: '480 MDL / год',
+  },
+}
+
+/**
+ * ОПИСАНИЕ ВОЗМОЖНОСТЕЙ ТАРИФОВ ДЛЯ КАРТОЧЕК И АПСЕЛЛОВ
+ * Генерируется на базе permissions.ts — единый источник истины.
+ */
+export interface TierFeatureItem {
+  id: string
+  text: string
+  included: boolean
+  highlight?: boolean
+}
+
+export const TIER_FEATURES_LIST: Record<SubscriptionTier, TierFeatureItem[]> = {
+  free: [
+    { id: 'chars', text: 'До 1 000 символов на одну запись', included: true },
+    { id: 'audio', text: 'Аудиозвонки P2P без ограничений', included: true },
+    { id: 'groups', text: '1 группа (до 5 участников)', included: true },
+    { id: 'stories', text: '1 история (Story) в день', included: true },
+    { id: 'analytics', text: 'Базовая аналитика стрика', included: true },
+    { id: 'photos', text: 'Прикрепление фото к записям', included: false },
+    { id: 'ai', text: 'ИИ-оценка летописи нейросетью Gemini', included: false },
+    { id: 'video', text: 'HD видеозвонки', included: false },
+  ],
+  pro: [
+    { id: 'chars', text: 'До 3 000 символов на запись (в 3 раза больше)', included: true, highlight: true },
+    { id: 'photos', text: '1 фото высокого качества в день', included: true },
+    { id: 'ai', text: '1 ИИ-оценка дня нейросетью Google Gemini', included: true, highlight: true },
+    { id: 'video', text: 'Зашифрованные видеозвонки HD', included: true },
+    { id: 'groups', text: 'До 5 групп (до 25 участников в каждой)', included: true },
+    { id: 'badge', text: 'Синяя галочка и значок ★ PREMIUM', included: true },
+    { id: 'analytics', text: 'Расширенная аналитика и когорты стрика', included: true },
+    { id: 'stories', text: 'До 5 историй и 20 отложенных сообщений', included: true },
+  ],
+  ultra: [
+    { id: 'chars', text: 'До 5 000 символов на запись (максимум)', included: true, highlight: true },
+    { id: 'photos', text: 'До 3 фото высокого качества в день', included: true },
+    { id: 'ai', text: 'ИИ-оценка дня с глубоким анализом и отчётом', included: true, highlight: true },
+    { id: 'video', text: 'Видеозвонки с выделенным TURN-сервером', included: true },
+    { id: 'groups', text: 'До 20 групп (до 100 участников)', included: true },
+    { id: 'badge', text: 'Золотой статус и значок ⚡ ULTRA FOUNDER', included: true },
+    { id: 'vault', text: 'Полный доступ к сейфу Evidence Vault', included: true },
+    { id: 'unlimited', text: '15 историй, 100 отложенных сообщений', included: true },
+  ],
+}
+
+/**
+ * Проверка статуса истечения подписки (за 3 дня предупреждение)
+ */
+export interface SubscriptionStatus {
+  rawTier: string
+  effectiveTier: SubscriptionTier
+  isPaid: boolean
+  isExpired: boolean
+  isExpiringSoon: boolean
+  daysRemaining: number | null
+  expiresAtFormatted: string | null
+}
+
+export function checkSubscriptionStatus(
+  rawTier: unknown,
+  validUntil?: string | null
+): SubscriptionStatus {
+  const effectiveTier = normalizeTier(rawTier, validUntil)
+  const isPaid = isPaidTierActive(rawTier, validUntil)
+
+  if (!validUntil) {
+    return {
+      rawTier: typeof rawTier === 'string' ? rawTier : 'free',
+      effectiveTier,
+      isPaid,
+      isExpired: false,
+      isExpiringSoon: false,
+      daysRemaining: null,
+      expiresAtFormatted: null,
+    }
+  }
+
+  const expDate = new Date(validUntil)
+  const expTime = expDate.getTime()
+  if (isNaN(expTime)) {
+    return {
+      rawTier: typeof rawTier === 'string' ? rawTier : 'free',
+      effectiveTier,
+      isPaid,
+      isExpired: false,
+      isExpiringSoon: false,
+      daysRemaining: null,
+      expiresAtFormatted: null,
+    }
+  }
+
+  const now = Date.now()
+  const diffMs = expTime - now
+  const isExpired = diffMs <= 0
+  const daysRemaining = !isExpired ? Math.ceil(diffMs / (24 * 60 * 60 * 1000)) : 0
+  // Предупреждение за 3 дня (1, 2 или 3 дня до окончания)
+  const isExpiringSoon = !isExpired && daysRemaining > 0 && daysRemaining <= 3
+
+  const expiresAtFormatted = expDate.toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
+
+  return {
+    rawTier: typeof rawTier === 'string' ? rawTier : 'free',
+    effectiveTier,
+    isPaid: isPaid && !isExpired,
+    isExpired,
+    isExpiringSoon,
+    daysRemaining,
+    expiresAtFormatted,
+  }
+}
+

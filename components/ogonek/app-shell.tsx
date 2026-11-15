@@ -40,8 +40,10 @@ import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/og
 import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
 import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
-import { Phone, PhoneOff, Video } from 'lucide-react'
+import { AlertTriangle, Phone, PhoneOff, Video } from 'lucide-react'
 import { DesktopToastStack, type DesktopToast } from './notifications'
+import { checkSubscriptionStatus, TIER_NAMES } from '@/lib/ogonek/permissions'
+import { canShowUpgradeModal } from './upgrade-modal'
 import {
   playChatMessageSound,
   playFriendRequestSound,
@@ -59,6 +61,8 @@ const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { s
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
 const FriendsModal = dynamic(() => import('./friends/friends-modal').then((m) => m.FriendsModal), { ssr: false })
+const PremiumModal = dynamic(() => import('./premium-modal').then((m) => m.PremiumModal), { ssr: false })
+const UpgradeModal = dynamic(() => import('./upgrade-modal').then((m) => m.UpgradeModal), { ssr: false })
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -71,6 +75,17 @@ export function AppShell() {
   const [friendsModalOpen, setFriendsModalOpen] = useState(false)
   const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'requests' | 'search' | 'following'>('friends')
   const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [premiumModalOpen, setPremiumModalOpen] = useState(false)
+  const [upgradeModal, setUpgradeModal] = useState<{
+    isOpen: boolean
+    feature: string | null
+    requiredTier?: 'pro' | 'ultra'
+    customTitle?: string
+    customBenefit?: string
+  }>({
+    isOpen: false,
+    feature: null,
+  })
   const [toast, setToast] = useState('')
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
@@ -149,7 +164,9 @@ export function AppShell() {
       hotkeysModal ||
       lightbox ||
       onboardingOpen ||
-      incomingCall
+      incomingCall ||
+      premiumModalOpen ||
+      upgradeModal.isOpen
     )
   )
 
@@ -165,6 +182,43 @@ export function AppShell() {
     window.addEventListener('ogonek:open-friends', handler)
     return () => window.removeEventListener('ogonek:open-friends', handler)
   }, [openFriendsModal])
+
+  // Обработчики открытия модального окна Премиума и Апселла (CONTRACT Шаг 12)
+  useEffect(() => {
+    const handleOpenPremium = () => {
+      setPremiumModalOpen(true)
+    }
+    const handleOpenUpgrade = (e: any) => {
+      const detail = e?.detail || {}
+      const feature = detail.feature || 'photos'
+      const force = Boolean(detail.force)
+      if (canShowUpgradeModal(feature, force)) {
+        setUpgradeModal({
+          isOpen: true,
+          feature,
+          requiredTier: detail.requiredTier,
+          customTitle: detail.customTitle,
+          customBenefit: detail.customBenefit,
+        })
+      }
+    }
+
+    window.addEventListener('ogonek:open-premium', handleOpenPremium)
+    window.addEventListener('ogonek:open-upgrade', handleOpenUpgrade)
+    const handleEditDayEvent = (e: any) => {
+      const day = e?.detail?.day || state.days[0]
+      if (day) {
+        setEditingDay(day)
+        setComposer(true)
+      }
+    }
+    window.addEventListener('ogonek:edit-day', handleEditDayEvent)
+    return () => {
+      window.removeEventListener('ogonek:open-premium', handleOpenPremium)
+      window.removeEventListener('ogonek:open-upgrade', handleOpenUpgrade)
+      window.removeEventListener('ogonek:edit-day', handleEditDayEvent)
+    }
+  }, [state.days])
 
   const notify = useCallback((message: string) => {
     setToast(message)
@@ -804,6 +858,11 @@ export function AppShell() {
   const navigate = useCallback(
     (next: ViewId, targetUserId?: string | null) => {
       playClick(state.soundEnabled)
+      // CONTRACT Шаг 12: «Премиум» открывается модальным окном (pop-up), а не страницей
+      if (next === 'premium') {
+        setPremiumModalOpen(true)
+        return
+      }
       setView(next)
       if (next === 'messages') {
         setUnreadChatCount(0)
@@ -846,7 +905,23 @@ export function AppShell() {
       }
 
       const params = new URLSearchParams(window.location.search)
+      if (params.get('modal') === 'premium') {
+        setPremiumModalOpen(true)
+        params.delete('modal')
+        const newSearch = params.toString() ? `?${params.toString()}` : ''
+        window.history.replaceState(null, '', `${window.location.pathname}${newSearch}`)
+      }
+
       const v = params.get('view') as ViewId | null
+      if (v === 'premium') {
+        setPremiumModalOpen(true)
+        setView('home')
+        params.delete('view')
+        const newSearch = params.toString() ? `?${params.toString()}` : ''
+        window.history.replaceState(null, '', `${window.location.pathname}${newSearch}`)
+        return
+      }
+
       const u = params.get('userId') || params.get('user') || params.get('u')
       const validViews: ViewId[] = [
         'home',
@@ -880,6 +955,19 @@ export function AppShell() {
   const streakCount = useMemo(() => {
     return state.days.length || calculateStreak(state.days)
   }, [state.days])
+
+  // Статус подписки и предупреждение за 3 дня (CONTRACT Шаг 12)
+  const subStatus = useMemo(() => {
+    const rawTier = state.profile.subscription_tier
+    const validUntil =
+      state.profile.subscription_expires_at ||
+      (state.profile as any).subscription_valid_until
+    return checkSubscriptionStatus(rawTier, validUntil)
+  }, [
+    state.profile.subscription_tier,
+    state.profile.subscription_expires_at,
+    (state.profile as any).subscription_valid_until,
+  ])
 
   // Compute live streak state
   const streakState = useMemo(() => {
@@ -1275,6 +1363,16 @@ export function AppShell() {
           }}
           onNotify={notify}
         />
+
+        {/* Модальное окно тарифов Премиум при открытии через /premium (CONTRACT Шаг 12) */}
+        {premiumModalOpen && (
+          <PremiumModal
+            isOpen={premiumModalOpen}
+            onClose={() => setPremiumModalOpen(false)}
+            onNotify={notify}
+          />
+        )}
+
         {/* Всплывающие уведомления в стиле Telegram Desktop (максимум 3 в стеке) */}
         <DesktopToastStack
           toasts={desktopToasts}
@@ -1351,6 +1449,30 @@ export function AppShell() {
                     streakStatus={streakState.status}
                     hoursLeft={streakState.hoursLeft}
                   />
+                )}
+
+                {/* Предупреждение об истечении подписки за 3 дня (CONTRACT Шаг 12) */}
+                {view === 'home' && subStatus.isExpiringSoon && (
+                  <div
+                    id="subscription-expiring-soon-banner"
+                    className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2 text-amber-300 min-w-0">
+                      <AlertTriangle size={16} className="shrink-0 text-amber-400" />
+                      <span className="truncate">
+                        Подписка <b>{TIER_NAMES[subStatus.effectiveTier]}</b> истекает через{' '}
+                        <b>{subStatus.daysRemaining} {subStatus.daysRemaining === 1 ? 'день' : 'дня'}</b>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      id="renew-expiring-subscription-btn"
+                      onClick={() => setPremiumModalOpen(true)}
+                      className="px-3 py-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white font-bold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
+                    >
+                      Продлить
+                    </button>
+                  </div>
                 )}
                 <motion.div
                   key={view}
@@ -1482,6 +1604,31 @@ export function AppShell() {
               }}
               onNotify={notify}
               soundEnabled={state.soundEnabled}
+            />
+          )}
+
+          {/* Модальное окно тарифов Премиум (CONTRACT Шаг 12) */}
+          {premiumModalOpen && (
+            <PremiumModal
+              isOpen={premiumModalOpen}
+              onClose={() => setPremiumModalOpen(false)}
+              onNotify={notify}
+            />
+          )}
+
+          {/* Единая модалка апселла UpgradeModal (CONTRACT Шаг 12) */}
+          {upgradeModal.isOpen && (
+            <UpgradeModal
+              isOpen={upgradeModal.isOpen}
+              feature={upgradeModal.feature}
+              requiredTier={upgradeModal.requiredTier}
+              customTitle={upgradeModal.customTitle}
+              customBenefit={upgradeModal.customBenefit}
+              onClose={() => setUpgradeModal((prev) => ({ ...prev, isOpen: false }))}
+              onOpenPremiumModal={() => {
+                setUpgradeModal((prev) => ({ ...prev, isOpen: false }))
+                setPremiumModalOpen(true)
+              }}
             />
           )}
         </AnimatePresence>

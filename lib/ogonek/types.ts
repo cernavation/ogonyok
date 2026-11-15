@@ -252,8 +252,8 @@ export type OgonekProfile = {
   age?: number | null
   /** Режим полной анонимности: скрыт из глобального поиска, в подписках/лентах как «Анонимный друг» */
   isAnonymous?: boolean
-  /** Текущий тариф подписки: 'free' | 'premium' | 'ultra' */
-  subscription_tier?: 'free' | 'premium' | 'ultra'
+  /** Текущий тариф подписки: 'free' | 'pro' | 'premium' | 'ultra' */
+  subscription_tier?: 'free' | 'pro' | 'premium' | 'ultra'
   /** Дата истечения подписки */
   subscription_expires_at?: string | null
   subscription_valid_until?: string | null

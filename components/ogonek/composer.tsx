@@ -450,7 +450,11 @@ export function Composer({
     if (file) {
       if (tierLimits.maxPhotosPerDay === 0) {
         playClick(soundEnabled)
-        setShowPhotoUpsell(true)
+        window.dispatchEvent(
+          new CustomEvent('ogonek:open-upgrade', {
+            detail: { feature: 'photos', force: true },
+          })
+        )
         onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
         if (fileInputRef.current) fileInputRef.current.value = ''
         return
@@ -831,7 +835,11 @@ export function Composer({
   const handleImagePaste = async (file: File) => {
     if (tierLimits.maxPhotosPerDay === 0) {
       playClick(soundEnabled)
-      setShowPhotoUpsell(true)
+      window.dispatchEvent(
+        new CustomEvent('ogonek:open-upgrade', {
+          detail: { feature: 'photos', force: true },
+        })
+      )
       onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
       return
     }
@@ -1622,6 +1630,19 @@ export function Composer({
         <div className="flex items-center gap-1.5" role="group" aria-label="Инструменты записи">
           {/* Фото / Медиа */}
           <label
+            id="composer-attach-photo-btn"
+            onClick={(e) => {
+              if (tierLimits.maxPhotosPerDay === 0) {
+                e.preventDefault()
+                playClick(soundEnabled)
+                window.dispatchEvent(
+                  new CustomEvent('ogonek:open-upgrade', {
+                    detail: { feature: 'photos', force: true },
+                  })
+                )
+                onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
+              }
+            }}
             className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer min-h-[40px] min-w-[40px]"
             title="Прикрепить фото дня"
             aria-label="Прикрепить фото дня"

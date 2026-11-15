@@ -165,6 +165,11 @@ export function FriendsModal({
     const tier = state.profile?.subscription_tier || (state.profile as any)?.subscriptionTier || 'free'
     const check = canCreateGroup(tier, ownedGroupsCount)
     if (!check.allowed) {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:open-upgrade', {
+          detail: { feature: 'groups', force: true },
+        })
+      )
       onNotify(check.error || 'Достигнут лимит созданных групп для вашего тарифа')
       return
     }
