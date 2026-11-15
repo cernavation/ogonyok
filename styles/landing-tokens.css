@@ -1,11 +1,15 @@
 /* ══════════════════════════════════════════════════════════════════════════
-   ЛЕНДИНГ ОГОНЁК — APPLE-STYLE DESIGN TOKENS & CINEMATIC ANIMATIONS
-   Scoped strictly under .landing to prevent leaking into main app UI.
-   Source of truth: DESIGN.md (Apple Cupertino / Refero architecture).
+   ЛЕНДИНГ ОГОНЁК — APPLE-STYLE DESIGN TOKENS
+   Exact specification from:
+   - DESIGN (3).md (Apple España Refero design system)
+   - variables (1).css
+   - theme (1).css
+   - tokens (1).json
+   Scoped strictly under .landing to ensure zero side-effects on the rest of the app.
    ══════════════════════════════════════════════════════════════════════════ */
 
 .landing {
-  /* ── Colors (Exact Apple Refero palette) ─────────────────────────── */
+  /* ── Colors (Exact tokens from tokens.json & variables.css) ────────── */
   --color-obsidian: #1d1d1f;
   --color-frost-white: #f5f5f7;
   --color-pure-black: #000000;
@@ -23,29 +27,106 @@
   --color-iris-violet: #8668ff;
   --color-reef-teal: #00a1b3;
 
-  /* ── Apple Cupertino Fluid Curves & Timings ──────────────────────── */
-  --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --apple-ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --apple-ease-soft: cubic-bezier(0.25, 1, 0.5, 1);
-  --apple-duration: 0.9s;
-  --apple-duration-fast: 0.35s;
+  /* ── Surfaces (Exact Surface Hierarchy) ──────────────────────────── */
+  --surface-pure-black-stage: #000000;
+  --surface-carbon-layer: #111111;
+  --surface-obsidian-card: #1d1d1f;
+  --surface-graphite-surface: #333336;
+  --surface-frost-white-panel: #f5f5f7;
+  --surface-paper-white: #ffffff;
 
-  /* ── Typography — Native Apple SF Pro stack with Inter fallback ──── */
-  --font-apple: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", var(--font-inter), system-ui, sans-serif;
+  /* ── Typography — Font Families ──────────────────────────────────── */
+  --font-sf-pro-display: 'SF Pro Display', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, var(--font-inter), sans-serif;
+  --font-sf-pro-text: 'SF Pro Text', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, var(--font-inter), sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
 
-  /* ── Spacing & Layout ────────────────────────────────────────────── */
-  --page-max-width: 1200px;
-  --radius-cards: 28px;
+  /* ── Typography — Scale & Density (Exact tokens from DESIGN.md) ──── */
+  --text-caption: 10px;
+  --leading-caption: 1.83;
+  --tracking-caption: -0.37px;
+
+  --text-body: 14px;
+  --leading-body: 1.43;
+  --tracking-body: -0.22px;
+
+  --text-body-lg: 17px;
+  --leading-body-lg: 1.47;
+  --tracking-body-lg: -0.19px;
+
+  --text-heading-sm: 19px;
+  --leading-heading-sm: 1.21;
+  --tracking-heading-sm: -0.28px;
+
+  --text-heading: 24px;
+  --leading-heading: 1.17;
+  --tracking-heading: -0.24px;
+
+  --text-heading-lg: 32px;
+  --leading-heading-lg: 1.14;
+  --tracking-heading-lg: -0.32px;
+
+  --text-display: 56px;
+  --leading-display: 1.07;
+  --tracking-display: -0.84px;
+
+  --text-hero: 80px;
+  --leading-hero: 1.05;
+  --tracking-hero: -0.24px;
+
+  /* ── Typography — Weights ────────────────────────────────────────── */
+  --font-weight-regular: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ── Spacing Scale (Exact 4px base scale) ─────────────────────────── */
+  --spacing-unit: 4px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-60: 60px;
+  --spacing-76: 76px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-104: 104px;
+  --spacing-160: 160px;
+
+  /* ── Layout & Radii ──────────────────────────────────────────────── */
+  --page-max-width: 1440px;
+  --section-gap: 120px;
+  --card-padding: 28px;
+  --element-gap: 12px;
+
+  --radius-lg: 10px;
+  --radius-3xl: 28px;
+  --radius-3xl-2: 32px;
+  --radius-3xl-3: 36px;
+  --radius-full: 980px;
+
+  --radius-nav: 980px;
   --radius-pill: 980px;
+  --radius-cards: 28px;
+  --radius-links: 10px;
+  --radius-buttons: 36px;
+
+  /* ── Apple Cupertino Motion Tokens ───────────────────────────────── */
+  --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --apple-duration: 0.9s;
+  --apple-duration-fast: 0.3s;
 
   /* ── Base Styling inside .landing ─────────────────────────────────── */
   color: var(--color-frost-white);
-  background-color: var(--color-pure-black);
-  font-family: var(--font-apple);
+  background-color: var(--surface-pure-black-stage);
+  font-family: var(--font-sf-pro-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.47;
+  line-height: var(--leading-body-lg);
   position: relative;
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
@@ -61,64 +142,61 @@
 .landing h2,
 .landing h3,
 .landing h4 {
-  font-family: var(--font-apple);
+  font-family: var(--font-sf-pro-display);
   color: var(--color-frost-white);
   font-weight: 700;
 }
 
+/* ── Hero Title (80px Display) ─────────────────────────────────────── */
 .landing .apple-hero-title {
-  font-size: clamp(38px, 6vw, 82px);
-  font-weight: 700;
-  letter-spacing: -0.038em;
-  line-height: 1.05;
+  font-family: var(--font-sf-pro-display);
+  font-size: clamp(38px, 6vw, var(--text-hero));
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-hero);
+  line-height: var(--leading-hero);
   color: var(--color-frost-white);
 }
 
+/* ── Section Title (56px Display) ──────────────────────────────────── */
 .landing .apple-section-title {
-  font-size: clamp(32px, 4.5vw, 56px);
-  font-weight: 700;
-  letter-spacing: -0.032em;
-  line-height: 1.12;
+  font-family: var(--font-sf-pro-display);
+  font-size: clamp(32px, 4.5vw, var(--text-display));
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
   color: var(--color-frost-white);
 }
 
+/* ── Category Eyebrow Tag (Exact specification from DESIGN.md) ───────
+   "Plain text label in Signal Orange (#f56900), SF Pro Text 17px weight 600,
+   letter-spacing -0.19px. No background, no border, no chip chrome —
+   color alone signals category. Sits above a feature headline, left-aligned." */
 .landing .apple-eyebrow {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sf-pro-text);
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-body-lg);
   color: var(--color-signal-orange);
   line-height: 1.2;
+  display: inline-block;
 }
 
+/* ── Body Copy (SF Pro Text 17px Platinum #86868b) ─────────────────── */
 .landing .apple-body {
-  font-size: 17px;
-  font-weight: 400;
-  line-height: 1.47;
-  letter-spacing: -0.015em;
+  font-family: var(--font-sf-pro-text);
+  font-size: var(--text-body-lg);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-body-lg);
+  letter-spacing: var(--tracking-body-lg);
   color: var(--color-platinum);
 }
 
-/* ── Apple Metallic & Titanium Shimmer Text ───────────────────────── */
-.landing .apple-shimmer-text {
-  background: linear-gradient(180deg, #FFFFFF 0%, #D2D2D7 65%, #86868B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.landing .apple-amber-glow-text {
-  background: linear-gradient(180deg, #FFA04D 0%, #F56900 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* ── Apple Card Design (Machined Obsidian / Carbon) ───────────────── */
+/* ── Apple Card Design (Exact 28px radius, Obsidian surface, hairline Smoke border) ── */
 .landing .apple-card {
   position: relative;
-  background: #161617;
+  background-color: var(--surface-obsidian-card);
   border-radius: var(--radius-cards);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-smoke);
   transition: border-color var(--apple-duration-fast) var(--apple-ease),
               transform var(--apple-duration-fast) var(--apple-ease),
               box-shadow var(--apple-duration-fast) var(--apple-ease);
@@ -129,22 +207,21 @@
 }
 
 .landing .apple-card-hover:hover {
-  transform: translateY(-4px) scale(1.006);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.85),
-              0 0 0 1px rgba(255, 255, 255, 0.15),
-              inset 0 1px 2px rgba(255, 255, 255, 0.12);
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
 }
 
 /* Extreme 5th level card subtle pulse glow */
 .landing .apple-card-extreme:hover {
-  border-color: rgba(245, 105, 0, 0.45);
-  box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.9),
-              0 0 30px rgba(245, 105, 0, 0.2),
-              inset 0 1px 2px rgba(255, 255, 255, 0.15);
+  border-color: rgba(245, 105, 0, 0.5);
+  box-shadow: 0 12px 36px rgba(245, 105, 0, 0.15);
 }
 
-/* ── Apple Primary Blue Button with Light Sweep Sheen ─────────────── */
+/* ── Primary CTA Button (Apple Blue Filled) ──────────────────────────
+   "Filled pill button: background #0071e3, text #ffffff, 36px border-radius,
+   10px vertical / 20px horizontal padding, SF Pro Text 14px weight 600,
+   letter-spacing -0.22px. The only filled chromatic button on the page." */
 .landing .apple-btn-primary {
   position: relative;
   display: inline-flex;
@@ -152,20 +229,18 @@
   justify-content: center;
   gap: 8px;
   background-color: var(--color-apple-blue);
-  color: #ffffff;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  padding: 10px 22px;
+  color: var(--color-paper-white);
+  border-radius: var(--radius-buttons);
+  font-family: var(--font-sf-pro-text);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--tracking-body);
+  padding: 10px 20px;
   border: none;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s var(--apple-ease);
+  transition: all 0.25s var(--apple-ease);
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2),
-              0 0 20px rgba(0, 113, 227, 0.35),
-              inset 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
 .landing .apple-btn-primary::after {
@@ -178,11 +253,11 @@
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.25) 50%,
     transparent 100%
   );
-  transform: skewX(-22deg);
-  transition: left 0.75s ease;
+  transform: skewX(-20deg);
+  transition: left 0.7s ease;
   pointer-events: none;
 }
 
@@ -192,10 +267,8 @@
 
 .landing .apple-btn-primary:hover {
   background-color: #0077ed;
-  transform: scale(1.03);
-  box-shadow: 0 0 35px rgba(0, 113, 227, 0.6),
-              0 4px 16px rgba(0, 0, 0, 0.4),
-              inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transform: scale(1.02);
+  box-shadow: 0 0 25px rgba(0, 113, 227, 0.45);
 }
 
 .landing .apple-btn-primary:active {
@@ -203,32 +276,42 @@
   background-color: #006edb;
 }
 
-/* ── Apple Ghost Button ────────────────────────────────────────────── */
+/* ── Ghost Button (Borderless text action beside CTA) ────────────────
+   "Borderless text button: text #ffffff on dark stages, SF Pro Text 14px weight 400,
+   36px border-radius, transparent background, 10px vertical / 20px horizontal padding." */
 .landing .apple-btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   background-color: transparent;
-  color: var(--color-halo-blue);
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  color: var(--color-frost-white);
+  font-family: var(--font-sf-pro-text);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: var(--tracking-body);
   padding: 10px 20px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-buttons);
   border: none;
   cursor: pointer;
-  transition: all 0.25s var(--apple-ease);
+  transition: all 0.2s var(--apple-ease);
 }
 
 .landing .apple-btn-ghost:hover {
-  color: #6cb4ff;
-  background: rgba(41, 151, 255, 0.1);
+  color: var(--color-halo-blue);
+  background: rgba(41, 151, 255, 0.08);
   transform: scale(1.02);
 }
 
 .landing .apple-btn-ghost:active {
   transform: scale(0.98);
+}
+
+/* ── Titanium Specular Shimmer Text ───────────────────────────────── */
+.landing .apple-shimmer-text {
+  background: linear-gradient(180deg, #FFFFFF 0%, #D2D2D7 60%, #86868B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 /* ── Ambient Keynote Lighting Orbs ─────────────────────────────────── */
@@ -237,7 +320,7 @@
   border-radius: 9999px;
   pointer-events: none;
   filter: blur(140px);
-  opacity: 0.14;
+  opacity: 0.12;
   mix-blend-mode: screen;
   z-index: 1;
 }
@@ -260,8 +343,8 @@
   /* 2. Apple Cinematic Blur-In (macOS / Keynote text reveal) */
   .landing .fade-blur {
     opacity: 0;
-    filter: blur(14px);
-    transform: translateY(22px) scale(0.985);
+    filter: blur(12px);
+    transform: translateY(20px) scale(0.985);
     transition: opacity var(--apple-duration) var(--apple-ease),
                 filter var(--apple-duration) var(--apple-ease),
                 transform var(--apple-duration) var(--apple-ease);
@@ -276,7 +359,7 @@
   /* 3. Apple Hardware Scale-Up (for cards and photo stages) */
   .landing .fade-scale {
     opacity: 0;
-    transform: scale(0.94) translateY(24px);
+    transform: scale(0.95) translateY(20px);
     transition: opacity 1s var(--apple-ease),
                 transform 1s var(--apple-ease);
     will-change: opacity, transform;
@@ -286,10 +369,10 @@
     transform: scale(1) translateY(0);
   }
 
-  /* 4. Apple Slide-in Left / Right (for sequential step lists) */
+  /* 4. Apple Slide-in Left / Right */
   .landing .fade-slide-left {
     opacity: 0;
-    transform: translateX(-32px);
+    transform: translateX(-30px);
     transition: opacity var(--apple-duration) var(--apple-ease),
                 transform var(--apple-duration) var(--apple-ease);
     will-change: opacity, transform;
@@ -301,7 +384,7 @@
 
   .landing .fade-slide-right {
     opacity: 0;
-    transform: translateX(32px);
+    transform: translateX(30px);
     transition: opacity var(--apple-duration) var(--apple-ease),
                 transform var(--apple-duration) var(--apple-ease);
     will-change: opacity, transform;
@@ -325,7 +408,7 @@
   .landing .delay-700 { transition-delay: 700ms; }
 }
 
-/* ── Fallback for Reduced Motion (Respects Accessibility) ──────────── */
+/* ── Fallback for Reduced Motion ───────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .landing .fade-up,
   .landing .fade-blur,

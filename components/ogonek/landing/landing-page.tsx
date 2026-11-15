@@ -147,15 +147,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[960px] mx-auto text-center flex flex-col items-center">
-          {/* Subtle Apple Eyebrow Tag */}
-          <div className="fade-blur mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/15 backdrop-blur-md shadow-lg">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          {/* Category Eyebrow Tag (Exact SF Pro Text 17px weight 600 Signal Orange, no chip chrome) */}
+          <div className="fade-blur mb-5 inline-flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
                 fill="#f56900"
               />
             </svg>
-            <span className="text-[12px] font-medium tracking-wider text-[#f5f5f7] uppercase">
+            <span className="apple-eyebrow">
               Дневник силы и летопись побед
             </span>
           </div>
@@ -168,24 +168,24 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </h1>
 
           {/* Subtitle with Fade-Up */}
-          <p className="apple-body fade-up delay-250 max-w-[660px] mb-12 sm:mb-16 text-white/90 text-base sm:text-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
+          <p className="apple-body fade-up delay-250 max-w-[660px] mb-10 sm:mb-14 text-[#f5f5f7]/90 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
             Огонёк хранит твои победы, серию дней и благодарности.
             Чтобы ничего не терялось.
           </p>
 
-          {/* Action CTAs with Scale-In & Button Shimmer */}
+          {/* Action CTAs (Exact Apple 36px radius, filled blue CTA & ghost text action) */}
           <div className="fade-scale delay-350 flex items-center justify-center gap-4 flex-wrap">
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="apple-btn-primary !px-9 !py-4 !text-[16px] shadow-[0_0_30px_rgba(0,113,227,0.35)]"
+              className="apple-btn-primary !px-7 !py-3 !text-[14px]"
             >
               Начать
             </button>
             <button
               type="button"
               onClick={() => openAuth('signin')}
-              className="apple-btn-ghost !px-7 !py-4 !text-[16px]"
+              className="apple-btn-ghost !px-6 !py-3 !text-[14px]"
             >
               Войти ›
             </button>

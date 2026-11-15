@@ -301,7 +301,7 @@ export function AppleModesPanel() {
                 return (
                   <div
                     key={mode.id}
-                    className="relative rounded-[24px] bg-[rgba(30,30,32,0.75)] backdrop-blur-xl border border-white/15 p-7 sm:p-8 shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-2"
+                    className="relative rounded-[28px] bg-[rgba(29,29,31,0.85)] backdrop-blur-xl border border-white/10 p-7 sm:p-8 shadow-2xl transition-all duration-500 animate-in fade-in slide-in-from-bottom-2"
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2.5">
