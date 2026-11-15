@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { LandingNav } from './landing-nav'
+import { AppleNavbar } from './apple-navbar'
 import { AppleFooter } from './apple-footer'
 import { MediaSlot } from './media-slot'
 import { AppleModesPanel } from './apple-modes-panel'
@@ -101,7 +101,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
   return (
     <div className="landing" ref={containerRef}>
       {/* ── Fixed Apple Header ──────────────────────────────────────── */}
-      <LandingNav onOpenAuth={openAuth} />
+      <AppleNavbar onOpenAuth={openAuth} />
 
       {/* ── Existing Auth Modal ─────────────────────────────────────── */}
       {authModal && (
