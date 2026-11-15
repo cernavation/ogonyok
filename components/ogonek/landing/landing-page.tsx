@@ -1124,6 +1124,36 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               </button>
             </div>
           </div>
+
+          {/* AI Page Callout Banner */}
+          <div className="mt-12 p-6 sm:p-8 rounded-[24px] bg-gradient-to-r from-[#0071e3]/15 via-[#00c7be]/10 to-transparent border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 fade-up">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/20 border border-[#0071e3]/30 flex items-center justify-center text-[#2997ff] shrink-0">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-[17px] font-semibold text-white tracking-tight">
+                  Как именно работает нейросетевой наставник?
+                </h4>
+                <p className="text-[14px] text-[#86868b]">
+                  Изучите 4 ключевые задачи ИИ, шкалу преодоления 1–10★, вердикт Ментора и гарантии Zero-Training.
+                </p>
+              </div>
+            </div>
+            <a
+              href="/ai"
+              className="apple-btn-secondary !px-6 !py-3 !text-[14px] whitespace-nowrap shrink-0 hover:bg-white/[0.14] transition-all"
+            >
+              Подробнее об ИИ Огонька →
+            </a>
+          </div>
         </div>
       </section>
 

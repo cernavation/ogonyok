@@ -10,6 +10,7 @@ interface AppleNavbarProps {
 
 const NAV_ITEMS = [
   { label: 'О платформе', href: '/platform' },
+  { label: 'ИИ-наставник', href: '/ai' },
   { label: 'Как это работает', href: '/how-it-works' },
   { label: 'Открытость', href: '/#open' },
   { label: 'Тарифы', href: '/#pricing' },

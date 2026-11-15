@@ -34,6 +34,11 @@ export function AppleFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/ai" className="hover:text-[#f5f5f7] transition-colors text-[#2997ff]">
+                  ИИ-наставник (AI Gemini)
+                </Link>
+              </li>
+              <li>
                 <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors">
                   Манифест открытости
                 </Link>
