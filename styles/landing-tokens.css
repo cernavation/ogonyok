@@ -191,12 +191,14 @@
   color: var(--color-platinum);
 }
 
-/* ── Apple Card Design (Exact 28px radius, Obsidian surface, hairline Smoke border) ── */
+/* ── Apple Card Design (Refined Obsidian Glass, Subtle Hairline Border) ── */
 .landing .apple-card {
   position: relative;
-  background-color: var(--surface-obsidian-card);
+  background: linear-gradient(180deg, rgba(28, 28, 30, 0.65) 0%, rgba(18, 18, 20, 0.75) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: var(--radius-cards);
-  border: 1px solid var(--color-smoke);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: border-color var(--apple-duration-fast) var(--apple-ease),
               transform var(--apple-duration-fast) var(--apple-ease),
               box-shadow var(--apple-duration-fast) var(--apple-ease);
@@ -208,14 +210,14 @@
 
 .landing .apple-card-hover:hover {
   transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Extreme 5th level card subtle pulse glow */
 .landing .apple-card-extreme:hover {
   border-color: rgba(245, 105, 0, 0.5);
-  box-shadow: 0 12px 36px rgba(245, 105, 0, 0.15);
+  box-shadow: 0 16px 40px rgba(245, 105, 0, 0.18);
 }
 
 /* ── Primary CTA Button (Apple Blue Filled) ──────────────────────────
