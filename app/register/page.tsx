@@ -11,32 +11,32 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 const RHYTHMS = [
   {
     flames: 1,
-    title: '1 гордость в день',
+    title: '1 гордость',
     sub: 'Мягкий старт',
     desc: 'Одна главная победа за вечер. Идеально для формирования привычки.',
   },
   {
     flames: 2,
-    title: '2 гордости в день',
+    title: '2 гордости',
     sub: 'Стандарт',
     desc: 'Баланс между работой и личной жизнью. Твёрдый шаг каждый день.',
   },
   {
     flames: 3,
-    title: '3 гордости в день',
+    title: '3 гордости',
     sub: 'Режим роста',
-    desc: 'Осознанный фокус на ключевых направлениях. Дисциплина.',
+    desc: 'Осознанный фокус на ключевых направлениях без надрыва.',
   },
   {
     flames: 4,
-    title: '4 гордости в день',
-    sub: 'Серьёзная дисциплина',
-    desc: 'Высокая интенсивность. Спорт, карьера, проекты.',
+    title: '4 гордости',
+    sub: 'Серьёзный темп',
+    desc: 'Высокая интенсивность. Спорт, карьера и проекты.',
   },
   {
     flames: 5,
-    title: '5 гордостей · Extreme',
-    sub: 'Максимум',
+    title: '5 гордостей',
+    sub: 'Extreme',
     desc: 'Предельный уровень концентрации для несокрушимого характера.',
   },
 ]
@@ -123,9 +123,9 @@ export default function RegisterPage() {
                       </div>
 
                       <div>
-                        <div className="text-[16px] font-semibold text-[#f5f5f7] tracking-tight flex items-center gap-2">
-                          <span>{r.title}</span>
-                          <span className="text-[12px] font-medium text-[#f56900]">· {r.sub}</span>
+                        <div className="text-[16px] font-semibold text-[#f5f5f7] tracking-tight flex items-baseline gap-2 flex-wrap">
+                          <span className="whitespace-nowrap">{r.title}</span>
+                          <span className="text-[12px] font-medium text-[#f56900] whitespace-nowrap">· {r.sub}</span>
                         </div>
                         <div className="text-[13px] text-[#86868b] mt-0.5">{r.desc}</div>
                       </div>
