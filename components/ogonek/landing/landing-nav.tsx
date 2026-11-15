@@ -121,26 +121,47 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
         </div>
       </div>
 
-      {/* Mobile Glass Dropdown */}
+      {/* Mobile Apple Full-Screen Drawer */}
       {mobileOpen && (
         <div
-          className="md:hidden border-t border-white/[0.08] px-6 py-6 flex flex-col gap-5 animate-in fade-in slide-in-from-top-2 duration-300"
-          style={{
-            background: 'rgba(0, 0, 0, 0.95)',
-            backdropFilter: 'saturate(180%) blur(30px)',
-            WebkitBackdropFilter: 'saturate(180%) blur(30px)',
-          }}
+          className="md:hidden fixed inset-x-0 top-[48px] bottom-0 bg-[#000000] z-50 px-7 py-8 flex flex-col justify-between overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-300"
+          style={{ minHeight: 'calc(100vh - 48px)' }}
         >
-          {NAV_LINKS.map((link) => (
+          <nav className="flex flex-col gap-5" aria-label="Мобильная навигация">
+            {NAV_LINKS.map((link) => (
+              <button
+                key={link.href}
+                type="button"
+                onClick={() => handleNavClick(link.href)}
+                className="text-left text-[22px] font-semibold text-[#f5f5f7] tracking-tight hover:text-[#2997ff] transition-colors border-none bg-transparent cursor-pointer pb-3 border-b border-white/[0.08]"
+              >
+                {link.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="pt-8 pb-4 flex flex-col gap-3">
             <button
-              key={link.href}
               type="button"
-              onClick={() => handleNavClick(link.href)}
-              className="text-left text-[17px] font-medium text-[#f5f5f7] tracking-tight hover:text-[#0071e3] transition-colors border-none bg-transparent cursor-pointer py-1"
+              onClick={() => {
+                setMobileOpen(false)
+                onOpenAuth('register')
+              }}
+              className="w-full py-3.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[16px] font-medium text-center shadow-lg cursor-pointer border-none transition-all active:scale-95"
             >
-              {link.label}
+              Регистрация
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => {
+                setMobileOpen(false)
+                onOpenAuth('signin')
+              }}
+              className="w-full py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.1] border border-white/10 text-white text-[16px] font-medium text-center cursor-pointer transition-all active:scale-95"
+            >
+              Войти
+            </button>
+          </div>
         </div>
       )}
     </header>
