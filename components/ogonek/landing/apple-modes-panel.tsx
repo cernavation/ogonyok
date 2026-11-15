@@ -150,7 +150,7 @@ export function AppleModesPanel() {
       {/* ── Left Column: Big Rounded Photo Stage & Slider ────────── */}
       <div className="lg:col-span-7 fade-up">
         <div
-          className="group apple-card overflow-hidden p-2 sm:p-3 bg-[#161617] relative select-none"
+          className="group apple-card apple-card-hover overflow-hidden p-2 sm:p-3 bg-[#161617] relative select-none"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >

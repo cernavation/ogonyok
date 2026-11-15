@@ -3,9 +3,10 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Applies IntersectionObserver-based scroll reveal to elements
- * with class "fade-up" inside the provided ref container.
- * Respects prefers-reduced-motion via CSS.
+ * High-End Apple.com Scroll Reveal Controller
+ * Observes elements with .fade-up, .fade-blur, .fade-scale, .fade-slide-left, .fade-slide-right
+ * and applies .visible when they scroll into viewport.
+ * Fully respects prefers-reduced-motion.
  */
 export function useScrollReveal() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -14,11 +15,13 @@ export function useScrollReveal() {
     const container = containerRef.current
     if (!container) return
 
+    const revealSelector =
+      '.fade-up, .fade-blur, .fade-scale, .fade-slide-left, .fade-slide-right, [data-reveal]'
+
     // Check if user prefers reduced motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) {
-      // Mark all as visible immediately
-      container.querySelectorAll('.fade-up').forEach((el) => {
+      container.querySelectorAll(revealSelector).forEach((el) => {
         el.classList.add('visible')
       })
       return
@@ -34,12 +37,12 @@ export function useScrollReveal() {
         })
       },
       {
-        threshold: 0.1,
-        rootMargin: '0px 0px -40px 0px',
+        threshold: 0.12,
+        rootMargin: '0px 0px -50px 0px',
       }
     )
 
-    const targets = container.querySelectorAll('.fade-up')
+    const targets = container.querySelectorAll(revealSelector)
     targets.forEach((el) => observer.observe(el))
 
     return () => observer.disconnect()
