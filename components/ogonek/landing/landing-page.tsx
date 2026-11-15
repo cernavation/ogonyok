@@ -147,8 +147,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[960px] mx-auto text-center flex flex-col items-center">
-          {/* Category Eyebrow Tag (Exact SF Pro Text 17px weight 600 Signal Orange, no chip chrome) */}
-          <div className="fade-blur mb-5 inline-flex items-center gap-2">
+          {/* Category Eyebrow Tag (17px weight 600 Signal Orange, 16px margin to H1) */}
+          <div className="fade-blur mb-4 inline-flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
@@ -160,15 +160,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </span>
           </div>
 
-          {/* Epic Apple Headline with Blur-In & Metallic Shimmer */}
-          <h1 className="apple-hero-title fade-blur delay-150 mb-6 sm:mb-8 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)]">
+          {/* Epic Apple Headline (80px display, tight 20px-24px margin to subtitle) */}
+          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)]">
             Жизнь, которой ты гордишься.
             <br />
             <span className="apple-shimmer-text">Записанная.</span>
           </h1>
 
-          {/* Subtitle with Fade-Up */}
-          <p className="apple-body fade-up delay-250 max-w-[660px] mb-10 sm:mb-14 text-[#f5f5f7]/90 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
+          {/* Subtitle (17px SF Pro Text, 32px-36px margin to buttons) */}
+          <p className="apple-body fade-up delay-250 max-w-[640px] mb-8 sm:mb-9 text-[#f5f5f7]/90 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
             Огонёк хранит твои победы, серию дней и благодарности.
             Чтобы ничего не терялось.
           </p>
@@ -584,18 +584,18 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <div className="apple-ambient-orb w-[500px] h-[500px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
 
             {/* Overlaid Banner Content */}
-            <div className="relative z-20 max-w-[680px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-200 mb-6 !text-[36px] sm:!text-[56px] leading-[1.08]">
+            <div className="relative z-20 max-w-[640px] mx-auto flex flex-col items-center">
+              <h2 className="apple-hero-title fade-blur delay-200 mb-5 sm:mb-6 !text-[36px] sm:!text-[52px] leading-[1.08]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body fade-up delay-300 text-white/80 max-w-[520px] mb-10 sm:mb-12 text-base sm:text-lg leading-relaxed">
+              <p className="apple-body fade-up delay-300 text-[#f5f5f7]/85 max-w-[500px] mb-8 sm:mb-9 text-base sm:text-[17px] leading-relaxed">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с близкими и создавай нерушимую уверенность в себе.
               </p>
               <div className="fade-scale delay-400">
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="apple-btn-primary !px-10 !py-4 !text-[17px] shadow-[0_0_40px_rgba(0,113,227,0.4)]"
+                  className="apple-btn-primary !px-8 !py-3.5 !text-[15px] shadow-[0_0_35px_rgba(0,113,227,0.4)]"
                 >
                   Начать
                 </button>
