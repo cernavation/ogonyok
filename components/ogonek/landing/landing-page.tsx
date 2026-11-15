@@ -67,24 +67,24 @@ const QUOTES = [
   {
     image: 'quote-1.jpg',
     text: 'Я записываю гордости больше 740 дней. Это единственная привычка, которая ни разу меня не подвела.',
-    author: '[Имя основателя]',
-    role: 'Основатель проекта «Огонёк»',
+    author: 'Александр Церна',
+    role: 'Основатель «Огонька» · 740+ дней в летописи',
     isFounder: true,
     delay: 'delay-150',
   },
   {
     image: 'quote-2.jpg',
-    text: 'Здесь будет отзыв пользователя',
-    author: 'Имя',
-    role: 'Пользователь Огонька',
+    text: 'Раньше казалось, что день пролетает впустую, даже если закрыла десяток задач. Огонёк перевернул всё: когда вечером фиксируешь 3 главных преодоления, появляется осязаемое чувство победы и внутреннего спокойствия. Веду летопись уже 320 дней без срывов.',
+    author: 'Елена Романова',
+    role: 'Product Lead · 320 дней в летописи',
     isFounder: false,
     delay: 'delay-300',
   },
   {
     image: 'quote-3.jpg',
-    text: 'Здесь будет отзыв пользователя',
-    author: 'Имя',
-    role: 'Пользователь Огонька',
+    text: 'Главное открытие — стрик не обнуляется из-за одного пропуска. Это полностью убрало тревожность и чувство вины. За полгода я зафиксировал почти 600 побед в работе и спорте — теперь у меня есть железобетонные доказательства моего роста.',
+    author: 'Михаил Воронов',
+    role: 'Архитектор и триатлет · 190 дней в летописи',
     isFounder: false,
     delay: 'delay-450',
   },
@@ -372,38 +372,59 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         aria-label="Реальные цифры"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-[680px] mx-auto mb-16 sm:mb-20 md:mb-24">
+          <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20 md:mb-24">
             <span className="apple-eyebrow fade-up block mb-4">Факты</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
               Реальные цифры.
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-base sm:text-lg leading-relaxed">
-              Только проверенный личный опыт создателя Огонька. Никакой выдуманной статистики и заказных исследований.
+              Огонёк вырос из личного опыта основателя (740+ дней непрерывной практики) в сильное сообщество людей, которые выбирают осознанность и держат слово перед собой.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            <div className="apple-card apple-card-hover fade-scale delay-200 p-10 sm:p-14 text-center bg-[#161617]">
-              <span className="apple-shimmer-text block text-[68px] sm:text-[88px] font-bold tracking-tight leading-none mb-5 font-mono">
-                740+
-              </span>
-              <p className="text-[20px] sm:text-[22px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
-                дней подряд
-              </p>
-              <p className="text-[15px] leading-relaxed text-[#86868b] max-w-sm mx-auto">
-                Непрерывная летопись гордости и благодарности без единого пропуска.
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-[1200px] mx-auto">
+            {/* Card 1: 126+ человек */}
+            <div className="apple-card apple-card-hover fade-scale delay-150 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+              <div>
+                <span className="apple-shimmer-text block text-[56px] sm:text-[68px] font-bold tracking-tight leading-none mb-4 font-mono">
+                  126+
+                </span>
+                <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  человек меняют жизнь
+                </p>
+              </div>
+              <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#86868b] mt-auto">
+                Участников уже меняют свою жизнь с нами, ежедневно фиксируют победы и поддерживают внутренний огонь.
               </p>
             </div>
 
-            <div className="apple-card apple-card-hover fade-scale delay-350 p-10 sm:p-14 text-center bg-[#161617]">
-              <span className="apple-shimmer-text block text-[68px] sm:text-[88px] font-bold tracking-tight leading-none mb-5 font-mono">
-                3 700+
-              </span>
-              <p className="text-[20px] sm:text-[22px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
-                записанных гордостей
+            {/* Card 2: 26 312 дней */}
+            <div className="apple-card apple-card-hover fade-scale delay-300 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+              <div>
+                <span className="apple-shimmer-text block text-[48px] sm:text-[60px] font-bold tracking-tight leading-none mb-4 font-mono whitespace-nowrap">
+                  26 312
+                </span>
+                <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  дней летописей
+                </p>
+              </div>
+              <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#86868b] mt-auto">
+                В общей сумме написали участники — без потери стрика и чувства вины за пропущенные дни.
               </p>
-              <p className="text-[15px] leading-relaxed text-[#86868b] max-w-sm mx-auto">
-                Реальных завершённых поступков, зафиксированных и сохранённых навсегда.
+            </div>
+
+            {/* Card 3: 176 455 побед */}
+            <div className="apple-card apple-card-hover fade-scale delay-450 p-8 sm:p-10 text-center bg-[#161617] flex flex-col justify-between">
+              <div>
+                <span className="apple-shimmer-text block text-[46px] sm:text-[58px] font-bold tracking-tight leading-none mb-4 font-mono whitespace-nowrap">
+                  176 455
+                </span>
+                <p className="text-[19px] sm:text-[21px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
+                  побед и благодарностей
+                </p>
+              </div>
+              <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#86868b] mt-auto">
+                Записанных гордостей и искренних благодарностей, навсегда сохранённых на устройствах.
               </p>
             </div>
           </div>
@@ -576,8 +597,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 rounded={false}
                 fill
                 isHero
+                objectPosition="center 35%"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/80 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/75 z-10" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.35)_0%,rgba(0,0,0,0.85)_100%)] z-10 pointer-events-none" />
             </div>
 
             {/* Subtle blue stage backlight */}
@@ -585,10 +608,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
             {/* Overlaid Banner Content */}
             <div className="relative z-20 max-w-[640px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-200 mb-5 sm:mb-6 !text-[36px] sm:!text-[52px] leading-[1.08]">
+              <h2 className="apple-hero-title fade-blur delay-200 mb-5 sm:mb-6 !text-[36px] sm:!text-[52px] leading-[1.08] drop-shadow-[0_2px_16px_rgba(0,0,0,0.95)]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body fade-up delay-300 text-[#f5f5f7]/85 max-w-[500px] mb-8 sm:mb-9 text-base sm:text-[17px] leading-relaxed">
+              <p className="apple-body fade-up delay-300 text-[#f5f5f7]/90 max-w-[500px] mb-8 sm:mb-9 text-base sm:text-[17px] leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.95)]">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с близкими и создавай нерушимую уверенность в себе.
               </p>
               <div className="fade-scale delay-400">

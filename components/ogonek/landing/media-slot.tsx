@@ -191,14 +191,14 @@ export function MediaSlot({
 
   // Real Image
   return (
-    <div className={`overflow-hidden ${borderRadiusClass} ${className}`}>
+    <div className={`overflow-hidden ${borderRadiusClass} ${className} ${circle ? 'aspect-square shrink-0' : ''}`}>
       <Image
         src={src}
         alt={alt || name}
         width={width}
         height={height}
         unoptimized
-        className="w-full h-auto object-cover"
+        className="w-full h-full object-cover"
         style={{ objectPosition }}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
         loading={priority ? 'eager' : 'lazy'}
