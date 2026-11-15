@@ -231,7 +231,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </h1>
 
           {/* Subtitle (17px SF Pro Text, 32px-36px margin to buttons) */}
-          <p className="apple-body fade-up delay-250 max-w-[620px] mb-8 sm:mb-9 text-[#f5f5f7]/90 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
+          <p className="apple-body fade-up delay-250 max-w-[620px] mb-8 sm:mb-9 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
             Огонёк хранит твои победы, серию закрытых дней и искренние благодарности. Без страха пропусков и чувства вины.
           </p>
 
@@ -809,7 +809,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               <h2 className="apple-hero-title fade-blur delay-200 mb-5 !text-[36px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body fade-up delay-300 text-white max-w-[560px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
+              <p className="apple-body fade-up delay-300 !text-white max-w-[560px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с&nbsp;близкими и&nbsp;создавай нерушимую уверенность в&nbsp;себе.
               </p>
               <div className="fade-scale delay-400">
