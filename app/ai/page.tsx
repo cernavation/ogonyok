@@ -15,7 +15,7 @@ export default function AiPage() {
       <AppleNavbar />
 
       {/* ── HERO STAGE ────────────────────────────────────────────── */}
-      <section className="relative min-h-[85vh] flex flex-col justify-center items-center text-center pt-32 pb-20 px-5 sm:px-8 overflow-hidden bg-black">
+      <section className="relative min-h-[80vh] flex flex-col justify-start sm:justify-center items-center text-center pt-24 sm:pt-36 pb-16 sm:pb-24 px-5 sm:px-8 overflow-hidden bg-black">
         {/* Ambient Stage Halo: Sapphire + Emerald Glow */}
         <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
         <div className="apple-ambient-orb w-[400px] h-[400px] bg-[#00c7be] top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-10" />
