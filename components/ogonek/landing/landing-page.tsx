@@ -433,6 +433,16 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               </div>
             ))}
           </div>
+
+          {/* Link to Examples and Level Guide */}
+          <div className="mt-10 text-center fade-up delay-200">
+            <Link
+              href="/examples"
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+            >
+              <span>Подробный гид: как писать гордости и какой уровень выбрать для себя →</span>
+            </Link>
+          </div>
         </div>
       </section>
 

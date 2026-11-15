@@ -10,6 +10,7 @@ interface AppleNavbarProps {
 
 const NAV_ITEMS = [
   { label: 'О платформе', href: '/platform' },
+  { label: 'Примеры гордостей', href: '/examples' },
   { label: 'ИИ-наставник', href: '/ai' },
   { label: 'Как это работает', href: '/how-it-works' },
   { label: 'Открытость', href: '/#open' },
@@ -73,7 +74,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-7" aria-label="Разделы сайта">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6" aria-label="Разделы сайта">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href
             return (

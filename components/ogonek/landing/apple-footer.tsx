@@ -68,6 +68,11 @@ export function AppleFooter() {
             </h4>
             <ul className="space-y-2.5">
               <li>
+                <Link href="/examples" className="hover:text-[#f5f5f7] transition-colors text-[#f56900]">
+                  Примеры гордостей (Гид)
+                </Link>
+              </li>
+              <li>
                 <Link href="/how-it-works" className="hover:text-[#f5f5f7] transition-colors">
                   Как это работает (Ритуал)
                 </Link>
