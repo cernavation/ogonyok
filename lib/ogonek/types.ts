@@ -351,6 +351,8 @@ export type ComposerDraft = {
   gratitudeVisibilities?: Record<number, VisibilityLevel>
   gratitudeGroupIds?: Record<number, string | null>
   gratitudeGroupNames?: Record<number, string | undefined>
+  /** Оценки и уровни преодоления гордостей по индексу (ЭТАП 11) */
+  evaluations?: Record<number, { scale: number; score?: number; overcome: OvercomeLevel; verdict?: string; tags?: string[] }>
 }
 
 /* ────────────────────────────────────────────────────────────────────────

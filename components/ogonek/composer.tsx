@@ -12,6 +12,14 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { getTierLimits, normalizeTier } from '@/lib/ogonek/permissions'
+import {
+  isSingleUrl,
+  parseListItems,
+  distributeListItems,
+  handleLargeTextPaste,
+  splitRemainder,
+  formatCharCount,
+} from '@/lib/ogonek/smart-composer'
 import dynamic from 'next/dynamic'
 import { ModalShell } from './modal-shell'
 import { Tooltip } from './tooltip'
@@ -263,9 +271,26 @@ export function Composer({
       editingDay.prides.forEach((p, idx) => {
         evMap[idx] = {
           scale: typeof p.scale === 'number' ? p.scale : 7,
+          score: typeof (p as any).score === 'number' ? (p as any).score : (typeof p.scale === 'number' ? p.scale : 7),
           overcome: typeof p.overcome === 'number' ? p.overcome : 0,
           tags: [],
           verdict: 'Оригинальная оценка дня',
+        }
+      })
+      return evMap
+    }
+    if (initialDraft?.evaluations) {
+      const evMap: Record<number, PrideEvaluation> = {}
+      Object.entries(initialDraft.evaluations).forEach(([k, ev]) => {
+        const idx = Number(k)
+        if (ev) {
+          evMap[idx] = {
+            scale: ev.scale,
+            score: ev.score,
+            overcome: ev.overcome as OvercomeLevel,
+            verdict: ev.verdict || '',
+            tags: ev.tags || [],
+          }
         }
       })
       return evMap
@@ -404,6 +429,7 @@ export function Composer({
         visibility: dayVisibility,
         prideVisibilities: prideVis,
         gratitudeVisibilities: gratitudeVis,
+        evaluations,
       }
 
       // 1. Синхронное резервное сохранение
@@ -417,11 +443,18 @@ export function Composer({
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [prides, gratitudes, preview, attachedTargets, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis])
+  }, [prides, gratitudes, preview, attachedTargets, tab, extra, onSaveDraft, editingDay, dayVisibility, prideVis, gratitudeVis, evaluations])
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      if (tierLimits.maxPhotosPerDay === 0) {
+        playClick(soundEnabled)
+        setShowPhotoUpsell(true)
+        onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        return
+      }
       if (previewRef.current && previewRef.current.startsWith('blob:')) {
         URL.revokeObjectURL(previewRef.current)
       }
@@ -765,10 +798,164 @@ export function Composer({
   const activeValue = currentValues[activeSlot] || ''
   const currentLength = activeValue.length
   const charRatio = maxChars > 0 ? currentLength / maxChars : 0
-  const showCharCounter = charRatio > 0.7
-  const isCharLimitDanger = charRatio >= 0.95
+  const isOverLimit = currentLength > maxChars
+  const showCharCounter = charRatio > 0.7 || isOverLimit
+  const isCharLimitDanger = isOverLimit || charRatio >= 0.95
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const cursorRef = useRef<number | null>(null)
+  const pendingCursorPosRef = useRef<'start' | 'end' | null>(null)
+
+  const [showPhotoUpsell, setShowPhotoUpsell] = useState(false)
+  const [smartToast, setSmartToast] = useState<{
+    id: string
+    message: string
+    undoAction?: () => void
+  } | null>(null)
+  const smartToastTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const showSmartToast = (message: string, undoAction?: () => void) => {
+    if (smartToastTimerRef.current) {
+      clearTimeout(smartToastTimerRef.current)
+    }
+    setSmartToast({
+      id: String(Date.now()),
+      message,
+      undoAction,
+    })
+    onNotify?.(message + (undoAction ? ' · Отменить' : ''))
+    smartToastTimerRef.current = setTimeout(() => {
+      setSmartToast(null)
+    }, 4500)
+  }
+
+  const handleImagePaste = async (file: File) => {
+    if (tierLimits.maxPhotosPerDay === 0) {
+      playClick(soundEnabled)
+      setShowPhotoUpsell(true)
+      onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
+      return
+    }
+
+    playClick(soundEnabled)
+    if (previewRef.current && previewRef.current.startsWith('blob:')) {
+      URL.revokeObjectURL(previewRef.current)
+    }
+    const url = URL.createObjectURL(file)
+    previewRef.current = url
+    setPreview(url)
+    setSelectedFile(file)
+    if (attachedTargets.length === 0) {
+      setAttachedTargets([{ type: tab, index: activeSlot + 1 }])
+    }
+    try {
+      const id = await savePhoto(file)
+      setPhotoId(id)
+    } catch {}
+    showSmartToast('Фото прикреплено к записи')
+  }
+
+  const handleSplitRemainder = () => {
+    playClick(soundEnabled)
+    const activeValues = tab === 'pride' ? prides : gratitudes
+    const result = splitRemainder(activeValues, activeSlot, maxChars)
+
+    if (tab === 'pride') {
+      setPrides(result.newValues)
+    } else {
+      setGratitudes(result.newValues)
+    }
+
+    setActiveSlot(result.remainderSlot)
+    pendingCursorPosRef.current = 'start'
+    const labelItem = tab === 'pride' ? 'гордость' : 'благодарность'
+    showSmartToast(`Остаток перенесён в ${labelItem} №${result.remainderSlot + 1}`)
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    // 1. Проверяем изображение в буфере (Part 2)
+    const items = e.clipboardData?.items
+    if (items) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        if (item.type.startsWith('image/')) {
+          e.preventDefault()
+          const file = item.getAsFile()
+          if (file) {
+            handleImagePaste(file)
+          }
+          return
+        }
+      }
+    }
+
+    // 2. Получаем вставленный текст
+    const pastedText = e.clipboardData?.getData('text')
+    if (!pastedText) return
+
+    // (c) Одиночная ссылка отдельно: остаётся ссылкой, слот не переключается
+    if (isSingleUrl(pastedText)) {
+      return
+    }
+
+    // (b) Список (нумерация, маркеры или несколько абзацев): раскладываем по слотам (до 3)
+    const listItems = parseListItems(pastedText)
+    if (listItems && listItems.length >= 2) {
+      e.preventDefault()
+      const prevPrides = [...prides]
+      const prevGratitudes = [...gratitudes]
+      const prevSlot = activeSlot
+      const activeValues = tab === 'pride' ? prides : gratitudes
+
+      const distResult = distributeListItems(activeValues, activeSlot, listItems)
+
+      if (tab === 'pride') {
+        setPrides(distResult.newValues)
+      } else {
+        setGratitudes(distResult.newValues)
+      }
+
+      setActiveSlot(distResult.nextFocusSlot)
+
+      const labelPlural = tab === 'pride' ? 'гордостям' : 'благодарностям'
+      showSmartToast(`Разложил по ${distResult.distributedCount} ${labelPlural}`, () => {
+        if (tab === 'pride') {
+          setPrides(prevPrides)
+        } else {
+          setGratitudes(prevGratitudes)
+        }
+        setActiveSlot(prevSlot)
+        onNotify?.('Вставка списка отменена')
+      })
+      return
+    }
+
+    // (d) Вставка длиннее лимита тарифа (> maxChars):
+    // не обрезаем тихо, оставляем в текущем слоте для показа красного счётчика и кнопки «Разложить остаток»
+    if (pastedText.length > maxChars) {
+      e.preventDefault()
+      handleActiveChange(pastedText)
+      return
+    }
+
+    // (a) Большой кусок текста (>= 120 символов, не одна ссылка)
+    if (pastedText.trim().length >= 120) {
+      e.preventDefault()
+      const activeValues = tab === 'pride' ? prides : gratitudes
+      const result = handleLargeTextPaste(activeValues, activeSlot, pastedText.trim())
+
+      if (tab === 'pride') {
+        setPrides(result.newValues)
+      } else {
+        setGratitudes(result.newValues)
+      }
+
+      setActiveSlot(result.nextFocusSlot)
+
+      const labelItem = tab === 'pride' ? 'гордость' : 'благодарность'
+      showSmartToast(`Вставлено в ${labelItem} №${result.targetSlot + 1}`)
+      return
+    }
+  }
 
   const handleActiveChange = (val: string) => {
     if (textareaRef.current) {
@@ -788,6 +975,20 @@ export function Composer({
       })
     }
   }
+
+  // Защита позиции курсора при смене слота клавиатурой (↑ в конец, ↓ в начало)
+  useEffect(() => {
+    if (textareaRef.current && pendingCursorPosRef.current) {
+      const posType = pendingCursorPosRef.current
+      pendingCursorPosRef.current = null
+      const len = textareaRef.current.value.length
+      const pos = posType === 'end' ? len : 0
+      try {
+        textareaRef.current.focus()
+        textareaRef.current.setSelectionRange(pos, pos)
+      } catch {}
+    }
+  }, [activeSlot])
 
   // Защита фокуса и позиции курсора при быстром вводе
   useEffect(() => {
@@ -997,8 +1198,16 @@ export function Composer({
         {/* Кнопка «Записать» справа */}
         <button
           type="button"
+          id="composer-publish-btn"
           onClick={handlePublish}
-          disabled={isPublishing || (editingDay ? totalFilled === 0 : !canPublish)}
+          disabled={isPublishing || (editingDay ? totalFilled === 0 || hasOverlongItem : !canPublish)}
+          title={
+            hasOverlongItem
+              ? `Длина записи превышает лимит тарифа (${maxChars} симв.)`
+              : !canPublish && !editingDay
+              ? `Заполните минимум ${userLevel} гордости`
+              : 'Опубликовать день'
+          }
           className="x-primary-btn px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] disabled:opacity-40 shadow-sm"
         >
           {isPublishing ? 'Запись…' : 'Записать'}
@@ -1044,10 +1253,19 @@ export function Composer({
         </div>
 
         <div className="relative flex items-center gap-2">
-          {/* Оценка слота (если доступна) */}
+          {/* Оценка слота и звёзды преодоления (CONTRACT Шаг 11) */}
           {currentSlotScore !== null && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+            <span
+              id="composer-slot-score-badge"
+              className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20"
+              title={`Оценка: ${currentSlotScore}${evaluations[activeSlot]?.overcome ? `, преодоление: уровень ${evaluations[activeSlot].overcome}` : ''}`}
+            >
               🔥 {currentSlotScore}
+              {evaluations[activeSlot]?.overcome && evaluations[activeSlot].overcome > 0 && (
+                <span className="text-[10px] text-amber-400 font-normal">
+                  {'★'.repeat(evaluations[activeSlot].overcome)}
+                </span>
+              )}
             </span>
           )}
 
@@ -1222,10 +1440,52 @@ export function Composer({
         rows={4}
         value={activeValue}
         onChange={(e) => handleActiveChange(e.target.value)}
+        onPaste={handlePaste}
         onKeyDown={(e) => {
+          // 1. Ctrl/Cmd+Enter = Записать
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault()
+            handlePublish()
+            return
+          }
+
+          // 2. Tab / Shift+Tab между слотами 1..5
+          if (e.key === 'Tab') {
+            e.preventDefault()
+            const next = e.shiftKey ? (activeSlot + 4) % 5 : (activeSlot + 1) % 5
+            setActiveSlot(next)
+            return
+          }
+
+          // 3. ↑ в начале поля = предыдущий слот (курсор в конец)
+          if (e.key === 'ArrowUp') {
+            const isAtStart = e.currentTarget.selectionStart === 0 && e.currentTarget.selectionEnd === 0
+            if (isAtStart && activeSlot > 0) {
+              e.preventDefault()
+              pendingCursorPosRef.current = 'end'
+              setActiveSlot(activeSlot - 1)
+              return
+            }
+          }
+
+          // 4. ↓ в конце поля = следующий слот (курсор в начало)
+          if (e.key === 'ArrowDown') {
+            const isAtEnd =
+              e.currentTarget.selectionStart === activeValue.length &&
+              e.currentTarget.selectionEnd === activeValue.length
+            if (isAtEnd && activeSlot < 4) {
+              e.preventDefault()
+              pendingCursorPosRef.current = 'start'
+              setActiveSlot(activeSlot + 1)
+              return
+            }
+          }
+
+          // 5. Enter без Shift в заполненном поле -> следующий слот
           if (e.key === 'Enter' && !e.shiftKey && activeValue.trim().length > 0 && activeSlot < 4) {
             e.preventDefault()
             setActiveSlot(activeSlot + 1)
+            return
           }
         }}
         placeholder={
@@ -1238,9 +1498,24 @@ export function Composer({
         aria-label={`Пункт ${activeSlot + 1}`}
       />
 
-      {/* Живой счётчик символов (CONTRACT Шаг 05): маленький серый «742/1000», виден только при >70% лимита, краснеет при >=95% */}
+      {/* Живой счётчик символов и раскладывание остатка (CONTRACT Шаг 05 & Шаг 11) */}
       {showCharCounter && (
-        <div className="flex justify-end -mt-2 mb-2 px-1">
+        <div className="flex items-center justify-between -mt-2 mb-2 px-1">
+          {isOverLimit ? (
+            <button
+              type="button"
+              id="composer-split-remainder-btn"
+              onClick={handleSplitRemainder}
+              className="text-[11px] text-[var(--accent)] hover:underline font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+              title="Разложить превышающий остаток в следующую запись"
+            >
+              <span>
+                Разложить остаток в следующую {tab === 'pride' ? 'гордость' : 'благодарность'} →
+              </span>
+            </button>
+          ) : (
+            <div />
+          )}
           <span
             id="composer-char-counter"
             className={`text-[11px] font-mono transition-colors ${
@@ -1249,8 +1524,9 @@ export function Composer({
                 : 'text-[var(--text-3)]'
             }`}
             aria-live="polite"
+            title={isOverLimit ? `Превышен лимит тарифа (${maxChars} симв.)` : undefined}
           >
-            {currentLength}/{maxChars}
+            {formatCharCount(currentLength, maxChars)}
           </span>
         </div>
       )}
@@ -1458,6 +1734,67 @@ export function Composer({
                 className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1d9bf0] text-white hover:bg-[#1a8cd8] transition"
               >
                 Понятно, открыть всем
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Интерактивный тост умной вставки (CONTRACT Шаг 11) */}
+      {smartToast && (
+        <div
+          id="composer-smart-toast"
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#e7e9ea] text-[#090a0b] px-4 py-2.5 rounded-full text-xs font-semibold shadow-2xl flex items-center gap-2 border border-white/20"
+        >
+          <span>{smartToast.message}</span>
+          {smartToast.undoAction && (
+            <button
+              type="button"
+              id="composer-smart-toast-undo"
+              onClick={() => {
+                playClick(soundEnabled)
+                smartToast.undoAction!()
+              }}
+              className="ml-1 text-[var(--accent)] font-bold hover:underline cursor-pointer"
+            >
+              · Отменить
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Модальное окно предложения апгрейда при вставке фото на Free тарифе (CONTRACT Шаг 11) */}
+      {showPhotoUpsell && (
+        <div
+          id="composer-photo-upsell-modal"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={() => setShowPhotoUpsell(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-3 border"
+            style={{ background: '#16181c', borderColor: '#2f3336' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
+              <Sparkles size={18} className="text-amber-400" />
+              <span>Прикрепление фото</span>
+            </div>
+            <p className="text-xs text-[var(--text-2)] leading-relaxed">
+              Прикрепление фотографий к записям доступно на тарифах <strong>Премиум</strong> и <strong>Ultra</strong> (на тарифе Базовый лимит — 0 фото в день).
+            </p>
+            <p className="text-xs text-[var(--muted)] leading-relaxed">
+              Обновите тариф в профиле или настройках, чтобы добавлять фотографии к вашим победам!
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                id="composer-photo-upsell-close"
+                onClick={() => setShowPhotoUpsell(false)}
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[var(--accent)] text-white hover:opacity-90 transition"
+              >
+                Понятно
               </button>
             </div>
           </div>
