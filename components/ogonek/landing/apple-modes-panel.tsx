@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { MediaSlot } from './media-slot'
 
 export interface LifeMode {
   id: string
   label: string
   title: string
-  image: string
+  images: string[]
   oneLiner: string
   detail: string
 }
@@ -17,44 +17,113 @@ export const MODES: LifeMode[] = [
     id: 'sport',
     label: 'Спорт',
     title: 'Спорт и тело',
-    image: 'mode-sport.jpg',
+    images: [
+      'mode-sport.jpg',
+      'mode-sport-2.jpg',
+      'mode-sport-3.jpg',
+      'mode-sport-4.jpg',
+      'mode-sport-5.jpg',
+      'mode-finish.jpg',
+    ],
     oneLiner: 'Тренировки, забеги, личные рекорды и восстановление.',
-    detail: 'Фиксируй каждый пройденный километр, поднятый вес и преодоление лени в дни, когда не хотелось выходить на пробежку. Тело помнит каждую победу.',
+    detail:
+      'Фиксируй каждый пройденный километр, поднятый вес и преодоление лени в дни, когда не хотелось выходить на пробежку. Тело помнит каждую победу.',
   },
   {
     id: 'work',
     label: 'Работа',
     title: 'Работа и фокус',
-    image: 'mode-work.jpg',
+    images: ['mode-work.jpg', 'mode-work-2.jpg'],
     oneLiner: 'Дедлайны, переговоры, запуски и карьерные победы.',
-    detail: 'Закрытые спринты, сложные решения под давлением и завершённые проекты. Твоя профессиональная летопись без офисной суеты и пустого шума.',
+    detail:
+      'Закрытые спринты, сложные решения под давлением и завершённые проекты. Твоя профессиональная летопись без офисной суеты и пустого шума.',
   },
   {
     id: 'creative',
     label: 'Творчество',
     title: 'Творчество и идеи',
-    image: 'mode-creative.jpg',
+    images: ['mode-creative.jpg', 'mode-creative-2.jpg'],
     oneLiner: 'Музыка, рисование, писательство и сценические выступления.',
-    detail: 'Преодоление страха чистого листа, часы репетиций и первый завершённый черновик. Доказательство того, что вдохновение рождается из дисциплины.',
+    detail:
+      'Преодоление страха чистого листа, часы репетиций и первый завершённый черновик. Доказательство того, что вдохновение рождается из дисциплины.',
   },
   {
     id: 'family',
     label: 'Семья',
     title: 'Семья и дом',
-    image: 'mode-family.jpg',
+    images: ['mode-family.jpg'],
     oneLiner: 'Время вместе, поддержка, воспитание и семейные традиции.',
-    detail: 'Тёплые вечера, терпение в трудные моменты и искренняя забота о близких. Самые важные победы в жизни, которые чаще всего остаются незамеченными.',
+    detail:
+      'Тёплые вечера, терпение в трудные моменты и искренняя забота о близких. Самые важные победы в жизни, которые чаще всего остаются незамеченными.',
   },
 ]
 
 export function AppleModesPanel() {
-  // activeIndex: 0..3 for active mode, or null for all collapsed
   const [activeIndex, setActiveIndex] = useState<number | null>(0)
+  const [slideIndex, setSlideIndex] = useState<number>(0)
+  const touchStartXRef = useRef<number | null>(null)
+  const touchStartYRef = useRef<number | null>(null)
 
   const activeMode = activeIndex !== null ? MODES[activeIndex] : MODES[0]
+  const images = activeMode.images
+  const hasMultipleImages = images.length > 1
   const isExpanded = activeIndex !== null
 
-  const handleSelect = (idx: number) => {
+  // Reset slide index when mode changes
+  useEffect(() => {
+    setSlideIndex(0)
+  }, [activeIndex])
+
+  // Advance to next slide
+  const handleNextSlide = useCallback(() => {
+    if (images.length > 1) {
+      setSlideIndex((prev) => (prev + 1) % images.length)
+    }
+  }, [images.length])
+
+  // Return to prev slide
+  const handlePrevSlide = useCallback(() => {
+    if (images.length > 1) {
+      setSlideIndex((prev) => (prev - 1 + images.length) % images.length)
+    }
+  }, [images.length])
+
+  // Auto-advance every 5 seconds if mode has multiple photos
+  useEffect(() => {
+    if (!hasMultipleImages) return
+    const timer = setInterval(() => {
+      handleNextSlide()
+    }, 5000)
+    return () => clearInterval(timer)
+  }, [hasMultipleImages, handleNextSlide, slideIndex])
+
+  // Touch swipe support for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!hasMultipleImages) return
+    touchStartXRef.current = e.touches[0].clientX
+    touchStartYRef.current = e.touches[0].clientY
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!hasMultipleImages || touchStartXRef.current === null) return
+    const touchEndX = e.changedTouches[0].clientX
+    const touchEndY = e.changedTouches[0].clientY
+    const deltaX = touchEndX - touchStartXRef.current
+    const deltaY = touchEndY - (touchStartYRef.current || 0)
+
+    // Ensure horizontal gesture takes precedence over vertical scroll
+    if (Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX < 0) {
+        handleNextSlide()
+      } else {
+        handlePrevSlide()
+      }
+    }
+    touchStartXRef.current = null
+    touchStartYRef.current = null
+  }
+
+  const handleSelectMode = (idx: number) => {
     setActiveIndex(idx)
   }
 
@@ -62,40 +131,103 @@ export function AppleModesPanel() {
     setActiveIndex(null)
   }
 
-  const handlePrev = () => {
+  const handlePrevMode = () => {
     if (activeIndex !== null && activeIndex > 0) {
       setActiveIndex(activeIndex - 1)
     }
   }
 
-  const handleNext = () => {
+  const handleNextMode = () => {
     if (activeIndex !== null && activeIndex < MODES.length - 1) {
       setActiveIndex(activeIndex + 1)
     }
   }
 
+  const currentImage = images[slideIndex] || images[0]
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-      {/* ── Left Column: Big Rounded Photo Stage ─────────────────── */}
+      {/* ── Left Column: Big Rounded Photo Stage & Slider ────────── */}
       <div className="lg:col-span-7 fade-up">
-        <div className="apple-card overflow-hidden p-2 sm:p-3 bg-[#161617] relative">
-          {/* Subtle transition wrapper for active mode photo */}
-          <div key={activeMode.id} className="animate-in fade-in duration-500">
+        <div
+          className="group apple-card overflow-hidden p-2 sm:p-3 bg-[#161617] relative select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Active Photo Slot with smooth fade */}
+          <div
+            key={`${activeMode.id}-${slideIndex}`}
+            className="animate-in fade-in duration-500 relative"
+          >
             <MediaSlot
-              name={activeMode.image}
+              name={currentImage}
               width={1920}
               height={1080}
               ratio="16:9"
-              alt={`Режим: ${activeMode.label}`}
+              alt={`Режим: ${activeMode.label} (кадр ${slideIndex + 1} из ${images.length})`}
               rounded={true}
+              objectPosition="center 20%"
             />
           </div>
 
-          {/* Bottom badge indicating current mode on photo */}
-          <div className="absolute bottom-6 left-6 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs">
+          {/* Top-left Badge: Active Mode indicator */}
+          <div className="absolute top-4 left-4 sm:top-6 sm:left-6 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md border border-white/10 text-white text-xs shadow-lg">
             <span className="w-2 h-2 rounded-full bg-[#f56900] animate-pulse" />
             <span className="font-medium">{activeMode.title}</span>
+            {hasMultipleImages && (
+              <span className="text-white/40 text-[10px] font-mono ml-1">
+                {slideIndex + 1}/{images.length}
+              </span>
+            )}
           </div>
+
+          {/* Slider Desktop Chevrons (visible on hover if multiple images) */}
+          {hasMultipleImages && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevSlide}
+                className="hidden sm:flex absolute left-5 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/10 items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+                aria-label="Предыдущее фото"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={handleNextSlide}
+                className="hidden sm:flex absolute right-5 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md border border-white/10 items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+                aria-label="Следующее фото"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* Bottom Slider Dots (Centered, only if multiple images) */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 shadow-xl">
+              {images.map((img, idx) => {
+                const isActive = idx === slideIndex
+                return (
+                  <button
+                    key={img}
+                    type="button"
+                    onClick={() => setSlideIndex(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      isActive
+                        ? 'w-6 bg-white shadow-[0_0_8px_rgba(255,255,255,0.7)]'
+                        : 'w-1.5 bg-white/35 hover:bg-white/70'
+                    }`}
+                    aria-label={`Перейти к фото ${idx + 1}`}
+                  />
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -115,7 +247,7 @@ export function AppleModesPanel() {
                 {/* Arrow Up / Prev */}
                 <button
                   type="button"
-                  onClick={handlePrev}
+                  onClick={handlePrevMode}
                   disabled={activeIndex === 0}
                   className={`w-8 h-8 rounded-full bg-[rgba(40,40,42,0.6)] backdrop-blur-md border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer hover:bg-[rgba(80,80,82,0.7)] ${
                     activeIndex === 0 ? 'opacity-30 cursor-not-allowed pointer-events-none' : 'hover:scale-105 active:scale-95'
@@ -130,7 +262,7 @@ export function AppleModesPanel() {
                 {/* Arrow Down / Next */}
                 <button
                   type="button"
-                  onClick={handleNext}
+                  onClick={handleNextMode}
                   disabled={activeIndex === MODES.length - 1}
                   className={`w-8 h-8 rounded-full bg-[rgba(40,40,42,0.6)] backdrop-blur-md border border-white/10 flex items-center justify-center text-white transition-all cursor-pointer hover:bg-[rgba(80,80,82,0.7)] ${
                     activeIndex === MODES.length - 1 ? 'opacity-30 cursor-not-allowed pointer-events-none' : 'hover:scale-105 active:scale-95'
@@ -200,7 +332,7 @@ export function AppleModesPanel() {
                 <button
                   key={mode.id}
                   type="button"
-                  onClick={() => handleSelect(idx)}
+                  onClick={() => handleSelectMode(idx)}
                   className="group flex items-center justify-between w-full h-[54px] px-6 rounded-full bg-[rgba(30,30,32,0.5)] hover:bg-[rgba(44,44,46,0.65)] backdrop-blur-md border border-white/[0.08] hover:border-white/20 transition-all duration-300 text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">

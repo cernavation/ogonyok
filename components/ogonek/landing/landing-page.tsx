@@ -118,8 +118,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         {/* Full-width video slot in background */}
         <div className="absolute inset-0 z-0 w-full h-full">
           <MediaSlot
-            name="hero.mp4"
-            poster="hero.jpg"
+            name="mainvideo.mp4"
+            poster="mode-sport.jpg"
             width={2560}
             height={1440}
             ratio="16:9"
@@ -129,34 +129,36 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             fill
             isHero
           />
-          {/* Subtle dark gradient overlay to ensure perfect contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/75 z-10 pointer-events-none" />
+          {/* Layered dark gradient overlay to ensure perfect contrast over video */}
+          <div className="absolute inset-0 bg-black/45 z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/80 z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.9)_100%)] z-10 pointer-events-none" />
         </div>
 
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[960px] mx-auto text-center flex flex-col items-center">
           {/* Subtle Apple Eyebrow Tag */}
-          <div className="fade-up mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 backdrop-blur-md">
+          <div className="fade-up mb-6 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.08] border border-white/15 backdrop-blur-md shadow-lg">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
                 fill="#f56900"
               />
             </svg>
-            <span className="text-[12px] font-medium tracking-wider text-[#d2d2d7] uppercase">
+            <span className="text-[12px] font-medium tracking-wider text-[#f5f5f7] uppercase">
               Дневник силы и летопись побед
             </span>
           </div>
 
           {/* Epic Apple Headline */}
-          <h1 className="apple-hero-title fade-up mb-6 sm:mb-8">
+          <h1 className="apple-hero-title fade-up mb-6 sm:mb-8 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)]">
             Жизнь, которой ты гордишься.
             <br />
             <span className="text-[#f5f5f7]">Записанная.</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="apple-body fade-up max-w-[640px] mb-12 sm:mb-16 text-[#a1a1a6] text-base sm:text-xl leading-relaxed">
+          <p className="apple-body fade-up max-w-[660px] mb-12 sm:mb-16 text-white/90 text-base sm:text-xl leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
             Огонёк хранит твои победы, серию дней и благодарности.
             Чтобы ничего не терялось.
           </p>

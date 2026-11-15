@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 
 interface MediaSlotProps {
@@ -28,13 +28,14 @@ interface MediaSlotProps {
   fill?: boolean
   /** If this is the Hero background, adjust placeholder position to avoid text overlap */
   isHero?: boolean
+  /** Custom object position (e.g. "center 20%" to protect heads/faces) */
+  objectPosition?: string
 }
 
 /**
  * Reusable media slot for the Apple-style landing page.
- * Automatically looks for files in /media/landing/{name}.
- * Shows a refined, high-end Apple dark-stage placeholder with file name, dimensions & ratio when missing.
- * For video: autoplay, muted, loop, playsInline.
+ * Loads directly from /media/landing/{name}.
+ * If the file fails to load or is missing, gracefully falls back to a high-end Apple dark-stage placeholder.
  */
 export function MediaSlot({
   name,
@@ -49,20 +50,18 @@ export function MediaSlot({
   circle = false,
   fill = false,
   isHero = false,
+  objectPosition = 'center 20%',
 }: MediaSlotProps) {
   const isVideo = name.endsWith('.mp4') || name.endsWith('.webm')
   const src = `/media/landing/${name}`
   const posterSrc = poster ? `/media/landing/${poster}` : undefined
 
-  const [exists, setExists] = useState<boolean | null>(null)
+  const [hasError, setHasError] = useState(false)
 
+  // Reset error when name prop changes
   useEffect(() => {
-    const controller = new AbortController()
-    fetch(src, { method: 'HEAD', signal: controller.signal })
-      .then((res) => setExists(res.ok))
-      .catch(() => setExists(false))
-    return () => controller.abort()
-  }, [src])
+    setHasError(false)
+  }, [name])
 
   const borderRadiusClass = circle
     ? 'rounded-full'
@@ -74,8 +73,8 @@ export function MediaSlot({
     ? { width: '100%', height: '100%' }
     : { width: '100%', aspectRatio: `${width} / ${height}` }
 
-  // High-End Apple Dark Stage Placeholder
-  if (exists === false || exists === null) {
+  // High-End Apple Dark Stage Placeholder (rendered only on load error)
+  if (hasError) {
     if (circle) {
       return (
         <div
@@ -104,7 +103,7 @@ export function MediaSlot({
           {/* Subtle ambient stage backlight */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.03)_0%,transparent_75%)] pointer-events-none" />
           
-          {/* Subtle Apple-style tech spec badge positioned in bottom corner so it never collides with headline */}
+          {/* Subtle Apple-style tech spec badge positioned in bottom corner */}
           <div className="absolute bottom-6 right-6 z-20 flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-white/60 text-xs shadow-2xl">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polygon points="5 3 19 12 5 21 5 3" />
@@ -162,7 +161,9 @@ export function MediaSlot({
           loop
           playsInline
           className="w-full h-full object-cover"
+          style={{ objectPosition }}
           aria-label={alt || name}
+          onError={() => setHasError(true)}
         />
       </div>
     )
@@ -176,10 +177,13 @@ export function MediaSlot({
           src={src}
           alt={alt || name}
           fill
+          unoptimized
           className="object-cover"
+          style={{ objectPosition }}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
           loading={priority ? 'eager' : 'lazy'}
           priority={priority}
+          onError={() => setHasError(true)}
         />
       </div>
     )
@@ -193,10 +197,13 @@ export function MediaSlot({
         alt={alt || name}
         width={width}
         height={height}
+        unoptimized
         className="w-full h-auto object-cover"
+        style={{ objectPosition }}
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1440px"
         loading={priority ? 'eager' : 'lazy'}
         priority={priority}
+        onError={() => setHasError(true)}
       />
     </div>
   )
