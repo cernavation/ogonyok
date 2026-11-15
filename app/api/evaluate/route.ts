@@ -1,45 +1,70 @@
-import { NextResponse } from 'next/server'
-import { checkRateLimit, getClientIp } from '@/lib/server/rate-limit'
-import { getServerSupabase } from '@/lib/supabase/server'
+/**
+ * app/api/evaluate/route.ts: СЕРВЕРНАЯ ИИ-ОЦЕНКА ДНЯ (ЭТАП 11 / ШАГ 13)
+ * 
+ * Единый каскад: Google Gemini -> DeepSeek -> Heuristic offline fallback.
+ * Проверка тарифа из БД:
+ * - Free: 403 tier_required
+ * - Pro: баллы, разбор, без напутствия ментора
+ * - Ultra: полная церемония Ментора
+ */
 
-function isGibberish(text: string): boolean {
-  const clean = text.trim().toLowerCase()
-  if (clean.length < 3) return true
-  if (/^(.)\1+$/.test(clean)) return true
-  if (/^(тест|test|123|1234|12345|asdf|qwerty|йцукен|ыва|ывавыа|фыва|лол|кек|проверка)+$/i.test(clean)) return true
-  const cyrillicConsonants = clean.match(/[бвгджзйклмнпрстфхцчшщ]/g)
-  const cyrillicVowels = clean.match(/[аеёиоуыэюя]/g)
-  if (clean.length >= 6 && cyrillicConsonants && (!cyrillicVowels || cyrillicVowels.length === 0)) return true
-  return false
-}
+import { NextResponse } from 'next/server'
+import { applyRateLimit } from '@/lib/server/rate-limit'
+import { getAuthenticatedUser } from '@/lib/server/auth'
+import { getEffectiveTier } from '@/lib/server/tier'
+import { evaluateDayWithAI } from '@/lib/server/ai'
+
+/**
+ * Спецификация резервного вызова DeepSeek API (каскад Google Gemini -> DeepSeek -> Heuristic):
+ * - Эндпоинт: https://api.deepseek.com/chat/completions
+ * - Модель: deepseek-chat
+ * - Секрет: process.env.DEEPSEEK_API_KEY
+ * - Формат: response_format: { type: 'json_object' }
+ * - Температура: temperature: 0.5
+ * - Оценка только для гордостей (prideEvaluations), благодарности не оцениваются (gratitudeEvaluations: [])
+ */
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request)
-  const rateLimit = await checkRateLimit('evaluate', ip, 60, 60_000)
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { success: false, error: 'Слишком много запросов. Подождите минуту.' },
-      { status: 429 }
-    )
+  const authUser = await getAuthenticatedUser(request)
+
+  const rateLimitResponse = await applyRateLimit(request, {
+    route: 'evaluate',
+    limit: 30,
+    windowSeconds: 60,
+    userId: authUser?.userId,
+  })
+  if (rateLimitResponse) {
+    return rateLimitResponse
   }
 
-  const apiKey = (process.env.DEEPSEEK_API_KEY || '').trim().replace(/^["']|["']$/g, '')
-
-  if (!apiKey) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Ключ DEEPSEEK_API_KEY не задан в переменных окружения (Settings -> Environment Variables)',
-      },
-      { status: 500 }
-    )
-  }
-
-  let body: any
+  let body: any = {}
   try {
     body = await request.json()
   } catch {
     body = {}
+  }
+
+  const userId =
+    authUser?.userId ||
+    request.headers.get('x-user-id') ||
+    (typeof body.userId === 'string' ? body.userId : 'demo-anonymous')
+
+  const userTier = await getEffectiveTier(userId)
+
+  // Free: отказ в ИИ-оценке с кодом tier_required
+  if (userTier === 'free') {
+    return NextResponse.json(
+      {
+        error: {
+          code: 'tier_required',
+          feature: 'aiEvaluationsPerDay',
+          limit: 0,
+          tier: 'free',
+          message: 'ИИ-оценка дня доступна только на тарифах Премиум и Ultra',
+        },
+      },
+      { status: 403 }
+    )
   }
 
   const prides: string[] = Array.isArray(body.prides)
@@ -61,180 +86,66 @@ export async function POST(request: Request) {
     )
   }
 
-  try {
-    const systemPrompt = `Ты — бескомпромиссный, объективный и вдохновляющий ментор личной силы системы побед "Огонёк".
-Твоя задача — строго дифференцированно оценить каждую гордость дня по реальному масштабу, преодолённым барьерам и воле.
+  const result = await evaluateDayWithAI({
+    userId,
+    prides,
+    gratitudes,
+    dayId: body.dayId,
+    dayNumber: body.dayNumber,
+    tier: userTier,
+    timeoutMs: 20000,
+  })
 
-КРИТЕРИИ ОЦЕНКИ КАЖДОЙ ГОРДОСТИ (ОТ 1.0 ДО 10.0★):
-- 1.0 - 2.0★: Бессмысленный текст, спам, опечатки, заглушки (например: "ывавыа", "тест", "123", "asdf", бессвязные буквы). Оценка СТРОГО 1.0-2.0! Комментарий — бескомпромиссная критика бессмысленного ввода.
-- 3.0 - 4.9★: Минимальное или тривиальное действие без преодоления сопротивления.
-- 5.0 - 7.0★: Обычные бытовые дела, базовая гигиена, рутина (уборка, вовремя проснулся, приготовил еду, помыл посуду).
-- 7.1 - 8.9★: Преодоление лени, спорт, интенсивная тренировка, сложные переговоры, разработка, интеллектуальный труд, волевое сверхусилие.
-- 9.0 - 10.0★: Исключительный триумф, марафон, закрытие ключевой сделки, прорыв сквозь кризис или сильный страх.
-
-СТРОГИЕ ПРАВИЛА:
-1. Запрещены одинаковые шаблонные баллы (например всем ставить 8.8)! Оценивай каждый пункт индивидуально.
-2. Запрещены одинаковые шаблонные фразы ("Отличная концентрация", "Фиксация победы"). Пиши уникальный, живой, точный разбор (1 короткое предложение ровно по сути написанного).
-3. БЛАГОДАРНОСТИ НЕ ОЦЕНИВАЮТСЯ ЦИФРАМИ И ЗВЁЗДАМИ! Запрещено выставлять баллы благодарностям. Тексты благодарностей используй исключительно для составления душевного и точного напутствия ментора (verdict).
-
-Верни строгий JSON со следующими полями:
-{
-  "prideEvaluations": [
-    {
-      "num": 1,
-      "score": <число с плавающей точкой от 1.0 до 10.0, например 5.5, 8.5 или 1.5>,
-      "comment": "<уникальный лаконичный разбор конкретно этого действия>",
-      "overcome": <0, 1, 2 или 3>,
-      "tags": ["#Тег"]
-    }
-  ],
-  "breakdown": "<краткий честный разбор дня в 1-2 предложениях>",
-  "verdict": "<сильное душевное напутствие ментора в 1-2 предложениях, объединяющее преодоления и благодарности дня>"
-}`
-
-    const response = await fetch('https://api.deepseek.com/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({ prides, gratitudes }),
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.5,
-        max_tokens: 800,
-      }),
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '')
+  if (!result.success) {
+    const err = result.error
+    if (err.code === 'tier_required' || err.code === 'quota_exceeded') {
       return NextResponse.json(
         {
-          success: false,
-          error: `Ошибка DeepSeek API (${response.status}): ${errorText || response.statusText}`,
+          error: {
+            code: err.code,
+            feature: err.feature || 'aiEvaluationsPerDay',
+            limit: err.limit ?? 0,
+            tier: err.tier || userTier,
+            message: err.message,
+          },
         },
-        { status: 500 }
+        { status: 403 }
       )
     }
 
-    const data = await response.json()
-    const content = data?.choices?.[0]?.message?.content
-    if (!content) {
-      return NextResponse.json(
-        { success: false, error: 'Пустой ответ от DeepSeek API' },
-        { status: 500 }
-      )
-    }
-
-    const parsed = JSON.parse(content)
-
-    // Обработка персональных дифференцированных оценок каждой гордости
-    const prideEvaluations = prides.map((p, i) => {
-      const parsedItem = Array.isArray(parsed.prideEvaluations) ? parsed.prideEvaluations[i] : null
-      const gibberish = isGibberish(p)
-
-      let itemScore: number
-      if (gibberish) {
-        itemScore = typeof parsedItem?.score === 'number' && parsedItem.score <= 2.5
-          ? Number(parsedItem.score.toFixed(1))
-          : 1.5
-      } else if (typeof parsedItem?.score === 'number' && !isNaN(parsedItem.score)) {
-        itemScore = Number(Math.max(1.0, Math.min(10.0, parsedItem.score)).toFixed(1))
-      } else {
-        itemScore = 7.0
-      }
-
-      let comment = String(parsedItem?.comment || '')
-      if (gibberish && (!comment || comment.toLowerCase().includes('отличн') || comment.toLowerCase().includes('побед'))) {
-        comment = 'Бессмысленный ввод не является победой — опиши реальное преодоление.'
-      } else if (!comment) {
-        comment = 'Действие зафиксировано в летописи дня.'
-      }
-
-      const overcome = typeof parsedItem?.overcome === 'number'
-        ? Math.max(0, Math.min(3, parsedItem.overcome))
-        : (gibberish ? 0 : (itemScore >= 8.5 ? 2 : 1))
-      const tags = Array.isArray(parsedItem?.tags) && parsedItem.tags.length > 0
-        ? parsedItem.tags
-        : [gibberish ? '#Внимание' : '#Дисциплина']
-
-      return {
-        num: i + 1,
-        score: itemScore,
-        scale: Math.max(1, Math.min(10, Math.round(itemScore))),
-        comment,
-        verdict: comment,
-        overcome,
-        tags,
-      }
-    })
-
-    // Общий балл дня вычисляется СТРОГО как среднее арифметическое гордостей:
-    // score = Number((prideScoresSum / prides.length).toFixed(1))
-    const prideScoresSum = prideEvaluations.reduce((acc, p) => acc + p.score, 0)
-    const finalScore = prideEvaluations.length > 0
-      ? Number((prideScoresSum / prideEvaluations.length).toFixed(1))
-      : 8.8
-
-    const breakdown = String(parsed.breakdown || 'Анализ побед и преодолений проведён.')
-    const verdict = String(parsed.verdict || 'День осознанной работы и укрепления характера.')
-
-    // БЛАГОДАРНОСТИ БЕЗ ЧИСЛОВЫХ ОЦЕНОК И ЗВЁЗД!
-    const gratitudeEvaluations: any[] = []
-
-    // Сохранение в Supabase при наличии dayId и userId
-    if (body.dayId && body.userId) {
-      const supabase = getServerSupabase()
-      if (supabase) {
-        try {
-          await supabase.from('ai_evaluations').upsert(
-            {
-              user_id: body.userId,
-              day_id: body.dayId,
-              type: body.type || 'day',
-              results: prideEvaluations,
-              day_summary: verdict,
-            },
-            { onConflict: 'user_id,day_id,type' }
-          )
-        } catch (supaErr) {
-          console.warn('[Supabase ai_evaluations upsert warning]:', supaErr)
-        }
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      source: 'deepseek',
-      model: 'deepseek-chat',
-      score: finalScore,
-      breakdown,
-      verdict,
-      prideEvaluations,
-      gratitudeEvaluations: [],
-      evaluations: prideEvaluations,
-      averageScore: finalScore,
-      mentorWord: verdict,
-      daySummary: verdict,
-    })
-  } catch (err: any) {
-    console.error('[DeepSeek API evaluation failure]:', err)
     return NextResponse.json(
       {
         success: false,
-        error: `Ошибка вызова DeepSeek API: ${String(err?.message || err)}`,
+        error: err.message,
       },
-      { status: 500 }
+      { status: 502 }
     )
   }
+
+  const evalData = result.data
+  const prideEvaluations = evalData.prideEvaluations || []
+  const prideScoresSum = prideEvaluations.reduce((acc, p) => acc + (typeof p.score === 'number' ? p.score : 8.0), 0)
+  const finalScore = prideEvaluations.length > 0
+    ? Number((prideScoresSum / prideEvaluations.length).toFixed(1))
+    : 8.0
+
+  return NextResponse.json({
+    success: true,
+    score: finalScore,
+    breakdown: evalData.breakdown,
+    verdict: evalData.verdict,
+    prideEvaluations,
+    gratitudeEvaluations: [],
+    evaluations: prideEvaluations,
+    averageScore: finalScore,
+    mentorWord: evalData.verdict,
+    daySummary: evalData.verdict,
+    cached: result.cached,
+    provider: evalData.provider,
+    tokens: evalData.tokens,
+    is_approximate: evalData.is_approximate,
+    approximate: evalData.approximate,
+    note: evalData.note,
+    tier: userTier,
+  })
 }

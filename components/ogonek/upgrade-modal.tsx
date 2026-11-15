@@ -55,10 +55,10 @@ export const UPGRADE_FEATURES_CONFIG: Record<string, UpgradeFeatureDetail> = {
     iconColor: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   },
   ai_eval: {
-    title: 'ИИ-оценка дня Gemini',
-    subtitle: 'Персональный разбор летописи нейросетью Google Gemini',
+    title: 'ИИ-оценка дня',
+    subtitle: 'Персональный разбор летописи нейросетью ИИ',
     benefit:
-      'На тарифе Премиум искусственный интеллект анализирует глубину ваших побед, преодоления и даёт мудрое напутствие ментора.',
+      'На тарифе Премиум искусственный интеллект анализирует глубину ваших побед, преодоления и динамику личной силы.',
     requiredTier: 'pro',
     icon: Sparkles,
     iconColor: 'text-violet-400 bg-violet-500/10 border-violet-500/20',

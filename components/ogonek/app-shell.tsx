@@ -63,6 +63,10 @@ const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m
 const FriendsModal = dynamic(() => import('./friends/friends-modal').then((m) => m.FriendsModal), { ssr: false })
 const PremiumModal = dynamic(() => import('./premium-modal').then((m) => m.PremiumModal), { ssr: false })
 const UpgradeModal = dynamic(() => import('./upgrade-modal').then((m) => m.UpgradeModal), { ssr: false })
+const MilestoneModal = dynamic(
+  () => import('./milestones/milestone-modal').then((m) => m.MilestoneModal),
+  { ssr: false }
+)
 
 export function AppShell() {
   const [view, setView] = useState<ViewId>('home')
@@ -85,6 +89,14 @@ export function AppShell() {
   }>({
     isOpen: false,
     feature: null,
+  })
+  const [milestoneModal, setMilestoneModal] = useState<{
+    isOpen: boolean
+    milestoneNumber: number
+    initialReview?: any
+  }>({
+    isOpen: false,
+    milestoneNumber: 100,
   })
   const [toast, setToast] = useState('')
   const [locked, setLocked] = useState(false)
@@ -183,6 +195,16 @@ export function AppShell() {
     return () => window.removeEventListener('ogonek:open-friends', handler)
   }, [openFriendsModal])
 
+  const notify = useCallback((message: string) => {
+    setToast(message)
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current)
+    }
+    toastTimerRef.current = setTimeout(() => {
+      setToast('')
+    }, 2400)
+  }, [])
+
   // Обработчики открытия модального окна Премиума и Апселла (CONTRACT Шаг 12)
   useEffect(() => {
     const handleOpenPremium = () => {
@@ -205,6 +227,21 @@ export function AppShell() {
 
     window.addEventListener('ogonek:open-premium', handleOpenPremium)
     window.addEventListener('ogonek:open-upgrade', handleOpenUpgrade)
+    const handleOpenMilestone = (e: any) => {
+      const detail = e?.detail || {}
+      const mNum = typeof detail.milestoneNumber === 'number' ? detail.milestoneNumber : 100
+      const currentTier = detail.tier || subStatus.effectiveTier || state.profile.subscription_tier || 'free'
+      if (currentTier === 'free') {
+        notify(`🔥 Поздравляем! ${mNum} дней подряд. Хочешь увидеть, как ты изменился за эти ${mNum} дней? Премиум`)
+      } else {
+        setMilestoneModal({
+          isOpen: true,
+          milestoneNumber: mNum,
+          initialReview: detail.reviewData || detail.initialReview,
+        })
+      }
+    }
+    window.addEventListener('ogonek:open-milestone', handleOpenMilestone)
     const handleEditDayEvent = (e: any) => {
       const day = e?.detail?.day || state.days[0]
       if (day) {
@@ -216,19 +253,10 @@ export function AppShell() {
     return () => {
       window.removeEventListener('ogonek:open-premium', handleOpenPremium)
       window.removeEventListener('ogonek:open-upgrade', handleOpenUpgrade)
+      window.removeEventListener('ogonek:open-milestone', handleOpenMilestone)
       window.removeEventListener('ogonek:edit-day', handleEditDayEvent)
     }
-  }, [state.days])
-
-  const notify = useCallback((message: string) => {
-    setToast(message)
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current)
-    }
-    toastTimerRef.current = setTimeout(() => {
-      setToast('')
-    }, 2400)
-  }, [])
+  }, [state.days, state.profile.subscription_tier, notify])
 
   // Тосты в стиле Telegram Desktop (максимум 3 в стеке)
   const showDesktopToast = useCallback((toast: Omit<DesktopToast, 'id' | 'createdAt'>) => {
@@ -912,6 +940,16 @@ export function AppShell() {
         window.history.replaceState(null, '', `${window.location.pathname}${newSearch}`)
       }
 
+      if (params.get('modal') === 'milestone') {
+        const mNum = parseInt(params.get('milestone') || params.get('number') || '100', 10)
+        setMilestoneModal({ isOpen: true, milestoneNumber: mNum })
+        params.delete('modal')
+        params.delete('milestone')
+        params.delete('number')
+        const newSearch = params.toString() ? `?${params.toString()}` : ''
+        window.history.replaceState(null, '', `${window.location.pathname}${newSearch}`)
+      }
+
       const v = params.get('view') as ViewId | null
       if (v === 'premium') {
         setPremiumModalOpen(true)
@@ -1151,11 +1189,20 @@ export function AppShell() {
       } else {
         addNewDay(payload, dateISO)
         notify('День сохранён в локальное хранилище. Стрик продолжается!')
+        const nextCount = state.days.length + 1
+        if (nextCount > 0 && nextCount % 100 === 0) {
+          const currentTier = subStatus.effectiveTier || state.profile.subscription_tier || 'free'
+          if (currentTier === 'free') {
+            notify(`🔥 Поздравляем! ${nextCount} дней подряд. Хочешь увидеть, как ты изменился за эти ${nextCount} дней? Премиум`)
+          } else {
+            setMilestoneModal({ isOpen: true, milestoneNumber: nextCount })
+          }
+        }
       }
       setComposer(false)
       setEditingDay(null)
     },
-    [updateDayWithPayload, addNewDay, notify]
+    [updateDayWithPayload, addNewDay, notify, state.days.length, state.profile.subscription_tier]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(
@@ -1629,6 +1676,23 @@ export function AppShell() {
                 setUpgradeModal((prev) => ({ ...prev, isOpen: false }))
                 setPremiumModalOpen(true)
               }}
+            />
+          )}
+
+          {/* Модальное окно юбилея вехи 100/200/300 (CONTRACT Шаг 13) */}
+          {milestoneModal.isOpen && (
+            <MilestoneModal
+              isOpen={milestoneModal.isOpen}
+              milestoneNumber={milestoneModal.milestoneNumber}
+              tier={subStatus.effectiveTier}
+              initialReview={milestoneModal.initialReview}
+              onClose={() => setMilestoneModal((prev) => ({ ...prev, isOpen: false }))}
+              onUpgrade={() => {
+                setMilestoneModal((prev) => ({ ...prev, isOpen: false }))
+                setPremiumModalOpen(true)
+              }}
+              onNotify={notify}
+              soundEnabled={state.soundEnabled}
             />
           )}
         </AnimatePresence>

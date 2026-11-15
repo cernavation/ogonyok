@@ -1,26 +1,26 @@
-# Guard Report — 2026-11-15T02:53:20.970Z
+# Guard Report — 2026-11-15T06:40:43.012Z
 
 - **Статус**: FAIL (exit 1)
-- **Режим**: guard | **Шаг**: `12` | **Окружение**: https://jryhluhgjricjbkimsfa.supabase.co
+- **Режим**: guard | **Шаг**: `13` | **Окружение**: https://jryhluhgjricjbkimsfa.supabase.co
 - **Проверка .lock**: OK
 - **Staging ключи**: OK
 - **Baseline**: Найден
-- **Экранов проверено**: 150 | **Найдено проблем**: 3425
+- **Экранов проверено**: 150 | **Найдено проблем**: 3490
 
 ## Сводка по категориям проверок
 | Код проверки | Кол-во |
 |---|---|
-| `d-missing-aria-label` | 1822 |
-| `g-contrast-ratio` | 809 |
+| `d-missing-aria-label` | 1854 |
+| `g-contrast-ratio` | 841 |
 | `b-narrow-text-column` | 201 |
 | `f-pixel-diff-exceeded` | 150 |
-| `d-dead-button-click-probe` | 144 |
-| `e-console-error` | 73 |
-| `e-http-error` | 48 |
+| `d-dead-button-click-probe` | 142 |
+| `e-console-error` | 74 |
+| `e-http-error` | 49 |
 | `b-clipped-text` | 46 |
 | `d-small-tap-target` | 45 |
 | `d-missing-accessible-name` | 35 |
-| `c-duplicate-accessible-name` | 30 |
+| `c-duplicate-accessible-name` | 31 |
 | `a-horizontal-overflow-container` | 14 |
 | `d-dead-button` | 5 |
 | `c-duplicate-icon-onclick` | 3 |

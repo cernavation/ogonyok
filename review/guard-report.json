@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-15T02:53:20.970Z",
+  "generatedAt": "2026-11-15T06:40:43.012Z",
   "ok": false,
   "mode": "guard",
-  "step": "12",
+  "step": "13",
   "stagingUrl": "https://jryhluhgjricjbkimsfa.supabase.co",
   "lock": {
     "ok": true,
@@ -43,13 +43,13 @@
         "endpoint": "/rest/v1/profiles?select=id&limit=1",
         "ok": true,
         "status": 200,
-        "message": "[{\"id\":\"3124a3f5-335e-4d9f-abc1-d3ab572d58e3\"}]"
+        "message": "[{\"id\":\"55da6030-1100-43c6-bd05-c4b2f8f42ca1\"}]"
       }
     ]
   },
   "baselineExists": true,
   "screensChecked": 150,
-  "errorCount": 3425,
+  "errorCount": 3490,
   "warningCount": 0,
   "issues": [
     {
@@ -4846,21 +4846,6 @@
       "severity": "error",
       "screen": "home",
       "viewport": "1210x756",
-      "selector": "button[aria-label=\"Друзья\"]",
-      "message": "Клик по кнопке не вызвал ни DOM-изменений, ни навигации, ни сетевого запроса: \"Друзья\"",
-      "rect": {
-        "x": 366,
-        "y": 63,
-        "width": 200,
-        "height": 52
-      }
-    },
-    {
-      "checkId": "d-dead-button-click-probe",
-      "category": "controls",
-      "severity": "error",
-      "screen": "home",
-      "viewport": "1210x756",
       "selector": "button[aria-label=\"Подписки\"]",
       "message": "Клик по кнопке не вызвал ни DOM-изменений, ни навигации, ни сетевого запроса: \"Подписки\"",
       "rect": {
@@ -5931,25 +5916,9 @@
       "screen": "messages_list",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 2.30% (> 0.30%) вне allowed_regions.json (21085/914760 px)",
+      "message": "Визуальное расхождение 2.31% (> 0.30%) вне allowed_regions.json (21115/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/messages_list.png",
       "rect": null
-    },
-    {
-      "checkId": "d-dead-button-click-probe",
-      "category": "controls",
-      "severity": "error",
-      "screen": "messages_list",
-      "viewport": "1210x756",
-      "selector": "button[aria-label=\"Аудиозвонок\"]",
-      "message": "Клик по кнопке не вызвал ни DOM-изменений, ни навигации, ни сетевого запроса: \"Аудиозвонок\"",
-      "rect": {
-        "x": 1034,
-        "y": 14,
-        "width": 44,
-        "height": 44
-      },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1210x756__d-dead-button-click-probe__17.png"
     },
     {
       "checkId": "d-dead-button-click-probe",
@@ -5964,7 +5933,8 @@
         "y": 14,
         "width": 44,
         "height": 44
-      }
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1210x756__d-dead-button-click-probe__17.png"
     },
     {
       "checkId": "d-dead-button-click-probe",
@@ -6206,7 +6176,7 @@
       "screen": "messages_chat",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 8.39% (> 0.30%) вне allowed_regions.json (76707/914760 px)",
+      "message": "Визуальное расхождение 8.38% (> 0.30%) вне allowed_regions.json (76690/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/messages_chat.png",
       "rect": null
     },
@@ -7452,7 +7422,7 @@
       "screen": "profile",
       "viewport": "1210x756",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A45%3A50.220Z&created_at=gte.2026-11-14T06%3A45%3A50.220Z&order=created_at.desc&limit=100)",
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A33%3A07.839Z&created_at=gte.2026-11-14T10%3A33%3A07.839Z&order=created_at.desc&limit=100)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1210x756__e-http-error__35.png"
     },
     {
@@ -9389,7 +9359,7 @@
       "screen": "leaderboard",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 9.33% (> 0.30%) вне allowed_regions.json (85352/914760 px)",
+      "message": "Визуальное расхождение 9.32% (> 0.30%) вне allowed_regions.json (85238/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/leaderboard.png",
       "rect": null
     },
@@ -13221,10 +13191,10 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 395,
-        "y": 223,
-        "width": 87,
-        "height": 34
+        "x": 396,
+        "y": 224,
+        "width": 86,
+        "height": 33
       }
     },
     {
@@ -13236,10 +13206,10 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
-        "x": 481,
-        "y": 223,
-        "width": 125,
-        "height": 34
+        "x": 482,
+        "y": 224,
+        "width": 124,
+        "height": 33
       }
     },
     {
@@ -13251,10 +13221,10 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(1) > button.x-primary-btn.px-4:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
-        "x": 748,
-        "y": 216,
-        "width": 117,
-        "height": 48
+        "x": 747,
+        "y": 217,
+        "width": 116,
+        "height": 47
       }
     },
     {
@@ -13266,10 +13236,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 345,
+        "x": 347,
         "y": 289,
-        "width": 34,
-        "height": 34
+        "width": 33,
+        "height": 33
       }
     },
     {
@@ -13281,10 +13251,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"2\")",
       "rect": {
-        "x": 385,
+        "x": 386,
         "y": 289,
-        "width": 34,
-        "height": 34
+        "width": 33,
+        "height": 33
       }
     },
     {
@@ -13296,10 +13266,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 424,
+        "x": 426,
         "y": 289,
-        "width": 34,
-        "height": 34
+        "width": 33,
+        "height": 33
       }
     },
     {
@@ -13311,10 +13281,10 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(4)",
       "message": "Элемент без aria-label (текст/подпись \"4\")",
       "rect": {
-        "x": 464,
+        "x": 465,
         "y": 289,
-        "width": 34,
-        "height": 34
+        "width": 33,
+        "height": 33
       }
     },
     {
@@ -13328,8 +13298,8 @@
       "rect": {
         "x": 504,
         "y": 289,
-        "width": 34,
-        "height": 34
+        "width": 33,
+        "height": 33
       }
     },
     {
@@ -13341,7 +13311,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Публично\")",
       "rect": {
-        "x": 548,
+        "x": 549,
         "y": 292,
         "width": 101,
         "height": 28
@@ -13356,9 +13326,9 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
-        "x": 650,
+        "x": 649,
         "y": 292,
-        "width": 78,
+        "width": 77,
         "height": 28
       }
     },
@@ -13371,9 +13341,9 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 738,
-        "y": 292,
-        "width": 127,
+        "x": 737,
+        "y": 293,
+        "width": 126,
         "height": 27
       }
     },
@@ -13463,7 +13433,7 @@
       "screen": "modal_composer",
       "viewport": "1210x756",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A48%3A05.331Z&created_at=gte.2026-11-14T06%3A48%3A05.331Z&order=created_at.desc&limit=100)",
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A35%3A22.708Z&created_at=gte.2026-11-14T10%3A35%3A22.708Z&order=created_at.desc&limit=100)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1210x756__e-http-error__94.png"
     },
     {
@@ -13482,7 +13452,7 @@
       "screen": "modal_composer",
       "viewport": "1210x756",
       "selector": "document",
-      "message": "Визуальное расхождение 32.88% (> 0.30%) вне allowed_regions.json (300815/914760 px)",
+      "message": "Визуальное расхождение 32.88% (> 0.30%) вне allowed_regions.json (300761/914760 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1210x756/modal_composer.png",
       "rect": null
     },
@@ -15902,6 +15872,22 @@
     {
       "screen": "explore",
       "viewport": "1440x900",
+      "checkId": "c-duplicate-accessible-name",
+      "category": "duplicates",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(3) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(4) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(5) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(6) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(7) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(8) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(9) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(10) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(11) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(12) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(13) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(14) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(15) > button.px-4.rounded-full:nth-of-type(2) | section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(16) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Дубль кнопки/ссылки с одинаковым именем \"читать\" (16 шт.)",
+      "rect": {
+        "x": 863,
+        "y": 324,
+        "width": 77,
+        "height": 36
+      },
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__c-duplicate-accessible-name__122.png"
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
       "checkId": "d-missing-aria-label",
       "category": "controls",
       "severity": "error",
@@ -15913,7 +15899,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__d-missing-aria-label__122.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__d-missing-aria-label__123.png"
     },
     {
       "screen": "explore",
@@ -15959,7 +15945,487 @@
         "width": 56,
         "height": 29
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__d-dead-button__123.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__d-dead-button__124.png"
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "rect": {
+        "x": 424,
+        "y": 320,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 324,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
+      "rect": {
+        "x": 424,
+        "y": 397,
+        "width": 428,
+        "height": 63
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 411,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(3) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"ПП Пустой Профиль @guard_empty\")",
+      "rect": {
+        "x": 424,
+        "y": 493,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(3) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 497,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(4) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"АТ Алексей Тест @guard_peer · 🔥 9 Тесто\")",
+      "rect": {
+        "x": 424,
+        "y": 570,
+        "width": 428,
+        "height": 63
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(4) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 584,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(5) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"U4 user_401275 @user_401275\")",
+      "rect": {
+        "x": 424,
+        "y": 666,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(5) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 670,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(6) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T6 test_63936 @test_63936\")",
+      "rect": {
+        "x": 424,
+        "y": 743,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(6) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 747,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(7) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T1 test_18607 @test_18607\")",
+      "rect": {
+        "x": 424,
+        "y": 820,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(7) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 824,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(8) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T6 test_61482 @test_61482\")",
+      "rect": {
+        "x": 424,
+        "y": 897,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(8) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 901,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(9) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T0 test_08620 @test_08620\")",
+      "rect": {
+        "x": 424,
+        "y": 974,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(9) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 978,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(10) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T8 test_89358 @test_89358\")",
+      "rect": {
+        "x": 424,
+        "y": 1051,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(10) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1055,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(11) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T7 test_75639 @test_75639\")",
+      "rect": {
+        "x": 424,
+        "y": 1128,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(11) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1132,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(12) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"T5 test_57475 @test_57475\")",
+      "rect": {
+        "x": 424,
+        "y": 1205,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(12) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1209,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(13) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"U1 user_110628 @user_110628\")",
+      "rect": {
+        "x": 424,
+        "y": 1282,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(13) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1286,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(14) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"U0 user_029566 @user_029566\")",
+      "rect": {
+        "x": 424,
+        "y": 1359,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(14) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1363,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(15) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"U8 user_873394 @user_873394\")",
+      "rect": {
+        "x": 424,
+        "y": 1436,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(15) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1440,
+        "width": 77,
+        "height": 36
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(16) > button.flex.items-center:nth-of-type(1)",
+      "message": "Элемент без aria-label (текст/подпись \"U6 user_693115 @user_693115\")",
+      "rect": {
+        "x": 424,
+        "y": 1513,
+        "width": 428,
+        "height": 44
+      }
+    },
+    {
+      "screen": "explore",
+      "viewport": "1440x900",
+      "checkId": "d-missing-aria-label",
+      "category": "controls",
+      "severity": "error",
+      "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(16) > button.px-4.rounded-full:nth-of-type(2)",
+      "message": "Элемент без aria-label (текст/подпись \"Читать\")",
+      "rect": {
+        "x": 863,
+        "y": 1517,
+        "width": 77,
+        "height": 36
+      }
     },
     {
       "screen": "explore",
@@ -16020,7 +16486,7 @@
         "width": 56,
         "height": 29
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__g-contrast-ratio__124.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/explore__1440x900__g-contrast-ratio__125.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -16028,12 +16494,267 @@
       "severity": "error",
       "screen": "explore",
       "viewport": "1440x900",
-      "selector": ".text-\\[15px\\]",
+      "selector": ".px-2\\.5.border-\\[var\\(--border\\)\\].py-1",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 872,
+        "y": 256,
+        "width": 86,
+        "height": 27
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(1) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 480,
-        "y": 321,
+        "y": 346,
         "width": 82,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(2) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 422,
+        "width": 356,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(3) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 519,
+        "width": 124,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(4) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 595,
+        "width": 372,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(5) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 692,
+        "width": 92,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(6) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 769,
+        "width": 84,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(7) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.18:1 (min 4.5:1, fg=#71767b, bg=#27292c)",
+      "rect": {
+        "x": 480,
+        "y": 846,
+        "width": 80,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(8) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 923,
+        "width": 81,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(9) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1000,
+        "width": 84,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(10) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1077,
+        "width": 84,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(11) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1154,
+        "width": 83,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(12) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1231,
+        "width": 81,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(13) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1308,
+        "width": 91,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(14) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1385,
+        "width": 96,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(15) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1462,
+        "width": 95,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": "li:nth-child(16) > .text-left.flex-1.min-w-0 > .min-w-0 > .mt-0\\.5.text-\\[var\\(--text-2\\)\\].truncate",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 480,
+        "y": 1539,
+        "width": 91,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "1440x900",
+      "selector": ".font-normal.text-\\[15px\\].select-none",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 1046,
+        "y": 23,
+        "width": 132,
         "height": 23
       }
     },
@@ -16058,7 +16779,7 @@
       "severity": "error",
       "screen": "explore",
       "viewport": "1440x900",
-      "selector": ".items-baseline > .text-\\[13px\\].font-normal",
+      "selector": ".items-baseline > .text-\\[13px\\].font-normal.text-\\[var\\(--muted\\)\\]",
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 1099,
@@ -16073,13 +16794,13 @@
       "severity": "error",
       "screen": "explore",
       "viewport": "1440x900",
-      "selector": ".mt-1",
+      "selector": ".mt-1.text-\\[13px\\].font-normal",
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
-        "x": 480,
-        "y": 443,
-        "width": 356,
-        "height": 17
+        "x": 1072,
+        "y": 163,
+        "width": 200,
+        "height": 20
       }
     },
     {
@@ -16104,7 +16825,7 @@
       "screen": "explore",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 12.56% (> 0.30%) вне allowed_regions.json (162837/1296000 px)",
+      "message": "Визуальное расхождение 20.57% (> 0.30%) вне allowed_regions.json (266549/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/explore.png",
       "rect": null
     },
@@ -16122,7 +16843,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__a-horizontal-overflow-container__125.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__a-horizontal-overflow-container__126.png"
     },
     {
       "screen": "messages_list",
@@ -16138,7 +16859,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__d-missing-aria-label__126.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__d-missing-aria-label__127.png"
     },
     {
       "screen": "messages_list",
@@ -16184,7 +16905,7 @@
         "width": 36,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__g-contrast-ratio__127.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_list__1440x900__g-contrast-ratio__128.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -16253,7 +16974,7 @@
       "screen": "messages_list",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 1.67% (> 0.30%) вне allowed_regions.json (21598/1296000 px)",
+      "message": "Визуальное расхождение 1.66% (> 0.30%) вне allowed_regions.json (21561/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/messages_list.png",
       "rect": null
     },
@@ -16271,7 +16992,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__a-horizontal-overflow-container__128.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__a-horizontal-overflow-container__129.png"
     },
     {
       "screen": "messages_chat",
@@ -16287,7 +17008,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__d-missing-aria-label__129.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__d-missing-aria-label__130.png"
     },
     {
       "screen": "messages_chat",
@@ -16333,7 +17054,7 @@
         "width": 36,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__g-contrast-ratio__130.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_chat__1440x900__g-contrast-ratio__131.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -16402,7 +17123,7 @@
       "screen": "messages_chat",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 0.95% (> 0.30%) вне allowed_regions.json (12331/1296000 px)",
+      "message": "Визуальное расхождение 1.04% (> 0.30%) вне allowed_regions.json (13482/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/messages_chat.png",
       "rect": null
     },
@@ -16420,7 +17141,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__a-horizontal-overflow-container__131.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__a-horizontal-overflow-container__132.png"
     },
     {
       "screen": "messages_group",
@@ -16436,7 +17157,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__d-missing-aria-label__132.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__d-missing-aria-label__133.png"
     },
     {
       "screen": "messages_group",
@@ -16767,7 +17488,7 @@
         "width": 36,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__g-contrast-ratio__133.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/messages_group__1440x900__g-contrast-ratio__134.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -17079,7 +17800,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__b-narrow-text-column__134.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__b-narrow-text-column__135.png"
     },
     {
       "screen": "profile",
@@ -17110,7 +17831,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__d-missing-aria-label__135.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__d-missing-aria-label__136.png"
     },
     {
       "screen": "profile",
@@ -17351,7 +18072,7 @@
         "width": 149,
         "height": 25
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__g-contrast-ratio__136.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/profile__1440x900__g-contrast-ratio__137.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -17453,7 +18174,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__b-narrow-text-column__137.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__b-narrow-text-column__138.png"
     },
     {
       "screen": "vault",
@@ -17499,7 +18220,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__d-missing-aria-label__138.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__d-missing-aria-label__139.png"
     },
     {
       "screen": "vault",
@@ -17680,7 +18401,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__g-contrast-ratio__139.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/vault__1440x900__g-contrast-ratio__140.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -17827,7 +18548,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__b-narrow-text-column__140.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__b-narrow-text-column__141.png"
     },
     {
       "screen": "premium",
@@ -17858,7 +18579,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__d-missing-aria-label__141.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__d-missing-aria-label__142.png"
     },
     {
       "screen": "premium",
@@ -18009,7 +18730,7 @@
         "width": 64,
         "height": 17
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__g-contrast-ratio__142.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/premium__1440x900__g-contrast-ratio__143.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -18246,7 +18967,7 @@
         "width": 209,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__b-narrow-text-column__143.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__b-narrow-text-column__144.png"
     },
     {
       "screen": "analytics",
@@ -18292,7 +19013,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__d-missing-aria-label__144.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__d-missing-aria-label__145.png"
     },
     {
       "screen": "analytics",
@@ -18428,7 +19149,7 @@
         "width": 81,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__g-contrast-ratio__145.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/analytics__1440x900__g-contrast-ratio__146.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -18740,7 +19461,7 @@
         "width": 210,
         "height": 21
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__b-narrow-text-column__146.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__b-narrow-text-column__147.png"
     },
     {
       "screen": "leaderboard",
@@ -18801,7 +19522,7 @@
         "width": 117,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__c-duplicate-accessible-name__147.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__c-duplicate-accessible-name__148.png"
     },
     {
       "screen": "leaderboard",
@@ -18817,7 +19538,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__d-missing-aria-label__148.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__d-missing-aria-label__149.png"
     },
     {
       "screen": "leaderboard",
@@ -19223,7 +19944,7 @@
         "width": 267,
         "height": 38
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__g-contrast-ratio__149.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/leaderboard__1440x900__g-contrast-ratio__150.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -19355,7 +20076,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__b-narrow-text-column__150.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__b-narrow-text-column__151.png"
     },
     {
       "screen": "intentions",
@@ -19386,7 +20107,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__d-missing-aria-label__151.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__d-missing-aria-label__152.png"
     },
     {
       "screen": "intentions",
@@ -19492,7 +20213,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__g-contrast-ratio__152.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/intentions__1440x900__g-contrast-ratio__153.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -19579,7 +20300,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__b-narrow-text-column__153.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__b-narrow-text-column__154.png"
     },
     {
       "screen": "settings_appearance",
@@ -19625,7 +20346,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__d-missing-aria-label__154.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__d-missing-aria-label__155.png"
     },
     {
       "screen": "settings_appearance",
@@ -19851,7 +20572,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__d-missing-accessible-name__155.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__d-missing-accessible-name__156.png"
     },
     {
       "screen": "settings_appearance",
@@ -19912,7 +20633,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__g-contrast-ratio__156.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_appearance__1440x900__g-contrast-ratio__157.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -20104,7 +20825,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__b-narrow-text-column__157.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__b-narrow-text-column__158.png"
     },
     {
       "screen": "settings_diary",
@@ -20150,7 +20871,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__d-missing-aria-label__158.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__d-missing-aria-label__159.png"
     },
     {
       "screen": "settings_diary",
@@ -20376,7 +21097,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__d-missing-accessible-name__159.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__d-missing-accessible-name__160.png"
     },
     {
       "screen": "settings_diary",
@@ -20437,7 +21158,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__g-contrast-ratio__160.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_diary__1440x900__g-contrast-ratio__161.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -20629,7 +21350,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__b-narrow-text-column__161.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__b-narrow-text-column__162.png"
     },
     {
       "screen": "settings_notifications",
@@ -20675,7 +21396,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__d-missing-aria-label__162.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__d-missing-aria-label__163.png"
     },
     {
       "screen": "settings_notifications",
@@ -20901,7 +21622,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__d-missing-accessible-name__163.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__d-missing-accessible-name__164.png"
     },
     {
       "screen": "settings_notifications",
@@ -20962,7 +21683,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__g-contrast-ratio__164.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_notifications__1440x900__g-contrast-ratio__165.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -21154,7 +21875,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__b-narrow-text-column__165.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__b-narrow-text-column__166.png"
     },
     {
       "screen": "settings_privacy",
@@ -21200,7 +21921,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__d-missing-aria-label__166.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__d-missing-aria-label__167.png"
     },
     {
       "screen": "settings_privacy",
@@ -21426,7 +22147,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__d-missing-accessible-name__167.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__d-missing-accessible-name__168.png"
     },
     {
       "screen": "settings_privacy",
@@ -21487,7 +22208,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__g-contrast-ratio__168.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_privacy__1440x900__g-contrast-ratio__169.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -21679,7 +22400,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__b-narrow-text-column__169.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__b-narrow-text-column__170.png"
     },
     {
       "screen": "settings_account",
@@ -21725,7 +22446,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__d-missing-aria-label__170.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__d-missing-aria-label__171.png"
     },
     {
       "screen": "settings_account",
@@ -21951,7 +22672,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__d-missing-accessible-name__171.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__d-missing-accessible-name__172.png"
     },
     {
       "screen": "settings_account",
@@ -22012,7 +22733,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__g-contrast-ratio__172.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_account__1440x900__g-contrast-ratio__173.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -22204,7 +22925,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__b-narrow-text-column__173.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__b-narrow-text-column__174.png"
     },
     {
       "screen": "settings_guide",
@@ -22250,7 +22971,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__d-missing-aria-label__174.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__d-missing-aria-label__175.png"
     },
     {
       "screen": "settings_guide",
@@ -22476,7 +23197,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__d-missing-accessible-name__175.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__d-missing-accessible-name__176.png"
     },
     {
       "screen": "settings_guide",
@@ -22537,7 +23258,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__g-contrast-ratio__176.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/settings_guide__1440x900__g-contrast-ratio__177.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -22729,7 +23450,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__b-clipped-text__177.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__b-clipped-text__178.png"
     },
     {
       "screen": "modal_composer",
@@ -22760,7 +23481,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__b-narrow-text-column__178.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__b-narrow-text-column__179.png"
     },
     {
       "screen": "modal_composer",
@@ -22791,7 +23512,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__c-duplicate-accessible-name__179.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__c-duplicate-accessible-name__180.png"
     },
     {
       "screen": "modal_composer",
@@ -22807,7 +23528,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__d-missing-aria-label__180.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__d-missing-aria-label__181.png"
     },
     {
       "screen": "modal_composer",
@@ -23147,7 +23868,7 @@
       "viewport": "1440x900",
       "selector": "document",
       "message": "Console error: Failed to load resource: the server responded with a status of 400 ()",
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__e-console-error__181.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__e-console-error__182.png"
     },
     {
       "checkId": "e-http-error",
@@ -23156,8 +23877,8 @@
       "screen": "modal_composer",
       "viewport": "1440x900",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A50%3A15.744Z&created_at=gte.2026-11-14T06%3A50%3A15.744Z&order=created_at.desc&limit=100)",
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__e-http-error__182.png"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A37%3A34.559Z&created_at=gte.2026-11-14T10%3A37%3A34.559Z&order=created_at.desc&limit=100)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_composer__1440x900__e-http-error__183.png"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -23166,7 +23887,7 @@
       "screen": "modal_composer",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 2.56% (> 0.30%) вне allowed_regions.json (33114/1296000 px)",
+      "message": "Визуальное расхождение 2.55% (> 0.30%) вне allowed_regions.json (33053/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/modal_composer.png",
       "rect": null
     },
@@ -23184,7 +23905,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__b-clipped-text__183.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__b-clipped-text__184.png"
     },
     {
       "screen": "modal_day_menu",
@@ -23215,7 +23936,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__b-narrow-text-column__184.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__b-narrow-text-column__185.png"
     },
     {
       "screen": "modal_day_menu",
@@ -23246,7 +23967,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__c-duplicate-accessible-name__185.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__c-duplicate-accessible-name__186.png"
     },
     {
       "screen": "modal_day_menu",
@@ -23262,7 +23983,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__d-missing-aria-label__186.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__d-missing-aria-label__187.png"
     },
     {
       "screen": "modal_day_menu",
@@ -23443,7 +24164,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__g-contrast-ratio__187.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_day_menu__1440x900__g-contrast-ratio__188.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -23530,7 +24251,7 @@
         "width": 196,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_friends__1440x900__b-narrow-text-column__188.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_friends__1440x900__b-narrow-text-column__189.png"
     },
     {
       "screen": "modal_friends",
@@ -23576,7 +24297,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_friends__1440x900__d-missing-aria-label__189.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_friends__1440x900__d-missing-aria-label__190.png"
     },
     {
       "screen": "modal_friends",
@@ -23963,7 +24684,7 @@
         "width": 222,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__b-narrow-text-column__190.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__b-narrow-text-column__191.png"
     },
     {
       "screen": "modal_notifications",
@@ -24009,7 +24730,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__d-missing-aria-label__191.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__d-missing-aria-label__192.png"
     },
     {
       "screen": "modal_notifications",
@@ -24235,7 +24956,7 @@
         "width": 1,
         "height": 1
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__d-missing-accessible-name__192.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_notifications__1440x900__d-missing-accessible-name__193.png"
     },
     {
       "screen": "modal_notifications",
@@ -24397,7 +25118,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_call__1440x900__a-horizontal-overflow-container__193.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_call__1440x900__a-horizontal-overflow-container__194.png"
     },
     {
       "screen": "modal_call",
@@ -24413,7 +25134,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_call__1440x900__d-missing-aria-label__194.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/modal_call__1440x900__d-missing-aria-label__195.png"
     },
     {
       "screen": "modal_call",
@@ -24542,7 +25263,7 @@
       "screen": "modal_call",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 25.54% (> 0.30%) вне allowed_regions.json (331014/1296000 px)",
+      "message": "Визуальное расхождение 25.54% (> 0.30%) вне allowed_regions.json (331010/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/modal_call.png",
       "rect": null
     },
@@ -24560,7 +25281,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__b-clipped-text__195.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__b-clipped-text__196.png"
     },
     {
       "screen": "home",
@@ -24591,7 +25312,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__b-narrow-text-column__196.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__b-narrow-text-column__197.png"
     },
     {
       "screen": "home",
@@ -24622,7 +25343,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__c-duplicate-accessible-name__197.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__c-duplicate-accessible-name__198.png"
     },
     {
       "screen": "home",
@@ -24638,7 +25359,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__d-missing-aria-label__198.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__d-missing-aria-label__199.png"
     },
     {
       "screen": "home",
@@ -24819,7 +25540,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__g-contrast-ratio__199.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__g-contrast-ratio__200.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -24888,8 +25609,7 @@
       "screen": "home",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/home__1024x768__e-console-error__200.png"
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()"
     },
     {
       "checkId": "e-http-error",
@@ -25893,7 +26613,7 @@
       "screen": "explore",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 21.90% (> 0.30%) вне allowed_regions.json (172242/786432 px)",
+      "message": "Визуальное расхождение 23.92% (> 0.30%) вне allowed_regions.json (188106/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/explore.png",
       "rect": null
     },
@@ -26024,7 +26744,7 @@
       "screen": "messages_list",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 2.95% (> 0.30%) вне allowed_regions.json (23161/786432 px)",
+      "message": "Визуальное расхождение 2.95% (> 0.30%) вне allowed_regions.json (23191/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/messages_list.png",
       "rect": null
     },
@@ -26155,7 +26875,7 @@
       "screen": "messages_chat",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 1.79% (> 0.30%) вне allowed_regions.json (14080/786432 px)",
+      "message": "Визуальное расхождение 1.72% (> 0.30%) вне allowed_regions.json (13514/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/messages_chat.png",
       "rect": null
     },
@@ -28996,7 +29716,7 @@
       "screen": "leaderboard",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 6.87% (> 0.30%) вне allowed_regions.json (54003/786432 px)",
+      "message": "Визуальное расхождение 6.83% (> 0.30%) вне allowed_regions.json (53748/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/leaderboard.png",
       "rect": null
     },
@@ -32611,7 +33331,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 301,
+        "x": 302,
         "y": 229,
         "width": 87,
         "height": 34
@@ -32626,9 +33346,9 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
-        "x": 388,
+        "x": 389,
         "y": 229,
-        "width": 126,
+        "width": 125,
         "height": 34
       }
     },
@@ -32641,9 +33361,9 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(1) > button.x-primary-btn.px-4:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
-        "x": 655,
-        "y": 222,
-        "width": 118,
+        "x": 654,
+        "y": 223,
+        "width": 117,
         "height": 48
       }
     },
@@ -32656,8 +33376,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 251,
-        "y": 294,
+        "x": 252,
+        "y": 295,
         "width": 34,
         "height": 34
       }
@@ -32671,8 +33391,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"2\")",
       "rect": {
-        "x": 291,
-        "y": 294,
+        "x": 292,
+        "y": 295,
         "width": 34,
         "height": 34
       }
@@ -32686,8 +33406,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 331,
-        "y": 294,
+        "x": 332,
+        "y": 295,
         "width": 34,
         "height": 34
       }
@@ -32701,8 +33421,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(4)",
       "message": "Элемент без aria-label (текст/подпись \"4\")",
       "rect": {
-        "x": 370,
-        "y": 294,
+        "x": 371,
+        "y": 295,
         "width": 34,
         "height": 34
       }
@@ -32716,8 +33436,8 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(5)",
       "message": "Элемент без aria-label (текст/подпись \"5\")",
       "rect": {
-        "x": 410,
-        "y": 294,
+        "x": 411,
+        "y": 295,
         "width": 34,
         "height": 34
       }
@@ -32732,8 +33452,8 @@
       "message": "Элемент без aria-label (текст/подпись \"Публично\")",
       "rect": {
         "x": 455,
-        "y": 297,
-        "width": 102,
+        "y": 298,
+        "width": 101,
         "height": 28
       }
     },
@@ -32747,7 +33467,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
         "x": 557,
-        "y": 297,
+        "y": 298,
         "width": 78,
         "height": 28
       }
@@ -32761,7 +33481,7 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 646,
+        "x": 645,
         "y": 298,
         "width": 127,
         "height": 27
@@ -32783,7 +33503,7 @@
       "screen": "modal_composer",
       "viewport": "1024x768",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A50%3A56.251Z&created_at=gte.2026-11-14T06%3A50%3A56.251Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A38%3A16.907Z&created_at=gte.2026-11-14T10%3A38%3A16.907Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -32792,7 +33512,7 @@
       "screen": "modal_composer",
       "viewport": "1024x768",
       "selector": "document",
-      "message": "Визуальное расхождение 6.09% (> 0.30%) вне allowed_regions.json (47918/786432 px)",
+      "message": "Визуальное расхождение 3.63% (> 0.30%) вне allowed_regions.json (28568/786432 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1024x768/modal_composer.png",
       "rect": null
     },
@@ -34326,24 +35046,6 @@
       }
     },
     {
-      "checkId": "e-console-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "home",
-      "viewport": "820x1180",
-      "selector": "document",
-      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()"
-    },
-    {
-      "checkId": "e-http-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "home",
-      "viewport": "820x1180",
-      "selector": "network",
-      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)"
-    },
-    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -34364,7 +35066,7 @@
       "message": "Дубль кнопки/ссылки с одинаковым именем \"читать\" (16 шт.)",
       "rect": {
         "x": 627,
-        "y": 334,
+        "y": 324,
         "width": 77,
         "height": 36
       }
@@ -34436,12 +35138,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
       "rect": {
         "x": 187,
         "y": 320,
         "width": 428,
-        "height": 63
+        "height": 44
       }
     },
     {
@@ -34454,7 +35156,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 627,
-        "y": 334,
+        "y": 324,
         "width": 77,
         "height": 36
       }
@@ -34466,12 +35168,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
       "rect": {
         "x": 187,
-        "y": 416,
+        "y": 397,
         "width": 428,
-        "height": 44
+        "height": 63
       }
     },
     {
@@ -34484,7 +35186,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 627,
-        "y": 420,
+        "y": 411,
         "width": 77,
         "height": 36
       }
@@ -34949,8 +35651,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 243,
-        "y": 345,
-        "width": 356,
+        "y": 346,
+        "width": 82,
         "height": 17
       }
     },
@@ -34964,8 +35666,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 243,
-        "y": 442,
-        "width": 82,
+        "y": 422,
+        "width": 356,
         "height": 17
       }
     },
@@ -35180,13 +35882,31 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "820x1180",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "explore",
+      "viewport": "820x1180",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
       "screen": "explore",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 38.78% (> 0.30%) вне allowed_regions.json (375264/967600 px)",
+      "message": "Визуальное расхождение 39.09% (> 0.30%) вне allowed_regions.json (378221/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/explore.png",
       "rect": null
     },
@@ -35197,7 +35917,7 @@
       "screen": "messages_list",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 1.51% (> 0.30%) вне allowed_regions.json (14575/967600 px)",
+      "message": "Визуальное расхождение 1.51% (> 0.30%) вне allowed_regions.json (14592/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/messages_list.png",
       "rect": null
     },
@@ -35307,7 +36027,7 @@
       "screen": "messages_chat",
       "viewport": "820x1180",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A51%3A16.116Z&created_at=gte.2026-11-14T06%3A51%3A16.116Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A38%3A35.587Z&created_at=gte.2026-11-14T10%3A38%3A35.587Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -35316,7 +36036,7 @@
       "screen": "messages_chat",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 0.44% (> 0.30%) вне allowed_regions.json (4289/967600 px)",
+      "message": "Визуальное расхождение 0.45% (> 0.30%) вне allowed_regions.json (4322/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/messages_chat.png",
       "rect": null
     },
@@ -35372,7 +36092,7 @@
       "screen": "messages_group",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 0.49% (> 0.30%) вне allowed_regions.json (4781/967600 px)",
+      "message": "Визуальное расхождение 0.34% (> 0.30%) вне allowed_regions.json (3260/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/messages_group.png",
       "rect": null
     },
@@ -36882,7 +37602,7 @@
       "screen": "leaderboard",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 9.40% (> 0.30%) вне allowed_regions.json (90926/967600 px)",
+      "message": "Визуальное расхождение 9.39% (> 0.30%) вне allowed_regions.json (90853/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/leaderboard.png",
       "rect": null
     },
@@ -39372,7 +40092,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(1) > div.flex.items-center > div.flex.rounded-full:nth-of-type(1) > button.px-3\\.5.py-1\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
-        "x": 200,
+        "x": 201,
         "y": 436,
         "width": 86,
         "height": 34
@@ -39544,7 +40264,7 @@
       "screen": "modal_composer",
       "viewport": "820x1180",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A51%3A32.624Z&created_at=gte.2026-11-14T06%3A51%3A32.624Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A38%3A52.525Z&created_at=gte.2026-11-14T10%3A38%3A52.525Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -39553,7 +40273,7 @@
       "screen": "modal_composer",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 1.85% (> 0.30%) вне allowed_regions.json (17922/967600 px)",
+      "message": "Визуальное расхождение 1.86% (> 0.30%) вне allowed_regions.json (18016/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/modal_composer.png",
       "rect": null
     },
@@ -40587,7 +41307,7 @@
       "screen": "modal_call",
       "viewport": "820x1180",
       "selector": "document",
-      "message": "Визуальное расхождение 45.08% (> 0.30%) вне allowed_regions.json (436242/967600 px)",
+      "message": "Визуальное расхождение 45.08% (> 0.30%) вне allowed_regions.json (436233/967600 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/820x1180/modal_call.png",
       "rect": null
     },
@@ -40743,11 +41463,11 @@
       "checkId": "b-clipped-text",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
       "message": "Обрезан текст (191px > 178px): \"@cernavation · Moldova · 🔥 720\"",
       "rect": {
         "x": 89,
-        "y": 454,
+        "y": 377,
         "width": 178,
         "height": 17
       }
@@ -40758,11 +41478,11 @@
       "checkId": "b-narrow-text-column",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.truncate:nth-of-type(2)",
       "message": "Текстовая колонка уже 28 символов (~21 симв., 178px): \"@cernavation · Moldova · 🔥 720\"",
       "rect": {
         "x": 89,
-        "y": 454,
+        "y": 377,
         "width": 178,
         "height": 17
       }
@@ -40773,11 +41493,11 @@
       "checkId": "b-narrow-text-column",
       "category": "text",
       "severity": "error",
-      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.line-clamp-1:nth-of-type(3)",
+      "selector": "ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1) > div.min-w-0 > p.text-xs.line-clamp-1:nth-of-type(3)",
       "message": "Текстовая колонка уже 28 символов (~21 симв., 178px): \"Entrepreneur · founder · athlete · marathon runner · champio\"",
       "rect": {
         "x": 89,
-        "y": 476,
+        "y": 399,
         "width": 178,
         "height": 17
       }
@@ -40807,7 +41527,7 @@
       "message": "Дубль кнопки/ссылки с одинаковым именем \"читать\" (16 шт.)",
       "rect": {
         "x": 279,
-        "y": 355,
+        "y": 364,
         "width": 77,
         "height": 40
       }
@@ -40864,12 +41584,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(1) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
+      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
       "rect": {
         "x": 33,
         "y": 353,
         "width": 234,
-        "height": 44
+        "height": 63
       }
     },
     {
@@ -40882,7 +41602,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 279,
-        "y": 355,
+        "y": 364,
         "width": 77,
         "height": 40
       }
@@ -40894,12 +41614,12 @@
       "category": "controls",
       "severity": "error",
       "selector": "section[aria-label=\"Участники Огонька\"] > ul.flex.flex-col > li.p-4.flex:nth-of-type(2) > button.flex.items-center:nth-of-type(1)",
-      "message": "Элемент без aria-label (текст/подпись \"Alexei Cerna @cernavation · Moldova · 🔥\")",
+      "message": "Элемент без aria-label (текст/подпись \"ILON MUSK @ilonmusk\")",
       "rect": {
         "x": 33,
-        "y": 430,
+        "y": 449,
         "width": 234,
-        "height": 63
+        "height": 44
       }
     },
     {
@@ -40912,7 +41632,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Читать\")",
       "rect": {
         "x": 279,
-        "y": 441,
+        "y": 451,
         "width": 77,
         "height": 40
       }
@@ -41377,8 +42097,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 89,
-        "y": 378,
-        "width": 82,
+        "y": 377,
+        "width": 178,
         "height": 17
       }
     },
@@ -41392,8 +42112,8 @@
       "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
       "rect": {
         "x": 89,
-        "y": 454,
-        "width": 178,
+        "y": 475,
+        "width": 82,
         "height": 17
       }
     },
@@ -41614,7 +42334,7 @@
       "screen": "explore",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 34.36% (> 0.30%) вне allowed_regions.json (113095/329160 px)",
+      "message": "Визуальное расхождение 34.90% (> 0.30%) вне allowed_regions.json (114881/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/explore.png",
       "rect": null
     },
@@ -41640,7 +42360,7 @@
       "screen": "messages_list",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 2.08% (> 0.30%) вне allowed_regions.json (6836/329160 px)",
+      "message": "Визуальное расхождение 2.08% (> 0.30%) вне allowed_regions.json (6850/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/messages_list.png",
       "rect": null
     },
@@ -41855,7 +42575,7 @@
       "screen": "messages_chat",
       "viewport": "390x844",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A51%3A50.947Z&created_at=gte.2026-11-14T06%3A51%3A50.947Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A39%3A10.657Z&created_at=gte.2026-11-14T10%3A39%3A10.657Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -41864,7 +42584,7 @@
       "screen": "messages_chat",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 0.78% (> 0.30%) вне allowed_regions.json (2577/329160 px)",
+      "message": "Визуальное расхождение 0.79% (> 0.30%) вне allowed_regions.json (2608/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/messages_chat.png",
       "rect": null
     },
@@ -41940,6 +42660,231 @@
         "x": 52,
         "y": 801,
         "width": 288,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(1) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 283,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(2) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 352,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(3) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 3.00:1 (min 4.5:1, fg=#ffffff, bg=#1d9bf0)",
+      "rect": {
+        "x": 17,
+        "y": 396,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(3) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 421,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(4) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 3.00:1 (min 4.5:1, fg=#ffffff, bg=#1d9bf0)",
+      "rect": {
+        "x": 17,
+        "y": 465,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(4) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 490,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(5) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 559,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(6) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 2.52:1 (min 4.5:1, fg=#ffffff, bg=#00ba7c)",
+      "rect": {
+        "x": 17,
+        "y": 603,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(6) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 628,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(7) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 2.52:1 (min 4.5:1, fg=#ffffff, bg=#00ba7c)",
+      "rect": {
+        "x": 17,
+        "y": 672,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(7) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 697,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(8) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 2.52:1 (min 4.5:1, fg=#ffffff, bg=#00ba7c)",
+      "rect": {
+        "x": 17,
+        "y": 741,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(8) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 766,
+        "width": 300,
+        "height": 17
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(9) > .text-white.font-bold.rounded-full",
+      "message": "Низкий контраст текста 2.52:1 (min 4.5:1, fg=#ffffff, bg=#00ba7c)",
+      "rect": {
+        "x": 17,
+        "y": 810,
+        "width": 44,
+        "height": 44
+      }
+    },
+    {
+      "checkId": "g-contrast-ratio",
+      "category": "contrast",
+      "severity": "error",
+      "screen": "messages_group",
+      "viewport": "390x844",
+      "selector": ".py-3.gap-3[role=\"option\"]:nth-child(9) > .flex-1.min-w-0 > .mt-0\\.5",
+      "message": "Низкий контраст текста 3.87:1 (min 4.5:1, fg=#71767b, bg=#16181c)",
+      "rect": {
+        "x": 73,
+        "y": 835,
+        "width": 300,
         "height": 17
       }
     },
@@ -43355,7 +44300,7 @@
       "screen": "leaderboard",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 17.94% (> 0.30%) вне allowed_regions.json (59047/329160 px)",
+      "message": "Визуальное расхождение 17.95% (> 0.30%) вне allowed_regions.json (59085/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/leaderboard.png",
       "rect": null
     },
@@ -45680,10 +46625,10 @@
       "selector": "div[aria-label=\"Записать День #1\"] > div.modal.outline-none",
       "message": "Горизонтальный скролл в контейнере: scrollWidth=572px > clientWidth=368px",
       "rect": {
-        "x": 11,
-        "y": 465,
-        "width": 368,
-        "height": 368
+        "x": 12,
+        "y": 466,
+        "width": 366,
+        "height": 366
       }
     },
     {
@@ -45831,7 +46776,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Гордость\")",
       "rect": {
         "x": 77,
-        "y": 488,
+        "y": 489,
         "width": 87,
         "height": 40
       }
@@ -45846,7 +46791,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Благодарность\")",
       "rect": {
         "x": 164,
-        "y": 488,
+        "y": 489,
         "width": 125,
         "height": 40
       }
@@ -45861,7 +46806,7 @@
       "message": "Элемент без aria-label (текст/подпись \"Записать\")",
       "rect": {
         "x": 427,
-        "y": 484,
+        "y": 485,
         "width": 117,
         "height": 48
       }
@@ -45875,7 +46820,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"1\")",
       "rect": {
-        "x": 30,
+        "x": 31,
         "y": 557,
         "width": 40,
         "height": 40
@@ -45905,7 +46850,7 @@
       "selector": "div[aria-label=\"Пункты записи\"] > button.relative.w-8:nth-of-type(3)",
       "message": "Элемент без aria-label (текст/подпись \"3\")",
       "rect": {
-        "x": 121,
+        "x": 122,
         "y": 557,
         "width": 40,
         "height": 40
@@ -45950,7 +46895,7 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(1)",
       "message": "Элемент без aria-label (текст/подпись \"Публично\")",
       "rect": {
-        "x": 264,
+        "x": 263,
         "y": 557,
         "width": 101,
         "height": 40
@@ -45965,9 +46910,9 @@
       "selector": "div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > div.inline-flex.items-center > button.h-7.px-2\\.5:nth-of-type(2)",
       "message": "Элемент без aria-label (текст/подпись \"Лично\")",
       "rect": {
-        "x": 365,
+        "x": 364,
         "y": 557,
-        "width": 78,
+        "width": 77,
         "height": 40
       }
     },
@@ -45980,7 +46925,7 @@
       "selector": "div.modal.outline-none > div.w-full > div.flex.items-center:nth-of-type(2) > div.flex.items-center:nth-of-type(2) > button.transition-colors.whitespace-nowrap",
       "message": "Элемент без aria-label (текст/подпись \"Применить ко всем\")",
       "rect": {
-        "x": 454,
+        "x": 453,
         "y": 557,
         "width": 127,
         "height": 40
@@ -46002,7 +46947,7 @@
       "screen": "modal_composer",
       "viewport": "390x844",
       "selector": "network",
-      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T02%3A52%3A06.407Z&created_at=gte.2026-11-14T06%3A52%3A06.407Z&order=created_at.desc&limit=100)"
+      "message": "HTTP 400 (GET https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/stories?select=*%2Cauthor%3Aprofiles%21stories_user_id_fkey%28*%29&expires_at=gt.2026-11-15T06%3A39%3A26.213Z&created_at=gte.2026-11-14T10%3A39%3A26.213Z&order=created_at.desc&limit=100)"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -46011,7 +46956,7 @@
       "screen": "modal_composer",
       "viewport": "390x844",
       "selector": "document",
-      "message": "Визуальное расхождение 10.19% (> 0.30%) вне allowed_regions.json (33546/329160 px)",
+      "message": "Визуальное расхождение 10.24% (> 0.30%) вне allowed_regions.json (33693/329160 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/390x844/modal_composer.png",
       "rect": null
     },
@@ -47460,6 +48405,26 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1210x756",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1210x756__e-console-error__6.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1210x756",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1210x756__e-http-error__7.png"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -47484,7 +48449,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1210x756__d-dead-button-click-probe__6.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1210x756__d-dead-button-click-probe__8.png"
     },
     {
       "checkId": "d-dead-button-click-probe",
@@ -47575,7 +48540,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__b-narrow-text-column__7.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__b-narrow-text-column__9.png"
     },
     {
       "screen": "empty_vault",
@@ -47621,7 +48586,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__d-missing-aria-label__8.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__d-missing-aria-label__10.png"
     },
     {
       "screen": "empty_vault",
@@ -47873,7 +48838,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__d-dead-button-click-probe__9.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1210x756__d-dead-button-click-probe__11.png"
     },
     {
       "checkId": "d-dead-button-click-probe",
@@ -48024,7 +48989,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1210x756__d-missing-aria-label__10.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1210x756__d-missing-aria-label__12.png"
     },
     {
       "screen": "empty_messages",
@@ -48066,7 +49031,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__b-clipped-text__11.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__b-clipped-text__13.png"
     },
     {
       "screen": "empty_home",
@@ -48097,7 +49062,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__b-narrow-text-column__12.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__b-narrow-text-column__14.png"
     },
     {
       "screen": "empty_home",
@@ -48128,7 +49093,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__c-duplicate-accessible-name__13.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__c-duplicate-accessible-name__15.png"
     },
     {
       "screen": "empty_home",
@@ -48144,7 +49109,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__d-missing-aria-label__14.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__d-missing-aria-label__16.png"
     },
     {
       "screen": "empty_home",
@@ -48325,7 +49290,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__g-contrast-ratio__15.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__g-contrast-ratio__17.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -48388,6 +49353,26 @@
       }
     },
     {
+      "checkId": "e-console-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1440x900",
+      "selector": "document",
+      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__e-console-error__18.png"
+    },
+    {
+      "checkId": "e-http-error",
+      "category": "runtime",
+      "severity": "error",
+      "screen": "empty_home",
+      "viewport": "1440x900",
+      "selector": "network",
+      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)",
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1440x900__e-http-error__19.png"
+    },
+    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -48412,7 +49397,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__b-narrow-text-column__16.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__b-narrow-text-column__20.png"
     },
     {
       "screen": "empty_vault",
@@ -48458,7 +49443,7 @@
         "width": 234,
         "height": 48
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__d-missing-aria-label__17.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__d-missing-aria-label__21.png"
     },
     {
       "screen": "empty_vault",
@@ -48639,7 +49624,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__g-contrast-ratio__18.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1440x900__g-contrast-ratio__22.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -48768,7 +49753,7 @@
       "screen": "empty_vault",
       "viewport": "1440x900",
       "selector": "document",
-      "message": "Визуальное расхождение 2.82% (> 0.30%) вне allowed_regions.json (36508/1296000 px)",
+      "message": "Визуальное расхождение 3.47% (> 0.30%) вне allowed_regions.json (45025/1296000 px)",
       "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/diffs/1440x900/empty_vault.png",
       "rect": null
     },
@@ -48786,7 +49771,7 @@
         "width": 72,
         "height": 900
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__a-horizontal-overflow-container__19.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__a-horizontal-overflow-container__23.png"
     },
     {
       "screen": "empty_messages",
@@ -48802,7 +49787,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__d-missing-aria-label__20.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1440x900__d-missing-aria-label__24.png"
     },
     {
       "screen": "empty_messages",
@@ -48844,7 +49829,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-clipped-text__21.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-clipped-text__25.png"
     },
     {
       "screen": "empty_home",
@@ -48875,7 +49860,7 @@
         "width": 200,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-narrow-text-column__22.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__b-narrow-text-column__26.png"
     },
     {
       "screen": "empty_home",
@@ -48906,7 +49891,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__c-duplicate-accessible-name__23.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__c-duplicate-accessible-name__27.png"
     },
     {
       "screen": "empty_home",
@@ -48922,7 +49907,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__d-missing-aria-label__24.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__d-missing-aria-label__28.png"
     },
     {
       "screen": "empty_home",
@@ -49103,7 +50088,7 @@
         "width": 132,
         "height": 23
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__g-contrast-ratio__25.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__g-contrast-ratio__29.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -49166,26 +50151,6 @@
       }
     },
     {
-      "checkId": "e-console-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "empty_home",
-      "viewport": "1024x768",
-      "selector": "document",
-      "message": "Console error: Failed to load resource: the server responded with a status of 422 ()",
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__e-console-error__26.png"
-    },
-    {
-      "checkId": "e-http-error",
-      "category": "runtime",
-      "severity": "error",
-      "screen": "empty_home",
-      "viewport": "1024x768",
-      "selector": "network",
-      "message": "HTTP 422 (POST https://jryhluhgjricjbkimsfa.supabase.co/auth/v1/signup)",
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__1024x768__e-http-error__27.png"
-    },
-    {
       "checkId": "f-pixel-diff-exceeded",
       "category": "pixel-diff",
       "severity": "error",
@@ -49210,7 +50175,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__b-narrow-text-column__28.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__b-narrow-text-column__30.png"
     },
     {
       "screen": "empty_vault",
@@ -49256,7 +50221,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__d-missing-aria-label__29.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__d-missing-aria-label__31.png"
     },
     {
       "screen": "empty_vault",
@@ -49437,7 +50402,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__g-contrast-ratio__30.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__1024x768__g-contrast-ratio__32.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -49584,7 +50549,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1024x768__d-missing-aria-label__31.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__1024x768__d-missing-aria-label__33.png"
     },
     {
       "screen": "empty_messages",
@@ -49626,7 +50591,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__b-clipped-text__32.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__b-clipped-text__34.png"
     },
     {
       "screen": "empty_home",
@@ -49657,7 +50622,7 @@
         "width": 36,
         "height": 36
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__c-duplicate-accessible-name__33.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__c-duplicate-accessible-name__35.png"
     },
     {
       "screen": "empty_home",
@@ -49673,7 +50638,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__d-missing-aria-label__34.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__820x1180__d-missing-aria-label__36.png"
     },
     {
       "screen": "empty_home",
@@ -49820,7 +50785,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__b-narrow-text-column__35.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__b-narrow-text-column__37.png"
     },
     {
       "screen": "empty_vault",
@@ -49836,7 +50801,7 @@
         "width": 50,
         "height": 50
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__d-missing-aria-label__36.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__d-missing-aria-label__38.png"
     },
     {
       "screen": "empty_vault",
@@ -49972,7 +50937,7 @@
         "width": 97,
         "height": 34
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__g-contrast-ratio__37.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__820x1180__g-contrast-ratio__39.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -50044,7 +51009,7 @@
         "width": 179,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__820x1180__d-missing-aria-label__38.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__820x1180__d-missing-aria-label__40.png"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
@@ -50071,7 +51036,7 @@
         "width": 74,
         "height": 16
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__b-clipped-text__39.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__b-clipped-text__41.png"
     },
     {
       "screen": "empty_home",
@@ -50102,7 +51067,7 @@
         "width": 135,
         "height": 51
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__d-missing-aria-label__40.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_home__390x844__d-missing-aria-label__42.png"
     },
     {
       "screen": "empty_home",
@@ -50219,7 +51184,7 @@
         "width": 357,
         "height": 44
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__a-horizontal-overflow-container__41.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__a-horizontal-overflow-container__43.png"
     },
     {
       "screen": "empty_vault",
@@ -50235,7 +51200,7 @@
         "width": 211,
         "height": 24
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__b-narrow-text-column__42.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__b-narrow-text-column__44.png"
     },
     {
       "screen": "empty_vault",
@@ -50251,7 +51216,7 @@
         "width": 152,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-missing-aria-label__43.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-missing-aria-label__45.png"
     },
     {
       "screen": "empty_vault",
@@ -50267,7 +51232,7 @@
         "width": 301,
         "height": 21
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-small-tap-target__44.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__d-small-tap-target__46.png"
     },
     {
       "screen": "empty_vault",
@@ -50373,7 +51338,7 @@
         "width": 97,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__g-contrast-ratio__45.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_vault__390x844__g-contrast-ratio__47.png"
     },
     {
       "checkId": "g-contrast-ratio",
@@ -50445,7 +51410,7 @@
         "width": 307,
         "height": 20
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-small-tap-target__46.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-small-tap-target__48.png"
     },
     {
       "screen": "empty_messages",
@@ -50461,7 +51426,7 @@
         "width": 179,
         "height": 40
       },
-      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-missing-aria-label__47.png"
+      "screenshot": "/Users/user/Desktop/ogonyok-ai-clone/review/guard-artifacts/empty_messages__390x844__d-missing-aria-label__49.png"
     },
     {
       "checkId": "f-pixel-diff-exceeded",
