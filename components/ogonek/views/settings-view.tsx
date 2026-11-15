@@ -1,42 +1,21 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useState } from 'react'
 import {
   ArrowLeft,
   Bell,
-  Check,
   ChevronDown,
-  ChevronRight,
-  Download,
-  Eye,
-  Flame,
-  HelpCircle,
+  Database,
+  Info,
   Lock,
-  Moon,
+  MessageSquare,
   Palette,
-  Pipette,
-  RotateCcw,
+  Play,
+  ShieldCheck,
   Sparkles,
-  Sun,
-  SunDim,
-  Type,
-  Upload,
   User,
-  Volume2,
 } from 'lucide-react'
-import {
-  ACCENT_PRESETS,
-  FONT_SCALE_PRESETS,
-  THEME_PRESETS,
-} from '@/lib/ogonek/appearance'
-import {
-  playClick,
-  playSuccess,
-  playChatMessageSound,
-  playFriendRequestSound,
-  playMissedCallSound,
-} from '@/lib/ogonek/sound'
-import { exportStoreAsJson, validateAndImportJson } from '@/lib/ogonek/storage'
+import { playClick } from '@/lib/ogonek/sound'
 import type {
   AccentId,
   FeedDensityId,
@@ -46,13 +25,18 @@ import type {
   ThemeMode,
   ViewId,
 } from '@/lib/ogonek/types'
-import { SecurityPanel } from '../security'
-import { PrivacyPanel, StreakDeadlinePanel } from '../settings'
-import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
-import { normalizeTier } from '@/lib/ogonek/permissions'
-import { DifficultyLevelPanel } from '../settings/difficulty-level-panel'
-import { TelegramReminderPanel } from '../settings/telegram-reminder-panel'
-import { Button } from '../ui'
+import {
+  AboutPanel,
+  AppearancePanel,
+  ChatsPanel,
+  DataPanel,
+  NotificationsPanel,
+  PrivacyPanel,
+  ProfilePanel,
+  SecurityPanel,
+  TariffPanel,
+  TourPanel,
+} from '../settings'
 
 type Props = {
   state: OgonekStoreState
@@ -63,74 +47,17 @@ type Props = {
   onSetTheme: (theme: ThemeMode) => void
   onSetAccent: (accent: AccentId) => void
   onSetFontScale: (scale: FontScaleId) => void
-  onSetFeedDensity: (density: FeedDensityId) => void
+  onSetFeedDensity?: (density: FeedDensityId) => void
   onResetAppearance: () => void
   onImportState: (newState: OgonekStoreState) => void
   onResetToDefaults: () => void
   onUpdateProfile?: (patch: Partial<OgonekProfile>) => void
 }
 
-type SettingsSection = 'appearance' | 'diary' | 'notifications' | 'privacy' | 'account' | 'guide'
-
-const THEME_ICONS: Record<ThemeMode, typeof Moon> = {
-  'x-black': Moon,
-  'apple-light': Sun,
-  dim: SunDim,
-}
-
-const SECTIONS = [
-  { id: 'appearance' as SettingsSection, label: 'Внешний вид', hint: 'Тема, акцентный цвет, шрифт и звук', icon: Palette },
-  { id: 'diary' as SettingsSection, label: 'Дневник', hint: 'Уровень сложности, стрик и дедлайн дня', icon: Flame },
-  { id: 'notifications' as SettingsSection, label: 'Уведомления', hint: 'Напоминания в Telegram и расписание', icon: Bell },
-  { id: 'privacy' as SettingsSection, label: 'Приватность', hint: 'Видимость записей, Face ID и PIN-код', icon: Eye },
-  { id: 'account' as SettingsSection, label: 'Аккаунт', hint: 'Профиль, резервное копирование и сброс', icon: User },
-  { id: 'guide' as SettingsSection, label: 'Как пользоваться', hint: 'Руководство, правила стрика и уровней', icon: HelpCircle },
-] as const
-
-function HexColorInput({
-  currentAccent,
-  onSetAccent,
-}: {
-  currentAccent: string
-  onSetAccent: (val: any) => void
-}) {
-  const [localHex, setLocalHex] = useState(currentAccent.startsWith('#') ? currentAccent : '')
-
-  useEffect(() => {
-    if (currentAccent.startsWith('#')) {
-      setLocalHex(currentAccent)
-    }
-  }, [currentAccent])
-
-  return (
-    <input
-      type="text"
-      value={localHex}
-      placeholder="#FF5C00"
-      onChange={(e) => {
-        const val = e.target.value
-        setLocalHex(val)
-        const clean = val.trim()
-        if (/^#[0-9a-fA-F]{6}$/.test(clean)) {
-          onSetAccent(clean)
-        }
-      }}
-      onBlur={() => {
-        const clean = localHex.trim()
-        if (/^#[0-9a-fA-F]{6}$/.test(clean)) {
-          onSetAccent(clean)
-        } else if (!clean) {
-          setLocalHex('')
-        } else if (currentAccent.startsWith('#')) {
-          setLocalHex(currentAccent)
-        }
-      }}
-      className="w-24 h-8 px-2.5 text-xs font-mono font-bold rounded-lg border border-[var(--border)] bg-[var(--bg)] text-[var(--text)] outline-none focus:border-[var(--accent)]"
-      maxLength={7}
-      aria-label="HEX код акцента"
-    />
-  )
-}
+import {
+  SETTINGS_SECTIONS,
+  type SettingsSection,
+} from '@/lib/ogonek/settings-data'
 
 export function SettingsView({
   state,
@@ -141,530 +68,97 @@ export function SettingsView({
   onSetTheme,
   onSetAccent,
   onSetFontScale,
+  onSetFeedDensity,
+  onResetAppearance,
   onResetToDefaults,
   onImportState,
   onUpdateProfile,
 }: Props) {
-  const [activeSection, setActiveSection] = useState<SettingsSection | null>('appearance')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const isFree =
-    normalizeTier(
-      state.profile?.subscription_tier,
-      state.profile?.subscription_expires_at || (state.profile as any)?.subscription_valid_until
-    ) === 'free'
-
-  const handleExport = () => {
-    try {
-      const json = exportStoreAsJson(state)
-      const blob = new Blob([json], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `ogonek-backup-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      playSuccess(state.soundEnabled)
-      onNotify('Резервная копия сохранена')
-    } catch {
-      onNotify('Ошибка при экспорте данных')
-    }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      const raw = event.target?.result as string
-      const res = validateAndImportJson(raw)
-      if (res.success) {
-        onImportState(res.data)
-        playSuccess(state.soundEnabled)
-        onNotify('Данные успешно импортированы')
-      } else {
-        onNotify(res.error || 'Неверный формат файла бэкапа')
-      }
-    }
-    reader.readAsText(file)
-  }
+  const [activeSection, setActiveSection] = useState<SettingsSection | null>('profile')
 
   const renderSectionContent = (sec: SettingsSection) => {
     switch (sec) {
+      case 'profile':
+        return (
+          <ProfilePanel
+            profile={state.profile}
+            soundEnabled={state.soundEnabled}
+            onUpdateProfile={onUpdateProfile}
+            onNotify={onNotify}
+          />
+        )
+
       case 'appearance':
         return (
-          <div className="flex flex-col gap-5 p-4 sm:p-5">
-            {/* Тема оформления */}
-            <div className="flex flex-col gap-3">
-              <div>
-                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <Moon size={16} className="text-[var(--accent)]" /> Тема оформления
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Тёмная X Black, Dim или светлая Apple Light
-                </p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                {THEME_PRESETS.map((t) => {
-                  const Icon = THEME_ICONS[t.id]
-                  const active = state.theme === t.id
-                  return (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        onSetTheme(t.id)
-                        playClick(state.soundEnabled)
-                      }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
-                        active
-                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)] shadow-sm'
-                          : 'border-[var(--border)] bg-[var(--bg-elev)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
-                      }`}
-                    >
-                      <Icon size={20} className={active ? 'text-[var(--accent)]' : ''} />
-                      <span className="text-[12px] font-bold mt-1.5">{t.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Акцентный цвет */}
-            <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
-              <div>
-                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <Palette size={16} className="text-[var(--accent)]" /> Акцентный цвет
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Главный цвет кнопок, бейджей и активных элементов
-                </p>
-              </div>
-
-              {/* 6 Пресетов */}
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                {ACCENT_PRESETS.map((a) => {
-                  const active = state.accent === a.id
-                  return (
-                    <button
-                      key={a.id}
-                      type="button"
-                      onClick={() => {
-                        onSetAccent(a.id)
-                        playClick(state.soundEnabled)
-                      }}
-                      className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border text-center transition-all ${
-                        active
-                          ? 'border-[var(--text)] bg-[var(--bg-elev)] shadow-sm'
-                          : 'border-[var(--border)] bg-[var(--bg-elev)]/50 hover:border-[var(--border-strong)]'
-                      }`}
-                    >
-                      <span
-                        className="w-5 h-5 rounded-full shadow-sm mb-1"
-                        style={{ background: a.color }}
-                      />
-                      <span className="text-[13px] font-semibold text-[var(--text)] truncate w-full">
-                        {a.label}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Выбор своего цвета (Color Picker) */}
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border border-[var(--border)] mt-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative">
-                    <input
-                      type="color"
-                      id="settings-custom-color-picker"
-                      value={state.accent.startsWith('#') ? state.accent : '#FF5C00'}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        if (isFree) {
-                          window.dispatchEvent(
-                            new CustomEvent('ogonek:open-upgrade', {
-                              detail: { feature: 'accent', requiredTier: 'ultra', force: true },
-                            })
-                          )
-                          onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
-                          return
-                        }
-                        onSetAccent(val as any)
-                      }}
-                      className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
-                      aria-label="Выбрать свой цвет"
-                    />
-                    <div
-                      className="w-9 h-9 rounded-full border-2 border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-105"
-                      style={{
-                        background: state.accent.startsWith('#') ? state.accent : 'var(--accent)',
-                      }}
-                    >
-                      <Pipette size={14} className="text-white drop-shadow" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-bold text-[var(--text)] flex items-center gap-1.5">
-                      <span>Свой цвет (HEX)</span>
-                      {isFree && <Lock size={12} className="text-amber-400" />}
-                    </p>
-                    <p className="text-[12px] text-[var(--text-2)]">
-                      {state.accent.startsWith('#') ? state.accent.toUpperCase() : isFree ? 'Доступно на тарифе Ultra' : 'Выбери любой оттенок'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <HexColorInput
-                    currentAccent={state.accent}
-                    onSetAccent={(val) => {
-                      if (isFree) {
-                        window.dispatchEvent(
-                          new CustomEvent('ogonek:open-upgrade', {
-                            detail: { feature: 'accent', requiredTier: 'ultra', force: true },
-                          })
-                        )
-                        onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
-                        return
-                      }
-                      onSetAccent(val)
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Размер шрифта */}
-            <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
-              <div>
-                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <Type size={16} className="text-[var(--accent)]" /> Размер шрифта
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Масштабирование текста интерфейса
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {FONT_SCALE_PRESETS.map((f) => {
-                  const active = state.fontScale === f.id
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => {
-                        onSetFontScale(f.id)
-                        playClick(state.soundEnabled)
-                      }}
-                      className={`p-2.5 rounded-xl border text-center text-[13px] font-semibold transition-all ${
-                        active
-                          ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
-                          : 'border-[var(--border)] bg-[var(--bg-elev)] text-[var(--text-2)]'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Звуковые эффекты */}
-            <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
-              <div>
-                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <Volume2 size={16} className="text-[var(--accent)]" /> Звуковые эффекты
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Тактильный отклик и щелчки при взаимодействии
-                </p>
-              </div>
-
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={state.soundEnabled}
-                  onChange={(e) => onSetSoundEnabled(e.target.checked)}
-                  className="sr-only"
-                />
-                <div
-                  className={`w-11 h-6 rounded-full transition-colors ${
-                    state.soundEnabled ? 'bg-[var(--accent)]' : 'bg-[var(--border)]'
-                  }`}
-                >
-                  <div
-                    className={`w-5 h-5 rounded-full bg-white transition-transform absolute top-0.5 left-0.5 ${
-                      state.soundEnabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                  />
-                </div>
-              </label>
-            </div>
-          </div>
-        )
-
-      case 'diary':
-        return (
-          <div className="flex flex-col gap-5 p-4 sm:p-5">
-            <DifficultyLevelPanel
-              currentLevel={state.profile.level ?? 5}
-              levelChangedAtISO={state.profile.levelChangedAtISO ?? null}
-              soundEnabled={state.soundEnabled}
-              onChangeLevel={(newLevel) => {
-                onUpdateProfile?.({ level: newLevel, levelChangedAtISO: new Date().toISOString() })
-              }}
-              onNotify={onNotify}
-            />
-
-            <StreakDeadlinePanel onNotify={onNotify} />
-          </div>
-        )
-
-      case 'notifications':
-        return (
-          <div className="flex flex-col gap-5 p-4 sm:p-5">
-            {/* Настройки звука и уведомлений */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-bold text-[var(--text)]">Звуковые эффекты</h3>
-                  <p className="text-xs text-[var(--text-2)] mt-0.5">
-                    Мягкие звуки новых сообщений, заявок в друзья и пропущенных звонков
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={state.soundEnabled}
-                  aria-label="Включить звуковые эффекты"
-                  onClick={() => {
-                    const next = !state.soundEnabled
-                    onSetSoundEnabled(next)
-                    if (next) playChatMessageSound(state.soundVolume, true)
-                  }}
-                  className={`w-12 h-6 rounded-full transition-colors relative flex items-center px-0.5 ${
-                    state.soundEnabled ? 'bg-[var(--accent)]' : 'bg-zinc-800'
-                  }`}
-                >
-                  <span
-                    className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
-                      state.soundEnabled ? 'translate-x-6' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {state.soundEnabled && (
-                <div className="flex flex-col gap-3 pt-3 border-t border-[var(--line)]">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-[var(--text)]">Громкость звука</span>
-                    <span className="font-mono text-[var(--muted)]">
-                      {Math.round((state.soundVolume ?? 0.8) * 100)}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.05"
-                    value={state.soundVolume ?? 0.8}
-                    onChange={(e) => {
-                      const vol = parseFloat(e.target.value)
-                      onSetSoundVolume?.(vol)
-                    }}
-                    aria-label="Громкость звука"
-                    className="w-full accent-[var(--accent)] cursor-pointer"
-                  />
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-xs text-[var(--muted)] mr-1">Проверить:</span>
-                    <button
-                      type="button"
-                      onClick={() => playChatMessageSound(state.soundVolume, true)}
-                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
-                    >
-                      Сообщение
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => playFriendRequestSound(state.soundVolume, true)}
-                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
-                    >
-                      Заявка
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => playMissedCallSound(state.soundVolume, true)}
-                      className="px-2.5 py-1 text-xs font-medium rounded-lg bg-[var(--surface2)] hover:bg-white/10 text-[var(--text)] transition-colors"
-                    >
-                      Звонок
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <TelegramReminderPanel
-              chatId={state.profile.telegramChatId}
-              reminderTimes={state.profile.reminderTimes}
-              soundEnabled={state.soundEnabled}
-              onNotify={onNotify}
-              onSaveChatId={(id) => onUpdateProfile?.({ telegramChatId: id })}
-              onSaveReminderTimes={(times) => onUpdateProfile?.({ reminderTimes: times })}
-            />
-          </div>
+          <AppearancePanel
+            theme={state.theme}
+            accent={state.accent}
+            fontScale={state.fontScale}
+            feedDensity={state.feedDensity}
+            soundEnabled={state.soundEnabled}
+            subscriptionTier={state.profile.subscription_tier}
+            subscriptionExpiresAt={
+              state.profile.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+            }
+            onSetTheme={onSetTheme}
+            onSetAccent={onSetAccent}
+            onSetFontScale={onSetFontScale}
+            onSetFeedDensity={onSetFeedDensity}
+            onSetSoundEnabled={onSetSoundEnabled}
+            onResetAppearance={onResetAppearance}
+            onNotify={onNotify}
+          />
         )
 
       case 'privacy':
+        return <PrivacyPanel onNotify={onNotify} />
+
+      case 'notifications':
         return (
-          <div className="flex flex-col gap-5 p-4 sm:p-5">
-            <PrivacyPanel onNotify={onNotify} />
-            <SecurityPanel onNotify={onNotify} />
-          </div>
+          <NotificationsPanel
+            profile={state.profile}
+            soundEnabled={state.soundEnabled}
+            soundVolume={state.soundVolume}
+            onSetSoundEnabled={onSetSoundEnabled}
+            onSetSoundVolume={onSetSoundVolume}
+            onUpdateProfile={onUpdateProfile}
+            onNotify={onNotify}
+          />
         )
 
-      case 'account':
+      case 'chats':
+        return <ChatsPanel soundEnabled={state.soundEnabled} onNotify={onNotify} />
+
+      case 'security':
+        return <SecurityPanel onNotify={onNotify} />
+
+      case 'data':
         return (
-          <div className="flex flex-col gap-5 p-4 sm:p-5">
-            {/* Данные профиля */}
-            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg text-white"
-                  style={{ background: state.profile.avatarColor || 'var(--accent)' }}
-                >
-                  {state.profile.displayName.slice(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="font-bold text-[15px] text-[var(--text)]">
-                    {state.profile.displayName}
-                  </h3>
-                  <p className="text-[13px] text-[var(--text-2)]">
-                    @{state.profile.username}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('profile')}
-                className="h-8 px-4 rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)] text-[13px] font-bold transition-colors"
-              >
-                Профиль
-              </button>
-            </div>
-
-            {/* Перенос старого дневника в облако (705 дней) — строго для cernavation */}
-            {(state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)?.snapshot?.username || state.profile.username || '').toLowerCase() === 'cernavation' && (
-              <LegacyMigrationBanner
-                userId={state.auth.activeAccountId || 'acc-owner'}
-                localDaysCount={state.days.length || 705}
-                localDays={state.days}
-                soundEnabled={state.soundEnabled}
-                onNotify={onNotify}
-              />
-            )}
-
-            {/* Резервная копия */}
-            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
-              <div>
-                <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <Download size={16} className="text-[var(--accent)]" /> Резервное копирование
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Сохранение всех записей дневника в локальный JSON файл
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={handleExport}
-                  className="h-9 px-4 rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] text-[13px] font-extrabold inline-flex items-center gap-1.5 transition-colors"
-                >
-                  <Download size={15} />
-                  <span>Скачать JSON</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="h-9 px-4 rounded-full border border-[var(--border)] text-[var(--text)] hover:bg-[var(--bg-hover)] text-[13px] font-bold inline-flex items-center gap-1.5 transition-colors"
-                >
-                  <Upload size={15} />
-                  <span>Импортировать JSON</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
-              </div>
-            </div>
-
-            {/* Сброс к демо */}
-            <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-between">
-              <div>
-                <h3 className="text-[15px] font-bold text-rose-500">
-                  Сброс к демо-данным
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-                  Вернуть дневник в исходное состояние
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm('Сбросить все данные дневника к демо-состоянию?')) {
-                    onResetToDefaults()
-                    onNotify('Данные сброшены к демо')
-                  }
-                }}
-                className="h-8 px-4 rounded-full border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 text-[13px] font-bold inline-flex items-center gap-1.5 transition-colors"
-              >
-                <RotateCcw size={14} />
-                <span>Сбросить</span>
-              </button>
-            </div>
-          </div>
+          <DataPanel
+            state={state}
+            onImportState={onImportState}
+            onResetToDefaults={onResetToDefaults}
+            onNotify={onNotify}
+          />
         )
 
-      case 'guide':
+      case 'tariff':
         return (
-          <div className="flex flex-col gap-4 p-4 sm:p-5">
-            <div className="p-5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
-              <div>
-                <h3 className="text-[16px] font-bold text-[var(--text)] flex items-center gap-2">
-                  <HelpCircle size={18} className="text-[var(--accent)]" /> Как пользоваться Огоньком
-                </h3>
-                <p className="text-[13px] text-[var(--text-2)] mt-1.5 leading-relaxed">
-                  «Огонёк» — твой честный дневник силы без фальши и токсичной продуктивности.
-                  Каждый день фиксируй свои победы и слова благодарности.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2 pt-3 border-t border-[var(--border)] text-[13px] text-[var(--text-2)]">
-                <p>• <b>Стрик никогда не сгорает</b>: стрик равен общему количеству закрытых дней.</p>
-                <p>• <b>Уровни сложности 1–5</b>: требуют от 1 до 5 побед каждый день.</p>
-                <p>• <b>Evidence Vault</b>: прикрепляй фотофиксации и сертификаты к рекордам.</p>
-              </div>
-
-              <button
-                type="button"
-                id="settings-guide-restart-tour-btn"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('ogonek:open-tour'))
-                }}
-                className="x-primary-btn mt-3 py-2.5 px-4 rounded-full text-[14px] font-bold text-center"
-              >
-                Пройти интерактивный тур заново
-              </button>
-            </div>
-          </div>
+          <TariffPanel
+            profile={state.profile}
+            soundEnabled={state.soundEnabled}
+            onNotify={onNotify}
+          />
         )
+
+      case 'tour':
+        return <TourPanel soundEnabled={state.soundEnabled} onNotify={onNotify} />
+
+      case 'about':
+        return <AboutPanel />
+
+      default:
+        return null
     }
   }
 
@@ -685,7 +179,7 @@ export function SettingsView({
             Настройки
           </h1>
           <p className="text-[13px] text-[var(--muted)] font-normal">
-            Персонализация дневника и системы
+            Персонализация дневника, приватность и безопасность
           </p>
         </div>
       </header>
@@ -712,9 +206,9 @@ export function SettingsView({
         </button>
       </div>
 
-      {/* Main Settings Container: вертикальная вёрстка в колонку (X.com standard внутри 600px) */}
+      {/* Main Settings Container: 10 подразделов */}
       <div className="w-full divide-y divide-[var(--border)]" role="tablist" aria-label="Разделы настроек">
-        {SECTIONS.map((sec) => {
+        {SETTINGS_SECTIONS.map((sec) => {
           const Icon = sec.icon
           const isSelected = activeSection === sec.id
 
@@ -723,6 +217,7 @@ export function SettingsView({
               <button
                 type="button"
                 role="tab"
+                id={`settings-tab-${sec.id}`}
                 onClick={() => {
                   playClick(state.soundEnabled)
                   setActiveSection(isSelected ? null : sec.id)
@@ -735,6 +230,7 @@ export function SettingsView({
                 aria-label={sec.label}
                 aria-selected={isSelected}
                 aria-expanded={isSelected}
+                aria-controls={`settings-panel-${sec.id}`}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div
@@ -750,7 +246,7 @@ export function SettingsView({
                     <p className="text-[15px] font-bold text-[var(--text)] leading-tight">
                       {sec.label}
                     </p>
-                    <p className="text-[13px] text-[var(--text-2)] truncate mt-0.5">
+                    <p className="text-[12px] text-[var(--text-2)] break-words mt-0.5 leading-snug">
                       {sec.hint}
                     </p>
                   </div>
@@ -766,9 +262,12 @@ export function SettingsView({
                 </div>
               </button>
 
-              {/* Vertical section expansion in full 600px width */}
+              {/* Vertical section expansion in full width */}
               {isSelected && (
-                <div className="border-t border-[var(--border)] bg-[var(--bg)] animate-in fade-in duration-200">
+                <div
+                  id={`settings-panel-${sec.id}`}
+                  className="border-t border-[var(--border)] bg-[var(--bg)] animate-in fade-in duration-200"
+                >
                   {renderSectionContent(sec.id)}
                 </div>
               )}

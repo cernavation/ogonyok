@@ -33,6 +33,11 @@ export interface ProfileRecord {
   onboarding_completed?: boolean
   subscription_tier?: 'free' | 'premium' | 'ultra'
   avatar_color?: string | null
+  who_can_find?: 'everyone' | 'friends' | 'nobody'
+  who_can_message?: 'everyone' | 'friends' | 'nobody'
+  who_can_call?: 'everyone' | 'friends' | 'nobody'
+  who_can_see_online?: 'everyone' | 'friends' | 'nobody'
+  default_day_visibility?: 'private' | 'friends' | 'public'
   created_at?: string
   updated_at?: string
 }
@@ -1281,6 +1286,11 @@ export async function updateProfileInDb(
     }
     if (patch.is_anonymous !== undefined) updates.is_anonymous = patch.is_anonymous
     if (patch.privacy !== undefined) updates.privacy = patch.privacy
+    if (patch.who_can_find !== undefined) updates.who_can_find = patch.who_can_find
+    if (patch.who_can_message !== undefined) updates.who_can_message = patch.who_can_message
+    if (patch.who_can_call !== undefined) updates.who_can_call = patch.who_can_call
+    if (patch.who_can_see_online !== undefined) updates.who_can_see_online = patch.who_can_see_online
+    if (patch.default_day_visibility !== undefined) updates.default_day_visibility = patch.default_day_visibility
     if (patch.settings !== undefined) updates.settings = patch.settings
 
     // Если обновляется уровень, дублируем в settings.level для 100% совместимости
@@ -2305,6 +2315,60 @@ export async function saveChatFoldersToDb(
       )
     }
   } catch {}
+}
+
+export type BlockedProfile = {
+  id: string
+  username: string
+  display_name: string
+  avatar_url?: string | null
+  blocked_at: string
+}
+
+export async function getBlockedProfiles(viewerId?: string): Promise<{ ok: boolean; profiles: BlockedProfile[]; error?: string }> {
+  try {
+    const supabase = getSupabase()
+    if (!supabase) return { ok: true, profiles: [] }
+    const currentUid = viewerId || (await supabase.auth.getUser()).data.user?.id
+    if (!currentUid) return { ok: true, profiles: [] }
+
+    // Пробуем вызвать RPC get_blocked_profiles
+    try {
+      const { data, error } = await supabase.rpc('get_blocked_profiles', { p_viewer_id: currentUid })
+      if (!error && Array.isArray(data)) {
+        return { ok: true, profiles: data }
+      }
+    } catch {}
+
+    // Фолбэк: выборка из blocks
+    const { data: rawBlocks } = await supabase
+      .from('blocks')
+      .select('blocked_id, created_at')
+      .eq('blocker_id', currentUid)
+
+    if (Array.isArray(rawBlocks) && rawBlocks.length > 0) {
+      const ids = rawBlocks.map((b) => b.blocked_id)
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, avatar_url')
+        .in('id', ids)
+      const profMap = new Map((profs || []).map((p) => [p.id, p]))
+      const mapped = rawBlocks.map((b) => {
+        const p = profMap.get(b.blocked_id)
+        return {
+          id: b.blocked_id,
+          username: p?.username || 'пользователь',
+          display_name: p?.display_name || 'Пользователь',
+          avatar_url: p?.avatar_url || null,
+          blocked_at: b.created_at,
+        }
+      })
+      return { ok: true, profiles: mapped }
+    }
+    return { ok: true, profiles: [] }
+  } catch (err: any) {
+    return { ok: false, profiles: [], error: err?.message }
+  }
 }
 
 // Re-export social service functions

@@ -1,5 +1,6 @@
 'use client'
 
+import React, { useEffect, useMemo, useState, type ComponentType } from 'react'
 import {
   BadgeCheck,
   Check,
@@ -7,14 +8,16 @@ import {
   Globe,
   Lock,
   MessageSquare,
+  Phone,
+  Radio,
   RotateCcw,
   Search,
   ShieldCheck,
   Trophy,
+  UserCheck,
   UserX,
   Users,
 } from 'lucide-react'
-import { useMemo, type ComponentType } from 'react'
 import {
   INTERACTION_AUDIENCE_OPTIONS,
   PROFILE_VISIBILITY_OPTIONS,
@@ -25,7 +28,8 @@ import {
 } from '@/lib/ogonek/privacy'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import type { InteractionAudience, PrivacySettings } from '@/lib/ogonek/types'
+import { getBlockedProfiles, type BlockedProfile } from '@/lib/supabase/api'
+import type { PrivacySettings } from '@/lib/ogonek/types'
 
 type Props = {
   onNotify: (message: string) => void
@@ -43,12 +47,11 @@ type ToggleKey =
 
 const TOGGLES: {
   key: ToggleKey
-  icon: ComponentType<{ size?: number }>
+  icon: ComponentType<{ size?: number; className?: string }>
   onLabel: string
   onHint: string
   offLabel: string
   offHint: string
-  /** Значение, которое считается «приватным» (подсвечивается акцентом) */
   privateWhen: boolean
 }[] = [
   {
@@ -98,6 +101,12 @@ const TOGGLES: {
   },
 ]
 
+const ACCESS_OPTIONS = [
+  { id: 'everyone' as const, label: 'Все' },
+  { id: 'friends' as const, label: 'Только друзья' },
+  { id: 'nobody' as const, label: 'Никто' },
+]
+
 export function PrivacyPanel({ onNotify }: Props) {
   const {
     state,
@@ -114,10 +123,59 @@ export function PrivacyPanel({ onNotify }: Props) {
   const score = useMemo(() => evaluatePrivacyScore(privacy), [privacy])
   const activeVisibility = profileVisibilityMeta(privacy.profileVisibility)
 
+  // Список заблокированных пользователей
+  const [blockedUsers, setBlockedUsers] = useState<BlockedProfile[]>([])
+  const [loadingBlocked, setLoadingBlocked] = useState(false)
+  const [unblockingId, setUnblockingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    const load = async () => {
+      setLoadingBlocked(true)
+      const res = await getBlockedProfiles()
+      if (mounted && res.ok) {
+        setBlockedUsers(res.profiles)
+      }
+      if (mounted) setLoadingBlocked(false)
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleUnblock = async (user: BlockedProfile) => {
+    try {
+      setUnblockingId(user.id)
+      playClick(sound)
+      const res = await fetch('/api/friends/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'unblock', targetUserId: user.id }),
+      })
+      if (res.ok) {
+        setBlockedUsers((prev) => prev.filter((b) => b.id !== user.id))
+        playSuccess(sound)
+        onNotify(`Пользователь @${user.username} разблокирован`)
+      } else {
+        onNotify('Не удалось разблокировать пользователя')
+      }
+    } catch {
+      onNotify('Ошибка соединения')
+    } finally {
+      setUnblockingId(null)
+    }
+  }
+
   const isDefault =
     privacy.profileVisibility === 'public' &&
     privacy.commentPolicy === 'everyone' &&
     privacy.chatPolicy === 'friends' &&
+    privacy.whoCanFind === 'everyone' &&
+    privacy.whoCanMessage === 'everyone' &&
+    privacy.whoCanCall === 'everyone' &&
+    privacy.whoCanSeeOnline === 'everyone' &&
+    privacy.defaultDayVisibility === 'public' &&
     privacy.showStreakPublicly &&
     privacy.showBadgesPublicly &&
     privacy.searchableByUsername &&
@@ -131,22 +189,6 @@ export function PrivacyPanel({ onNotify }: Props) {
       next === 'private'
         ? 'Аккаунт закрыт: записи видят только друзья'
         : 'Профиль открыт: записи доступны в глобальной ленте'
-    )
-  }
-
-  const handleAudience = (
-    field: 'commentPolicy' | 'chatPolicy',
-    next: InteractionAudience
-  ) => {
-    if (privacy[field] === next) return
-    if (field === 'commentPolicy') setCommentPolicy(next)
-    else setChatPolicy(next)
-    playClick(sound)
-    const meta = audienceMeta(next)
-    onNotify(
-      field === 'commentPolicy'
-        ? `Комментарии: ${meta.label.toLowerCase()}`
-        : `Сообщения: ${meta.label.toLowerCase()}`
     )
   }
 
@@ -164,109 +206,240 @@ export function PrivacyPanel({ onNotify }: Props) {
   }
 
   return (
-    <section className="settings-section privacy-panel" aria-labelledby="privacy-title">
-      <div className="appearance-section-head">
+    <div className="flex flex-col gap-5 p-4 sm:p-5" aria-labelledby="privacy-title">
+      {/* ── Заголовок и индикатор приватности ─────────────────────────── */}
+      <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
         <div>
-          <b id="privacy-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <ShieldCheck size={16} style={{ color: 'var(--accent)' }} /> Приватность профиля
-          </b>
-          <small>{buildPrivacySummary(privacy)}</small>
+          <h2 id="privacy-title" className="text-[16px] font-bold text-[var(--text)] flex items-center gap-2">
+            <ShieldCheck size={18} className="text-[var(--accent)]" /> Приватность профиля и данных
+          </h2>
+          <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+            {buildPrivacySummary(privacy)}
+          </p>
         </div>
-        <span className={`privacy-score-badge privacy-score-badge--${score.level}`} title={score.label}>
-          <Lock size={12} /> {score.label}
+        <span
+          className="px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-[var(--border)]"
+          style={{
+            background: score.level === 'closed' ? 'rgba(34,197,94,0.1)' : score.level === 'balanced' ? 'rgba(59,130,246,0.1)' : 'rgba(234,179,8,0.1)',
+            color: score.level === 'closed' ? '#22c55e' : score.level === 'balanced' ? '#3b82f6' : '#eab308',
+          }}
+        >
+          <Lock size={12} /> {score.label} ({score.percent}%)
         </span>
       </div>
 
       {/* ── Кольцо приватности + сводка ─────────────────────────────────── */}
-      <div className="privacy-hero">
-        <div className="privacy-ring" aria-hidden="true">
-          <svg viewBox="0 0 108 108">
-            <circle className="privacy-ring__track" cx="54" cy="54" r={RING_RADIUS} />
+      <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex items-center gap-4">
+        <div className="relative shrink-0 w-20 h-20 flex items-center justify-center">
+          <svg viewBox="0 0 108 108" className="w-full h-full -rotate-90">
             <circle
-              className="privacy-ring__value"
               cx="54"
               cy="54"
               r={RING_RADIUS}
+              className="fill-none stroke-[var(--border)] stroke-[8]"
+            />
+            <circle
+              cx="54"
+              cy="54"
+              r={RING_RADIUS}
+              className="fill-none stroke-[var(--accent)] stroke-[8] transition-all duration-500"
               style={{
                 strokeDasharray: `${(score.percent / 100) * RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`,
+                strokeLinecap: 'round',
               }}
             />
           </svg>
-          <span className="privacy-ring__label">
-            <b>{score.percent}%</b>
-            <small>приватность</small>
-          </span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span className="text-[15px] font-black leading-tight text-[var(--text)]">{score.percent}%</span>
+            <span className="text-[9px] uppercase tracking-wider text-[var(--text-3)] font-bold">индекс</span>
+          </div>
         </div>
 
-        <div className="privacy-hero__info">
-          <b className="privacy-hero__title">
-            <span aria-hidden="true">{activeVisibility.emoji}</span> {activeVisibility.label}
-          </b>
-          <p className="privacy-hero__text">{activeVisibility.description}</p>
-          <div className="privacy-hero__chips">
-            <span className={`privacy-chip ${privacy.profileVisibility === 'private' ? 'is-on' : ''}`}>
-              <Lock size={12} /> {activeVisibility.shortLabel}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{activeVisibility.emoji}</span>
+            <h3 className="text-[15px] font-bold text-[var(--text)]">{activeVisibility.label}</h3>
+          </div>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5 leading-relaxed break-words">
+            {activeVisibility.description}
+          </p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--bg)] border border-[var(--border)] text-[var(--text-2)] flex items-center gap-1">
+              <Lock size={10} /> {activeVisibility.shortLabel}
             </span>
-            <span className="privacy-chip">
-              <MessageSquare size={12} /> Коммент: {audienceMeta(privacy.commentPolicy).shortLabel}
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--bg)] border border-[var(--border)] text-[var(--text-2)] flex items-center gap-1">
+              <MessageSquare size={10} /> Сообщения: {privacy.whoCanMessage === 'everyone' ? 'Все' : privacy.whoCanMessage === 'friends' ? 'Друзья' : 'Никто'}
             </span>
-            <span className="privacy-chip">
-              <Users size={12} /> Чат: {audienceMeta(privacy.chatPolicy).shortLabel}
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--bg)] border border-[var(--border)] text-[var(--text-2)] flex items-center gap-1">
+              <Phone size={10} /> Звонки: {privacy.whoCanCall === 'everyone' ? 'Все' : privacy.whoCanCall === 'friends' ? 'Друзья' : 'Никто'}
             </span>
           </div>
         </div>
       </div>
 
-      {/* ── Тип аккаунта ─────────────────────────────────────────────────── */}
-      <div className="privacy-group">
-        <b className="privacy-group__label">
-          <Globe size={14} /> Тип аккаунта
-        </b>
-        <div className="privacy-visibility-grid" role="radiogroup" aria-label="Тип аккаунта">
-          {PROFILE_VISIBILITY_OPTIONS.map((option) => {
-            const active = option.id === privacy.profileVisibility
+      {/* ── 1. Кто может находить меня в поиске ─────────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Search size={15} className="text-[var(--accent)]" /> Кто может находить меня в поиске
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Определяет, отображается ли профиль в поиске хаба и результатах автокомплита
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Кто может находить меня">
+          {ACCESS_OPTIONS.map((opt) => {
+            const active = (privacy.whoCanFind || 'everyone') === opt.id
             return (
               <button
-                key={option.id}
+                key={opt.id}
                 type="button"
                 role="radio"
                 aria-checked={active}
-                className={`privacy-visibility-card ${active ? 'is-active' : ''}`}
-                style={active ? { borderColor: option.color } : undefined}
-                onClick={() => handleVisibility(option.id)}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ whoCanFind: opt.id })
+                  onNotify(`Поиск: ${opt.label}`)
+                }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
               >
-                <span className="privacy-visibility-card__emoji" aria-hidden="true">
-                  {option.emoji}
-                </span>
-                <span className="privacy-visibility-card__body">
-                  <b>{option.label}</b>
-                  <small>{option.description}</small>
-                </span>
-                {active && (
-                  <span className="privacy-visibility-card__check" aria-hidden="true">
-                    <Check size={13} />
-                  </span>
-                )}
+                {opt.label}
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* ── Приватность записей по умолчанию ───────────────────────────── */}
-      <div className="privacy-group">
-        <b className="privacy-group__label">
-          <Lock size={14} /> Приватность записей по умолчанию
-        </b>
-        <p className="text-xs text-[var(--text-2)] mb-2.5">
-          Новые дни и гордости автоматически предзаполняются выбранным значением
-        </p>
+      {/* ── 2. Кто может писать мне личные сообщения ─────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <MessageSquare size={15} className="text-[var(--accent)]" /> Кто может писать мне сообщения
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Применяется на уровне сервера PostgreSQL RLS: входящие диалоги от других будут заблокированы
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Кто может писать мне">
+          {ACCESS_OPTIONS.map((opt) => {
+            const active = (privacy.whoCanMessage || 'everyone') === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ whoCanMessage: opt.id })
+                  onNotify(`Сообщения: ${opt.label}`)
+                }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
-        <div className="segmented privacy-policy__seg" role="radiogroup" aria-label="Приватность записей по умолчанию">
+      {/* ── 3. Кто может звонить мне ───────────────────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Phone size={15} className="text-[var(--accent)]" /> Кто может звонить мне
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Проверяется RPC звонков: если звонящий не соответствует правилу, вызов автоматически отклоняется
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Кто может звонить мне">
+          {ACCESS_OPTIONS.map((opt) => {
+            const active = (privacy.whoCanCall || 'everyone') === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ whoCanCall: opt.id })
+                  onNotify(`Звонки: ${opt.label}`)
+                }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── 4. Кто видит статус «в сети» ───────────────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Radio size={15} className="text-[var(--accent)]" /> Кто видит мой статус «в сети»
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Зелёный индикатор активности и время последнего визита
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Кто видит статус в сети">
+          {ACCESS_OPTIONS.map((opt) => {
+            const active = (privacy.whoCanSeeOnline || 'everyone') === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ whoCanSeeOnline: opt.id })
+                  onNotify(`Статус онлайн: ${opt.label}`)
+                }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── 5. Аудитория записей по умолчанию ───────────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Lock size={15} className="text-[var(--accent)]" /> Аудитория записей по умолчанию
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Новые дни и гордости автоматически создаются с этой видимостью
+          </p>
+        </div>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Аудитория записей по умолчанию">
           {[
-            { id: 'private' as const, label: '🔒 Только я (Лично)' },
-            { id: 'friends' as const, label: '👥 Для друзей' },
-            { id: 'public' as const, label: '🌐 Публично' },
+            { id: 'private' as const, label: 'Лично' },
+            { id: 'friends' as const, label: 'Друзьям' },
+            { id: 'public' as const, label: 'Всем' },
           ].map((opt) => {
             const currentVis = privacy.defaultDayVisibility || 'public'
             const active = currentVis === opt.id
@@ -276,12 +449,16 @@ export function PrivacyPanel({ onNotify }: Props) {
                 type="button"
                 role="radio"
                 aria-checked={active}
-                className={active ? 'selected' : ''}
                 onClick={() => {
                   playClick(sound)
                   updatePrivacy({ defaultDayVisibility: opt.id })
-                  onNotify(`Приватность по умолчанию: ${opt.label}`)
+                  onNotify(`Аудитория по умолчанию: ${opt.label}`)
                 }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
               >
                 {opt.label}
               </button>
@@ -290,108 +467,113 @@ export function PrivacyPanel({ onNotify }: Props) {
         </div>
       </div>
 
-      {/* ── Политика взаимодействия ──────────────────────────────────────── */}
-      <div className="privacy-group">
-        <b className="privacy-group__label">
-          <MessageSquare size={14} /> Кто может комментировать и писать
-        </b>
-
-        <div className="privacy-policy">
-          <span className="privacy-policy__caption">
-            <MessageSquare size={13} /> Комментарии
-          </span>
-          <div className="segmented privacy-policy__seg" role="radiogroup" aria-label="Кто может комментировать">
-            {INTERACTION_AUDIENCE_OPTIONS.map((option) => {
-              const active = option.id === privacy.commentPolicy
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={active ? 'selected' : ''}
-                  title={option.description}
-                  onClick={() => handleAudience('commentPolicy', option.id)}
-                >
-                  {option.shortLabel}
-                </button>
-              )
-            })}
-          </div>
+      {/* ── 6. Список заблокированных пользователей ─────────────────────── */}
+      <div className="flex flex-col gap-3 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <UserX size={15} className="text-rose-500" /> Заблокированные пользователи
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            Заблокированные пользователи не могут писать вам, звонить и находить в поиске
+          </p>
         </div>
 
-        <div className="privacy-policy">
-          <span className="privacy-policy__caption">
-            <Users size={13} /> Личные сообщения
-          </span>
-          <div className="segmented privacy-policy__seg" role="radiogroup" aria-label="Кто может писать в чат">
-            {INTERACTION_AUDIENCE_OPTIONS.map((option) => {
-              const active = option.id === privacy.chatPolicy
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  className={active ? 'selected' : ''}
-                  title={option.description}
-                  onClick={() => handleAudience('chatPolicy', option.id)}
-                >
-                  {option.shortLabel}
-                </button>
-              )
-            })}
+        {loadingBlocked ? (
+          <div className="py-4 text-center text-xs text-[var(--text-3)]">Загрузка черного списка...</div>
+        ) : blockedUsers.length === 0 ? (
+          <div className="py-4 px-3 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-center">
+            <UserCheck size={20} className="mx-auto text-[var(--text-3)] mb-1 opacity-70" />
+            <p className="text-xs text-[var(--text-2)] font-medium">Черный список пуст</p>
+            <p className="text-[11px] text-[var(--text-3)] mt-0.5">У вас нет заблокированных пользователей</p>
           </div>
-        </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {blockedUsers.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)]"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 text-zinc-300 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                    {b.display_name.slice(0, 1)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-[var(--text)] truncate">{b.display_name}</p>
+                    <p className="text-[11px] text-[var(--text-3)] truncate">@{b.username}</p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={unblockingId === b.id}
+                  onClick={() => handleUnblock(b)}
+                  className="px-3 py-1 rounded-full text-xs font-bold border border-rose-500/40 text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0"
+                >
+                  {unblockingId === b.id ? 'Разблокировка...' : 'Разблокировать'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Тумблеры видимости ───────────────────────────────────────────── */}
-      <div className="privacy-group privacy-toggles">
+      {/* ── 7. Дополнительные переключатели приватности ───────────────────── */}
+      <div className="flex flex-col gap-2 pt-2 border-t border-[var(--border)]">
+        <h3 className="text-[13px] font-bold text-[var(--text-2)] uppercase tracking-wider mb-1">
+          Видимость элементов профиля
+        </h3>
         {TOGGLES.map((toggle) => {
           const Icon = toggle.icon
           const raw = privacy[toggle.key]
-          // For hideFromLeaderboards: visual ON = participating (raw=false), visual OFF = hidden (raw=true)
           const visualOn = toggle.key === 'hideFromLeaderboards' ? !raw : raw
-          const privateState = toggle.privateWhen ? raw : !raw
           return (
-            <div className="setting-row privacy-toggle-row" key={toggle.key}>
-              <div>
-                <b style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon size={15} /> {visualOn ? toggle.onLabel : toggle.offLabel}
-                  {privateState && (
-                    <span className="privacy-private-pill">
-                      <Lock size={10} /> приватно
-                    </span>
-                  )}
-                </b>
-                <small>{visualOn ? toggle.onHint : toggle.offHint}</small>
+            <div
+              key={toggle.key}
+              className="flex items-center justify-between p-3 rounded-xl bg-[var(--bg-elev)] border border-[var(--border)]"
+            >
+              <div className="min-w-0 pr-3">
+                <p className="text-[13px] font-bold text-[var(--text)] flex items-center gap-2">
+                  <Icon size={14} className="text-[var(--text-2)]" />
+                  <span>{visualOn ? toggle.onLabel : toggle.offLabel}</span>
+                </p>
+                <p className="text-[12px] text-[var(--text-2)] mt-0.5 break-words leading-tight">
+                  {visualOn ? toggle.onHint : toggle.offHint}
+                </p>
               </div>
+
               <button
                 type="button"
-                className={`switch ${visualOn ? 'on' : ''}`}
-                onClick={() => handleToggle(toggle)}
-                aria-pressed={visualOn}
+                role="switch"
+                aria-checked={visualOn}
                 aria-label={visualOn ? toggle.onLabel : toggle.offLabel}
+                onClick={() => handleToggle(toggle)}
+                className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 shrink-0 ${
+                  visualOn ? 'bg-[var(--accent)]' : 'bg-zinc-800'
+                }`}
               >
-                <i />
+                <span
+                  className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+                    visualOn ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
               </button>
             </div>
           )
         })}
       </div>
 
-      <div className="privacy-reset-row">
+      {/* ── Кнопка сброса ──────────────────────────────────────────────── */}
+      <div className="pt-2 flex justify-end">
         <button
           type="button"
-          className="appearance-reset-btn"
           onClick={handleReset}
           disabled={isDefault}
-          aria-label="Сбросить приватность к значениям по умолчанию"
+          className="px-4 py-2 rounded-full border border-[var(--border)] text-xs font-bold text-[var(--text-2)] hover:text-[var(--text)] hover:border-[var(--border-strong)] transition-colors flex items-center gap-1.5 disabled:opacity-40"
         >
-          {isDefault ? <UserX size={14} /> : <RotateCcw size={14} />}
-          <span>{isDefault ? 'Приватность по умолчанию' : 'Сбросить приватность'}</span>
+          <RotateCcw size={13} />
+          <span>Сбросить приватность по умолчанию</span>
         </button>
       </div>
-    </section>
+    </div>
   )
 }

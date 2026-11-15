@@ -1119,6 +1119,14 @@ export type PrivacySettings = {
   commentPolicy: InteractionAudience
   /** Кто может писать в личные сообщения (чаты) */
   chatPolicy: InteractionAudience
+  /** Кто может находить профиль в поиске ('everyone' | 'friends' | 'nobody') */
+  whoCanFind?: InteractionAudience
+  /** Кто может писать личные сообщения ('everyone' | 'friends' | 'nobody') */
+  whoCanMessage?: InteractionAudience
+  /** Кто может звонить (аудио/видео) ('everyone' | 'friends' | 'nobody') */
+  whoCanCall?: InteractionAudience
+  /** Кто видит статус «в сети» ('everyone' | 'friends' | 'nobody') */
+  whoCanSeeOnline?: InteractionAudience
   /** Показывать длину стрика публично */
   showStreakPublicly: boolean
   /** Показывать верифицированные бейджи публично */

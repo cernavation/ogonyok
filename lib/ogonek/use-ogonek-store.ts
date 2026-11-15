@@ -2507,14 +2507,34 @@ export function useOgonekStore() {
   /** Точечно обновляет приватность профиля с валидацией и меткой времени */
   const updatePrivacy = useCallback(
     (patch: Partial<PrivacySettings>) => {
-      updateStore((prev) => ({
-        ...prev,
-        privacy: sanitizePrivacySettings({
+      let nextPrivacy: PrivacySettings | null = null
+      updateStore((prev) => {
+        nextPrivacy = sanitizePrivacySettings({
           ...prev.privacy,
           ...patch,
           updatedAtISO: new Date().toISOString(),
-        }),
-      }))
+        })
+        return {
+          ...prev,
+          privacy: nextPrivacy,
+        }
+      })
+
+      // Серверная синхронизация настроек приватности в БД Supabase
+      const snap = getSnapshot()
+      const activeId = snap.auth?.activeAccountId
+      if (activeId && nextPrivacy) {
+        updateProfileInDb(activeId, {
+          privacy: nextPrivacy,
+          who_can_find: (nextPrivacy as PrivacySettings).whoCanFind,
+          who_can_message: (nextPrivacy as PrivacySettings).whoCanMessage,
+          who_can_call: (nextPrivacy as PrivacySettings).whoCanCall,
+          who_can_see_online: (nextPrivacy as PrivacySettings).whoCanSeeOnline,
+          default_day_visibility: (nextPrivacy as PrivacySettings).defaultDayVisibility,
+        } as any).catch((err: any) => {
+          console.warn('[updatePrivacy] Remote update error:', err)
+        })
+      }
     },
     [updateStore]
   )
@@ -5493,6 +5513,7 @@ export function useOgonekStore() {
       let dbAge: number | null = null
       let dbIsAnon: boolean | null = null
       let dbTourCompleted: boolean | null = null
+      let dbPrivacy: any = null
 
       try {
         const client = getSupabase()
@@ -5503,6 +5524,7 @@ export function useOgonekStore() {
             .eq('id', params.userId)
             .single()
           if (dbProfile) {
+            if (dbProfile.privacy) dbPrivacy = dbProfile.privacy
             if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
             if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
             dbLevel =
@@ -5608,6 +5630,7 @@ export function useOgonekStore() {
             tour_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.tour_completed) : false),
             onboarding_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.onboarding_completed) : false),
           }),
+          privacy: dbPrivacy ? sanitizePrivacySettings(dbPrivacy) : prev.privacy,
           // Для нового пользователя (не cernavation) лента чистая и готова к первому дню
           days: isOwner
             ? prev.days

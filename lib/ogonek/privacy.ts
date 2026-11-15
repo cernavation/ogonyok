@@ -15,6 +15,10 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   profileVisibility: 'public',
   commentPolicy: 'everyone',
   chatPolicy: 'friends',
+  whoCanFind: 'everyone',
+  whoCanMessage: 'everyone',
+  whoCanCall: 'friends',
+  whoCanSeeOnline: 'friends',
   showStreakPublicly: true,
   showBadgesPublicly: true,
   showDifficultyLevelPublicly: true,
@@ -121,14 +125,45 @@ export function sanitizePrivacySettings(value: unknown): PrivacySettings {
   const v = value as Partial<PrivacySettings>
   const bool = (raw: unknown, fallback: boolean): boolean =>
     typeof raw === 'boolean' ? raw : fallback
+
+  const whoCanFind =
+    v.whoCanFind === 'friends' || v.whoCanFind === 'nobody'
+      ? v.whoCanFind
+      : v.searchableByUsername === false
+      ? 'nobody'
+      : 'everyone'
+
+  const whoCanMessage =
+    v.whoCanMessage === 'everyone' || v.whoCanMessage === 'nobody'
+      ? v.whoCanMessage
+      : v.chatPolicy === 'nobody'
+      ? 'nobody'
+      : v.chatPolicy === 'everyone'
+      ? 'everyone'
+      : 'friends'
+
+  const whoCanCall =
+    v.whoCanCall === 'everyone' || v.whoCanCall === 'nobody'
+      ? v.whoCanCall
+      : 'friends'
+
+  const whoCanSeeOnline =
+    v.whoCanSeeOnline === 'everyone' || v.whoCanSeeOnline === 'nobody'
+      ? v.whoCanSeeOnline
+      : 'friends'
+
   return {
     profileVisibility: normalizeProfileVisibility(v.profileVisibility),
     commentPolicy: normalizeAudience(v.commentPolicy),
     chatPolicy: normalizeAudience(v.chatPolicy),
+    whoCanFind,
+    whoCanMessage,
+    whoCanCall,
+    whoCanSeeOnline,
     showStreakPublicly: bool(v.showStreakPublicly, DEFAULT_PRIVACY.showStreakPublicly),
     showBadgesPublicly: bool(v.showBadgesPublicly, DEFAULT_PRIVACY.showBadgesPublicly),
     showDifficultyLevelPublicly: bool(v.showDifficultyLevelPublicly, DEFAULT_PRIVACY.showDifficultyLevelPublicly ?? true),
-    searchableByUsername: bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
+    searchableByUsername: whoCanFind !== 'nobody' && bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
     hideFromLeaderboards: bool(v.hideFromLeaderboards, DEFAULT_PRIVACY.hideFromLeaderboards),
     defaultDayVisibility:
       v.defaultDayVisibility === 'private' || v.defaultDayVisibility === 'friends'
