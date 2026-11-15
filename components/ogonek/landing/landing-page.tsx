@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { LandingNav } from './landing-nav'
 import { MediaSlot } from './media-slot'
+import { AppleModesPanel } from './apple-modes-panel'
 import { useScrollReveal } from './use-scroll-reveal'
 import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
@@ -11,38 +12,6 @@ type Props = {
   onNotify?: (msg: string) => void
   onAuthenticated?: (accountId: string) => void
 }
-
-/* ── Mode switcher data (MacBook Pro style) ───────────────────────── */
-const MODES = [
-  {
-    id: 'sport',
-    label: 'Спорт',
-    image: 'mode-sport.jpg',
-    oneLiner: 'Тренировки, забеги, личные рекорды и восстановление.',
-    detail: 'Фиксируй каждый пройденный километр, поднятый вес и дисциплину в дни, когда не хотелось выходить на пробежку. Тело помнит всё.',
-  },
-  {
-    id: 'work',
-    label: 'Работа',
-    image: 'mode-work.jpg',
-    oneLiner: 'Дедлайны, переговоры, запуски и карьерные победы.',
-    detail: 'Закрытые спринты, сложные решения под давлением и завершённые проекты. Твоя профессиональная летопись без офисного шума.',
-  },
-  {
-    id: 'creative',
-    label: 'Творчество',
-    image: 'mode-creative.jpg',
-    oneLiner: 'Музыка, рисование, писательство и сценические выступления.',
-    detail: 'Преодоление чистого листа, часы репетиций и первый записанный трек. Доказательство того, что вдохновение рождается из регулярности.',
-  },
-  {
-    id: 'family',
-    label: 'Семья',
-    image: 'mode-family.jpg',
-    oneLiner: 'Время вместе, поддержка, воспитание и семейные традиции.',
-    detail: 'Тёплые вечера, терпение в трудные моменты и забота о близких. Самые важные победы, которые часто остаются незамеченными.',
-  },
-]
 
 /* ── Difficulty levels data ───────────────────────────────────────── */
 const LEVELS = [
@@ -117,10 +86,6 @@ const QUOTES = [
 export function LandingPage({ onNotify, onAuthenticated }: Props) {
   const containerRef = useScrollReveal()
   const [authModal, setAuthModal] = useState<AuthMode | null>(null)
-  const [activeModeId, setActiveModeId] = useState('sport')
-  const [expandedModeId, setExpandedModeId] = useState<string | null>(null)
-
-  const currentMode = MODES.find((m) => m.id === activeModeId) || MODES[0]
 
   const openAuth = (mode: AuthMode) => setAuthModal(mode)
   const closeAuth = () => setAuthModal(null)
@@ -288,7 +253,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 3 — «РЕЖИМЫ ЖИЗНИ» (MacBook Pro style switcher)
+          SECTION 3 — «РЕЖИМЫ ЖИЗНИ» (Apple Interactive Modes Panel)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
@@ -303,67 +268,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             Режимы жизни.
           </h2>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {/* Left: Big photo frame with caption & plus toggle */}
-            <div className="lg:col-span-8 fade-up apple-card overflow-hidden bg-[#161617] p-3 sm:p-4">
-              <MediaSlot
-                name={currentMode.image}
-                width={1920}
-                height={1080}
-                ratio="16:9"
-                alt={`Режим: ${currentMode.label}`}
-                rounded={true}
-              />
-
-              <div className="pt-5 pb-3 px-3">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-[16px] sm:text-[17px] font-medium text-[#f5f5f7] tracking-tight">
-                    {currentMode.oneLiner}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setExpandedModeId(expandedModeId === activeModeId ? null : activeModeId)
-                    }
-                    className="shrink-0 w-8 h-8 rounded-full border border-white/20 bg-white/[0.04] hover:bg-white/[0.1] hover:border-white/40 flex items-center justify-center text-white/80 transition-all cursor-pointer"
-                    aria-label={expandedModeId === activeModeId ? 'Скрыть подробности' : 'Раскрыть подробности'}
-                  >
-                    <span className="text-[16px] font-light leading-none">
-                      {expandedModeId === activeModeId ? '−' : '+'}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Expandable sub-caption */}
-                {expandedModeId === activeModeId && (
-                  <div className="mt-4 pt-4 border-t border-white/[0.08] text-[14px] leading-relaxed text-[#86868b] animate-in fade-in duration-200">
-                    {currentMode.detail}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Right: Vertical list of Apple pill buttons */}
-            <div className="lg:col-span-4 flex flex-col gap-3 fade-up">
-              <p className="text-[13px] font-semibold text-[#86868b] uppercase tracking-wider mb-2">
-                Выбери направление
-              </p>
-              {MODES.map((mode) => {
-                const isActive = activeModeId === mode.id
-                return (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    onClick={() => setActiveModeId(mode.id)}
-                    className={`mode-pill-btn ${isActive ? 'active' : ''}`}
-                  >
-                    <span>{mode.label}</span>
-                    <span className="text-[12px] opacity-60">›</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          <AppleModesPanel />
         </div>
       </section>
 
