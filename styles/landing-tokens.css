@@ -66,11 +66,11 @@
   --tracking-heading-lg: -0.32px;
 
   --text-display: 56px;
-  --leading-display: 1.12;
-  --tracking-display: -0.64px;
+  --leading-display: 1.07;
+  --tracking-display: -0.84px;
 
   --text-hero: 80px;
-  --leading-hero: 1.08;
+  --leading-hero: 1.05;
   --tracking-hero: -0.24px;
 
   /* ── Typography — Weights ────────────────────────────────────────── */
@@ -182,7 +182,8 @@
 }
 
 /* ── Body Copy (SF Pro Text 17px Platinum #86868b) ─────────────────── */
-.landing .apple-body {
+:where(.landing) .apple-body,
+.landing :where(.apple-body) {
   font-family: var(--font-sf-pro-text);
   font-size: var(--text-body-lg);
   font-weight: var(--font-weight-regular);
