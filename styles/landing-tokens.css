@@ -117,8 +117,8 @@
 
   /* ── Apple Cupertino Motion Tokens ───────────────────────────────── */
   --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
-  --apple-duration: 0.9s;
-  --apple-duration-fast: 0.3s;
+  --apple-duration: 0.65s;
+  --apple-duration-fast: 0.25s;
 
   /* ── Base Styling inside .landing ─────────────────────────────────── */
   color: var(--color-frost-white);
@@ -362,9 +362,9 @@
   /* 3. Apple Hardware Scale-Up (for cards and photo stages) */
   .landing .fade-scale {
     opacity: 0;
-    transform: scale(0.95) translateY(20px);
-    transition: opacity 1s var(--apple-ease),
-                transform 1s var(--apple-ease);
+    transform: scale(0.96) translateY(16px);
+    transition: opacity var(--apple-duration) var(--apple-ease),
+                transform var(--apple-duration) var(--apple-ease);
     will-change: opacity, transform;
   }
   .landing .fade-scale.visible {
@@ -375,7 +375,7 @@
   /* 4. Apple Slide-in Left / Right */
   .landing .fade-slide-left {
     opacity: 0;
-    transform: translateX(-30px);
+    transform: translateX(-24px);
     transition: opacity var(--apple-duration) var(--apple-ease),
                 transform var(--apple-duration) var(--apple-ease);
     will-change: opacity, transform;
@@ -387,7 +387,7 @@
 
   .landing .fade-slide-right {
     opacity: 0;
-    transform: translateX(30px);
+    transform: translateX(24px);
     transition: opacity var(--apple-duration) var(--apple-ease),
                 transform var(--apple-duration) var(--apple-ease);
     will-change: opacity, transform;
@@ -397,18 +397,19 @@
     transform: translateX(0);
   }
 
-  /* ── Apple Cascading Stagger Timing Delays ───────────────────────── */
-  .landing .delay-75  { transition-delay: 75ms; }
-  .landing .delay-100 { transition-delay: 100ms; }
-  .landing .delay-150 { transition-delay: 150ms; }
-  .landing .delay-200 { transition-delay: 200ms; }
-  .landing .delay-250 { transition-delay: 250ms; }
-  .landing .delay-300 { transition-delay: 300ms; }
-  .landing .delay-350 { transition-delay: 350ms; }
-  .landing .delay-400 { transition-delay: 400ms; }
-  .landing .delay-500 { transition-delay: 500ms; }
-  .landing .delay-600 { transition-delay: 600ms; }
-  .landing .delay-700 { transition-delay: 700ms; }
+  /* ── Apple Cascading Stagger Timing Delays (Crisp ProMotion response) ── */
+  .landing .delay-75  { transition-delay: 50ms; }
+  .landing .delay-100 { transition-delay: 75ms; }
+  .landing .delay-150 { transition-delay: 100ms; }
+  .landing .delay-200 { transition-delay: 150ms; }
+  .landing .delay-250 { transition-delay: 175ms; }
+  .landing .delay-300 { transition-delay: 200ms; }
+  .landing .delay-350 { transition-delay: 225ms; }
+  .landing .delay-400 { transition-delay: 250ms; }
+  .landing .delay-450 { transition-delay: 275ms; }
+  .landing .delay-500 { transition-delay: 300ms; }
+  .landing .delay-600 { transition-delay: 350ms; }
+  .landing .delay-700 { transition-delay: 400ms; }
 }
 
 /* ── Fallback for Reduced Motion ───────────────────────────────────── */

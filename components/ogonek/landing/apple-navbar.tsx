@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -20,6 +20,21 @@ const NAV_ITEMS = [
 export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+
+  // Apple-grade UX: lock body scroll and support Escape key when drawer is open
+  useEffect(() => {
+    if (!mobileOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = prevOverflow
+    }
+  }, [mobileOpen])
 
   return (
     <header

@@ -224,10 +224,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </div>
 
           {/* Epic Apple Headline (80px display, tight 20px-24px margin to subtitle) */}
-          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)] max-w-[840px]">
-            Жизнь, которой ты гордишься.
-            <br />
-            <span className="apple-shimmer-text">Записанная каждый вечер.</span>
+          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)] max-w-[1080px]">
+            <span className="inline-block">Жизнь, которой ты гордишься.</span>{' '}
+            <br className="hidden md:inline" />
+            <span className="apple-shimmer-text inline-block">Записанная каждый вечер.</span>
           </h1>
 
           {/* Subtitle (17px SF Pro Text, 32px-36px margin to buttons) */}
@@ -806,13 +806,13 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
             {/* Overlaid Banner Content */}
             <div className="relative z-20 max-w-[680px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-200 mb-5 !text-[36px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+              <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[36px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
                 Вместе гордиться легче.
               </h2>
-              <p className="apple-body fade-up delay-300 !text-white max-w-[560px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
+              <p className="apple-body fade-up delay-150 !text-white max-w-[560px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
                 Начни свою летопись сегодня. Сохраняй каждый шаг, делись победами с&nbsp;близкими и&nbsp;создавай нерушимую уверенность в&nbsp;себе.
               </p>
-              <div className="fade-scale delay-400">
+              <div className="fade-scale delay-200">
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
