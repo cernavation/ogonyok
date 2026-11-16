@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, ReactNode } from 'react';
+import React, { useEffect, useRef, ReactNode } from 'react';
 
 export interface GlowCardProps {
   children?: ReactNode;
@@ -9,16 +9,16 @@ export interface GlowCardProps {
   size?: 'sm' | 'md' | 'lg';
   width?: string | number;
   height?: string | number;
-  customSize?: boolean; // When true, ignores size prop and uses width/height or className
+  customSize?: boolean;
   spotlightSize?: number;
 }
 
 const glowColorMap = {
   blue: { base: 220, spread: 200 },
   purple: { base: 280, spread: 300 },
-  green: { base: 120, spread: 200 },
+  green: { base: 140, spread: 180 },
   red: { base: 0, spread: 200 },
-  orange: { base: 30, spread: 200 }
+  orange: { base: 28, spread: 180 }
 };
 
 const sizeMap = {
@@ -28,6 +28,16 @@ const sizeMap = {
 };
 
 const beforeAfterStyles = `
+  [data-glow] {
+    --glow-active: 0;
+  }
+  
+  [data-glow]:hover,
+  [data-glow]:focus-within,
+  [data-glow][data-active="true"] {
+    --glow-active: 1;
+  }
+
   [data-glow]::before,
   [data-glow]::after {
     pointer-events: none;
@@ -40,21 +50,21 @@ const beforeAfterStyles = `
     background-size: calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)));
     background-repeat: no-repeat;
     background-position: 50% 50%;
-    -webkit-mask: linear-gradient(transparent, transparent), linear-gradient(white, white);
-    -webkit-mask-clip: padding-box, border-box;
-    -webkit-mask-composite: source-in, xor;
-    mask: linear-gradient(transparent, transparent), linear-gradient(white, white);
-    mask-clip: padding-box, border-box;
-    mask-composite: intersect;
-    opacity: var(--glow-opacity, 0);
-    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+
+    opacity: var(--glow-active, 0);
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   [data-glow]::before {
     background-image: radial-gradient(
-      calc(var(--spotlight-size) * 0.8) calc(var(--spotlight-size) * 0.8) at
-      calc(var(--x, -2000) * 1px)
-      calc(var(--y, -2000) * 1px),
+      calc(var(--spotlight-size) * 0.85) calc(var(--spotlight-size) * 0.85) at
+      calc(var(--x, 0) * 1px)
+      calc(var(--y, 0) * 1px),
       hsl(var(--hue, 210) calc(var(--saturation, 100) * 1%) calc(var(--lightness, 55) * 1%) / var(--border-spot-opacity, 1)), transparent 100%
     );
     filter: brightness(2);
@@ -62,10 +72,10 @@ const beforeAfterStyles = `
   
   [data-glow]::after {
     background-image: radial-gradient(
-      calc(var(--spotlight-size) * 0.45) calc(var(--spotlight-size) * 0.45) at
-      calc(var(--x, -2000) * 1px)
-      calc(var(--y, -2000) * 1px),
-      hsl(0 100% 100% / var(--border-light-opacity, 0.95)), transparent 100%
+      calc(var(--spotlight-size) * 0.5) calc(var(--spotlight-size) * 0.5) at
+      calc(var(--x, 0) * 1px)
+      calc(var(--y, 0) * 1px),
+      hsl(0 100% 100% / var(--border-light-opacity, 1)), transparent 100%
     );
   }
   
@@ -73,8 +83,8 @@ const beforeAfterStyles = `
     position: absolute;
     inset: 0;
     will-change: filter, opacity;
-    opacity: calc(var(--outer, 1) * var(--glow-opacity, 0));
-    transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: calc(var(--outer, 1) * var(--glow-active, 0));
+    transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     border-radius: calc(var(--radius) * 1px);
     border-width: calc(var(--border-size) * 20);
     filter: blur(calc(var(--border-size) * 10));
@@ -97,37 +107,20 @@ export const GlowCard: React.FC<GlowCardProps> = ({
   width,
   height,
   customSize = false,
-  spotlightSize = 300,
+  spotlightSize = 260,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     const syncPointer = (e: PointerEvent) => {
       const { clientX: x, clientY: y } = e;
       
-      if (!cardRef.current) return;
-
-      const rect = cardRef.current.getBoundingClientRect();
-      // Only active if the cursor is actually inside or directly on THIS card
-      const isInside = (
-        x >= rect.left &&
-        x <= rect.right &&
-        y >= rect.top &&
-        y <= rect.bottom
-      );
-
-      if (isInside) {
+      if (cardRef.current) {
         cardRef.current.style.setProperty('--x', x.toFixed(2));
         cardRef.current.style.setProperty('--xp', (x / window.innerWidth).toFixed(2));
         cardRef.current.style.setProperty('--y', y.toFixed(2));
         cardRef.current.style.setProperty('--yp', (y / window.innerHeight).toFixed(2));
-        cardRef.current.style.setProperty('--glow-opacity', '1');
-        setIsHovered(true);
-      } else {
-        cardRef.current.style.setProperty('--glow-opacity', '0');
-        setIsHovered(false);
       }
     };
 
@@ -137,10 +130,9 @@ export const GlowCard: React.FC<GlowCardProps> = ({
 
   const { base, spread } = glowColorMap[glowColor] || glowColorMap.blue;
 
-  // Determine sizing
   const getSizeClasses = () => {
     if (customSize) {
-      return ''; // Let className handle sizing
+      return '';
     }
     return sizeMap[size];
   };
@@ -155,15 +147,14 @@ export const GlowCard: React.FC<GlowCardProps> = ({
       '--backup-border': 'rgba(255, 255, 255, 0.08)',
       '--size': spotlightSize,
       '--outer': '1',
-      '--glow-opacity': isHovered ? '1' : '0',
       '--border-size': 'calc(var(--border, 2) * 1px)',
-      '--spotlight-size': 'calc(var(--size, 200) * 1px)',
+      '--spotlight-size': 'calc(var(--size, 260) * 1px)',
       '--hue': 'calc(var(--base) + (var(--xp, 0) * var(--spread, 0)))',
       backgroundImage: `radial-gradient(
         var(--spotlight-size) var(--spotlight-size) at
-        calc(var(--x, -2000) * 1px)
-        calc(var(--y, -2000) * 1px),
-        hsl(var(--hue, 210) calc(var(--saturation, 100) * 1%) calc(var(--lightness, 70) * 1%) / calc(var(--bg-spot-opacity, 0.12) * var(--glow-opacity, 0))), transparent
+        calc(var(--x, 0) * 1px)
+        calc(var(--y, 0) * 1px),
+        hsl(var(--hue, 210) 90% 65% / calc(0.12 * var(--glow-active, 0))), transparent
       )`,
       backgroundColor: 'var(--backdrop, #121214)',
       backgroundSize: 'calc(100% + (2 * var(--border-size))) calc(100% + (2 * var(--border-size)))',
@@ -171,7 +162,7 @@ export const GlowCard: React.FC<GlowCardProps> = ({
       backgroundAttachment: 'fixed',
       border: 'var(--border-size) solid var(--backup-border)',
       position: 'relative',
-      touchAction: 'pan-y', // Keep mobile scrolling smooth
+      touchAction: 'pan-y',
     };
 
     if (width !== undefined) {
@@ -191,14 +182,12 @@ export const GlowCard: React.FC<GlowCardProps> = ({
     cardRef.current.style.setProperty('--xp', (x / window.innerWidth).toFixed(2));
     cardRef.current.style.setProperty('--y', y.toFixed(2));
     cardRef.current.style.setProperty('--yp', (y / window.innerHeight).toFixed(2));
-    cardRef.current.style.setProperty('--glow-opacity', '1');
-    setIsHovered(true);
+    cardRef.current.setAttribute('data-active', 'true');
   };
 
   const handlePointerLeave = () => {
     if (!cardRef.current) return;
-    cardRef.current.style.setProperty('--glow-opacity', '0');
-    setIsHovered(false);
+    cardRef.current.removeAttribute('data-active');
   };
 
   return (
