@@ -70,14 +70,14 @@ const LEVELS = [
 const SHOWCASE_TABS = [
   {
     id: 'profile',
-    label: 'Профиль 740 дней',
-    tag: 'ЛИЧНЫЙ СТРИК И ВЕХИ',
-    title: '740 дней непрерывной летописи',
-    desc: 'Настоящий профиль создателя системы: 740 закрытых дней, максимальный 5-й уровень дисциплины и прозрачный календарь побед без страха пропусков.',
+    label: 'Рекорд 740 дней',
+    tag: 'МАКСИМАЛЬНЫЙ СТРИК САЙТА',
+    title: '740 дней — рекорд максимального стрика',
+    desc: 'Рекорд платформы: 740 закрытых дней подряд. Доказательство того, что регулярный вечерний ритуал превращается в нерушимую внутреннюю силу.',
     image: 'platform_02_profile.png',
     color: '#f56900',
     stats: [
-      { label: 'Закрытых дней', val: '740+' },
+      { label: 'Рекорд стрика', val: '740+' },
       { label: 'Зафиксированных побед', val: '7 400+' },
       { label: 'Уровень дисциплины', val: 'Уровень 5' },
     ],
@@ -105,8 +105,8 @@ const SHOWCASE_TABS = [
     image: 'platform_04_vault.png',
     color: '#8668ff',
     stats: [
-      { label: 'Шифрование', val: 'Web Crypto' },
-      { label: 'Хранение медиа', val: 'Local-first' },
+      { label: 'Приватность', val: 'Секретно / Публично' },
+      { label: 'Видимость', val: 'Под твоим контролем' },
       { label: 'Доступ', val: 'Пин-код / Face ID' },
     ],
   },
@@ -130,9 +130,9 @@ const SHOWCASE_TABS = [
 const QUOTES = [
   {
     image: 'quote-1.jpg',
-    text: 'Я фиксирую гордости больше 740 дней подряд без единого пропуска. Это единственная привычка, которая вытащила меня из выгорания и дала железобетонную опору.',
+    text: '740 дней — это рекорд максимального огонька на сайте. Когда каждый вечер фиксируешь победы, стрик становится непоколебимой внутренней опорой. И главное: ты сам выбираешь, делиться ими с миром или держать в секрете.',
     author: 'Александр Церна',
-    role: 'Основатель Priday · 740 дней стрика',
+    role: 'Основатель Priday · Рекорд стрика 740 дней',
     isFounder: true,
     delay: 'delay-150',
   },
@@ -257,7 +257,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
           {/* Trust subtitle */}
           <div className="fade-up delay-250 mt-6 text-[12px] font-mono text-[#b0b0b5] apple-hero-shadow tracking-wider">
-            Бесплатно навсегда · Без рекламы · Данные только на&nbsp;твоём чипе
+            Бесплатно навсегда · Без рекламы · Публичный или секретный режим
           </div>
         </div>
       </section>
@@ -668,65 +668,66 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="apple-eyebrow">Манифест священной приватности</span>
+            <span className="apple-eyebrow">Полный контроль видимости</span>
           </div>
 
           <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[920px]">
-            Твои сокровенные мысли — не корм для чужих алгоритмов.
+            Делись победами со всем миром или оставайся в полной секретности.
           </h2>
 
           <p className="apple-body fade-up delay-150 max-w-[740px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Никаких рекламных трекеров и продажи данных. Дневник шифруется локально на чипе твоего устройства. Даже создатели Priday физически не имеют доступа к твоим записям.
+            Ты сам решаешь, кому доступны твои записи. Ты можешь публиковать победы, чтобы вдохновлять других, а можешь держать их исключительно у себя — в секретном режиме тебя никто не найдёт на платформе, кроме тех, кому ты лично откроешь доступ.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {[
               {
-                badge: 'AES-GCM 256',
+                badge: 'ПУБЛИЧНЫЙ РЕЖИМ',
                 icon: (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="1.8">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                   </svg>
                 ),
-                title: 'Web Crypto на твоём чипе',
-                desc: 'Шифрование мастер-ключом на аппаратном уровне браузера. Ни один бит твоих побед не читаем даже создателями сервиса.',
+                title: 'Открытость всему миру',
+                desc: 'Публикуй победы в общую ленту, участвуй в рейтингах силы и вдохновляй единомышленников своим прогрессом.',
                 delay: 'delay-150',
               },
               {
-                badge: 'OFFLINE 100%',
+                badge: 'СЕКРЕТНЫЙ РЕЖИМ',
                 icon: (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c7be" strokeWidth="1.8">
-                    <ellipse cx="12" cy="5" rx="9" ry="3" />
-                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
                   </svg>
                 ),
-                title: 'Автономный Local-first',
-                desc: 'Локальная база IndexedDB. Дневник открывается мгновенно в самолёте, метро и горах без единого байта интернета.',
+                title: 'Полная невидимость',
+                desc: 'Тебя невозможно найти через поиск платформы. Профиль и записи скрыты — никто не увидит их без твоего разрешения.',
                 delay: 'delay-200',
               },
               {
-                badge: 'ZERO TRACKING',
+                badge: 'ВЫБОРОЧНЫЙ ДОСТУП',
                 icon: (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="1.8">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <polyline points="16 11 18 13 22 9" />
                   </svg>
                 ),
-                title: '0% рекламы и трекеров',
-                desc: 'Полный запрет коммерческой слежки. Никаких рекламных сетей, брокеров данных и скрытых скриптов аналитики.',
+                title: 'Только для доверенных',
+                desc: 'Открывай доступ к отдельным дням или группам только тем, кого выбираешь сам — по закрытой приватной ссылке.',
                 delay: 'delay-250',
               },
               {
-                badge: 'ZERO TRAINING',
+                badge: 'ZERO TRAINING ИИ',
                 icon: (
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8">
                     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   </svg>
                 ),
-                title: 'Закрытый ИИ без обучения',
-                desc: 'Нейросетевой анализ дня выполняется в закрытой изолированной памяти. Твои сокровенные мысли не уходят в публичные модели.',
+                title: 'Нулевой сбор данных',
+                desc: '0% рекламы и трекеров. Искусственный интеллект разбирает дни изолированно и никогда не обучается на твоих текстах.',
                 delay: 'delay-300',
               },
             ].map((card) => (
@@ -760,7 +761,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               href="/privacy"
               className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
             >
-              <span>Читать манифест приватности и безопасности Local-first</span>
+              <span>Читать манифест приватности и секретного режима</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
@@ -843,10 +844,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   </svg>
                 </div>
                 <h3 className="text-[20px] font-semibold text-[#f5f5f7] mb-3 tracking-tight">
-                  Local-First независимость
+                  Абсолютная приватность
                 </h3>
                 <p className="text-[14px] leading-relaxed text-[#86868b]">
-                  Твои записи хранятся локально на чипе твоего смартфона или ноутбука. Даже если отключится интернет или упадут наши сервера — твой дневник продолжит открываться и работать.
+                  Ты сам решаешь, быть публичным или вести полностью секретную летопись. Твои сокровенные победы никогда не станут достоянием чужих глаз без твоего прямого разрешения.
                 </p>
               </div>
               <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#2997ff] uppercase tracking-wider">
@@ -952,7 +953,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                    <span>Локальное шифрование Web Crypto</span>
+                    <span>Публичный или секретный профиль</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

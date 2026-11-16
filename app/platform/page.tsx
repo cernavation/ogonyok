@@ -164,7 +164,7 @@ export default function PlatformPage() {
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#f56900]" />
-                  <span>Локальное хранение оригиналов на устройстве</span>
+                  <span>Разграничение доступа: публичный или секретный профиль</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#f56900]" />
@@ -206,7 +206,7 @@ export default function PlatformPage() {
                     width={1440}
                     height={900}
                     ratio="16:10"
-                    alt="Профиль 740 дней стрика Алексея Черны"
+                    alt="Рекордный профиль стрика 740 дней на платформе Priday"
                     rounded={false}
                   />
                 </div>

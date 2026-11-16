@@ -23,8 +23,8 @@ const PRIMARY_NAV = [
 const MORE_NAV = [
   { label: 'Манифест открытости', href: '/#open', sub: '100% бесплатно и без рекламы' },
   { label: 'Сферы жизни', href: '/modes', sub: '5 жизненных опор без перекосов' },
-  { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Философия создателя платформы' },
-  { label: 'Приватность Local-first', href: '/privacy', sub: 'Шифрование данных на твоём чипе' },
+  { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Рекорд стрика и сила ритуала' },
+  { label: 'Приватность и секретный режим', href: '/privacy', sub: 'Публичный или закрытый профиль' },
   { label: 'Поддержка & FAQ', href: '/support', sub: 'Ответы и связь с основателем' },
   { label: 'Условия сервиса', href: '/terms', sub: 'Честные прозрачные правила' },
 ]
@@ -54,7 +54,7 @@ const MOBILE_SECTIONS = [
     items: [
       { label: 'Манифест открытости', href: '/#open', sub: 'Бесплатно навсегда и без рекламы' },
       { label: 'Тарифные планы', href: '/#pricing', sub: 'Свободный · Pro · Ultra' },
-      { label: 'Приватность Local-first', href: '/privacy', sub: 'Шифрование на чипе устройства' },
+      { label: 'Приватность и секретный режим', href: '/privacy', sub: 'Публичный или закрытый профиль' },
       { label: 'Поддержка и FAQ', href: '/support', sub: 'Связь с создателем Priday' },
       { label: 'Условия сервиса', href: '/terms', sub: 'Прозрачные гарантии' },
     ],
@@ -352,7 +352,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
               Войти в существующий профиль
             </Link>
             <div className="text-center text-[11px] font-mono text-[#86868b] pt-1">
-              Local-first · Web Crypto · Без рекламы и трекеров
+              Публичный или секретный профиль · Без рекламы и трекеров
             </div>
           </div>
         </div>

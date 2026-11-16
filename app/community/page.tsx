@@ -458,7 +458,7 @@ export default function CommunityPage() {
                       <span className="text-emerald-400">⚡ 18</span>
                       <span className="text-blue-400">👏 12</span>
                     </div>
-                    <span className="text-[11px] font-mono text-white/60">Local-first verified</span>
+                    <span className="text-[11px] font-mono text-white/60">Verified Priday</span>
                   </div>
                 </div>
               </div>
@@ -568,10 +568,10 @@ export default function CommunityPage() {
 
                 <div className="p-4 rounded-xl bg-[#141416] border border-white/5">
                   <h4 className="text-[15px] font-semibold text-white mb-1">
-                    🔒 Сквозное шифрование Web Crypto
+                    🔒 Секретный или публичный режим
                   </h4>
                   <p className="text-[13px] text-[#86868b]">
-                    Ключи шифрования хранятся только на чипе твоего смартфона.
+                    Ты сам решаешь, кто видит диалог: полный приват без индексации в поиске или открытый профиль.
                   </p>
                 </div>
               </div>
