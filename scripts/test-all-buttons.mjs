@@ -88,6 +88,8 @@ async function run() {
           bannerPreset: 'ember',
           verified: true,
           subscription_tier: 'premium',
+          tour_completed: true,
+          onboarding_completed: true,
         },
         days: [
           {
@@ -138,6 +140,7 @@ async function run() {
       }
 
       localStorage.setItem('ogonek.v2', JSON.stringify(store))
+      localStorage.setItem('ogonek:tour-completed', 'true')
       localStorage.setItem('ogonek.appearance.v1', JSON.stringify({
         theme: 'x-black',
         accent: 'flame',
@@ -205,6 +208,13 @@ async function run() {
     ]
 
     for (const tab of TABS) {
+      // Закрываем любую модалку если открыта перед кликом на следующий таб
+      const modalClose = page.locator('#premium-modal-close-btn, button[aria-label="Закрыть"]').first()
+      if (await modalClose.isVisible({ timeout: 300 }).catch(() => false)) {
+        await modalClose.click({ force: true }).catch(() => {})
+        await page.waitForTimeout(300)
+      }
+
       const label = tab.match || tab.label
       const btn = page.locator(`button[aria-label="${label}"], button:has-text("${label}")`).first()
       const exists = await btn.isVisible({ timeout: 2000 }).catch(() => false)
@@ -214,8 +224,14 @@ async function run() {
         continue
       }
 
-      await btn.click()
-      await page.waitForTimeout(250)
+      await btn.click({ force: true })
+      await page.waitForTimeout(300)
+
+      // Закрываем модалку если открылась от клика
+      if (await modalClose.isVisible({ timeout: 300 }).catch(() => false)) {
+        await modalClose.click({ force: true }).catch(() => {})
+        await page.waitForTimeout(300)
+      }
       logStep(`Таб сайдбара "${label}" кликабелен и переключает вид`)
     }
 
@@ -322,6 +338,14 @@ async function run() {
         await aiEvalOption.click()
         await page.waitForTimeout(600)
         logStep('Меню дня (...): пункт «Оценить с ИИ» успешно сработал')
+        // Закрываем модалку ИИ-оценки
+        const closeAiModal = page.locator('div[role="dialog"] button[aria-label="Закрыть"], div[role="dialog"] button:has-text("Закрыть"), div[role="dialog"] button:has-text("Понятно")').first()
+        if (await closeAiModal.isVisible({ timeout: 500 }).catch(() => false)) {
+          await closeAiModal.click().catch(() => {})
+        } else {
+          await page.keyboard.press('Escape').catch(() => {})
+        }
+        await page.waitForTimeout(300)
       }
 
       // 3.2 Редактировать
@@ -395,6 +419,8 @@ async function run() {
           await closeDayOptions.click()
           await page.waitForTimeout(300)
         }
+        await page.keyboard.press('Escape').catch(() => {})
+        await page.waitForTimeout(200)
       }
     } else {
       errors.push('Посты на главной не найдены для меню опций дня')

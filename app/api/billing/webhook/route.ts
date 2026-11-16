@@ -24,7 +24,29 @@ const BillingWebhookSchema = z.object({
   days: z.number().int().positive().optional(),
 })
 
+// Rate-limiting защита от DDoS атак на вебхук (rateLimitMap)
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+
+function checkWebhookRateLimit(ip: string): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(ip)
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 })
+    return true
+  }
+  if (record.count >= 60) {
+    return false
+  }
+  record.count++
+  return true
+}
+
 export async function POST(request: Request) {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  if (!checkWebhookRateLimit(ip)) {
+    return apiErrorResponse('RATE_LIMIT_EXCEEDED', 'Too Many Requests: rate limit exceeded', 429)
+  }
+
   // 1. Проверка наличия секрета вебхука в переменных окружения
   const secret = process.env.BILLING_WEBHOOK_SECRET
   if (!secret) {

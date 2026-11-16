@@ -36,6 +36,8 @@ export type AuthMode = 'signin' | 'register'
 type Props = {
   variant?: 'screen' | 'modal'
   initialMode?: AuthMode
+  mode?: AuthMode
+  onModeChange?: (mode: AuthMode) => void
   onAuthenticated?: (accountId: string) => void
   onNotify?: (message: string) => void
 }
@@ -51,11 +53,25 @@ const AVATAR_PALETTE = [
   { name: 'Графит', color: '#64748B' },
 ]
 
-export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthenticated, onNotify }: Props) {
+export function AuthForm({
+  variant = 'screen',
+  initialMode = 'signin',
+  mode: controlledMode,
+  onModeChange,
+  onAuthenticated,
+  onNotify,
+}: Props) {
   const { state, continueAsGuest, applyUserSession } = useOgonekStore()
   const sound = state.soundEnabled
 
-  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [internalMode, setInternalMode] = useState<AuthMode>(initialMode)
+  const mode = controlledMode || internalMode
+
+  const setMode = (newMode: AuthMode) => {
+    setInternalMode(newMode)
+    onModeChange?.(newMode)
+  }
+
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
@@ -63,7 +79,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Registration specifics
+  // Registration 2-step flow
+  const [registrationStep, setRegistrationStep] = useState<1 | 2>(1)
   const [selectedAvatarColor, setSelectedAvatarColor] = useState<string>('#FF6A1A')
   const [agreedToTerms, setAgreedToTerms] = useState<boolean>(true)
 
@@ -95,23 +112,24 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     const hasUpperAndLower = /[a-zа-я]/.test(password) && /[A-ZА-Я]/.test(password)
 
     if (password.length >= 10 && hasLetters && hasDigits && (hasSpecial || hasUpperAndLower)) {
-      return { level: 3, label: 'Надёжный мастер-пароль', color: 'bg-emerald-500' }
+      return { level: 3, label: 'Надёжный пароль', color: 'bg-emerald-500' }
     }
     if (hasLetters && hasDigits) {
-      return { level: 2, label: 'Хороший (добавь спецсимвол)', color: 'bg-amber-500' }
+      return { level: 2, label: 'Хороший пароль', color: 'bg-amber-500' }
     }
     return { level: 1, label: 'Слабый пароль (добавь цифры)', color: 'bg-rose-500' }
   })()
 
   // Reset state when switching mode
   useEffect(() => {
+    setRegistrationStep(1)
     setError(null)
     formStartTimeRef.current = Date.now()
   }, [mode])
 
   // Debounced check of username availability via /api/auth/check-username (300ms)
   useEffect(() => {
-    if (mode !== 'register' || !usernameCheck.valid) {
+    if (mode !== 'register' || registrationStep !== 1 || !usernameCheck.valid) {
       setCheckingUsername(false)
       setIsAvailable(null)
       setUsernameReason(null)
@@ -149,7 +167,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     return () => {
       if (checkTimerRef.current) clearTimeout(checkTimerRef.current)
     }
-  }, [username, mode, usernameCheck.valid, usernameCheck.clean])
+  }, [username, mode, registrationStep, usernameCheck.valid, usernameCheck.clean])
 
   const finish = (accountId: string, message: string) => {
     playSuccess(sound)
@@ -167,8 +185,8 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     }
   }
 
-  // Registration submit
-  const handleRegister = async (e: FormEvent) => {
+  // Step 1: validate nickname & password, advance to Step 2
+  const handleStep1Advance = (e: FormEvent) => {
     e.preventDefault()
     if (busy) return
 
@@ -190,6 +208,17 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       setError(usernameReason || 'Этот никнейм уже занят')
       return
     }
+
+    playClick(sound)
+    setError(null)
+    setRegistrationStep(2)
+  }
+
+  // Step 2: finalize registration
+  const handleStep2Submit = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy) return
+
     if (!agreedToTerms) {
       setError('Необходимо принять условия использования и политику приватности')
       return
@@ -372,7 +401,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
             setMode('signin')
             setError(null)
           }}
-          className={`flex-1 py-1.5 text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
+          className={`flex-1 py-2 min-h-[36px] text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
             !isRegister
               ? 'bg-[#2c2c2e] text-[#f5f5f7] shadow-sm font-semibold'
               : 'text-[#86868b] hover:text-[#f5f5f7]'
@@ -390,7 +419,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
             setMode('register')
             setError(null)
           }}
-          className={`flex-1 py-1.5 text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
+          className={`flex-1 py-2 min-h-[36px] text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
             isRegister
               ? 'bg-[#0071e3] text-white shadow-[0_2px_12px_rgba(0,113,227,0.4)] font-semibold'
               : 'text-[#86868b] hover:text-[#f5f5f7]'
@@ -413,15 +442,117 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
         </motion.div>
       )}
 
-      {/* ── ФОРМА ── */}
-      <form onSubmit={isRegister ? handleRegister : handleSignin} noValidate className="flex flex-col gap-4">
-        {/* Поле @никнейм */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="authform-username" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+      {/* ── ФОРМА ВХОДА (SIGN IN) ── */}
+      {!isRegister && (
+        <form onSubmit={handleSignin} noValidate className="flex flex-col gap-4">
+          {/* Поле @никнейм */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="signin-username" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
               <UserRound size={13} /> Никнейм
             </label>
-            {isRegister && (
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 text-[#86868b] font-mono text-[14px] select-none pointer-events-none">
+                @
+              </span>
+              <input
+                id="signin-username"
+                type="text"
+                name="username"
+                aria-label="Никнейм"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={username}
+                placeholder="alex_cerna"
+                onChange={(e) => {
+                  const cleanUsername = e.target.value.replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+                  setUsername(cleanUsername)
+                  if (error) setError(null)
+                }}
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
+              />
+            </div>
+          </div>
+
+          {/* Поле «Пароль» */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="signin-password" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+              <Lock size={13} /> Мастер-пароль
+            </label>
+            <div className="relative flex items-center">
+              <input
+                id="signin-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                aria-label="Пароль"
+                autoComplete="current-password"
+                value={password}
+                placeholder="Минимум 8 символов"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (error) setError(null)
+                }}
+                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 text-[#86868b] hover:text-[#f5f5f7] p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
+                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Кнопка входа */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[0_4px_20px_rgba(0,113,227,0.35)]"
+            >
+              {busy ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Подождите...</span>
+                </>
+              ) : (
+                <>
+                  <span>Войти в летопись</span>
+                  <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Гостевой вход */}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={handleGuest}
+              className="text-[12px] text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer bg-transparent border-none py-2 min-h-[36px] hover:underline"
+            >
+              Или войти как гость (быстрый демо-режим без пароля)
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* ── РЕГИСТРАЦИЯ: ШАГ 1 (registrationStep === 1) ── */}
+      {isRegister && registrationStep === 1 && (
+        <form onSubmit={handleStep1Advance} noValidate className="flex flex-col gap-4">
+          <div className="flex items-center justify-between text-xs text-[#86868b] mb-1">
+            <span className="font-mono text-[#f56900]">Шаг 1 из 2 · Мастер-ключ</span>
+            <span>Local-first</span>
+          </div>
+
+          {/* Поле @никнейм */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-username" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+                <UserRound size={13} /> Никнейм
+              </label>
               <div className="text-[11px] font-mono">
                 {checkingUsername && <span className="text-[#86868b]">проверяем...</span>}
                 {!checkingUsername && isAvailable === true && (
@@ -430,45 +561,46 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                   </span>
                 )}
                 {!checkingUsername && isAvailable === false && (
-                  <span className="text-rose-400">занят</span>
+                  <span className="text-rose-400">
+                    {usernameReason?.includes('зарезервирован') ? 'зарезервирован' : 'занят'}
+                  </span>
                 )}
               </div>
-            )}
+            </div>
+            <div className="relative flex items-center">
+              <span className="absolute left-3.5 text-[#86868b] font-mono text-[14px] select-none pointer-events-none">
+                @
+              </span>
+              <input
+                id="reg-username"
+                type="text"
+                name="username"
+                aria-label="Никнейм"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                value={username}
+                placeholder="alex_cerna"
+                onChange={(e) => {
+                  const cleanUsername = e.target.value.replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+                  setUsername(cleanUsername)
+                  if (error) setError(null)
+                }}
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
+              />
+            </div>
           </div>
-          <div className="relative flex items-center">
-            <span className="absolute left-3.5 text-[#86868b] font-mono text-[14px] select-none pointer-events-none">
-              @
-            </span>
-            <input
-              id="authform-username"
-              type="text"
-              name="username"
-              aria-label="Никнейм"
-              autoComplete="username"
-              autoCapitalize="none"
-              spellCheck={false}
-              value={username}
-              placeholder="alex_cerna"
-              onChange={(e) => {
-                const cleanUsername = e.target.value.replace(/^@+/, '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
-                setUsername(cleanUsername)
-                if (error) setError(null)
-              }}
-              className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
-            />
-          </div>
-        </div>
 
-        {/* Поле «Имя» (только при регистрации) */}
-        {isRegister && (
+          {/* Поле «Имя» */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="authform-display-name" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
+            <label htmlFor="reg-displayName" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
               Имя летописца (необязательно)
             </label>
             <input
-              id="authform-display-name"
+              id="reg-displayName"
               type="text"
               name="displayName"
+              aria-label="Имя летописца"
               autoComplete="name"
               value={displayName}
               placeholder="Алексей"
@@ -479,69 +611,111 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
               className="w-full px-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all"
             />
           </div>
-        )}
 
-        {/* Поле «Пароль» */}
-        <div className="flex flex-col gap-1.5">
-          <div className="flex items-center justify-between">
-            <label htmlFor="authform-password" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
-              <Lock size={13} /> Мастер-пароль
-            </label>
-            {isRegister && password && (
-              <span className={`text-[11px] font-mono ${passwordStrength.color.replace('bg-', 'text-')}`}>
-                {passwordStrength.label}
-              </span>
+          {/* Поле «Пароль» */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-password" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+                <Lock size={13} /> Мастер-пароль
+              </label>
+              {password && (
+                <span className={`text-[11px] font-mono ${passwordStrength.color.replace('bg-', 'text-')}`}>
+                  {passwordStrength.label}
+                </span>
+              )}
+            </div>
+            <div className="relative flex items-center">
+              <input
+                id="reg-password"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                aria-label="Пароль"
+                autoComplete="new-password"
+                value={password}
+                placeholder="Минимум 8 символов"
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  if (error) setError(null)
+                }}
+                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 text-[#86868b] hover:text-[#f5f5f7] p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
+                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+
+            {/* Индикатор надёжности */}
+            {password && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <div
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 1 ? passwordStrength.color : 'bg-white/10'
+                  }`}
+                />
+                <div
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 2 ? passwordStrength.color : 'bg-white/10'
+                  }`}
+                />
+                <div
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 3 ? passwordStrength.color : 'bg-white/10'
+                  }`}
+                />
+              </div>
             )}
           </div>
-          <div className="relative flex items-center">
-            <input
-              id="authform-password"
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              aria-label="Пароль"
-              autoComplete={isRegister ? 'new-password' : 'current-password'}
-              value={password}
-              placeholder="Минимум 8 символов"
-              onChange={(e) => {
-                setPassword(e.target.value)
-                if (error) setError(null)
-              }}
-              className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
-            />
+
+          {/* Кнопка шага 1 */}
+          <div className="pt-2">
             <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 text-[#86868b] hover:text-[#f5f5f7] p-1.5 cursor-pointer transition-colors"
-              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+              type="submit"
+              disabled={busy}
+              aria-label="Далее: выбор аватара"
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#f56900] hover:bg-[#ff7b1a] text-white shadow-[0_4px_24px_rgba(245,105,0,0.35)]"
             >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              <span>Далее: выбор аватара</span>
+              <ChevronRight size={16} />
             </button>
           </div>
 
-          {/* Индикатор надёжности (при регистрации) */}
-          {isRegister && password && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <div
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                  passwordStrength.level >= 1 ? passwordStrength.color : 'bg-white/10'
-                }`}
-              />
-              <div
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                  passwordStrength.level >= 2 ? passwordStrength.color : 'bg-white/10'
-                }`}
-              />
-              <div
-                className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                  passwordStrength.level >= 3 ? passwordStrength.color : 'bg-white/10'
-                }`}
-              />
-            </div>
-          )}
-        </div>
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={handleGuest}
+              className="text-[12px] text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer bg-transparent border-none py-2 min-h-[36px] hover:underline"
+            >
+              Или войти как гость (быстрый демо-режим без пароля)
+            </button>
+          </div>
+        </form>
+      )}
 
-        {/* Выбор цвета аватара (только при регистрации) */}
-        {isRegister && (
+      {/* ── РЕГИСТРАЦИЯ: ШАГ 2 (registrationStep === 2) ── */}
+      {isRegister && registrationStep === 2 && (
+        <form onSubmit={handleStep2Submit} noValidate className="flex flex-col gap-4">
+          <div className="flex items-center justify-between text-xs text-[#86868b] mb-1">
+            <button
+              type="button"
+              onClick={() => setRegistrationStep(1)}
+              aria-label="Вернуться к шагу 1"
+              className="text-[#2997ff] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent min-h-[36px]"
+            >
+              <ArrowLeft size={12} /> Вернуться к шагу 1
+            </button>
+            <span className="font-mono text-[#f56900]">Шаг 2 из 2</span>
+          </div>
+
+          <h3 className="text-[15px] font-semibold text-[#f5f5f7]">
+            Шаг 2 из 2 · Выбери цвет профиля
+          </h3>
+
+          {/* Выбор цвета аватара */}
           <div className="flex flex-col gap-1.5 pt-1">
             <label className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
               Цвет персонального пламени
@@ -554,23 +728,21 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                     key={item.color}
                     type="button"
                     onClick={() => setSelectedAvatarColor(item.color)}
-                    className={`w-7 h-7 rounded-full transition-transform cursor-pointer relative flex items-center justify-center ${
+                    className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full transition-transform cursor-pointer relative flex items-center justify-center border-none ${
                       isSelected ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-[#121214]' : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: item.color }}
                     title={item.name}
                     aria-label={`Выбрать цвет: ${item.name}`}
                   >
-                    {isSelected && <Check size={12} className="text-white drop-shadow" />}
+                    {isSelected && <Check size={14} className="text-white drop-shadow" />}
                   </button>
                 )
               })}
             </div>
           </div>
-        )}
 
-        {/* Согласие с правилами (только при регистрации) */}
-        {isRegister && (
+          {/* Согласие с правилами */}
           <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
             <input
               type="checkbox"
@@ -589,49 +761,29 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
               </Link>
             </span>
           </label>
-        )}
 
-        {/* Кнопка отправки */}
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={busy}
-            className={`w-full py-3.5 px-6 rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] ${
-              isRegister
-                ? 'bg-[#f56900] hover:bg-[#ff7b1a] text-white shadow-[0_4px_24px_rgba(245,105,0,0.35)]'
-                : 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[0_4px_20px_rgba(0,113,227,0.35)]'
-            }`}
-          >
-            {busy ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Подождите...</span>
-              </>
-            ) : isRegister ? (
-              <>
-                <span>Зажечь огонёк и начать</span>
-                <ArrowRight size={15} />
-              </>
-            ) : (
-              <>
-                <span>Войти в летопись</span>
-                <ArrowRight size={15} />
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Гостевой режим */}
-        <div className="text-center pt-2">
-          <button
-            type="button"
-            onClick={handleGuest}
-            className="text-[12px] text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer bg-transparent border-none py-1 hover:underline"
-          >
-            Или войти как гость (быстрый демо-режим без пароля)
-          </button>
-        </div>
-      </form>
+          {/* Кнопка завершения регистрации */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#f56900] hover:bg-[#ff7b1a] text-white shadow-[0_4px_24px_rgba(245,105,0,0.35)]"
+            >
+              {busy ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Создание профиля...</span>
+                </>
+              ) : (
+                <>
+                  <span>Зажечь огонёк и начать</span>
+                  <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Безопасность */}
       <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-[11px] font-mono text-[#86868b]">
