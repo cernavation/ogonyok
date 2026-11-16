@@ -225,7 +225,7 @@ export default function ExamplesPage() {
       </section>
 
       {/* ── SECTION 1: АНАТОМИЯ СИЛЬНОЙ ЗАПИСИ (ФОРМУЛА 3 ЭЛЕМЕНТОВ) ── */}
-      <section id="formula" className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section id="formula" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4">Анатомия формулировки</span>
@@ -381,7 +381,7 @@ export default function ExamplesPage() {
       </section>
 
       {/* ── SECTION 2: ЧЕМ ИЗРАСХОДОВАТЬСЯ: КАК ПОЛУЧИТЬ 9.0–10.0★ ──── */}
-      <section id="high-score" className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section id="high-score" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[800px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4 !text-[#2997ff]">Критерии нейросети</span>
@@ -496,7 +496,7 @@ export default function ExamplesPage() {
       </section>
 
       {/* ── SECTION 3: КАК ОПРЕДЕЛИТЬСЯ С УРОВНЕМ ИЗ 5? ─────────────── */}
-      <section id="levels-guide" className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section id="levels-guide" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[820px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4 !text-[#f56900]">Интерактивный навигатор</span>
@@ -636,7 +636,7 @@ export default function ExamplesPage() {
       </section>
 
       {/* ── SECTION 4: ПОШАГОВЫЙ РИТУАЛ В ИНТЕРФЕЙСЕ ──────────────── */}
-      <section className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-16">
             <span className="apple-eyebrow fade-up block mb-4">Техника выполнения</span>
@@ -685,7 +685,7 @@ export default function ExamplesPage() {
       </section>
 
       {/* ── FINAL BANNER ──────────────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
         <div className="max-w-[760px] mx-auto px-5 sm:px-8">
           <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
             Начни с одного честного факта сегодня вечером.

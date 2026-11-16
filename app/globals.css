@@ -1,6 +1,8 @@
 @import '../styles/tokens.css';
 @import '../styles/landing-tokens.css';
 @import 'tailwindcss';
+@source "../components";
+@source "../app";
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import './interactive-overrides.css';

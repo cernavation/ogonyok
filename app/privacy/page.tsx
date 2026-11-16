@@ -44,7 +44,7 @@ export default function PrivacyPage() {
       </section>
 
       {/* ── COMPARISON TABLE ──────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1024px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[640px] mx-auto mb-16">
             <span className="apple-eyebrow block mb-3">Стандарты честности</span>
@@ -107,7 +107,7 @@ export default function PrivacyPage() {
       </section>
 
       {/* ── TECHNICAL DEEP DIVE ────────────────────────────────────── */}
-      <section id="encryption" className="py-20 sm:py-28 bg-black border-t border-white/[0.06]">
+      <section id="encryption" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[840px] mx-auto px-5 sm:px-8 space-y-12">
           <div>
             <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">

@@ -224,7 +224,7 @@ export default function ReviewsPage() {
       </section>
 
       {/* ── BOTTOM CALL TO ACTION ─────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-black border-t border-white/[0.06] text-center">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] text-center">
         <div className="max-w-[800px] mx-auto px-5 sm:px-8">
           <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
             Начни писать свою историю.

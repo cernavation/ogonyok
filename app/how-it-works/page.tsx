@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ── PART 1: ПРОБЛЕМА СОВРЕМЕННОГО ЧЕЛОВЕКА ───────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[840px] mx-auto px-5 sm:px-8">
           <span className="apple-eyebrow block mb-3">Глава 1 · Психология</span>
           <h2 className="text-[28px] sm:text-[36px] font-bold text-[#f5f5f7] mb-6 tracking-tight">
@@ -67,7 +67,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ── PART 2: ТРИ ШАГА РИТУАЛА ──────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1024px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[680px] mx-auto mb-16">
             <span className="apple-eyebrow block mb-3">Глава 2 · Практика</span>
@@ -141,7 +141,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ── PART 3: ЧТО ПРОИСХОДИТ СО ВРЕМЕНЕМ ──────────────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1024px] mx-auto px-5 sm:px-8">
           <div className="text-center mb-16">
             <span className="apple-eyebrow block mb-3">Глава 3 · Динамика</span>
@@ -179,7 +179,7 @@ export default function HowItWorksPage() {
       </section>
 
       {/* ── CALL TO ACTION ────────────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-black border-t border-white/[0.06] text-center">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] text-center">
         <div className="max-w-[800px] mx-auto px-5 sm:px-8">
           <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
             Попробуй сегодня вечером.

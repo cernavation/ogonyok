@@ -201,10 +201,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             fill
             isHero
           />
-          {/* Layered dark gradient overlay to ensure perfect contrast over video */}
-          <div className="absolute inset-0 bg-black/45 z-10 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/80 z-10 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.9)_100%)] z-10 pointer-events-none" />
+          {/* Calibrated luminous video overlay: transparent in upper & middle, soft gradient in lower third (max 0.55) */}
+          <div className="apple-video-overlay" aria-hidden="true" />
         </div>
 
         {/* Apple Ambient Stage Glow Halo behind hero headline */}
@@ -213,7 +211,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[1080px] mx-auto text-center flex flex-col items-center">
           {/* Category Eyebrow Tag: Punchy psychological hook */}
-          <div className="fade-blur mb-4 inline-flex items-center gap-2">
+          <div className="fade-blur mb-5 sm:mb-6 inline-flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
@@ -221,20 +219,20 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               />
             </svg>
             <span className="apple-eyebrow">
-              Антидот от самообесценивания
+              Антидот от&nbsp;самообесценивания
             </span>
           </div>
 
           {/* Epic Apple Headline (Wide 2-line structure) */}
-          <h1 className="apple-hero-title fade-blur delay-75 mb-5 sm:mb-6 drop-shadow-[0_2px_16px_rgba(0,0,0,0.9)] max-w-[1080px]">
+          <h1 className="apple-hero-title apple-hero-shadow fade-blur delay-75 mb-6 sm:mb-8 max-w-[1080px]">
             <span className="inline-block">Хватит обесценивать себя.</span>{' '}
             <br className="hidden md:inline" />
             <span className="apple-shimmer-text inline-block">Твои победы требуют доказательств.</span>
           </h1>
 
-          {/* Subtitle: Direct emotional trigger */}
-          <p className="apple-body fade-up delay-150 max-w-[680px] mb-8 sm:mb-9 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] font-normal">
-            Каждый вечер мозг врёт тебе, что ты сделал недостаточно. «Огонёк» возвращает твёрдые факты: 5&nbsp;минут вечерней тишины, от&nbsp;1 до&nbsp;5 настоящих поступков — и&nbsp;железное спокойствие перед зеркалом.
+          {/* Subtitle: Direct emotional trigger (24-32px from h1, 32-40px to buttons, multiple of 8px) */}
+          <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[720px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed font-normal">
+            Каждый вечер мозг врёт тебе, что ты&nbsp;сделал недостаточно. «Огонёк» возвращает твёрдые факты: 5&nbsp;минут вечерней тишины, от&nbsp;1 до&nbsp;5 настоящих поступков&nbsp;— и&nbsp;железное спокойствие перед зеркалом.
           </p>
 
           {/* Action CTAs: Apple Blue + Ghost link */}
@@ -244,20 +242,20 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               onClick={() => openAuth('register')}
               className="apple-btn-primary !px-8 !py-3.5 !text-[15px] shadow-[0_0_24px_rgba(0,113,227,0.4)]"
             >
-              Начать свою летопись →
+              Начать свою летопись&nbsp;→
             </button>
             <button
               type="button"
               onClick={() => openAuth('signin')}
               className="apple-btn-ghost !px-6 !py-3.5 !text-[15px]"
             >
-              Войти ›
+              Войти&nbsp;›
             </button>
           </div>
 
           {/* Trust subtitle */}
-          <div className="fade-up delay-250 mt-4 text-[12px] font-mono text-[#86868b] tracking-wider">
-            Бесплатно навсегда · Без рекламы · Данные только на твоём чипе
+          <div className="fade-up delay-250 mt-6 text-[12px] font-mono text-[#86868b] tracking-wider">
+            Бесплатно навсегда · Без рекламы · Данные только на&nbsp;твоём чипе
           </div>
         </div>
       </section>
@@ -267,7 +265,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="how"
-        className="relative py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        className="relative py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Как это работает"
       >
         {/* Soft Amber Ambient Glow on Left */}
@@ -348,7 +346,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
-        className="relative py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        className="relative py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Режимы жизни"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10" />
@@ -375,7 +373,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="levels"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Уровни жёсткости"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -451,7 +449,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="numbers"
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Реальные цифры"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -528,7 +526,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="quotes"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Цитаты"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -600,7 +598,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="showcase"
-        className="py-28 sm:py-36 md:py-44 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Платформа в действии"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -703,7 +701,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="privacy"
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Приватность и безопасность"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -817,7 +815,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="open"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] relative overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Открытость и бесплатность"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#00a1b3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-10" />
@@ -905,7 +903,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="pricing"
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32"
         aria-label="Тарифы и подписка"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 right-1/4 -z-0 opacity-15" />
@@ -1188,7 +1186,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="together"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Финальный призыв к действию"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">

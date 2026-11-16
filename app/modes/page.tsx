@@ -66,7 +66,7 @@ export default function ModesPage() {
       </section>
 
       {/* ── ACTIVE MODE SHOWCASE ──────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             {/* Left: Photos preview */}
@@ -143,7 +143,7 @@ export default function ModesPage() {
       </section>
 
       {/* ── 4 MODES OVERVIEW GRID ─────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[600px] mx-auto mb-16">
             <span className="apple-eyebrow block mb-3">Каталог</span>

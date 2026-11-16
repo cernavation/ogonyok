@@ -47,7 +47,7 @@ export default function ManifestoPage() {
       </section>
 
       {/* ── ESSAY CONTENT ──────────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[760px] mx-auto px-5 sm:px-8 space-y-10 text-[17px] leading-relaxed text-[#a1a1a6]">
           <div className="flex items-center gap-4 p-6 rounded-2xl bg-[#161617] border border-white/10">
             <img

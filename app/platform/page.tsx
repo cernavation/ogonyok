@@ -52,7 +52,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── PILLAR 1: ДНЕВНИК СИЛЫ (Daily Diary) ────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="max-w-[760px] mb-14 sm:mb-16">
             <span className="apple-eyebrow fade-up block mb-4">Ядро платформы</span>
@@ -144,7 +144,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── PILLAR 2: СЕЙФ ДОКАЗАТЕЛЬСТВ (Evidence Vault) ───────────── */}
-      <section id="vault" className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section id="vault" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-5 fade-up">
@@ -195,7 +195,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── PILLAR 3: СТРИК И ПРОФИЛЬ 740 ДНЕЙ ──────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-7 order-2 lg:order-1 fade-scale delay-150">
@@ -238,7 +238,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── PILLAR 4: АНАЛИТИКА ПРЕОДОЛЕНИЯ ─────────────────────────── */}
-      <section id="analytics" className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section id="analytics" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-5 fade-up">
@@ -281,7 +281,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── FINAL BANNER CTA ───────────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1024px] mx-auto px-5 sm:px-8 text-center">
           <h2 className="apple-hero-title mb-6 !text-[36px] sm:!text-[48px]">
             Начни свой первый вечер.

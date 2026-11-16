@@ -139,7 +139,7 @@ export default function SupportPage() {
       </section>
 
       {/* ── FAQ ACCORDION ─────────────────────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-[#0c0c0e]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e]">
         <div className="max-w-[840px] mx-auto px-5 sm:px-8">
           <div className="mb-12">
             <span className="apple-eyebrow block mb-3">База знаний</span>
@@ -188,7 +188,7 @@ export default function SupportPage() {
       </section>
 
       {/* ── DIRECT CONTACT STAGE ───────────────────────────────────── */}
-      <section id="contact" className="py-20 sm:py-28 bg-black border-t border-white/[0.06]">
+      <section id="contact" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
             {/* Left: Contact Options */}

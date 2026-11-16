@@ -69,7 +69,7 @@ export default function AiPage() {
       </section>
 
       {/* ── 4 CORE PILLARS OF OGONEK AI ───────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4">Архитектура ума</span>
@@ -170,7 +170,7 @@ export default function AiPage() {
       </section>
 
       {/* ── REAL UI SCREENSHOT: ANALYTICS & INSIGHTS ───────────────── */}
-      <section className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
             <div className="lg:col-span-5 fade-up">
@@ -224,7 +224,7 @@ export default function AiPage() {
       </section>
 
       {/* ── TIERS COMPARISON FOR AI ────────────────────────────────── */}
-      <section id="pricing-ai" className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section id="pricing-ai" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16">
             <span className="apple-eyebrow fade-up block mb-4">Доступность по тарифам</span>
@@ -377,7 +377,7 @@ export default function AiPage() {
       </section>
 
       {/* ── ZERO-TRAINING PRIVACY PLEDGE ──────────────────────────── */}
-      <section className="py-20 sm:py-28 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[860px] mx-auto px-5 sm:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-mono text-[#00c7be] mb-6">
             <span>ШИФРОВАНИЕ SHA-256</span>
@@ -403,7 +403,7 @@ export default function AiPage() {
       </section>
 
       {/* ── FINAL CALL TO ACTION ──────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
         <div className="max-w-[760px] mx-auto px-5 sm:px-8">
           <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
             Узнай, на что ты способен на самом деле.

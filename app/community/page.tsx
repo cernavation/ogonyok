@@ -199,7 +199,7 @@ export default function CommunityPage() {
       </section>
 
       {/* ── SECTION 1: ПОИСК ЕДИНОМЫШЛЕННИКОВ ПО ХОББИ ──────────────── */}
-      <section id="search" className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section id="search" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4 !text-[#2997ff]">Умный поиск напарников</span>
@@ -278,7 +278,7 @@ export default function CommunityPage() {
       </section>
 
       {/* ── SECTION 2: ГРУППЫ И КРУГИ СИЛЫ ─────────────────────────── */}
-      <section id="groups" className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section id="groups" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[800px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4 !text-[#f56900]">Клубы по направлениям</span>
@@ -396,7 +396,7 @@ export default function CommunityPage() {
       </section>
 
       {/* ── SECTION 3: СТОРИС ПОБЕД (КАК СОЗДАВАТЬ И ПУБЛИКОВАТЬ) ──── */}
-      <section id="stories" className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06]">
+      <section id="stories" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-16 sm:mb-20">
             <span className="apple-eyebrow fade-up block mb-4 !text-[#f91880]">Сторис в Огоньке</span>
@@ -544,7 +544,7 @@ export default function CommunityPage() {
       </section>
 
       {/* ── SECTION 4: ЗАШИФРОВАННЫЕ ЧАТЫ И P2P СОЗВОНЫ ─────────────── */}
-      <section className="py-24 sm:py-32 bg-black border-t border-white/[0.06]">
+      <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <div className="lg:col-span-7">
@@ -603,7 +603,7 @@ export default function CommunityPage() {
       </section>
 
       {/* ── FINAL BANNER ──────────────────────────────────────────── */}
-      <section className="py-24 sm:py-32 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] text-center">
         <div className="max-w-[760px] mx-auto px-5 sm:px-8">
           <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
             Вместе гордиться легче.
