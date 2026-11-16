@@ -11,7 +11,7 @@ export type TextBlinkProps = Omit<React.ComponentProps<"span">, "children"> & {
 
 function TextBlink({
   children,
-  as: Component = "p",
+  as: Component = "span",
   className,
   minOpacity = 0.45,
   style,
