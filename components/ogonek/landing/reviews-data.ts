@@ -539,3 +539,164 @@ export const ALL_REVIEWS: ReviewItem[] = [
       'Масштабирование бизнеса — это проверка на верность стандартам. Мы с командой ввели традицию: в конце дня каждый бариста отмечает одну вещь, которой гордится в обслуживании гостей. Это создало культуру заботы, которую чувствуют все клиенты.',
   },
 ]
+
+export interface GlobeTestimonialReview {
+  id: string
+  quote: string
+  name: string
+  role?: string
+  company?: string
+  city: string
+  country?: string
+  lat: number
+  lng: number
+  image: string
+  rating?: number
+  tone?: 1 | 2 | 3 | 4 | 5
+}
+
+/**
+ * 3D Globe Testimonials ordered East to West so the natural idle spin brings each story smoothly to the front.
+ */
+export const GLOBE_TESTIMONIALS: GlobeTestimonialReview[] = [
+  {
+    id: 'almaty',
+    name: 'Елена Романова',
+    role: 'Product Lead',
+    company: 'Финтех',
+    city: 'Алматы',
+    country: 'KZ',
+    lat: 43.22,
+    lng: 76.85,
+    image: '/media/landing/quote-2.jpg',
+    rating: 5,
+    tone: 2,
+    quote: 'Раньше день заканчивался чувством «опять ничего не успела». Вечерний ритуал Огонька вернул спокойствие и веру в свои силы.',
+  },
+  {
+    id: 'tbilisi',
+    name: 'Михаил Воронов',
+    role: 'Трейлраннер',
+    company: 'Trail Club',
+    city: 'Тбилиси',
+    country: 'GE',
+    lat: 41.71,
+    lng: 44.78,
+    image: '/media/landing/quote-3.jpg',
+    rating: 5,
+    tone: 3,
+    quote: 'Стрик не сгорает при болезни или пропуске. В Огоньке ценятся реальные прожитые дни, а не тупое насилие над собой.',
+  },
+  {
+    id: 'yerevan',
+    name: 'Артём Игнатов',
+    role: 'Senior Engineer',
+    company: 'Tech Labs',
+    city: 'Ереван',
+    country: 'AM',
+    lat: 40.18,
+    lng: 44.51,
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 4,
+    quote: 'Год практики летописи. Мозг перестал обесценивать прожитые дни. Когда открываешь архив — видишь 365 весомых доказательств.',
+  },
+  {
+    id: 'limassol',
+    name: 'София Левина',
+    role: 'HR Директор',
+    company: 'Global Staff',
+    city: 'Лимасол',
+    country: 'CY',
+    lat: 34.68,
+    lng: 33.04,
+    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 1,
+    quote: 'Категории баланса жизни спасли меня от выгорания. Как только вижу перекос в работу, сознательно добавляю спорт и семью.',
+  },
+  {
+    id: 'chisinau',
+    name: 'Александр Церна',
+    role: 'Основатель',
+    company: 'Огонёк',
+    city: 'Кишинёв',
+    country: 'MD',
+    lat: 47.01,
+    lng: 28.86,
+    image: '/media/landing/quote-1.jpg',
+    rating: 5,
+    tone: 1,
+    quote: '740 дней без единого пропуска. Единственная привычка, которая ни разу меня не подвела. Твой собственный честный разговор с собой.',
+  },
+  {
+    id: 'warsaw',
+    name: 'Сергей Баринов',
+    role: 'Инженер-конструктор',
+    company: 'Robotics',
+    city: 'Варшава',
+    country: 'PL',
+    lat: 52.23,
+    lng: 21.01,
+    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 5,
+    quote: 'Заполняю дневник вместе с сыном перед сном. Это стало главным семейным ритуалом, который учит ребёнка замечать свои поступки.',
+  },
+  {
+    id: 'budva',
+    name: 'Андрей Кравцов',
+    role: 'Основатель студии',
+    company: 'Craft Media',
+    city: 'Будва',
+    country: 'ME',
+    lat: 42.28,
+    lng: 18.84,
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 2,
+    quote: 'Шкала преодоления 1–10★ научила честно признавать, что было рутиной, а что стоило колоссальных волевых усилий.',
+  },
+  {
+    id: 'vienna',
+    name: 'Юлия Шнайдер',
+    role: 'Финансовый консультант',
+    company: 'Vienna Advisory',
+    city: 'Вена',
+    country: 'AT',
+    lat: 48.21,
+    lng: 16.37,
+    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 3,
+    quote: 'Никакой токсичной мотивации и навязанного позитива. Простой вечерний факт-чекинг с собой перед зеркалом.',
+  },
+  {
+    id: 'berlin',
+    name: 'Дарья Мельникова',
+    role: 'Концепт-художник',
+    company: 'Game Art Lab',
+    city: 'Берлин',
+    country: 'DE',
+    lat: 52.52,
+    lng: 13.40,
+    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 4,
+    quote: 'Страх чистого листа ушёл, когда я начала фиксировать даже микро-победы. Теперь у меня целая книга доказательств силы.',
+  },
+  {
+    id: 'san-francisco',
+    name: 'Дмитрий Соловьев',
+    role: 'CTO',
+    company: 'Cloud Scale',
+    city: 'Сан-Франциско',
+    country: 'US',
+    lat: 37.78,
+    lng: -122.42,
+    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&h=400&q=80',
+    rating: 5,
+    tone: 2,
+    quote: 'Приватность Local-first была решающим фактором. Мои личные размышления шифруются на моём Mac и не утекают в датацентры.',
+  },
+]

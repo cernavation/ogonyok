@@ -9,6 +9,8 @@ import { AppleModesPanel } from './apple-modes-panel'
 import { useScrollReveal } from './use-scroll-reveal'
 import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
+import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
+import { GLOBE_TESTIMONIALS } from './reviews-data'
 
 type Props = {
   onNotify?: (msg: string) => void
@@ -522,75 +524,32 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          SECTION 6 — «ЦИТАТЫ» (Голоса практиков)
+          SECTION 6 — 3D ИНТЕРАКТИВНЫЙ ГЛОБУС ОТЗЫВОВ (Голоса практиков)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="quotes"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Цитаты"
+        aria-label="Отзывы и истории участников"
       >
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="text-center mb-16 sm:mb-20 md:mb-24">
-            <span className="apple-eyebrow fade-up block mb-4">Голоса практиков</span>
-            <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              «Я наконец-то перестал жрать себя изнутри перед сном».
-            </h2>
-            <p className="apple-body fade-up delay-150 max-w-[620px] mx-auto text-[#86868b] text-[17px] leading-relaxed">
-              Живые истории предпринимателей, врачей, спортсменов и родителей, которые вернули веру в свои силы благодаря пяти минутам вечерней летописи.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {QUOTES.map((q, i) => (
-              <div
-                key={i}
-                className={`apple-card apple-card-hover fade-scale ${q.delay} p-7 sm:p-8 flex flex-col justify-between min-h-[310px] bg-[#161617]`}
-              >
-                <div>
-                  <span className="text-[32px] font-serif leading-none text-white/20 select-none block mb-3">
-                    “
-                  </span>
-                  <blockquote className="text-[15px] sm:text-[16px] leading-relaxed text-[#f5f5f7] font-normal tracking-tight mb-6">
-                    «{q.text}»
-                  </blockquote>
-                </div>
-
-                <div className="flex items-center gap-3.5 pt-4 border-t border-white/[0.08] mt-auto">
-                  <MediaSlot
-                    name={q.image}
-                    width={48}
-                    height={48}
-                    ratio="1:1"
-                    alt={q.author}
-                    circle
-                    className="shrink-0 w-12 h-12"
-                  />
-                  <div>
-                    <cite className="not-italic text-[15px] font-semibold text-[#f5f5f7] block tracking-tight">
-                      {q.author}
-                    </cite>
-                    <span className="text-[12px] text-[#86868b]">
-                      {q.role}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Link to all 30+ reviews */}
-          <div className="mt-12 text-center fade-up delay-200">
-            <a
+        <TestimonialGlobe
+          items={GLOBE_TESTIMONIALS}
+          eyebrow="Голоса практиков по всему миру"
+          heading="«Я наконец-то перестал жрать себя изнутри перед сном»."
+          caption="Живые истории предпринимателей, инженеров, спортсменов и родителей из 10+ стран, которые вернули веру в свои силы благодаря пяти минутам вечерней летописи."
+          autoplay
+          interval={3600}
+          action={
+            <Link
               href="/reviews"
-              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 px-4 text-xs font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
             >
-              <span>Читать все 32 проверенные истории участников</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M5 12h14M12 5l7 7-7 7" />
+              <span>Читать все 32 истории</span>
+              <svg viewBox="0 0 16 16" aria-hidden="true" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 8h9.5M8.5 4l4 4-4 4" />
               </svg>
-            </a>
-          </div>
-        </div>
+            </Link>
+          }
+        />
       </section>
 
       {/* ═══════════════════════════════════════════════════════════

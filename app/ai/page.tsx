@@ -15,7 +15,7 @@ export default function AiPage() {
       <AppleNavbar />
 
       {/* ── HERO STAGE ────────────────────────────────────────────── */}
-      <section className="relative min-h-[80vh] flex flex-col justify-start sm:justify-center items-center text-center pt-24 sm:pt-36 pb-16 sm:pb-24 px-5 sm:px-8 overflow-hidden bg-black">
+      <section className="relative flex flex-col items-center text-center pt-28 sm:pt-36 pb-16 sm:pb-24 px-5 sm:px-8 bg-black">
         {/* Ambient Stage Halo: Sapphire + Emerald Glow */}
         <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
         <div className="apple-ambient-orb w-[400px] h-[400px] bg-[#00c7be] top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-10" />
@@ -25,12 +25,12 @@ export default function AiPage() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path
                 d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
-                stroke="#00c7be"
+                stroke="#f56900"
                 strokeWidth="2"
                 strokeLinecap="round"
               />
             </svg>
-            <span className="apple-eyebrow !text-[#00c7be]">Нейросетевой наставник Огонька</span>
+            <span className="apple-eyebrow">Нейросетевой наставник Огонька</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-75 mb-6 max-w-[960px]">
@@ -127,7 +127,7 @@ export default function AiPage() {
             {/* Pillar 3 */}
             <div className="apple-card apple-card-hover fade-up delay-350 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#00c7be]/10 border border-[#00c7be]/20 flex items-center justify-center text-[#00c7be] mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/10 border border-[#0071e3]/20 flex items-center justify-center text-[#2997ff] mb-6">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                     <line x1="7" y1="7" x2="7.01" y2="7" />
@@ -140,7 +140,7 @@ export default function AiPage() {
                   Алгоритм сам классифицирует поступки (#Спорт, #Бизнес, #Семья, #Дисциплина) и бьёт тревогу, если начинается сильный перекос в карьеру ценой здоровья или отношений с близкими.
                 </p>
               </div>
-              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#00c7be]">
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] text-[#2997ff] font-medium">
                 ЗАЩИТА БАЛАНСА ЖИЗНИ
               </div>
             </div>
@@ -148,7 +148,7 @@ export default function AiPage() {
             {/* Pillar 4 */}
             <div className="apple-card apple-card-hover fade-up delay-450 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between">
               <div>
-                <div className="w-12 h-12 rounded-2xl bg-[#8668ff]/10 border border-[#8668ff]/20 flex items-center justify-center text-[#8668ff] mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-[#f56900]/10 border border-[#f56900]/20 flex items-center justify-center text-[#f56900] mb-6">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 14 14" />
@@ -161,7 +161,7 @@ export default function AiPage() {
                   В тарифе Ultra ИИ формулирует персональный вердикт дня: трезвый итог преодоленного и конкретный вектор приложения усилий на завтрашнее утро. Никаких шаблонных цитат из интернета.
                 </p>
               </div>
-              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] font-mono text-[#8668ff]">
+              <div className="pt-6 border-t border-white/[0.06] mt-8 text-[12px] text-[#f56900] font-medium">
                 ЭКСКЛЮЗИВ ДЛЯ ТАРИФА ULTRA
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function AiPage() {
                 Панель AI Insight сопоставляет утренние намерения (Morning Focus) с тем, что ты фактически записал вечером.
               </p>
               <div className="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] mb-6">
-                <div className="text-[13px] font-mono text-[#00c7be] mb-2 uppercase tracking-wider">
+                <div className="text-[13px] text-[#2997ff] mb-2 uppercase tracking-wider font-semibold">
                   Классификация рекомендаций:
                 </div>
                 <div className="space-y-2 text-[14px] text-[#f5f5f7]">
@@ -379,8 +379,8 @@ export default function AiPage() {
       {/* ── ZERO-TRAINING PRIVACY PLEDGE ──────────────────────────── */}
       <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
         <div className="max-w-[860px] mx-auto px-5 sm:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs font-mono text-[#00c7be] mb-6">
-            <span>ШИФРОВАНИЕ SHA-256</span>
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] border border-white/10 text-xs text-[#86868b] mb-6">
+            <span className="text-[#2997ff] font-medium">ШИФРОВАНИЕ SHA-256</span>
             <span>·</span>
             <span>ZERO DATA TRAINING</span>
           </div>
