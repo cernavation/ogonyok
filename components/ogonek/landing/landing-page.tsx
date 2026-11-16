@@ -11,6 +11,7 @@ import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
+import { AiCeremonyShowcase } from './ai-ceremony-showcase'
 import { GLOBE_TESTIMONIALS } from './reviews-data'
 
 type Props = {
@@ -208,8 +209,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           <div className="apple-video-overlay" aria-hidden="true" />
         </div>
 
-        {/* Apple Ambient Stage Glow Halo behind hero headline */}
-        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0" />
+        {/* Subtle Top Blue Accent Halo strictly at the top edge */}
+        <div className="apple-ambient-orb w-[500px] h-[140px] bg-[#0071e3]/20 top-0 left-1/2 -translate-x-1/2 -z-0 pointer-events-none" />
 
         {/* Hero Content positioned over the video stage */}
         <div className="relative z-20 max-w-[1080px] mx-auto text-center flex flex-col items-center">
@@ -551,6 +552,32 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </Link>
           }
         />
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          SECTION 6.2 — «НЕЙРОСЕТЕВОЙ НАСТАВНИК» (Разбор дня и долгосрок)
+          ═══════════════════════════════════════════════════════════ */}
+      <section
+        id="ai"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
+        aria-label="ИИ-наставник Priday"
+      >
+        {/* Apple Ambient Stage Glow Halo */}
+        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-15" />
+
+        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-[840px] mx-auto mb-12 sm:mb-16">
+            <span className="apple-eyebrow fade-up block mb-4">Нейросетевой наставник</span>
+            <h2 className="apple-section-title fade-up delay-75 mb-6">
+              ИИ, который не льстит. Трезвый разбор твоих побед.
+            </h2>
+            <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+              Никаких пустых шаблонных комплиментов. Искусственный интеллект Priday взвешивает силу преодоления, находит, в чём ты реально хорош, ведёт долгосрочную статистику привычек и вовремя даёт советы при спаде или росте.
+            </p>
+          </div>
+
+          <AiCeremonyShowcase />
+        </div>
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
