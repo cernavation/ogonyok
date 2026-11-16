@@ -202,7 +202,7 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
                 {/* Current Plan Badge */}
                 {isCurrent && (
                   <span className="absolute -top-2.5 left-3.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-[var(--accent,#FF6A1A)] text-white shadow-sm">
-                    ТЕКУЩИЙ ПЛАН
+                    Текущий план
                   </span>
                 )}
 
@@ -292,29 +292,20 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
                     <button
                       type="button"
                       id={`checkout-btn-${tier}`}
-                      disabled={isCurrent}
-                      onClick={() => !isCurrent && handleCheckout(tier)}
+                      onClick={() => handleCheckout(tier)}
                       className={`w-full h-8 rounded-full text-[12px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] ${
                         isCurrent
-                          ? 'bg-[var(--surface2,#202327)] text-[var(--text,#e7e9ea)] border border-[var(--line,#2f3336)] cursor-default'
+                          ? 'bg-[var(--surface2,#202327)] text-[var(--text,#e7e9ea)] border border-[var(--line,#2f3336)] hover:border-[var(--accent,#FF6A1A)]'
                           : isUltra
                           ? 'bg-amber-500 hover:bg-amber-600 text-black'
                           : 'bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-white'
                       }`}
                     >
-                      {isCurrent ? (
-                        <>
-                          <Check size={12} strokeWidth={3} />
-                          <span>ТЕКУЩИЙ ПЛАН</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>
-                            {getPaymentButtonLabel(effectiveTier, tier, validUntil)}
-                          </span>
-                          <ExternalLink size={12} className="opacity-70" />
-                        </>
-                      )}
+                      {isCurrent && <Check size={12} strokeWidth={3} className="text-emerald-400" />}
+                      <span>
+                        {getPaymentButtonLabel(effectiveTier, tier, validUntil)}
+                      </span>
+                      <ExternalLink size={12} className="opacity-70" />
                     </button>
                   )}
                 </div>

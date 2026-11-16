@@ -46,6 +46,7 @@ function buildUserStore(user, overrides = {}) {
       city: 'Austin',
       verified: true,
       subscription_tier: 'ultra',
+      tour_completed: true,
     },
     auth: {
       signedIn: true,
@@ -122,6 +123,7 @@ async function run() {
     await page1.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' })
     await page1.evaluate((store) => {
       localStorage.setItem('ogonek.v2', store)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore(USER_1))
     await page1.reload({ waitUntil: 'domcontentloaded' })
     await page1.waitForTimeout(1500)

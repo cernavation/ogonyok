@@ -1,79 +1,13 @@
-[
-  {
-    "screen": "landing",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "signin",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "register",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "privacy",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "terms",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_appearance",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_diary",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_notifications",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_privacy",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_account",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  },
-  {
-    "screen": "settings_guide",
-    "x": 0,
-    "y": 0,
-    "width": 3000,
-    "height": 3000
-  }
-]
+{
+  "step": 17,
+  "description": "Zero UI modifications, performance & offline layer",
+  "allowedScreens": [
+    "1210x756",
+    "820x1180",
+    "390x844"
+  ],
+  "ignoreSelectors": [
+    ".network-badge",
+    ".offline-indicator"
+  ]
+}

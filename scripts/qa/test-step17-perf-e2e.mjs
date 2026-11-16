@@ -133,6 +133,7 @@ async function main() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore())
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -159,6 +160,7 @@ async function main() {
       await page.evaluate((s) => {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore())
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(500)
@@ -214,6 +216,7 @@ ${budgetRows
     await perfPage.evaluate((s) => {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore())
     await perfPage.reload({ waitUntil: 'domcontentloaded' })
     await perfPage.waitForTimeout(600)

@@ -39,6 +39,7 @@ function buildUserStore(tier = 'ultra', streak = 100) {
       avatarColor: '#ff5722',
       verified: tier !== 'free',
       subscription_tier: tier,
+      tour_completed: true,
     },
     privacy: { defaultDayVisibility: 'private' },
     auth: {
@@ -125,6 +126,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('free'))
     await page1.reload({ waitUntil: 'domcontentloaded' })
     await page1.waitForTimeout(600)
@@ -156,6 +158,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('free', 100))
     await page2.reload({ waitUntil: 'domcontentloaded' })
     await page2.waitForTimeout(500)
@@ -195,6 +198,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('pro', 100))
     await page3.reload({ waitUntil: 'domcontentloaded' })
     await page3.waitForTimeout(500)
@@ -247,6 +251,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('ultra', 100))
     await page4.reload({ waitUntil: 'domcontentloaded' })
     await page4.waitForTimeout(500)
@@ -298,6 +303,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('ultra', 100))
 
     await page5.goto(`${BASE_URL}/?modal=milestone&number=100`, { waitUntil: 'domcontentloaded' })
@@ -321,6 +327,7 @@ async function runE2ETests() {
       localStorage.clear()
       localStorage.setItem('ogonek.v2', s)
       localStorage.setItem('ogonek.store.v1', s)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore('ultra', 100))
     await page6.reload({ waitUntil: 'domcontentloaded' })
     await page6.waitForTimeout(500)

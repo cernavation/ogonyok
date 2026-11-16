@@ -47,6 +47,7 @@ function buildUserStore(tier = 'free', expiresAt = null) {
       verified: tier !== 'free',
       subscription_tier: tier,
       subscription_expires_at: expiresAt,
+      tour_completed: true,
     },
     privacy: { defaultDayVisibility: 'private' },
     auth: {
@@ -133,6 +134,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('free'))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -157,7 +159,7 @@ async function runStep12Tests() {
 
       // Подсветка текущего тарифа Free
       const currentBadgeText = await freeCard?.$eval('.rounded-full', (el) => el.textContent)
-      assert(currentBadgeText?.includes('Текущий план'), 'На карточке Free подсвечен «Текущий план»')
+      assert(currentBadgeText?.toLowerCase().includes('текущий план'), 'На карточке Free подсвечен «Текущий план»')
 
       // Переключатель Месяц / Год
       const monthlyBtn = await page.$('#billing-switch-monthly')
@@ -216,6 +218,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('free'))
       await page.goto(`${BASE_URL}/premium`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -239,6 +242,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('pro', futureDate))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -250,10 +254,11 @@ async function runStep12Tests() {
       // Проверяем подсветку карточки Pro
       const proCard = await page.$('#tier-card-pro')
       const proBadge = await proCard?.$eval('.rounded-full', (el) => el.textContent)
-      assert(proBadge?.includes('Текущий план'), 'На тарифе Pro карточка Pro отмечена как «Текущий план»')
+      assert(proBadge?.toLowerCase().includes('текущий план'), 'На тарифе Pro карточка Pro отмечена как «Текущий план»')
 
       // Кнопка на карточке Pro должна называться «Продлить»
       const proBtnText = await proCard?.$eval('#checkout-btn-pro', (el) => el.textContent)
+      console.log('DEBUG proBtnText:', JSON.stringify(proBtnText))
       assert(proBtnText?.includes('Продлить'), 'Кнопка на текущем тарифе Pro называется «Продлить»')
 
       // На карточке Ultra кнопка «Улучшить до Ultra»
@@ -281,6 +286,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('free'))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -341,6 +347,9 @@ async function runStep12Tests() {
       console.log('Проверка точки входа: Кастомный цвет акцента...')
       const settingsNav = await page.$('button[aria-label="Настройки"]')
       if (settingsNav) await settingsNav.click()
+      await page.waitForTimeout(300)
+      const appearanceTab = await page.$('#settings-tab-appearance')
+      if (appearanceTab) await appearanceTab.click()
       await page.waitForSelector('#settings-custom-color-picker', { timeout: 5000 })
       // Триггерим попытку выбора цвета на Free
       await page.evaluate(() => {
@@ -417,6 +426,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('free'))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(500)
@@ -466,6 +476,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('pro', expiringInTwoDays))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)
@@ -498,6 +509,7 @@ async function runStep12Tests() {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
         localStorage.setItem('ogonek.store.v1', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore('pro', expiredYesterday))
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(600)

@@ -67,27 +67,31 @@ async function main() {
       await page.evaluate((s) => {
         localStorage.clear()
         localStorage.setItem('ogonek.v2', s)
+        localStorage.setItem('ogonek:tour-completed', 'true')
       }, buildUserStore())
       await page.reload({ waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(500)
 
       const domRes = await runDomChecks(page, {
         screen: 'app',
-        viewport: vp.name,
+        viewport: vp,
         step: '17',
         allowedRegions: [],
       })
-      totalDomIssues += domRes.issues.length
+      const domIssues = Array.isArray(domRes) ? domRes : domRes?.issues || []
+      totalDomIssues += domIssues.length
 
       const contrastRes = await runContrastChecks(page, {
         screen: 'app',
+        viewport: vp,
         theme: 'x-black',
         step: '17',
         allowedRegions: [],
       })
-      totalContrastIssues += contrastRes.issues.length
+      const contrastIssues = Array.isArray(contrastRes) ? contrastRes : contrastRes?.issues || []
+      totalContrastIssues += contrastIssues.length
 
-      console.log(`  -> ${vp.name}: DOM issues=${domRes.issues.length}, Contrast issues=${contrastRes.issues.length}`)
+      console.log(`  -> ${vp.name}: DOM issues=${domIssues.length}, Contrast issues=${contrastIssues.length}`)
       await ctx.close()
     }
 
