@@ -170,13 +170,13 @@ export function AppleFooter() {
                 <li>
                   <Link href="/examples" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Примеры побед</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#f56900]/15 text-[#f56900] font-medium">Гид</span>
+                    <span className="px-1.5 py-0.2 rounded text-[11px] bg-[#f56900]/15 text-[#f56900] font-medium">Гид</span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/ai" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>ИИ-наставник</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#2997ff]/20 text-[#2997ff] font-medium">Gemini 2.5</span>
+                    <span className="px-1.5 py-0.2 rounded text-[11px] bg-[#2997ff]/20 text-[#2997ff] font-medium">Gemini 2.5</span>
                   </Link>
                 </li>
                 <li>
@@ -211,7 +211,7 @@ export function AppleFooter() {
                 <li>
                   <Link href="/community#stories" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Сторис побед</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-white/[0.08] text-[#f5f5f7] font-medium">24 часа</span>
+                    <span className="px-1.5 py-0.2 rounded text-[11px] bg-white/[0.08] text-[#f5f5f7] font-medium">24 часа</span>
                   </Link>
                 </li>
                 <li>
@@ -281,7 +281,7 @@ export function AppleFooter() {
                 <li>
                   <Link href="/#open" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>100% бесплатно навсегда</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400 font-medium">Free</span>
+                    <span className="px-1.5 py-0.2 rounded text-[11px] bg-emerald-500/20 text-emerald-400 font-medium">Free</span>
                   </Link>
                 </li>
                 <li>
@@ -326,7 +326,7 @@ export function AppleFooter() {
                 <li>
                   <Link href="/ai#privacy-pledge" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Zero-Training ИИ</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#0071e3]/15 text-[#2997ff] font-medium">100%</span>
+                    <span className="px-1.5 py-0.2 rounded text-[11px] bg-[#0071e3]/15 text-[#2997ff] font-medium">100%</span>
                   </Link>
                 </li>
                 <li>

@@ -87,7 +87,7 @@ export function MediaSlot({
               <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
-            <span className="text-[9px] font-mono mt-1 opacity-70 truncate max-w-[50px]">{name}</span>
+            <span className="text-[11px] font-mono mt-1 opacity-70 truncate max-w-[60px]">{name}</span>
           </div>
         </div>
       )
