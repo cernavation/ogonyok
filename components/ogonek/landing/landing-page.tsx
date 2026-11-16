@@ -254,7 +254,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </div>
 
           {/* Trust subtitle */}
-          <div className="fade-up delay-250 mt-6 text-[12px] font-mono text-[#86868b] tracking-wider">
+          <div className="fade-up delay-250 mt-6 text-[12px] font-mono text-[#b0b0b5] apple-hero-shadow tracking-wider">
             Бесплатно навсегда · Без рекламы · Данные только на&nbsp;твоём чипе
           </div>
         </div>
