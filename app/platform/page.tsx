@@ -37,7 +37,7 @@ export default function PlatformPage() {
           </h1>
 
           <p className="apple-body fade-up delay-250 max-w-[680px] mb-9 sm:mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Каждая функция «Огонька» подчинена одной задаче: убрать тревожность, защитить твои сокровенные мысли и дать твёрдые доказательства твоего ежедневного роста.
+            Каждая функция «Priday» подчинена одной задаче: убрать тревожность, защитить твои сокровенные мысли и дать твёрдые доказательства твоего ежедневного роста.
           </p>
 
           <div className="fade-scale delay-350 flex items-center justify-center gap-4 flex-wrap">
@@ -60,7 +60,7 @@ export default function PlatformPage() {
               Вечерний ритуал пяти минут.
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              В конце дня внимание истощено. «Огонёк» не требует писать длинные эссе или заполнять сложные таблицы. Ты отвечаешь всего на два вопроса: чем ты гордишься и за что благодарен.
+              В конце дня внимание истощено. «Priday» не требует писать длинные эссе или заполнять сложные таблицы. Ты отвечаешь всего на два вопроса: чем ты гордишься и за что благодарен.
             </p>
           </div>
 
@@ -72,7 +72,7 @@ export default function PlatformPage() {
                 width={1440}
                 height={900}
                 ratio="16:10"
-                alt="Интерфейс ежедневного дневника Огонька"
+                alt="Интерфейс ежедневного дневника Priday"
                 rounded={false}
               />
             </div>
@@ -219,7 +219,7 @@ export default function PlatformPage() {
                 Стрик, который не сгорает.
               </h2>
               <p className="apple-body mb-6 text-[#86868b] text-[17px] sm:text-[18px] leading-relaxed">
-                Мы ненавидим приложения, которые наказывают человека за болезнь, форс-мажор или усталость. В «Огоньке» действует правило истинной летописи.
+                Мы ненавидим приложения, которые наказывают человека за болезнь, форс-мажор или усталость. В «Priday» действует правило истинной летописи.
               </p>
               <div className="p-5 rounded-2xl bg-[#161617] border border-white/[0.08] mb-6">
                 <div className="text-[15px] font-semibold text-[#f5f5f7] mb-2">

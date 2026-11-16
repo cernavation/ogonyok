@@ -57,7 +57,7 @@ export default function ManifestoPage() {
             />
             <div>
               <div className="text-[17px] font-semibold text-[#f5f5f7]">Александр Церна</div>
-              <div className="text-[13px] text-[#86868b]">Основатель проекта «Огонёк» · Серийный предприниматель</div>
+              <div className="text-[13px] text-[#86868b]">Основатель проекта «Priday» · Серийный предприниматель</div>
             </div>
           </div>
 
@@ -74,13 +74,13 @@ export default function ManifestoPage() {
           </p>
 
           <p>
-            Так родился «Огонёк». Не как коммерческий стартап, а как личный спасательный круг. Каждый вечер перед сном я открывал чистый лист и записывал от 1 до 5 реальных фактов преодоления. И за 740 дней эта простая практика изменила во мне буквально всё.
+            Так родился «Priday». Не как коммерческий стартап, а как личный спасательный круг. Каждый вечер перед сном я открывал чистый лист и записывал от 1 до 5 реальных фактов преодоления. И за 740 дней эта простая практика изменила во мне буквально всё.
           </p>
 
           {/* 5 Principles */}
           <div className="pt-8 pb-4">
             <h2 className="text-[26px] sm:text-[32px] font-bold text-[#f5f5f7] mb-8 tracking-tight">
-              Пять нерушимых законов Огонька:
+              Пять нерушимых законов Priday:
             </h2>
 
             <div className="space-y-6">
@@ -115,7 +115,7 @@ export default function ManifestoPage() {
               <div className="p-6 rounded-2xl bg-[#161617] border border-white/[0.08]">
                 <h3 className="text-[18px] font-semibold text-white mb-2">5. Вместе гордиться легче</h3>
                 <p className="text-[15px] text-[#86868b]">
-                  Когда рядом есть те, кто так же каждый вечер выбирает дисциплину вместо жалости к себе, путь становится радостным. Огонёк — это сообщество людей чести.
+                  Когда рядом есть те, кто так же каждый вечер выбирает дисциплину вместо жалости к себе, путь становится радостным. Priday — это сообщество людей чести.
                 </p>
               </div>
             </div>
@@ -128,7 +128,7 @@ export default function ManifestoPage() {
           <div className="pt-8 border-t border-white/[0.08] flex items-center justify-between">
             <div>
               <div className="text-[18px] font-serif italic text-[#f5f5f7]">Александр Церна</div>
-              <div className="text-xs text-[#86868b]">Основатель «Огонька»</div>
+              <div className="text-xs text-[#86868b]">Основатель «Priday»</div>
             </div>
             <Link href="/register" className="apple-btn-primary !px-7 !py-3 !text-[14px]">
               Зажечь свой огонёк ›

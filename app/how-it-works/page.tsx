@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
           </h1>
 
           <p className="apple-body fade-up delay-250 max-w-[660px] mb-8 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Почему большинство трекеров привычек умирают через две недели, и как Огонёк перепрошивает отношение к собственным силам на физиологическом уровне.
+            Почему большинство трекеров привычек умирают через две недели, и как Priday перепрошивает отношение к собственным силам на физиологическом уровне.
           </p>
 
           <Link href="/register" className="apple-btn-primary !px-8 !py-3.5 !text-[14px]">

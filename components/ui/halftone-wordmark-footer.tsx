@@ -1,0 +1,595 @@
+"use client"
+
+// Halftone Wordmark Footer — a site footer whose wordmark is set enormous and
+// cropped by the bottom edge, printed as a field of halftone dots. Each dot is
+// sized by how much of the letter covers its cell, so the type keeps its edges
+// at any scale. Move across it and the dots part around the pointer on springs,
+// warming in colour as they are pushed off their place; click and a shock ring
+// runs through the word. Above it sit the studio line, tracked link columns and
+// a back-to-top, separated by a hairline, all over a fine print grain.
+//
+// One file, React only. A 2D canvas for the dots and the grain, real anchors
+// for the links. Every rule in the scoped <style> is .hwf- prefixed and nothing
+// is fetched: the faces come from the host page or the fallback stacks.
+
+import * as React from "react"
+
+export interface HalftonePalette {
+  /** The footer background. */
+  background: string
+  /** The dots at rest, and the text. */
+  ink: string
+  /** The colour a dot warms toward as it is pushed off its place. */
+  warm: string
+}
+
+export type HalftonePreset = "night" | "paper" | "ember" | "cobalt"
+
+export interface FooterLink {
+  label: string
+  href?: string
+}
+
+export interface FooterColumn {
+  title: string
+  links: FooterLink[]
+}
+
+export interface HalftoneWordmarkCanvasProps {
+  /** The giant word printed in dots. */
+  wordmark?: string
+  /** Starting colours. Defaults to "night". */
+  preset?: HalftonePreset
+  /** Colour overrides, merged over the preset. */
+  palette?: { background?: string; ink?: string; warm?: string }
+  /** Distance between dot centres, in CSS px. Defaults to 6. */
+  dotGap?: number
+  /** How far the pointer pushes, in CSS px. Defaults to 80. */
+  radius?: number
+  /** How much of the word's cap height hangs below the bottom edge, 0–0.6. Defaults to 0.2. */
+  crop?: number
+  /** Print grain over everything, 0–1. Defaults to 0.5. */
+  grain?: number
+  /** Pointer and click response. Defaults to true. */
+  interactive?: boolean
+  /** Face for the wordmark. Heavy grotesks print best. */
+  fontFamily?: string
+  /** Weight of the wordmark. Defaults to 800. */
+  fontWeight?: number
+  /** Canvas container height. */
+  height?: string
+  /** Extra class names. */
+  className?: string
+}
+
+export interface HalftoneWordmarkFooterProps extends HalftoneWordmarkCanvasProps {
+  /** Top-left studio line. */
+  label?: string
+  /** The muted line under it. */
+  meta?: string
+  /** Link columns along the top. */
+  columns?: FooterColumn[]
+  /** Show the back-to-top link. It scrolls the window to 0. Defaults to true. */
+  backToTop?: boolean
+  /** Face for the small type. */
+  monoFamily?: string
+  /** Optional children rendered above the wordmark */
+  children?: React.ReactNode
+}
+
+const PRESETS: { [K in HalftonePreset]: HalftonePalette } = {
+  night: { background: "#050507", ink: "#f5f5f7", warm: "#f56900" },
+  paper: { background: "#efebe3", ink: "#17150f", warm: "#c2361c" },
+  ember: { background: "#160a06", ink: "#f2c48c", warm: "#ff5a1f" },
+  cobalt: { background: "#0d1b4d", ink: "#dfe7ff", warm: "#ffcd3c" },
+}
+
+export const DEFAULT_COLUMNS: FooterColumn[] = [
+  {
+    title: "Платформа",
+    links: [
+      { label: "Возможности", href: "/platform" },
+      { label: "Примеры побед", href: "/examples" },
+      { label: "ИИ-наставник", href: "/ai" },
+      { label: "Сейф доказательств", href: "/platform#vault" },
+      { label: "Шкала преодоления", href: "/examples#high-score" },
+    ],
+  },
+  {
+    title: "Сообщество",
+    links: [
+      { label: "Клубы по интересам", href: "/community#groups" },
+      { label: "Поиск напарников", href: "/community#search" },
+      { label: "Сторис побед", href: "/community#stories" },
+      { label: "Зашифрованные звонки", href: "/community#calls" },
+      { label: "Парный стрик", href: "/community#duo" },
+    ],
+  },
+  {
+    title: "Ритм и сферы",
+    links: [
+      { label: "Вечерний ритуал", href: "/how-it-works" },
+      { label: "5 сфер баланса", href: "/modes" },
+      { label: "Истории участников", href: "/reviews" },
+      { label: "Манифест 740 дней", href: "/manifesto" },
+    ],
+  },
+  {
+    title: "Открытость",
+    links: [
+      { label: "100% бесплатно", href: "/#open" },
+      { label: "Тарифы Pro и Ultra", href: "/#pricing" },
+      { label: "0% рекламы", href: "/#open" },
+      { label: "Философия Local-first", href: "/privacy#local-first" },
+    ],
+  },
+  {
+    title: "Безопасность",
+    links: [
+      { label: "Политика приватности", href: "/privacy" },
+      { label: "Шифрование Web Crypto", href: "/privacy#encryption" },
+      { label: "Zero-Training ИИ", href: "/ai#privacy-pledge" },
+      { label: "Условия сервиса", href: "/terms" },
+      { label: "Центр заботы & FAQ", href: "/support" },
+    ],
+  },
+]
+
+const SANS_STACK =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif'
+const MONO_STACK =
+  '"SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace'
+
+// #region halftone
+// Pure helpers, lifted out and executed by tests/halftone-wordmark-footer.test.mjs.
+
+/** Hex → [r, g, b] in 0–255, or null for anything that isn't #rgb / #rrggbb. */
+export function hwfHex(hex: string) {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((hex || "").trim())
+  if (!m) return null
+  const h = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1]
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
+}
+
+/** Dot radius for a cell coverage in [0, 1]: area-true, so tone stays even. */
+export function hwfRadius(coverage: number, gap: number) {
+  const c = coverage < 0 ? 0 : coverage > 1 ? 1 : coverage
+  return Math.sqrt(c) * gap * 0.56
+}
+
+/**
+ * One step of a dot's spring back to home, plus the push from a pointer at
+ * (px, py) within radius r. Returns [x, y, vx, vy]. Away from the pointer a
+ * displaced dot always heads home and comes to rest.
+ */
+export function hwfStep(
+  x: number, y: number, vx: number, vy: number,
+  hx: number, hy: number, px: number, py: number, r: number,
+) {
+  const dx = x - px
+  const dy = y - py
+  const d2 = dx * dx + dy * dy
+  if (r > 0 && d2 < r * r) {
+    const d = Math.sqrt(d2) + 0.001
+    const f = (1 - d / r) * 2.6
+    vx += (dx / d) * f
+    vy += (dy / d) * f
+  }
+  vx = (vx + (hx - x) * 0.05) * 0.84
+  vy = (vy + (hy - y) * 0.05) * 0.84
+  return [x + vx, y + vy, vx, vy]
+}
+
+/** How warm a dot is drawn: 0 at home, 1 once it is `span` px or more away. */
+export function hwfWarmth(x: number, y: number, hx: number, hy: number, span: number) {
+  const d = Math.hypot(x - hx, y - hy)
+  return span > 0 ? Math.min(1, d / span) : 0
+}
+
+/** Font size that sets `measured` (width at 100px) to fill `width` exactly. */
+export function hwfFitSize(measured: number, width: number) {
+  return measured > 0 ? (width / measured) * 100 : 0
+}
+// #endregion
+
+const HWF_CSS = `
+.hwf-root {
+  position: relative; width: 100%; overflow: hidden; isolation: isolate;
+  background: var(--hwf-bg); color: var(--hwf-ink); -webkit-font-smoothing: antialiased;
+}
+.hwf-root canvas, .hwf-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
+.hwf-canvas-wrap {
+  position: relative; width: 100%; overflow: hidden; isolation: isolate;
+}
+.hwf-top {
+  position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(4, minmax(0, 1fr));
+  gap: 24px; padding: clamp(22px, 3.4vw, 40px) clamp(20px, 3.4vw, 44px) 0;
+  font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.75;
+}
+.hwf-brand strong { display: block; font-weight: 600; letter-spacing: 0.1em; }
+.hwf-brand span { opacity: .55; }
+.hwf-col h3 { margin: 0; font: inherit; opacity: .5; font-weight: 600; }
+.hwf-col ul { list-style: none; margin: 0; padding: 0; }
+.hwf-col a, .hwf-up {
+  color: inherit; text-decoration: none; opacity: .78; background: none; border: 0; padding: 0;
+  font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
+  background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
+  background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1);
+}
+.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: #f56900; }
+.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; opacity: 1; }
+.hwf-rule {
+  position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: center; gap: 16px;
+  margin: clamp(18px, 2.6vw, 30px) clamp(20px, 3.4vw, 44px) 0; padding-top: 12px;
+  border-top: 0.5px solid color-mix(in srgb, var(--hwf-ink) 16%, transparent);
+  font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+}
+.hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (max-width: 900px) {
+  .hwf-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 20px; }
+  .hwf-brand { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hwf-col a, .hwf-up { transition: none; }
+}
+`
+
+/**
+ * Dedicated Halftone Wordmark Canvas component.
+ * Can be used standalone or embedded in any footer.
+ */
+export function HalftoneWordmarkCanvas({
+  wordmark = "Priday",
+  preset = "night",
+  palette,
+  dotGap = 6,
+  radius = 80,
+  crop = 0.22,
+  grain = 0.45,
+  interactive = true,
+  fontFamily = SANS_STACK,
+  fontWeight = 800,
+  height = "320px",
+  className = "",
+}: HalftoneWordmarkCanvasProps) {
+  const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) }
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
+  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
+  const opts = React.useRef({ colors, dotGap, radius, crop, grain, interactive, fontFamily, fontWeight, wordmark })
+  opts.current = { colors, dotGap, radius, crop, grain, interactive, fontFamily, fontWeight, wordmark }
+  const key = [wordmark, dotGap, crop, grain, fontFamily, fontWeight, colors.background, colors.ink, colors.warm].join("|")
+
+  React.useEffect(() => {
+    const root = rootRef.current
+    const canvas = canvasRef.current
+    if (!root || !canvas) return
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    let w = 0
+    let h = 0
+    let dpr = 1
+    let px = -1e5
+    let py = -1e5
+    let raf = 0
+    let visible = true
+    let awake = true
+    let ring = { x: 0, y: 0, t: -1 }
+    // Flat arrays: x, y, vx, vy, hx, hy, r per dot.
+    let dots = new Float32Array(0)
+    let count = 0
+    let grainTile: HTMLCanvasElement | null = null
+    const ink = hwfHex(opts.current.colors.ink) || [245, 245, 247]
+    const warm = hwfHex(opts.current.colors.warm) || [245, 105, 0]
+
+    const layout = () => {
+      const o = opts.current
+      const rect = root.getBoundingClientRect()
+      w = Math.max(1, Math.round(rect.width))
+      h = Math.max(1, Math.round(rect.height))
+      dpr = Math.min(window.devicePixelRatio || 1, 2)
+      canvas.width = Math.round(w * dpr)
+      canvas.height = Math.round(h * dpr)
+
+      // Set the word once, at a size that fills the width, on a 1x mask.
+      const mask = document.createElement("canvas")
+      mask.width = w
+      mask.height = h
+      const m = mask.getContext("2d", { willReadFrequently: true })
+      if (!m) return
+      const face = o.fontWeight + " 100px " + o.fontFamily
+      m.font = face
+      const word = o.wordmark || " "
+      const fit = hwfFitSize(m.measureText(word).width, w * 1.02)
+      m.font = o.fontWeight + " " + fit + "px " + o.fontFamily
+      const box = m.measureText(word)
+      const cap = box.actualBoundingBoxAscent || fit * 0.72
+      const c = Math.max(0, Math.min(0.6, o.crop))
+      m.fillStyle = "#000"
+      m.textBaseline = "alphabetic"
+      m.fillText(word, (w - box.width) / 2, h + cap * c)
+      const img = m.getImageData(0, 0, w, h).data
+
+      const gap = Math.max(3, o.dotGap)
+      const cols = Math.ceil(w / gap)
+      const rows = Math.ceil(h / gap)
+      const tmp: number[] = []
+      for (let gy = 0; gy < rows; gy++) {
+        for (let gx = 0; gx < cols; gx++) {
+          // Coverage: average alpha over a 3×3 sample of the cell.
+          let sum = 0
+          for (let sy = 0; sy < 3; sy++) {
+            for (let sx = 0; sx < 3; sx++) {
+              const x = Math.min(w - 1, Math.floor(gx * gap + ((sx + 0.5) * gap) / 3))
+              const y = Math.min(h - 1, Math.floor(gy * gap + ((sy + 0.5) * gap) / 3))
+              sum += img[(y * w + x) * 4 + 3]
+            }
+          }
+          const cov = sum / (9 * 255)
+          if (cov < 0.06) continue
+          const hx = gx * gap + gap / 2
+          const hy = gy * gap + gap / 2
+          tmp.push(hx, hy, 0, 0, hx, hy, hwfRadius(cov, gap))
+        }
+      }
+      dots = new Float32Array(tmp)
+      count = tmp.length / 7
+
+      // A fixed tile of print grain, drawn once and laid over every frame.
+      grainTile = document.createElement("canvas")
+      grainTile.width = 256
+      grainTile.height = 256
+      const g = grainTile.getContext("2d")
+      if (g) {
+        const id = g.createImageData(256, 256)
+        for (let i = 0; i < id.data.length; i += 4) {
+          const v = Math.random() * 255
+          id.data[i] = id.data[i + 1] = id.data[i + 2] = v
+          id.data[i + 3] = Math.random() < 0.5 ? 0 : 255
+        }
+        g.putImageData(id, 0, 0)
+      }
+      awake = true
+    }
+
+    const draw = (now: number) => {
+      const o = opts.current
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.fillStyle = o.colors.background
+      ctx.fillRect(0, 0, w, h)
+
+      const r = o.interactive && !reduced ? Math.max(0, o.radius) : 0
+      const ringAge = ring.t < 0 ? 1e9 : now - ring.t
+      const ringR = ringAge * 0.9
+      let moving = false
+      for (let i = 0; i < count; i++) {
+        const j = i * 7
+        let x = dots[j]
+        let y = dots[j + 1]
+        let vx = dots[j + 2]
+        let vy = dots[j + 3]
+        const hx = dots[j + 4]
+        const hy = dots[j + 5]
+        if (!reduced) {
+          if (ringAge < 900) {
+            const dx = hx - ring.x
+            const dy = hy - ring.y
+            const d = Math.sqrt(dx * dx + dy * dy) + 0.001
+            const band = 1 - Math.min(1, Math.abs(d - ringR) / 26)
+            if (band > 0) {
+              const f = band * 3.2 * (1 - ringAge / 900)
+              vx += (dx / d) * f
+              vy += (dy / d) * f
+            }
+          }
+          const next = hwfStep(x, y, vx, vy, hx, hy, px, py, r)
+          x = next[0]
+          y = next[1]
+          vx = next[2]
+          vy = next[3]
+          dots[j] = x
+          dots[j + 1] = y
+          dots[j + 2] = vx
+          dots[j + 3] = vy
+          if (Math.abs(vx) > 0.08 || Math.abs(vy) > 0.08 || Math.abs(x - hx) > 0.1 || Math.abs(y - hy) > 0.1) {
+            moving = true
+          }
+        }
+        const warmth = !reduced ? hwfWarmth(x, y, hx, hy, 40) : 0
+        const cr = Math.round(ink[0] + (warm[0] - ink[0]) * warmth)
+        const cg = Math.round(ink[1] + (warm[1] - ink[1]) * warmth)
+        const cb = Math.round(ink[2] + (warm[2] - ink[2]) * warmth)
+        ctx.fillStyle = `rgb(${cr},${cg},${cb})`
+        const rad = dots[j + 6]
+        ctx.beginPath()
+        ctx.arc(x, y, rad, 0, Math.PI * 2)
+        ctx.fill()
+      }
+
+      if (o.grain > 0 && grainTile) {
+        ctx.save()
+        ctx.globalAlpha = Math.max(0, Math.min(1, o.grain * 0.07))
+        ctx.globalCompositeOperation = "screen"
+        const pat = ctx.createPattern(grainTile, "repeat")
+        if (pat) {
+          ctx.fillStyle = pat
+          ctx.fillRect(0, 0, w, h)
+        }
+        ctx.restore()
+      }
+
+      awake = moving || px > -1e4 || ringAge < 900
+      if (awake && visible) {
+        raf = requestAnimationFrame(draw)
+      } else {
+        raf = 0
+      }
+    }
+
+    const kick = () => {
+      if (!awake) {
+        awake = true
+        if (visible && !raf) raf = requestAnimationFrame(draw)
+      }
+    }
+
+    const onMove = (e: PointerEvent) => {
+      const rect = root.getBoundingClientRect()
+      px = e.clientX - rect.left
+      py = e.clientY - rect.top
+      kick()
+    }
+    const onLeave = () => {
+      px = -1e5
+      py = -1e5
+      kick()
+    }
+    const onDown = (e: PointerEvent) => {
+      const rect = root.getBoundingClientRect()
+      ring = { x: e.clientX - rect.left, y: e.clientY - rect.top, t: performance.now() }
+      kick()
+    }
+
+    let alive = true
+    const ro = new ResizeObserver(() => {
+      if (!alive) return
+      layout()
+      if (visible && !raf) raf = requestAnimationFrame(draw)
+    })
+    ro.observe(root)
+
+    const io = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      if (visible && awake && !raf) raf = requestAnimationFrame(draw)
+    })
+    io.observe(root)
+
+    if (opts.current.interactive && !reduced) {
+      root.addEventListener("pointermove", onMove, { passive: true })
+      root.addEventListener("pointerleave", onLeave, { passive: true })
+      root.addEventListener("pointerdown", onDown, { passive: true })
+    }
+
+    layout()
+    raf = requestAnimationFrame(draw)
+
+    return () => {
+      alive = false
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+      io.disconnect()
+      root.removeEventListener("pointermove", onMove)
+      root.removeEventListener("pointerleave", onLeave)
+      root.removeEventListener("pointerdown", onDown)
+    }
+  }, [key])
+
+  return (
+    <div
+      ref={rootRef}
+      className={"hwf-canvas-wrap " + className}
+      style={{ height, background: colors.background }}
+    >
+      <style>{HWF_CSS}</style>
+      <canvas ref={canvasRef} aria-hidden="true" />
+      <span className="hwf-sr sr-only tracking-[0.22em] pointer-events-none">{wordmark}</span>
+    </div>
+  )
+}
+
+/**
+ * Halftone Wordmark Footer component
+ */
+export default function HalftoneWordmarkFooter({
+  wordmark = "Priday",
+  label = "Priday",
+  meta = "© 2026 · Local-first & Zero-Training",
+  columns = DEFAULT_COLUMNS,
+  backToTop = true,
+  preset = "night",
+  palette,
+  dotGap = 6,
+  radius = 80,
+  crop = 0.22,
+  grain = 0.45,
+  interactive = true,
+  fontFamily = SANS_STACK,
+  fontWeight = 800,
+  monoFamily = MONO_STACK,
+  height = "560px",
+  className = "",
+  children,
+}: HalftoneWordmarkFooterProps) {
+  const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) }
+
+  const toTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  return (
+    <footer
+      className={"hwf-root " + className}
+      style={
+        {
+          minHeight: height,
+          "--hwf-bg": colors.background,
+          "--hwf-ink": colors.ink,
+          "--hwf-mono": monoFamily,
+        } as React.CSSProperties
+      }
+    >
+      <style>{HWF_CSS}</style>
+
+      {/* Interactive Halftone Dot Background Canvas */}
+      <HalftoneWordmarkCanvas
+        wordmark={wordmark}
+        preset={preset}
+        palette={palette}
+        dotGap={dotGap}
+        radius={radius}
+        crop={crop}
+        grain={grain}
+        interactive={interactive}
+        fontFamily={fontFamily}
+        fontWeight={fontWeight}
+        height="100%"
+        className="absolute inset-0 z-0 pointer-events-auto"
+      />
+
+      <span className="hwf-sr tracking-[0.22em] pointer-events-none">{wordmark}</span>
+
+      {children ? (
+        <div className="relative z-10 w-full">{children}</div>
+      ) : (
+        <>
+          <div className="hwf-top relative z-10">
+            <div className="hwf-brand">
+              <strong>{label}</strong>
+              <span>{meta}</span>
+            </div>
+            {columns.map((col) => (
+              <nav className="hwf-col" key={col.title} aria-label={col.title}>
+                <h3>{col.title}</h3>
+                <ul>
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <a href={l.href || "#"}>{l.label}</a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            ))}
+          </div>
+          <div className="hwf-rule relative z-10">
+            {backToTop ? (
+              <button type="button" className="hwf-up" onClick={toTop}>
+                Наверх ↑
+              </button>
+            ) : null}
+          </div>
+        </>
+      )}
+    </footer>
+  )
+}
