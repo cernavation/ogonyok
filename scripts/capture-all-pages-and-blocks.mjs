@@ -50,12 +50,13 @@ async function runCapture() {
 
     // Sections list on landing page
     const landingSections = [
-      { id: '01_landing_hero', selector: 'section[aria-label="Главный экран Огонька"]' },
+      { id: '01_landing_hero', selector: 'section[aria-label="Главный экран Priday"], section[aria-label="Главный экран Огонька"]' },
       { id: '02_landing_how_it_works', selector: '#how' },
       { id: '03_landing_modes', selector: '#modes' },
       { id: '04_landing_levels', selector: '#levels' },
       { id: '05_landing_numbers', selector: 'section[aria-label="Реальные цифры"]' },
-      { id: '06_landing_quotes', selector: 'section[aria-label="Цитаты"]' },
+      { id: '06_landing_quotes', selector: 'section[aria-label="Отзывы и истории участников"], section[aria-label="Цитаты"]' },
+      { id: '06b_landing_ai_ceremony', selector: 'section[aria-label="ИИ-наставник Priday"]' },
       { id: '07_landing_showcase', selector: '#showcase' },
       { id: '08_landing_privacy', selector: '#privacy' },
       { id: '09_landing_open_and_free', selector: '#open' },

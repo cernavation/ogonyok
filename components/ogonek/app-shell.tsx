@@ -307,7 +307,7 @@ export function AppShell() {
   useEffect(() => {
     const updateTitle = () => {
       const total = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
-      const targetTitle = total > 0 ? `(${total}) Огонёк` : 'Огонёк — Твой личный дневник силы'
+      const targetTitle = total > 0 ? `(${total}) Priday` : 'Priday — Твой личный дневник силы'
       if (document.title !== targetTitle) {
         document.title = targetTitle
       }

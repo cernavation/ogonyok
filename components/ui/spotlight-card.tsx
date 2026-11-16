@@ -164,6 +164,7 @@ export const GlowCard: React.FC<GlowCardProps> = ({
       <style dangerouslySetInnerHTML={{ __html: spotlightStyles }} />
       <div
         ref={cardRef}
+        data-spotlight-card="true"
         style={inlineStyles}
         onPointerEnter={handlePointerEnter}
         onPointerMove={handlePointerMove}
