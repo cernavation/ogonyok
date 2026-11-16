@@ -25,23 +25,23 @@ export default function ManifestoPage() {
                 fill="#f56900"
               />
             </svg>
-            <span className="apple-eyebrow">Манифест основателя</span>
+            <span className="apple-eyebrow">Манифест платформы</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6">
-            740 дней, которые
+            740 дней стрика.
             <br />
-            <span className="apple-shimmer-text">доказали: ты сильнее, чем думаешь.</span>
+            <span className="apple-shimmer-text">Рекорд ежедневной силы ритуала.</span>
           </h1>
 
           <p className="apple-body fade-up delay-250 max-w-[620px] mb-8 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Открытое письмо Александра Церны к каждому, кто устал от пустых обещаний самому себе, выгорания и вечной суеты.
+            Открытое письмо создателя Priday к каждому, кто устал от пустых обещаний самому себе, выгорания и вечной суеты.
           </p>
 
           <div className="flex items-center gap-4 text-xs font-mono text-[#86868b]">
             <span>Александр Церна</span>
             <span>·</span>
-            <span>740+ дней непрерывной летописи</span>
+            <span>740+ дней — рекорд стрика на платформе</span>
           </div>
         </div>
       </section>
@@ -74,7 +74,7 @@ export default function ManifestoPage() {
           </p>
 
           <p>
-            Так родился «Priday». Не как коммерческий стартап, а как личный спасательный круг. Каждый вечер перед сном я открывал чистый лист и записывал от 1 до 5 реальных фактов преодоления. И за 740 дней эта простая практика изменила во мне буквально всё.
+            Так родился «Priday». Не как коммерческий стартап, а как пространство силы и личной летописи. Сегодня рекорд сообщества составляет 740 дней непрерывной практики без единого обнуления — доказательство того, как вечерний ритуал меняет в человеке буквально всё.
           </p>
 
           {/* 5 Principles */}
@@ -106,9 +106,9 @@ export default function ManifestoPage() {
               </div>
 
               <div className="p-6 rounded-2xl bg-[#161617] border border-white/[0.08]">
-                <h3 className="text-[18px] font-semibold text-white mb-2">4. Приватность неприкосновенна</h3>
+                <h3 className="text-[18px] font-semibold text-white mb-2">4. Приватность неприкосновенна: выбор за тобой</h3>
                 <p className="text-[15px] text-[#86868b]">
-                  Твои мысли, сомнения и победы принадлежат только тебе. Они хранятся локально на твоём устройстве. Никаких алгоритмов, анализирующих твою жизнь ради продажи рекламы.
+                  Ты сам решаешь: быть публичным и делиться победами со всем миром, или вести секретную летопись, скрытую от всех (тебя никто не найдет в поиске платформы, или найдут только те, кому ты лично разрешишь). Никаких рекламных трекеров.
                 </p>
               </div>
 
@@ -131,7 +131,7 @@ export default function ManifestoPage() {
               <div className="text-xs text-[#86868b]">Основатель «Priday»</div>
             </div>
             <Link href="/register" className="apple-btn-primary !px-7 !py-3 !text-[14px]">
-              Зажечь свой огонёк ›
+              Начать летопись ›
             </Link>
           </div>
         </div>

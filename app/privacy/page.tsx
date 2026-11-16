@@ -22,7 +22,7 @@ export default function PrivacyPage() {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="apple-eyebrow !text-[#2997ff]">Манифест Local-First Приватности</span>
+            <span className="apple-eyebrow !text-[#2997ff]">Манифест Приватности и Секретного Режима</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6">
@@ -38,7 +38,7 @@ export default function PrivacyPage() {
           <div className="flex items-center gap-4 text-xs font-mono text-[#86868b]">
             <span>Обновлено: ноябрь 2026 г.</span>
             <span>·</span>
-            <span>Шифрование: Web Crypto 256-bit</span>
+            <span>Приватность: Публичный или секретный профиль</span>
           </div>
         </div>
       </section>
@@ -49,37 +49,37 @@ export default function PrivacyPage() {
           <div className="text-center max-w-[640px] mx-auto mb-16">
             <span className="apple-eyebrow block mb-3">Стандарты честности</span>
             <h2 className="apple-section-title mb-4">
-              Обычные сервисы vs Огонёк
+              Обычные сервисы vs Priday
             </h2>
           </div>
 
           <div className="apple-card overflow-hidden bg-[#161617] border border-white/10">
             <div className="grid grid-cols-12 p-5 border-b border-white/[0.08] text-xs font-mono text-[#86868b] uppercase tracking-wider">
               <div className="col-span-4 sm:col-span-5">Параметр</div>
-              <div className="col-span-4 sm:col-span-3 text-rose-400">Облачные трекеры</div>
-              <div className="col-span-4 sm:col-span-4 text-[#2997ff]">Огонёк Local-first</div>
+              <div className="col-span-4 sm:col-span-3 text-rose-400">Обычные соцсети</div>
+              <div className="col-span-4 sm:col-span-4 text-[#2997ff]">Priday</div>
             </div>
 
             {[
               {
-                feature: 'Где хранятся записи',
-                cloud: 'На чужом сервере в открытом виде',
-                ogonek: 'Только на твоём устройстве (IndexedDB)',
+                feature: 'Видимость записей',
+                cloud: 'Видны всем без разбора в ленте',
+                ogonek: 'Свободный выбор: делись со всеми или держи у себя',
+              },
+              {
+                feature: 'Поиск по платформе',
+                cloud: 'Профиль индексируется и виден всем',
+                ogonek: 'В секретном режиме тебя никто не найдёт',
               },
               {
                 feature: 'Реклама и трекеры',
                 cloud: 'Meta Pixel, Google Analytics, спам',
-                ogonek: '0 рекламных трекеров, 0 телеметрии',
+                ogonek: '0 рекламных трекеров, 0 продажи данных',
               },
               {
                 feature: 'Обучение нейросетей',
                 cloud: 'Парсинг текстов для LLM моделей',
-                ogonek: 'Полный запрет на публичное обучение',
-              },
-              {
-                feature: 'Работа без интернета',
-                cloud: 'Блокировка экрана или ошибки сети',
-                ogonek: '100% автономная оффлайн работа',
+                ogonek: 'Zero-Training: закрытый stateless анализ',
               },
               {
                 feature: 'Экспорт и удаление',
@@ -111,19 +111,19 @@ export default function PrivacyPage() {
         <div className="max-w-[840px] mx-auto px-5 sm:px-8 space-y-12">
           <div>
             <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">
-              1. Локальная база данных и криптография
+              1. Свобода выбора: публичность или секретный режим
             </h3>
             <p className="text-[16px] leading-relaxed text-[#86868b]">
-              Дневник использует аппаратно-ускоренный API <strong className="text-white">Web Crypto</strong> современных браузеров (SHA-256 хэширование паролей и PBKDF2 деривация ключей). Ваши тексты шифруются ключом, который знает только ваше устройство. Даже если физический накопитель попадёт в чужие руки, прочитать записи без мастер-ключа невозможно.
+              Ты сам решаешь, какой уровень открытости тебе нужен. Ты можешь сделать свой профиль полностью публичным — делиться победами со всем миром, вдохновлять других и участвовать в общих рейтингах. А можешь включить секретный режим: в этом случае тебя никто не сможет найти на платформе через поиск, а твои записи не увидит никто на свете, кроме тех избранных людей, кому ты лично откроешь закрытый доступ.
             </p>
           </div>
 
           <div>
             <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">
-              2. Row Level Security в облачной синхронизации
+              2. Защищённое разграничение доступа
             </h3>
             <p className="text-[16px] leading-relaxed text-[#86868b]">
-              Если вы добровольно включаете резервное копирование в облако, доступ защищается протоколом <strong className="text-white">PostgreSQL Row Level Security (RLS)</strong>. Это означает, что правила доступа проверяются на уровне ядра базы: ни один другой пользователь физически не может отправить запрос к чужим приватным таблицам.
+              Доступ к закрытым записям защищается протоколом <strong className="text-white">Row Level Security (RLS)</strong>. Это означает, что правила проверяются на уровне базы данных: ни один другой пользователь физически не может получить доступ к твоим секретным записям без выданного тобой разрешения.
             </p>
           </div>
 
@@ -132,7 +132,7 @@ export default function PrivacyPage() {
               3. Право на забвение и полный контроль
             </h3>
             <p className="text-[16px] leading-relaxed text-[#86868b] mb-4">
-              В любой момент в разделе «Настройки → Данные» вы можете нажать одну кнопку, чтобы выгрузить полный архив всех дней в открытом формате JSON, либо нажать «Удалить аккаунт», что моментально и безвозвратно сотрёт все локальные ключи и записи.
+              В любой момент в разделе «Настройки → Данные» вы можете нажать одну кнопку, чтобы выгрузить полный архив всех дней в открытом формате JSON, либо нажать «Удалить аккаунт», что моментально и безвозвратно сотрёт весь профиль и все записи.
             </p>
             <div className="p-5 rounded-2xl bg-[#161617] border border-white/10 text-xs text-[#86868b]">
               Вопросы по безопасности и аудиту кода можно направлять на <a href="mailto:security@ogonek.app" className="text-[#2997ff] underline">security@ogonek.app</a>

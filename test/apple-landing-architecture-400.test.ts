@@ -180,64 +180,54 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     assert.ok(footerContent.includes('Летопись'), 'Финальный элемент хлебных крошек')
   })
 
-  it('содержит бейдж локальной безопасности AES-GCM 256 в верхней строке подвала', () => {
-    assert.ok(footerContent.includes('AES-GCM 256 · Local-first'), 'Бейдж криптографии обязателен')
+  it('содержит стилизованную кнопку «Начать летопись» с градиентом Priday', () => {
+    assert.ok(footerContent.includes('Начать летопись'), 'Кнопка действия')
   })
 
-  it('содержит напоминание о вечернем ритуале в 21:00', () => {
-    assert.ok(footerContent.includes('Ежевечерний ритуал в 21:00'), 'Напоминание о времени ритуала')
+  it('содержит стилизованную кнопку «Войти» для быстрого входа в аккаунт', () => {
+    assert.ok(footerContent.includes('Войти'), 'Кнопка входа')
   })
 
-  it('содержит карточку Telegram-бота с кнопкой перехода и отсутствием спама', () => {
-    assert.ok(footerContent.includes('Вечерний ритуал в Telegram'), 'Карточка бота должна присутствовать')
-    assert.ok(footerContent.includes('Без спама'), 'Пометка о приватности бота')
-    assert.ok(footerContent.includes('Подключить напоминания'), 'Кнопка действия')
+  it('содержит кнопку быстрого скролла наверх «Наверх»', () => {
+    assert.ok(footerContent.includes('Наверх') && footerContent.includes('scrollToTop'), 'Кнопка наверх')
   })
 
-  it('содержит карточку 100% Local-first с гарантией Zero-Training', () => {
-    assert.ok(footerContent.includes('Нулевой сбор данных'), 'Заголовок карточки приватности')
-    assert.ok(footerContent.includes('Zero-Training'), 'Гарантия запрета обучения ИИ')
+  it('содержит панель контроля видимости: публичный профиль и секретный режим', () => {
+    assert.ok(footerContent.includes('Публичный профиль') && footerContent.includes('Секретный режим'), 'Два режима видимости')
   })
 
-  // 31-35: Проверка 4 юридических сносок Apple
-  it('сноска 1 подробно описывает философию Local-first и Web Crypto', () => {
-    assert.ok(footerContent.includes('1. <strong'), 'Сноска 1 должна быть оформлена')
-    assert.ok(footerContent.includes('Web Crypto (AES-GCM 256)'), 'Указание точного шифра')
+  // 31-35: Проверка принципов открытости и приватности
+  it('разъясняет свободу приватности: возможность открыться миру или оставаться в полной секретности', () => {
+    assert.ok(footerContent.includes('Полный контроль видимости'), 'Разъяснение контроля видимости')
   })
 
-  it('сноска 2 утверждает правило «Стрик не сгорает» и защиту от вины', () => {
-    assert.ok(footerContent.includes('2. <strong'), 'Сноска 2 должна быть оформлена')
+  it('утверждает правило «Стрик не сгорает» в колонке ритма', () => {
     assert.ok(footerContent.includes('Стрик не сгорает'), 'Термин несгораемого стрика')
   })
 
-  it('сноска 3 гарантирует изолированную stateless-среду для ИИ', () => {
-    assert.ok(footerContent.includes('3. <strong'), 'Сноска 3 должна быть оформлена')
-    assert.ok(footerContent.includes('stateless-среде'), 'Техническая спецификация изоляции ИИ')
+  it('гарантирует Zero-Training ИИ в колонке безопасности', () => {
+    assert.ok(footerContent.includes('Zero-Training ИИ'), 'Спецификация Zero-Training')
   })
 
-  it('сноска 4 фиксирует 0% рекламы и отсутствие сторонних брокеров данных', () => {
-    assert.ok(footerContent.includes('4. <strong'), 'Сноска 4 должна быть оформлена')
-    assert.ok(footerContent.includes('не продаём рекламные места'), 'Гарантия отсутствия рекламы')
+  it('фиксирует 0% рекламы и трекеров в колонке открытости', () => {
+    assert.ok(footerContent.includes('0% рекламы и трекеров'), 'Гарантия отсутствия рекламы')
   })
 
-  it('нижняя мастер-плашка содержит копирайт Огонёк Inc.', () => {
-    assert.ok(footerContent.includes('Огонёк Inc. Все права защищены.'), 'Формулировка копирайта')
+  it('нижняя мастер-плашка содержит копирайт Priday Inc.', () => {
+    assert.ok(footerContent.includes('Priday Inc. Все права защищены.'), 'Формулировка копирайта')
   })
 
   // 36-45: Проверка технических атрибутов подвала
-  it('содержит селектор региона: СНГ · Русский (Local-first)', () => {
-    assert.ok(footerContent.includes('СНГ · Русский (Local-first)'), 'Селектор локали в стиле Apple')
+  it('подвал не содержит устаревшего селектора языка согласно требованиям пользователя', () => {
+    assert.ok(!footerContent.includes('СНГ · Русский'), 'Селектор локали убран')
   })
 
-  it('содержит живой пульсирующий индикатор здоровья системы 24 мс', () => {
-    assert.ok(footerContent.includes('Все системы в строю (24 мс)'), 'Индикатор аптайма и задержки')
-    assert.ok(footerContent.includes('animate-pulse'), 'Индикатор должен пульсировать')
+  it('подвал не содержит системного индикатора статуса согласно требованиям пользователя', () => {
+    assert.ok(!footerContent.includes('Все системы в строю'), 'Индикатор аптайма убран')
   })
 
-  it('содержит гигантский монументальный титановый водяной знак ОГОНЁК', () => {
-    assert.ok(footerContent.includes('ОГОНЁК'), 'Водяной знак ОГОНЁК')
-    assert.ok(footerContent.includes('tracking-[0.22em]'), 'Титановый трекинг шрифта')
-    assert.ok(footerContent.includes('pointer-events-none'), 'Водяной знак не должен блокировать клики')
+  it('содержит гигантский монументальный водяной знак Halftone Wordmark Priday', () => {
+    assert.ok(footerContent.includes('HalftoneWordmarkCanvas') && footerContent.includes('Priday'), 'Водяной знак Priday')
   })
 
   it('подвал использует глубокий черный OLED фон #050507', () => {

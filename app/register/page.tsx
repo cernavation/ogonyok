@@ -212,7 +212,7 @@ export default function RegisterPage() {
                   >
                     ‹ Изменить ритм ({selectedRhythm} в день)
                   </button>
-                  <span className="text-xs font-mono text-[#86868b]">Local-first Encryption</span>
+                  <span className="text-xs font-mono text-[#86868b]">Private & Secure</span>
                 </div>
 
                 <AuthForm

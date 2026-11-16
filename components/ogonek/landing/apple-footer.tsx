@@ -5,14 +5,14 @@ import Link from 'next/link'
 import {
   ExternalLink,
   ChevronDown,
-  ShieldCheck,
-  Send,
-  Lock,
-  Heart,
-  Globe,
   Sparkles,
   Flame,
-  CheckCircle2,
+  Globe2,
+  Lock,
+  ArrowUp,
+  UserCheck,
+  EyeOff,
+  ShieldCheck,
 } from 'lucide-react'
 import { HalftoneWordmarkCanvas } from '@/components/ui/halftone-wordmark-footer'
 
@@ -33,190 +33,160 @@ export function AppleFooter() {
     }))
   }
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleOpenAuth = (mode: 'login' | 'register') => {
+    window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode } }))
+  }
+
   return (
     <footer
-      className="relative pt-14 pb-8 bg-[#050507] text-[#86868b] text-[12px] border-t border-white/[0.08] overflow-hidden"
+      className="relative pt-12 sm:pt-16 pb-6 bg-[#050507] text-[#86868b] text-[12px] border-t border-white/[0.08] overflow-hidden"
       aria-label="Подвал сайта"
     >
-      {/* Apple Subtle Ambient Halo in center-bottom */}
+      {/* Apple Subtle Ambient Halo in center */}
       <div
-        className="apple-ambient-orb w-[700px] h-[350px] bg-[#0071e3]/10 -bottom-24 left-1/2 -translate-x-1/2"
+        className="apple-ambient-orb w-[700px] h-[350px] bg-[#0071e3]/10 -bottom-24 left-1/2 -translate-x-1/2 pointer-events-none"
         aria-hidden="true"
       />
 
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 relative z-10">
-        {/* ── 1. APPLE BREADCRUMBS BAR ────────────────────────────────────── */}
-        <div className="fade-up pb-6 border-b border-white/[0.06] flex items-center justify-between text-[11px] text-[#86868b] flex-wrap gap-3">
-          <nav aria-label="Навигационная цепочка" className="flex items-center gap-2 flex-wrap">
-            <Link
-              href="/"
-              className="text-[#f5f5f7] hover:text-[#0071e3] transition-colors flex items-center gap-1.5 font-medium"
+        {/* ── 1. HEADER ROW: BRAND, BREADCRUMBS & STYLED ACTION BUTTONS ────── */}
+        <div className="fade-up pb-8 border-b border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3">
+            {/* Breadcrumbs */}
+            <nav aria-label="Навигационная цепочка" className="flex items-center gap-2 flex-wrap text-[11px] text-[#86868b]">
+              <Link
+                href="/"
+                className="text-[#f5f5f7] hover:text-[#f56900] transition-colors flex items-center gap-1.5 font-medium"
+              >
+                <Flame size={14} className="text-[#f56900]" />
+                <span>Priday</span>
+              </Link>
+              <span className="text-[#424245]">›</span>
+              <Link href="/platform" className="hover:text-[#f5f5f7] transition-colors">
+                Дневник силы и побед
+              </Link>
+              <span className="text-[#424245]">›</span>
+              <span className="text-[#d2d2d7] font-medium">Летопись</span>
+            </nav>
+
+            <h3 className="text-[18px] sm:text-[20px] font-bold text-white tracking-tight flex items-center gap-2">
+              <span>Личная летопись побед и дисциплины</span>
+            </h3>
+            <p className="text-[13px] text-[#86868b] max-w-[540px] leading-relaxed">
+              Фиксируй настоящие преодоления каждый вечер. Твой рекорд непрерывного огонька принадлежит тебе навсегда.
+            </p>
+          </div>
+
+          {/* Styled Action Buttons for Footer */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleOpenAuth('register')}
+              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#f56900] to-[#ff8c00] hover:from-[#ff7714] hover:to-[#ffa024] text-white font-semibold text-[13px] shadow-[0_4px_20px_rgba(245,105,0,0.35)] hover:shadow-[0_6px_25px_rgba(245,105,0,0.5)] transition-all active:scale-95 cursor-pointer flex items-center gap-2"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <path
-                  d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                  fill="#f56900"
-                />
-              </svg>
-              <span>Priday</span>
-            </Link>
-            <span className="text-[#424245]">›</span>
-            <Link href="/platform" className="hover:text-[#f5f5f7] transition-colors">
-              Дневник силы и побед
-            </Link>
-            <span className="text-[#424245]">›</span>
-            <span className="text-[#d2d2d7] font-medium">Летопись</span>
-          </nav>
+              <span>Начать летопись</span>
+              <span className="text-white/80">→</span>
+            </button>
 
-          <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-mono font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>AES-GCM 256 · Local-first</span>
-            </span>
-            <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-[#6e6e73]">
-              <span>Ежевечерний ритуал в 21:00</span>
-            </span>
+            <button
+              type="button"
+              onClick={() => handleOpenAuth('login')}
+              className="px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-white/20 text-[#f5f5f7] font-medium text-[13px] transition-all active:scale-95 cursor-pointer"
+            >
+              Войти
+            </button>
+
+            <button
+              type="button"
+              onClick={scrollToTop}
+              className="px-3.5 py-2.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-[#86868b] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[12px]"
+              title="Прокрутить страницу наверх"
+            >
+              <span>Наверх</span>
+              <ArrowUp size={13} />
+            </button>
           </div>
         </div>
 
-        {/* ── 2. APPLE TRIPLE VALUE STAGE (DOUBLE-BEZEL HARDWARE CARDS) ───── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 py-8 sm:py-10 border-b border-white/[0.06]">
-          {/* Card 1: Telegram вечерний бот */}
-          <div className="fade-scale delay-150 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
-            <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-full bg-[#2997ff]/10 border border-[#2997ff]/20 flex items-center justify-center text-[#2997ff]">
-                    <Send size={15} />
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-[#86868b]">
-                    Без спама
-                  </span>
-                </div>
-                <h4 className="text-[15px] font-semibold text-[#f5f5f7] mb-1.5 group-hover:text-[#2997ff] transition-colors">
-                  Вечерний ритуал в Telegram
-                </h4>
-                <p className="text-[12px] text-[#86868b] leading-relaxed mb-4">
-                  В 21:00 бот задаёт один вопрос: «Чем гордишься сегодня?». Твой ответ моментально сохраняется в зашифрованную летопись.
-                </p>
+        {/* ── 2. PRIVACY FREEDOM PANEL: ПУБЛИЧНЫЙ ИЛИ СЕКРЕТНЫЙ РЕЖИМ ─────── */}
+        <div className="fade-scale delay-150 my-8 p-6 sm:p-7 rounded-[1.75rem] bg-gradient-to-b from-white/[0.04] to-transparent border border-white/[0.08] relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-[620px]">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f56900]/15 border border-[#f56900]/30 text-[#f56900] text-[11px] font-medium">
+                <ShieldCheck size={13} />
+                <span>Полный контроль видимости</span>
               </div>
-              <a
-                href="https://t.me/ogonek_support"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-[#0071e3] text-[#f5f5f7] hover:text-white text-[12px] font-medium transition-all duration-200 group/btn"
-              >
-                <span>Подключить напоминания</span>
-                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover/btn:translate-x-0.5 transition-transform">
-                  <ExternalLink size={10} />
-                </div>
-              </a>
+              <h4 className="text-[17px] sm:text-[19px] font-semibold text-white tracking-tight">
+                Ты сам решаешь: открыться миру или оставаться в полной секретности
+              </h4>
+              <p className="text-[13px] text-[#86868b] leading-relaxed">
+                В Priday ты можешь сделать профиль публичным и делиться победами со всем миром, вдохновляя окружающих. А можешь включить секретный режим — тогда тебя невозможно найти в поиске платформы, а твои записи не увидит никто, кроме тех, кому ты лично откроешь доступ.
+              </p>
             </div>
-          </div>
 
-          {/* Card 2: 100% Local-first и приватность */}
-          <div className="fade-scale delay-250 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
-            <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                    <Lock size={15} />
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">
-                    Zero-Training
-                  </span>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="p-4 rounded-2xl bg-black/40 border border-white/[0.08] min-w-[200px]">
+                <div className="flex items-center gap-2 text-[#2997ff] text-[12px] font-semibold mb-1">
+                  <Globe2 size={14} />
+                  <span>Публичный профиль</span>
                 </div>
-                <h4 className="text-[15px] font-semibold text-[#f5f5f7] mb-1.5 group-hover:text-emerald-400 transition-colors">
-                  Нулевой сбор данных
-                </h4>
-                <p className="text-[12px] text-[#86868b] leading-relaxed mb-4">
-                  Ключи шифрования создаются исключительно на процессоре твоего устройства. Мы физически не можем прочитать записи побед или продать рекламу.
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  Делись победами с миром, попадай в общую ленту и рейтинги.
                 </p>
               </div>
-              <Link
-                href="/privacy"
-                className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-emerald-500 text-[#f5f5f7] hover:text-black text-[12px] font-medium transition-all duration-200 group/btn"
-              >
-                <span>Манифест Local-first</span>
-                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover/btn:translate-x-0.5 transition-transform font-bold">
-                  ›
-                </div>
-              </Link>
-            </div>
-          </div>
 
-          {/* Card 3: Авторский независимый проект */}
-          <div className="fade-scale delay-350 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
-            <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-9 h-9 rounded-full bg-[#f56900]/10 border border-[#f56900]/20 flex items-center justify-center text-[#f56900]">
-                    <Heart size={15} />
-                  </div>
-                  <span className="text-[10px] uppercase tracking-wider font-mono px-2 py-0.5 rounded-full bg-white/[0.06] text-[#86868b]">
-                    740+ дней
-                  </span>
+              <div className="p-4 rounded-2xl bg-black/40 border border-white/[0.08] min-w-[200px]">
+                <div className="flex items-center gap-2 text-emerald-400 text-[12px] font-semibold mb-1">
+                  <EyeOff size={14} />
+                  <span>Секретный режим</span>
                 </div>
-                <h4 className="text-[15px] font-semibold text-[#f5f5f7] mb-1.5 group-hover:text-[#f56900] transition-colors">
-                  Создан для людей, а не алгоритмов
-                </h4>
-                <p className="text-[12px] text-[#86868b] leading-relaxed mb-4">
-                  Никаких венчурных фондов, токсичных пушей и накруток дофамина. Только честная опора на себя и уважение к твоему пути.
+                <p className="text-[11px] text-[#86868b] leading-snug">
+                  Полная невидимость в поиске. Доступ только по твоему личному разрешению.
                 </p>
               </div>
-              <Link
-                href="/manifesto"
-                className="inline-flex items-center justify-between w-full px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-[#f56900] text-[#f5f5f7] hover:text-white text-[12px] font-medium transition-all duration-200 group/btn"
-              >
-                <span>Манифест создателя</span>
-                <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center group-hover/btn:translate-x-0.5 transition-transform font-bold">
-                  ›
-                </div>
-              </Link>
             </div>
           </div>
         </div>
 
-        {/* ── 3. 5-COLUMN APPLE ESPAÑA DIRECTORY WITH MOBILE ACCORDIONS ────── */}
-        <div className="fade-up delay-200 py-10 border-b border-white/[0.06]">
+        {/* ── 3. 5-COLUMN DIRECTORY WITH MOBILE ACCORDIONS ────────────────── */}
+        <div className="fade-up delay-200 py-8 border-b border-white/[0.08]">
           {/* Desktop 5-Column Grid */}
-          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-8">
+          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-8 text-[12px]">
             {/* Column 1: Платформа */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
+              <h4 className="text-[11px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase font-mono">
                 Платформа
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/platform" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/platform" className="hover:text-white transition-colors">
                     Возможности и функции
                   </Link>
                 </li>
                 <li>
-                  <Link href="/examples" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
+                  <Link href="/examples" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Примеры побед</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#f56900]/15 text-[#f56900] font-medium">Гид</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/ai" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
+                  <Link href="/ai" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>ИИ-наставник</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#2997ff]/20 text-[#2997ff] font-medium">Gemini 2.5</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/platform#vault" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/platform#vault" className="hover:text-white transition-colors">
                     Сейф доказательств (Vault)
                   </Link>
                 </li>
                 <li>
-                  <Link href="/examples#high-score" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/examples#high-score" className="hover:text-white transition-colors">
                     Шкала преодоления 1–10★
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/support#export" className="hover:text-[#f5f5f7] transition-colors">
-                    Резервный экспорт в JSON
                   </Link>
                 </li>
               </ul>
@@ -224,167 +194,163 @@ export function AppleFooter() {
 
             {/* Column 2: Сообщество */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
+              <h4 className="text-[11px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase font-mono">
                 Сообщество
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/community#groups" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/community#groups" className="hover:text-white transition-colors">
                     Клубы по хобби и целям
                   </Link>
                 </li>
                 <li>
-                  <Link href="/community#search" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/community#search" className="hover:text-white transition-colors">
                     Поиск напарников
                   </Link>
                 </li>
                 <li>
-                  <Link href="/community#stories" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
+                  <Link href="/community#stories" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Сторис побед</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-white/[0.08] text-[#f5f5f7] font-medium">24 часа</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/community#calls" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/community#calls" className="hover:text-white transition-colors">
                     Зашифрованные P2P звонки
                   </Link>
                 </li>
                 <li>
-                  <Link href="/community#duo" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/community#duo" className="hover:text-white transition-colors">
                     Парный огонёк (Duo Streak)
                   </Link>
                 </li>
                 <li>
-                  <Link href="/community" className="hover:text-[#f5f5f7] transition-colors">
-                    Экологичная лента побед
-                  </Link>
+                  <a
+                    href="https://t.me/ogonek_support"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-white transition-colors inline-flex items-center gap-1.5"
+                  >
+                    <span>Telegram-сообщество</span>
+                    <ExternalLink size={10} className="text-[#86868b]" />
+                  </a>
                 </li>
               </ul>
             </div>
 
             {/* Column 3: Ритм и сферы */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
+              <h4 className="text-[11px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase font-mono">
                 Ритм и сферы
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/how-it-works" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/how-it-works" className="hover:text-white transition-colors">
                     Вечерний ритуал (5 минут)
                   </Link>
                 </li>
                 <li>
-                  <Link href="/modes" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/modes" className="hover:text-white transition-colors">
                     5 сфер баланса жизни
                   </Link>
                 </li>
                 <li>
-                  <Link href="/examples#levels-guide" className="hover:text-[#f5f5f7] transition-colors">
-                    Выбор уровня сложности
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/reviews" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/reviews" className="hover:text-white transition-colors">
                     Истории участников (32+)
                   </Link>
                 </li>
                 <li>
-                  <Link href="/manifesto" className="hover:text-[#f5f5f7] transition-colors">
-                    Манифест 740 дней
+                  <Link href="/manifesto" className="hover:text-white transition-colors">
+                    Рекорд платформы 740 дней
                   </Link>
                 </li>
                 <li>
-                  <Link href="/how-it-works#streak" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/how-it-works#streak" className="hover:text-white transition-colors">
                     Правило «Стрик не сгорает»
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Column 4: Открытость и тарифы */}
+            {/* Column 4: Открытость */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
+              <h4 className="text-[11px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase font-mono">
                 Открытость
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
+                  <Link href="/#open" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>100% бесплатно навсегда</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400 font-medium">Free</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#pricing" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/#pricing" className="hover:text-white transition-colors">
                     Тарифы Pro и Ultra
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#pricing" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/#pricing" className="hover:text-white transition-colors">
                     Годовая подписка (-20%)
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/#open" className="hover:text-white transition-colors">
                     0% рекламы и трекеров
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/#open" className="hover:text-white transition-colors">
                     Поддержка независимых
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy#local-first" className="hover:text-[#f5f5f7] transition-colors">
-                    Философия Local-first
                   </Link>
                 </li>
               </ul>
             </div>
 
-            {/* Column 5: Безопасность */}
+            {/* Column 5: Безопасность и приватность */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
+              <h4 className="text-[11px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase font-mono">
                 Безопасность
               </h4>
               <ul className="space-y-2.5">
                 <li>
-                  <Link href="/privacy" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/privacy" className="hover:text-white transition-colors">
                     Политика приватности
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy#encryption" className="hover:text-[#f5f5f7] transition-colors">
-                    Шифрование Web Crypto
+                  <Link href="/privacy#modes" className="hover:text-white transition-colors">
+                    Публичный или секретный профиль
                   </Link>
                 </li>
                 <li>
-                  <Link href="/ai#privacy-pledge" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
+                  <Link href="/ai#privacy-pledge" className="hover:text-white transition-colors inline-flex items-center gap-1.5">
                     <span>Zero-Training ИИ</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#0071e3]/15 text-[#2997ff] font-medium">100%</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/terms" className="hover:text-white transition-colors">
                     Условия сервиса
                   </Link>
                 </li>
                 <li>
-                  <Link href="/support" className="hover:text-[#f5f5f7] transition-colors">
+                  <Link href="/support" className="hover:text-white transition-colors">
                     Центр заботы & FAQ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/support#status" className="hover:text-[#f5f5f7] transition-colors">
-                    Статус серверов
+                  <Link href="/privacy#encryption" className="hover:text-white transition-colors">
+                    Защита персональных данных
                   </Link>
                 </li>
               </ul>
             </div>
           </div>
 
-          {/* Mobile Apple-style Collapsible Accordion (< md) */}
+          {/* Mobile Collapsible Accordion (< md) */}
           <div className="md:hidden divide-y divide-white/[0.08]">
-            {/* Accordion 1: Платформа */}
+            {/* Accordion 1 */}
             <div className="py-3">
               <button
                 type="button"
@@ -407,12 +373,11 @@ export function AppleFooter() {
                   <li><Link href="/ai" className="hover:text-white transition-colors block py-0.5 text-[#2997ff]">ИИ-наставник (Gemini 2.5)</Link></li>
                   <li><Link href="/platform#vault" className="hover:text-white transition-colors block py-0.5">Сейф доказательств (Vault)</Link></li>
                   <li><Link href="/examples#high-score" className="hover:text-white transition-colors block py-0.5">Шкала преодоления 1–10★</Link></li>
-                  <li><Link href="/support#export" className="hover:text-white transition-colors block py-0.5">Экспорт данных в JSON</Link></li>
                 </ul>
               )}
             </div>
 
-            {/* Accordion 2: Сообщество */}
+            {/* Accordion 2 */}
             <div className="py-3">
               <button
                 type="button"
@@ -435,12 +400,12 @@ export function AppleFooter() {
                   <li><Link href="/community#stories" className="hover:text-white transition-colors block py-0.5 text-[#f91880]">Сторис побед 24ч</Link></li>
                   <li><Link href="/community#calls" className="hover:text-white transition-colors block py-0.5">Зашифрованные P2P звонки</Link></li>
                   <li><Link href="/community#duo" className="hover:text-white transition-colors block py-0.5">Парный огонёк (Duo Streak)</Link></li>
-                  <li><Link href="/community" className="hover:text-white transition-colors block py-0.5">Экологичная лента побед</Link></li>
+                  <li><a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="hover:text-white transition-colors block py-0.5">Telegram-сообщество</a></li>
                 </ul>
               )}
             </div>
 
-            {/* Accordion 3: Ритм и сферы */}
+            {/* Accordion 3 */}
             <div className="py-3">
               <button
                 type="button"
@@ -460,15 +425,14 @@ export function AppleFooter() {
                 <ul className="pt-2.5 pb-2 space-y-2 text-[12px] pl-2 border-l border-white/[0.1] mt-1.5">
                   <li><Link href="/how-it-works" className="hover:text-white transition-colors block py-0.5">Вечерний ритуал (5 минут)</Link></li>
                   <li><Link href="/modes" className="hover:text-white transition-colors block py-0.5">5 сфер баланса жизни</Link></li>
-                  <li><Link href="/examples#levels-guide" className="hover:text-white transition-colors block py-0.5">Выбор уровня сложности</Link></li>
                   <li><Link href="/reviews" className="hover:text-white transition-colors block py-0.5">Истории участников (32+)</Link></li>
-                  <li><Link href="/manifesto" className="hover:text-white transition-colors block py-0.5">Манифест 740 дней</Link></li>
+                  <li><Link href="/manifesto" className="hover:text-white transition-colors block py-0.5">Рекорд платформы 740 дней</Link></li>
                   <li><Link href="/how-it-works#streak" className="hover:text-white transition-colors block py-0.5">Правило «Стрик не сгорает»</Link></li>
                 </ul>
               )}
             </div>
 
-            {/* Accordion 4: Открытость и тарифы */}
+            {/* Accordion 4 */}
             <div className="py-3">
               <button
                 type="button"
@@ -476,7 +440,7 @@ export function AppleFooter() {
                 className="w-full flex items-center justify-between text-left text-[13px] font-semibold text-[#f5f5f7] py-1"
                 aria-expanded={openSections.pricing}
               >
-                <span>Открытость и тарифы</span>
+                <span>Открытость</span>
                 <ChevronDown
                   size={15}
                   className={`text-[#86868b] transition-transform duration-200 ${
@@ -490,13 +454,11 @@ export function AppleFooter() {
                   <li><Link href="/#pricing" className="hover:text-white transition-colors block py-0.5">Тарифы Pro и Ultra</Link></li>
                   <li><Link href="/#pricing" className="hover:text-white transition-colors block py-0.5">Годовая подписка (-20%)</Link></li>
                   <li><Link href="/#open" className="hover:text-white transition-colors block py-0.5">0% рекламы и трекеров</Link></li>
-                  <li><Link href="/#open" className="hover:text-white transition-colors block py-0.5">Поддержка независимых</Link></li>
-                  <li><Link href="/privacy#local-first" className="hover:text-white transition-colors block py-0.5">Философия Local-first</Link></li>
                 </ul>
               )}
             </div>
 
-            {/* Accordion 5: Безопасность */}
+            {/* Accordion 5 */}
             <div className="py-3">
               <button
                 type="button"
@@ -515,55 +477,28 @@ export function AppleFooter() {
               {openSections.security && (
                 <ul className="pt-2.5 pb-2 space-y-2 text-[12px] pl-2 border-l border-white/[0.1] mt-1.5">
                   <li><Link href="/privacy" className="hover:text-white transition-colors block py-0.5">Политика приватности</Link></li>
-                  <li><Link href="/privacy#encryption" className="hover:text-white transition-colors block py-0.5">Шифрование Web Crypto</Link></li>
+                  <li><Link href="/privacy#modes" className="hover:text-white transition-colors block py-0.5">Публичный или секретный профиль</Link></li>
                   <li><Link href="/ai#privacy-pledge" className="hover:text-white transition-colors block py-0.5 text-blue-400">Zero-Training ИИ</Link></li>
                   <li><Link href="/terms" className="hover:text-white transition-colors block py-0.5">Условия сервиса</Link></li>
                   <li><Link href="/support" className="hover:text-white transition-colors block py-0.5">Центр заботы & FAQ</Link></li>
-                  <li><Link href="/support#status" className="hover:text-white transition-colors block py-0.5">Статус серверов</Link></li>
                 </ul>
               )}
             </div>
           </div>
         </div>
 
-        {/* ── 4. APPLE DEEP FOOTNOTES & LEGAL SPECIFICATIONS ───────────────── */}
-        <div className="fade-up delay-250 py-8 border-b border-white/[0.06] text-[11px] leading-relaxed text-[#6e6e73] space-y-2.5">
-          <p>
-            1. <strong className="text-[#86868b]">Философия Local-first:</strong> все личные записи побед, заметки благодарностей, шкала преодоления и медиа-доказательства по умолчанию сохраняются во внутреннем хранилище вашего устройства с использованием аппаратного шифрования Web Crypto (AES-GCM 256). Ни один байт ваших записей не передаётся на удалённые серверы без вашей прямой команды.
-          </p>
-          <p>
-            2. <strong className="text-[#86868b]">Защита от выгорания и «Стрик не сгорает»:</strong> алгоритм «Priday» ориентирован на долгосрочную устойчивость психики. Пропуск одного дня не обнуляет накопленный стрик и не начисляет штрафов. «Priday» — это инструмент возвращения к себе, а не конвейер вины.
-          </p>
-          <p>
-            3. <strong className="text-[#86868b]">Конфиденциальность ИИ-слоя:</strong> подсказки и анализ на базе ИИ функционируют в изолированной stateless-среде с нулевым хранением контекста. Действует строгое гарантийное соглашение Zero-Training: ваши персональные данные никогда не используются для обучения или дообучения больших языковых моделей.
-          </p>
-          <p>
-            4. <strong className="text-[#86868b]">Независимость и отсутствие рекламы:</strong> платформа существует исключительно за счёт добровольных платных подписок Pro и Ultra. Мы не продаём рекламные места, не встраиваем маркетинговые пиксели и не передаём профили пользователей сторонним брокерам данных.
-          </p>
-        </div>
-
-        {/* ── 5. APPLE BOTTOM MASTER ROW (COPYRIGHT, REGION, STATUS) ──────── */}
-        <div className="fade-up delay-300 pt-8 flex flex-col lg:flex-row items-center justify-between gap-5 text-[11px]">
-          {/* Brand & Copyright */}
-          <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
-            <div className="flex items-center gap-2">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                <path
-                  d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                  fill="#f56900"
-                />
-              </svg>
-              <span className="font-semibold text-[#f5f5f7]">Priday</span>
-            </div>
+        {/* ── 4. MASTER ROW (CLEAN, NO SYSTEMS STATUS, NO LANGUAGE SELECTOR) ─ */}
+        <div className="fade-up delay-250 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
+          <div className="flex items-center gap-2">
+            <Flame size={14} className="text-[#f56900]" />
+            <span className="font-semibold text-[#f5f5f7]">Priday</span>
             <span className="text-[#424245]">·</span>
             <span className="text-[#6e6e73]">
               © {new Date().getFullYear()} Priday Inc. Все права защищены.
-              <span className="sr-only">Огонёк Inc. Все права защищены.</span>
             </span>
           </div>
 
-          {/* Legal Quick Links */}
-          <nav aria-label="Юридическая информация" className="flex items-center gap-4 sm:gap-6 flex-wrap justify-center text-[#86868b]">
+          <nav aria-label="Юридическая информация" className="flex items-center gap-5 flex-wrap justify-center text-[#86868b]">
             <Link href="/privacy" className="hover:text-[#f5f5f7] transition-colors">
               Конфиденциальность
             </Link>
@@ -576,28 +511,12 @@ export function AppleFooter() {
             <Link href="/privacy#encryption" className="hover:text-[#f5f5f7] transition-colors">
               Безопасность
             </Link>
-            <Link href="/support#status" className="hover:text-[#f5f5f7] transition-colors">
-              Статус систем
-            </Link>
           </nav>
-
-          {/* Region Picker & Status Pulse */}
-          <div className="flex items-center gap-4 flex-wrap justify-center lg:justify-end">
-            <span className="inline-flex items-center gap-1.5 text-emerald-400 font-mono text-[10px]">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Все системы в строю (24 мс)</span>
-            </span>
-            <span className="text-[#333336]">|</span>
-            <div className="inline-flex items-center gap-1.5 text-[#d2d2d7] hover:text-white transition-colors cursor-default">
-              <Globe size={13} className="text-[#86868b]" />
-              <span>СНГ · Русский (Local-first)</span>
-            </div>
-          </div>
         </div>
 
-        {/* ── 6. GIANT HALFTONE WORDMARK WATERMARK (PRIDAY) ──────────────── */}
+        {/* ── 5. GIANT INTERACTIVE HALFTONE WORDMARK CANVAS (PRIDAY) ──────── */}
         <div
-          className="fade-blur delay-350 pt-8 sm:pt-12 pb-2 text-center select-none overflow-hidden relative"
+          className="fade-blur delay-300 pt-8 sm:pt-12 pb-2 text-center select-none overflow-hidden relative"
           aria-hidden="true"
         >
           <HalftoneWordmarkCanvas
@@ -615,9 +534,6 @@ export function AppleFooter() {
               warm: '#f56900',
             }}
           />
-          <span className="sr-only tracking-[0.22em] pointer-events-none">
-            Priday ОГОНЁК
-          </span>
         </div>
       </div>
     </footer>
