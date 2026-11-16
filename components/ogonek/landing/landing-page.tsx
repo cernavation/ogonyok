@@ -132,13 +132,13 @@ const QUOTES = [
     image: 'quote-1.jpg',
     text: 'Я фиксирую гордости больше 740 дней подряд без единого пропуска. Это единственная привычка, которая вытащила меня из выгорания и дала железобетонную опору.',
     author: 'Александр Церна',
-    role: 'Основатель Огонька · 740 дней стрика',
+    role: 'Основатель Priday · 740 дней стрика',
     isFounder: true,
     delay: 'delay-150',
   },
   {
     image: 'quote-2.jpg',
-    text: 'Раньше казалось, что день пролетает впустую. Огонёк перевернул всё: когда вечером фиксируешь 3 главных преодоления, появляется осязаемое чувство победы и спокойствия.',
+    text: 'Раньше казалось, что день пролетает впустую. Priday перевернул всё: когда вечером фиксируешь 3 главных преодоления, появляется осязаемое чувство победы и спокойствия.',
     author: 'Елена Романова',
     role: 'Product Lead · 320 дней в летописи',
     isFounder: false,
@@ -187,7 +187,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-16 pb-20 px-5 sm:px-8"
-        aria-label="Главный экран Огонька"
+        aria-label="Главный экран Priday"
       >
         {/* Full-width video slot in background */}
         <div className="absolute inset-0 z-0 w-full h-full">
@@ -234,7 +234,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
           {/* Subtitle: Direct emotional trigger (24-32px from h1, 32-40px to buttons, multiple of 8px) */}
           <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[720px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[19px] leading-relaxed font-normal">
-            Каждый вечер мозг врёт тебе, что ты&nbsp;сделал недостаточно. «Огонёк» возвращает твёрдые факты: 5&nbsp;минут вечерней тишины, от&nbsp;1 до&nbsp;5 настоящих поступков&nbsp;— и&nbsp;железное спокойствие перед зеркалом.
+            Каждый вечер мозг врёт тебе, что ты&nbsp;сделал недостаточно. «Priday» возвращает твёрдые факты: 5&nbsp;минут вечерней тишины, от&nbsp;1 до&nbsp;5 настоящих поступков&nbsp;— и&nbsp;железное спокойствие перед зеркалом.
           </p>
 
           {/* Action CTAs: Apple Blue + Ghost link */}
@@ -361,7 +361,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             Победа в бизнесе не должна стоить тебе инфаркта и семьи.
           </h2>
           <p className="apple-body fade-up delay-100 max-w-[680px] mb-16 sm:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Успех в одной сфере ценой разрушения остальных — это не сила, это побег. «Огонёк» удерживает в балансе 4 ключевые опоры: тело, карьеру, семью и внутренний дух.
+            Успех в одной сфере ценой разрушения остальных — это не сила, это побег. «Priday» удерживает в балансе 4 ключевые опоры: тело, карьеру, семью и внутренний дух.
           </p>
 
           <div className="fade-up delay-150">
@@ -676,7 +676,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </h2>
 
           <p className="apple-body fade-up delay-150 max-w-[740px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Никаких рекламных трекеров и продажи данных. Дневник шифруется локально на чипе твоего устройства. Даже создатели Огонька физически не имеют доступа к твоим записям.
+            Никаких рекламных трекеров и продажи данных. Дневник шифруется локально на чипе твоего устройства. Даже создатели Priday физически не имеют доступа к твоим записям.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
@@ -786,7 +786,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               Платформа свободна. Навсегда.
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              «Огонёк» создавался не как коммерческий пылесос для выкачивания денег из тревожных людей. Это личный спасательный круг. Спокойствие и уважение к себе — это базовое право человека, а не платная подписка.
+              «Priday» создавался не как коммерческий пылесос для выкачивания денег из тревожных людей. Это личный спасательный круг. Спокойствие и уважение к себе — это базовое право человека, а не платная подписка.
             </p>
           </div>
 
@@ -874,7 +874,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               Поддержка независимого развития.
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              Базовый «Огонёк» бесплатен навсегда. Платные тарифы созданы для тех, кому нужны нейросетевой ИИ-разбор дня, сейф фото-доказательств и кто хочет ускорить развитие проекта.
+              Базовый «Priday» бесплатен навсегда. Платные тарифы созданы для тех, кому нужны нейросетевой ИИ-разбор дня, сейф фото-доказательств и кто хочет ускорить развитие проекта.
             </p>
 
             {/* Billing Cycle Pill Selector */}
@@ -984,7 +984,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   ПРЕМИУМ ПЛАН
                 </div>
                 <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                  Огонёк Pro
+                  Priday Pro
                 </h3>
                 <p className="text-[14px] text-[#86868b] mb-6">
                   Для активной работы над собой: нейросетевой разбор и сейф доказательств.
@@ -1134,7 +1134,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               href="/ai"
               className="apple-btn-secondary !px-6 !py-3 !text-[14px] whitespace-nowrap shrink-0 hover:bg-white/[0.14] transition-all"
             >
-              Подробнее об ИИ Огонька →
+              Подробнее об ИИ Priday →
             </a>
           </div>
         </div>

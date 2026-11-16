@@ -55,7 +55,7 @@ const MOBILE_SECTIONS = [
       { label: 'Манифест открытости', href: '/#open', sub: 'Бесплатно навсегда и без рекламы' },
       { label: 'Тарифные планы', href: '/#pricing', sub: 'Свободный · Pro · Ultra' },
       { label: 'Приватность Local-first', href: '/privacy', sub: 'Шифрование на чипе устройства' },
-      { label: 'Поддержка и FAQ', href: '/support', sub: 'Связь с создателем Огонька' },
+      { label: 'Поддержка и FAQ', href: '/support', sub: 'Связь с создателем Priday' },
       { label: 'Условия сервиса', href: '/terms', sub: 'Прозрачные гарантии' },
     ],
   },
@@ -115,7 +115,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         <Link
           href="/"
           className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none shrink-0"
-          aria-label="Огонёк — главная страница"
+          aria-label="Priday — главная страница"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
             <defs>
@@ -130,7 +130,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
             />
           </svg>
           <span className="text-[14px] font-semibold tracking-tight text-[#f5f5f7]">
-            Огонёк
+            Priday
           </span>
         </Link>
 
@@ -284,7 +284,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
                 <span>Главная страница</span>
               </Link>
               <span className="text-[11px] font-mono text-[#00c7be] uppercase">
-                Огонёк 2026
+                Priday 2026
               </span>
             </div>
 

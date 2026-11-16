@@ -30,7 +30,7 @@ export default function AiPage() {
                 strokeLinecap="round"
               />
             </svg>
-            <span className="apple-eyebrow">Нейросетевой наставник Огонька</span>
+            <span className="apple-eyebrow">Нейросетевой наставник Priday</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-75 mb-6 max-w-[960px]">
@@ -40,7 +40,7 @@ export default function AiPage() {
           </h1>
 
           <p className="apple-body fade-up delay-150 max-w-[700px] mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Никаких шаблонных комплиментов и генерации белого шума. Искусственный интеллект Огонька анализирует силу сопротивления, взвешивает трудность твоих поступков и находит скрытые закономерности роста.
+            Никаких шаблонных комплиментов и генерации белого шума. Искусственный интеллект Priday анализирует силу сопротивления, взвешивает трудность твоих поступков и находит скрытые закономерности роста.
           </p>
 
           <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap mb-14">
@@ -57,7 +57,7 @@ export default function AiPage() {
             <div className="rounded-[22px] overflow-hidden border border-white/10 bg-black">
               <img
                 src="/media/landing/platform_ai_ceremony.png"
-                alt="Реальный интерфейс церемонии ИИ-оценки дня в Огоньке"
+                alt="Реальный интерфейс церемонии ИИ-оценки дня в Priday"
                 className="w-full h-auto object-cover"
               />
             </div>
@@ -210,7 +210,7 @@ export default function AiPage() {
                     width={1440}
                     height={900}
                     ratio="16:10"
-                    alt="Панель аналитики и ИИ-инсайтов в платформе Огонёк"
+                    alt="Панель аналитики и ИИ-инсайтов в платформе Priday"
                     rounded={false}
                   />
                 </div>
@@ -287,7 +287,7 @@ export default function AiPage() {
                 <span className="text-xs font-mono text-[#2997ff] uppercase tracking-wider block mb-2">
                   ПРЕМИУМ
                 </span>
-                <h3 className="text-[24px] font-bold text-white mb-2">Огонёк Pro</h3>
+                <h3 className="text-[24px] font-bold text-white mb-2">Priday Pro</h3>
                 <div className="text-[32px] font-bold text-white font-sans mb-4">
                   25 MDL <span className="text-xs text-[#86868b] font-normal">/ мес (240 MDL/год)</span>
                 </div>
@@ -412,7 +412,7 @@ export default function AiPage() {
             Начни фиксировать победы сегодня вечером и получи первый честный разбор своей внутренней силы.
           </p>
           <Link href="/register" className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold shadow-[0_0_35px_rgba(0,113,227,0.6)]">
-            Попробовать Огонёк с ИИ →
+            Попробовать Priday с ИИ →
           </Link>
         </div>
       </section>

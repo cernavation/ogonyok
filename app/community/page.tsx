@@ -155,7 +155,7 @@ export default function CommunityPage() {
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="apple-eyebrow !text-[#f56900]">Круг силы Огонька</span>
+            <span className="apple-eyebrow !text-[#f56900]">Круг силы Priday</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-75 mb-6 max-w-[980px]">
@@ -165,7 +165,7 @@ export default function CommunityPage() {
           </h1>
 
           <p className="apple-body fade-up delay-150 max-w-[720px] mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            В одиночку дисциплина рано или поздно ломается об усталость. В «Огоньке» нет алгоритмической ленты с бессмысленным скроллом — здесь собираются люди дела. Находи единомышленников по хобби, объединяйся в группы и делись сторис настоящих побед.
+            В одиночку дисциплина рано или поздно ломается об усталость. В «Priday» нет алгоритмической ленты с бессмысленным скроллом — здесь собираются люди дела. Находи единомышленников по хобби, объединяйся в группы и делись сторис настоящих побед.
           </p>
 
           <div className="fade-scale delay-200 flex items-center justify-center gap-3.5 sm:gap-4 flex-wrap mb-12">
@@ -207,7 +207,7 @@ export default function CommunityPage() {
               Как найти друзей по общим интересам?
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              В Огоньке действует закрытый социальный граф. Ты находишь не случайных френдов для лайков, а напарников по подотчётности (accountability partners), которые разделяют твои ценности.
+              В Priday действует закрытый социальный граф. Ты находишь не случайных френдов для лайков, а напарников по подотчётности (accountability partners), которые разделяют твои ценности.
             </p>
           </div>
 
@@ -286,7 +286,7 @@ export default function CommunityPage() {
               Группы, где нет флуда — только факты.
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              Это не чаты с бесконечными стикерами и токсичными спорами. В группах Огонька участники объединяются вокруг конкретной цели и подтверждают действия каждый день.
+              Это не чаты с бесконечными стикерами и токсичными спорами. В группах Priday участники объединяются вокруг конкретной цели и подтверждают действия каждый день.
             </p>
 
             {/* Quick Filter Bar */}
@@ -382,7 +382,7 @@ export default function CommunityPage() {
                 Хочешь создать группу для своей команды или друзей?
               </h4>
               <p className="text-[14px] text-[#86868b] max-w-[680px]">
-                В Огоньке можно создать закрытый круг силы со своими правилами, минимальным уровнем (1–5) и совместной статистикой побед.
+                В Priday можно создать закрытый круг силы со своими правилами, минимальным уровнем (1–5) и совместной статистикой побед.
               </p>
             </div>
             <Link
@@ -399,12 +399,12 @@ export default function CommunityPage() {
       <section id="stories" className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[780px] mx-auto mb-16 sm:mb-20">
-            <span className="apple-eyebrow fade-up block mb-4 !text-[#f91880]">Сторис в Огоньке</span>
+            <span className="apple-eyebrow fade-up block mb-4 !text-[#f91880]">Сторис в Priday</span>
             <h2 className="apple-section-title fade-up delay-75 mb-6">
               Сторис побед, а не фальшивого успеха.
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              В Огоньке сторис создаются прямо из вечерней летописи в один клик. Это честный отчёт дня с доказательством, оценкой преодоления и счётчиком непрерывного стрика.
+              В Priday сторис создаются прямо из вечерней летописи в один клик. Это честный отчёт дня с доказательством, оценкой преодоления и счётчиком непрерывного стрика.
             </p>
           </div>
 
@@ -553,7 +553,7 @@ export default function CommunityPage() {
                 Зашифрованные чаты и P2P созвоны без слежки.
               </h2>
               <p className="apple-body mb-6 text-[#86868b] text-[17px] leading-relaxed">
-                В Огоньке встроен полноценный мессенджер с технологией WebRTC. Голосовые и видеосозвоны идут напрямую между вашими устройствами (Peer-to-Peer), минуя центральные серверы корпораций.
+                В Priday встроен полноценный мессенджер с технологией WebRTC. Голосовые и видеосозвоны идут напрямую между вашими устройствами (Peer-to-Peer), минуя центральные серверы корпораций.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

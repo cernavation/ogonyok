@@ -15,20 +15,20 @@ import { OfflineBanner } from '@/components/ogonek/offline-banner'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ogonek.app'),
-  title: 'Огонёк — Твой личный дневник силы',
+  title: 'Priday — Твой личный дневник силы',
   description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
   manifest: '/manifest.json',
   openGraph: {
-    title: 'Огонёк — Твой личный дневник силы',
+    title: 'Priday — Твой личный дневник силы',
     description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
     url: 'https://ogonek.app',
-    siteName: 'Огонёк',
+    siteName: 'Priday',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Огонёк — Твой личный дневник силы',
+        alt: 'Priday — Твой личный дневник силы',
       },
     ],
     locale: 'ru_RU',
@@ -36,14 +36,14 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Огонёк — Твой личный дневник силы',
+    title: 'Priday — Твой личный дневник силы',
     description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
     images: ['/og-image.png'],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Огонёк',
+    title: 'Priday',
   },
   icons: {
     icon: [

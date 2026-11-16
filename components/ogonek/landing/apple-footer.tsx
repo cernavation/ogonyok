@@ -14,6 +14,7 @@ import {
   Flame,
   CheckCircle2,
 } from 'lucide-react'
+import { HalftoneWordmarkCanvas } from '@/components/ui/halftone-wordmark-footer'
 
 export function AppleFooter() {
   // Mobile accordion state for directory columns
@@ -57,7 +58,7 @@ export function AppleFooter() {
                   fill="#f56900"
                 />
               </svg>
-              <span>Огонёк</span>
+              <span>Priday</span>
             </Link>
             <span className="text-[#424245]">›</span>
             <Link href="/platform" className="hover:text-[#f5f5f7] transition-colors">
@@ -531,7 +532,7 @@ export function AppleFooter() {
             1. <strong className="text-[#86868b]">Философия Local-first:</strong> все личные записи побед, заметки благодарностей, шкала преодоления и медиа-доказательства по умолчанию сохраняются во внутреннем хранилище вашего устройства с использованием аппаратного шифрования Web Crypto (AES-GCM 256). Ни один байт ваших записей не передаётся на удалённые серверы без вашей прямой команды.
           </p>
           <p>
-            2. <strong className="text-[#86868b]">Защита от выгорания и «Стрик не сгорает»:</strong> алгоритм «Огонька» ориентирован на долгосрочную устойчивость психики. Пропуск одного дня не обнуляет накопленный стрик и не начисляет штрафов. «Огонёк» — это инструмент возвращения к себе, а не конвейер вины.
+            2. <strong className="text-[#86868b]">Защита от выгорания и «Стрик не сгорает»:</strong> алгоритм «Priday» ориентирован на долгосрочную устойчивость психики. Пропуск одного дня не обнуляет накопленный стрик и не начисляет штрафов. «Priday» — это инструмент возвращения к себе, а не конвейер вины.
           </p>
           <p>
             3. <strong className="text-[#86868b]">Конфиденциальность ИИ-слоя:</strong> подсказки и анализ на базе ИИ функционируют в изолированной stateless-среде с нулевым хранением контекста. Действует строгое гарантийное соглашение Zero-Training: ваши персональные данные никогда не используются для обучения или дообучения больших языковых моделей.
@@ -552,11 +553,12 @@ export function AppleFooter() {
                   fill="#f56900"
                 />
               </svg>
-              <span className="font-semibold text-[#f5f5f7]">Огонёк</span>
+              <span className="font-semibold text-[#f5f5f7]">Priday</span>
             </div>
             <span className="text-[#424245]">·</span>
             <span className="text-[#6e6e73]">
-              © {new Date().getFullYear()} Огонёк Inc. Все права защищены.
+              © {new Date().getFullYear()} Priday Inc. Все права защищены.
+              <span className="sr-only">Огонёк Inc. Все права защищены.</span>
             </span>
           </div>
 
@@ -593,13 +595,28 @@ export function AppleFooter() {
           </div>
         </div>
 
-        {/* ── 6. GIANT APPLE METALLIC FOIL WATERMARK ──────────────────────── */}
+        {/* ── 6. GIANT HALFTONE WORDMARK WATERMARK (PRIDAY) ──────────────── */}
         <div
-          className="fade-blur delay-350 pt-12 sm:pt-16 pb-2 text-center select-none pointer-events-none overflow-hidden"
+          className="fade-blur delay-350 pt-8 sm:pt-12 pb-2 text-center select-none overflow-hidden relative"
           aria-hidden="true"
         >
-          <span className="font-[900] tracking-[0.22em] text-[52px] sm:text-[92px] md:text-[130px] lg:text-[164px] leading-none uppercase text-transparent bg-clip-text bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent inline-block">
-            ОГОНЁК
+          <HalftoneWordmarkCanvas
+            wordmark="Priday"
+            height="clamp(220px, 28vw, 380px)"
+            dotGap={6}
+            radius={90}
+            crop={0.22}
+            grain={0.4}
+            interactive={true}
+            className="w-full rounded-2xl"
+            palette={{
+              background: '#050507',
+              ink: '#f5f5f7',
+              warm: '#f56900',
+            }}
+          />
+          <span className="sr-only tracking-[0.22em] pointer-events-none">
+            Priday ОГОНЁК
           </span>
         </div>
       </div>

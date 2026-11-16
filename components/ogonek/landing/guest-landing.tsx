@@ -120,7 +120,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
     },
     {
       q: 'Сбросится ли мой стрик, если я пропущу день или заболею?',
-      a: 'Никогда. В отличие от токсичных трекеров, где один пропущенный день сжигает месяцы усилий, в Огоньке стрик равен общему количеству закрытых дней дневника. Пропуск ничего не обнуляет: дата и номер привязываются к твоей последней записи. Твой накопленный опыт и самоуважение принадлежат тебе навсегда.',
+      a: 'Никогда. В отличие от токсичных трекеров, где один пропущенный день сжигает месяцы усилий, в Priday стрик равен общему количеству закрытых дней дневника. Пропуск ничего не обнуляет: дата и номер привязываются к твоей последней записи. Твой накопленный опыт и самоуважение принадлежат тебе навсегда.',
     },
     {
       q: 'Как работает ИИ с моими данными и записями?',
@@ -150,11 +150,11 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
         }`}
       >
         <div className="flex items-center gap-6">
-          <Link href="/" aria-label="Огонёк — главная страница" className="flex items-center gap-3 group">
+          <Link href="/" aria-label="Priday — главная страница" className="flex items-center gap-3 group">
             <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-[var(--accent,#FF6A1A)] to-amber-500 flex items-center justify-center text-white shadow-md shadow-[var(--accent,#FF6A1A)]/20 font-bold group-hover:scale-105 transition-transform">
               ✦
             </div>
-            <span className="font-extrabold text-lg tracking-tight">Огонёк</span>
+            <span className="font-extrabold text-lg tracking-tight">Priday</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-5 text-xs font-semibold text-zinc-400" aria-label="Навигация лендинга">
@@ -225,7 +225,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
 
       {/* ── 2. HERO СЕКЦИЯ ───────────────────────────────────────────────── */}
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-20 flex flex-col gap-16 sm:gap-24">
-        <section aria-label="Главный экран Огонька" className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
+        <section aria-label="Главный экран Priday" className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-6 sm:space-y-8">
           {/* Бейдж стрика */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold bg-[var(--accent,#FF6A1A)]/10 border border-[var(--accent,#FF6A1A)]/30 text-[var(--accent,#FF6A1A)] shadow-sm whitespace-nowrap">
             <Flame size={14} className="text-[var(--accent,#FF6A1A)]" />
@@ -442,7 +442,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src="/landing/screen-mobile.png"
-                        alt="Огонёк на мобильном экране 390x844"
+                        alt="Priday на мобильном экране 390x844"
                         className="w-full h-auto object-cover"
                         loading="lazy"
                       />
@@ -452,7 +452,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={showcaseTabs.find((t) => t.id === activeShowcase)?.file || '/landing/screen-diary.png'}
-                    alt={showcaseTabs.find((t) => t.id === activeShowcase)?.label || 'Скриншот Огонька'}
+                    alt={showcaseTabs.find((t) => t.id === activeShowcase)?.label || 'Скриншот Priday'}
                     className="w-full h-auto object-cover max-h-[560px]"
                     loading="lazy"
                   />
@@ -844,7 +844,7 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
                 <button
                   type="button"
                   onClick={() => setAuthModal('register')}
-                  aria-label="Создать аккаунт в Огоньке"
+                  aria-label="Создать аккаунт в Priday"
                   className="w-full sm:w-auto flex items-center justify-center gap-2.5 py-3.5 px-7 rounded-2xl bg-[var(--accent,#FF6A1A)] hover:opacity-90 text-black font-extrabold text-sm shadow-lg shadow-[var(--accent,#FF6A1A)]/25 transition-all active:scale-95 min-h-[44px] cursor-pointer"
                 >
                   <span>Создать аккаунт</span>

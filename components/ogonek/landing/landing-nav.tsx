@@ -49,7 +49,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85"
-          aria-label="Огонёк — главная страница"
+          aria-label="Priday — главная страница"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
             <defs>
@@ -64,7 +64,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
             />
           </svg>
           <span className="text-[14px] font-semibold tracking-tight text-[#f5f5f7]">
-            Огонёк
+            Priday
           </span>
         </a>
 
