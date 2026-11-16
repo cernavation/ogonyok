@@ -63,23 +63,23 @@ export function AuthModal({ onClose, onNotify, initialMode = 'signin', onAuthent
         {/* ── LEFT COLUMN: Cinematic Art Showcase (finish.jpg / ritual.jpg) ── */}
         <div className="relative md:w-[44%] shrink-0 overflow-hidden select-none bg-black flex flex-col justify-between">
           {/* Dynamic Cross-fading Background Image */}
-          <div className="absolute inset-0 z-0">
-            <AnimatePresence mode="wait">
+          <div className="absolute inset-0 z-0 bg-black">
+            <AnimatePresence>
               <motion.img
                 key={activeImage}
                 src={activeImage}
                 alt={isRegister ? 'Финиш и преодоление' : 'Вечерний ритуал силы'}
-                initial={{ opacity: 0, scale: 1.05 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.45, ease: 'easeInOut' }}
-                className="w-full h-full object-cover object-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="absolute inset-0 w-full h-full object-cover object-center"
               />
             </AnimatePresence>
 
             {/* Dark Apple Cinematic Gradient Vignette */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#121214] via-[#121214]/55 to-black/30" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#121214]/80 hidden md:block" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121214] via-[#121214]/40 to-black/20 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#121214]/70 hidden md:block pointer-events-none" />
           </div>
 
           {/* Top Banner Content */}

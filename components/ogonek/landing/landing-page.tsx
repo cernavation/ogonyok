@@ -267,7 +267,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="how"
-        className="relative py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] overflow-hidden"
+        className="relative py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Как это работает"
       >
         {/* Soft Amber Ambient Glow on Left */}
@@ -348,7 +348,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
-        className="relative py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden"
+        className="relative py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Режимы жизни"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10" />
@@ -375,7 +375,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="levels"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Уровни жёсткости"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -598,7 +598,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="showcase"
-        className="py-28 sm:py-36 md:py-44 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden"
+        className="py-28 sm:py-36 md:py-44 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Платформа в действии"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -698,7 +698,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="privacy"
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Приватность и безопасность"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -720,55 +720,66 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {[
               {
+                badge: 'AES-GCM 256',
                 icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="1.8">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
                 ),
-                title: 'Серии дней',
-                desc: 'Стрик считается по закрытым дням летописи, а не календарным суткам. Пропуск ничего не обнуляет.',
+                title: 'Web Crypto на твоём чипе',
+                desc: 'Шифрование мастер-ключом на аппаратном уровне браузера. Ни один бит твоих побед не читаем даже создателями сервиса.',
                 delay: 'delay-150',
               },
               {
+                badge: 'OFFLINE 100%',
                 icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00c7be" strokeWidth="1.8">
+                    <ellipse cx="12" cy="5" rx="9" ry="3" />
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
                   </svg>
                 ),
-                title: 'Ачивки и вехи',
-                desc: 'Юбилейные вехи 100, 200, 300 дней и защищённый сейф доказательств побед Evidence Vault.',
+                title: 'Автономный Local-first',
+                desc: 'Локальная база IndexedDB. Дневник открывается мгновенно в самолёте, метро и горах без единого байта интернета.',
+                delay: 'delay-200',
+              },
+              {
+                badge: 'ZERO TRACKING',
+                icon: (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="1.8">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                  </svg>
+                ),
+                title: '0% рекламы и трекеров',
+                desc: 'Полный запрет коммерческой слежки. Никаких рекламных сетей, брокеров данных и скрытых скриптов аналитики.',
                 delay: 'delay-250',
               },
               {
+                badge: 'ZERO TRAINING',
                 icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="1.8">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   </svg>
                 ),
-                title: 'Аналитика',
-                desc: 'Шкала преодоления 1–10★ и честные графики динамики без токсичной продуктивности.',
-                delay: 'delay-350',
-              },
-              {
-                icon: (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                  </svg>
-                ),
-                title: 'Мессенджер внутри',
-                desc: 'Приватные чаты, голосовые заметки и зашифрованные звонки для общения с единомышленниками.',
-                delay: 'delay-450',
+                title: 'Закрытый ИИ без обучения',
+                desc: 'Нейросетевой анализ дня выполняется в закрытой изолированной памяти. Твои сокровенные мысли не уходят в публичные модели.',
+                delay: 'delay-300',
               },
             ].map((card) => (
               <div
                 key={card.title}
-                className={`apple-card apple-card-hover fade-up ${card.delay} p-6 sm:p-7 bg-[#161617] flex flex-col justify-between min-h-[220px]`}
+                className={`apple-card apple-card-hover fade-up ${card.delay} p-6 sm:p-7 bg-[#161617] flex flex-col justify-between min-h-[240px]`}
               >
                 <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#f5f5f7] mb-5">
-                    {card.icon}
+                  <div className="flex items-center justify-between mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center">
+                      {card.icon}
+                    </div>
+                    <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[#a1a1a6]">
+                      {card.badge}
+                    </span>
                   </div>
                   <h3 className="text-[18px] font-semibold text-[#f5f5f7] mb-2.5 tracking-tight leading-snug">
                     {card.title}
@@ -801,7 +812,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="open"
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] relative overflow-hidden"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] relative overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label="Открытость и бесплатность"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#00a1b3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-10" />
@@ -889,7 +900,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="pricing"
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] relative"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32"
         aria-label="Тарифы и подписка"
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 right-1/4 -z-0 opacity-15" />

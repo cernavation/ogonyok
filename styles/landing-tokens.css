@@ -216,9 +216,25 @@
 }
 
 /* Extreme 5th level card subtle pulse glow */
+.landing .apple-card-extreme {
+  border-color: rgba(245, 105, 0, 0.35);
+  background: linear-gradient(180deg, rgba(32, 24, 20, 0.85) 0%, rgba(20, 16, 14, 0.95) 100%);
+  box-shadow: 0 0 30px rgba(245, 105, 0, 0.08);
+}
+
 .landing .apple-card-extreme:hover {
-  border-color: rgba(245, 105, 0, 0.5);
-  box-shadow: 0 16px 40px rgba(245, 105, 0, 0.18);
+  border-color: rgba(245, 105, 0, 0.6);
+  box-shadow: 0 16px 40px rgba(245, 105, 0, 0.22);
+}
+
+/* ── Apple Metric Number (Titanium Platinum Specular Gradient) ────────── */
+.landing .apple-metric-number {
+  font-family: var(--font-sf-pro-display);
+  background: linear-gradient(180deg, #FFFFFF 0%, #E8E8ED 55%, #A1A1A6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  letter-spacing: -0.03em;
 }
 
 /* ── Primary CTA Button (Apple Blue Filled) ──────────────────────────
@@ -398,18 +414,18 @@
   }
 
   /* ── Apple Cascading Stagger Timing Delays (Crisp ProMotion response) ── */
-  .landing .delay-75  { transition-delay: 50ms; }
-  .landing .delay-100 { transition-delay: 75ms; }
-  .landing .delay-150 { transition-delay: 100ms; }
-  .landing .delay-200 { transition-delay: 150ms; }
-  .landing .delay-250 { transition-delay: 175ms; }
-  .landing .delay-300 { transition-delay: 200ms; }
-  .landing .delay-350 { transition-delay: 225ms; }
-  .landing .delay-400 { transition-delay: 250ms; }
-  .landing .delay-450 { transition-delay: 275ms; }
-  .landing .delay-500 { transition-delay: 300ms; }
-  .landing .delay-600 { transition-delay: 350ms; }
-  .landing .delay-700 { transition-delay: 400ms; }
+  .landing .delay-75  { transition-delay: 20ms; }
+  .landing .delay-100 { transition-delay: 40ms; }
+  .landing .delay-150 { transition-delay: 60ms; }
+  .landing .delay-200 { transition-delay: 80ms; }
+  .landing .delay-250 { transition-delay: 100ms; }
+  .landing .delay-300 { transition-delay: 120ms; }
+  .landing .delay-350 { transition-delay: 140ms; }
+  .landing .delay-400 { transition-delay: 160ms; }
+  .landing .delay-450 { transition-delay: 180ms; }
+  .landing .delay-500 { transition-delay: 200ms; }
+  .landing .delay-600 { transition-delay: 220ms; }
+  .landing .delay-700 { transition-delay: 240ms; }
 }
 
 /* ── Fallback for Reduced Motion ───────────────────────────────────── */
