@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -8,43 +8,103 @@ interface AppleNavbarProps {
   onOpenAuth?: (mode: 'signin' | 'register') => void
 }
 
-const NAV_ITEMS = [
+/* ── Primary direct links visible on desktop ──────────────────────── */
+const PRIMARY_NAV = [
   { label: 'Платформа', href: '/platform' },
   { label: 'Примеры', href: '/examples' },
-  { label: 'ИИ-разбор', href: '/ai' },
+  { label: 'ИИ-наставник', href: '/ai' },
   { label: 'Сообщество', href: '/community' },
   { label: 'Ритуал', href: '/how-it-works' },
-  { label: 'Открытость', href: '/#open' },
   { label: 'Тарифы', href: '/#pricing' },
   { label: 'Отзывы', href: '/reviews' },
-  { label: 'Манифест', href: '/manifesto' },
-  { label: 'Поддержка', href: '/support' },
+]
+
+/* ── Secondary links accessible via desktop «Ещё ▾» dropdown ──────── */
+const MORE_NAV = [
+  { label: 'Манифест открытости', href: '/#open', sub: '100% бесплатно и без рекламы' },
+  { label: 'Сферы жизни', href: '/modes', sub: '5 жизненных опор без перекосов' },
+  { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Философия создателя платформы' },
+  { label: 'Приватность Local-first', href: '/privacy', sub: 'Шифрование данных на твоём чипе' },
+  { label: 'Поддержка & FAQ', href: '/support', sub: 'Ответы и связь с основателем' },
+  { label: 'Условия сервиса', href: '/terms', sub: 'Честные прозрачные правила' },
+]
+
+/* ── Structured groups for Apple mobile drawer ────────────────────── */
+const MOBILE_SECTIONS = [
+  {
+    category: 'ИНСТРУМЕНТЫ ЛЕТОПИСЦА',
+    items: [
+      { label: 'Платформа', href: '/platform', sub: 'Возможности и Evidence Vault' },
+      { label: 'Примеры гордостей', href: '/examples', sub: 'Формула 3 элементов и шкала 10★' },
+      { label: 'ИИ-наставник', href: '/ai', sub: 'Google Gemini и преодоление' },
+      { label: 'Сообщество и клубы', href: '/community', sub: 'Напарники по хобби и сторис' },
+    ],
+  },
+  {
+    category: 'ПРАКТИКА И ДИСЦИПЛИНА',
+    items: [
+      { label: 'Вечерний ритуал', href: '/how-it-works', sub: '5 минут тишины перед сном' },
+      { label: 'Сферы жизни', href: '/modes', sub: 'Баланс без выгорания' },
+      { label: 'Истории участников', href: '/reviews', sub: '32+ проверенных опыта' },
+      { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Философия личной силы' },
+    ],
+  },
+  {
+    category: 'ДОВЕРИЕ И ПРАВИЛА',
+    items: [
+      { label: 'Манифест открытости', href: '/#open', sub: 'Бесплатно навсегда и без рекламы' },
+      { label: 'Тарифные планы', href: '/#pricing', sub: 'Свободный · Pro · Ultra' },
+      { label: 'Приватность Local-first', href: '/privacy', sub: 'Шифрование на чипе устройства' },
+      { label: 'Поддержка и FAQ', href: '/support', sub: 'Связь с создателем Огонька' },
+      { label: 'Условия сервиса', href: '/terms', sub: 'Прозрачные гарантии' },
+    ],
+  },
 ]
 
 export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const pathname = usePathname()
+  const moreRef = useRef<HTMLDivElement>(null)
 
-  // Apple-grade UX: lock body scroll and support Escape key when drawer is open
+  // Apple-grade UX: lock body scroll and support Escape key
   useEffect(() => {
-    if (!mobileOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileOpen(false)
+      if (e.key === 'Escape') {
+        setMobileOpen(false)
+        setMoreOpen(false)
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      document.body.style.overflow = prevOverflow
+
+    if (mobileOpen) {
+      const prevOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown)
+        document.body.style.overflow = prevOverflow
+      }
     }
+
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen])
+
+  // Close desktop "More" dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setMoreOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 h-12 transition-all duration-300"
       style={{
-        background: 'rgba(0, 0, 0, 0.82)',
+        background: 'rgba(0, 0, 0, 0.85)',
         backdropFilter: 'saturate(180%) blur(20px)',
         WebkitBackdropFilter: 'saturate(180%) blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
@@ -54,7 +114,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         {/* Apple-style Logo with Project SVG Flame */}
         <Link
           href="/"
-          className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none"
+          className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none shrink-0"
           aria-label="Огонёк — главная страница"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
@@ -75,8 +135,8 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-2.5 xl:gap-4 shrink-0" aria-label="Разделы сайта">
-          {NAV_ITEMS.map((item) => {
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0" aria-label="Разделы сайта">
+          {PRIMARY_NAV.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -92,10 +152,65 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
               </Link>
             )
           })}
+
+          {/* Desktop «Ещё ▾» Flyout Dropdown */}
+          <div className="relative" ref={moreRef}>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(!moreOpen)}
+              className={`whitespace-nowrap text-[12px] tracking-tight transition-all duration-200 flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 ${
+                moreOpen
+                  ? 'text-white font-semibold opacity-100'
+                  : 'text-[#d2d2d7] opacity-75 hover:opacity-100 hover:text-white'
+              }`}
+              aria-expanded={moreOpen}
+              aria-haspopup="true"
+            >
+              <span>Ещё</span>
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className={`transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {moreOpen && (
+              <div
+                className="absolute top-8 left-1/2 -translate-x-1/2 w-[280px] p-2 rounded-2xl bg-[#161617]/95 border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-200"
+                style={{
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <div className="space-y-0.5">
+                  {MORE_NAV.map((subItem) => (
+                    <Link
+                      key={subItem.href}
+                      href={subItem.href}
+                      onClick={() => setMoreOpen(false)}
+                      className="block p-2.5 rounded-xl hover:bg-white/[0.08] transition-colors group text-left"
+                    >
+                      <span className="text-[13px] font-semibold text-white block group-hover:text-[#2997ff] transition-colors">
+                        {subItem.label}
+                      </span>
+                      <span className="text-[11px] text-[#86868b] block mt-0.5 truncate">
+                        {subItem.sub}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right Action Cluster */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {onOpenAuth ? (
             <button
               type="button"
@@ -134,7 +249,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 cursor-pointer border-none bg-transparent text-[#f5f5f7] p-1"
+            className="lg:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 cursor-pointer border-none bg-transparent text-[#f5f5f7] p-1 ml-1"
             aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
           >
             <span
@@ -151,47 +266,94 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </div>
       </div>
 
-      {/* Mobile Apple Full-Screen Drawer */}
+      {/* ── MOBILE APPLE HIGH-END DRAWER ──────────────────────────── */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-x-0 top-[48px] bottom-0 bg-[#000000] z-50 px-7 py-8 flex flex-col justify-between overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-300"
+          className="lg:hidden fixed inset-x-0 top-[48px] bottom-0 bg-black/98 z-50 px-5 sm:px-8 py-6 flex flex-col justify-between overflow-y-auto animate-in fade-in duration-300 backdrop-blur-2xl"
           style={{ minHeight: 'calc(100vh - 48px)' }}
         >
-          <nav className="flex flex-col gap-4" aria-label="Мобильная навигация">
-            <Link
-              href="/"
-              onClick={() => setMobileOpen(false)}
-              className="text-left text-[20px] font-semibold text-[#f5f5f7] tracking-tight hover:text-[#2997ff] transition-colors pb-3 border-b border-white/[0.08]"
-            >
-              Главная
-            </Link>
-            {NAV_ITEMS.map((item) => (
+          <div className="space-y-6">
+            {/* Quick Home Pill */}
+            <div className="pb-3 border-b border-white/[0.08] flex items-center justify-between">
               <Link
-                key={item.href}
-                href={item.href}
+                href="/"
                 onClick={() => setMobileOpen(false)}
-                className="text-left text-[20px] font-semibold text-[#f5f5f7] tracking-tight hover:text-[#2997ff] transition-colors pb-3 border-b border-white/[0.08]"
+                className="text-[17px] font-bold text-white tracking-tight flex items-center gap-2"
               >
-                {item.label}
+                <span>🔥</span>
+                <span>Главная страница</span>
               </Link>
-            ))}
-          </nav>
+              <span className="text-[11px] font-mono text-[#00c7be] uppercase">
+                Огонёк 2026
+              </span>
+            </div>
 
-          <div className="pt-8 pb-4 flex flex-col gap-3">
+            {/* Categorized Apple Directory */}
+            {MOBILE_SECTIONS.map((section) => (
+              <div key={section.category} className="space-y-2">
+                <div className="text-[11px] font-mono text-[#86868b] uppercase tracking-wider px-1">
+                  {section.category}
+                </div>
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                          isActive
+                            ? 'bg-white/[0.12] text-white font-semibold'
+                            : 'bg-white/[0.03] text-[#f5f5f7] hover:bg-white/[0.08]'
+                        }`}
+                      >
+                        <div>
+                          <div className="text-[15px] font-medium tracking-tight">
+                            {item.label}
+                          </div>
+                          <div className="text-[11px] text-[#86868b] mt-0.5">
+                            {item.sub}
+                          </div>
+                        </div>
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-[#86868b]"
+                        >
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom Action Footer inside Drawer */}
+          <div className="pt-8 pb-4 mt-8 border-t border-white/[0.08] flex flex-col gap-3">
             <Link
               href="/register"
               onClick={() => setMobileOpen(false)}
-              className="w-full py-3.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[16px] font-medium text-center shadow-lg cursor-pointer border-none transition-all active:scale-95"
+              className="w-full py-4 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[15px] font-semibold text-center shadow-lg cursor-pointer border-none transition-all active:scale-95 block"
             >
-              Начать бесплатно
+              Создать летопись силы →
             </Link>
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[15px] font-medium text-center transition-all"
+              className="w-full py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#f5f5f7] text-[14px] font-medium text-center transition-all block border border-white/5"
             >
-              Войти в существующий аккаунт
+              Войти в существующий профиль
             </Link>
+            <div className="text-center text-[11px] font-mono text-[#86868b] pt-1">
+              Local-first · Web Crypto · Без рекламы и трекеров
+            </div>
           </div>
         </div>
       )}
