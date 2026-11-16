@@ -22,6 +22,8 @@ import { Tooltip } from './tooltip'
 import { VaultSpark } from './vault-spark'
 import { VisibilitySwitcher } from './visibility-switcher'
 import { IconButton } from './ui'
+import { TextBlink } from '@/components/ui/text-blink'
+import { TextEffect } from '@/components/ui/text-effect'
 
 const TABS = [
   { id: 'pride', label: '5 Гордостей', icon: Flame },
@@ -244,8 +246,17 @@ function DayEntriesComponent({
             onClick={handleAiEvaluateCurrentTab}
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 transition-all shadow-sm disabled:opacity-50 min-h-[36px]"
           >
-            {isEvaluating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            {mode === 'pride' ? 'Оценить гордости с ИИ' : 'Оценить благодарности с ИИ'}
+            {isEvaluating ? (
+              <>
+                <Loader2 size={14} className="animate-spin" />
+                <TextBlink minOpacity={0.3}>Анализирую поступки...</TextBlink>
+              </>
+            ) : (
+              <>
+                <Sparkles size={14} />
+                <span>{mode === 'pride' ? 'Оценить гордости с ИИ' : 'Оценить благодарности с ИИ'}</span>
+              </>
+            )}
           </button>
 
           <span className="text-[13px] text-[var(--text-3)] font-medium">
@@ -260,7 +271,9 @@ function DayEntriesComponent({
           <div className="flex items-center gap-1.5 font-bold text-[var(--accent)] mb-1">
             <Sparkles size={14} /> Итог дня от ИИ:
           </div>
-          <p className="leading-relaxed">{daySummary}</p>
+          <div className="leading-relaxed">
+            <TextEffect preset="fade" per="word">{daySummary}</TextEffect>
+          </div>
         </div>
       )}
 

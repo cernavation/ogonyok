@@ -7,6 +7,7 @@ import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
 import { MediaSlot } from '@/components/ogonek/landing/media-slot'
 import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
 import { GlowCard } from '@/components/ui/spotlight-card'
+import { AiCeremonyShowcase } from '@/components/ogonek/landing/ai-ceremony-showcase'
 
 export default function AiPage() {
   const containerRef = useScrollReveal()
@@ -53,23 +54,14 @@ export default function AiPage() {
             </Link>
           </div>
 
-          {/* Real Platform UI Showcase: AI Ceremony Modal Frame */}
-          <div className="fade-scale delay-250 w-full max-w-[980px] mx-auto apple-card p-3 sm:p-5 bg-[#141416] border border-white/10 shadow-[0_24px_80px_rgba(0,113,227,0.25)] relative">
-            <div className="rounded-[22px] overflow-hidden border border-white/10 bg-black">
-              <img
-                src="/media/landing/platform_ai_ceremony.png"
-                alt="Реальный интерфейс церемонии ИИ-оценки дня в Priday"
-                className="w-full h-auto object-cover"
-              />
-            </div>
-            <div className="pt-3 text-center text-xs font-mono text-[#86868b]">
-              Реальный экран церемонии оценки дня: вопросы-триггеры, взвешивание преодоления 1–3 и запуск нейросети
-            </div>
+          {/* Real Platform UI Showcase: Dynamic AI Ceremony & Long-term Mentor */}
+          <div className="fade-scale delay-250 w-full">
+            <AiCeremonyShowcase />
           </div>
         </div>
       </section>
 
-      {/* ── 4 CORE PILLARS OF OGONEK AI ───────────────────────────── */}
+      {/* ── 4 CORE PILLARS OF PRIDAY AI ───────────────────────────── */}
       <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20">
