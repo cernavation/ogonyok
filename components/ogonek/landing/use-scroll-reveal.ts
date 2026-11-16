@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react'
 
 /**
  * High-End Apple.com Scroll Reveal Controller
- * Observes elements with .fade-up, .fade-blur, .fade-scale, .fade-slide-left, .fade-slide-right
- * and applies .visible when they scroll into viewport.
+ * Observes elements with .fade-up, .fade-blur, .fade-scale, .fade-pop, .fade-slide-left, .fade-slide-right
+ * and applies .visible when they enter the viewport.
  * Fully respects prefers-reduced-motion.
  */
 export function useScrollReveal() {
@@ -16,7 +16,7 @@ export function useScrollReveal() {
     if (!container) return
 
     const revealSelector =
-      '.fade-up, .fade-blur, .fade-scale, .fade-slide-left, .fade-slide-right, [data-reveal]'
+      '.fade-up, .fade-blur, .fade-scale, .fade-pop, .fade-slide-left, .fade-slide-right, [data-reveal]'
 
     // Check if user prefers reduced motion
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -37,13 +37,23 @@ export function useScrollReveal() {
         })
       },
       {
-        threshold: 0.02,
-        rootMargin: '120px 0px 120px 0px',
+        threshold: 0.05,
+        rootMargin: '0px 0px -40px 0px',
       }
     )
 
     const targets = container.querySelectorAll(revealSelector)
-    targets.forEach((el) => observer.observe(el))
+    targets.forEach((el) => {
+      // Elements already visible in initial viewport (above fold) reveal smoothly with their cascade delays
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight * 0.85 && rect.bottom > 0) {
+        requestAnimationFrame(() => {
+          el.classList.add('visible')
+        })
+      } else {
+        observer.observe(el)
+      }
+    })
 
     return () => observer.disconnect()
   }, [])

@@ -450,7 +450,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 5 — «ЦИФРЫ» (Без воды и инфоцыганства)
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06]"
+        id="numbers"
+        className="py-28 sm:py-36 md:py-44 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Реальные цифры"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -526,7 +527,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 6 — «ЦИТАТЫ» (Голоса практиков)
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
+        id="quotes"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Цитаты"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
@@ -613,7 +615,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </div>
 
           {/* Apple Segmented Pill Switcher */}
-          <div className="flex items-center justify-center gap-2 mb-8 sm:mb-10 flex-wrap">
+          <div className="fade-scale delay-150 flex items-center justify-center gap-2 mb-8 sm:mb-10 flex-wrap">
             {SHOWCASE_TABS.map((tab) => {
               const isActive = tab.id === activeShowcase
               return (
@@ -634,7 +636,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           </div>
 
           {/* Active Showcase Stage Frame */}
-          <div className="apple-card overflow-hidden p-5 sm:p-8 bg-[#141416] border border-white/10 shadow-2xl mb-12">
+          <div className="fade-scale delay-200 apple-card overflow-hidden p-5 sm:p-8 bg-[#141416] border border-white/10 shadow-2xl mb-12">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-6">
               <div className="lg:col-span-8">
                 <span
@@ -668,7 +670,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </div>
 
             {/* High-Resolution 16:10 Screen Display Stage */}
-            <div className="rounded-[20px] overflow-hidden border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-black animate-in fade-in duration-300">
+            <div
+              key={activeShowcase}
+              className="rounded-[20px] overflow-hidden border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-black animate-in fade-in zoom-in-[0.98] duration-300 transition-all"
+            >
               <MediaSlot
                 name={activeShowcaseItem.image}
                 width={1440}
@@ -1182,7 +1187,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           SECTION 10 — ФИНАЛЬНЫЙ БАННЕР «ВМЕСТЕ ГОРДИТЬСЯ ЛЕГЧЕ»
           ═══════════════════════════════════════════════════════════ */}
       <section
-        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06]"
+        id="together"
+        className="py-28 sm:py-36 md:py-44 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label="Финальный призыв к действию"
       >
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8">

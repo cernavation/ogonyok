@@ -45,7 +45,7 @@ export function AppleFooter() {
 
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 relative z-10">
         {/* ── 1. APPLE BREADCRUMBS BAR ────────────────────────────────────── */}
-        <div className="pb-6 border-b border-white/[0.06] flex items-center justify-between text-[11px] text-[#86868b] flex-wrap gap-3">
+        <div className="fade-up pb-6 border-b border-white/[0.06] flex items-center justify-between text-[11px] text-[#86868b] flex-wrap gap-3">
           <nav aria-label="Навигационная цепочка" className="flex items-center gap-2 flex-wrap">
             <Link
               href="/"
@@ -81,7 +81,7 @@ export function AppleFooter() {
         {/* ── 2. APPLE TRIPLE VALUE STAGE (DOUBLE-BEZEL HARDWARE CARDS) ───── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 py-8 sm:py-10 border-b border-white/[0.06]">
           {/* Card 1: Telegram вечерний бот */}
-          <div className="rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
+          <div className="fade-scale delay-150 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
             <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -114,7 +114,7 @@ export function AppleFooter() {
           </div>
 
           {/* Card 2: 100% Local-first и приватность */}
-          <div className="rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
+          <div className="fade-scale delay-250 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
             <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -145,7 +145,7 @@ export function AppleFooter() {
           </div>
 
           {/* Card 3: Авторский независимый проект */}
-          <div className="rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
+          <div className="fade-scale delay-350 rounded-[1.5rem] p-1 bg-white/[0.03] border border-white/[0.08] hover:border-white/[0.18] transition-all duration-300 group">
             <div className="h-full rounded-[calc(1.5rem-0.25rem)] p-5 sm:p-6 bg-[#0c0c0e]/90 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -177,7 +177,7 @@ export function AppleFooter() {
         </div>
 
         {/* ── 3. 5-COLUMN APPLE ESPAÑA DIRECTORY WITH MOBILE ACCORDIONS ────── */}
-        <div className="py-10 border-b border-white/[0.06]">
+        <div className="fade-up delay-200 py-10 border-b border-white/[0.06]">
           {/* Desktop 5-Column Grid */}
           <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-8">
             {/* Column 1: Платформа */}
@@ -526,7 +526,7 @@ export function AppleFooter() {
         </div>
 
         {/* ── 4. APPLE DEEP FOOTNOTES & LEGAL SPECIFICATIONS ───────────────── */}
-        <div className="py-8 border-b border-white/[0.06] text-[11px] leading-relaxed text-[#6e6e73] space-y-2.5">
+        <div className="fade-up delay-250 py-8 border-b border-white/[0.06] text-[11px] leading-relaxed text-[#6e6e73] space-y-2.5">
           <p>
             1. <strong className="text-[#86868b]">Философия Local-first:</strong> все личные записи побед, заметки благодарностей, шкала преодоления и медиа-доказательства по умолчанию сохраняются во внутреннем хранилище вашего устройства с использованием аппаратного шифрования Web Crypto (AES-GCM 256). Ни один байт ваших записей не передаётся на удалённые серверы без вашей прямой команды.
           </p>
@@ -542,7 +542,7 @@ export function AppleFooter() {
         </div>
 
         {/* ── 5. APPLE BOTTOM MASTER ROW (COPYRIGHT, REGION, STATUS) ──────── */}
-        <div className="pt-8 flex flex-col lg:flex-row items-center justify-between gap-5 text-[11px]">
+        <div className="fade-up delay-300 pt-8 flex flex-col lg:flex-row items-center justify-between gap-5 text-[11px]">
           {/* Brand & Copyright */}
           <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
             <div className="flex items-center gap-2">
@@ -595,7 +595,7 @@ export function AppleFooter() {
 
         {/* ── 6. GIANT APPLE METALLIC FOIL WATERMARK ──────────────────────── */}
         <div
-          className="pt-12 sm:pt-16 pb-2 text-center select-none pointer-events-none overflow-hidden"
+          className="fade-blur delay-350 pt-12 sm:pt-16 pb-2 text-center select-none pointer-events-none overflow-hidden"
           aria-hidden="true"
         >
           <span className="font-[900] tracking-[0.22em] text-[52px] sm:text-[92px] md:text-[130px] lg:text-[164px] leading-none uppercase text-transparent bg-clip-text bg-gradient-to-b from-white/[0.07] via-white/[0.02] to-transparent inline-block">
