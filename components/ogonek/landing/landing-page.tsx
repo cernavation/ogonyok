@@ -1011,7 +1011,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <GlowCard
               glowColor="blue"
               customSize
-              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative shadow-[0_0_50px_rgba(0,113,227,0.3)]"
+              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative"
             >
               {/* Highlight Badge */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0071e3] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20">
