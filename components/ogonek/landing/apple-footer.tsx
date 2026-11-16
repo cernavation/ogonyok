@@ -182,7 +182,7 @@ export function AppleFooter() {
           <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-5 gap-8">
             {/* Column 1: Платформа */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight uppercase font-mono">
+              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
                 Платформа
               </h4>
               <ul className="space-y-2.5">
@@ -194,13 +194,13 @@ export function AppleFooter() {
                 <li>
                   <Link href="/examples" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
                     <span>Примеры побед</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#f56900]/20 text-[#f56900] font-mono">Гид</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#f56900]/15 text-[#f56900] font-medium">Гид</span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/ai" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
                     <span>ИИ-наставник</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#2997ff]/20 text-[#2997ff] font-mono">Gemini 2.5</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#2997ff]/20 text-[#2997ff] font-medium">Gemini 2.5</span>
                   </Link>
                 </li>
                 <li>
@@ -223,7 +223,7 @@ export function AppleFooter() {
 
             {/* Column 2: Сообщество */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight uppercase font-mono">
+              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
                 Сообщество
               </h4>
               <ul className="space-y-2.5">
@@ -240,7 +240,7 @@ export function AppleFooter() {
                 <li>
                   <Link href="/community#stories" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
                     <span>Сторис побед</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#f91880]/20 text-[#f91880] font-mono">24 часа</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-white/[0.08] text-[#f5f5f7] font-medium">24 часа</span>
                   </Link>
                 </li>
                 <li>
@@ -263,7 +263,7 @@ export function AppleFooter() {
 
             {/* Column 3: Ритм и сферы */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight uppercase font-mono">
+              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
                 Ритм и сферы
               </h4>
               <ul className="space-y-2.5">
@@ -302,14 +302,14 @@ export function AppleFooter() {
 
             {/* Column 4: Открытость и тарифы */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight uppercase font-mono">
+              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
                 Открытость
               </h4>
               <ul className="space-y-2.5">
                 <li>
                   <Link href="/#open" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
                     <span>100% бесплатно навсегда</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400 font-mono">Free</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-emerald-500/20 text-emerald-400 font-medium">Free</span>
                   </Link>
                 </li>
                 <li>
@@ -342,7 +342,7 @@ export function AppleFooter() {
 
             {/* Column 5: Безопасность */}
             <div>
-              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-tight uppercase font-mono">
+              <h4 className="text-[12px] font-semibold text-[#f5f5f7] mb-3.5 tracking-wider uppercase">
                 Безопасность
               </h4>
               <ul className="space-y-2.5">
@@ -359,7 +359,7 @@ export function AppleFooter() {
                 <li>
                   <Link href="/ai#privacy-pledge" className="hover:text-[#f5f5f7] transition-colors inline-flex items-center gap-1.5">
                     <span>Zero-Training ИИ</span>
-                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-blue-500/20 text-blue-400 font-mono">100%</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#0071e3]/15 text-[#2997ff] font-medium">100%</span>
                   </Link>
                 </li>
                 <li>
