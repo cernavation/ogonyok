@@ -16,6 +16,7 @@ export const RESERVED_USERNAMES = new Set([
   'root',
   'system',
   'moderator',
+  'mod',
   'official',
   'api',
   'dev',
@@ -118,6 +119,21 @@ export function validatePasswordSecurity(password: string): { valid: boolean; er
 
   return { valid: true }
 }
+
+/**
+ * Очищает пользовательский ввод от опасных HTML тегов и скриптов (XSS)
+ */
+export function sanitizeText(input: string): string {
+  if (typeof input !== 'string') return ''
+  return input
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/javascript:/gi, '')
+    .trim()
+}
+
 
 /**
  * Проверка времени заполнения формы (защита от мгновенных скриптов ботов)
