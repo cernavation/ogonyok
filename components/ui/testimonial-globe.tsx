@@ -227,6 +227,7 @@ function Portrait({ src, className }: { src: string; className?: string }) {
       alt=""
       draggable={false}
       decoding="async"
+      referrerPolicy="no-referrer"
       className={cx("object-cover", className)}
       onError={() => setFailed(true)}
     />
