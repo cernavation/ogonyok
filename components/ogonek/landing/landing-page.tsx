@@ -10,6 +10,7 @@ import { useScrollReveal } from './use-scroll-reveal'
 import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
+import { GlowCard } from '@/components/ui/spotlight-card'
 import { GLOBE_TESTIMONIALS } from './reviews-data'
 
 type Props = {
@@ -908,205 +909,223 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </div>
           </div>
 
-          {/* 3 Tier Hardware Cards */}
+          {/* 3 Tier Hardware Cards with Spotlight Glow Effect */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1200px] mx-auto items-stretch">
             {/* TIER 1: БАЗОВЫЙ (FREE) */}
-            <div className="apple-card apple-card-hover fade-up delay-150 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between border border-white/10">
-              <div>
-                <div className="text-[12px] font-mono text-[#86868b] uppercase tracking-wider mb-2">
-                  БАЗОВЫЙ ПЛАН
-                </div>
-                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                  Свободный
-                </h3>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Для тех, кому нужна точка внутренней опоры и спокойный сон.
-                </p>
+            <GlowCard
+              glowColor="green"
+              customSize
+              className="p-8 sm:p-10 flex flex-col justify-between fade-up delay-150"
+            >
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <div className="text-[12px] font-mono text-[#00c7be] uppercase tracking-wider mb-2 font-semibold">
+                    БАЗОВЫЙ ПЛАН
+                  </div>
+                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                    Свободный
+                  </h3>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Для тех, кому нужна точка внутренней опоры и спокойный сон.
+                  </p>
 
-                <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                    0 MDL
-                  </span>
-                  <span className="text-[14px] text-[#86868b] ml-2">/ навсегда</span>
+                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                      0 MDL
+                    </span>
+                    <span className="text-[14px] text-[#86868b] ml-2">/ навсегда</span>
+                  </div>
+
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>До 1 000 символов на запись</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Дневник гордостей и благодарностей</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Стрик, который не сгорает</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Публичный или секретный профиль</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>P2P аудиозвонки без лимитов</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>До 1 000 символов на запись</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Дневник гордостей и благодарностей</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Стрик, который не сгорает</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Публичный или секретный профиль</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>P2P аудиозвонки без лимитов</span>
-                  </li>
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => openAuth('register')}
+                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+                >
+                  Начать бесплатно
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => openAuth('register')}
-                className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
-              >
-                Начать бесплатно
-              </button>
-            </div>
+            </GlowCard>
 
             {/* TIER 2: ПРЕМИУМ (PRO) — РЕКОМЕНДУЕМЫЙ */}
-            <div className="apple-card apple-card-hover fade-scale delay-200 p-8 sm:p-10 bg-gradient-to-b from-[#1a1e28] to-[#12141a] flex flex-col justify-between border-2 border-[#0071e3] relative shadow-[0_0_40px_rgba(0,113,227,0.25)]">
+            <GlowCard
+              glowColor="blue"
+              customSize
+              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative shadow-[0_0_50px_rgba(0,113,227,0.3)]"
+            >
               {/* Highlight Badge */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0071e3] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0071e3] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20">
                 ★ Выбор сообщества
               </div>
 
-              <div>
-                <div className="text-[12px] font-mono text-[#2997ff] uppercase tracking-wider mb-2">
-                  ПРЕМИУМ ПЛАН
-                </div>
-                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                  Priday Pro
-                </h3>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Для активной работы над собой: нейросетевой разбор и сейф доказательств.
-                </p>
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <div className="text-[12px] font-mono text-[#2997ff] uppercase tracking-wider mb-2 font-semibold">
+                    ПРЕМИУМ ПЛАН
+                  </div>
+                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                    Priday Pro
+                  </h3>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Для активной работы над собой: нейросетевой разбор и сейф доказательств.
+                  </p>
 
-                <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                    {billingCycle === 'yearly' ? '240 MDL' : '25 MDL'}
-                  </span>
-                  <span className="text-[14px] text-[#86868b] ml-2">
-                    {billingCycle === 'yearly' ? '/ год (~20 MDL/мес)' : '/ месяц'}
-                  </span>
+                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                      {billingCycle === 'yearly' ? '240 MDL' : '25 MDL'}
+                    </span>
+                    <span className="text-[14px] text-[#86868b] ml-2">
+                      {billingCycle === 'yearly' ? '/ год (~20 MDL/мес)' : '/ месяц'}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8">
+                    <li className="flex items-center gap-3 font-medium text-white">
+                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>До 3 000 символов на запись (в 3 раза больше)</span>
+                    </li>
+                    <li className="flex items-center gap-3 font-medium text-[#2997ff]">
+                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>1 ИИ-оценка летописи в сутки нейросетью</span>
+                    </li>
+                    <li className="flex items-center gap-3 font-medium text-white">
+                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Evidence Vault: 1 фото-доказательство в день</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Зашифрованные видеозвонки HD</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Расширенная аналитика стрика и вех</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8">
-                  <li className="flex items-center gap-3 font-medium text-white">
-                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>До 3 000 символов на запись (в 3 раза больше)</span>
-                  </li>
-                  <li className="flex items-center gap-3 font-medium text-[#2997ff]">
-                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>1 ИИ-оценка летописи в сутки нейросетью</span>
-                  </li>
-                  <li className="flex items-center gap-3 font-medium text-white">
-                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Evidence Vault: 1 фото-доказательство в день</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Зашифрованные видеозвонки HD</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Расширенная аналитика стрика и вех</span>
-                  </li>
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => openAuth('register')}
+                  className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold shadow-[0_0_25px_rgba(0,113,227,0.5)]"
+                >
+                  Выбрать Премиум Pro →
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => openAuth('register')}
-                className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold shadow-[0_0_25px_rgba(0,113,227,0.5)]"
-              >
-                Выбрать Премиум Pro →
-              </button>
-            </div>
+            </GlowCard>
 
             {/* TIER 3: ОСНОВАТЕЛЬ (ULTRA) */}
-            <div className="apple-card apple-card-hover fade-up delay-300 p-8 sm:p-10 bg-[#161617] flex flex-col justify-between border border-white/10">
-              <div>
-                <div className="text-[12px] font-mono text-[#f56900] uppercase tracking-wider mb-2">
-                  КЛУБ ОСНОВАТЕЛЕЙ
-                </div>
-                <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                  Основатель Ultra
-                </h3>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Максимальная глубина, золотой статус и прямой вклад в проект.
-                </p>
+            <GlowCard
+              glowColor="orange"
+              customSize
+              className="p-8 sm:p-10 flex flex-col justify-between fade-up delay-300"
+            >
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <div className="text-[12px] font-mono text-[#f56900] uppercase tracking-wider mb-2 font-semibold">
+                    КЛУБ ОСНОВАТЕЛЕЙ
+                  </div>
+                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                    Основатель Ultra
+                  </h3>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Максимальная глубина, золотой статус и прямой вклад в проект.
+                  </p>
 
-                <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                  <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                    {billingCycle === 'yearly' ? '480 MDL' : '50 MDL'}
-                  </span>
-                  <span className="text-[14px] text-[#86868b] ml-2">
-                    {billingCycle === 'yearly' ? '/ год (~40 MDL/мес)' : '/ месяц'}
-                  </span>
+                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                      {billingCycle === 'yearly' ? '480 MDL' : '50 MDL'}
+                    </span>
+                    <span className="text-[14px] text-[#86868b] ml-2">
+                      {billingCycle === 'yearly' ? '/ год (~40 MDL/мес)' : '/ месяц'}
+                    </span>
+                  </div>
+
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
+                    <li className="flex items-center gap-3 font-medium text-white">
+                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>До 5 000 символов на запись</span>
+                    </li>
+                    <li className="flex items-center gap-3 font-medium text-white">
+                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>До 3 фото в сутки в Evidence Vault</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Глубокие отчёты о вехах (100, 200, 300+ дней)</span>
+                    </li>
+                    <li className="flex items-center gap-3 text-[#f56900] font-medium">
+                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Золотой статус ⚡ ULTRA FOUNDER</span>
+                    </li>
+                    <li className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <span>Прямой закрытый чат и приоритет</span>
+                    </li>
+                  </ul>
                 </div>
 
-                <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                  <li className="flex items-center gap-3 font-medium text-white">
-                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>До 5 000 символов на запись</span>
-                  </li>
-                  <li className="flex items-center gap-3 font-medium text-white">
-                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>До 3 фото в сутки в Evidence Vault</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Глубокие отчёты о вехах (100, 200, 300+ дней)</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-[#f56900] font-medium">
-                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Золотой статус ⚡ ULTRA FOUNDER</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    <span>Прямой закрытый чат и приоритет</span>
-                  </li>
-                </ul>
+                <button
+                  type="button"
+                  onClick={() => openAuth('register')}
+                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+                >
+                  Стать Основателем
+                </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => openAuth('register')}
-                className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
-              >
-                Стать Основателем
-              </button>
-            </div>
+            </GlowCard>
           </div>
 
           {/* AI Page Callout Banner */}
