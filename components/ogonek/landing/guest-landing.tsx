@@ -31,6 +31,7 @@ import {
   type SubscriptionTier,
 } from '@/lib/ogonek/permissions'
 import { AuthModal } from '../auth/auth-modal'
+import { AppleFooter } from './apple-footer'
 
 type Props = {
   onEnterDemo?: () => void
@@ -864,49 +865,8 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
         </section>
       </main>
 
-      {/* ── 10. СЕМАНТИЧЕСКИЙ ФУТЕР ───────────────────────────────────────── */}
-      <footer
-        className={`border-t transition-colors px-4 sm:px-8 py-8 ${
-          isDark ? 'bg-black border-zinc-800 text-zinc-400' : 'bg-white border-zinc-200 text-zinc-600'
-        }`}
-      >
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-center sm:text-left">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-            <span className="text-[var(--accent,#FF6A1A)] font-bold">✦</span>
-            <span className="font-semibold text-zinc-300 whitespace-nowrap">Огонёк — Дневник силы и благодарности</span>
-            <span className="whitespace-nowrap">· © 2026</span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-5">
-            <Link
-              href="/privacy"
-              aria-label="Политика конфиденциальности"
-              className="text-zinc-300 hover:text-white transition-colors underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Политика конфиденциальности
-            </Link>
-
-            <Link
-              href="/terms"
-              aria-label="Условия использования"
-              className="text-zinc-300 hover:text-white transition-colors underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Условия использования
-            </Link>
-
-            <a
-              href="https://t.me/ogonek_support"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Telegram канал поддержки @ogonek_support"
-              className="text-zinc-300 hover:text-white transition-colors flex items-center gap-1 underline-offset-4 hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              <span>Поддержка</span>
-              <ExternalLink size={12} />
-            </a>
-          </div>
-        </div>
-      </footer>
+      {/* ── 10. СЕМАНТИЧЕСКИЙ ФУТЕР В СТИЛЕ APPLE ────────────────────────── */}
+      <AppleFooter />
 
       {/* Модальное окно авторизации */}
       {authModal && (

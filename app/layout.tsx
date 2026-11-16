@@ -1,6 +1,13 @@
 import { Analytics } from '@vercel/analytics/next'
+import { Inter } from 'next/font/google'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 import { APPEARANCE_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/appearance'
 import { SECURITY_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/security'
 import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
@@ -74,7 +81,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className={`antialiased ${inter.variable}`} suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SECURITY_BOOTSTRAP_SCRIPT }} />
         <ServiceWorkerRegister />

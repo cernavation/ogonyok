@@ -299,3 +299,34 @@ export function computeStreak(
     filledDays: currentFilled,
   }
 }
+
+/** Проверяет, является ли следующий календарный день непосредственно следующим за предыдущим */
+export function isNextDay(prevDayStr: string, nextDayStr: string): boolean {
+  return daysBetweenLocalDays(prevDayStr, nextDayStr) === 1
+}
+
+/** Сравнивает, приходятся ли две временные отметки на один и тот же календарный день (по UTC) */
+export function isSameDay(dateA: string | Date, dateB: string | Date): boolean {
+  const dA = typeof dateA === 'string' ? new Date(dateA) : dateA
+  const dB = typeof dateB === 'string' ? new Date(dateB) : dateB
+  if (isNaN(dA.getTime()) || isNaN(dB.getTime())) return false
+  return dA.toISOString().slice(0, 10) === dB.toISOString().slice(0, 10)
+}
+
+/** Форматирует число дней стрика со склонением на русском языке (день / дня / дней) */
+export function formatStreakText(count: number): string {
+  const abs = Math.abs(count)
+  const mod10 = abs % 10
+  const mod100 = abs % 100
+  if (mod100 >= 11 && mod100 <= 19) {
+    return `${count} дней`
+  }
+  if (mod10 === 1) {
+    return `${count} день`
+  }
+  if (mod10 >= 2 && mod10 <= 4) {
+    return `${count} дня`
+  }
+  return `${count} дней`
+}
+

@@ -48,6 +48,7 @@ function buildUserStore(user, overrides = {}) {
       city: 'Dubai',
       verified: true,
       subscription_tier: overrides.tier || 'ultra',
+      tour_completed: true,
     },
     privacy: {
       defaultDayVisibility: 'private',
@@ -148,6 +149,7 @@ async function runE2ETests() {
     await page.evaluate((storeJson) => {
       localStorage.setItem('ogonek.v2', storeJson)
       localStorage.setItem('ogonek.store.v1', storeJson)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore(USER_ALEX))
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(1000)

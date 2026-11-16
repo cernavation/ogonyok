@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
+  ArrowRight,
   X,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -35,6 +36,8 @@ export type AuthMode = 'signin' | 'register'
 type Props = {
   variant?: 'screen' | 'modal'
   initialMode?: AuthMode
+  mode?: AuthMode
+  onModeChange?: (mode: AuthMode) => void
   onAuthenticated?: (accountId: string) => void
   onNotify?: (message: string) => void
 }
@@ -50,11 +53,25 @@ const AVATAR_PALETTE = [
   { name: 'Графит', color: '#64748B' },
 ]
 
-export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthenticated, onNotify }: Props) {
+export function AuthForm({
+  variant = 'screen',
+  initialMode = 'signin',
+  mode: controlledMode,
+  onModeChange,
+  onAuthenticated,
+  onNotify,
+}: Props) {
   const { state, continueAsGuest, applyUserSession } = useOgonekStore()
   const sound = state.soundEnabled
 
-  const [mode, setMode] = useState<AuthMode>(initialMode)
+  const [internalMode, setInternalMode] = useState<AuthMode>(initialMode)
+  const mode = controlledMode || internalMode
+
+  const setMode = (newMode: AuthMode) => {
+    setInternalMode(newMode)
+    onModeChange?.(newMode)
+  }
+
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
@@ -62,7 +79,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Registration 2-step flow (Шаг 14)
+  // Registration 2-step flow
   const [registrationStep, setRegistrationStep] = useState<1 | 2>(1)
   const [selectedAvatarColor, setSelectedAvatarColor] = useState<string>('#FF6A1A')
   const [agreedToTerms, setAgreedToTerms] = useState<boolean>(true)
@@ -73,7 +90,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
   const [usernameReason, setUsernameReason] = useState<string | null>(null)
   const checkTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Honeypot & timing security protection (Шаг 5 / Шаг 14)
+  // Honeypot & timing security protection
   const [honeypot, setHoneypot] = useState('')
   const formStartTimeRef = useRef<number>(Date.now())
 
@@ -83,9 +100,9 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
   const usernameCheck = validateUsername(username)
   const passwordCheck = validatePassword(password)
 
-  // Password strength classification (1: weak, 2: medium, 3: strong)
+  // Password strength classification
   const passwordStrength = (() => {
-    if (!password) return { level: 0, label: '', color: 'bg-zinc-700' }
+    if (!password) return { level: 0, label: '', color: 'bg-zinc-800' }
     if (password.length < 8) {
       return { level: 1, label: 'Слабый пароль (мин. 8 симв.)', color: 'bg-rose-500' }
     }
@@ -98,12 +115,12 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       return { level: 3, label: 'Надёжный пароль', color: 'bg-emerald-500' }
     }
     if (hasLetters && hasDigits) {
-      return { level: 2, label: 'Средний пароль', color: 'bg-amber-500' }
+      return { level: 2, label: 'Хороший пароль', color: 'bg-amber-500' }
     }
     return { level: 1, label: 'Слабый пароль (добавь цифры)', color: 'bg-rose-500' }
   })()
 
-  // Reset registration step when switching mode
+  // Reset state when switching mode
   useEffect(() => {
     setRegistrationStep(1)
     setError(null)
@@ -168,7 +185,7 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     }
   }
 
-  // Step 1: validate fields, advance to Step 2
+  // Step 1: validate nickname & password, advance to Step 2
   const handleStep1Advance = (e: FormEvent) => {
     e.preventDefault()
     if (busy) return
@@ -197,19 +214,19 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     setRegistrationStep(2)
   }
 
-  // Step 2: finalize registration (avatar + agreement)
+  // Step 2: finalize registration
   const handleStep2Submit = async (e: FormEvent) => {
     e.preventDefault()
     if (busy) return
 
     if (!agreedToTerms) {
-      setError('Необходимо принять Условия использования и Политику конфиденциальности')
+      setError('Необходимо принять условия использования и политику приватности')
       return
     }
 
-    // Minimum form filling duration check (≥ 3 seconds)
+    // Minimum form filling duration check (≥ 2.5 seconds)
     const elapsed = Date.now() - formStartTimeRef.current
-    if (elapsed < 3000 && !isDemo) {
+    if (elapsed < 2500 && !isDemo) {
       setError('Пожалуйста, заполняйте форму без спешки (защита от ботов)')
       return
     }
@@ -251,21 +268,19 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       const supabase = getSupabase()
       if (supabase) {
         try {
-          await supabase
-            .from('profiles')
-            .upsert(
-              {
-                id: userId,
-                username: cleanNick,
-                display_name: nameToUse,
-                avatar_color: selectedAvatarColor,
-                subscription_tier: 'free',
-                tour_completed: false,
-                onboarding_completed: false,
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: 'id' }
-            )
+          await supabase.from('profiles').upsert(
+            {
+              id: userId,
+              username: cleanNick,
+              display_name: nameToUse,
+              avatar_color: selectedAvatarColor,
+              subscription_tier: 'free',
+              tour_completed: false,
+              onboarding_completed: false,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'id' }
+          )
         } catch {
           // Profile sync will be handled by background synchronization if network drops
         }
@@ -330,18 +345,11 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
     }
   }
 
-  const monogram = (displayName || username || '✦').trim().charAt(0).toUpperCase()
-
-  const isStep1Disabled =
-    busy ||
-    !usernameCheck.valid ||
-    !passwordCheck.valid ||
-    isAvailable === false ||
-    checkingUsername
+  const isRegister = mode === 'register'
 
   return (
-    <div className={`auth-form auth-form--${variant} max-w-md mx-auto w-full`}>
-      {/* Honeypot поле для ботов (Шаг 5) */}
+    <div className={`auth-form auth-form--${variant} max-w-md mx-auto w-full text-white`}>
+      {/* Honeypot поле для ботов */}
       <input
         type="text"
         name="website"
@@ -354,34 +362,49 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       />
 
       {/* Фирменный логотип 🔥 и название ОГОНЁК */}
-      <div className="flex flex-col items-center justify-center gap-1 mb-5 text-center">
-        <div className="flex items-center gap-2">
-          <span className="text-3xl">🔥</span>
-          <span className="text-2xl font-black tracking-tight text-[var(--text)] uppercase">
-            ОГОНЁК
+      <div className="flex flex-col items-center justify-center gap-1.5 mb-6 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <defs>
+              <linearGradient id="authFlameLogo" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ffa600" />
+                <stop offset="100%" stopColor="#ff6b35" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+              fill="url(#authFlameLogo)"
+            />
+          </svg>
+          <span className="text-[13px] font-semibold tracking-wider text-[#f5f5f7] uppercase font-mono">
+            ОГОНЁК · 2026
           </span>
         </div>
-        <p className="text-[12px] text-[var(--text-2)] font-medium">
-          Дневник силы и летопись побед
+        <p className="text-[13px] text-[#86868b] font-normal">
+          {isRegister ? 'Создай личный дневник силы и побед' : 'Личный вход в зашифрованную летопись'}
         </p>
       </div>
 
-      {/* Вкладки «Вход» / «Регистрация» в стиле X.com */}
-      <div className="flex border-b border-[var(--border)] mb-5" role="tablist" aria-label="Вход или регистрация">
+      {/* Вкладки в стиле Apple Segmented Control */}
+      <div
+        className="flex p-1 rounded-full bg-white/[0.06] border border-white/[0.08] mb-6 max-w-[280px] mx-auto w-full"
+        role="tablist"
+        aria-label="Вход или регистрация"
+      >
         <button
           type="button"
           role="tab"
           aria-label="Вход"
-          aria-selected={mode === 'signin'}
+          aria-selected={!isRegister}
           onClick={() => {
             playClick(sound)
             setMode('signin')
             setError(null)
           }}
-          className={`flex-1 py-3 text-[15px] font-bold text-center border-b-2 transition-colors min-h-[44px] cursor-pointer ${
-            mode === 'signin'
-              ? 'border-[var(--accent)] text-[var(--text)]'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          className={`flex-1 py-2 min-h-[36px] text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
+            !isRegister
+              ? 'bg-[#2c2c2e] text-[#f5f5f7] shadow-sm font-semibold'
+              : 'text-[#86868b] hover:text-[#f5f5f7]'
           }`}
         >
           Вход
@@ -390,16 +413,16 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
           type="button"
           role="tab"
           aria-label="Регистрация"
-          aria-selected={mode === 'register'}
+          aria-selected={isRegister}
           onClick={() => {
             playClick(sound)
             setMode('register')
             setError(null)
           }}
-          className={`flex-1 py-3 text-[15px] font-bold text-center border-b-2 transition-colors min-h-[44px] cursor-pointer ${
-            mode === 'register'
-              ? 'border-[var(--accent)] text-[var(--text)]'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
+          className={`flex-1 py-2 min-h-[36px] text-[13px] font-medium text-center rounded-full transition-all cursor-pointer border-none ${
+            isRegister
+              ? 'bg-[#0071e3] text-white shadow-[0_2px_12px_rgba(0,113,227,0.4)] font-semibold'
+              : 'text-[#86868b] hover:text-[#f5f5f7]'
           }`}
         >
           Регистрация
@@ -409,25 +432,26 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
       {/* Сообщение об ошибке */}
       {error && (
         <motion.div
-          className="mb-4 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[13px] flex items-center gap-2"
+          className="mb-4 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[13px] flex items-center gap-2"
           initial={{ opacity: 0, y: -4 }}
           animate={{ opacity: 1, y: 0 }}
           role="alert"
         >
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
           <span>{error}</span>
         </motion.div>
       )}
 
-      {/* ——— SIGN IN ——— */}
-      {mode === 'signin' && (
+      {/* ── ФОРМА ВХОДА (SIGN IN) ── */}
+      {!isRegister && (
         <form onSubmit={handleSignin} noValidate className="flex flex-col gap-4">
           {/* Поле @никнейм */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="signin-username" className="text-[13px] font-bold text-zinc-300 flex items-center gap-1.5">
-              <UserRound size={14} className="text-zinc-400" /> Никнейм
+            <label htmlFor="signin-username" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+              <UserRound size={13} /> Никнейм
             </label>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-zinc-400 font-mono text-[15px] select-none">
+              <span className="absolute left-3.5 text-[#86868b] font-mono text-[14px] select-none pointer-events-none">
                 @
               </span>
               <input
@@ -445,15 +469,15 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                   setUsername(cleanUsername)
                   if (error) setError(null)
                 }}
-                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors font-mono"
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
               />
             </div>
           </div>
 
-          {/* Поле Пароль */}
+          {/* Поле «Пароль» */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="signin-password" className="text-[13px] font-bold text-zinc-300 flex items-center gap-1.5">
-              <KeyRound size={14} className="text-zinc-400" /> Пароль
+            <label htmlFor="signin-password" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+              <Lock size={13} /> Мастер-пароль
             </label>
             <div className="relative flex items-center">
               <input
@@ -463,81 +487,88 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                 aria-label="Пароль"
                 autoComplete="current-password"
                 value={password}
-                placeholder="Твой пароль"
+                placeholder="Минимум 8 символов"
                 onChange={(e) => {
                   setPassword(e.target.value)
                   if (error) setError(null)
                 }}
-                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors"
+                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="absolute right-2 text-[#86868b] hover:text-[#f5f5f7] p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
                 aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
 
-          <button
-            type="submit"
-            aria-label="Войти в аккаунт"
-            disabled={busy || !usernameCheck.valid || !password}
-            className="x-primary-btn w-full py-3.5 px-5 rounded-2xl text-[15px] font-bold mt-2 shadow-md disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
-          >
-            {busy ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                <span>Входим…</span>
-              </>
-            ) : (
-              <span>Войти</span>
-            )}
-          </button>
+          {/* Кнопка входа */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-[0_4px_20px_rgba(0,113,227,0.35)]"
+            >
+              {busy ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Подождите...</span>
+                </>
+              ) : (
+                <>
+                  <span>Войти в летопись</span>
+                  <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Гостевой вход */}
+          <div className="text-center pt-2">
+            <button
+              type="button"
+              onClick={handleGuest}
+              className="text-[12px] text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer bg-transparent border-none py-2 min-h-[36px] hover:underline"
+            >
+              Или войти как гость (быстрый демо-режим без пароля)
+            </button>
+          </div>
         </form>
       )}
 
-      {/* ——— REGISTER STEP 1: username + displayName + password + security ——— */}
-      {mode === 'register' && registrationStep === 1 && (
+      {/* ── РЕГИСТРАЦИЯ: ШАГ 1 (registrationStep === 1) ── */}
+      {isRegister && registrationStep === 1 && (
         <form onSubmit={handleStep1Advance} noValidate className="flex flex-col gap-4">
-          {/* Индикатор шагов (2 шага) */}
-          <div className="flex items-center gap-2 mb-1" aria-hidden="true">
-            <div className="h-1.5 flex-1 rounded-full bg-[var(--accent)]" />
-            <div className="h-1.5 flex-1 rounded-full bg-[var(--border)]" />
-          </div>
-          <div className="flex items-center justify-between text-xs text-zinc-400 -mt-2">
-            <span>Шаг 1 из 2 — Данные аккаунта</span>
-            <span>Далее: выбор аватара</span>
+          <div className="flex items-center justify-between text-xs text-[#86868b] mb-1">
+            <span className="font-mono text-[#f56900]">Шаг 1 из 2 · Мастер-ключ</span>
+            <span>Local-first</span>
           </div>
 
-          {/* Поле @никнейм с живой проверкой */}
+          {/* Поле @никнейм */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="reg-username" className="text-[13px] font-bold text-zinc-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <UserRound size={14} className="text-zinc-400" /> Никнейм
-              </span>
-              {username.length > 0 && (
-                <span className="text-[12px] font-normal">
-                  {checkingUsername ? (
-                    <span className="text-zinc-400 flex items-center gap-1">
-                      <Loader2 size={12} className="animate-spin" /> проверяем…
-                    </span>
-                  ) : isAvailable === true ? (
-                    <span className="text-emerald-500 flex items-center gap-1 font-bold">
-                      <Check size={12} /> свободен
-                    </span>
-                  ) : isAvailable === false ? (
-                    <span className="text-rose-400 flex items-center gap-1 font-bold">
-                      <X size={12} /> {usernameReason || 'занят'}
-                    </span>
-                  ) : null}
-                </span>
-              )}
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-username" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+                <UserRound size={13} /> Никнейм
+              </label>
+              <div className="text-[11px] font-mono">
+                {checkingUsername && <span className="text-[#86868b]">проверяем...</span>}
+                {!checkingUsername && isAvailable === true && (
+                  <span className="text-emerald-400 flex items-center gap-1">
+                    <Check size={11} /> свободен
+                  </span>
+                )}
+                {!checkingUsername && isAvailable === false && (
+                  <span className="text-rose-400">
+                    {usernameReason?.includes('зарезервирован') ? 'зарезервирован' : 'занят'}
+                  </span>
+                )}
+              </div>
+            </div>
             <div className="relative flex items-center">
-              <span className="absolute left-3.5 text-zinc-400 font-mono text-[15px] select-none">
+              <span className="absolute left-3.5 text-[#86868b] font-mono text-[14px] select-none pointer-events-none">
                 @
               </span>
               <input
@@ -555,51 +586,44 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                   setUsername(cleanUsername)
                   if (error) setError(null)
                 }}
-                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors font-mono"
+                className="w-full pl-8 pr-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
               />
             </div>
-            <p className="text-[11px] text-zinc-400 px-1">
-              От 3 до 20 символов: латиница, цифры и _
-            </p>
           </div>
 
-          {/* Поле Имя / Псевдоним */}
+          {/* Поле «Имя» */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="reg-displayName" className="text-[13px] font-bold text-zinc-300">
-              Имя или псевдоним
+            <label htmlFor="reg-displayName" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
+              Имя летописца (необязательно)
             </label>
             <input
               id="reg-displayName"
               type="text"
               name="displayName"
-              aria-label="Имя или псевдоним"
+              aria-label="Имя летописца"
+              autoComplete="name"
               value={displayName}
-              placeholder="Как к тебе обращаться"
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-4 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors"
+              placeholder="Алексей"
+              onChange={(e) => {
+                setDisplayName(e.target.value)
+                if (error) setError(null)
+              }}
+              className="w-full px-4 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all"
             />
           </div>
 
-          {/* Поле Пароль с индикатором надёжности */}
+          {/* Поле «Пароль» */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="reg-password" className="text-[13px] font-bold text-zinc-300 flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <KeyRound size={14} className="text-zinc-400" /> Пароль
-              </span>
-              {password.length > 0 && (
-                <span
-                  className={`text-[12px] font-bold ${
-                    passwordStrength.level === 1
-                      ? 'text-rose-400'
-                      : passwordStrength.level === 2
-                      ? 'text-amber-500'
-                      : 'text-emerald-500'
-                  }`}
-                >
+            <div className="flex items-center justify-between">
+              <label htmlFor="reg-password" className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider flex items-center gap-1.5">
+                <Lock size={13} /> Мастер-пароль
+              </label>
+              {password && (
+                <span className={`text-[11px] font-mono ${passwordStrength.color.replace('bg-', 'text-')}`}>
                   {passwordStrength.label}
                 </span>
               )}
-            </label>
+            </div>
             <div className="relative flex items-center">
               <input
                 id="reg-password"
@@ -613,172 +637,147 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
                   setPassword(e.target.value)
                   if (error) setError(null)
                 }}
-                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)] text-[15px] outline-none focus:border-[var(--accent)] transition-colors"
+                className="w-full pl-4 pr-11 py-3 rounded-2xl bg-[#1c1c1f] border border-white/[0.08] text-[#f5f5f7] text-[14px] outline-none focus:border-[#f56900] focus:ring-1 focus:ring-[#f56900]/30 transition-all font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="absolute right-2 text-[#86868b] hover:text-[#f5f5f7] p-2 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors"
                 aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            {/* 3-сегментный визуальный индикатор надёжности */}
-            <div className="flex gap-1.5 h-1 mt-1 px-1" aria-hidden="true">
-              {[1, 2, 3].map((lvl) => (
+
+            {/* Индикатор надёжности */}
+            {password && (
+              <div className="flex items-center gap-1.5 mt-1.5">
                 <div
-                  key={lvl}
-                  className={`flex-1 rounded-full transition-colors ${
-                    lvl <= passwordStrength.level
-                      ? passwordStrength.color
-                      : 'bg-zinc-800'
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 1 ? passwordStrength.color : 'bg-white/10'
                   }`}
                 />
-              ))}
-            </div>
+                <div
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 2 ? passwordStrength.color : 'bg-white/10'
+                  }`}
+                />
+                <div
+                  className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                    passwordStrength.level >= 3 ? passwordStrength.color : 'bg-white/10'
+                  }`}
+                />
+              </div>
+            )}
           </div>
 
-          <button
-            type="submit"
-            aria-label="Далее: выбор аватара"
-            disabled={isStep1Disabled}
-            className="x-primary-btn w-full py-3.5 px-5 rounded-2xl text-[15px] font-bold mt-2 shadow-md disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
-          >
-            <span>Далее</span>
-            <ChevronRight size={18} />
-          </button>
+          {/* Кнопка шага 1 */}
+          <div className="pt-2">
+            <button
+              type="submit"
+              disabled={busy}
+              aria-label="Далее: выбор аватара"
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#f56900] hover:bg-[#ff7b1a] text-white shadow-[0_4px_24px_rgba(245,105,0,0.35)]"
+            >
+              <span>Далее: выбор аватара</span>
+              <ChevronRight size={16} />
+            </button>
+          </div>
+
+          <div className="text-center pt-1">
+            <button
+              type="button"
+              onClick={handleGuest}
+              className="text-[12px] text-[#86868b] hover:text-[#f5f5f7] transition-colors cursor-pointer bg-transparent border-none py-2 min-h-[36px] hover:underline"
+            >
+              Или войти как гость (быстрый демо-режим без пароля)
+            </button>
+          </div>
         </form>
       )}
 
-      {/* ——— REGISTER STEP 2: avatar color + terms agreement ——— */}
-      {mode === 'register' && registrationStep === 2 && (
-        <form onSubmit={handleStep2Submit} noValidate className="flex flex-col gap-5">
-          {/* Индикатор шагов */}
-          <div className="flex items-center gap-2 mb-1" aria-hidden="true">
-            <div className="h-1.5 flex-1 rounded-full bg-[var(--accent)]" />
-            <div className="h-1.5 flex-1 rounded-full bg-[var(--accent)]" />
-          </div>
-          <div className="flex items-center justify-between text-xs text-zinc-400 -mt-3">
-            <span>Шаг 2 из 2 — Аватар и завершение</span>
-            <span className="text-[var(--accent)] font-semibold">Финал</span>
-          </div>
-
-          {/* Предпросмотр аватара */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
-            <div
-              className="w-16 h-16 rounded-full flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shrink-0 transition-colors"
-              style={{ backgroundColor: selectedAvatarColor }}
+      {/* ── РЕГИСТРАЦИЯ: ШАГ 2 (registrationStep === 2) ── */}
+      {isRegister && registrationStep === 2 && (
+        <form onSubmit={handleStep2Submit} noValidate className="flex flex-col gap-4">
+          <div className="flex items-center justify-between text-xs text-[#86868b] mb-1">
+            <button
+              type="button"
+              onClick={() => setRegistrationStep(1)}
+              aria-label="Вернуться к шагу 1"
+              className="text-[#2997ff] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent min-h-[36px]"
             >
-              {monogram}
-            </div>
-            <div className="min-w-0">
-              <div className="font-bold text-[15px] text-zinc-100 truncate">
-                {displayName || username}
-              </div>
-              <div className="text-xs text-zinc-400 font-mono truncate">
-                @{username}
-              </div>
-              <div className="text-[11px] text-zinc-400 mt-1">
-                Цвет монограммы в профиле и чатах
-              </div>
-            </div>
+              <ArrowLeft size={12} /> Вернуться к шагу 1
+            </button>
+            <span className="font-mono text-[#f56900]">Шаг 2 из 2</span>
           </div>
 
-          {/* Палитра выбора цвета */}
-          <div className="flex flex-col gap-2">
-            <label className="text-[13px] font-bold text-zinc-300">
-              Выбери цвет профиля
+          <h3 className="text-[15px] font-semibold text-[#f5f5f7]">
+            Шаг 2 из 2 · Выбери цвет профиля
+          </h3>
+
+          {/* Выбор цвета аватара */}
+          <div className="flex flex-col gap-1.5 pt-1">
+            <label className="text-[12px] font-semibold text-[#86868b] uppercase tracking-wider">
+              Цвет персонального пламени
             </label>
-            <div className="grid grid-cols-4 gap-2.5">
-              {AVATAR_PALETTE.map((item) => (
-                <button
-                  key={item.color}
-                  type="button"
-                  aria-label={`Выбрать цвет ${item.name}`}
-                  onClick={() => {
-                    playClick(sound)
-                    setSelectedAvatarColor(item.color)
-                  }}
-                  className={`h-11 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold text-white transition-all cursor-pointer border ${
-                    selectedAvatarColor === item.color
-                      ? 'border-white scale-105 shadow-md'
-                      : 'border-transparent opacity-80 hover:opacity-100'
-                  }`}
-                  style={{ backgroundColor: item.color }}
-                >
-                  {selectedAvatarColor === item.color && (
-                    <Check size={15} strokeWidth={3} className="text-white drop-shadow" />
-                  )}
-                  <span>{item.name}</span>
-                </button>
-              ))}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {AVATAR_PALETTE.map((item) => {
+                const isSelected = selectedAvatarColor === item.color
+                return (
+                  <button
+                    key={item.color}
+                    type="button"
+                    onClick={() => setSelectedAvatarColor(item.color)}
+                    className={`w-9 h-9 min-w-[36px] min-h-[36px] rounded-full transition-transform cursor-pointer relative flex items-center justify-center border-none ${
+                      isSelected ? 'scale-110 ring-2 ring-white ring-offset-2 ring-offset-[#121214]' : 'hover:scale-105'
+                    }`}
+                    style={{ backgroundColor: item.color }}
+                    title={item.name}
+                    aria-label={`Выбрать цвет: ${item.name}`}
+                  >
+                    {isSelected && <Check size={14} className="text-white drop-shadow" />}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
-          {/* Чекбокс согласия с условиями и политикой */}
-          <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
+          {/* Согласие с правилами */}
+          <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none">
             <input
-              id="terms-agree-cb"
               type="checkbox"
               checked={agreedToTerms}
               onChange={(e) => setAgreedToTerms(e.target.checked)}
-              aria-label="Согласие с условиями использования и политикой конфиденциальности"
-              className="mt-0.5 w-4 h-4 rounded text-[var(--accent)] accent-[var(--accent)] cursor-pointer"
+              className="mt-0.5 w-4 h-4 rounded bg-[#1c1c1f] border border-white/20 accent-[#f56900] cursor-pointer"
             />
-            <label htmlFor="terms-agree-cb" className="text-xs text-zinc-300 leading-relaxed cursor-pointer select-none">
-              Я принимаю{' '}
-              <Link
-                href="/terms"
-                target="_blank"
-                aria-label="Условия использования сервиса Огонёк"
-                className="text-[var(--accent)] hover:underline font-semibold"
-              >
-                Условия использования
+            <span className="text-[12px] text-[#86868b] leading-tight">
+              Согласен с{' '}
+              <Link href="/terms" className="text-[#2997ff] hover:underline">
+                Условиями сервиса
               </Link>{' '}
               и{' '}
-              <Link
-                href="/privacy"
-                target="_blank"
-                aria-label="Политика конфиденциальности сервиса Огонёк"
-                className="text-[var(--accent)] hover:underline font-semibold"
-              >
-                Политику конфиденциальности
+              <Link href="/privacy" className="text-[#2997ff] hover:underline">
+                Политикой Local-first
               </Link>
-              . Записи остаются моей собственностью.
-            </label>
-          </div>
+            </span>
+          </label>
 
-          {/* Кнопки Назад / Завершить */}
-          <div className="flex gap-2.5 pt-1">
-            <button
-              type="button"
-              aria-label="Вернуться к шагу 1"
-              onClick={() => {
-                playClick(sound)
-                setRegistrationStep(1)
-              }}
-              className="py-3 px-4 rounded-2xl border border-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-900 text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer"
-            >
-              <ArrowLeft size={16} />
-              <span>Назад</span>
-            </button>
-
+          {/* Кнопка завершения регистрации */}
+          <div className="pt-2">
             <button
               type="submit"
-              aria-label="Завершить регистрацию"
-              disabled={busy || !agreedToTerms}
-              className="x-primary-btn flex-1 py-3.5 px-5 rounded-2xl text-[15px] font-bold shadow-md disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
+              disabled={busy}
+              className="w-full py-3.5 px-6 min-h-[44px] rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer border-none shadow-lg active:scale-[0.98] bg-[#f56900] hover:bg-[#ff7b1a] text-white shadow-[0_4px_24px_rgba(245,105,0,0.35)]"
             >
               {busy ? (
                 <>
-                  <Loader2 size={18} className="animate-spin" />
-                  <span>Создаём аккаунт…</span>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Создание профиля...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles size={18} />
-                  <span>Создать аккаунт</span>
+                  <span>Зажечь огонёк и начать</span>
+                  <ArrowRight size={15} />
                 </>
               )}
             </button>
@@ -786,24 +785,10 @@ export function AuthForm({ variant = 'screen', initialMode = 'signin', onAuthent
         </form>
       )}
 
-      {/* Демо-вход для гостя / автотестов */}
-      {isDemo && (
-        <div className="mt-4 pt-3 border-t border-[var(--border)] text-center">
-          <button
-            type="button"
-            aria-label="Войти в демонстрационном режиме"
-            onClick={handleGuest}
-            className="text-[13px] text-amber-500 hover:text-amber-400 font-semibold inline-flex items-center gap-1.5 py-2 px-3 rounded-lg hover:bg-amber-500/10 transition-colors min-h-[40px] cursor-pointer"
-          >
-            <Sparkles size={14} /> Войти в демо-режиме (без регистрации)
-          </button>
-        </div>
-      )}
-
-      {/* Подсказка о безопасности */}
-      <div className="mt-4 pt-3 border-t border-[var(--border)]/40 text-center flex items-center justify-center gap-1.5 text-xs text-zinc-400">
-        <ShieldCheck size={13} className="text-emerald-500" />
-        <span>Защищено Supabase Row Level Security & Signal Privacy</span>
+      {/* Безопасность */}
+      <div className="mt-6 pt-4 border-t border-white/[0.06] flex items-center gap-2 text-[11px] font-mono text-[#86868b]">
+        <ShieldCheck size={14} className="text-emerald-400 shrink-0" />
+        <span>Local-first: Web Crypto API на твоём чипе. Мы не читаем твои записи.</span>
       </div>
     </div>
   )

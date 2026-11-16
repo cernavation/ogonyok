@@ -52,6 +52,8 @@ function buildUserStore(user, tier = 'free') {
       city: 'Chisinau',
       verified: true,
       subscription_tier: tier,
+      tour_completed: true,
+      onboarding_completed: true,
     },
     privacy: {
       defaultDayVisibility: 'private',
@@ -113,6 +115,7 @@ async function runStep11Suite() {
     await page.evaluate((storeJson) => {
       localStorage.setItem('ogonek.v2', storeJson)
       localStorage.setItem('ogonek.store.v1', storeJson)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildUserStore(USER_PRIMARY, 'free'))
     await page.reload({ waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(500)

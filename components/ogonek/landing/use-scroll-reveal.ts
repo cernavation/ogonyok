@@ -1,0 +1,62 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+
+/**
+ * High-End Apple.com Scroll Reveal Controller
+ * Observes elements with .fade-up, .fade-blur, .fade-scale, .fade-pop, .fade-slide-left, .fade-slide-right
+ * and applies .visible when they enter the viewport.
+ * Fully respects prefers-reduced-motion.
+ */
+export function useScrollReveal() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const revealSelector =
+      '.fade-up, .fade-blur, .fade-scale, .fade-pop, .fade-slide-left, .fade-slide-right, [data-reveal]'
+
+    // Check if user prefers reduced motion
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReduced) {
+      container.querySelectorAll(revealSelector).forEach((el) => {
+        el.classList.add('visible')
+      })
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      {
+        threshold: 0.05,
+        rootMargin: '0px 0px -40px 0px',
+      }
+    )
+
+    const targets = container.querySelectorAll(revealSelector)
+    targets.forEach((el) => {
+      // Elements already visible in initial viewport (above fold) reveal smoothly with their cascade delays
+      const rect = el.getBoundingClientRect()
+      if (rect.top < window.innerHeight * 0.85 && rect.bottom > 0) {
+        requestAnimationFrame(() => {
+          el.classList.add('visible')
+        })
+      } else {
+        observer.observe(el)
+      }
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
+  return containerRef
+}

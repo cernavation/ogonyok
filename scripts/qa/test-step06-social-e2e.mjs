@@ -65,6 +65,7 @@ function buildInitialStore(user) {
       city: 'Austin',
       verified: true,
       subscription_tier: 'ultra',
+      tour_completed: true,
     },
     auth: {
       signedIn: true,
@@ -150,6 +151,7 @@ async function runE2EScenario() {
     await page1.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' })
     await page1.evaluate((data) => {
       localStorage.setItem('ogonek.v2', data)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildInitialStore(USER_CERNAVATION))
     await page1.reload({ waitUntil: 'domcontentloaded' })
     await page1.waitForTimeout(600)
@@ -158,6 +160,7 @@ async function runE2EScenario() {
     await page2.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' })
     await page2.evaluate((data) => {
       localStorage.setItem('ogonek.v2', data)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildInitialStore(USER_ILONMUSK))
     await page2.reload({ waitUntil: 'domcontentloaded' })
     await page2.waitForTimeout(600)
@@ -281,6 +284,7 @@ async function runE2EScenario() {
     await pageM.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' })
     await pageM.evaluate((data) => {
       localStorage.setItem('ogonek.v2', data)
+      localStorage.setItem('ogonek:tour-completed', 'true')
     }, buildInitialStore(USER_CERNAVATION))
     await pageM.reload({ waitUntil: 'domcontentloaded' })
     await pageM.waitForTimeout(600)

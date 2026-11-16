@@ -1,131 +1,147 @@
-import Link from 'next/link'
-import { ArrowLeft, Shield, Lock, Eye, Database, Mail } from 'lucide-react'
+'use client'
 
-export const metadata = {
-  title: 'Политика конфиденциальности — Огонёк',
-  description: 'Как сервис Огонёк защищает ваши данные и личные записи.',
-}
+import React from 'react'
+import Link from 'next/link'
+import { AppleNavbar } from '@/components/ogonek/landing/apple-navbar'
+import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
+import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
 
 export default function PrivacyPage() {
+  const containerRef = useScrollReveal()
+
   return (
-    <div className="min-h-screen bg-black text-white px-4 py-12 sm:px-6 lg:px-8 selection:bg-[var(--accent,#FF6A1A)]/30">
-      <div className="max-w-2xl mx-auto flex flex-col gap-8">
-        <div>
-          <Link
-            href="/"
-            aria-label="Вернуться на главную"
-            className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors min-h-[40px] py-2 px-1"
-          >
-            <ArrowLeft size={16} />
-            <span>На главную</span>
-          </Link>
-        </div>
+    <div className="landing" ref={containerRef}>
+      <AppleNavbar />
 
-        <header className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[var(--accent,#FF6A1A)]/15 text-[var(--accent,#FF6A1A)] flex items-center justify-center font-bold">
-              ✦
-            </span>
-            <span className="text-xl font-bold tracking-tight">Огонёк</span>
+      {/* ── HERO STAGE ────────────────────────────────────────────── */}
+      <section className="relative pt-32 pb-20 px-5 sm:px-8 bg-black text-center overflow-hidden">
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-15" />
+
+        <div className="relative z-10 max-w-[840px] mx-auto flex flex-col items-center">
+          <div className="fade-blur mb-4 inline-flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            <span className="apple-eyebrow !text-[#2997ff]">Манифест Local-First Приватности</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl text-zinc-100">
-            Политика конфиденциальности
+
+          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6">
+            Твои мысли принадлежат
+            <br />
+            <span className="apple-shimmer-text">только тебе.</span>
           </h1>
-          <p className="text-sm text-zinc-400">
-            Последнее обновление: 24 октября 2026 г.
+
+          <p className="apple-body fade-up delay-250 max-w-[640px] mb-8 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Мы не собираем персональные профили для рекламы, не продаём твои записи дата-брокерам и не сканируем мысли без твоего ведома.
           </p>
-        </header>
 
-        <section className="space-y-6 text-sm text-zinc-300 leading-relaxed">
-          <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
-            <Shield size={20} className="text-[var(--accent,#FF6A1A)] shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-white block mb-1">Главный принцип Огонька: твои победы принадлежат только тебе</strong>
-              <p className="text-xs text-zinc-300">
-                Записи дневника по умолчанию строго приватны. Никто, кроме тебя, не имеет доступа к твоим гордостям и благодарностям, пока ты сам не решишь поделиться ими с друзьями или в общей ленте.
-              </p>
+          <div className="flex items-center gap-4 text-xs font-mono text-[#86868b]">
+            <span>Обновлено: ноябрь 2026 г.</span>
+            <span>·</span>
+            <span>Шифрование: Web Crypto 256-bit</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── COMPARISON TABLE ──────────────────────────────────────── */}
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+        <div className="max-w-[1024px] mx-auto px-5 sm:px-8">
+          <div className="text-center max-w-[640px] mx-auto mb-16">
+            <span className="apple-eyebrow block mb-3">Стандарты честности</span>
+            <h2 className="apple-section-title mb-4">
+              Обычные сервисы vs Огонёк
+            </h2>
+          </div>
+
+          <div className="apple-card overflow-hidden bg-[#161617] border border-white/10">
+            <div className="grid grid-cols-12 p-5 border-b border-white/[0.08] text-xs font-mono text-[#86868b] uppercase tracking-wider">
+              <div className="col-span-4 sm:col-span-5">Параметр</div>
+              <div className="col-span-4 sm:col-span-3 text-rose-400">Облачные трекеры</div>
+              <div className="col-span-4 sm:col-span-4 text-[#2997ff]">Огонёк Local-first</div>
+            </div>
+
+            {[
+              {
+                feature: 'Где хранятся записи',
+                cloud: 'На чужом сервере в открытом виде',
+                ogonek: 'Только на твоём устройстве (IndexedDB)',
+              },
+              {
+                feature: 'Реклама и трекеры',
+                cloud: 'Meta Pixel, Google Analytics, спам',
+                ogonek: '0 рекламных трекеров, 0 телеметрии',
+              },
+              {
+                feature: 'Обучение нейросетей',
+                cloud: 'Парсинг текстов для LLM моделей',
+                ogonek: 'Полный запрет на публичное обучение',
+              },
+              {
+                feature: 'Работа без интернета',
+                cloud: 'Блокировка экрана или ошибки сети',
+                ogonek: '100% автономная оффлайн работа',
+              },
+              {
+                feature: 'Экспорт и удаление',
+                cloud: 'Сложные запросы, данные сохраняются',
+                ogonek: 'Экспорт в JSON в 1 клик, мгновенный вайп',
+              },
+            ].map((row, i) => (
+              <div
+                key={i}
+                className="grid grid-cols-12 p-5 border-b border-white/[0.04] text-[14px] items-center hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="col-span-4 sm:col-span-5 font-medium text-[#f5f5f7]">
+                  {row.feature}
+                </div>
+                <div className="col-span-4 sm:col-span-3 text-rose-400/90 text-[13px]">
+                  ✗ {row.cloud}
+                </div>
+                <div className="col-span-4 sm:col-span-4 text-[#2997ff] font-medium text-[13px]">
+                  ✓ {row.ogonek}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TECHNICAL DEEP DIVE ────────────────────────────────────── */}
+      <section id="encryption" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06]">
+        <div className="max-w-[840px] mx-auto px-5 sm:px-8 space-y-12">
+          <div>
+            <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">
+              1. Локальная база данных и криптография
+            </h3>
+            <p className="text-[16px] leading-relaxed text-[#86868b]">
+              Дневник использует аппаратно-ускоренный API <strong className="text-white">Web Crypto</strong> современных браузеров (SHA-256 хэширование паролей и PBKDF2 деривация ключей). Ваши тексты шифруются ключом, который знает только ваше устройство. Даже если физический накопитель попадёт в чужие руки, прочитать записи без мастер-ключа невозможно.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">
+              2. Row Level Security в облачной синхронизации
+            </h3>
+            <p className="text-[16px] leading-relaxed text-[#86868b]">
+              Если вы добровольно включаете резервное копирование в облако, доступ защищается протоколом <strong className="text-white">PostgreSQL Row Level Security (RLS)</strong>. Это означает, что правила доступа проверяются на уровне ядра базы: ни один другой пользователь физически не может отправить запрос к чужим приватным таблицам.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-[24px] sm:text-[28px] font-bold text-[#f5f5f7] mb-4 tracking-tight">
+              3. Право на забвение и полный контроль
+            </h3>
+            <p className="text-[16px] leading-relaxed text-[#86868b] mb-4">
+              В любой момент в разделе «Настройки → Данные» вы можете нажать одну кнопку, чтобы выгрузить полный архив всех дней в открытом формате JSON, либо нажать «Удалить аккаунт», что моментально и безвозвратно сотрёт все локальные ключи и записи.
+            </p>
+            <div className="p-5 rounded-2xl bg-[#161617] border border-white/10 text-xs text-[#86868b]">
+              Вопросы по безопасности и аудиту кода можно направлять на <a href="mailto:security@ogonek.app" className="text-[#2997ff] underline">security@ogonek.app</a>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Database size={18} className="text-[var(--accent,#FF6A1A)]" /> 1. Какие данные мы собираем
-            </h2>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300">
-              <li>Данные авторизации: никнейм, псевдоним, хэш пароля (при локальной или облачной авторизации).</li>
-              <li>Данные дневника: текст гордостей и благодарностей, выбранный уровень сложности, дата и оценки.</li>
-              <li>Технические метаданные: часовой пояс (для расчёта дедлайна закрытия дня) и настройки интерфейса (тема, акцент).</li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Lock size={18} className="text-[var(--accent,#FF6A1A)]" /> 2. Защита данных и Row Level Security
-            </h2>
-            <p className="text-zinc-300">
-              Все данные хранятся в защищённой базе данных с включённым механизмом Row Level Security (RLS). Это гарантирует на уровне базы, что ни один пользователь не может прочитать или изменить чужие закрытые записи.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Eye size={18} className="text-[var(--accent,#FF6A1A)]" /> 3. Передача третьим лицам
-            </h2>
-            <p className="text-zinc-300">
-              Мы никогда не продаём и не передаём личные данные пользователей третьим лицам, маркетинговым сетям или рекламным брокерам. Для ИИ-оценки дней (при нажатии пользователем кнопки «Оценить с ИИ») обезличенный текст передаётся через защищённый серверный шлюз.
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Mail size={18} className="text-[var(--accent,#FF6A1A)]" /> 4. Контакты и удаление данных
-            </h2>
-            <p className="text-zinc-300">
-              Вы имеете право в любой момент запросить полный экспорт или безвозвратное удаление всех своих данных и профиля.
-            </p>
-            <div className="text-xs text-zinc-400 flex flex-wrap items-center gap-2 pt-1">
-              <span>Контакты поддержки:</span>
-              <a
-                href="mailto:support@ogonek.app"
-                aria-label="Почта поддержки support@ogonek.app"
-                className="text-[var(--accent,#FF6A1A)] hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-              >
-                support@ogonek.app
-              </a>
-              <span>или Telegram:</span>
-              <a
-                href="https://t.me/ogonek_support"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Telegram поддержки @ogonek_support"
-                className="text-[var(--accent,#FF6A1A)] hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-              >
-                @ogonek_support
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <footer className="pt-8 border-t border-zinc-900 text-xs text-zinc-400 flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <span className="text-zinc-400">© 2026 Огонёк. Все права защищены.</span>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/terms"
-              aria-label="Перейти к условиям использования"
-              className="text-zinc-300 hover:text-white transition-colors min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Условия использования
-            </Link>
-            <Link
-              href="/"
-              aria-label="Перейти на главную страницу"
-              className="text-zinc-300 hover:text-white transition-colors min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Главная страница
-            </Link>
-          </div>
-        </footer>
-      </div>
+      <AppleFooter />
     </div>
   )
 }

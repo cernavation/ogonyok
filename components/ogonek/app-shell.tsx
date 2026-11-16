@@ -10,7 +10,6 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ComposerPayload, Day, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
 import { AppearanceProvider } from './appearance-provider'
-import { AuthScreen } from './auth'
 import { BottomNav } from './bottom-nav'
 import { MobileTopBar } from './mobile-top-bar'
 import { RightRail } from './right-rail'
@@ -31,7 +30,7 @@ import { SettingsView } from './views/settings-view'
 import { VaultView } from './views/vault-view'
 import { LeaderboardView } from './views/leaderboard-view'
 import { PremiumView } from './views/premium-view'
-import { GuestLanding } from './landing/guest-landing'
+import { LandingPage } from './landing/landing-page'
 import { ChatWindow } from './messenger/chat-window'
 import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
@@ -1392,10 +1391,9 @@ export function AppShell() {
         />
       ),
       landing: (
-        <GuestLanding
-          onEnterDemo={() => {
-            continueAsGuest()
-            notify('Включён демонстрационный режим')
+        <LandingPage
+          onAuthenticated={(accountId) => {
+            navigate('home')
           }}
           onNotify={notify}
         />
@@ -1432,68 +1430,16 @@ export function AppShell() {
     ]
   )
 
-  // Гостевой лендинг для неавторизованных посетителей (?view=landing)
-  if (view === 'landing') {
+  // Если пользователь не вошёл или вышел (currentUser === null или !state.auth?.signedIn),
+  // либо явно запрошен лендинг (view === 'landing') — открываем новый флагманский Apple Landing
+  if (!currentUser || !state.auth?.signedIn || view === 'landing') {
     return (
-      <GuestLanding
-        onEnterDemo={() => {
-          continueAsGuest()
-          notify('Включён демонстрационный режим')
+      <LandingPage
+        onAuthenticated={(accountId) => {
+          navigate('home')
         }}
         onNotify={notify}
       />
-    )
-  }
-
-  // Если пользователь не вошёл (currentUser === null) — показываем экран авторизации AuthForm, кроме прямого перехода в чаты
-  if (!currentUser) {
-    if (view === 'messages') {
-      return (
-        <FullscreenMessenger
-          initialThreadId={state.chatActiveFriendId || undefined}
-          currentUserId={state.auth?.activeAccountId || 'local-user'}
-          onNavigate={navigate}
-          onCompose={() => setComposer(true)}
-          onOpenProfile={() => navigate('profile')}
-          onOpenAuth={openAuth}
-          onFocusIntentions={handleFocusIntentions}
-        />
-      )
-    }
-    return (
-      <TooltipProvider>
-        <AppearanceProvider
-          theme={state.theme}
-          accent={state.accent}
-          fontScale={state.fontScale}
-          feedDensity={state.feedDensity}
-        />
-        <AuthScreen
-          onAuthenticated={() => {
-            navigate('home')
-          }}
-          onNotify={notify}
-        />
-
-        {/* Модальное окно тарифов Премиум при открытии через /premium (CONTRACT Шаг 12) */}
-        {premiumModalOpen && (
-          <PremiumModal
-            isOpen={premiumModalOpen}
-            onClose={() => setPremiumModalOpen(false)}
-            onNotify={notify}
-          />
-        )}
-
-        {/* Всплывающие уведомления в стиле Telegram Desktop (максимум 3 в стеке) */}
-        <DesktopToastStack
-          toasts={desktopToasts}
-          onDismiss={dismissDesktopToast}
-          onClickToast={handleClickToast}
-          onSendReply={handleToastReply}
-        />
-
-        <Toast message={toast} />
-      </TooltipProvider>
     )
   }
 
@@ -1886,18 +1832,6 @@ export function AppShell() {
 
         <Toast message={toast} />
       </main>
-
-      {/* ЭТАП 18: полноэкранный шлюз авторизации, когда пользователь вышел */}
-      <AnimatePresence>
-        {!state.auth.signedIn && !locked && (
-          <AuthScreen
-            onAuthenticated={() => {
-              navigate('home')
-            }}
-            onNotify={notify}
-          />
-        )}
-      </AnimatePresence>
     </TooltipProvider>
   )
 }

@@ -7,9 +7,34 @@ async function benchmark() {
   page.on('console', msg => console.log('PAGE LOG:', msg.text()))
   page.on('pageerror', err => console.log('PAGE ERROR:', err.message, err.stack))
 
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000'
   console.log('--- STARTING PERFORMANCE BENCHMARK ---')
   const startLoad = Date.now()
-  await page.goto('http://localhost:3000', { waitUntil: 'domcontentloaded' })
+  await page.goto(baseUrl, { waitUntil: 'domcontentloaded' })
+  await page.evaluate(() => {
+    const s = JSON.stringify({
+      profile: {
+        id: '00000000-0000-4000-8000-000000000001',
+        username: 'alex_cerna',
+        displayName: 'Алексей Черна',
+        streak_count: 720,
+        level: 3,
+        avatarColor: '#ff5722',
+        verified: true,
+        subscription_tier: 'pro',
+        tour_completed: true,
+      },
+      auth: {
+        signedIn: true,
+        activeAccountId: '00000000-0000-4000-8000-000000000001',
+        accounts: [{ id: '00000000-0000-4000-8000-000000000001', email: 'alex@ogonek.app' }],
+      },
+    })
+    localStorage.setItem('ogonek.v2', s)
+    localStorage.setItem('ogonek.store.v1', s)
+    localStorage.setItem('ogonek:tour-completed', 'true')
+  })
+  await page.reload({ waitUntil: 'domcontentloaded' })
   const loadTime = Date.now() - startLoad
   await page.waitForSelector('.feed-content', { timeout: 10000 })
   await page.waitForTimeout(500)

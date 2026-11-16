@@ -40,7 +40,7 @@ async function main() {
     // ── 1. Проверка Гостевого лендинга ──────────────────────────────────
     console.log('[STEP 14 E2E]: Navigating to /?view=landing...')
     await page.setViewportSize({ width: 1210, height: 756 })
-    await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'domcontentloaded' })
     await page.waitForTimeout(500)
 
     // Проверка Hero
@@ -221,7 +221,7 @@ async function main() {
       await page.setViewportSize({ width: vp.width, height: vp.height })
 
       // Тёмная тема
-      await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(400)
       await page.screenshot({
         path: path.join(REVIEW_DIR, `after_dark_${vp.name}.png`),
@@ -254,7 +254,7 @@ async function main() {
 
     for (const vp of VIEWPORTS) {
       await page.setViewportSize({ width: vp.width, height: vp.height })
-      await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'networkidle' })
+      await page.goto(`${BASE_URL}/?view=landing`, { waitUntil: 'domcontentloaded' })
       await page.waitForTimeout(300)
 
       const measurements = await page.evaluate((vpName) => {

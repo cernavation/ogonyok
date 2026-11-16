@@ -1,137 +1,124 @@
-import Link from 'next/link'
-import { ArrowLeft, FileText, CheckCircle2, Shield, AlertCircle, Scale, Mail } from 'lucide-react'
+'use client'
 
-export const metadata = {
-  title: 'Условия использования — Огонёк',
-  description: 'Пользовательское соглашение и условия использования сервиса Огонёк.',
-}
+import React from 'react'
+import Link from 'next/link'
+import { AppleNavbar } from '@/components/ogonek/landing/apple-navbar'
+import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
+import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
 
 export default function TermsPage() {
-  return (
-    <div className="min-h-screen bg-black text-white px-4 py-12 sm:px-6 lg:px-8 selection:bg-[var(--accent,#FF6A1A)]/30">
-      <div className="max-w-2xl mx-auto flex flex-col gap-8">
-        <div>
-          <Link
-            href="/"
-            aria-label="Вернуться на главную"
-            className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors min-h-[40px] py-2 px-1"
-          >
-            <ArrowLeft size={16} />
-            <span>На главную</span>
-          </Link>
-        </div>
+  const containerRef = useScrollReveal()
 
-        <header className="space-y-3 border-b border-zinc-800 pb-6">
-          <div className="flex items-center gap-3">
-            <span className="w-9 h-9 rounded-xl bg-[var(--accent,#FF6A1A)]/15 text-[var(--accent,#FF6A1A)] flex items-center justify-center font-bold">
-              ✦
-            </span>
-            <span className="text-xl font-bold tracking-tight">Огонёк</span>
+  return (
+    <div className="landing" ref={containerRef}>
+      <AppleNavbar />
+
+      {/* ── HERO STAGE ────────────────────────────────────────────── */}
+      <section className="relative pt-32 pb-20 px-5 sm:px-8 bg-black text-center overflow-hidden">
+        {/* Soft Ambient Orb */}
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-15" />
+
+        <div className="relative z-10 max-w-[840px] mx-auto flex flex-col items-center">
+          <div className="fade-blur mb-4 inline-flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+            <span className="apple-eyebrow !text-[#2997ff]">Правовые стандарты</span>
           </div>
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl text-zinc-100">
+
+          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6">
             Условия использования
           </h1>
-          <p className="text-sm text-zinc-400">
-            Редакция действует с 24 октября 2026 г.
+
+          <p className="apple-body fade-up delay-250 max-w-[620px] mb-8 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Честные, прозрачные и понятные правила сервиса Огонёк. Твой контент остаётся только твоим.
           </p>
-        </header>
 
-        <section className="space-y-6 text-sm text-zinc-300 leading-relaxed">
-          <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-3">
-            <Scale size={20} className="text-[var(--accent,#FF6A1A)] shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-white block mb-1">
-                Кратко и по делу
-              </strong>
-              <p className="text-xs text-zinc-300">
-                Огонёк создан для фиксации личных достижений, гордостей и благодарностей. Твой контент остаётся твоей собственностью. Мы не продаём твои данные и не навязываем скрытых платежей.
-              </p>
-            </div>
+          <div className="flex items-center gap-4 text-xs font-mono text-[#86868b]">
+            <span>Редакция действует с: 24 октября 2026 г.</span>
+            <span>·</span>
+            <span>Юрисдикция: Local-First Privacy</span>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <CheckCircle2 size={18} className="text-[var(--accent,#FF6A1A)]" /> 1. Принятие условий
-            </h2>
-            <p className="text-zinc-300">
-              Используя сервис «Огонёк» (сайт, мобильную веб-версию или PWA), вы соглашаетесь с настоящими Условиями использования и Политикой конфиденциальности. Если вы не согласны с какими-либо пунктами, пожалуйста, прекратите использование сервиса.
+      {/* ── TERMS CONTENT ─────────────────────────────────────────── */}
+      <section className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06]">
+        <div className="max-w-[760px] mx-auto px-5 sm:px-8 space-y-10 text-[16px] sm:text-[17px] leading-relaxed text-[#a1a1a6]">
+          {/* Summary Box */}
+          <div className="apple-card p-6 sm:p-8 bg-[#161617] border border-white/10">
+            <span className="text-xs font-mono text-[#f56900] uppercase tracking-wider block mb-2 font-semibold">
+              Кратко и по делу
+            </span>
+            <p className="text-[15px] sm:text-[16px] text-[#f5f5f7] leading-relaxed">
+              «Огонёк» создан для фиксации личных достижений, побед и благодарностей. Твой контент — это твоя исключительная собственность. Мы не продаём твои данные, не навязываем скрытых платежей и не передаём твои записи рекламным сетям.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Shield size={18} className="text-[var(--accent,#FF6A1A)]" /> 2. Права на контент и дневниковые записи
+          {/* Section 1 */}
+          <div className="space-y-4">
+            <h2 className="text-[22px] sm:text-[26px] font-bold text-[#f5f5f7] tracking-tight">
+              1. Принятие условий
             </h2>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300">
-              <li>Все записи дневника, формулировки гордостей, благодарностей и файлы в Evidence Vault являются исключительной собственностью автора.</li>
-              <li>Сервис «Огонёк» не претендует на интеллектуальные права на пользовательский контент и использует его исключительно для предоставления функций сервиса (отображение, аналитика, синхронизация).</li>
-              <li>Вы вправе в любой момент полностью выгрузить свои данные в формате JSON или удалить аккаунт со всеми записями.</li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <FileText size={18} className="text-[var(--accent,#FF6A1A)]" /> 3. Правила поведения в сообществе и чатах
-            </h2>
-            <p className="text-zinc-300">
-              При взаимодействии с друзьями в чатах, публикации записей в общую ленту и комментировании запрещены:
-            </p>
-            <ul className="list-disc pl-5 space-y-1.5 text-zinc-300">
-              <li>Оскорбления, угрозы, дискриминация и разжигание вражды.</li>
-              <li>Распространение спама, вредоносных ссылок и несанкционированной рекламы.</li>
-              <li>Публикация персональных данных третьих лиц без их предварительного согласия.</li>
-            </ul>
-          </div>
-
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <AlertCircle size={18} className="text-[var(--accent,#FF6A1A)]" /> 4. Отказ от медицинских гарантий
-            </h2>
-            <p className="text-zinc-300">
-              «Огонёк» является инструментом саморефлексии и фиксации привычек, но не является медицинской или психотерапевтической помощью. При наличии депрессивных или тревожных состояний мы настоятельно рекомендуем обращаться к квалифицированным специалистам.
+            <p>
+              Используя сервис «Огонёк» (веб-приложение, сайт или PWA-версию), вы подтверждаете согласие с настоящими Условиями и Политикой приватности. Если вы не согласны с какими-либо положениями, пожалуйста, воздержитесь от использования сервиса.
             </p>
           </div>
 
-          <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Mail size={18} className="text-[var(--accent,#FF6A1A)]" /> 5. Вопросы и поддержка
+          {/* Section 2 */}
+          <div className="space-y-4">
+            <h2 className="text-[22px] sm:text-[26px] font-bold text-[#f5f5f7] tracking-tight">
+              2. Право собственности на контент
             </h2>
-            <p className="text-zinc-300">
-              По любым юридическим или техническим вопросам обращайтесь в официальный канал поддержки:{' '}
-              <a
-                href="https://t.me/ogonek_support"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Telegram канал поддержки @ogonek_support"
-                className="text-[var(--accent,#FF6A1A)] hover:underline min-h-[40px] inline-flex items-center py-2 px-1"
-              >
-                @ogonek_support
-              </a>
-              .
+            <p>
+              Все тексты побед, благодарностей, личные цели, прикреплённые фотографии и аудиозаписи принадлежат исключительно вам. Мы не претендуем ни на какие авторские права на ваш личный контент.
+            </p>
+            <p>
+              Поскольку платформа работает по модели Local-First, ваши данные по умолчанию хранятся локально в IndexedDB вашего браузера и зашифрованы ключами, доступными только на вашем устройстве.
             </p>
           </div>
-        </section>
 
-        <footer className="pt-8 border-t border-zinc-900 text-xs text-zinc-400 flex flex-col sm:flex-row gap-3 justify-between items-center">
-          <span className="text-zinc-400">© 2026 Огонёк. Все права защищены.</span>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/privacy"
-              aria-label="Перейти к политике конфиденциальности"
-              className="text-zinc-300 hover:text-white transition-colors min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Политика конфиденциальности
-            </Link>
-            <Link
-              href="/"
-              aria-label="Перейти на главную страницу"
-              className="text-zinc-300 hover:text-white transition-colors min-h-[40px] inline-flex items-center py-2 px-1"
-            >
-              Главная страница
-            </Link>
+          {/* Section 3 */}
+          <div className="space-y-4">
+            <h2 className="text-[22px] sm:text-[26px] font-bold text-[#f5f5f7] tracking-tight">
+              3. Правила использования и аккаунты
+            </h2>
+            <p>
+              Вы несёте ответственность за сохранность доступа к своему устройству и мастер-паролю (если включено локальное шифрование). Запрещается использовать сервис для распространения вредоносного ПО, спама или попыток взлома чужих аккаунтов.
+            </p>
           </div>
-        </footer>
-      </div>
+
+          {/* Section 4 */}
+          <div className="space-y-4">
+            <h2 className="text-[22px] sm:text-[26px] font-bold text-[#f5f5f7] tracking-tight">
+              4. Экспорт и удаление данных
+            </h2>
+            <p>
+              Вы имеете право в любой момент бесплатно экспортировать весь архив своих записей в стандартном формате JSON через меню «Настройки → Экспорт». Также вы можете в 1 клик удалить все локальные данные с вашего устройства.
+            </p>
+          </div>
+
+          {/* Section 5 */}
+          <div className="space-y-4">
+            <h2 className="text-[22px] sm:text-[26px] font-bold text-[#f5f5f7] tracking-tight">
+              5. Обратная связь
+            </h2>
+            <p>
+              По любым вопросам относительно настоящих Условий вы можете написать нам через страницу{' '}
+              <Link href="/support" className="text-[#2997ff] hover:underline font-medium">
+                Поддержки и связи
+              </Link>{' '}
+              или отправить запрос команде проекта.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <AppleFooter />
     </div>
   )
 }
