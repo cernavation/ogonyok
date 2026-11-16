@@ -73,6 +73,11 @@ export function AppleFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/community" className="hover:text-[#f5f5f7] transition-colors text-[#2997ff]">
+                  Сообщество, группы и сторис
+                </Link>
+              </li>
+              <li>
                 <Link href="/how-it-works" className="hover:text-[#f5f5f7] transition-colors">
                   Как это работает (Ритуал)
                 </Link>

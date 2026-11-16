@@ -1207,7 +1207,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               <p className="apple-body fade-up delay-150 !text-white max-w-[580px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
                 Закрой этот день с уважением к себе. Зафиксируй то, за что не стыдно перед зеркалом. И ложись спать со спокойной душой.
               </p>
-              <div className="fade-scale delay-200">
+              <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
@@ -1215,6 +1215,12 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 >
                   Зажечь свой огонёк →
                 </button>
+                <Link
+                  href="/community"
+                  className="apple-btn-ghost !px-6 !py-4 !text-[15px] !text-white hover:!text-white/90"
+                >
+                  Клубы и сторис ›
+                </Link>
               </div>
             </div>
           </div>

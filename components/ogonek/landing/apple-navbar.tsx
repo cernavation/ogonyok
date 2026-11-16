@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { label: 'Платформа', href: '/platform' },
   { label: 'Примеры', href: '/examples' },
   { label: 'ИИ-разбор', href: '/ai' },
+  { label: 'Сообщество', href: '/community' },
   { label: 'Ритуал', href: '/how-it-works' },
   { label: 'Открытость', href: '/#open' },
   { label: 'Тарифы', href: '/#pricing' },
@@ -74,7 +75,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 shrink-0" aria-label="Разделы сайта">
+        <nav className="hidden lg:flex items-center gap-2.5 xl:gap-4 shrink-0" aria-label="Разделы сайта">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href
             return (
