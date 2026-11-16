@@ -1,0 +1,636 @@
+{
+  "defects": [
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"начать вести дневник бесплатно\" на landing",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "landing",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_free",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_free",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_free",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_free",
+      "viewport": "1210x756",
+      "selector": "span.truncate"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"читать\" на explore_free",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "explore_free",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"статистика\" на vault_free",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "vault_free",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_pro",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_pro",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_pro",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_pro",
+      "viewport": "1210x756",
+      "selector": "span.truncate"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"читать\" на explore_pro",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "explore_pro",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"статистика\" на vault_pro",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "vault_pro",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_ultra",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_ultra",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_ultra",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_ultra",
+      "viewport": "1210x756",
+      "selector": "span.truncate"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"читать\" на explore_ultra",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "explore_ultra",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"статистика\" на vault_ultra",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "vault_ultra",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"начать вести дневник бесплатно\" на landing",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "landing",
+      "viewport": "390x844"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_free",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_free",
+      "viewport": "390x844"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_free",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_free",
+      "viewport": "390x844",
+      "selector": "span.truncate"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_pro",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_pro",
+      "viewport": "390x844"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_pro",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_pro",
+      "viewport": "390x844",
+      "selector": "span.truncate"
+    },
+    {
+      "id": "RULE4_DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дубль контрола/действия \"друзья\" на home_ultra",
+      "description": "Две видимые кнопки с одинаковым действием на одном экране нарушают правило 4 контракта",
+      "screen": "home_ultra",
+      "viewport": "390x844"
+    },
+    {
+      "id": "RULE5_TRUNCATE_WITHOUT_TITLE",
+      "severity": "Low",
+      "title": "Обрезан текст (.truncate) без всплывающей подсказки title на chats_ultra",
+      "description": "Обрезанный текст: \"Привет! Добро пожаловать на ау...\" не читаем полностью",
+      "screen": "chats_ultra",
+      "viewport": "390x844",
+      "selector": "span.truncate"
+    }
+  ],
+  "consoleLogs": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:3000/nonexistent-page-404"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/chats/cerna"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/?view=settings"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/chats/cerna"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/?view=settings"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/chats/cerna"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=explore"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/?view=vault"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/?view=settings"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/?view=messages"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:3000/nonexistent-page-404"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 422 ()",
+      "url": "http://localhost:3000/"
+    }
+  ],
+  "networkErrors": [
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/profiles?select=*&username=eq.cerna",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/profiles?select=*&username=eq.cerna",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?recipient_id=eq.user_pro_id&author_id=eq.cerna&is_read=eq.false",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_user_pro_id%2Cthread_key.eq.cerna%2Cthread_key.eq.user_pro_id%2Cand%28author_id.eq.user_pro_id%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.user_pro_id%29%29&order=sent_at.asc&limit=100",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_user_pro_id%2Cthread_key.eq.cerna%2Cthread_key.eq.user_pro_id%2Cand%28author_id.eq.user_pro_id%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.user_pro_id%29%29&order=sent_at.asc&limit=100",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/profiles?select=*&username=eq.cerna",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?select=*&or=%28thread_key.eq.cerna_user_pro_id%2Cthread_key.eq.cerna%2Cthread_key.eq.user_pro_id%2Cand%28author_id.eq.user_pro_id%2Crecipient_id.eq.cerna%29%2Cand%28author_id.eq.cerna%2Crecipient_id.eq.user_pro_id%29%29&order=sent_at.asc&limit=100",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?recipient_id=eq.user_pro_id&author_id=eq.cerna&is_read=eq.false",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    },
+    {
+      "url": "https://jryhluhgjricjbkimsfa.supabase.co/rest/v1/direct_messages?recipient_id=eq.user_pro_id&author_id=eq.cerna&is_read=eq.false",
+      "error": "net::ERR_INTERNET_DISCONNECTED"
+    }
+  ],
+  "timestamp": "2026-11-15T10:48:08.655Z"
+}

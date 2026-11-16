@@ -1,0 +1,61 @@
+{
+  "defects": [
+    {
+      "id": "DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дублирование видимого контрола \"начать вести дневник бесплатно\" на landing",
+      "description": "Обнаружено несколько активных кнопок с одинаковым лейблом \"начать вести дневник бесплатно\"",
+      "screen": "landing",
+      "viewport": "1210x756"
+    },
+    {
+      "id": "CONSOLE_ERROR",
+      "severity": "High",
+      "title": "Ошибка в консоли браузера: WebSocket connection to 'ws://localhost:3000/_next/hmr?id=v4jEqHzArLvaSYsM5aTUr'",
+      "description": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=v4jEqHzArLvaSYsM5aTUr' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "screen": "http://localhost:3000/chats",
+      "viewport": "1210x756",
+      "file": "runtime/console"
+    },
+    {
+      "id": "DUPLICATE_ACTION",
+      "severity": "Medium",
+      "title": "Дублирование видимого контрола \"начать вести дневник бесплатно\" на landing",
+      "description": "Обнаружено несколько активных кнопок с одинаковым лейблом \"начать вести дневник бесплатно\"",
+      "screen": "landing",
+      "viewport": "390x844"
+    },
+    {
+      "id": "CONSOLE_ERROR",
+      "severity": "High",
+      "title": "Ошибка в консоли браузера: WebSocket connection to 'ws://localhost:3000/_next/hmr?id=GjEc-RqbAMtNK5ah74PDF'",
+      "description": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=GjEc-RqbAMtNK5ah74PDF' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "screen": "http://localhost:3000/chats",
+      "viewport": "390x844",
+      "file": "runtime/console"
+    }
+  ],
+  "consoleLogs": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:3000/random-missing-route-404"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=v4jEqHzArLvaSYsM5aTUr' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/chats"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://localhost:3000/random-missing-route-404"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:3000/_next/hmr?id=GjEc-RqbAMtNK5ah74PDF' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "url": "http://localhost:3000/chats"
+    }
+  ],
+  "timestamp": "2026-11-15T10:42:23.041Z"
+}
