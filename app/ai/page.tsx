@@ -6,6 +6,7 @@ import { AppleNavbar } from '@/components/ogonek/landing/apple-navbar'
 import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
 import { MediaSlot } from '@/components/ogonek/landing/media-slot'
 import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
+import { GlowCard } from '@/components/ui/spotlight-card'
 
 export default function AiPage() {
   const containerRef = useScrollReveal()
@@ -238,140 +239,158 @@ export default function AiPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
             {/* Free */}
-            <div className="apple-card p-8 bg-[#161617] border border-white/10 flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-mono text-[#86868b] uppercase tracking-wider block mb-2">
-                  БАЗОВЫЙ
-                </span>
-                <h3 className="text-[24px] font-bold text-white mb-2">Свободный</h3>
-                <div className="text-[32px] font-bold text-white font-sans mb-4">0 MDL</div>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Чистая летопись без нейросетей для тех, кому важна только вечерняя тишина.
-                </p>
+            <GlowCard
+              glowColor="green"
+              customSize
+              className="p-8 flex flex-col justify-between"
+            >
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <span className="text-xs font-mono text-[#00c7be] uppercase tracking-wider block mb-2 font-semibold">
+                    БАЗОВЫЙ
+                  </span>
+                  <h3 className="text-[24px] font-bold text-white mb-2">Свободный</h3>
+                  <div className="text-[32px] font-bold text-white font-sans mb-4">0 MDL</div>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Чистая летопись без нейросетей для тех, кому важна только вечерняя тишина.
+                  </p>
 
-                <div className="space-y-3 text-[14px] text-[#86868b]">
-                  <div className="flex items-center gap-2.5 text-rose-400/90">
-                    <span>✗</span>
-                    <span>ИИ-оценка летописи: 0 в сутки</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-rose-400/90">
-                    <span>✗</span>
-                    <span>Анализ преодоления нейросетью</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-rose-400/90">
-                    <span>✗</span>
-                    <span>Вердикт Ментора Личной Силы</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white/90 pt-3 border-t border-white/5">
-                    <span className="text-[#00c7be]">✓</span>
-                    <span>100% бесплатный дневник и стрик</span>
+                  <div className="space-y-3 text-[14px] text-[#86868b]">
+                    <div className="flex items-center gap-2.5 text-rose-400/90">
+                      <span>✗</span>
+                      <span>ИИ-оценка летописи: 0 в сутки</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-rose-400/90">
+                      <span>✗</span>
+                      <span>Анализ преодоления нейросетью</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-rose-400/90">
+                      <span>✗</span>
+                      <span>Вердикт Ментора Личной Силы</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white/90 pt-3 border-t border-white/5">
+                      <span className="text-[#00c7be]">✓</span>
+                      <span>100% бесплатный дневник и стрик</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <Link
-                href="/register"
-                className="mt-8 w-full py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-[14px] text-center font-medium block transition-all"
-              >
-                Начать без ИИ
-              </Link>
-            </div>
+                <Link
+                  href="/register"
+                  className="mt-8 w-full py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-[14px] text-center font-medium block transition-all border border-white/10"
+                >
+                  Начать без ИИ
+                </Link>
+              </div>
+            </GlowCard>
 
             {/* Pro */}
-            <div className="apple-card p-8 bg-gradient-to-b from-[#1a1e28] to-[#12141a] border-2 border-[#0071e3] flex flex-col justify-between shadow-[0_0_35px_rgba(0,113,227,0.25)] relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071e3] text-white text-[10px] font-bold uppercase tracking-wider">
+            <GlowCard
+              glowColor="blue"
+              customSize
+              className="p-8 flex flex-col justify-between relative shadow-[0_0_35px_rgba(0,113,227,0.25)]"
+            >
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#0071e3] text-white text-[10px] font-bold uppercase tracking-wider z-20">
                 ★ Выбор практиков
               </div>
 
-              <div>
-                <span className="text-xs font-mono text-[#2997ff] uppercase tracking-wider block mb-2">
-                  ПРЕМИУМ
-                </span>
-                <h3 className="text-[24px] font-bold text-white mb-2">Priday Pro</h3>
-                <div className="text-[32px] font-bold text-white font-sans mb-4">
-                  25 MDL <span className="text-xs text-[#86868b] font-normal">/ мес (240 MDL/год)</span>
-                </div>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Ежедневный персональный разбор дня нейросетью Google Gemini.
-                </p>
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <span className="text-xs font-mono text-[#2997ff] uppercase tracking-wider block mb-2 font-semibold">
+                    ПРЕМИУМ
+                  </span>
+                  <h3 className="text-[24px] font-bold text-white mb-2">Priday Pro</h3>
+                  <div className="text-[32px] font-bold text-white font-sans mb-4">
+                    25 MDL <span className="text-xs text-[#86868b] font-normal">/ мес (240 MDL/год)</span>
+                  </div>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Ежедневный персональный разбор дня нейросетью Google Gemini.
+                  </p>
 
-                <div className="space-y-3 text-[14px] text-[#f5f5f7]">
-                  <div className="flex items-center gap-2.5 text-white font-medium">
-                    <span className="text-[#0071e3]">✓</span>
-                    <span><strong>1 ИИ-оценка в день</strong> (Google Gemini)</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#0071e3]">✓</span>
-                    <span>Шкала преодоления 1–10★ и баллы</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#0071e3]">✓</span>
-                    <span>Автоматические теги сфер жизни</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#0071e3]">✓</span>
-                    <span>Сравнение обещаний и реальных дел</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-[#86868b]">
-                    <span>✗</span>
-                    <span>Напутствие Ментора Личной Силы</span>
+                  <div className="space-y-3 text-[14px] text-[#f5f5f7]">
+                    <div className="flex items-center gap-2.5 text-white font-medium">
+                      <span className="text-[#0071e3]">✓</span>
+                      <span><strong>1 ИИ-оценка в день</strong> (Google Gemini)</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#0071e3]">✓</span>
+                      <span>Шкала преодоления 1–10★ и баллы</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#0071e3]">✓</span>
+                      <span>Автоматические теги сфер жизни</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#0071e3]">✓</span>
+                      <span>Сравнение обещаний и реальных дел</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[#86868b]">
+                      <span>✗</span>
+                      <span>Напутствие Ментора Личной Силы</span>
+                    </div>
                   </div>
                 </div>
+
+                <Link
+                  href="/register"
+                  className="mt-8 apple-btn-primary w-full !py-3 !text-[14px] text-center font-medium block"
+                >
+                  Подключить Pro с ИИ →
+                </Link>
               </div>
-
-              <Link
-                href="/register"
-                className="mt-8 apple-btn-primary w-full !py-3 !text-[14px] text-center font-medium block"
-              >
-                Подключить Pro с ИИ →
-              </Link>
-            </div>
+            </GlowCard>
 
             {/* Ultra */}
-            <div className="apple-card p-8 bg-[#161617] border border-white/10 flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-mono text-[#f56900] uppercase tracking-wider block mb-2">
-                  КЛУБ ОСНОВАТЕЛЕЙ
-                </span>
-                <h3 className="text-[24px] font-bold text-white mb-2">Основатель Ultra</h3>
-                <div className="text-[32px] font-bold text-white font-sans mb-4">
-                  50 MDL <span className="text-xs text-[#86868b] font-normal">/ мес (480 MDL/год)</span>
-                </div>
-                <p className="text-[14px] text-[#86868b] mb-6">
-                  Максимальная глубина: персональный Ментор Личной Силы на каждый вечер.
-                </p>
+            <GlowCard
+              glowColor="orange"
+              customSize
+              className="p-8 flex flex-col justify-between"
+            >
+              <div className="relative z-10 flex flex-col justify-between h-full">
+                <div>
+                  <span className="text-xs font-mono text-[#f56900] uppercase tracking-wider block mb-2 font-semibold">
+                    КЛУБ ОСНОВАТЕЛЕЙ
+                  </span>
+                  <h3 className="text-[24px] font-bold text-white mb-2">Основатель Ultra</h3>
+                  <div className="text-[32px] font-bold text-white font-sans mb-4">
+                    50 MDL <span className="text-xs text-[#86868b] font-normal">/ мес (480 MDL/год)</span>
+                  </div>
+                  <p className="text-[14px] text-[#86868b] mb-6">
+                    Максимальная глубина: персональный Ментор Личной Силы на каждый вечер.
+                  </p>
 
-                <div className="space-y-3 text-[14px] text-[#f5f5f7]">
-                  <div className="flex items-center gap-2.5 text-white font-medium">
-                    <span className="text-[#f56900]">✓</span>
-                    <span><strong>Все возможности тарифа Pro</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-[#f56900] font-medium">
-                    <span className="text-[#f56900]">✓</span>
-                    <span><strong>Вердикт Ментора Личной Силы</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#f56900]">✓</span>
-                    <span>Приоритетные вычислительные квоты</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#f56900]">✓</span>
-                    <span>Глубокий анализ вех (100, 200, 300+ дней)</span>
-                  </div>
-                  <div className="flex items-center gap-2.5 text-white">
-                    <span className="text-[#f56900]">✓</span>
-                    <span>Прямой контакт с основателем</span>
+                  <div className="space-y-3 text-[14px] text-[#f5f5f7]">
+                    <div className="flex items-center gap-2.5 text-white font-medium">
+                      <span className="text-[#f56900]">✓</span>
+                      <span><strong>Все возможности тарифа Pro</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-[#f56900] font-medium">
+                      <span className="text-[#f56900]">✓</span>
+                      <span><strong>Вердикт Ментора Личной Силы</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#f56900]">✓</span>
+                      <span>Приоритетные вычислительные квоты</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#f56900]">✓</span>
+                      <span>Глубокий анализ вех (100, 200, 300+ дней)</span>
+                    </div>
+                    <div className="flex items-center gap-2.5 text-white">
+                      <span className="text-[#f56900]">✓</span>
+                      <span>Прямой контакт с основателем</span>
+                    </div>
                   </div>
                 </div>
+
+                <Link
+                  href="/register"
+                  className="mt-8 w-full py-3 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-[14px] text-center font-medium block transition-all border border-white/10"
+                >
+                  Стать Основателем
+                </Link>
               </div>
-
-              <Link
-                href="/register"
-                className="mt-8 w-full py-3 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-white text-[14px] text-center font-medium block transition-all border border-white/10"
-              >
-                Стать Основателем
-              </Link>
-            </div>
+            </GlowCard>
           </div>
         </div>
       </section>
