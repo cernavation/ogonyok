@@ -65,14 +65,14 @@ describe('Шаг 07: Звуки, тосты, уведомления и счет�
     assert.equal(formatBadge(350), '99+')
   })
 
-  it('Форматирование document.title: "(N) Огонёк" при N > 0 и чистый заголовок при 0', () => {
+  it('Форматирование document.title: "(N) Priday" при N > 0 и чистый заголовок при 0', () => {
     const formatTitle = (unread: number) =>
-      unread > 0 ? `(${unread}) Огонёк` : 'Огонёк — Твой личный дневник силы'
+      unread > 0 ? `(${unread}) Priday` : 'Priday — Твой личный дневник силы'
 
-    assert.equal(formatTitle(0), 'Огонёк — Твой личный дневник силы')
-    assert.equal(formatTitle(1), '(1) Огонёк')
-    assert.equal(formatTitle(3), '(3) Огонёк')
-    assert.equal(formatTitle(100), '(100) Огонёк')
+    assert.equal(formatTitle(0), 'Priday — Твой личный дневник силы')
+    assert.equal(formatTitle(1), '(1) Priday')
+    assert.equal(formatTitle(3), '(3) Priday')
+    assert.equal(formatTitle(100), '(100) Priday')
   })
 
   it('Ограничение стека тостов: максимум 3 элемента одновременно', () => {

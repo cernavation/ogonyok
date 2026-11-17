@@ -12,7 +12,7 @@ function escapeXml(unsafe: string): string {
 export function formatDayAsText(day: Day): string {
   const dateStr = day.dateISO ? new Date(day.dateISO).toLocaleDateString('ru-RU') : 'Сегодня'
   const lines: string[] = [
-    `✦ Огонёк · День #${day.id} (${dateStr})`,
+    `✦ Priday · День #${day.id} (${dateStr})`,
     '',
     '🔥 Гордости:',
   ]
@@ -116,7 +116,7 @@ export function generateDayCardSvg(day: Day): string {
   <g transform="translate(48, 56)">
     <!-- Spark icon -->
     <path d="M14 0L17.5 10.5L28 14L17.5 17.5L14 28L10.5 17.5L0 14L10.5 10.5L14 0Z" fill="url(#flameGrad)" />
-    <text x="38" y="20" fill="#ff6b35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="1">ОГОНЁК</text>
+    <text x="38" y="20" fill="#ff6b35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="1">PRIDAY</text>
     <text x="145" y="20" fill="#71767b" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16">· Дневник силы</text>
   </g>
 

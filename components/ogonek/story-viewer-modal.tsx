@@ -385,7 +385,7 @@ export function StoryViewerModal({
     setSharing(true)
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'Сторис Огонька', text: shareText, url: shareUrl })
+        await navigator.share({ title: 'Сторис Priday', text: shareText, url: shareUrl })
       } else {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
       }

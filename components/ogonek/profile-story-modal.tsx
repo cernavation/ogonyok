@@ -215,7 +215,7 @@ export function ProfileStoryModal({
           <div className="flex items-center gap-2">
             <span className="text-[15px]">✦</span>
             <span className="text-white text-[15px] font-extrabold tracking-[0.15em]">
-              ОГОНЁК
+              PRIDAY
             </span>
           </div>
 

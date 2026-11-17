@@ -17,7 +17,7 @@ import { buildFriendDigest, buildMyDigest, type StoryDayDigest } from './story-d
 import type { Day, FriendStory, MyStory, StorySlide, VisibilityLevel } from './types'
 import { normalizeVisibility } from './visibility.ts'
 
-/** Палитра градиентов кадров — тёплый огонь Огонька + холодные акценты */
+/** Палитра градиентов кадров — тёплый огонь Priday + холодные акценты */
 const SLIDE_THEMES: Array<{ from: string; to: string; accent: string }> = [
   { from: '#2a1206', to: '#7a2f0c', accent: '#ffa600' },
   { from: '#0a1420', to: '#123a5a', accent: '#66ffd9' },
@@ -153,7 +153,7 @@ export const STORY_TEMPLATES: StoryTemplate[] = [
     accent: '#ffa600',
     build: (ctx) => ({
       headline: ctx.latestTitle || 'Новый день силы',
-      detail: `День №${ctx.latestDayId ?? '—'} в летописи Огонька`,
+      detail: `День №${ctx.latestDayId ?? '—'} в летописи Priday`,
       sourceDayId: ctx.latestDayId,
     }),
   },

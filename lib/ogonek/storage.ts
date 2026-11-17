@@ -190,7 +190,7 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
           typeof c.author === 'string' && c.author.trim()
             ? c.author.trim().slice(0, 60)
             : persona === 'support'
-              ? 'Огонёк поддержки'
+              ? 'Priday поддержки'
               : 'Пользователь',
         initials:
           typeof c.initials === 'string' && c.initials.trim()
@@ -559,7 +559,7 @@ function sanitizeRegulationValue(
         : topic.slice(0, 200),
     summary: typeof v.summary === 'string' ? v.summary.slice(0, 600) : '',
     requirements,
-    verifier: typeof v.verifier === 'string' ? v.verifier.slice(0, 200) : 'Команда верификации Огонька',
+    verifier: typeof v.verifier === 'string' ? v.verifier.slice(0, 200) : 'Команда верификации Priday',
     freshnessRule: typeof v.freshnessRule === 'string' ? v.freshnessRule.slice(0, 300) : '',
     rejectionCriteria: Array.isArray(v.rejectionCriteria)
       ? v.rejectionCriteria.filter((x): x is string => typeof x === 'string').slice(0, 8)
@@ -676,21 +676,21 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
             atISO: daysAgo(138),
             status: 'on-moderation',
             note: 'Пакет доказательств отправлен модератору (Email (Resend)).',
-            actor: 'Огонёк · автоотправка',
+            actor: 'Priday · автоотправка',
           },
           {
             id: 'rev-mar-1',
             atISO: daysAgo(136),
             status: 'on-moderation',
             note: 'Первичная сверка протокола с базой результатов организатора.',
-            actor: 'Модератор Огонька',
+            actor: 'Модератор Priday',
           },
           {
             id: 'rev-mar-2',
             atISO: daysAgo(135),
             status: 'officially-verified',
             note: 'Протокол и видео совпадают: дистанция полная, обуви нет.',
-            actor: 'Модератор Огонька',
+            actor: 'Модератор Priday',
           },
         ],
       },
@@ -738,7 +738,7 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
             atISO: daysAgo(1),
             status: 'on-moderation',
             note: 'Пакет доказательств отправлен модератору (Webhook).',
-            actor: 'Огонёк · автоотправка',
+            actor: 'Priday · автоотправка',
           },
         ],
       },

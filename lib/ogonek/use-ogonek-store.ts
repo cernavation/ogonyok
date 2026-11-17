@@ -1934,7 +1934,7 @@ export function useOgonekStore() {
             a.submission,
             status,
             cleanNote || MODERATION_STATUS_META[status].description,
-            'Модератор Огонька'
+            'Модератор Priday'
           )
           const isFinal = status !== 'on-moderation'
           return {
@@ -2174,7 +2174,7 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Сбрасывает всё оформление к заводским значениям Огонька */
+  /** Сбрасывает всё оформление к заводским значениям Priday */
   const resetAppearance = useCallback(() => {
     updateStore((prev) => ({
       ...prev,
@@ -3361,7 +3361,7 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Полностью сбрасывает хранилище к заводским значениям Огонька */
+  /** Полностью сбрасывает хранилище к заводским значениям Priday */
   const resetToDefaults = useCallback(() => {
     updateStore(() => DEFAULT_STORE_STATE)
   }, [updateStore])
@@ -5518,7 +5518,7 @@ export function useOgonekStore() {
       const nowISO = new Date().toISOString()
       const account = createAccount({
         provider: 'guest',
-        displayName: 'Гость Огонька',
+        displayName: 'Гость Priday',
         isGuest: true,
         existingIds: prev.auth.accounts.map((a) => a.id),
         takenUsernames: takenUsernamesOf(prev.auth.accounts),

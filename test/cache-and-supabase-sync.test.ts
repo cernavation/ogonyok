@@ -60,7 +60,7 @@ function sampleState(overrides: Partial<OgonekStoreState> = {}): OgonekStoreStat
     profile: {
       displayName: 'Alexei Cerna',
       username: 'cernavation',
-      bio: 'Основатель Огонька',
+      bio: 'Основатель Priday',
       city: 'Chisinau',
       website: '',
       joinedLabel: 'August 2024',

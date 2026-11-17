@@ -56,7 +56,7 @@ export function BiometricSetupModal({ onClose, onNotify }: Props) {
     setBusy(true)
     const result = await registerBiometricCredential({
       userName: state.profile.username || 'ogonek',
-      displayName: state.profile.displayName || 'Огонёк',
+      displayName: state.profile.displayName || 'Priday',
     })
     setBusy(false)
     if (result.ok) {
@@ -97,7 +97,7 @@ export function BiometricSetupModal({ onClose, onNotify }: Props) {
       <p className="modal-intro">
         <Fingerprint size={13} className="inline -mt-0.5 mr-1" />
         Браузерный биометрический ключ WebAuthn. Отпечаток или лицо никогда не покидают
-        устройство — Огонёк получает только подтверждение «это действительно вы».
+        устройство — Priday получает только подтверждение «это действительно вы».
       </p>
 
       <div className="bio-visual" aria-hidden="true">

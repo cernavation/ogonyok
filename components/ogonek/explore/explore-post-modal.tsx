@@ -159,7 +159,7 @@ export function ExplorePostModal({
             <Calendar size={13} /> {post.dateLabel}
           </span>
           <span>
-            <Flame size={13} /> {formatCommunityCount(post.likes)} огоньков
+            <Flame size={13} /> {formatCommunityCount(post.likes)} реакций
           </span>
           <span>
             <MessageCircle size={13} /> {formatCommunityCount(post.comments)} поддержки
@@ -173,12 +173,12 @@ export function ExplorePostModal({
             onClick={() => {
               const now = toggleExplorePostLike(post.id)
               playClick(soundEnabled)
-              onNotify(now ? '🔥 Огонёк зажжён!' : 'Огонёк снят')
+              onNotify(now ? '🔥 Priday зажжён!' : 'Priday снят')
             }}
             aria-pressed={isLiked}
           >
             <Flame size={15} fill={isLiked ? 'currentColor' : 'none'} />
-            {isLiked ? 'Горит' : 'Зажечь огонёк'}
+            {isLiked ? 'Горит' : 'Зажечь огонь'}
           </button>
 
           <button

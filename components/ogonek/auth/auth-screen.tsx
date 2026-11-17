@@ -19,7 +19,7 @@ const HIGHLIGHTS = [
 /**
  * ЭТАП 18 — ПОЛНОЭКРАННЫЙ ЭКРАН ВХОДА/РЕГИСТРАЦИИ.
  * Показывается, когда пользователь вышел из аккаунта. Слева — витрина
- * Огонька, справа — форма входа, регистрации, Google и гостевого режима.
+ * Priday, справа — форма входа, регистрации, Google и гостевого режима.
  */
 export function AuthScreen({ onAuthenticated, onNotify }: Props) {
   const { state } = useOgonekStore()
@@ -29,7 +29,7 @@ export function AuthScreen({ onAuthenticated, onNotify }: Props) {
       className="auth-screen"
       role="dialog"
       aria-modal="true"
-      aria-label="Вход в Огонёк"
+      aria-label="Вход в Priday"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -37,16 +37,16 @@ export function AuthScreen({ onAuthenticated, onNotify }: Props) {
       <div className="auth-screen__glow" aria-hidden="true" />
 
       <div className="auth-screen__grid">
-        <section className="auth-hero w-full min-w-0" aria-label="О проекте Огонёк">
+        <section className="auth-hero w-full min-w-0" aria-label="О проекте Priday">
           <div className="auth-brand flex items-center gap-2 mb-2">
             <span className="auth-flame flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent,#FF6A1A)]/10 text-[var(--accent,#FF6A1A)]" aria-hidden="true">
               <Flame size={22} className="fill-[var(--accent,#FF6A1A)]/20 text-[var(--accent,#FF6A1A)]" />
             </span>
-            <span className="font-extrabold text-xl text-[var(--text)]">Огонёк</span>
+            <span className="font-extrabold text-xl text-[var(--text)]">Priday</span>
           </div>
           <h1 className="auth-hero__title text-[var(--text)] flex items-center gap-3">
             <span className="text-3xl sm:text-4xl">🔥</span>
-            <span>ОГОНЁК</span>
+            <span>PRIDAY</span>
           </h1>
           <p className="auth-hero__lead text-[var(--text-2)]">
             Дневник силы и личная летопись побед. Записывайте гордости, держите стрик, собирайте доказательства достижений и следите за

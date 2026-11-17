@@ -444,7 +444,7 @@ export function ChatComposer({
         </div>
       )}
 
-      {/* Превью прикреплённой карточки Огонька */}
+      {/* Превью прикреплённой карточки Priday */}
       {attachment && (
         <div className="mcw-attach-preview mb-1.5">
           <div className="flex-1 min-w-0">
@@ -632,7 +632,7 @@ export function ChatComposer({
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
                 >
                   <Sparkles size={16} className="text-[#ffad5a]" />
-                  <span>Карточка Огонька</span>
+                  <span>Карточка Priday</span>
                 </button>
               </div>
             )}
@@ -712,7 +712,7 @@ export function ChatComposer({
         </div>
       )}
 
-      {/* Модалка выбора карточки Огонька (гордость, благодарность, сторис) */}
+      {/* Модалка выбора карточки Priday (гордость, благодарность, сторис) */}
       {attachOpen && (
         <AttachCardPicker
           onPick={(card) => {

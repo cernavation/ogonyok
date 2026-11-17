@@ -898,7 +898,7 @@ export function ChatCallModal({
           ) : (
             <Phone size={13} className="text-[#00ba7c]" />
           )}
-          <span>{effectiveVideo ? 'Видеозвонок Огонька' : 'Аудиозвонок Огонька'}</span>
+          <span>{effectiveVideo ? 'Видеозвонок Priday' : 'Аудиозвонок Priday'}</span>
         </div>
 
         {/* Кнопка сворачивания в мини-окно (PiP) */}
@@ -1032,7 +1032,7 @@ export function ChatCallModal({
                   ? 'Входящий звонок'
                   : 'Ожидание ответа собеседника...'
                 : callState === 'connected'
-                ? 'Защищённый WebRTC голосовой поток Огонька'
+                ? 'Защищённый WebRTC голосовой поток Priday'
                 : statusMessage || 'Вызов завершён'}
             </p>
           </div>

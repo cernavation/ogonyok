@@ -32,7 +32,7 @@ export const INITIAL_PRIDES: PrideEntry[] = [
   },
   {
     num: '04',
-    text: 'Опубликовал новую версию Огонька',
+    text: 'Опубликовал новую версию Priday',
     scale: 9,
     overcome: 3,
   },

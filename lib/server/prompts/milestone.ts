@@ -117,7 +117,7 @@ export function buildUltraMilestonePrompt(params: {
     .map((d) => `[День #${d.dayNumber}] Победы: ${d.prides.join('; ')} | Благодарность: ${d.gratitudes.join('; ')}`)
     .join('\n')
 
-  return `ТЫ — МЕНТОР ЛИЧНОЙ СИЛЫ СИСТЕМЫ «ОГОНЁК».
+  return `ТЫ — МЕНТОР ЛИЧНОЙ СИЛЫ СИСТЕМЫ «PRIDAY».
 Автор закрыл рубеж #${milestoneNumber} дней.
 Перед тобой данные: точные цифры и выдержки из реальных записей автора за этот период.
 

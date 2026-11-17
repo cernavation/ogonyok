@@ -191,7 +191,7 @@ export function SettingsView({
             <Sparkles size={16} className="text-[var(--accent)]" /> Обучающий тур
           </h2>
           <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-            Пройди интерактивный тур по ключевым возможностям Огонька за 1 минуту
+            Пройди интерактивный тур по ключевым возможностям Priday за 1 минуту
           </p>
         </div>
         <button

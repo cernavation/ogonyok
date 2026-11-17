@@ -157,7 +157,7 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     { name: 'Поиск напарников', path: '/community#search' },
     { name: 'Сторис побед', path: '/community#stories' },
     { name: 'Зашифрованные P2P звонки', path: '/community#calls' },
-    { name: 'Парный огонёк', path: '/community#duo' },
+    { name: 'Парный стрик', path: '/community#duo' },
     { name: 'Вечерний ритуал', path: '/how-it-works' },
     { name: 'Манифест 740 дней', path: '/manifesto' },
     { name: 'Тарифы Pro и Ultra', path: '/#pricing' },
@@ -174,7 +174,7 @@ describe('2. Архитектура и спецификации AppleFooter (50 
   })
 
   // 26-30: Проверка навигационной цепочки (Breadcrumbs)
-  it('содержит хлебные крошки Apple: Огонёк › Дневник силы и побед › Летопись', () => {
+  it('содержит хлебные крошки Apple: Priday › Дневник силы и побед › Летопись', () => {
     assert.ok(footerContent.includes('Навигационная цепочка'), 'Должна быть семантическая навигация')
     assert.ok(footerContent.includes('Дневник силы и побед'), 'Должна присутствовать цепочка уровней')
     assert.ok(footerContent.includes('Летопись'), 'Финальный элемент хлебных крошек')

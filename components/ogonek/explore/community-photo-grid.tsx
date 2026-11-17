@@ -95,10 +95,10 @@ export function CommunityPhotoGrid({
                   onClick={() => {
                     const now = toggleExplorePostLike(post.id)
                     playClick(soundEnabled)
-                    onNotify(now ? '🔥 Зажёг огонёк!' : 'Огонёк снят')
+                    onNotify(now ? '🔥 Огонь зажжён!' : 'Реакция снята')
                   }}
                   aria-pressed={isLiked}
-                  aria-label={isLiked ? 'Убрать огонёк' : 'Зажечь огонёк'}
+                  aria-label={isLiked ? 'Убрать огонь' : 'Зажечь огонь'}
                 >
                   <Flame size={14} fill={isLiked ? 'currentColor' : 'none'} />
                   <span>{formatCommunityCount(post.likes + (isLiked ? 1 : 0))}</span>

@@ -77,7 +77,7 @@ export function AppleFooter() {
               <span>Личная летопись побед и дисциплины</span>
             </h3>
             <p className="text-[13px] text-[#86868b] max-w-[540px] leading-relaxed">
-              Фиксируй настоящие преодоления каждый вечер. Твой рекорд непрерывного огонька принадлежит тебе навсегда.
+              Фиксируй настоящие преодоления каждый вечер. Твой рекорд непрерывного стрика в Priday принадлежит тебе навсегда.
             </p>
           </div>
 
@@ -221,7 +221,7 @@ export function AppleFooter() {
                 </li>
                 <li>
                   <Link href="/community#duo" className="hover:text-white transition-colors">
-                    Парный огонёк (Duo Streak)
+                    Парный стрик (Duo Streak)
                   </Link>
                 </li>
                 <li>
@@ -399,7 +399,7 @@ export function AppleFooter() {
                   <li><Link href="/community#search" className="hover:text-white transition-colors block py-0.5">Поиск напарников</Link></li>
                   <li><Link href="/community#stories" className="hover:text-white transition-colors block py-0.5 text-[#f91880]">Сторис побед 24ч</Link></li>
                   <li><Link href="/community#calls" className="hover:text-white transition-colors block py-0.5">Зашифрованные P2P звонки</Link></li>
-                  <li><Link href="/community#duo" className="hover:text-white transition-colors block py-0.5">Парный огонёк (Duo Streak)</Link></li>
+                  <li><Link href="/community#duo" className="hover:text-white transition-colors block py-0.5">Парный стрик (Duo Streak)</Link></li>
                   <li><a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="hover:text-white transition-colors block py-0.5">Telegram-сообщество</a></li>
                 </ul>
               )}

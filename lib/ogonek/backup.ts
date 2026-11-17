@@ -11,7 +11,7 @@ import {
    ЭТАП 16 — ПОЛНЫЙ ЭКСПОРТ / ИМПОРТ И СИНХРОНИЗАЦИЯ БАЗЫ ДАННЫХ
    Слой поверх чистых функций sync-code, связанный с хранилищем приложения:
    разбор кода синхронизации/JSON через validateAndImportJson и измерение
-   занятого localStorage по реальному ключу Огонька.
+   занятого localStorage по реальному ключу Priday.
    ══════════════════════════════════════════════════════════════════════════ */
 
 export * from './sync-code'
@@ -31,7 +31,7 @@ export function parseAnyBackup(raw: string): ImportResult {
   return parseAnyBackupWith(raw, validateAndImportJson)
 }
 
-/** Измеряет занятое хранилище браузера по ключу Огонька */
+/** Измеряет занятое хранилище браузера по ключу Priday */
 export function measureStorageUsage(): StorageUsage {
   return measureStorageUsageFor(STORAGE_KEY)
 }

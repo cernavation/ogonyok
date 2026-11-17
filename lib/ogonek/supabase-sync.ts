@@ -1,7 +1,7 @@
 /**
  * ЭТАП 19 — АДАПТЕР СИНХРОНИЗАЦИИ SUPABASE (OFFLINE-FIRST).
  *
- * Модуль бесшовно подключает локальную базу Огонька (ключ `ogonek.v2`) к
+ * Модуль бесшовно подключает локальную базу Priday (ключ `ogonek.v2`) к
  * облаку Supabase, но продолжает работать полностью офлайн:
  *
  *   • Ключей в .env.local нет            → адаптер выключен, приложение живёт локально.
@@ -1346,7 +1346,7 @@ function assembleComment(row: CommentRow): Comment {
   return {
     id: row.client_id,
     parentId: row.parent_client_id ?? null,
-    author: row.author || (persona === 'support' ? 'Огонёк поддержки' : 'Алексей Церна'),
+    author: row.author || (persona === 'support' ? 'Priday поддержки' : 'Алексей Церна'),
     initials: row.initials || (persona === 'support' ? '✦' : 'ОГ'),
     text: row.text ?? '',
     createdAt: row.created_at ?? new Date().toISOString(),

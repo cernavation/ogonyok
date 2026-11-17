@@ -66,7 +66,7 @@ export async function POST(request: Request) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 chat_id: chatId,
-                text: '🔥 <b>Огонёк успешно подключён!</b>\n\nТеперь бот будет бережно напоминать тебе о дневнике гордостей и благодарностей в выбранное время — только если день ещё не закрыт.',
+                text: '🔥 <b>Priday успешно подключён!</b>\n\nТеперь бот будет бережно напоминать тебе о дневнике гордостей и благодарностей в выбранное время — только если день ещё не закрыт.',
                 parse_mode: 'HTML',
               }),
             })
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chat_id: chatId,
-          text: `Привет! Твой Telegram Chat ID: <code>${chatId}</code>\n\nЧтобы привязать бота к Огоньку, открой Настройки в приложении и нажми «Подключить Telegram», либо введи этот номер в поле Chat ID.`,
+          text: `Привет! Твой Telegram Chat ID: <code>${chatId}</code>\n\nЧтобы привязать бота к Priday, открой Настройки в приложении и нажми «Подключить Telegram», либо введи этот номер в поле Chat ID.`,
           parse_mode: 'HTML',
         }),
       })

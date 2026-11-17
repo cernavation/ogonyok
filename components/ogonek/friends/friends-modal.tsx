@@ -1187,7 +1187,7 @@ export function FriendsModal({
                         </span>
                       </div>
                       <p className="text-xs text-[var(--muted,#71767b)] mt-1 leading-relaxed">
-                        {selectedGroup.description || 'Группа для совместных записей и общения в Огоньке.'}
+                        {selectedGroup.description || 'Группа для совместных записей и общения в Priday.'}
                       </p>
                     </div>
                   </div>

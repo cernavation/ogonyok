@@ -124,11 +124,11 @@ export function IntentionsView({
       </header>
 
       <div className="max-w-[700px] mx-auto">
-        {/* Огонёк фокуса — счётчик выполнения обещаний */}
+        {/* Priday фокуса — счётчик выполнения обещаний */}
         {stats.hasHistory && (
           <section
             className="px-4 py-4 border-b border-[var(--line)] flex items-center gap-4"
-            aria-label="Огонёк фокуса"
+            aria-label="Priday фокуса"
           >
             <FocusFlame stats={stats} />
             <div className="min-w-0 ml-auto text-right">

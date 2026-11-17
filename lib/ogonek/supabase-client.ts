@@ -1,5 +1,5 @@
 /**
- * SUPABASE CLIENT & AUTH MODULE RE-EXPORT — «ОГОНЁК»
+ * SUPABASE CLIENT & AUTH MODULE RE-EXPORT — «PRIDAY»
  * 
  * Re-exports the single canonical Supabase browser client from lib/supabase/browser.ts.
  * Guarantees a single WebSocket connection across all client components.

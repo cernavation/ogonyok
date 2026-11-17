@@ -1,4 +1,4 @@
-// Service Worker for «Огонёк» PWA (v3 — Zero API Cache Policy)
+// Service Worker for «Priday» PWA (v3 — Zero API Cache Policy)
 const CACHE_NAME = 'ogonek-pwa-v3'
 const PRECACHE_ASSETS = [
   '/',

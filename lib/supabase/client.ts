@@ -1,5 +1,5 @@
 /**
- * CANONICAL BROWSER SUPABASE RE-EXPORT — «ОГОНЁК»
+ * CANONICAL BROWSER SUPABASE RE-EXPORT — «PRIDAY»
  * 
  * Re-exports the single canonical Supabase browser client from lib/supabase/browser.ts.
  * Guarantees a single WebSocket connection across all client components.

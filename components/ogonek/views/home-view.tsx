@@ -496,7 +496,7 @@ export function HomeView({
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
             </span>
-            <h2 className="empty-state__title text-lg font-bold mt-2">Твой огонёк готов к первому дню</h2>
+            <h2 className="empty-state__title text-lg font-bold mt-2">Твой путь в Priday готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
             </p>

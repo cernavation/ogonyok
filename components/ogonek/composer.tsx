@@ -1382,7 +1382,7 @@ export function Composer({
                   <Globe size={13} className="text-[#1d9bf0]" />
                   <div>
                     <div>Всем</div>
-                    <div className="text-[10px] text-[var(--muted)] font-normal">Глобальная лента Огонька</div>
+                    <div className="text-[10px] text-[var(--muted)] font-normal">Глобальная лента Priday</div>
                   </div>
                 </div>
                 {currentSlotVis === 'public' && <Check size={14} className="text-[#1d9bf0]" />}

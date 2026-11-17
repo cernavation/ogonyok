@@ -1,5 +1,5 @@
 /**
- * CANONICAL BROWSER SUPABASE SINGLETON & AUTH MODULE — «ОГОНЁК»
+ * CANONICAL BROWSER SUPABASE SINGLETON & AUTH MODULE — «PRIDAY»
  * 
  * - Singleton-клиент (@supabase/supabase-js) для всех компонентов браузера
  * - Гарантирует ровно одно WebSocket-соединение для Realtime

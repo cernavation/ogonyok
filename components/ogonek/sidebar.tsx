@@ -443,7 +443,7 @@ export function Sidebar({
           role={view === 'messages' ? undefined : 'button'}
           tabIndex={view === 'messages' ? undefined : 0}
           aria-hidden={view === 'messages' ? 'true' : undefined}
-          title={view === 'messages' ? undefined : 'Огонёк'}
+          title={view === 'messages' ? undefined : 'Priday'}
         >
           <span
             className={`brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] ${view === 'messages' ? '' : 'group-hover:scale-110'} transition-transform duration-200 shrink-0`}
@@ -452,7 +452,7 @@ export function Sidebar({
             <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
           </span>
           {!isCollapsed && (
-            <span className="font-bold tracking-tight text-[19px] text-[var(--text)] hidden xl:inline">Огонёк</span>
+            <span className="font-bold tracking-tight text-[19px] text-[var(--text)] hidden xl:inline">Priday</span>
           )}
         </div>
 

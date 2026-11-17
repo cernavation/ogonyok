@@ -58,7 +58,7 @@ describe('Telegram Reminder Decision Logic', () => {
 
     assert.equal(decision.send, true)
     assert.equal(decision.type, 'burned_recovery')
-    assert.ok(decision.message?.includes('Огонёк ждёт тебя!'))
+    assert.ok(decision.message?.includes('Priday ждёт тебя!'))
   })
 
   it('skips daytime reminder when status is safe and hour is before 20:00', () => {

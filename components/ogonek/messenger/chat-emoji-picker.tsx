@@ -236,7 +236,7 @@ export function ChatEmojiPicker({
         /* Вкладка Стикеры */
         <div className="flex-1 overflow-y-auto p-3">
           <p className="mb-2.5 text-[11px] font-medium text-[#71767b]">
-            Стикерпак «Огонёк · Держим стрик»
+            Стикерпак «Priday · Держим стрик»
           </p>
           <div className="grid grid-cols-3 gap-2.5">
             {STICKER_PACK.map((sticker) => (

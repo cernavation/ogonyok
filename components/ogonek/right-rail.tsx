@@ -93,7 +93,7 @@ export function RightRail({
               </span>
             </div>
             <p className="text-[var(--muted)] text-[13px] font-normal mt-1">
-              Огонёк не сгорает при пропуске
+              Priday не сгорает при пропуске
             </p>
           </div>
         </div>

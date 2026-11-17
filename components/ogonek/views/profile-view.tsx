@@ -393,7 +393,7 @@ export function ProfileView({
           id: dayNum,
           dateISO: d.toISOString(),
           title: `День #${dayNum}`,
-          tags: ['#Огонёк', '#Летопись'],
+          tags: ['#Priday', '#Летопись'],
           visibility: 'public',
           prides: [
             { num: '01', text: 'Зафиксировал победу дня в летописи', scale: 8, overcome: 1, visibility: 'public' },

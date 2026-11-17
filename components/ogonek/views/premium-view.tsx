@@ -107,7 +107,7 @@ export function PremiumView({
         </button>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[var(--text)] flex items-center gap-2">
-            Премиум в Огоньке
+            Премиум в Priday
             <BadgeCheck size={18} className="text-[#1d9bf0]" />
           </h1>
           <p className="text-[13px] text-[var(--muted)] font-normal">
@@ -124,7 +124,7 @@ export function PremiumView({
         </div>
 
         <h2 className="text-2xl sm:text-4xl font-[900] tracking-tight max-w-2xl leading-tight">
-          Улучшите свой опыт в Огоньке
+          Улучшите свой опыт в Priday
         </h2>
         <p className="text-[15px] sm:text-[16px] text-[var(--text-2)] mt-2 max-w-xl">
           Выберите подходящий тариф: от базового доступа до синей галочки верификации и расширенной ИИ-оценки.
@@ -315,7 +315,7 @@ export function PremiumView({
                   <Sparkles size={12} />
                 </span>
                 <span>
-                  <b>Огонёк ИИ:</b> автоматическая оценка и разбор побед
+                  <b>Priday AI:</b> автоматическая оценка и разбор побед
                 </span>
               </li>
               <li className="flex items-start gap-2.5">
@@ -531,7 +531,7 @@ export function PremiumView({
             </div>
 
             <h3 className="text-xl font-[800] text-[var(--text)] tracking-tight">
-              {modalTier === 'ultra' ? 'Основатель Ultra' : 'Премиум в Огоньке'}
+              {modalTier === 'ultra' ? 'Основатель Ultra' : 'Премиум в Priday'}
             </h3>
 
             {/* Текст по ТЗ: Подключение онлайн-оплаты в разработке. Для активации обратитесь к @cernavation */}

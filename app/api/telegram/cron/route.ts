@@ -73,7 +73,7 @@ async function handleCron(request: Request) {
         continue
       }
 
-      const text = `🔥 <b>Огонёк ждёт тебя!</b>\n\nПривет, ${u.display_name}! Твой день дневника ещё не закрыт.\nЗапиши свои гордости и благодарности сегодня, чтобы огонь не угасал!`
+      const text = `🔥 <b>Priday ждёт тебя!</b>\n\nПривет, ${u.display_name}! Твой день дневника ещё не закрыт.\nЗапиши свои гордости и благодарности сегодня, чтобы огонь не угасал!`
 
       try {
         const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
