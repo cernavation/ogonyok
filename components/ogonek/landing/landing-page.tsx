@@ -6,6 +6,7 @@ import { AppleNavbar } from './apple-navbar'
 import { AppleFooter } from './apple-footer'
 import { MediaSlot } from './media-slot'
 import { AppleModesPanel } from './apple-modes-panel'
+import { WorksWheel, type WorksWheelItem } from '@/components/ui/works-wheel'
 import { useScrollReveal } from './use-scroll-reveal'
 import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
@@ -156,8 +157,67 @@ const QUOTES = [
   },
 ]
 
+/* ── Interactive Diary WorksWheel Entries (Примеры ежедневных побед) ──── */
+const DIARY_ENTRIES_WHEEL: WorksWheelItem[] = [
+  {
+    title: 'Бизнес-прорыв года',
+    subtitle: 'Договорился о ключевой сделке, продвинул стратегический этап проекта и защитил результат команды.',
+    tag: 'Бизнес и карьера',
+    image: '/media/landing/mode-work.jpg',
+  },
+  {
+    title: 'Тренировка, которой гордишься',
+    subtitle: 'Вышел на пробежку и тренировку вопреки лени, дождю и усталости. Чистая победа характера.',
+    tag: 'Спорт и тело',
+    image: '/media/landing/mode-sport-5.jpg',
+  },
+  {
+    title: 'Тёплый вечер с семьёй',
+    subtitle: 'Отложил ноутбук, закрыл рабочие чаты и уделил искреннее внимание детям и отдыху. Главная опора жизни.',
+    tag: 'Семья и дом',
+    image: '/media/landing/mode-family.jpg',
+  },
+  {
+    title: 'Решение трудной задачи',
+    subtitle: 'Распутал сложнейшую проблему по проекту, над которой бились несколько дней. Элегантное решение.',
+    tag: 'Фокус и интеллект',
+    image: '/media/landing/mode-creative-2.jpg',
+  },
+  {
+    title: 'Выверенная точность',
+    subtitle: 'Технично и хладнокровно обошёл скрытую угрозу, избежал опасной ошибки в критический момент.',
+    tag: 'Точность и расчёт',
+    image: '/media/landing/mode-sport-2.jpg',
+  },
+  {
+    title: 'Плотный рабочий спринт',
+    subtitle: 'День предельной концентрации: закрыл все горящие задачи и этапы без прокрастинации и шума.',
+    tag: 'Дисциплина труда',
+    image: '/media/landing/mode-work-2.jpg',
+  },
+  {
+    title: 'Исполненная мечта',
+    subtitle: 'Сотворил то, о чём мечтал годами. Личный рекорд и результат, который раньше казался невозможным.',
+    tag: 'Триумф воли',
+    image: '/media/landing/mode-sport-4.jpg',
+  },
+  {
+    title: 'Преодоление долгого цикла',
+    subtitle: 'Завершил трудный, длинный и изматывающий жизненный цикл, который закалил характер и открыл новый рубеж.',
+    tag: 'Жизненный цикл',
+    image: '/media/landing/mode-sport-3.jpg',
+  },
+  {
+    title: 'Пережитая битва',
+    subtitle: 'Трудное жизненное испытание, сквозь которое ты прошёл и выстоял. Внутренний стержень стал непоколебим.',
+    tag: 'Стойкость духа',
+    image: '/media/landing/mode-sport.jpg',
+  },
+]
+
 export function LandingPage({ onNotify, onAuthenticated }: Props) {
   const containerRef = useScrollReveal()
+  const modesTrackRef = React.useRef<HTMLDivElement>(null)
   const [authModal, setAuthModal] = useState<AuthMode | null>(null)
   const [activeShowcase, setActiveShowcase] = useState<string>('profile')
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
@@ -350,24 +410,35 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="modes"
-        className="relative py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        ref={modesTrackRef}
+        className="relative bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        style={{ height: '480vh' }}
         aria-label="Режимы жизни"
       >
-        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10" />
+        <div className="apple-ambient-orb w-[700px] h-[700px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10 pointer-events-none" />
 
-        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-4">
+        {/* 1. Header Block with generous spacing: user reads this first before reaching the centered circle */}
+        <div className="modes-header-block relative z-20 max-w-[1200px] mx-auto px-5 sm:px-8 pt-24 sm:pt-32 md:pt-40 pb-16 sm:pb-24 text-center sm:text-left">
+          <div className="fade-up mb-3 sm:mb-4">
             <span className="apple-eyebrow">Архитектура баланса</span>
           </div>
-          <h2 className="apple-section-title fade-up delay-75 mb-6 max-w-[920px]">
+          <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[920px]">
             Победа в бизнесе не должна стоить тебе инфаркта и семьи.
           </h2>
-          <p className="apple-body fade-up delay-100 max-w-[680px] mb-16 sm:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            Успех в одной сфере ценой разрушения остальных — это не сила, это побег. «Priday» удерживает в балансе 4 ключевые опоры: тело, карьеру, семью и внутренний дух.
+          <p className="apple-body fade-up delay-100 max-w-[680px] text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            Успех в одной сфере ценой разрушения остальных — это не сила, это побег. «Priday» удерживает в балансе 4 ключевые опоры: тело, карьеру, семью и внутренний дух. Записывай в летопись реальные победы каждого дня — от закрытой сделки до спокойного вечера с детьми.
           </p>
+        </div>
 
-          <div className="fade-up delay-150">
-            <AppleModesPanel />
+        {/* 2. Pinned Interactive Showcase: Locks into viewport as user arrives at circle center */}
+        <div className="sticky top-0 h-screen w-full flex flex-col justify-center items-center overflow-visible z-10 px-4 sm:px-8">
+          <div className="relative z-20 w-full max-w-[1440px] mx-auto flex-1 flex items-center justify-center min-h-0 overflow-visible">
+            <WorksWheel
+              items={DIARY_ENTRIES_WHEEL}
+              label="Что записывать в дневник"
+              action="В летопись"
+              trackRef={modesTrackRef}
+            />
           </div>
         </div>
       </section>
