@@ -869,7 +869,7 @@ export function MessengerChatPane({
           Выберите диалог или начните новый чат
         </h2>
         <p className="text-sm text-[var(--text-2)] max-w-sm mb-6 leading-relaxed">
-          Общайтесь с друзьями, делитесь карточками гордости, отправляйте голосовые и ставьте огоньки к победам.
+          Общайтесь с друзьями, делитесь карточками гордости, отправляйте голосовые и ставьте реакции к победам.
         </p>
       </div>
     )
@@ -1197,7 +1197,7 @@ export function MessengerChatPane({
               <ChatAvatar friendId={friendId} size={72} ringColor="var(--border)" />
               <p className="text-lg font-bold text-[var(--text)] mt-3">{title || 'Чат'}</p>
               <p className="text-xs text-[var(--text-2)] max-w-sm mt-1">
-                {isGroup ? thread?.groupMeta?.description : friend?.bio || 'Начало переписки в Огоньке.'}
+                {isGroup ? thread?.groupMeta?.description : friend?.bio || 'Начало переписки в Priday.'}
               </p>
               <p className="text-xs text-[var(--accent)] font-semibold mt-4">
                 Это начало вашей истории. Отправьте «Держим огонь 🔥» или поделитесь победой!
@@ -1567,7 +1567,7 @@ export function MessengerChatPane({
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                         >
-                          <Sparkles size={16} className="text-[var(--accent)]" /> Карточка Огонька
+                          <Sparkles size={16} className="text-[var(--accent)]" /> Карточка Priday
                         </button>
                       </div>
                     </>
@@ -1632,7 +1632,7 @@ export function MessengerChatPane({
                     showQuickChips ? 'text-[var(--accent)] border-[var(--accent)]' : 'text-[var(--text)]'
                   }`}
                   aria-label="Быстрые ответы"
-                  title="Быстрые ответы Огонька"
+                  title="Быстрые ответы Priday"
                 >
                   <Zap size={18} fill={showQuickChips ? 'currentColor' : 'none'} />
                 </button>

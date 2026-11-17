@@ -247,7 +247,7 @@ export function decodeSyncCode(code: string): DecodeResult {
   const trimmed = (code ?? '').trim()
   if (!trimmed) return { success: false, error: 'Код синхронизации пуст' }
   if (!trimmed.startsWith(SYNC_CODE_PREFIX)) {
-    return { success: false, error: 'Это не код синхронизации Огонька' }
+    return { success: false, error: 'Это не код синхронизации Priday' }
   }
   const rest = trimmed.slice(SYNC_CODE_PREFIX.length)
   const dot = rest.indexOf('.')
@@ -297,7 +297,7 @@ export function formatBytes(bytes: number): string {
 }
 
 export type StorageUsage = {
-  /** Размер базы Огонька в байтах */
+  /** Размер базы Priday в байтах */
   storeBytes: number
   /** Размер всего localStorage приложения в байтах */
   totalBytes: number

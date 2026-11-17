@@ -56,7 +56,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'nav-streak',
     title: 'Твой стрик',
     description:
-      'Счётчик прожитых дней летописи. В Огоньке стрик никогда не сгорает от пропуска — каждый закрытый день сохраняется навсегда.',
+      'Счётчик прожитых дней летописи. В Priday стрик никогда не сгорает от пропуска — каждый закрытый день сохраняется навсегда.',
     requiresComposer: false,
     requiredView: 'home',
   },
@@ -103,7 +103,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'nav-premium',
     title: 'Премиум возможности',
     description:
-      'Неограниченная видеосвязь, полный разбор ментора Огонька, расширенная летопись и приоритетная верификация.',
+      'Неограниченная видеосвязь, полный разбор ментора Priday, расширенная летопись и приоритетная верификация.',
     requiresComposer: false,
     requiresDrawer: true,
     requiredView: 'home',

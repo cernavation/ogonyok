@@ -194,7 +194,7 @@ export function UpgradeModal({
   const config: UpgradeFeatureDetail = UPGRADE_FEATURES_CONFIG[currentFeatureKey] || {
     title: customTitle || 'Расширенные возможности',
     subtitle: 'Эта функция доступна на платном тарифе',
-    benefit: customBenefit || 'Обновите тариф, чтобы разблокировать доступ ко всем преимуществам Огонька.',
+    benefit: customBenefit || 'Обновите тариф, чтобы разблокировать доступ ко всем преимуществам Priday.',
     requiredTier: explicitRequiredTier || 'pro',
     icon: Sparkles,
     iconColor: 'text-[var(--accent)] bg-[var(--accent-soft)] border-[var(--accent)]/30',

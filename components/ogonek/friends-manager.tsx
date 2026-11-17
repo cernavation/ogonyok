@@ -233,7 +233,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
       .filter((u) => matches(u, query))
       .map((friend) => ({
         friendId: friend.id,
-        reason: friend.city ? `Живёт в ${friend.city} · держит огонь` : 'Участник сообщества Огонёк',
+        reason: friend.city ? `Живёт в ${friend.city} · держит огонь` : 'Участник сообщества Priday',
         matchPercent: 80,
         source: 'interest' as const,
         friend,

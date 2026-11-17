@@ -303,7 +303,7 @@ export function AppShell() {
     [dismissDesktopToast, openFriendsModal, updateStore]
   )
 
-  // Динамический заголовок вкладки: document.title «(3) Огонёк»
+  // Динамический заголовок вкладки: document.title «(3) Priday»
   useEffect(() => {
     const updateTitle = () => {
       const total = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
@@ -1211,7 +1211,7 @@ export function AppShell() {
     (fact: string) => {
       addEvidenceItem({
         title: fact,
-        description: 'Сохранено из записи дня в Огоньке',
+        description: 'Сохранено из записи дня в Priday',
         category: 'Спорт',
         date: new Date().toLocaleDateString('ru-RU'),
         pinned: true,

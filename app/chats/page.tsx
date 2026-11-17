@@ -1,8 +1,8 @@
 import { FullscreenMessenger } from '@/components/ogonek/messenger/fullscreen-messenger'
 
 export const metadata = {
-  title: 'Чаты — Огонёк',
-  description: 'Полноэкранный мессенджер Огонёк',
+  title: 'Чаты — Priday',
+  description: 'Полноэкранный мессенджер Priday',
 }
 
 export default function ChatsPage() {

@@ -108,7 +108,7 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
                 id="premium-modal-title"
                 className="text-[18px] sm:text-[20px] font-[900] tracking-tight text-[var(--text,#e7e9ea)] flex items-center gap-1.5"
               >
-                <span>Тарифы Огонька</span>
+                <span>Тарифы Priday</span>
                 <BadgeCheck size={20} className="text-[#1d9bf0]" />
               </h2>
             </div>

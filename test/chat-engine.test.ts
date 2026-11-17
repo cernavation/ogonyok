@@ -45,7 +45,7 @@ test('Telegram Web UX: Папки и фильтрация диалогов', () 
       draft: '',
       groupMeta: {
         id: 'group-runners',
-        title: 'Бегуны Огонька',
+        title: 'Бегуны Priday',
         avatarColor: '#ff7a18',
         memberIds: ['me', 'fr-voloshin'],
         createdAtISO: new Date().toISOString(),

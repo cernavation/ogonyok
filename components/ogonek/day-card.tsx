@@ -257,7 +257,7 @@ function DayCardComponent({
     playClick(soundEnabled)
     setLikeAnim('pressed')
     setTimeout(() => setLikeAnim('idle'), 400)
-    if (becameActive) onNotify?.('🔥 Огонёк зажжён!')
+    if (becameActive) onNotify?.('🔥 Priday зажжён!')
   }
 
   const handlePinTopFact = () => {
@@ -291,7 +291,7 @@ function DayCardComponent({
               <ShieldAlert size={12} /> Grace Period
             </span>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400 italic mt-1.5 leading-relaxed">
-              В этот день записей не было, но огонёк пути сохранён.
+              В этот день записей не было, но стрик пути в Priday сохранён.
             </p>
           </div>
         </div>
@@ -609,7 +609,7 @@ function DayCardComponent({
               </div>
             )}
 
-            {/* 5 канонических IconButton в футере поста (X.com standard: Ответить, В копилку, Огонёк, Поделиться, Ещё) */}
+            {/* 5 канонических IconButton в футере поста (X.com standard: Ответить, В копилку, Priday, Поделиться, Ещё) */}
             <div
               className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--line)] max-w-[460px]"
               role="group"
@@ -635,11 +635,11 @@ function DayCardComponent({
                 onClick={handlePinTopFact}
               />
 
-              {/* 3. 🔥 Огонёк */}
+              {/* 3. 🔥 Priday */}
               <IconButton
                 icon={<Flame size={18} className={liked ? 'fill-[var(--accent)] text-[var(--accent)]' : ''} />}
-                label={liked ? 'Снять огонёк' : 'Огонёк'}
-                tooltip={liked ? 'Снять огонёк' : 'Огонёк'}
+                label={liked ? 'Убрать огонь' : 'Огонь'}
+                tooltip={liked ? 'Убрать огонь' : 'Зажечь огонь'}
                 count={fireCount > 0 ? fireCount : ''}
                 active={liked}
                 variant="accent"

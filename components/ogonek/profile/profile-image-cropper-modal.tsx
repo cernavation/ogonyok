@@ -427,7 +427,7 @@ export function ProfileImageCropperModal({
                   className="flex items-center gap-2 text-xs font-semibold text-[var(--accent)] hover:underline"
                 >
                   <Palette className="w-4 h-4" />
-                  {showGradients ? 'Скрыть готовые градиенты' : 'Выбрать готовый градиент Огонька'}
+                  {showGradients ? 'Скрыть готовые градиенты' : 'Выбрать готовый градиент Priday'}
                 </button>
 
                 {onRemovePhoto && (

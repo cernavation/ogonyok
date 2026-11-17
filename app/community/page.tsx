@@ -263,10 +263,10 @@ export default function CommunityPage() {
                   </svg>
                 </div>
                 <h3 className="text-[20px] font-bold text-white mb-3 tracking-tight">
-                  3. Парный огонёк (Duo Streak)
+                  3. Парный стрик (Duo Streak)
                 </h3>
                 <p className="text-[14px] text-[#86868b] leading-relaxed">
-                  Когда вы оба закрываете день в летописи, ваш общий огонёк дружбы растёт. Пропустить вечер стыдно перед напарником — это мощнейший психологический барьер от лени.
+                  Когда вы оба закрываете день в летописи, ваш общий стрик дружбы в Priday растёт. Пропустить вечер стыдно перед напарником — это мощнейший психологический барьер от лени.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-white/5 text-[12px] font-mono text-[#f56900]">

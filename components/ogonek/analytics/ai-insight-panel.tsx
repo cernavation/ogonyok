@@ -184,7 +184,7 @@ export function AiInsightPanel({ days, period, onNavigate, onNotify, soundEnable
         {!analyzed ? (
           <div className="ai-reco-teaser">
             <p>
-              Огонёк разберёт твои оценки, обещания и месячные цели и подскажет, где ты силён,
+              Priday разберёт твои оценки, обещания и месячные цели и подскажет, где ты силён,
               где теряешь темп и что стоит изменить.
             </p>
             <button type="button" className="ai-cta-btn" onClick={runAnalysis} disabled={loading}>

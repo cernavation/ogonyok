@@ -65,7 +65,7 @@ export const SUPPORT_PERSONAS: Record<CommentPersona, PersonaMeta> = {
   support: {
     id: 'support',
     label: 'Поддержка',
-    author: 'Огонёк поддержки',
+    author: 'Priday поддержки',
     initials: '✦',
     hint: 'Тёплый голос поддержки рядом',
   },

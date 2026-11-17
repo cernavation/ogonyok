@@ -184,7 +184,7 @@ export default function RegisterPage() {
                       />
                     </svg>
                     <span className="text-[13px] font-semibold tracking-wide uppercase text-white/90">
-                      Огонёк · 2026
+                      Priday · 2026
                     </span>
                   </div>
 

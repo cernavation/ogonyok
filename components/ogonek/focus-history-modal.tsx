@@ -49,7 +49,7 @@ function formatDayLabel(dateKey: string): string {
 
 /**
  * ЭТАП 10 — История утренних фокусов по дням: проценты выполнения,
- * отметки каждого шага и статистика «Огонька фокуса».
+ * отметки каждого шага и статистика «Priday фокуса».
  */
 export function FocusHistoryModal({
   history,

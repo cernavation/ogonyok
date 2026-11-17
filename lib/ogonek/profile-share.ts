@@ -89,7 +89,7 @@ export function computeProfileStats(
   // Честное число дней дневника: ВСЕГДА profile.streak_count || days.length (запрещено выводить обрезанные цифры вроде 681)
   const totalDays = Math.max(profileStreak || 0, days.length, recordedDays, streakDays)
 
-  // В системе Огонька каждый день содержит 10 записей (5 гордостей + 5 благодарностей).
+  // В системе Priday каждый день содержит 10 записей (5 гордостей + 5 благодарностей).
   // Из-за лимитов БД (PostgREST 2000 строк) выборка записей может быть неполной.
   // Число записей выводится как (profile.streak_count || days.length) * 10
   const expectedMinEntries = totalDays * 10
@@ -203,7 +203,7 @@ export function formatProfileAsText(
   shareUrl: string
 ): string {
   const lines = [
-    `🔥 Огонёк · @${profile.username}`,
+    `🔥 Priday · @${profile.username}`,
     `${profile.displayName}${profile.verified ? ' ✓' : ''}`,
     profile.bio,
     '────────────────────',
@@ -401,7 +401,7 @@ export function generateProfileCardSvg(
   <!-- Brand -->
   <g transform="translate(70, 58)">
     <path d="M13.5 0L16.8 10.2L27 13.5L16.8 16.8L13.5 27L10.2 16.8L0 13.5L10.2 10.2Z" fill="url(#avaGrad)" />
-    <text x="38" y="20" fill="#ffffff" font-family="${FONT_STACK}" font-size="21" font-weight="800" letter-spacing="1.5">ОГОНЁК</text>
+    <text x="38" y="20" fill="#ffffff" font-family="${FONT_STACK}" font-size="21" font-weight="800" letter-spacing="1.5">PRIDAY</text>
     <text x="156" y="20" fill="#ffffff" fill-opacity="0.55" font-family="${FONT_STACK}" font-size="16" font-weight="500">· Визитка силы</text>
   </g>
   <text x="930" y="76" text-anchor="end" fill="${theme.accent}" font-family="${FONT_STACK}" font-size="15" font-weight="700" letter-spacing="1">PRO</text>
@@ -458,7 +458,7 @@ export function buildProfileStories(
       from: '#2a1206',
       to: '#7a2f0c',
       accent: '#ffa600',
-      shareText: `🔥 ${stats.streakDays}+ дней подряд в Огоньке! Рекорд — ${stats.best} дней.`,
+      shareText: `🔥 ${stats.streakDays}+ дней подряд в Priday! Рекорд — ${stats.best} дней.`,
     },
     {
       id: 'score',
@@ -470,7 +470,7 @@ export function buildProfileStories(
       from: '#0a1420',
       to: '#123a5a',
       accent: '#66ffd9',
-      shareText: `⭐ Мой средний балл силы — ${stats.avgAiScore.toFixed(1)} из 10 в Огоньке.`,
+      shareText: `⭐ Мой средний балл силы — ${stats.avgAiScore.toFixed(1)} из 10 в Priday.`,
     },
     {
       id: 'prides',
@@ -482,7 +482,7 @@ export function buildProfileStories(
       from: '#1a0f0a',
       to: '#5a2410',
       accent: '#ff8a3d',
-      shareText: `💪 Зафиксировал ${formatNumber(stats.totalPrides)} гордостей в Огоньке!`,
+      shareText: `💪 Зафиксировал ${formatNumber(stats.totalPrides)} гордостей в Priday!`,
     },
     {
       id: 'gratitudes',
@@ -494,7 +494,7 @@ export function buildProfileStories(
       from: '#240a17',
       to: '#6b1846',
       accent: '#f91880',
-      shareText: `❤️ ${formatNumber(stats.totalGratitudes)} благодарностей — язык сердца в Огоньке.`,
+      shareText: `❤️ ${formatNumber(stats.totalGratitudes)} благодарностей — язык сердца в Priday.`,
     },
     {
       id: 'goal',
@@ -560,7 +560,7 @@ export function generateStoryCardSvg(
 
   <g transform="translate(60, 74)">
     <path d="M15 0L18.7 11.3L30 15L18.7 18.7L15 30L11.3 18.7L0 15L11.3 11.3Z" fill="${story.accent}" />
-    <text x="44" y="23" fill="#ffffff" font-family="${FONT_STACK}" font-size="24" font-weight="800" letter-spacing="2">ОГОНЁК</text>
+    <text x="44" y="23" fill="#ffffff" font-family="${FONT_STACK}" font-size="24" font-weight="800" letter-spacing="2">PRIDAY</text>
   </g>
 
   <text x="60" y="640" fill="${story.accent}" font-family="${FONT_STACK}" font-size="26" font-weight="800" letter-spacing="4">${escapeXml(story.kicker)}</text>

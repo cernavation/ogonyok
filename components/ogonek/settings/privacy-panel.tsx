@@ -85,7 +85,7 @@ const TOGGLES: {
     key: 'searchableByUsername',
     icon: Search,
     onLabel: 'Можно найти по @username',
-    onHint: 'Профиль находится через поиск в хабе Огонька',
+    onHint: 'Профиль находится через поиск в хабе Priday',
     offLabel: 'Невидим для поиска',
     offHint: 'Тебя нельзя найти по имени пользователя',
     privateWhen: false,

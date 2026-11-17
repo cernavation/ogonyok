@@ -44,7 +44,7 @@ export const PROFILE_VISIBILITY_OPTIONS: ProfileVisibilityOption[] = [
     id: 'public',
     label: 'Открытый профиль',
     shortLabel: 'Публичный',
-    description: 'Летопись и гордости видят все участники Огонька в глобальной ленте',
+    description: 'Летопись и гордости видят все участники Priday в глобальной ленте',
     color: '#1d9bf0',
     emoji: '🌍',
   },

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
       const fallbackGifs = [
         {
           id: 'fb-fire',
-          title: 'Огонёк',
+          title: 'Priday',
           url: 'https://media.giphy.com/media/26tPplGWjN0xLybiU/giphy.gif',
           previewUrl: 'https://media.giphy.com/media/26tPplGWjN0xLybiU/giphy.gif',
         },

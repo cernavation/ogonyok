@@ -140,7 +140,7 @@ export function ProfilePanel({
           <div className="flex flex-col gap-1.5 flex-1 w-full text-center sm:text-left">
             <span className="text-sm font-bold text-[var(--text)]">Цвет аватара</span>
             <p className="text-xs text-[var(--text-2)]">
-              Фирменная палитра Огонька для монограммы профиля
+              Фирменная палитра Priday для монограммы профиля
             </p>
             <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap mt-1">
               {AVATAR_COLORS.map((col) => {

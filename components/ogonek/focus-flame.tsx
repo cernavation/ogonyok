@@ -15,7 +15,7 @@ type Props = {
 }
 
 /**
- * ЭТАП 10 — «Огонёк фокуса»: собственный счётчик выполнения утренних
+ * ЭТАП 10 — «Priday фокуса»: собственный счётчик выполнения утренних
  * обещаний. Чем длиннее серия сдержанных обещаний, тем жарче пламя.
  */
 export function FocusFlame({ stats, compact = false, className = '', onClick, title }: Props) {
@@ -57,12 +57,12 @@ export function FocusFlame({ stats, compact = false, className = '', onClick, ti
           className={`font-bold leading-tight ${compact ? 'text-[13px]' : 'text-[14px]'}`}
           style={{ color: 'var(--text)' }}
         >
-          {compact ? `Огонёк фокуса · ${stats.currentStreak} дн.` : 'Огонёк фокуса'}
+          {compact ? `Priday фокуса · ${stats.currentStreak} дн.` : 'Priday фокуса'}
         </p>
         <p className={`leading-tight text-[13px]`} style={{ color: 'var(--muted)' }}>
           {stats.hasHistory
             ? `${tier.label} · ${stats.totalFulfilled} обещаний сдержано`
-            : 'Запиши утренний фокус — зажги огонёк'}
+            : 'Запиши утренний фокус — зажги огонь'}
         </p>
       </div>
     </>

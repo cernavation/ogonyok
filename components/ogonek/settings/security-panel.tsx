@@ -134,7 +134,7 @@ export function SecurityPanel({ onNotify }: Props) {
               <KeyRound size={16} className="text-[var(--accent)]" /> ПИН-код приложения
             </h3>
             <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-              4-значный код для защиты от подглядывания при открытии Огонька
+              4-значный код для защиты от подглядывания при открытии Priday
             </p>
           </div>
 

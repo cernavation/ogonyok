@@ -21,7 +21,7 @@ type Props = {
 /**
  * ЛУЧШЕЕ ЗА СЕГОДНЯ В МИРЕ.
  * Горизонтальная карусель самых вовлекающих достижений дня со всей планеты.
- * Огонёк под карточкой реально зажигает реакцию в сторе.
+ * Priday под карточкой реально зажигает реакцию в сторе.
  */
 export function TodayHighlights({
   posts,
@@ -97,10 +97,10 @@ export function TodayHighlights({
                   onClick={() => {
                     const now = toggleExplorePostLike(post.id)
                     playClick(soundEnabled)
-                    onNotify(now ? '🔥 Огонёк зажжён под достижением!' : 'Огонёк снят')
+                    onNotify(now ? '🔥 Priday зажжён под достижением!' : 'Priday снят')
                   }}
                   aria-pressed={isLiked}
-                  aria-label={isLiked ? 'Убрать огонёк' : 'Зажечь огонёк'}
+                  aria-label={isLiked ? 'Убрать огонь' : 'Зажечь огонь'}
                 >
                   <Flame size={15} fill={isLiked ? 'currentColor' : 'none'} />
                   <span>{formatCommunityCount(post.likes + (isLiked ? 1 : 0))}</span>

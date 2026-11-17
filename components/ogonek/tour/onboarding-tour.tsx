@@ -27,7 +27,7 @@ type Props = {
 }
 
 /**
- * Улыбающийся Огонёк-маскот (SVG)
+ * Улыбающийся Priday-маскот (SVG)
  */
 function SmilingFlameMascot({ size = 44 }: { size?: number }) {
   return (

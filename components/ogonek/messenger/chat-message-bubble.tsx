@@ -549,7 +549,7 @@ export function ChatMessageBubble({
                 </button>
               )}
 
-              {/* Карточка-вложение Огонька (гордость, благодарность, день) */}
+              {/* Карточка-вложение Priday (гордость, благодарность, день) */}
               {message.attachment && (
                 <div className="mb-2 w-full min-w-[220px]">
                   <ChatAttachmentCard attachment={message.attachment} />

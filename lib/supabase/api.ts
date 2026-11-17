@@ -144,7 +144,7 @@ export const FALLBACK_SEED_PROFILES: ProfileRecord[] = [
     id: 'cernavation-seed',
     username: 'cernavation',
     display_name: 'Alexei Cerna',
-    bio: 'Создатель Огонька. Дисциплина и летопись побед.',
+    bio: 'Создатель Priday. Дисциплина и летопись побед.',
     city: 'Москва',
     avatar_url: '/author-avatar.png',
     avatar_image: '/author-avatar.png',

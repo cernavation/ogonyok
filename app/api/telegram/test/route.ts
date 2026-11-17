@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const text = '✦ <b>Огонёк: Тестовое сообщение!</b>\n\nСвязь между дневником и Telegram успешно установлена. Напоминания о дневнике активны!'
+    const text = '✦ <b>Priday: Тестовое сообщение!</b>\n\nСвязь между дневником и Telegram успешно установлена. Напоминания о дневнике активны!'
 
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',

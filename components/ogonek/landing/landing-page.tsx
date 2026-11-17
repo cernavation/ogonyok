@@ -132,7 +132,7 @@ const SHOWCASE_TABS = [
 const QUOTES = [
   {
     image: 'quote-1.jpg',
-    text: '740 дней — это рекорд максимального огонька на сайте. Когда каждый вечер фиксируешь победы, стрик становится непоколебимой внутренней опорой. И главное: ты сам выбираешь, делиться ими с миром или держать в секрете.',
+    text: '740 дней — это рекорд максимального стрика в Priday. Когда каждый вечер фиксируешь победы, стрик становится непоколебимой внутренней опорой. И главное: ты сам выбираешь, делиться ими с миром или держать в секрете.',
     author: 'Александр Церна',
     role: 'Основатель Priday · Рекорд стрика 740 дней',
     isFounder: true,
@@ -1234,7 +1234,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold shadow-[0_0_35px_rgba(0,113,227,0.6)] hover:shadow-[0_0_45px_rgba(0,113,227,0.85)] cursor-pointer"
                 >
-                  Зажечь свой огонёк →
+                  Начать свой путь в Priday →
                 </button>
                 <Link
                   href="/community"

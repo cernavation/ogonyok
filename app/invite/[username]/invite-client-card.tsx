@@ -45,7 +45,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           404 · Пользователь не найден
         </span>
         <h1 className="text-2xl font-bold text-[var(--text,#fff)] mb-2">
-          @{username} ещё нет в Огоньке
+          @{username} ещё нет в Priday
         </h1>
         <p className="text-sm text-[var(--muted,#71767b)] leading-relaxed mb-6">
           Возможно, никнейм был изменён или ссылка содержит опечатку. Но ты можешь занять этот ник первым и начать вести свой дневник побед!
@@ -56,7 +56,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[var(--accent,#ff5722)] hover:opacity-95 text-white font-bold text-sm transition-all shadow-md active:scale-98"
         >
           <Sparkles size={16} />
-          <span>Зарегистрироваться в Огоньке</span>
+          <span>Зарегистрироваться в Priday</span>
         </Link>
 
         <Link
@@ -106,7 +106,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
       {/* Логотип приложения */}
       <div className="flex items-center gap-2 text-xs font-bold text-[var(--accent,#ff5722)] tracking-wider uppercase mb-6">
         <Flame size={18} className="fill-[var(--accent,#ff5722)]" />
-        <span>Огонёк · Летопись побед</span>
+        <span>Priday · Летопись побед</span>
       </div>
 
       {/* Аватар приглашающего */}
@@ -156,7 +156,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
       {/* Описание био / приглашение */}
       <p className="text-sm text-[var(--text,#e7e9ea)] leading-relaxed mb-6 max-w-sm">
         {initialProfile.bio ||
-          'Приглашает тебя в закрытый клуб Огонька — ежедневно фиксировать гордости, благодарить и держать дисциплину.'}
+          'Приглашает тебя в закрытый клуб Priday — ежедневно фиксировать гордости, благодарить и держать дисциплину.'}
       </p>
 
       {/* Ошибки */}
@@ -196,7 +196,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           href={`/?ref=${encodeURIComponent(initialProfile.username)}&auth=register`}
           className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[var(--accent,#ff5722)] hover:opacity-95 text-white font-bold text-sm transition-all shadow-md active:scale-98"
         >
-          <span>Присоединиться к Огоньку</span>
+          <span>Присоединиться к Priday</span>
           <ArrowRight size={16} />
         </Link>
       )}

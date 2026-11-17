@@ -59,7 +59,7 @@ describe('Статический анализ графа импортов и о�
 
   it('директория lib/ogonek содержит валидные TypeScript модули', () => {
     const files = getTsFiles(libDir)
-    assert.ok(files.length > 10, 'Ожидается наличие основных модулей Огонька')
+    assert.ok(files.length > 10, 'Ожидается наличие основных модулей Priday')
   })
 
   it('граф зависимостей lib/ogonek не содержит прямых взаимных циклов A -> B -> A', () => {
