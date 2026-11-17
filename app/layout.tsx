@@ -12,6 +12,7 @@ import { APPEARANCE_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/appearance'
 import { SECURITY_BOOTSTRAP_SCRIPT } from '@/lib/ogonek/security'
 import { ServiceWorkerRegister } from '@/components/ogonek/sw-register'
 import { OfflineBanner } from '@/components/ogonek/offline-banner'
+import { Preloader } from '@/components/ui/preloader'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://ogonek.app'),
@@ -84,6 +85,7 @@ export default function RootLayout({
       <body className={`antialiased ${inter.variable}`} suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SECURITY_BOOTSTRAP_SCRIPT }} />
+        <Preloader />
         <ServiceWorkerRegister />
         <OfflineBanner />
         {children}

@@ -6,7 +6,6 @@ import {
   ExternalLink,
   ChevronDown,
   Sparkles,
-  Flame,
   Globe2,
   Lock,
   ArrowUp,
@@ -62,7 +61,18 @@ export function AppleFooter() {
                 href="/"
                 className="text-[#f5f5f7] hover:text-[#f56900] transition-colors flex items-center gap-1.5 font-medium"
               >
-                <Flame size={14} className="text-[#f56900]" />
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="appleFlameFooterTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#ffa600" />
+                      <stop offset="100%" stopColor="#ff6b35" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+                    fill="url(#appleFlameFooterTop)"
+                  />
+                </svg>
                 <span>Priday</span>
               </Link>
               <span className="text-[#424245]">›</span>
@@ -490,7 +500,18 @@ export function AppleFooter() {
         {/* ── 4. MASTER ROW (CLEAN, NO SYSTEMS STATUS, NO LANGUAGE SELECTOR) ─ */}
         <div className="fade-up delay-250 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
           <div className="flex items-center gap-2">
-            <Flame size={14} className="text-[#f56900]" />
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
+              <defs>
+                <linearGradient id="appleFlameFooterBottom" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffa600" />
+                  <stop offset="100%" stopColor="#ff6b35" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
+                fill="url(#appleFlameFooterBottom)"
+              />
+            </svg>
             <span className="font-semibold text-[#f5f5f7]">Priday</span>
             <span className="text-[#424245]">·</span>
             <span className="text-[#6e6e73]">
