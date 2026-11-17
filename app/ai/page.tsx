@@ -14,19 +14,22 @@ export default function AiPage() {
   const containerRef = useScrollReveal()
 
   return (
-    <div className="landing relative min-h-screen" ref={containerRef}>
+    <div className="landing relative min-h-screen !bg-transparent" ref={containerRef} style={{ backgroundColor: 'transparent' }}>
       {/* ── FIXED GLYPH CANVAS BACKGROUND (Constant across all scrolling blocks) ── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <GlyphBackground
           className="size-full"
-          glowColor="#2997ff"
+          glowColor="#38bdf8"
           shapeColor="#0071e3"
-          fontSize={10}
+          fontSize={11}
+          rest={0.22}
+          haze={0.65}
+          hoverInk={0.95}
           interactive={true}
         />
-        {/* Soft dark vignette over the glyphs for Apple-grade contrast and reading comfort */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90 pointer-events-none" />
-        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3]/10 top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        {/* Soft edge radial vignette only (center is crystal clear for glowing matrix) */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_30%,rgba(0,0,0,0.5)_100%)] pointer-events-none" />
+        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3]/15 top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       </div>
 
       {/* ── SCROLLING FOREGROUND STAGE ─────────────────────────────── */}
@@ -75,7 +78,7 @@ export default function AiPage() {
         </section>
 
         {/* ── 4 CORE PILLARS OF PRIDAY AI ───────────────────────────── */}
-        <section className="py-16 sm:py-20 md:py-28 bg-black/40 backdrop-blur-md border-t border-white/[0.08]">
+        <section className="py-16 sm:py-20 md:py-28 bg-[#0a0c10]/40 backdrop-blur-xl border-t border-white/[0.08]">
           <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
             <div className="text-center max-w-[760px] mx-auto mb-16 sm:mb-20">
               <span className="apple-eyebrow fade-up block mb-4">Архитектура ума</span>
@@ -89,7 +92,7 @@ export default function AiPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Pillar 1 */}
-              <div className="apple-card apple-card-hover fade-up delay-150 p-8 sm:p-10 rounded-[24px] bg-[#141416]/75 backdrop-blur-xl border border-white/10 hover:border-white/20 flex flex-col justify-between shadow-2xl transition-all">
+              <div className="apple-card apple-card-hover fade-up delay-150 p-8 sm:p-10 rounded-[24px] bg-[#0e1015]/70 backdrop-blur-2xl border border-white/10 hover:border-[#2997ff]/40 flex flex-col justify-between shadow-2xl transition-all">
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#f56900]/10 border border-[#f56900]/20 flex items-center justify-center text-[#f56900] mb-6">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -109,7 +112,7 @@ export default function AiPage() {
               </div>
 
               {/* Pillar 2 */}
-              <div className="apple-card apple-card-hover fade-up delay-250 p-8 sm:p-10 rounded-[24px] bg-[#141416]/75 backdrop-blur-xl border border-white/10 hover:border-white/20 flex flex-col justify-between shadow-2xl transition-all">
+              <div className="apple-card apple-card-hover fade-up delay-250 p-8 sm:p-10 rounded-[24px] bg-[#0e1015]/70 backdrop-blur-2xl border border-white/10 hover:border-[#2997ff]/40 flex flex-col justify-between shadow-2xl transition-all">
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/10 border border-[#0071e3]/20 flex items-center justify-center text-[#2997ff] mb-6">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -131,7 +134,7 @@ export default function AiPage() {
               </div>
 
               {/* Pillar 3 */}
-              <div className="apple-card apple-card-hover fade-up delay-350 p-8 sm:p-10 rounded-[24px] bg-[#141416]/75 backdrop-blur-xl border border-white/10 hover:border-white/20 flex flex-col justify-between shadow-2xl transition-all">
+              <div className="apple-card apple-card-hover fade-up delay-350 p-8 sm:p-10 rounded-[24px] bg-[#0e1015]/70 backdrop-blur-2xl border border-white/10 hover:border-[#2997ff]/40 flex flex-col justify-between shadow-2xl transition-all">
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#0071e3]/10 border border-[#0071e3]/20 flex items-center justify-center text-[#2997ff] mb-6">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -152,7 +155,7 @@ export default function AiPage() {
               </div>
 
               {/* Pillar 4 */}
-              <div className="apple-card apple-card-hover fade-up delay-450 p-8 sm:p-10 rounded-[24px] bg-[#141416]/75 backdrop-blur-xl border border-white/10 hover:border-white/20 flex flex-col justify-between shadow-2xl transition-all">
+              <div className="apple-card apple-card-hover fade-up delay-450 p-8 sm:p-10 rounded-[24px] bg-[#0e1015]/70 backdrop-blur-2xl border border-white/10 hover:border-[#2997ff]/40 flex flex-col justify-between shadow-2xl transition-all">
                 <div>
                   <div className="w-12 h-12 rounded-2xl bg-[#f56900]/10 border border-[#f56900]/20 flex items-center justify-center text-[#f56900] mb-6">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -187,7 +190,7 @@ export default function AiPage() {
                 <p className="apple-body mb-6 text-[#86868b] text-[17px] sm:text-[18px] leading-relaxed">
                   Панель AI Insight сопоставляет утренние намерения (Morning Focus) с тем, что ты фактически записал вечером.
                 </p>
-                <div className="p-5 rounded-2xl bg-[#161617]/75 backdrop-blur-xl border border-white/10 mb-6 shadow-xl">
+                <div className="p-5 rounded-2xl bg-[#0e1015]/75 backdrop-blur-2xl border border-white/10 mb-6 shadow-xl">
                   <div className="text-[13px] text-[#2997ff] mb-2 uppercase tracking-wider font-semibold">
                     Классификация рекомендаций:
                   </div>
@@ -209,7 +212,7 @@ export default function AiPage() {
               </div>
 
               <div className="lg:col-span-7 fade-scale delay-200">
-                <div className="apple-card overflow-hidden rounded-[24px] bg-[#161617]/70 backdrop-blur-xl border border-white/10 p-3 sm:p-5 shadow-2xl">
+                <div className="apple-card overflow-hidden rounded-[24px] bg-[#0e1015]/70 backdrop-blur-2xl border border-white/10 p-3 sm:p-5 shadow-2xl">
                   <div className="rounded-[20px] overflow-hidden border border-white/10 bg-black">
                     <MediaSlot
                       name="platform_03_analytics.png"
@@ -230,7 +233,7 @@ export default function AiPage() {
         </section>
 
         {/* ── TIERS COMPARISON FOR AI ────────────────────────────────── */}
-        <section id="pricing-ai" className="py-16 sm:py-20 md:py-28 bg-black/40 backdrop-blur-md border-t border-white/[0.08]">
+        <section id="pricing-ai" className="py-16 sm:py-20 md:py-28 bg-[#0a0c10]/40 backdrop-blur-xl border-t border-white/[0.08]">
           <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
             <div className="text-center max-w-[760px] mx-auto mb-16">
               <span className="apple-eyebrow fade-up block mb-4">Доступность по тарифам</span>
@@ -427,7 +430,7 @@ export default function AiPage() {
         </section>
 
         {/* ── FINAL CALL TO ACTION ──────────────────────────────────── */}
-        <section className="py-16 sm:py-20 md:py-28 bg-black/40 backdrop-blur-md border-t border-white/[0.08] text-center">
+        <section className="py-16 sm:py-20 md:py-28 bg-[#0a0c10]/40 backdrop-blur-xl border-t border-white/[0.08] text-center">
           <div className="max-w-[760px] mx-auto px-5 sm:px-8">
             <h2 className="apple-hero-title mb-5 sm:mb-6 !text-[36px] sm:!text-[48px]">
               Узнай, на что ты способен на самом деле.

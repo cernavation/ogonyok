@@ -33,8 +33,10 @@ const spotlightStyles = `
     --x: -1000px;
     --y: -1000px;
     position: relative;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background-color: #121214;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(16, 18, 24, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     background-image: radial-gradient(
       var(--spotlight-size, 260px) circle at var(--x) var(--y),
       hsl(var(--hue, 220) 90% 60% / calc(0.12 * var(--glow-opacity))),

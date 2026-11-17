@@ -18,7 +18,7 @@ import { usePageVisible } from "@animate-ui/react/utils/use-page-visible";
 import { cn } from "@/lib/utils";
 
 const CHARACTERS =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]<>()/+=*#$_&;:~^";
 const MAX_WAVES = 12;
 const TRAIL = 12;
 const TRAIL_LIFE = 700;
@@ -132,11 +132,11 @@ void main() {
   float epoch = floor(time * 0.08 * (0.4 + seed) + seed * 97.0);
   float character = floor(hash(index + epoch * 0.137) * count);
   vec2 local = fract(pixel / cell);
-  float ink = pow(texture2D(atlas, vec2((character + local.x) / count, local.y)).a, 1.7);
+  float ink = pow(texture2D(atlas, vec2((character + local.x) / count, local.y)).a, 1.35);
 
-  float grey = ink * clamp(rest + haze * mask * (1.0 + 0.3 * activity) + hoverInk * hover * (0.6 + 0.4 * mask), 0.0, 1.0);
-  float blue = ink * ring * 0.72;
-  float alpha = grey + blue - grey * blue;
+  float grey = ink * clamp(rest + haze * mask * (1.0 + 0.35 * activity) + hoverInk * hover * (0.7 + 0.3 * mask), 0.0, 1.0);
+  float blue = ink * ring * 0.95;
+  float alpha = clamp(grey * 1.5 + blue * 2.0, 0.0, 1.0);
   vec3 tint = color * grey * (1.0 - blue) + accent * blue;
   gl_FragColor = vec4(tint, alpha);
 }
@@ -156,6 +156,9 @@ export type GlyphBackgroundProps = React.ComponentProps<"div"> & {
   shapeColor?: string;
   fontSize?: number;
   interactive?: boolean;
+  rest?: number;
+  haze?: number;
+  hoverInk?: number;
 };
 
 function compile(gl: WebGLRenderingContext, type: number, source: string) {
@@ -202,6 +205,9 @@ type Frame = {
   accent: [number, number, number];
   waves: Float32Array;
   trail: Float32Array;
+  rest: number;
+  haze: number;
+  hoverInk: number;
 };
 
 function createRenderer(gl: WebGLRenderingContext) {
@@ -279,6 +285,9 @@ function createRenderer(gl: WebGLRenderingContext) {
       gl.uniform2f(uniforms.drift, ...frame.drift);
       gl.uniform3f(uniforms.color, ...frame.color);
       gl.uniform3f(uniforms.accent, ...frame.accent);
+      gl.uniform1f(uniforms.rest, frame.rest);
+      gl.uniform1f(uniforms.haze, frame.haze);
+      gl.uniform1f(uniforms.hoverInk, frame.hoverInk);
       gl.uniform4fv(uniforms.waves, frame.waves);
       gl.uniform4fv(uniforms.trail, frame.trail);
       gl.clearColor(0, 0, 0, 0);
@@ -291,8 +300,11 @@ function createRenderer(gl: WebGLRenderingContext) {
 function GlyphBackgroundContent({
   glowColor,
   shapeColor,
-  fontSize = 10,
+  fontSize = 11,
   interactive = true,
+  rest = 0.22,
+  haze = 0.65,
+  hoverInk = 0.95,
   className,
   children,
   onPointerMove,
@@ -316,7 +328,7 @@ function GlyphBackgroundContent({
   const resizeRef = React.useRef(() => {});
   const activityRef = React.useRef({ value: 0, at: 0 });
 
-  const options = { glowColor, shapeColor, fontSize };
+  const options = { glowColor, shapeColor, fontSize, rest, haze, hoverInk };
   const optionsRef = React.useRef(options);
   React.useLayoutEffect(() => {
     optionsRef.current = options;
@@ -435,6 +447,7 @@ function GlyphBackgroundContent({
       const activity =
         energy.value *
         Math.exp(-Math.max(0, time - energy.at) / ACTIVITY_DECAY);
+      const { rest: r = 0.22, haze: h = 0.65, hoverInk: hi = 0.95 } = optionsRef.current;
       renderer.draw({
         activity,
         width: canvas.width,
@@ -447,6 +460,9 @@ function GlyphBackgroundContent({
         accent,
         waves,
         trail,
+        rest: r,
+        haze: h,
+        hoverInk: hi,
       });
     };
 

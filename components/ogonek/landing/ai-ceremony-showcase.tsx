@@ -105,7 +105,7 @@ export function AiCeremonyShowcase() {
         <GlowCard
           glowColor="blue"
           customSize
-          className="p-6 sm:p-8 md:p-10 border border-white/10 bg-[#121214] shadow-2xl relative overflow-hidden"
+          className="p-6 sm:p-8 md:p-10 border border-white/15 bg-[#0f1117]/75 backdrop-blur-2xl shadow-2xl relative overflow-hidden"
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between pb-6 border-b border-white/[0.08] mb-6 flex-wrap gap-4">
@@ -309,7 +309,7 @@ export function AiCeremonyShowcase() {
         <GlowCard
           glowColor="orange"
           customSize
-          className="p-6 sm:p-8 md:p-10 border border-white/10 bg-[#121214] shadow-2xl relative overflow-hidden"
+          className="p-6 sm:p-8 md:p-10 border border-white/15 bg-[#0f1117]/75 backdrop-blur-2xl shadow-2xl relative overflow-hidden"
         >
           {/* Milestone Selection Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/[0.08] mb-6 gap-4">
