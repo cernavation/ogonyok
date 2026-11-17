@@ -162,7 +162,9 @@ async function runAudit() {
 
     console.log('[AUDIT]: Загрузка landing page на десктопе 1440x900...')
     await page.goto(`${BASE_URL}/`, { waitUntil: 'domcontentloaded' })
-    await page.waitForTimeout(1000)
+    // Wait for brand LiquidGlass preloader to complete its 3s wow-effect reveal and fade out
+    await page.waitForSelector('[aria-label="Загрузка Priday"]', { state: 'detached', timeout: 8000 }).catch(() => {})
+    await page.waitForTimeout(500)
 
     // Trigger reveal classes
     await page.evaluate(() => {
