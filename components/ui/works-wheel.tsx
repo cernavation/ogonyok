@@ -95,6 +95,20 @@ export function WorksWheel({
   const turn = React.useRef(0);
   const target = React.useRef(0);
   const [active, setActive] = React.useState(0);
+
+  // Card hover & select states for smooth enlargement and dimming of other cards
+  const [hovered, setHovered] = React.useState<number | null>(null);
+  const [selected, setSelected] = React.useState<number | null>(null);
+  const hoveredRef = React.useRef<number | null>(null);
+  const selectedRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    hoveredRef.current = hovered;
+  }, [hovered]);
+
+  React.useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   
   // Initialize with window dimensions so cards are NEVER 0px/collapsed from first render
   const [stage, setStage] = React.useState<Stage>(() => {
@@ -106,6 +120,11 @@ export function WorksWheel({
 
   const count = items.length;
   const last = Math.max(count - 1, 0);
+
+  // Per-card smooth animation states (scale, opacity, subtitle opacity)
+  const currentScales = React.useRef<number[]>([]);
+  const currentOpacities = React.useRef<number[]>([]);
+  const currentSubOpacities = React.useRef<number[]>([]);
 
   const [reduced, setReduced] = React.useState(false);
   React.useEffect(() => {
@@ -142,14 +161,13 @@ export function WorksWheel({
     const cardH = cardW / CARD_RATIO;
     const drumR = cardH * DRUM;
 
-    // +40% larger resting ring radius:
-    // Forms a grand 680px-720px diameter ring on desktop
+    // Grand resting ring radius
     const maxRingR = isNarrow
       ? Math.min(h * 0.32, w * 0.38, 240)
       : Math.min(h * 0.38, w * 0.28, 350);
     const ringR = Math.max(maxRingR, 145);
 
-    // +40% larger card scale inside the ring (~210-220px wide cards on desktop)
+    // Card scale inside the ring (~210-220px wide cards on desktop)
     const ringScale = count
       ? clamp((((2 * Math.PI * ringR) / count) * 0.86) / (cardW || 1), 0.28, 0.46)
       : 0.35;
@@ -177,6 +195,13 @@ export function WorksWheel({
     const { ringR, ringScale, drumR, bow } = metrics;
     const isNarrow = stage.w < 1024;
 
+    // Ensure interpolation arrays match count
+    if (currentScales.current.length !== count) {
+      currentScales.current = new Array(count).fill(ringScale);
+      currentOpacities.current = new Array(count).fill(1);
+      currentSubOpacities.current = new Array(count).fill(0);
+    }
+
     const draw = () => {
       frame = requestAnimationFrame(draw);
       const gap = target.current - turn.current;
@@ -186,6 +211,7 @@ export function WorksWheel({
       const t = turn.current;
       const m = clamp(t, 0, 1);
       const pos = Math.max(0, t - 1);
+      const near = clamp(Math.round(pos), 0, last);
 
       // On desktop (>=1024px), smoothly shift drum to the RIGHT (+190px) into the freed space!
       const drumShiftX = isNarrow ? 0 : Math.min(stage.w * 0.14, 190) * m;
@@ -196,44 +222,117 @@ export function WorksWheel({
         wheelRef.current.style.transform = `translateX(${drumShiftX}px) translateY(${drumShiftY}px) translateZ(${-m * drumR}px)`;
       }
 
+      const hoveredIdx = hoveredRef.current;
+      const selectedIdx = selectedRef.current;
+      const anyFocus = hoveredIdx !== null || selectedIdx !== null;
+
       for (let i = 0; i < count; i++) {
         const d = i - pos;
         const drumDeg = d * STEP;
         const card = cardRefs.current[i];
+        const isHovered = hoveredIdx === i;
+        const isSelected = selectedIdx === i;
+        const hasFocus = isHovered || isSelected;
+
         if (card) {
-          card.style.transform = place(
-            d * (360 / count),
-            drumDeg,
-            ringR,
-            drumR,
-            bow,
-            m,
-          );
-          // On mobile/tablet: cull non-active cards when turned to keep screen clean and clear
-          if (isNarrow && m > 0.25) {
-            const op = Math.max(0, 1 - Math.abs(d) * 1.6);
-            card.style.opacity = Math.abs(d) > 0.65 ? "0" : String(op);
-          } else {
-            // Soft contrast: active card 1.0, distant neighbor cards fade slightly
-            const op = Math.max(0.2, 1 - Math.abs(d) * 0.45);
-            card.style.opacity = m > 0.5 && Math.abs(d) > CULL ? "0" : (m > 0.5 ? String(op) : "1");
+          // Extra 3D pop when focused
+          const zLift = hasFocus ? (m < 0.25 ? 55 : 30) : 0;
+          card.style.transform =
+            place(
+              d * (360 / count),
+              drumDeg,
+              ringR,
+              drumR,
+              bow,
+              m,
+            ) + (zLift ? ` translateZ(${zLift}px)` : "");
+
+          // Calculate base opacity
+          let baseOp = 1;
+          if (m > 0.25) {
+            if (isNarrow) {
+              baseOp = Math.abs(d) > 0.65 ? 0 : Math.max(0, 1 - Math.abs(d) * 1.6);
+            } else {
+              baseOp =
+                m > 0.5 && Math.abs(d) > CULL
+                  ? 0
+                  : Math.max(0.2, 1 - Math.abs(d) * 0.45);
+            }
           }
-          card.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
+
+          // Focused card is fully opaque; other cards slightly dimmed
+          let targetOp = baseOp;
+          if (hasFocus) {
+            targetOp = 1.0;
+          } else if (anyFocus) {
+            targetOp = baseOp * 0.32;
+          }
+
+          const curOp = currentOpacities.current[i] ?? targetOp;
+          const nextOp = curOp + (targetOp - curOp) * (reduced ? 1 : 0.18);
+          currentOpacities.current[i] = nextOp;
+          card.style.opacity = Math.abs(nextOp) < 0.005 ? "0" : nextOp.toFixed(3);
+
+          // Z-index: focused card stays on top
+          if (hasFocus) {
+            card.style.zIndex = "450";
+          } else {
+            card.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
+          }
         }
+
         const face = card?.firstElementChild as HTMLElement | null;
         if (face) {
-          face.style.transform = `scale(${lerp(ringScale, 1, m)})`;
-          // Subtitle overlay only fades in when turned into drum, keeping the resting ring pure and uncluttered
+          const baseScale = lerp(ringScale, 1, m);
+
+          // Enlarge smoothly when hovered or selected
+          let targetScale = baseScale;
+          if (hasFocus) {
+            targetScale = m < 0.25 ? Math.min(0.86, ringScale * 1.95) : baseScale * 1.06;
+          } else if (anyFocus) {
+            targetScale = baseScale * 0.94;
+          }
+
+          const curScale = currentScales.current[i] ?? targetScale;
+          const nextScale = curScale + (targetScale - curScale) * (reduced ? 1 : 0.18);
+          currentScales.current[i] = nextScale;
+          face.style.transform = `scale(${nextScale.toFixed(4)})`;
+
+          // Subtitle / Full phrase overlay opacity:
+          // Shows full phrase when focused (hovered or selected)
+          let targetSubOp = 0;
+          if (hasFocus) {
+            targetSubOp = 1.0;
+          } else if (m > 0.25) {
+            targetSubOp =
+              clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
+          } else {
+            targetSubOp = 0;
+          }
+
+          const curSubOp = currentSubOpacities.current[i] ?? targetSubOp;
+          const nextSubOp = curSubOp + (targetSubOp - curSubOp) * (reduced ? 1 : 0.22);
+          currentSubOpacities.current[i] = nextSubOp;
+
           const sub = face.querySelector(".card-subtitle-overlay") as HTMLElement | null;
           if (sub) {
-            sub.style.opacity = m > 0.25 ? String(clamp((m - 0.25) / 0.5, 0, 1)) : "0";
+            sub.style.opacity = Math.abs(nextSubOp) < 0.005 ? "0" : nextSubOp.toFixed(3);
           }
         }
       }
 
-      if (labelRef.current) labelRef.current.style.opacity = String(1 - m);
-      if (titleRef.current) titleRef.current.style.opacity = String(m);
-      const near = clamp(Math.round(pos), 0, last);
+      // Center ring label opacity: soften when a card is focused in ring mode
+      if (labelRef.current) {
+        const ringLabelBase = 1 - m;
+        const ringLabelOp = anyFocus && m < 0.3 ? ringLabelBase * 0.15 : ringLabelBase;
+        labelRef.current.style.opacity = ringLabelOp.toFixed(3);
+      }
+
+      // Left title overlay opacity in drum mode
+      if (titleRef.current) {
+        titleRef.current.style.opacity = m.toFixed(3);
+      }
+
       setActive((prev) => (prev === near ? prev : near));
 
       if (onTurnChangeRef.current) {
@@ -272,26 +371,18 @@ export function WorksWheel({
         const headerH = header ? (header as HTMLElement).offsetHeight : 280;
 
         const rect = track.getBoundingClientRect();
-        // Animation scroll range inside track
         const totalAnimScroll = track.offsetHeight - headerH - window.innerHeight;
         if (totalAnimScroll <= 0) return;
 
-        // Start animation ONLY when user scrolled past the header and the circle is at viewport center
         const currentAnimScroll = -rect.top - headerH;
 
         if (currentAnimScroll <= 0) {
-          // Still scrolling down to reach circle center: keep at rest (turn = 0)
           target.current = 0;
           return;
         }
 
         const progress = clamp(currentAnimScroll / totalAnimScroll, 0, 1);
 
-        // Map scroll progress to wheel turn:
-        // 0.00 -> 0.06: Dwell at rest circle so user can appreciate the centered ring (turn = 0)
-        // 0.06 -> 0.16: Expand ring to 3D drum, item 0 at front (turn 0 -> 1)
-        // 0.16 -> 0.92: Turn through items 0..8 (turn 1 -> count)
-        // 0.92 -> 1.00: Settle on item 8 (turn = count)
         let nextTarget = 0;
         if (progress <= 0.06) {
           nextTarget = 0;
@@ -344,6 +435,10 @@ export function WorksWheel({
 
   const drag = React.useRef<number | null>(null);
 
+  // Determine currently focused item for side headline
+  const focusedIndex = hovered ?? selected ?? active;
+  const currentItem = items[focusedIndex] ?? items[active] ?? items[0];
+
   return (
     <div
       aria-label={label}
@@ -360,12 +455,15 @@ export function WorksWheel({
       <div
         ref={stageRef}
         tabIndex={0}
-        role="listbox"
+        role="region"
         aria-label={label}
-        aria-activedescendant={`works-wheel-${active}`}
         className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing overflow-visible z-10"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
+          if (event.target === stageRef.current) {
+            setSelected(null);
+            selectedRef.current = null;
+          }
           drag.current = event.clientY;
           event.currentTarget.setPointerCapture(event.pointerId);
         }}
@@ -373,7 +471,6 @@ export function WorksWheel({
           if (drag.current === null) return;
           const delta = drag.current - event.clientY;
           drag.current = event.clientY;
-          // Smoothly scroll window when dragging on stage
           window.scrollBy({ top: delta * 1.5, behavior: "instant" as ScrollBehavior });
         }}
         onPointerUp={() => {
@@ -381,9 +478,18 @@ export function WorksWheel({
         }}
         onKeyDown={(event) => {
           if (event.key === "ArrowDown" || event.key === "ArrowRight") {
-            scrollToItem(Math.min(count - 1, active + 1));
+            const next = Math.min(count - 1, active + 1);
+            setSelected(next);
+            selectedRef.current = next;
+            scrollToItem(next);
           } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-            scrollToItem(Math.max(0, active - 1));
+            const prev = Math.max(0, active - 1);
+            setSelected(prev);
+            selectedRef.current = prev;
+            scrollToItem(prev);
+          } else if (event.key === "Escape") {
+            setSelected(null);
+            selectedRef.current = null;
           } else {
             return;
           }
@@ -395,19 +501,55 @@ export function WorksWheel({
           className="absolute top-1/2 left-1/2 [transform-style:preserve-3d]"
         >
           {items.map((item, i) => {
-            const Tag = (item.href ? "a" : "div") as "a";
             const isCurrent = i === active;
+            const isHovered = hovered === i;
+            const isSelected = selected === i;
+            const hasFocus = isHovered || isSelected;
+
             return (
               <React.Fragment key={item.title}>
-                <Tag
+                <div
                   id={`works-wheel-${i}`}
-                  role="option"
-                  aria-selected={isCurrent}
-                  href={item.href}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${item.tag ? `${item.tag}: ` : ""}${item.title}`}
+                  aria-selected={isCurrent || isSelected}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (selectedRef.current === i) {
+                      setSelected(null);
+                      selectedRef.current = null;
+                    } else {
+                      setSelected(i);
+                      selectedRef.current = i;
+                      if (turn.current > 0.4) {
+                        scrollToItem(i);
+                      }
+                    }
+                  }}
+                  onPointerEnter={() => {
+                    setHovered(i);
+                    hoveredRef.current = i;
+                  }}
+                  onPointerLeave={() => {
+                    setHovered(null);
+                    hoveredRef.current = null;
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      const next = selectedRef.current === i ? null : i;
+                      setSelected(next);
+                      selectedRef.current = next;
+                    }
+                  }}
                   ref={(node: HTMLElement | null) => {
                     cardRefs.current[i] = node;
                   }}
-                  className="group absolute [backface-visibility:hidden] transition-shadow duration-300"
+                  className={cn(
+                    "group absolute [backface-visibility:hidden] cursor-pointer outline-none transition-shadow duration-300",
+                    hasFocus && "z-50",
+                  )}
                   style={{
                     width: metrics.cardW,
                     height: metrics.cardH,
@@ -415,22 +557,56 @@ export function WorksWheel({
                     marginTop: -metrics.cardH / 2,
                   }}
                 >
-                  <span className="relative block size-full overflow-hidden rounded-2xl bg-[#16161a] border border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)] transition-transform duration-300 group-hover:scale-[1.01]">
+                  <span
+                    className={cn(
+                      "relative block size-full overflow-hidden rounded-2xl bg-[#16161a] border transition-all duration-300",
+                      hasFocus
+                        ? "border-[#2997ff]/60 shadow-[0_24px_80px_rgba(0,113,227,0.35),0_32px_70px_rgba(0,0,0,0.95)] ring-1 ring-[#2997ff]/50"
+                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)] group-hover:border-white/30",
+                    )}
+                  >
                     <img
                       src={item.image}
                       alt={item.title}
                       draggable={false}
-                      className="size-full object-cover select-none"
+                      className={cn(
+                        "size-full object-cover select-none transition-all duration-300",
+                        hasFocus ? "scale-105 brightness-105" : "group-hover:scale-[1.02]",
+                      )}
                     />
 
-                    {/* Subtle bottom gradient and description ONLY in drum mode - completely clean ring at rest! */}
-                    {item.subtitle && (
-                      <div className="card-subtitle-overlay opacity-0 absolute bottom-0 inset-x-0 p-4 sm:p-5 md:p-6 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none transition-opacity duration-300">
-                        <p className="text-[#f5f5f7] text-xs sm:text-sm md:text-base font-normal leading-relaxed drop-shadow-md">
-                          {item.subtitle}
-                        </p>
+                    {/* Category tag pill in top-left corner of each card */}
+                    {item.tag && (
+                      <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 pointer-events-none">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-300 shadow-md",
+                            hasFocus
+                              ? "bg-[#0071e3] text-white border border-white/30 shadow-[0_0_12px_rgba(0,113,227,0.8)]"
+                              : "bg-black/75 backdrop-blur-md text-[#2997ff] border border-white/20",
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              hasFocus ? "bg-white" : "bg-[#2997ff]",
+                            )}
+                          />
+                          {item.tag}
+                        </span>
                       </div>
                     )}
+
+                    {/* Full phrase overlay with gradient at bottom (strictly >= 16px font, no cut-off words) */}
+                    <div
+                      className={cn(
+                        "card-subtitle-overlay absolute bottom-0 inset-x-0 p-4 sm:p-5 md:p-6 bg-gradient-to-t from-black/95 via-black/80 to-transparent pointer-events-none transition-opacity duration-300 z-20 flex flex-col justify-end",
+                      )}
+                    >
+                      <p className="text-white text-[16px] sm:text-[17px] md:text-[18px] font-medium leading-snug drop-shadow-md break-words">
+                        {item.title}
+                      </p>
+                    </div>
 
                     {action && item.href ? (
                       <span className="bg-black/70 text-white border border-white/20 pointer-events-none absolute right-3.5 top-3.5 flex translate-y-1 items-center gap-1.5 rounded-full px-3 py-1 text-xs backdrop-blur-md opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
@@ -452,7 +628,7 @@ export function WorksWheel({
                       </span>
                     ) : null}
                   </span>
-                </Tag>
+                </div>
               </React.Fragment>
             );
           })}
@@ -462,7 +638,7 @@ export function WorksWheel({
       {/* Ring center label (visible when at rest before scroll) */}
       <div
         ref={labelRef}
-        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20"
+        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 transition-opacity duration-300"
       >
         <span className="text-[#2997ff] text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
           Интерактивная галерея
@@ -471,7 +647,7 @@ export function WorksWheel({
           {label}
         </h3>
         <p className="text-[#86868b] text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2.5 max-w-[220px] sm:max-w-[320px] drop-shadow">
-          Листай страницу вниз, чтобы исследовать ключевые победы
+          Нажми на карточку или листай страницу вниз
         </p>
         <div className="mt-3 sm:mt-4 flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[11px] sm:text-xs text-[#a1a1a6]">
           <span className="inline-block size-1.5 sm:size-2 rounded-full bg-[#0071e3] animate-pulse" />
@@ -485,25 +661,30 @@ export function WorksWheel({
         className="pointer-events-none absolute top-[68px] sm:top-20 lg:top-1/2 left-4 sm:left-6 lg:left-[5%] xl:left-[8%] right-4 sm:right-6 lg:right-auto lg:-translate-y-1/2 flex flex-col items-center lg:items-start text-center lg:text-left max-w-full lg:max-w-[340px] xl:max-w-[420px] tracking-tight opacity-0 z-30 transition-opacity duration-300"
       >
         <div className="inline-flex flex-col items-center lg:items-start px-4 py-2.5 sm:px-5 sm:py-3 lg:p-0 rounded-2xl lg:rounded-none bg-black/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/12 lg:border-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] lg:shadow-none">
-          {items[active]?.tag && (
+          {currentItem?.tag && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] lg:text-xs font-semibold tracking-wider uppercase mb-1.5 lg:mb-2 bg-[#0071e3]/25 text-[#2997ff] border border-[#0071e3]/30">
               <span className="size-1.5 rounded-full bg-[#2997ff]" />
-              {items[active].tag}
+              {currentItem.tag}
             </span>
           )}
           <h3 className="text-xl sm:text-2xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-snug drop-shadow-md">
-            {items[active]?.title}
+            {currentItem?.title}
           </h3>
         </div>
       </div>
 
-      {/* Dynamic Island Floating Control Bar (Fixed to bottom with offset, docking upon completion) */}
+      {/* Dynamic Island Floating Control Bar (Fixed to bottom with offset) */}
       <div className="absolute bottom-6 sm:bottom-8 md:bottom-10 inset-x-0 flex justify-center items-center pointer-events-auto z-40">
         <div className="flex items-center gap-2 sm:gap-2.5 p-1.5 sm:p-2 rounded-full bg-[#121215]/85 backdrop-blur-2xl border border-white/[0.12] shadow-[0_16px_48px_rgba(0,0,0,0.85)]">
           {/* Previous Arrow Button */}
           <button
             type="button"
-            onClick={() => scrollToItem(Math.max(0, active - 1))}
+            onClick={() => {
+              const prev = Math.max(0, active - 1);
+              setSelected(prev);
+              selectedRef.current = prev;
+              scrollToItem(prev);
+            }}
             className="size-8 sm:size-9 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-95 border border-white/10 flex items-center justify-center text-white/90 hover:text-white transition cursor-pointer"
             aria-label="Предыдущая победа"
           >
@@ -515,21 +696,25 @@ export function WorksWheel({
           {/* Dots Island */}
           <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-black/60 border border-white/[0.06]">
             {items.map((item, i) => {
-              const isCurrent = i === active;
+              const isCurrent = i === focusedIndex;
               return (
                 <button
                   key={item.title}
                   type="button"
-                  onClick={() => scrollToItem(i)}
+                  onClick={() => {
+                    setSelected(i);
+                    selectedRef.current = i;
+                    scrollToItem(i);
+                  }}
                   className="group relative py-1 flex items-center justify-center cursor-pointer border-0 bg-transparent outline-none"
-                  aria-label={`Перейти к: ${item.title}`}
+                  aria-label={`Перейти к: ${item.tag ?? item.title}`}
                 >
                   <span
                     className={cn(
                       "block rounded-full transition-all duration-300 pointer-events-none",
                       isCurrent
                         ? "w-5 sm:w-6 h-1.5 sm:h-2 bg-[#2997ff] shadow-[0_0_12px_rgba(41,151,255,0.85)]"
-                        : "size-1.5 sm:size-2 bg-white/30 hover:bg-white/55"
+                        : "size-1.5 sm:size-2 bg-white/30 hover:bg-white/55",
                     )}
                   />
                 </button>
@@ -540,7 +725,12 @@ export function WorksWheel({
           {/* Next Arrow Button */}
           <button
             type="button"
-            onClick={() => scrollToItem(Math.min(count - 1, active + 1))}
+            onClick={() => {
+              const next = Math.min(count - 1, active + 1);
+              setSelected(next);
+              selectedRef.current = next;
+              scrollToItem(next);
+            }}
             className="size-8 sm:size-9 rounded-full bg-white/[0.08] hover:bg-white/[0.18] active:scale-95 border border-white/10 flex items-center justify-center text-white/90 hover:text-white transition cursor-pointer"
             aria-label="Следующая победа"
           >
