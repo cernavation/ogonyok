@@ -587,19 +587,19 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          10. ТАРИФЫ (Честная подписка)
+          10. ТАРИФЫ (Честная модель навсегда)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="pricing"
-        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
         aria-label="Тарифы и подписка"
       >
-        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 right-1/4 -z-0 opacity-15" />
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00]/10 top-1/2 right-1/4 -z-0 pointer-events-none" />
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
           <div className="text-center max-w-[800px] mx-auto mb-12 sm:mb-16">
             <span className="apple-eyebrow fade-up block mb-4">{PRICING_CONTENT.eyebrow}</span>
-            <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
+            <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
               {PRICING_CONTENT.title}
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
@@ -624,7 +624,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                   billingCycle === 'yearly'
-                    ? 'bg-[#0071e3] text-white font-semibold shadow-md'
+                    ? 'bg-[#FF4D00] text-white font-semibold shadow-md'
                     : 'text-[#86868b] hover:text-white'
                 }`}
               >
@@ -650,10 +650,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     БАЗОВЫЙ ПЛАН
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    Свободный
+                    Базовый
                   </h3>
                   <p className="text-[14px] text-[#86868b] mb-6">
-                    Для тех, кому нужна точка внутренней опоры и спокойный сон.
+                    Всё необходимое для ежедневной летописи и стрика.
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
@@ -664,30 +664,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   </div>
 
                   <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Дневник гордостей и благодарностей</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Стрик, который не сгорает</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Публичный или секретный профиль</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Защищённые P2P звонки и чаты</span>
-                    </li>
+                    {PRICING_CONTENT.tiers[0].features.map((feat) => (
+                      <li key={feat} className="flex items-center gap-3">
+                        <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -701,26 +685,26 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               </div>
             </GlowCard>
 
-            {/* TIER 2: PRO */}
+            {/* TIER 2: PRO (РЕКОМЕНДУЕМЫЙ С ТОНКОЙ ОРАНЖЕВОЙ РАМКОЙ) */}
             <GlowCard
-              glowColor="blue"
+              glowColor="orange"
               customSize
-              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative"
+              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative border border-[#FF4D00] shadow-[0_0_30px_rgba(255,77,0,0.12)]"
             >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#0071e3] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20">
-                ★ Выбор сообщества
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF4D00] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20">
+                ★ Рекомендуемый
               </div>
 
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
-                  <div className="text-[12px] font-mono text-[#2997ff] uppercase tracking-wider mb-2 font-semibold">
-                    ПРЕМИУМ ПЛАН
+                  <div className="text-[12px] font-mono text-[#FF4D00] uppercase tracking-wider mb-2 font-semibold">
+                    РЕКОМЕНДУЕМЫЙ ПЛАН
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    Огонёк Pro
+                    Премиум
                   </h3>
                   <p className="text-[14px] text-[#86868b] mb-6">
-                    Нейросетевой разбор дня и сейф фото-доказательств.
+                    Официальная верификация и умный ИИ-анализ каждого дня.
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
@@ -733,30 +717,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   </div>
 
                   <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8">
-                    <li className="flex items-center gap-3 font-medium text-[#2997ff]">
-                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>1 ИИ-оценка летописи в сутки нейросетью</span>
-                    </li>
-                    <li className="flex items-center gap-3 font-medium text-white">
-                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Evidence Vault: фото-доказательства побед</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Зашифрованные видеозвонки HD</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#0071e3] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Расширенная аналитика стрика и вех</span>
-                    </li>
+                    {PRICING_CONTENT.tiers[1].features.map((feat, idx) => (
+                      <li key={feat} className={`flex items-center gap-3 ${idx < 2 ? 'font-medium text-white' : ''}`}>
+                        <svg className="w-4 h-4 text-[#FF4D00] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -765,7 +733,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold cursor-pointer"
                 >
-                  Выбрать Премиум Pro →
+                  Выбрать
                 </button>
               </div>
             </GlowCard>
@@ -778,14 +746,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
-                  <div className="text-[12px] font-mono text-[#f56900] uppercase tracking-wider mb-2 font-semibold">
+                  <div className="text-[12px] font-mono text-[#f5b942] uppercase tracking-wider mb-2 font-semibold">
                     КЛУБ ОСНОВАТЕЛЕЙ
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
                     Основатель Ultra
                   </h3>
                   <p className="text-[14px] text-[#86868b] mb-6">
-                    Максимальная глубина, золотой статус и прямой вклад в проект.
+                    Максимальная глубина, персональный ментор и золотой статус.
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
@@ -798,39 +766,23 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   </div>
 
                   <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                    <li className="flex items-center gap-3 font-medium text-white">
-                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>До 5 000 символов на запись</span>
-                    </li>
-                    <li className="flex items-center gap-3 font-medium text-white">
-                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>До 3 фото в сутки в Evidence Vault</span>
-                    </li>
-                    <li className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Глубокие отчёты о вехах (100, 200, 300+ дней)</span>
-                    </li>
-                    <li className="flex items-center gap-3 text-[#f56900] font-medium">
-                      <svg className="w-4 h-4 text-[#f56900] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                      <span>Золотой статус ⚡ ULTRA FOUNDER</span>
-                    </li>
+                    {PRICING_CONTENT.tiers[2].features.map((feat) => (
+                      <li key={feat} className="flex items-center gap-3 font-medium text-white">
+                        <svg className="w-4 h-4 text-[#f5b942] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10 hover:border-white/20"
                 >
-                  Стать Основателем
+                  Выбрать
                 </button>
               </div>
             </GlowCard>
