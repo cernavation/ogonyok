@@ -12,7 +12,7 @@ interface AppleNavbarProps {
 const NAV_LINKS = [
   { label: 'Как это работает', href: '/#how' },
   { label: 'ИИ-наставник', href: '/ai' },
-  { label: 'Отзывы', href: '/#quotes' },
+  { label: 'Примеры', href: '/#quotes' },
   { label: 'Тарифы', href: '/#pricing' },
 ]
 
