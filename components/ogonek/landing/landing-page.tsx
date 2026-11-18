@@ -12,6 +12,7 @@ import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { AiCeremonyShowcase } from './ai-ceremony-showcase'
+import { AppInterfaceShowcase } from './app-interface-showcase'
 import { GLOBE_TESTIMONIALS } from './reviews-data'
 import {
   HERO_CONTENT,
@@ -179,58 +180,46 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         aria-label="Как это работает"
       >
         <div id="showcase" className="scroll-mt-24 sm:scroll-mt-32" />
-        <div className="apple-ambient-orb w-[500px] h-[500px] bg-[#f56900] top-1/3 -left-32 -z-0 opacity-10" />
+        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00] top-1/4 -left-32 -z-0 opacity-10 pointer-events-none" />
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="fade-up mb-4">
-            <span className="apple-eyebrow">{HOW_IT_WORKS_CONTENT.eyebrow}</span>
+          <div className="text-center max-w-[820px] mx-auto mb-12 sm:mb-16">
+            <span className="apple-eyebrow fade-up block mb-4 !text-[#FF4D00]">{HOW_IT_WORKS_CONTENT.eyebrow}</span>
+            <h2 className="apple-section-title fade-up delay-75 mb-6">
+              {HOW_IT_WORKS_CONTENT.title}
+            </h2>
+            <p className="apple-body fade-up delay-100 max-w-[700px] mx-auto text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+              {HOW_IT_WORKS_CONTENT.subtitle}
+            </p>
           </div>
-          <h2 className="apple-section-title fade-up delay-75 mb-6 max-w-[920px]">
-            {HOW_IT_WORKS_CONTENT.title}
-          </h2>
-          <p className="apple-body fade-up delay-100 max-w-[700px] mb-16 sm:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            {HOW_IT_WORKS_CONTENT.subtitle}
-          </p>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-            {/* Left: Real platform interface preview */}
-            <div className="lg:col-span-7 fade-scale delay-150">
-              <div className="apple-card apple-card-hover overflow-hidden p-2.5 sm:p-3 bg-[#121214] border border-white/10 shadow-2xl rounded-[24px]">
-                <MediaSlot
-                  name={HOW_IT_WORKS_CONTENT.interfaceScreenshot}
-                  width={1440}
-                  height={900}
-                  ratio="16:10"
-                  alt="Интерфейс дневника Огонёк"
-                  rounded={false}
-                  priority
-                />
-              </div>
-            </div>
+          {/* Interactive Interface Showcase with real screenshots & orange pointers */}
+          <div className="fade-scale delay-150 mb-16 sm:mb-20">
+            <AppInterfaceShowcase />
+          </div>
 
-            {/* Right: 3 actionable steps */}
-            <div className="lg:col-span-5 flex flex-col gap-10">
-              {HOW_IT_WORKS_CONTENT.steps.map((item, idx) => (
-                <div
-                  key={item.step}
-                  className={`fade-slide-left delay-${(idx + 2) * 100} ${
-                    idx !== HOW_IT_WORKS_CONTENT.steps.length - 1 ? 'border-b border-white/[0.08] pb-10' : ''
-                  }`}
-                >
-                  <div className="flex items-baseline gap-3.5 mb-2.5">
-                    <span className="text-[13px] font-mono text-[#f56900] tracking-wider font-semibold">
+          {/* 3 Actionable Ritual Steps */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-[1100px] mx-auto">
+            {HOW_IT_WORKS_CONTENT.steps.map((item, idx) => (
+              <div
+                key={item.step}
+                className="apple-card p-6 sm:p-7 bg-[#121215]/80 border border-white/[0.08] rounded-2xl flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-[13px] font-mono text-[#FF4D00] tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#FF4D00]/10 border border-[#FF4D00]/25">
                       {item.step}
                     </span>
-                    <h3 className="text-[22px] font-semibold tracking-tight text-[#f5f5f7]">
+                    <h3 className="text-[18px] sm:text-[19px] font-semibold text-white tracking-tight">
                       {item.title}
                     </h3>
                   </div>
-                  <p className="text-[15px] leading-relaxed text-[#86868b] pl-8">
+                  <p className="text-[14px] sm:text-[15px] leading-relaxed text-[#86868b]">
                     {item.desc}
                   </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
