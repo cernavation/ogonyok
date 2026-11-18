@@ -64,7 +64,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="hero"
-        className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-16 pb-20 px-5 sm:px-8 scroll-mt-24 sm:scroll-mt-32"
+        className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-28 sm:pt-36 md:pt-40 pb-20 sm:pb-28 md:pb-32 px-5 sm:px-8 scroll-mt-24 sm:scroll-mt-32"
         aria-label="Главный экран Огонёк"
       >
         {/* Full-width video slot in background */}
@@ -84,36 +84,33 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           <div className="apple-video-overlay" aria-hidden="true" />
         </div>
 
-        {/* Top blue halo accent */}
-        <div className="apple-ambient-orb w-[500px] h-[140px] bg-[#0071e3]/20 top-0 left-1/2 -translate-x-1/2 -z-0 pointer-events-none" />
-
         {/* Hero Content */}
         <div className="relative z-20 max-w-[1080px] mx-auto text-center flex flex-col items-center">
           <div className="fade-blur mb-5 sm:mb-6 inline-flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                fill="#f56900"
+                fill="#FF4D00"
               />
             </svg>
-            <span className="apple-eyebrow">
+            <span className="apple-eyebrow !text-[#FF4D00]">
               {HERO_CONTENT.eyebrow}
             </span>
           </div>
 
-          <h1 className="apple-hero-title apple-hero-shadow fade-blur delay-75 mb-6 sm:mb-8 max-w-[1040px]">
-            <span className="inline-block">{HERO_CONTENT.title}</span>
+          <h1 className="apple-hero-title apple-hero-shadow fade-blur delay-75 mb-6 sm:mb-8 max-w-[960px] text-wrap-balance">
+            {HERO_CONTENT.title}
           </h1>
 
-          <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[740px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[20px] leading-relaxed font-normal">
+          <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[680px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[19px] md:text-[20px] leading-[1.35] font-normal text-wrap-balance">
             {HERO_CONTENT.subtitle}
           </p>
 
-          <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
+          <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap mb-6 sm:mb-8">
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="apple-btn-primary !px-8 !py-3.5 !text-[15px] shadow-[0_0_24px_rgba(0,113,227,0.4)] cursor-pointer"
+              className="apple-btn-primary !px-8 !py-3.5 !text-[15px] cursor-pointer"
             >
               {HERO_CONTENT.ctaPrimary}&nbsp;→
             </button>
@@ -126,7 +123,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </button>
           </div>
 
-          <div className="fade-up delay-250 mt-6 text-[12px] font-mono text-[#b0b0b5] apple-hero-shadow tracking-wider">
+          <div className="fade-up delay-250 text-[12px] sm:text-[13px] font-mono text-[#c7c7cc] apple-hero-shadow tracking-wider">
             {HERO_CONTENT.trustBadge}
           </div>
         </div>
@@ -766,7 +763,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold shadow-[0_0_25px_rgba(0,113,227,0.5)] cursor-pointer"
+                  className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold cursor-pointer"
                 >
                   Выбрать Премиум Pro →
                 </button>
@@ -900,7 +897,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold shadow-[0_0_35px_rgba(0,113,227,0.6)] hover:shadow-[0_0_45px_rgba(0,113,227,0.85)] cursor-pointer"
+                  className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold cursor-pointer"
                 >
                   {FINAL_CTA_CONTENT.ctaButton} →
                 </button>

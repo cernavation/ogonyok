@@ -46,20 +46,20 @@ export default function AiPage() {
               </span>
             </div>
 
-            <h1 className="apple-hero-title fade-blur delay-75 mb-6 max-w-[920px] text-[34px] sm:text-[52px] md:text-[64px] font-bold tracking-tight text-white leading-[1.08]">
+            <h1 className="apple-hero-title fade-blur delay-75 mb-6 sm:mb-8 max-w-[920px] text-wrap-balance">
               ИИ, который не льстит.
               <br />
               <span className="text-[#FF4D00]">Трезвый разбор твоих побед.</span>
             </h1>
 
-            <p className="apple-body fade-up delay-150 max-w-[680px] mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            <p className="apple-body apple-hero-subtitle fade-up delay-150 max-w-[680px] mb-8 sm:mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-[1.35] text-wrap-balance">
               Никакой лести и шаблонных комплиментов. Огонёк видит скрытый темп и силу твоих решений.
             </p>
 
-            <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap mb-14">
+            <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap mb-10 sm:mb-14">
               <Link
                 href="/register"
-                className="apple-btn-primary !px-8 !py-3.5 !text-[15px] !bg-[#FF4D00] hover:!bg-[#ff621f] shadow-[0_0_30px_rgba(255,77,0,0.35)] cursor-pointer"
+                className="apple-btn-primary !px-8 !py-3.5 !text-[15px] cursor-pointer"
               >
                 Начать бесплатно
               </Link>
@@ -395,7 +395,7 @@ export default function AiPage() {
             </p>
             <Link
               href="/register"
-              className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold !bg-[#FF4D00] hover:!bg-[#ff621f] shadow-[0_0_35px_rgba(255,77,0,0.5)] cursor-pointer"
+              className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold cursor-pointer"
             >
               Начать бесплатно
             </Link>

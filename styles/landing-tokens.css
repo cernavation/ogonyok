@@ -20,6 +20,8 @@
   --color-silver-mist: #cccccc;
   --color-smoke: #424245;
   --color-apple-blue: #0071e3;
+  --color-apple-blue-rgb: rgba(0, 113, 227, 1);
+  --color-apple-blue-glow: rgba(0, 113, 227, 0.45);
   --color-link-blue: #0066cc;
   --color-halo-blue: #2997ff;
   --color-signal-orange: #f56900;
@@ -142,7 +144,7 @@
   margin-top: 0;
 }
 
-/* ── Hero Headline Spacing & Rhythm ── */
+/* ── Hero Headline Spacing & Rhythm (24-32px from h1 to subtitle) ── */
 .landing .apple-hero-title {
   margin-top: 0;
   margin-bottom: 24px !important;
@@ -157,6 +159,8 @@
 .landing .apple-hero-subtitle {
   margin-top: 0;
   margin-bottom: 32px !important;
+  line-height: 1.35;
+  text-wrap: balance;
 }
 @media (min-width: 640px) {
   .landing .apple-hero-subtitle {
@@ -167,8 +171,8 @@
 /* ══════════════════════════════════════════════════════════════════════════
    CANONICAL APPLE TYPOGRAPHY SYSTEM FOR ALL HEADINGS
    - h1: clamp(36px, 5vw, 72px), line-height: 1.08, letter-spacing: -0.02em, text-wrap: balance
-   - h2: clamp(28px, 3.5vw, 48px), line-height: 1.12, letter-spacing: -0.02em, text-wrap: balance
-   - h3: clamp(20px, 2.2vw, 28px), line-height: 1.25, letter-spacing: -0.02em, text-wrap: balance
+   - h2: clamp(28px, 3.5vw, 48px), line-height: 1.10, letter-spacing: -0.02em, text-wrap: balance
+   - h3: clamp(20px, 2vw, 28px), line-height: 1.25, letter-spacing: -0.02em, text-wrap: balance
    ══════════════════════════════════════════════════════════════════════════ */
 
 .landing h1,
@@ -188,7 +192,7 @@
   font-family: var(--font-sf-pro-display);
   font-size: clamp(28px, 3.5vw, 48px) !important;
   font-weight: 700;
-  line-height: 1.12 !important;
+  line-height: 1.10 !important;
   letter-spacing: -0.02em !important;
   text-wrap: balance;
   color: var(--color-frost-white);
@@ -198,7 +202,7 @@
 .landing h3,
 .landing .apple-card-title {
   font-family: var(--font-sf-pro-display);
-  font-size: clamp(20px, 2.2vw, 28px) !important;
+  font-size: clamp(20px, 2vw, 28px) !important;
   font-weight: 600;
   line-height: 1.25 !important;
   letter-spacing: -0.02em !important;
@@ -223,15 +227,19 @@
   text-shadow: 0 2px 24px rgba(0, 0, 0, 0.45);
 }
 
-/* ── Main Video Overlay: 60% black darkening with subtle blue glow only at the very top ── */
+/* ── Main Video Overlay: lighter gradient (top <= 0.25, mid 0.15-0.24, bottom <= 0.55) ── */
 .landing .apple-video-overlay {
   position: absolute;
   inset: 0;
   z-index: 10;
   pointer-events: none;
-  background: 
-    radial-gradient(ellipse 60% 25% at 50% 0%, rgba(0, 113, 227, 0.22) 0%, transparent 70%),
-    rgba(0, 0, 0, 0.60);
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.22) 0%,
+    rgba(0, 0, 0, 0.18) 35%,
+    rgba(0, 0, 0, 0.24) 60%,
+    rgba(0, 0, 0, 0.52) 100%
+  );
 }
 
 
@@ -305,17 +313,14 @@
   letter-spacing: -0.03em;
 }
 
-/* ── Primary CTA Button (Apple Blue Filled) ──────────────────────────
-   "Filled pill button: background #0071e3, text #ffffff, 36px border-radius,
-   10px vertical / 20px horizontal padding, SF Pro Text 14px weight 600,
-   letter-spacing -0.22px. The only filled chromatic button on the page." */
+/* ── Primary CTA Button (Signal Orange Filled #FF4D00, No Neon Glow) ── */
 .landing .apple-btn-primary {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background-color: var(--color-apple-blue);
+  background-color: #FF4D00;
   color: var(--color-paper-white);
   border-radius: var(--radius-buttons);
   font-family: var(--font-sf-pro-text);
@@ -326,41 +331,21 @@
   border: none;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.25s var(--apple-ease);
+  transition: background-color 0.2s var(--apple-ease), transform 0.2s var(--apple-ease);
   text-decoration: none;
-}
-
-.landing .apple-btn-primary::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -120%;
-  width: 60%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.25) 50%,
-    transparent 100%
-  );
-  transform: skewX(-20deg);
-  transition: left 0.7s ease;
-  pointer-events: none;
-}
-
-.landing .apple-btn-primary:hover::after {
-  left: 200%;
+  box-shadow: none !important;
 }
 
 .landing .apple-btn-primary:hover {
-  background-color: #0077ed;
+  background-color: #ff621f;
   transform: scale(1.02);
-  box-shadow: 0 0 25px rgba(0, 113, 227, 0.45);
+  box-shadow: none !important;
 }
 
 .landing .apple-btn-primary:active {
-  transform: scale(0.97);
-  background-color: #006edb;
+  transform: scale(0.98);
+  background-color: #e64500;
+  box-shadow: none !important;
 }
 
 /* ── Ghost Button (Borderless text action beside CTA) ────────────────

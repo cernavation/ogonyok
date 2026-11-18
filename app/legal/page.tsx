@@ -26,11 +26,11 @@ export default function LegalPage() {
             <span className="apple-eyebrow !text-[#2997ff]">Правовые стандарты и защита данных</span>
           </div>
 
-          <h1 className="apple-hero-title fade-blur delay-150 mb-5 sm:mb-6">
+          <h1 className="apple-hero-title fade-blur delay-150 mb-6 sm:mb-8 text-wrap-balance">
             Условия и конфиденциальность
           </h1>
 
-          <p className="apple-body fade-up delay-250 max-w-[640px] mb-8 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+          <p className="apple-body apple-hero-subtitle fade-up delay-250 max-w-[640px] mb-8 sm:mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-[1.35] text-wrap-balance">
             Честные, прозрачные правила сервиса Priday. Твой контент остаётся твоей собственностью, а данные защищены.
           </p>
 
