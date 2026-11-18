@@ -11,7 +11,6 @@ import { AuthModal } from '../auth/auth-modal'
 import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
-import { AiCeremonyShowcase } from './ai-ceremony-showcase'
 import { AppInterfaceShowcase } from './app-interface-showcase'
 import storiesData from '@/src/content/stories.json'
 import {
@@ -305,14 +304,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="ai"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
-        aria-label="ИИ-наставник Огонёк"
+        aria-label="ИИ-анализ"
       >
-        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-15" />
+        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#FF4D00]/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none" />
 
         <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
-          <div className="text-center max-w-[840px] mx-auto mb-12 sm:mb-16">
+          <div className="text-center max-w-[840px] mx-auto mb-10 sm:mb-14">
             <span className="apple-eyebrow fade-up block mb-4">{AI_ANALYSIS_CONTENT.eyebrow}</span>
-            <h2 className="apple-section-title fade-up delay-75 mb-6">
+            <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
               {AI_ANALYSIS_CONTENT.title}
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
@@ -320,7 +319,90 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </p>
           </div>
 
-          <AiCeremonyShowcase />
+          {/* Три короткие карточки */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-[1040px] mx-auto mb-12 sm:mb-16">
+            {AI_ANALYSIS_CONTENT.cards.map((card, idx) => (
+              <div
+                key={card.id}
+                className={`fade-up delay-${(idx + 1) * 75} p-6 sm:p-7 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between group`}
+              >
+                <div>
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 border transition-transform group-hover:scale-105"
+                    style={{
+                      backgroundColor: `${card.tone}15`,
+                      borderColor: `${card.tone}35`,
+                      color: card.tone,
+                    }}
+                  >
+                    {card.icon === 'TrendingUp' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+                        <polyline points="16 7 22 7 22 13" />
+                      </svg>
+                    )}
+                    {card.icon === 'Sparkles' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 3l1.912 4.986L19 9.898l-4.088 3.002L16.824 18 12 14.544 7.176 18l1.912-5.1L5 9.898l5.088-.912L12 3z" />
+                      </svg>
+                    )}
+                    {card.icon === 'Clock' && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                    )}
+                  </div>
+                  <h3 className="text-[18px] sm:text-[19px] font-semibold text-white tracking-tight mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-[14px] sm:text-[15px] text-[#86868b] leading-relaxed">
+                    {card.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Реальный скриншот страницы статистики */}
+          <div className="max-w-[1040px] mx-auto fade-scale delay-200">
+            <div className="p-2 sm:p-3 rounded-[24px] sm:rounded-[28px] bg-[#121215] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
+              <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/[0.06] mb-2 sm:mb-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                </div>
+                <span className="text-[11px] sm:text-[12px] font-mono text-[#86868b]">
+                  Огонёк — Аналитика и рост
+                </span>
+                <span className="text-[11px] font-mono text-emerald-400">
+                  AI Active
+                </span>
+              </div>
+
+              <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#0a0a0c]">
+                <picture>
+                  <source media="(max-width: 640px)" srcSet={AI_ANALYSIS_CONTENT.mobileScreenshot} />
+                  <img
+                    src={AI_ANALYSIS_CONTENT.screenshot}
+                    alt="Реальный скриншот страницы статистики и ИИ-анализа Огонёк"
+                    className="w-full h-auto object-cover block"
+                    loading="lazy"
+                  />
+                </picture>
+              </div>
+            </div>
+
+            <div className="mt-8 text-center">
+              <Link
+                href="/ai"
+                className="inline-flex items-center gap-2 text-[15px] font-medium text-[#FF4D00] hover:text-[#ff6b26] transition-colors cursor-pointer"
+              >
+                <span>Подробнее о том, как работает ИИ в Огоньке →</span>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -189,9 +189,34 @@ export const TEMPO_CONTENT = {
 
 /* ── 5. ИИ-АНАЛИЗ ─────────────────────────────────────────────────── */
 export const AI_ANALYSIS_CONTENT = {
-  eyebrow: 'Умный наставник',
+  eyebrow: 'ИИ-анализ',
   title: 'Огонёк видит рост, который ты не замечаешь',
   subtitle: 'Нейросеть читает твои записи и показывает сильные стороны, темп и то, куда уходит время.',
+  screenshot: '/landing/screens/analytics.png',
+  mobileScreenshot: '/landing/screens/mobile-analytics.png',
+  cards: [
+    {
+      id: 'pace',
+      title: 'Твой темп',
+      desc: 'Сравнение с твоим прошлым месяцем.',
+      icon: 'TrendingUp',
+      tone: '#2997ff',
+    },
+    {
+      id: 'strengths',
+      title: 'Твои сильные стороны',
+      desc: 'Темы, в которых ты растёшь быстрее всего.',
+      icon: 'Sparkles',
+      tone: '#FF4D00',
+    },
+    {
+      id: 'time',
+      title: 'Куда уходит время',
+      desc: 'Заметь привычки, которые мешают целям.',
+      icon: 'Clock',
+      tone: '#f59e0b',
+    },
+  ],
 }
 
 /* ── 6. ДРУЗЬЯ И СЕМЬЯ ─────────────────────────────────────────────── */
