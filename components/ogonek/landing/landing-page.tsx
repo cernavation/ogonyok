@@ -13,7 +13,7 @@ import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { AiCeremonyShowcase } from './ai-ceremony-showcase'
 import { AppInterfaceShowcase } from './app-interface-showcase'
-import { GLOBE_TESTIMONIALS } from './reviews-data'
+import storiesData from '@/src/content/stories.json'
 import {
   HERO_CONTENT,
   PRIDE_WHEEL_CONTENT,
@@ -388,20 +388,21 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          7. ЗЕМЛЯ (3D Глобус отзывов со всего мира)
+          7. ЗЕМЛЯ (Примеры записей со всего мира)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="quotes"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Люди по всему миру"
+        aria-label="Примеры записей"
       >
         <TestimonialGlobe
-          items={GLOBE_TESTIMONIALS}
+          items={storiesData.globeStories as any}
+          extraItems={storiesData.extraStories as any}
           eyebrow={GLOBE_CONTENT.eyebrow}
           heading={GLOBE_CONTENT.title}
           caption={GLOBE_CONTENT.subtitle}
-          autoplay
-          interval={3600}
+          autoRotate
+          rotationSpeed={0.08}
         />
       </section>
 

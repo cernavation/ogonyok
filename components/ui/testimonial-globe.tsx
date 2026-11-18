@@ -11,90 +11,84 @@ type Tone = 1 | 2 | 3 | 4 | 5;
 
 export interface GlobeTestimonial {
   id: string;
-  /** One or two sentences. Longer quotes are clamped to four lines. */
+  type?: "example" | "real";
+  /** One or two sentences starting with «Горжусь тем, что…» */
   quote: string;
-  name: string;
-  role?: string;
-  company?: string;
-  /** City shown on the card and in the pin's accessible name. */
+  /** City name shown on the card and in the pin's accessible name. */
   city: string;
-  /** Short country code such as "MD", "KZ", "GE". Distinct values feed the country counter. */
+  /** Short country code such as "MD", "GB", "US". */
   country?: string;
+  /** Topic category (e.g. "Семья", "Спорт", "Работа") */
+  topic?: string;
   /** Pin latitude in degrees (south is negative). */
   lat: number;
   /** Pin longitude in degrees (west is negative). */
   lng: number;
-  /** Square portrait shown in the pin and on the card. */
-  image: string;
-  /** Star rating from 1 to 5. */
-  rating?: number;
+  /** Portrait or avatar image */
+  image?: string;
   /** Ring color token (1: Signal Orange, 2: Apple Blue, 3: Sapphire, 4: Amber, 5: Frost White) */
   tone?: Tone;
 }
 
+export interface ExtraStoryItem {
+  id: string;
+  type?: "example" | "real";
+  city: string;
+  country?: string;
+  topic?: string;
+  quote: string;
+}
+
 export interface TestimonialGlobeLabels {
-  /** Accessible name of the previous-review button. */
   previous: string;
-  /** Accessible name of the next-review button. */
   next: string;
-  /** Start of each pin's accessible name, followed by "<name>, <city>". */
   pin: string;
-  reviewsCountLabel?: string;
-  averageLabel?: string;
-  countriesLabel?: string;
+  storiesCountLabel?: string;
+  citiesLabel?: string;
 }
 
 export interface TestimonialGlobeProps extends React.ComponentProps<"section"> {
   items: GlobeTestimonial[];
+  extraItems?: ExtraStoryItem[];
   eyebrow?: string;
   heading?: string;
   caption?: string;
-  /** Call to action rendered next to the counters, e.g. a link to all reviews. */
+  /** Call to action rendered next to the counters */
   action?: React.ReactNode;
-  /** Spin while idle. Always off when the visitor prefers reduced motion. */
+  /** Spin while idle. Always off when visitor prefers reduced motion. */
   autoRotate?: boolean;
-  /** Idle spin speed in radians per second. */
+  /** Idle spin speed in radians per second. Continuous without pauses. */
   rotationSpeed?: number;
-  /** Feature the reviews one by one, turning each pin to the front. Off by default and never runs with reduced motion. */
-  autoplay?: boolean;
-  /** Milliseconds between two featured reviews while autoplay runs. */
-  interval?: number;
-  /** Controlled featured review (index into items), or null for none. */
+  /** Controlled featured story index, or null */
   active?: number | null;
-  /** Called whenever the featured review changes: autoplay, hover, click, keys, or a drag or spin that brings another pin to the front. */
+  /** Called whenever featured story changes */
   onActiveChange?: (index: number | null) => void;
-  /** Largest globe diameter in pixels. The globe shrinks to fit narrow containers. */
+  /** Largest globe diameter in pixels */
   size?: number;
   labels?: TestimonialGlobeLabels;
 }
 
-const GLOBE_RADIUS = 0.8; // cobe draws the sphere at 0.8 of the half-canvas
-const THETA = 0.3; // tilt toward the viewer, in radians
-const PIN_ALTITUDE = 0.05; // pins float just above the map
-const DRAG_FRICTION = 0.92; // per 60 Hz frame
-const RELEASE_GRACE_MS = 80;
-const TEXTURE_RETRY_MS = [150, 600, 1500];
-const TURN_MS = 1200; // a featured pin reaches the front in this time
+const GLOBE_RADIUS = 0.8;
+const THETA = 0.3; // tilt toward viewer in radians
+const PIN_ALTITUDE = 0.05; // pins float just above sphere
+const DRAG_FRICTION = 0.94; // smooth inertia decay
 const SWAP_MS = 220;
-const HOLD_MS = 7000; // a clicked pin keeps the globe paused this long
-const DRAG_SLOP = 6;
-const SWIPE_MIN = 40;
+const DRAG_SLOP = 5;
+const SWIPE_MIN = 35;
 const WIDE_MIN = 620;
-const FRONT_MARGIN = 0.06;
 const MAX_CONTENT = 1200;
 
 const DEFAULT_LABELS: TestimonialGlobeLabels = {
-  previous: "Предыдущий отзыв",
-  next: "Следующий отзыв",
-  pin: "Показать историю:",
-  reviewsCountLabel: "отзывов",
-  averageLabel: "средняя оценка",
-  countriesLabel: "стран",
+  previous: "Предыдущая запись",
+  next: "Следующая запись",
+  pin: "Запись из г.",
+  storiesCountLabel: "записей на карте",
+  citiesLabel: "городов мира",
 };
 
 /* ── Apple-calibrated ring & ping color classes matching Ogonek Design System ── */
 const RING = {
-  1: "ring-[#f56900]",
+  1: "ring-[#FF4D00]",
   2: "ring-[#0071e3]",
   3: "ring-[#2997ff]",
   4: "ring-[#ff9500]",
@@ -102,7 +96,7 @@ const RING = {
 } as const;
 
 const PING = {
-  1: "border-[#f56900]",
+  1: "border-[#FF4D00]",
   2: "border-[#0071e3]",
   3: "border-[#2997ff]",
   4: "border-[#ff9500]",
@@ -127,7 +121,7 @@ function toCartesian(lat: number, lng: number): Vec3 {
   return [-c * Math.cos(lo), Math.sin(la), c * Math.sin(lo)];
 }
 
-// Same rotation cobe applies on the GPU, so the HTML pins stay glued to the map.
+// Exactly matches cobe GPU rotation so HTML pins stay glued to the continents.
 function project([x, y, z]: Vec3, phi: number, theta: number, altitude: number) {
   const cp = Math.cos(phi);
   const sp = Math.sin(phi);
@@ -140,43 +134,27 @@ function project([x, y, z]: Vec3, phi: number, theta: number, altitude: number) 
   return { x: (sx + 1) / 2, y: (1 - sy) / 2, depth, rim: Math.hypot(sx, sy) - GLOBE_RADIUS };
 }
 
-/** The rotation that turns a longitude to face the viewer. */
 function facingPhi(lng: number) {
   return (3 * Math.PI) / 2 - (lng * Math.PI) / 180;
 }
 
-/** The copy of `angle` (mod 2π) closest to `from`, so every turn takes the short way round. */
 function nearestTurn(from: number, angle: number) {
   const tau = Math.PI * 2;
   return angle + tau * Math.round((from - angle) / tau);
 }
 
-// Pins thin out toward the horizon and vanish once the sphere hides them.
 function pinOpacity(depth: number, rim: number) {
   if (depth >= 0) return 0.45 + 0.55 * smooth(clamp01(depth / 0.3));
   const exposed = Math.max(clamp01(rim / 0.04), clamp01(1 + depth * 8));
   return 0.45 * exposed * clamp01(1 + depth * 3);
 }
 
-// …and shrink as they roll away, so the face of the globe reads as near and the rim as far.
 function pinScale(depth: number) {
-  return 0.62 + 0.38 * smooth(clamp01((depth + 0.2) / 0.7));
+  return 0.65 + 0.35 * smooth(clamp01((depth + 0.2) / 0.7));
 }
 
-// Exponential ease-out over a fixed time: a quick start, then a long settle onto the target.
 function easeOutExpo(t: number) {
   return t >= 1 ? 1 : (1 - Math.pow(2, -10 * t)) / (1 - Math.pow(2, -10));
-}
-
-function StarIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 20 20" aria-hidden="true" className={className}>
-      <polygon
-        points="10,1.2 12.4,6.7 18.3,7.3 13.9,11.3 15.2,17.1 10,14.1 4.8,17.1 6.1,11.3 1.7,7.3 7.6,6.7"
-        fill="currentColor"
-      />
-    </svg>
-  );
 }
 
 function QuoteMark({ className }: { className?: string }) {
@@ -204,36 +182,6 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
-function Portrait({ src, className }: { src: string; className?: string }) {
-  const [failed, setFailed] = React.useState(false);
-  const [shownSrc, setShownSrc] = React.useState(src);
-  if (shownSrc !== src) {
-    setShownSrc(src);
-    setFailed(false);
-  }
-  if (failed) {
-    return (
-      <span className={cx("grid place-items-center bg-[#242426] text-white/40", className)}>
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="w-3/5 h-3/5" fill="currentColor">
-          <circle cx="12" cy="8.5" r="4" />
-          <path d="M4.5 21c.8-4.1 3.8-6.4 7.5-6.4s6.7 2.3 7.5 6.4Z" />
-        </svg>
-      </span>
-    );
-  }
-  return (
-    <img
-      src={src}
-      alt=""
-      draggable={false}
-      decoding="async"
-      referrerPolicy="no-referrer"
-      className={cx("object-cover", className)}
-      onError={() => setFailed(true)}
-    />
-  );
-}
-
 interface QuoteCardProps {
   item: GlobeTestimonial;
   index: number;
@@ -244,9 +192,9 @@ interface QuoteCardProps {
 }
 
 const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode, ref }: QuoteCardProps) {
-  const rating = item.rating === undefined ? null : Math.max(0, Math.min(5, Math.round(item.rating)));
   const hidden = mode !== "current";
-  const meta = [item.role, item.company].filter(Boolean).join(", ");
+  const isExample = item.type !== "real";
+
   return (
     <figure
       ref={ref}
@@ -256,53 +204,63 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
       aria-hidden={hidden || undefined}
       inert={hidden || undefined}
       className={cx(
-        "relative col-start-1 row-start-1 m-0 flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#161618]/95 backdrop-blur-2xl text-[#f5f5f7] shadow-[0_24px_60px_rgba(0,0,0,0.8),0_0_30px_rgba(245,105,0,0.06)]",
+        "relative col-start-1 row-start-1 m-0 flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/[0.12] bg-[#141418]/95 backdrop-blur-2xl text-[#f5f5f7] shadow-[0_24px_60px_rgba(0,0,0,0.85),0_0_35px_rgba(255,77,0,0.08)]",
         roomy ? "p-7" : "px-5 py-4",
         mode === "sizer" && "invisible",
         mode === "leaving" && "pointer-events-none",
       )}
     >
       <div className={cx("relative flex items-center justify-between gap-3", roomy ? "h-7" : "h-6")}>
-        <div className="flex items-center gap-2">
-          <QuoteMark className={cx("shrink-0 text-[#f56900]/40", roomy ? "w-6 h-6" : "w-5 h-5")} />
-          {rating !== null && (
-            <span role="img" aria-label={`Оценка ${rating} из 5`} className="flex items-center gap-1">
-              {[0, 1, 2, 3, 4].map((k) => (
-                <StarIcon key={k} className={cx("w-3.5 h-3.5", k < rating ? "text-[#f56900]" : "text-white/20")} />
-              ))}
+        <div className="flex items-center gap-2.5">
+          <QuoteMark className={cx("shrink-0 text-[#FF4D00]", roomy ? "w-6 h-6" : "w-5 h-5")} />
+          {item.topic && (
+            <span className="text-[12px] font-semibold text-[#FF4D00] tracking-wider uppercase">
+              {item.topic}
             </span>
           )}
         </div>
+        {/* Only show 'Пример записи' when type === 'example' */}
+        {isExample && (
+          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#86868b] border border-white/10">
+            Пример записи
+          </span>
+        )}
       </div>
+
       <blockquote
         className={cx(
-          "relative m-0 line-clamp-4 text-pretty text-[#f5f5f7] font-normal",
-          roomy ? "mt-4 text-[17px] leading-relaxed" : "mt-2.5 text-[15px] leading-snug",
+          "relative m-0 text-pretty text-white font-normal",
+          roomy ? "mt-4 text-[17px] sm:text-[18px] leading-relaxed" : "mt-2.5 text-[15px] sm:text-[16px] leading-snug",
         )}
       >
         <p>«{item.quote}»</p>
       </blockquote>
-      <figcaption className={cx("relative mt-auto flex items-center gap-3.5 border-t border-white/[0.08]", roomy ? "pt-5 mt-5" : "pt-3.5 mt-3")}>
-        <span
-          className={cx(
-            "relative block shrink-0 overflow-hidden rounded-full bg-black/50 ring-2 ring-offset-2 ring-offset-[#161618]",
-            RING[tone],
-            roomy ? "w-11 h-11" : "w-9 h-9",
-          )}
-        >
-          {mode !== "sizer" && <Portrait src={item.image} className="w-full h-full" />}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold text-[#f5f5f7]">{item.name}</span>
-          {meta && <span className="block truncate text-xs text-[#86868b]">{meta}</span>}
-        </span>
-        <span className="shrink-0 text-right text-xs leading-tight text-[#86868b]">
-          <span className="block font-medium text-white/90">{item.city}</span>
-          {item.country && (
-            <span className="mt-0.5 block text-[10px] uppercase tracking-wider text-[#86868b] font-medium">
-              {item.country}
+
+      <figcaption className={cx("relative mt-auto flex items-center justify-between border-t border-white/[0.08]", roomy ? "pt-5 mt-5" : "pt-3.5 mt-3")}>
+        <div className="flex items-center gap-3">
+          <span
+            className={cx(
+              "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
+              roomy ? "size-9" : "size-8",
+            )}
+          >
+            {index + 1}
+          </span>
+          <div className="flex flex-col text-left">
+            <span className="text-[15px] font-semibold text-white leading-tight">
+              {item.city}
             </span>
-          )}
+            {item.country && (
+              <span className="text-xs text-[#86868b] font-medium">
+                {item.country}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <span className="text-xs font-mono text-[#86868b]">
+          {item.lat > 0 ? `${item.lat.toFixed(1)}°N` : `${Math.abs(item.lat).toFixed(1)}°S`},{' '}
+          {item.lng > 0 ? `${item.lng.toFixed(1)}°E` : `${Math.abs(item.lng).toFixed(1)}°W`}
         </span>
       </figcaption>
     </figure>
@@ -316,15 +274,9 @@ interface PinProps {
   size: number;
   label: string;
   featured: boolean;
-  approaching: boolean;
-  pressed: boolean;
-  tabbable: boolean;
   register: (index: number, el: HTMLButtonElement | null) => void;
   onEnter: (index: number, event: React.PointerEvent) => void;
-  onLeave: (index: number, event: React.PointerEvent) => void;
   onPress: (index: number) => void;
-  onKey: (index: number, event: React.KeyboardEvent) => void;
-  onFocusPin: (index: number, target: HTMLElement) => void;
 }
 
 const Pin = React.memo(function Pin({
@@ -334,15 +286,9 @@ const Pin = React.memo(function Pin({
   size,
   label,
   featured,
-  approaching,
-  pressed,
-  tabbable,
   register,
   onEnter,
-  onLeave,
   onPress,
-  onKey,
-  onFocusPin,
 }: PinProps) {
   return (
     <button
@@ -350,62 +296,56 @@ const Pin = React.memo(function Pin({
       type="button"
       data-pin={index}
       data-featured={featured ? "" : undefined}
-      data-target={approaching ? "" : undefined}
-      tabIndex={tabbable ? 0 : -1}
+      tabIndex={0}
       aria-label={label}
       aria-current={featured ? "true" : undefined}
-      aria-pressed={pressed}
       className="group/pin absolute left-0 top-0 rounded-full opacity-0 outline-none will-change-transform cursor-pointer"
       style={{ width: size, height: size }}
       onPointerEnter={(event) => onEnter(index, event)}
-      onPointerLeave={(event) => onLeave(index, event)}
       onClick={() => onPress(index)}
-      onKeyDown={(event) => onKey(index, event)}
-      onFocus={(event) => onFocusPin(index, event.currentTarget)}
     >
       <span
         aria-hidden="true"
         data-ping
         className={cx(
-          "pointer-events-none absolute inset-0 rounded-full border-2 animate-ping [animation-duration:3s] motion-reduce:hidden",
+          "pointer-events-none absolute inset-0 rounded-full border-2 animate-ping [animation-duration:2.8s] motion-reduce:hidden",
           PING[tone],
-          featured || approaching ? "opacity-80" : "opacity-25",
+          featured ? "opacity-90" : "opacity-30",
         )}
-        style={{ animationDelay: `${(index % 5) * 0.6}s` }}
+        style={{ animationDelay: `${(index % 5) * 0.5}s` }}
       />
       <span
         data-pin-face
         className={cx(
-          "relative block w-full h-full overflow-hidden rounded-full bg-black/60 shadow-lg ring-offset-2 ring-offset-black transition-[transform,box-shadow] duration-200 ease-out motion-reduce:transition-none",
-          "group-focus-visible/pin:outline-2 group-focus-visible/pin:outline-offset-[5px] group-focus-visible/pin:outline-[#f56900]",
+          "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border border-white/20 shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
           RING[tone],
-          featured ? "scale-[1.35] ring-[3px]" : "ring-2",
+          featured
+            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_20px_#FF4D00]"
+            : "ring-1 hover:scale-110 hover:border-white/40",
         )}
       >
-        <Portrait src={item.image} className="block w-full h-full" />
+        <span
+          className={cx(
+            "rounded-full transition-all duration-200",
+            featured
+              ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
+              : "size-2 bg-white/80 group-hover/pin:bg-white",
+          )}
+        />
       </span>
     </button>
   );
 });
 
-interface Turn {
-  from: number;
-  to: number;
-  start: number;
-  index: number;
-  commit: boolean;
-}
-
 export function TestimonialGlobe({
   items,
-  eyebrow,
-  heading,
-  caption,
+  extraItems,
+  eyebrow = "Примеры записей из Огонька",
+  heading = "Примеры записей",
+  caption = "Люди по всему миру записывают победы. Вот как это выглядит в разных странах.",
   action,
   autoRotate = true,
-  rotationSpeed = 0.12,
-  autoplay = false,
-  interval = 3500,
+  rotationSpeed = 0.08, // Serene, continuous rotation without stops or pauses
   active,
   onActiveChange,
   size = 460,
@@ -439,12 +379,6 @@ export function TestimonialGlobe({
   const [reduced, setReduced] = React.useState(false);
   const [visible, setVisible] = React.useState(true);
   const [internal, setInternal] = React.useState<number | null>(count > 0 ? 0 : null);
-  const [pinned, setPinned] = React.useState(false);
-  const [hoverPin, setHoverPin] = React.useState<number | null>(null);
-  const [cardHover, setCardHover] = React.useState(false);
-  const [keyboard, setKeyboard] = React.useState(false);
-  const [interacting, setInteracting] = React.useState(false);
-  const [target, setTarget] = React.useState<number | null>(null);
 
   const controlled = active !== undefined;
   const requested = controlled ? active : internal;
@@ -457,12 +391,10 @@ export function TestimonialGlobe({
     0,
     Math.round(width === 0 ? Math.min(size, 320) : wide ? Math.min(size, inner * 0.48) : Math.min(size, 320, inner * 0.8)),
   );
-  const pinSize = diameter >= 380 ? 44 : diameter >= 300 ? 38 : 34;
+  const pinSize = diameter >= 380 ? 32 : diameter >= 300 ? 28 : 24;
   const columnGap = width >= 1024 ? 72 : 36;
   const roomy = wide && Math.min(inner - diameter - columnGap, 544) >= 400;
   const ready = glState !== "pending";
-  const running =
-    autoplay && !reduced && count > 1 && !pinned && hoverPin === null && !cardHover && !keyboard && !interacting && visible;
 
   const live = React.useRef({
     phi: 0,
@@ -478,7 +410,7 @@ export function TestimonialGlobe({
     lastX: 0,
     lastMoveAt: 0,
     moveGap: 0,
-    turn: null as Turn | null,
+    turn: null as { from: number; to: number; start: number; index: number } | null,
     vectors: [] as Vec3[],
     longitudes: [] as number[],
     depths: [] as number[],
@@ -486,10 +418,6 @@ export function TestimonialGlobe({
     pin: pinSize,
     wide,
     featured: null as number | null,
-    requested: null as number | null,
-    front: -1,
-    spin: false,
-    follow: false,
     speed: rotationSpeed,
     reduced: false,
     onScreen: true,
@@ -503,14 +431,7 @@ export function TestimonialGlobe({
     growStart: 0,
     growing: false,
     controlled,
-    pinnedNow: false,
     onChange: onActiveChange,
-  });
-
-  const handlers = React.useRef({
-    arrive: (_index: number) => {},
-    front: (_index: number) => {},
-    settle: () => {},
   });
 
   const kick = () => kickRef.current();
@@ -518,44 +439,32 @@ export function TestimonialGlobe({
   const select = React.useCallback((index: number | null) => {
     const s = live.current;
     if (index === s.featured) return;
-    s.requested = index;
+    s.featured = index;
+    s.growStart = performance.now();
     if (!s.controlled) {
-      s.featured = index;
-      s.growStart = performance.now();
       setInternal(index);
     }
     s.onChange?.(index);
   }, []);
 
-  const turnTo = React.useCallback((index: number, commit: boolean) => {
+  const turnTo = React.useCallback((index: number) => {
     const s = live.current;
     const lng = s.longitudes[index];
     if (lng === undefined) return;
-    if (s.turn && s.turn.index === index && s.turn.commit === commit) return;
     const to = nearestTurn(s.phi, facingPhi(lng));
     s.velocity = 0;
     if (s.reduced) {
       s.phi = to;
       s.turn = null;
-      if (commit) handlers.current.arrive(index);
     } else {
-      s.turn = { from: s.phi, to, start: performance.now(), index, commit };
+      s.turn = { from: s.phi, to, start: performance.now(), index };
     }
     kickRef.current();
   }, []);
 
-  const go = React.useCallback(
-    (index: number) => {
-      select(index);
-      turnTo(index, false);
-    },
-    [select, turnTo],
-  );
-
   React.useLayoutEffect(() => {
     const s = live.current;
     if (s.vectors.length !== items.length) {
-      s.front = -1;
       s.depths.length = items.length;
     }
     s.vectors = items.map((item) => toCartesian(item.lat, item.lng));
@@ -566,11 +475,8 @@ export function TestimonialGlobe({
       if (first) s.phi = facingPhi(first.lng);
     }
     if (s.featured !== featured) {
-      const fromHost = controlled && featured !== s.requested;
       s.featured = featured;
-      s.requested = featured;
       s.growStart = performance.now();
-      if (fromHost && featured !== null && s.started) turnTo(featured, false);
     }
     s.size = diameter;
     s.pin = pinSize;
@@ -578,18 +484,7 @@ export function TestimonialGlobe({
     s.speed = rotationSpeed;
     s.reduced = reduced;
     s.controlled = controlled;
-    s.pinnedNow = pinned;
     s.onChange = onActiveChange;
-    s.spin = autoRotate && !reduced && !pinned && !keyboard;
-    s.follow = (!autoplay || interacting) && !pinned && hoverPin === null && !keyboard && !cardHover;
-    handlers.current = {
-      arrive: (index) => {
-        setTarget(null);
-        select(index);
-      },
-      front: (index) => select(index),
-      settle: () => setInteracting(false),
-    };
     kickRef.current();
   });
 
@@ -668,18 +563,14 @@ export function TestimonialGlobe({
     const s = live.current;
     const written = writtenRef.current;
     const { vectors, size: d, phi, theta } = s;
-    let front = -1;
-    let frontDepth = -Infinity;
     let featuredPoint: { x: number; y: number; depth: number; scale: number } | null = null;
+
     for (let i = 0; i < vectors.length; i++) {
       const vector = vectors[i];
       if (!vector) continue;
       const point = project(vector, phi, theta, PIN_ALTITUDE);
       s.depths[i] = point.depth;
-      if (point.depth > frontDepth) {
-        frontDepth = point.depth;
-        front = i;
-      }
+
       const el = pinRefs.current[i];
       if (!el) continue;
       const isFeatured = i === s.featured;
@@ -688,25 +579,19 @@ export function TestimonialGlobe({
       const z = String((isFeatured ? 100 : 0) + Math.round((point.depth + 1) * 40));
       const hit = opacity > 0.4 ? "auto" : "none";
       const prev = written[i]?.el === el ? written[i] : undefined;
+
       if (!prev || prev.opacity !== opacity) el.style.opacity = String(opacity);
       if (!prev || prev.z !== z) el.style.zIndex = z;
       if (!prev || prev.hit !== hit) el.style.pointerEvents = hit;
       written[i] = { el, opacity, z, hit };
+
       if (opacity > 0) {
         el.style.transform = `translate3d(${(point.x * d).toFixed(2)}px, ${(point.y * d).toFixed(2)}px, 0) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
       }
       if (isFeatured) featuredPoint = { x: point.x * d, y: point.y * d, depth: point.depth, scale };
     }
 
-    if (front >= 0 && front !== s.front) {
-      const current = s.depths[s.front] ?? -Infinity;
-      if (s.front < 0) s.front = front;
-      else if (frontDepth > current + FRONT_MARGIN) {
-        s.front = front;
-        if (s.follow && !s.turn) handlers.current.front(front);
-      }
-    }
-
+    // Leader line pointing from card to active pin
     const group = leaderRef.current;
     const line = lineRef.current;
     const startDot = startDotRef.current;
@@ -742,6 +627,7 @@ export function TestimonialGlobe({
 
   const hasSize = diameter > 0;
 
+  // WebGL Cobe Canvas Setup & Smooth Uninterrupted Continuous Rotation Loop
   React.useEffect(() => {
     const host = canvasHostRef.current;
     if (!host || !hasSize) return;
@@ -762,9 +648,9 @@ export function TestimonialGlobe({
         diffuse: 1.2,
         mapSamples: 16000,
         mapBrightness: 5.5,
-        baseColor: [0.06, 0.08, 0.12], // Deep sapphire-black base
-        markerColor: [0.96, 0.41, 0.0], // Signal Orange #f56900
-        glowColor: [0.0, 0.28, 0.58], // Apple Blue glow
+        baseColor: [0.06, 0.08, 0.12], // Deep space sapphire-black base
+        markerColor: [1.0, 0.3, 0.0], // Signal Orange #FF4D00
+        glowColor: [0.0, 0.28, 0.58], // Apple Blue atmosphere
         markers: [],
         markerElevation: 0,
       });
@@ -784,29 +670,31 @@ export function TestimonialGlobe({
       const dt = last ? Math.min((now - last) / 1000, 0.1) : 0;
       last = now;
       const turn = s.turn;
+
       if (turn) {
-        const t = s.reduced ? 1 : clamp01((now - turn.start) / TURN_MS);
+        // Quick smooth orientation animation when user explicitly navigates
+        const t = s.reduced ? 1 : clamp01((now - turn.start) / 800);
         s.phi = turn.from + (turn.to - turn.from) * easeOutExpo(t);
         s.velocity = 0;
         if (t >= 1) {
           s.turn = null;
           s.phi = turn.to;
-          if (turn.commit) handlers.current.arrive(turn.index);
         }
       } else if (!s.dragging) {
+        // Drag inertia or continuous uninterrupted idle spin
         if (Math.abs(s.velocity) > 1e-4) {
           const steps = dt * 60;
           s.phi += s.velocity * steps;
           s.velocity *= Math.pow(DRAG_FRICTION, steps);
         } else {
           s.velocity = 0;
-          if (s.spin) s.phi += s.speed * dt;
+          // CONTINUOUS ROTATION WITHOUT STOPS OR PAUSES:
+          if (!s.reduced && autoRotate) {
+            s.phi += s.speed * dt;
+          }
         }
       }
-      if (s.interacting && !s.dragging && s.velocity === 0) {
-        s.interacting = false;
-        handlers.current.settle();
-      }
+
       if (globe) {
         if (s.size !== renderedSize) {
           renderedSize = s.size;
@@ -816,24 +704,19 @@ export function TestimonialGlobe({
         }
       }
       place(now);
-      const isBusy =
-        s.dragging ||
-        s.interacting ||
-        s.turn !== null ||
-        s.growing ||
-        Math.abs(s.velocity) > 1e-4 ||
-        (s.spin && s.speed !== 0);
 
-      if (isBusy && s.onScreen && !document.hidden) raf = requestAnimationFrame(frame);
-      else last = 0;
+      // Globe keeps turning continuously unless visitor prefers reduced motion
+      if (s.onScreen && !document.hidden && (!s.reduced || s.dragging || s.turn !== null)) {
+        raf = requestAnimationFrame(frame);
+      } else {
+        last = 0;
+      }
     };
 
     kickRef.current = () => {
       if (!raf) raf = requestAnimationFrame(frame);
     };
     kickRef.current();
-
-    const retries = TEXTURE_RETRY_MS.map((ms) => window.setTimeout(() => kickRef.current(), ms));
 
     const onLost = (event: Event) => {
       event.preventDefault();
@@ -846,7 +729,6 @@ export function TestimonialGlobe({
 
     return () => {
       cancelAnimationFrame(raf);
-      retries.forEach((id) => window.clearTimeout(id));
       canvas.removeEventListener("webglcontextlost", onLost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
       kickRef.current = () => {};
@@ -856,41 +738,7 @@ export function TestimonialGlobe({
       host.replaceChildren();
       setGlState("pending");
     };
-  }, [hasSize, glVersion]);
-
-  // Autoplay
-  React.useEffect(() => {
-    if (!running) return;
-    const id = window.setTimeout(() => {
-      const next = ((live.current.featured ?? -1) + 1) % count;
-      setTarget(next);
-      turnTo(next, true);
-    }, Math.max(0, interval - TURN_MS));
-    return () => window.clearTimeout(id);
-  }, [running, featured, interval, count, turnTo]);
-
-  React.useEffect(() => {
-    if (running) return;
-    const s = live.current;
-    if (s.turn?.commit) {
-      s.turn = null;
-      kickRef.current();
-    }
-    setTarget(null);
-  }, [running]);
-
-  React.useEffect(() => {
-    if (!pinned) return;
-    const id = window.setTimeout(() => setPinned(false), HOLD_MS);
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setPinned(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      window.clearTimeout(id);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [pinned, featured]);
+  }, [hasSize, glVersion, autoRotate]);
 
   const [cards, setCards] = React.useState({ shown: featured, leaving: null as number | null, key: 0 });
   if (cards.shown !== featured) {
@@ -922,7 +770,9 @@ export function TestimonialGlobe({
 
   const step = (delta: number) => {
     if (count === 0) return;
-    go((((featured ?? (delta > 0 ? -1 : 0)) + delta) % count + count) % count);
+    const next = (((featured ?? (delta > 0 ? -1 : 0)) + delta) % count + count) % count;
+    select(next);
+    turnTo(next);
   };
 
   const registerPin = React.useCallback((index: number, el: HTMLButtonElement | null) => {
@@ -933,33 +783,10 @@ export function TestimonialGlobe({
     (index: number, event: React.PointerEvent) => {
       if (event.pointerType === "touch" || live.current.dragging) return;
       flushSync(() => {
-        setHoverPin(index);
         select(index);
       });
     },
     [select],
-  );
-
-  const onPinLeave = React.useCallback((index: number, event: React.PointerEvent) => {
-    if (event.pointerType === "touch") return;
-    setHoverPin((current) => (current === index ? null : current));
-  }, []);
-
-  const onPinKey = React.useCallback(
-    (index: number, event: React.KeyboardEvent) => {
-      const total = live.current.vectors.length;
-      if (event.altKey || event.ctrlKey || event.metaKey || total === 0) return;
-      let next: number;
-      if (event.key === "ArrowRight") next = (index + 1) % total;
-      else if (event.key === "ArrowLeft") next = (index - 1 + total) % total;
-      else if (event.key === "Home") next = 0;
-      else if (event.key === "End") next = total - 1;
-      else return;
-      event.preventDefault();
-      go(next);
-      pinRefs.current[next]?.focus({ preventScroll: true });
-    },
-    [go],
   );
 
   const onPinPress = React.useCallback(
@@ -969,22 +796,8 @@ export function TestimonialGlobe({
         s.moved = false;
         return;
       }
-      if (s.pinnedNow && s.featured === index) {
-        setPinned(false);
-        return;
-      }
       select(index);
-      setPinned(true);
-      turnTo(index, false);
-    },
-    [select, turnTo],
-  );
-
-  const onPinFocus = React.useCallback(
-    (index: number, target: HTMLElement) => {
-      if (!target.matches(":focus-visible")) return;
-      select(index);
-      if ((live.current.depths[index] ?? -1) < 0.55) turnTo(index, false);
+      turnTo(index);
     },
     [select, turnTo],
   );
@@ -995,7 +808,6 @@ export function TestimonialGlobe({
     s.interacting = true;
     s.turn = null;
     event.currentTarget.setPointerCapture(event.pointerId);
-    setInteracting(true);
     kick();
   };
 
@@ -1007,13 +819,7 @@ export function TestimonialGlobe({
     kick();
   };
 
-  const tabStop = featured ?? 0;
-  const avg = (() => {
-    const rated = items.filter((item) => typeof item.rating === "number");
-    if (rated.length === 0) return null;
-    return (rated.reduce((sum, item) => sum + (item.rating ?? 0), 0) / rated.length).toFixed(1);
-  })();
-  const countries = new Set(items.map((item) => item.country ?? item.city)).size;
+  const countries = new Set(items.map((item) => item.city)).size;
   const shownItem = cards.shown === null ? undefined : items[cards.shown];
   const leavingItem = cards.leaving === null ? undefined : items[cards.leaving];
 
@@ -1026,27 +832,24 @@ export function TestimonialGlobe({
       data-active={featured ?? ""}
       aria-labelledby={rest["aria-labelledby"] ?? (heading ? headingId : undefined)}
       className={cx("relative isolate w-full overflow-hidden bg-black text-[#f5f5f7]", className)}
-      onFocus={(event) => {
-        if ((event.target as HTMLElement).matches(":focus-visible")) setKeyboard(true);
-      }}
-      onBlur={(event) => {
-        const next = event.relatedTarget as Node | null;
-        if (!next || !event.currentTarget.contains(next)) setKeyboard(false);
-      }}
     >
-      {/* Apple Ambient Stage Glow Halo behind globe */}
+      {/* Ambient Stage Glow Halo behind globe */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           background: wide
-            ? "radial-gradient(42% 60% at 28% 50%, rgba(0, 113, 227, 0.14), transparent 72%)"
-            : "radial-gradient(70% 38% at 50% 48%, rgba(0, 113, 227, 0.14), transparent 72%)",
+            ? "radial-gradient(42% 60% at 28% 50%, rgba(255, 77, 0, 0.12), transparent 72%)"
+            : "radial-gradient(70% 38% at 50% 48%, rgba(255, 77, 0, 0.12), transparent 72%)",
         }}
       />
+
       <div
         ref={stageRef}
-        className={cx("relative mx-auto w-full", wide ? "grid items-center gap-y-8 py-12" : "flex flex-col items-center gap-6 py-6")}
+        className={cx(
+          "relative mx-auto w-full",
+          wide ? "grid items-center gap-y-8 py-10" : "flex flex-col items-center gap-6 py-6"
+        )}
         style={{
           maxWidth: MAX_CONTENT,
           paddingInline: pad,
@@ -1062,7 +865,7 @@ export function TestimonialGlobe({
           )}
         >
           {eyebrow && (
-            <p className="m-0 text-xs font-semibold uppercase tracking-wider text-[#f56900] mb-2">{eyebrow}</p>
+            <p className="m-0 text-xs font-semibold uppercase tracking-wider text-[#FF4D00] mb-2">{eyebrow}</p>
           )}
           {heading && (
             <h2 id={headingId} className="apple-section-title m-0 text-balance font-bold tracking-tight text-white">
@@ -1070,34 +873,25 @@ export function TestimonialGlobe({
             </h2>
           )}
           {caption && <p className="m-0 mt-3 max-w-prose text-pretty text-[16px] text-[#86868b] leading-relaxed">{caption}</p>}
+
+          {/* Honest counters without fake ratings or numbers */}
           <div className={cx("flex flex-wrap items-center gap-x-5 gap-y-2", wide ? "mt-5 justify-start" : "mt-4 justify-center")}>
             <dl className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#86868b]">
-              <div className="flex items-baseline gap-1">
-                <dt className="order-2 font-normal">{text.reviewsCountLabel || "отзывов"}</dt>
+              <div className="flex items-baseline gap-1.5">
                 <dd className="order-1 m-0 font-bold tabular-nums text-white">{count}</dd>
+                <dt className="order-2 font-normal">{text.storiesCountLabel || "записей на карте"}</dt>
               </div>
-              {avg !== null && (
-                <>
-                  <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-                  <div className="flex items-baseline gap-1">
-                    <dt className="order-2 font-normal">{text.averageLabel || "средняя"}</dt>
-                    <dd className="order-1 m-0 inline-flex items-center gap-1 font-bold tabular-nums text-white">
-                      <StarIcon className="w-3.5 h-3.5 self-center text-[#f56900]" />
-                      {avg}
-                    </dd>
-                  </div>
-                </>
-              )}
               <span aria-hidden="true" className="h-3 w-px bg-white/20" />
-              <div className="flex items-baseline gap-1">
-                <dt className="order-2 font-normal">{text.countriesLabel || "стран"}</dt>
+              <div className="flex items-baseline gap-1.5">
                 <dd className="order-1 m-0 font-bold tabular-nums text-white">{countries}</dd>
+                <dt className="order-2 font-normal">{text.citiesLabel || "городов мира"}</dt>
               </div>
             </dl>
             {action}
           </div>
         </header>
 
+        {/* 3D Globe Box with Draggable Interactive Surface */}
         <div
           ref={globeBoxRef}
           data-globe-box
@@ -1138,9 +932,9 @@ export function TestimonialGlobe({
             const s = live.current;
             if (event.pointerId !== s.pointerId) return;
             if (s.dragging) {
-              const grace = Math.min(250, Math.max(RELEASE_GRACE_MS, s.moveGap * 1.5));
-              if (s.reduced || event.timeStamp - s.lastMoveAt > grace) s.velocity = 0;
-              if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
             }
             endDrag();
           }}
@@ -1159,7 +953,7 @@ export function TestimonialGlobe({
               className="pointer-events-none absolute inset-[10%] overflow-hidden rounded-full border border-white/10"
               style={{
                 background:
-                  "radial-gradient(circle at 36% 30%, rgba(0, 113, 227, 0.2), rgba(0, 0, 0, 0.9) 72%)",
+                  "radial-gradient(circle at 36% 30%, rgba(255, 77, 0, 0.2), rgba(0, 0, 0, 0.9) 72%)",
               }}
             >
               <svg viewBox="0 0 100 100" className="w-full h-full text-white/10" fill="none" stroke="currentColor" strokeWidth="0.6">
@@ -1183,6 +977,7 @@ export function TestimonialGlobe({
             )}
           />
 
+          {/* HTML Pins Placed Over Land Coordinates */}
           <div className="pointer-events-none absolute inset-0">
             {items.map((item, i) => (
               <Pin
@@ -1191,30 +986,19 @@ export function TestimonialGlobe({
                 index={i}
                 tone={toneOf(item, i)}
                 size={pinSize}
-                label={`${text.pin} ${item.name}, ${item.city}`}
+                label={`${text.pin} ${item.city}`}
                 featured={i === featured}
-                approaching={target === i}
-                pressed={i === featured && pinned}
-                tabbable={i === tabStop}
                 register={registerPin}
                 onEnter={onPinEnter}
-                onLeave={onPinLeave}
                 onPress={onPinPress}
-                onKey={onPinKey}
-                onFocusPin={onPinFocus}
               />
             ))}
           </div>
         </div>
 
+        {/* Selected Story Card */}
         <div
           className={cx("relative w-full min-w-0", wide ? "col-start-2 row-start-2 self-start" : "max-w-md")}
-          onPointerEnter={(event) => {
-            if (event.pointerType !== "touch") setCardHover(true);
-          }}
-          onPointerLeave={(event) => {
-            if (event.pointerType !== "touch") setCardHover(false);
-          }}
         >
           <span
             aria-hidden="true"
@@ -1223,7 +1007,7 @@ export function TestimonialGlobe({
           <div
             ref={regionRef}
             data-quote-region
-            aria-live={running ? "off" : "polite"}
+            aria-live="polite"
             aria-atomic="true"
             className="grid touch-pan-y"
             onPointerDown={(event) => {
@@ -1268,12 +1052,13 @@ export function TestimonialGlobe({
               />
             )}
           </div>
+
           {count > 1 && (
             <div className={cx("absolute z-10 flex items-center gap-1", roomy ? "right-5 top-5" : "right-3.5 top-3")}>
               <button
                 type="button"
                 aria-label={text.previous}
-                className="grid w-8 h-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D00] cursor-pointer"
                 onClick={() => step(-1)}
               >
                 <Chevron direction="left" />
@@ -1284,7 +1069,7 @@ export function TestimonialGlobe({
               <button
                 type="button"
                 aria-label={text.next}
-                className="grid w-8 h-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
+                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D00] cursor-pointer"
                 onClick={() => step(1)}
               >
                 <Chevron direction="right" />
@@ -1294,7 +1079,7 @@ export function TestimonialGlobe({
         </div>
 
         {wide && (
-          <svg aria-hidden="true" data-leader className="pointer-events-none absolute left-0 top-0 z-[95] w-px h-px overflow-visible text-[#f56900]">
+          <svg aria-hidden="true" data-leader className="pointer-events-none absolute left-0 top-0 z-[95] w-px h-px overflow-visible text-[#FF4D00]">
             <g ref={leaderRef} className="opacity-0 transition-opacity duration-200 motion-reduce:transition-none">
               <line
                 ref={lineRef}
@@ -1307,12 +1092,53 @@ export function TestimonialGlobe({
                 strokeWidth="1.2"
                 vectorEffect="non-scaling-stroke"
               />
-              <circle ref={startDotRef} r="2.5" className="fill-[#f56900]" />
-              <circle ref={endDotRef} r="3.5" className="fill-black stroke-[#f56900]" strokeWidth="1.5" />
+              <circle ref={startDotRef} r="2.5" className="fill-[#FF4D00]" />
+              <circle ref={endDotRef} r="3.5" className="fill-black stroke-[#FF4D00]" strokeWidth="1.5" />
             </g>
           </svg>
         )}
       </div>
+
+      {/* ── Horizontal Ribbon: «Ещё примеры записей» ─────────────────── */}
+      {extraItems && extraItems.length > 0 && (
+        <div className="relative max-w-[1200px] mx-auto px-5 sm:px-8 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-white/[0.08]">
+          <div className="flex items-center justify-between mb-5 sm:mb-6">
+            <div className="flex items-center gap-2.5">
+              <span className="size-2 rounded-full bg-[#FF4D00] shadow-[0_0_8px_#FF4D00]" />
+              <h3 className="text-xs sm:text-sm font-semibold text-white tracking-wider uppercase">
+                Ещё примеры записей
+              </h3>
+            </div>
+            <span className="text-xs text-[#86868b]">
+              Листай вправо →
+            </span>
+          </div>
+
+          <div className="relative overflow-x-auto pb-4 no-scrollbar -mx-5 px-5 sm:mx-0 sm:px-0">
+            <div className="flex gap-4 sm:gap-5 w-max">
+              {extraItems.map((story) => (
+                <div
+                  key={story.id}
+                  className="w-[280px] sm:w-[320px] shrink-0 p-5 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between"
+                >
+                  <p className="text-white text-[14px] sm:text-[15px] leading-relaxed mb-4">
+                    «{story.quote}»
+                  </p>
+                  <div className="flex items-center justify-between border-t border-white/[0.06] pt-3 text-xs">
+                    <span className="font-semibold text-white/90">
+                      {story.city}
+                      {story.country ? `, ${story.country}` : ""}
+                    </span>
+                    <span className="text-[#FF4D00] font-medium">
+                      {story.topic}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
