@@ -507,14 +507,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             ))}
           </div>
 
-          {/* Link to Examples and Level Guide */}
+          {/* Action to choose level */}
           <div className="mt-10 text-center fade-up delay-200">
-            <Link
-              href="/examples"
-              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+            <button
+              type="button"
+              onClick={() => openAuth('register')}
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors cursor-pointer"
             >
-              <span>Подробный гид: как писать гордости и какой уровень выбрать для себя →</span>
-            </Link>
+              <span>Выбрать свой темп и начать летопись →</span>
+            </button>
           </div>
         </div>
       </section>
@@ -611,17 +612,6 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           caption="Живые истории предпринимателей, инженеров, спортсменов и родителей со всех континентов планеты, которые вернули веру в свои силы благодаря пяти минутам вечерней летописи."
           autoplay
           interval={3600}
-          action={
-            <Link
-              href="/reviews"
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] border border-white/10 px-4 text-xs font-semibold text-white transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3]"
-            >
-              <span>Читать все 32 истории</span>
-              <svg viewBox="0 0 16 16" aria-hidden="true" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 8h9.5M8.5 4l4 4-4 4" />
-              </svg>
-            </Link>
-          }
         />
       </section>
 
@@ -742,14 +732,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             </div>
           </div>
 
-          {/* Callout to /platform */}
+          {/* Callout */}
           <div className="text-center fade-up delay-200">
-            <a
-              href="/platform"
+            <button
+              type="button"
+              onClick={() => openAuth('register')}
               className="apple-btn-primary !px-8 !py-3.5 !text-[14px]"
             >
-              Подробный тур по возможностям платформы ›
-            </a>
+              Попробовать платформу в действии →
+            </button>
           </div>
         </div>
       </section>
@@ -856,15 +847,15 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
           {/* Privacy Whitepaper Link */}
           <div className="mt-12 text-center fade-up delay-200">
-            <a
-              href="/privacy"
+            <Link
+              href="/legal#privacy"
               className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
             >
               <span>Читать манифест приватности и секретного режима</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -1308,10 +1299,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   Начать свой путь в Priday →
                 </button>
                 <Link
-                  href="/community"
+                  href="/ai"
                   className="apple-btn-ghost !px-6 !py-4 !text-[15px] !text-white hover:!text-white/90"
                 >
-                  Клубы и сторис ›
+                  ИИ-наставник ›
                 </Link>
               </div>
             </div>

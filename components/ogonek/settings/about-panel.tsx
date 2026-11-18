@@ -80,7 +80,7 @@ export function AboutPanel() {
 
         <div className="flex flex-col gap-1.5 text-xs">
           <Link
-            href="/terms"
+            href="/legal#terms"
             className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)] transition-colors"
           >
             <span className="font-semibold">Пользовательское соглашение</span>
@@ -88,7 +88,7 @@ export function AboutPanel() {
           </Link>
 
           <Link
-            href="/privacy"
+            href="/legal#privacy"
             className="flex items-center justify-between p-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent)] transition-colors"
           >
             <span className="font-semibold">Политика конфиденциальности</span>

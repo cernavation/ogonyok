@@ -206,7 +206,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           Главная
         </Link>
         <span>·</span>
-        <Link href="/privacy" className="hover:text-[var(--text,#fff)] transition-colors">
+        <Link href="/legal" className="hover:text-[var(--text,#fff)] transition-colors">
           Конфиденциальность
         </Link>
       </div>

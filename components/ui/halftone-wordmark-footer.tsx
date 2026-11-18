@@ -86,51 +86,21 @@ const PRESETS: { [K in HalftonePreset]: HalftonePalette } = {
 
 export const DEFAULT_COLUMNS: FooterColumn[] = [
   {
-    title: "Платформа",
+    title: "Навигация",
     links: [
-      { label: "Возможности", href: "/platform" },
-      { label: "Примеры побед", href: "/examples" },
+      { label: "Главная", href: "/" },
+      { label: "Как это работает", href: "/#how" },
       { label: "ИИ-наставник", href: "/ai" },
-      { label: "Сейф доказательств", href: "/platform#vault" },
-      { label: "Шкала преодоления", href: "/examples#high-score" },
+      { label: "Отзывы", href: "/#quotes" },
+      { label: "Тарифы", href: "/#pricing" },
     ],
   },
   {
-    title: "Сообщество",
+    title: "Правовая информация",
     links: [
-      { label: "Клубы по интересам", href: "/community#groups" },
-      { label: "Поиск напарников", href: "/community#search" },
-      { label: "Сторис побед", href: "/community#stories" },
-      { label: "Зашифрованные звонки", href: "/community#calls" },
-      { label: "Парный стрик", href: "/community#duo" },
-    ],
-  },
-  {
-    title: "Ритм и сферы",
-    links: [
-      { label: "Вечерний ритуал", href: "/how-it-works" },
-      { label: "5 сфер баланса", href: "/modes" },
-      { label: "Истории участников", href: "/reviews" },
-      { label: "Манифест 740 дней", href: "/manifesto" },
-    ],
-  },
-  {
-    title: "Открытость",
-    links: [
-      { label: "100% бесплатно", href: "/#open" },
-      { label: "Тарифы Pro и Ultra", href: "/#pricing" },
-      { label: "0% рекламы", href: "/#open" },
-      { label: "Философия Local-first", href: "/privacy#local-first" },
-    ],
-  },
-  {
-    title: "Безопасность",
-    links: [
-      { label: "Политика приватности", href: "/privacy" },
-      { label: "Шифрование Web Crypto", href: "/privacy#encryption" },
-      { label: "Zero-Training ИИ", href: "/ai#privacy-pledge" },
-      { label: "Условия сервиса", href: "/terms" },
-      { label: "Центр заботы & FAQ", href: "/support" },
+      { label: "Условия и конфиденциальность", href: "/legal" },
+      { label: "Условия сервиса", href: "/legal#terms" },
+      { label: "Политика конфиденциальности", href: "/legal#privacy" },
     ],
   },
 ]

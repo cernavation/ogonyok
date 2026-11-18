@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -9,70 +9,22 @@ interface AppleNavbarProps {
 }
 
 /* ── Primary direct links visible on desktop ──────────────────────── */
-const PRIMARY_NAV = [
-  { label: 'Платформа', href: '/platform' },
-  { label: 'Примеры', href: '/examples' },
+const NAV_LINKS = [
+  { label: 'Как это работает', href: '/#how' },
   { label: 'ИИ-наставник', href: '/ai' },
-  { label: 'Сообщество', href: '/community' },
-  { label: 'Ритуал', href: '/how-it-works' },
+  { label: 'Отзывы', href: '/#quotes' },
   { label: 'Тарифы', href: '/#pricing' },
-  { label: 'Отзывы', href: '/reviews' },
-]
-
-/* ── Secondary links accessible via desktop «Ещё ▾» dropdown ──────── */
-const MORE_NAV = [
-  { label: 'Манифест открытости', href: '/#open', sub: '100% бесплатно и без рекламы' },
-  { label: 'Сферы жизни', href: '/modes', sub: '5 жизненных опор без перекосов' },
-  { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Рекорд стрика и сила ритуала' },
-  { label: 'Приватность и секретный режим', href: '/privacy', sub: 'Публичный или закрытый профиль' },
-  { label: 'Поддержка & FAQ', href: '/support', sub: 'Ответы и связь с основателем' },
-  { label: 'Условия сервиса', href: '/terms', sub: 'Честные прозрачные правила' },
-]
-
-/* ── Structured groups for Apple mobile drawer ────────────────────── */
-const MOBILE_SECTIONS = [
-  {
-    category: 'ИНСТРУМЕНТЫ ЛЕТОПИСЦА',
-    items: [
-      { label: 'Платформа', href: '/platform', sub: 'Возможности и Evidence Vault' },
-      { label: 'Примеры гордостей', href: '/examples', sub: 'Формула 3 элементов и шкала 10★' },
-      { label: 'ИИ-наставник', href: '/ai', sub: 'Google Gemini и преодоление' },
-      { label: 'Сообщество и клубы', href: '/community', sub: 'Напарники по хобби и сторис' },
-    ],
-  },
-  {
-    category: 'ПРАКТИКА И ДИСЦИПЛИНА',
-    items: [
-      { label: 'Вечерний ритуал', href: '/how-it-works', sub: '5 минут тишины перед сном' },
-      { label: 'Сферы жизни', href: '/modes', sub: 'Баланс без выгорания' },
-      { label: 'Истории участников', href: '/reviews', sub: '32+ проверенных опыта' },
-      { label: 'Манифест 740 дней', href: '/manifesto', sub: 'Философия личной силы' },
-    ],
-  },
-  {
-    category: 'ДОВЕРИЕ И ПРАВИЛА',
-    items: [
-      { label: 'Манифест открытости', href: '/#open', sub: 'Бесплатно навсегда и без рекламы' },
-      { label: 'Тарифные планы', href: '/#pricing', sub: 'Свободный · Pro · Ultra' },
-      { label: 'Приватность и секретный режим', href: '/privacy', sub: 'Публичный или закрытый профиль' },
-      { label: 'Поддержка и FAQ', href: '/support', sub: 'Связь с создателем Priday' },
-      { label: 'Условия сервиса', href: '/terms', sub: 'Прозрачные гарантии' },
-    ],
-  },
 ]
 
 export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
   const pathname = usePathname()
-  const moreRef = useRef<HTMLDivElement>(null)
 
   // Apple-grade UX: lock body scroll and support Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMobileOpen(false)
-        setMoreOpen(false)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -89,16 +41,14 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [mobileOpen])
 
-  // Close desktop "More" dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false)
-      }
+  const handleAuthAction = (mode: 'signin' | 'register') => {
+    setMobileOpen(false)
+    if (onOpenAuth) {
+      onOpenAuth(mode)
+    } else {
+      window.location.href = mode === 'register' ? '/register' : '/login'
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }
 
   return (
     <header
@@ -135,225 +85,118 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 shrink-0" aria-label="Разделы сайта">
-          {PRIMARY_NAV.map((item) => {
+        <nav className="hidden md:flex items-center gap-6 lg:gap-8 shrink-0" aria-label="Разделы сайта">
+          {NAV_LINKS.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`whitespace-nowrap text-[12px] tracking-tight transition-all duration-200 shrink-0 ${
+                className={`whitespace-nowrap text-[13px] tracking-tight transition-all duration-200 shrink-0 ${
                   isActive
                     ? 'text-[#f5f5f7] font-semibold opacity-100'
-                    : 'text-[#d2d2d7] opacity-75 hover:opacity-100 hover:text-white'
+                    : 'text-[#d2d2d7] opacity-80 hover:opacity-100 hover:text-white'
                 }`}
               >
                 {item.label}
               </Link>
             )
           })}
-
-          {/* Desktop «Ещё ▾» Flyout Dropdown */}
-          <div className="relative" ref={moreRef}>
-            <button
-              type="button"
-              onClick={() => setMoreOpen(!moreOpen)}
-              className={`whitespace-nowrap text-[12px] tracking-tight transition-all duration-200 flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 ${
-                moreOpen
-                  ? 'text-white font-semibold opacity-100'
-                  : 'text-[#d2d2d7] opacity-75 hover:opacity-100 hover:text-white'
-              }`}
-              aria-expanded={moreOpen}
-              aria-haspopup="true"
-            >
-              <span>Ещё</span>
-              <svg
-                width="10"
-                height="10"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                className={`transition-transform duration-200 ${moreOpen ? 'rotate-180' : ''}`}
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
-            </button>
-
-            {moreOpen && (
-              <div
-                className="absolute top-8 left-1/2 -translate-x-1/2 w-[280px] p-2 rounded-2xl bg-[#161617]/95 border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-200"
-                style={{
-                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <div className="space-y-0.5">
-                  {MORE_NAV.map((subItem) => (
-                    <Link
-                      key={subItem.href}
-                      href={subItem.href}
-                      onClick={() => setMoreOpen(false)}
-                      className="block p-2.5 rounded-xl hover:bg-white/[0.08] transition-colors group text-left"
-                    >
-                      <span className="text-[13px] font-semibold text-white block group-hover:text-[#2997ff] transition-colors">
-                        {subItem.label}
-                      </span>
-                      <span className="text-[11px] text-[#86868b] block mt-0.5 truncate">
-                        {subItem.sub}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </nav>
 
-        {/* Right Action Cluster */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          {onOpenAuth ? (
-            <button
-              type="button"
-              onClick={() => onOpenAuth('signin')}
-              className="text-[12px] font-normal text-[#2997ff] hover:text-[#6cb4ff] transition-colors cursor-pointer border-none bg-transparent px-2 py-1"
-            >
-              Войти
-            </button>
-          ) : (
-            <Link
-              href="/login"
-              className="text-[12px] font-normal text-[#2997ff] hover:text-[#6cb4ff] transition-colors cursor-pointer px-2 py-1"
-            >
-              Войти
-            </Link>
-          )}
-
-          {onOpenAuth ? (
-            <button
-              type="button"
-              onClick={() => onOpenAuth('register')}
-              className="inline-flex items-center justify-center rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-[12px] font-medium px-3.5 py-1 transition-all shadow-sm cursor-pointer border-none"
-            >
-              Начать
-            </button>
-          ) : (
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-[12px] font-medium px-3.5 py-1 transition-all shadow-sm cursor-pointer border-none"
-            >
-              Начать
-            </Link>
-          )}
-
-          {/* Minimalist Apple-style Mobile Menu Trigger */}
+        {/* Right CTA Actions: Signin + Register */}
+        <div className="hidden sm:flex items-center gap-3 shrink-0">
           <button
             type="button"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 cursor-pointer border-none bg-transparent text-[#f5f5f7] p-1 ml-1"
-            aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
+            onClick={() => handleAuthAction('signin')}
+            className="text-[13px] text-[#d2d2d7] hover:text-[#f5f5f7] transition-colors px-3 py-1.5 cursor-pointer font-normal"
           >
-            <span
-              className={`block w-4 h-0.5 bg-current transition-transform duration-300 ${
-                mobileOpen ? 'rotate-45 translate-y-1' : ''
-              }`}
-            />
-            <span
-              className={`block w-4 h-0.5 bg-current transition-transform duration-300 ${
-                mobileOpen ? '-rotate-45 -translate-y-1' : ''
-              }`}
-            />
+            Войти
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAuthAction('register')}
+            className="apple-btn-primary !px-4 !py-1.5 !text-[12px] !font-medium"
+          >
+            Начать
           </button>
         </div>
+
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 text-[#f5f5f7] focus:outline-none"
+          aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
+          aria-expanded={mobileOpen}
+        >
+          <span
+            className={`block w-4 h-[1.5px] bg-white transition-all duration-200 ${
+              mobileOpen ? 'rotate-45 translate-y-[4.5px]' : ''
+            }`}
+          />
+          <span
+            className={`block w-4 h-[1.5px] bg-white transition-all duration-200 ${
+              mobileOpen ? '-rotate-45 -translate-y-[4.5px]' : ''
+            }`}
+          />
+        </button>
       </div>
 
-      {/* ── MOBILE APPLE HIGH-END DRAWER ──────────────────────────── */}
+      {/* ── MOBILE FULLSCREEN DRAWER ─────────────────────────────────── */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-x-0 top-[48px] bottom-0 bg-black/98 z-50 px-5 sm:px-8 py-6 flex flex-col justify-between overflow-y-auto animate-in fade-in duration-300 backdrop-blur-2xl"
-          style={{ minHeight: 'calc(100vh - 48px)' }}
+          className="md:hidden fixed inset-x-0 top-12 bottom-0 z-40 bg-black/95 backdrop-blur-2xl flex flex-col justify-between p-6 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200"
+          role="dialog"
+          aria-modal="true"
         >
           <div className="space-y-6">
-            {/* Quick Home Pill */}
-            <div className="pb-3 border-b border-white/[0.08] flex items-center justify-between">
+            <div className="text-[11px] font-mono tracking-wider uppercase text-[#86868b] px-2">
+              Навигация
+            </div>
+            <nav className="flex flex-col space-y-3">
               <Link
                 href="/"
                 onClick={() => setMobileOpen(false)}
-                className="text-[17px] font-bold text-white tracking-tight flex items-center gap-2"
+                className="text-[18px] font-medium text-white px-2 py-1.5 hover:text-[#2997ff] transition-colors"
               >
-                <span>🔥</span>
-                <span>Главная страница</span>
+                Главная
               </Link>
-              <span className="text-[11px] font-mono text-[#00c7be] uppercase">
-                Priday 2026
-              </span>
-            </div>
-
-            {/* Categorized Apple Directory */}
-            {MOBILE_SECTIONS.map((section) => (
-              <div key={section.category} className="space-y-2">
-                <div className="text-[11px] font-mono text-[#86868b] uppercase tracking-wider px-1">
-                  {section.category}
-                </div>
-                <div className="space-y-1">
-                  {section.items.map((item) => {
-                    const isActive = pathname === item.href
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${
-                          isActive
-                            ? 'bg-white/[0.12] text-white font-semibold'
-                            : 'bg-white/[0.03] text-[#f5f5f7] hover:bg-white/[0.08]'
-                        }`}
-                      >
-                        <div>
-                          <div className="text-[15px] font-medium tracking-tight">
-                            {item.label}
-                          </div>
-                          <div className="text-[11px] text-[#86868b] mt-0.5">
-                            {item.sub}
-                          </div>
-                        </div>
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="text-[#86868b]"
-                        >
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </Link>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
+              {NAV_LINKS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="text-[18px] font-medium text-[#d2d2d7] px-2 py-1.5 hover:text-white transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <Link
+                href="/legal"
+                onClick={() => setMobileOpen(false)}
+                className="text-[15px] font-normal text-[#86868b] px-2 py-1.5 hover:text-white transition-colors"
+              >
+                Условия и конфиденциальность
+              </Link>
+            </nav>
           </div>
 
-          {/* Bottom Action Footer inside Drawer */}
-          <div className="pt-8 pb-4 mt-8 border-t border-white/[0.08] flex flex-col gap-3">
-            <Link
-              href="/register"
-              onClick={() => setMobileOpen(false)}
-              className="w-full py-4 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[15px] font-semibold text-center shadow-lg cursor-pointer border-none transition-all active:scale-95 block"
+          <div className="pt-8 border-t border-white/10 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => handleAuthAction('register')}
+              className="apple-btn-primary w-full !py-3.5 !text-[15px] text-center"
             >
-              Создать летопись силы →
-            </Link>
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
-              className="w-full py-3.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] text-[#f5f5f7] text-[14px] font-medium text-center transition-all block border border-white/5"
+              Начать свою летопись
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAuthAction('signin')}
+              className="w-full py-3 rounded-full bg-white/[0.06] text-white text-[14px] font-medium text-center hover:bg-white/[0.1] transition-colors"
             >
-              Войти в существующий профиль
-            </Link>
-            <div className="text-center text-[11px] font-mono text-[#86868b] pt-1">
-              Публичный или секретный профиль · Без рекламы и трекеров
-            </div>
+              Войти в аккаунт
+            </button>
           </div>
         </div>
       )}

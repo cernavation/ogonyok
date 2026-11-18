@@ -420,7 +420,7 @@ export default function AiPage() {
               Мы используем закрытые API корпоративного уровня с нулевым сохранением данных (Zero Data Retention). Ни один символ твоих побед или благодарностей не используется для обучения нейросетей. Ты сам решаешь, быть публичным или вести секретную летопись, скрытую от всех.
             </p>
 
-            <Link href="/privacy" className="text-[#2997ff] hover:underline text-[15px] font-medium inline-flex items-center gap-1.5">
+            <Link href="/legal#privacy" className="text-[#2997ff] hover:underline text-[15px] font-medium inline-flex items-center gap-1.5">
               <span>Читать манифест приватности и секретного режима</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M5 12h14M12 5l7 7-7 7" />

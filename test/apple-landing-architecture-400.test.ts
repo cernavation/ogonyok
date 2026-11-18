@@ -29,10 +29,16 @@ import {
    БЛОК 1: НАВИГАЦИЯ, ССЫЛКИ И СТРУКТУРА СТРАНИЦ ЛЕНДИНГА (40 ТЕСТОВ)
    ══════════════════════════════════════════════════════════════════════ */
 describe('1. Навигация, страницы и маршрутизация Apple Landing (40 тестов)', () => {
-  const routes = [
+  const activeRoutes = [
+    '/ai',
+    '/legal',
+    '/login',
+    '/register',
+  ]
+
+  const removedRoutes = [
     '/platform',
     '/examples',
-    '/ai',
     '/community',
     '/how-it-works',
     '/modes',
@@ -41,13 +47,11 @@ describe('1. Навигация, страницы и маршрутизация 
     '/support',
     '/terms',
     '/privacy',
-    '/login',
-    '/register',
   ]
 
-  // 1-13: Проверка существования файлов страниц в app/
-  routes.forEach((route) => {
-    it(`маршрут ${route} имеет соответствующий app${route}/page.tsx`, () => {
+  // Проверка существования только разрешённых публичных страниц
+  activeRoutes.forEach((route) => {
+    it(`активный маршрут ${route} имеет соответствующий app${route}/page.tsx`, () => {
       const pagePath = path.resolve(process.cwd(), `app${route}/page.tsx`)
       assert.ok(fs.existsSync(pagePath), `Файл ${pagePath} должен существовать`)
       const content = fs.readFileSync(pagePath, 'utf-8')
@@ -55,8 +59,29 @@ describe('1. Навигация, страницы и маршрутизация 
     })
   })
 
-  // 14-26: Проверка наличия AppleFooter на каждой странице
-  routes.forEach((route) => {
+  // Проверка отсутствия удалённых дублирующих страниц в app/
+  removedRoutes.forEach((route) => {
+    it(`удалённый маршрут ${route} больше не имеет отдельного файла в app${route}/page.tsx`, () => {
+      const pagePath = path.resolve(process.cwd(), `app${route}/page.tsx`)
+      assert.ok(!fs.existsSync(pagePath), `Файл ${pagePath} должен быть удален`)
+    })
+  })
+
+  // Проверка редиректов в next.config.mjs для удаленных маршрутов
+  it('конфигурация next.config.mjs содержит редиректы со старых маршрутов', () => {
+    const nextConfigPath = path.resolve(process.cwd(), 'next.config.mjs')
+    const configContent = fs.readFileSync(nextConfigPath, 'utf-8')
+    assert.ok(configContent.includes('redirects()'), 'next.config.mjs должен содержать redirects()')
+    removedRoutes.forEach((route) => {
+      assert.ok(
+        configContent.includes(`source: '${route}'`),
+        `Редирект для ${route} должен быть настроен в next.config.mjs`
+      )
+    })
+  })
+
+  // Проверка наличия AppleFooter на ключевых публичных страницах
+  ;['/ai', '/legal'].forEach((route) => {
     it(`страница ${route} интегрирует унифицированный <AppleFooter />`, () => {
       const pagePath = path.resolve(process.cwd(), `app${route}/page.tsx`)
       const content = fs.readFileSync(pagePath, 'utf-8')
@@ -67,7 +92,7 @@ describe('1. Навигация, страницы и маршрутизация 
     })
   })
 
-  // 27-37: Проверка ключевых якорных секций на главной странице
+  // Проверка ключевых якорных секций на главной странице
   const anchors = [
     '#how',
     '#modes',
@@ -98,7 +123,7 @@ describe('1. Навигация, страницы и маршрутизация 
     })
   })
 
-  // 38-40: Целостность навигационной структуры
+  // Целостность навигационной структуры
   it('главная страница экспортирует компонент LandingPage', () => {
     const landingPath = path.resolve(process.cwd(), 'components/ogonek/landing/landing-page.tsx')
     const content = fs.readFileSync(landingPath, 'utf-8')
@@ -109,13 +134,18 @@ describe('1. Навигация, страницы и маршрутизация 
     const navPath = path.resolve(process.cwd(), 'components/ogonek/landing/apple-navbar.tsx')
     const content = fs.readFileSync(navPath, 'utf-8')
     assert.ok(content.includes('appleFlameNavbar'), 'Шапка должна содержать градиентное пламя')
-    assert.ok(content.includes('onOpenAuth'), 'Шапка должна поддерживать открытие окна входа/регистрации')
+    assert.ok(content.includes('handleAuthAction'), 'Шапка должна поддерживать открытие окна входа/регистрации')
   })
 
   it('подвал GuestLanding также использует флагманский AppleFooter', () => {
     const guestPath = path.resolve(process.cwd(), 'components/ogonek/landing/guest-landing.tsx')
     const content = fs.readFileSync(guestPath, 'utf-8')
     assert.ok(content.includes('<AppleFooter />'), 'GuestLanding должен использовать AppleFooter')
+  })
+
+  it('создан sitemap.ts с актуальными публичными страницами', () => {
+    const sitemapPath = path.resolve(process.cwd(), 'app/sitemap.ts')
+    assert.ok(fs.existsSync(sitemapPath), 'app/sitemap.ts должен существовать')
   })
 })
 
@@ -132,98 +162,33 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     assert.ok(footerContent.length > 500, 'Содержимое подвала должно быть полным')
   })
 
-  // 2-11: Проверка 5 основных директорий колонок
-  const columns = ['Платформа', 'Сообщество', 'Ритм и сферы', 'Открытость', 'Безопасность']
-  columns.forEach((col) => {
-    it(`подвал содержит колонку «${col}» на десктопе`, () => {
-      assert.ok(footerContent.includes(col), `Колонка ${col} должна присутствовать в подвале`)
-    })
-    it(`подвал содержит мобильный аккордеон для «${col}»`, () => {
-      assert.ok(
-        footerContent.includes(`toggleSection`) && footerContent.includes(col),
-        `Для колонки ${col} должен быть интерактивный переключатель`
-      )
-    })
+  it('подвал содержит лаконичную ссылку на условия и конфиденциальность (/legal)', () => {
+    assert.ok(footerContent.includes('href="/legal"'), 'Ссылка на /legal должна быть в подвале')
+    assert.ok(
+      footerContent.includes('Условия и конфиденциальность'),
+      'Текст «Условия и конфиденциальность» должен присутствовать в подвале'
+    )
   })
 
-  // 12-25: Проверка ключевых ссылок в подвале
-  const links = [
-    { name: 'Возможности', path: '/platform' },
-    { name: 'Примеры гордостей', path: '/examples' },
-    { name: 'ИИ-наставник', path: '/ai' },
-    { name: 'Evidence Vault', path: '/platform#vault' },
-    { name: 'Шкала преодоления', path: '/examples#high-score' },
-    { name: 'Клубы по хобби', path: '/community#groups' },
-    { name: 'Поиск напарников', path: '/community#search' },
-    { name: 'Сторис побед', path: '/community#stories' },
-    { name: 'Зашифрованные P2P звонки', path: '/community#calls' },
-    { name: 'Парный стрик', path: '/community#duo' },
-    { name: 'Вечерний ритуал', path: '/how-it-works' },
-    { name: 'Манифест 740 дней', path: '/manifesto' },
-    { name: 'Тарифы Pro и Ultra', path: '/#pricing' },
-    { name: 'Манифест Local-first', path: '/privacy' },
-  ]
-
-  links.forEach(({ name, path: lPath }) => {
-    it(`подвал включает целевую ссылку на ${name} (${lPath})`, () => {
-      assert.ok(
-        footerContent.includes(`href="${lPath}"`),
-        `Подвал должен иметь ссылку на ${lPath}`
-      )
-    })
+  it('подвал содержит аккуратную иконку Telegram со ссылкой на канал/поддержку', () => {
+    assert.ok(footerContent.includes('t.me/ogonek_support'), 'Telegram ссылка должна присутствовать')
+    assert.ok(footerContent.includes('aria-label="Telegram"'), 'Иконка Telegram должна быть доступной для скринридеров')
   })
 
-  // 26-30: Проверка навигационной цепочки (Breadcrumbs)
-  it('содержит хлебные крошки Apple: Priday › Дневник силы и побед › Летопись', () => {
-    assert.ok(footerContent.includes('Навигационная цепочка'), 'Должна быть семантическая навигация')
-    assert.ok(footerContent.includes('Дневник силы и побед'), 'Должна присутствовать цепочка уровней')
-    assert.ok(footerContent.includes('Летопись'), 'Финальный элемент хлебных крошек')
-  })
-
-  it('содержит стилизованную кнопку «Начать летопись» с градиентом Priday', () => {
+  it('подвал содержит стилизованную кнопку «Начать летопись» с градиентом Priday', () => {
     assert.ok(footerContent.includes('Начать летопись'), 'Кнопка действия')
   })
 
-  it('содержит стилизованную кнопку «Войти» для быстрого входа в аккаунт', () => {
+  it('подвал содержит стилизованную кнопку «Войти» для быстрого входа в аккаунт', () => {
     assert.ok(footerContent.includes('Войти'), 'Кнопка входа')
   })
 
-  it('содержит кнопку быстрого скролла наверх «Наверх»', () => {
+  it('подвал содержит кнопку быстрого скролла наверх «Наверх»', () => {
     assert.ok(footerContent.includes('Наверх') && footerContent.includes('scrollToTop'), 'Кнопка наверх')
-  })
-
-  it('содержит панель контроля видимости: публичный профиль и секретный режим', () => {
-    assert.ok(footerContent.includes('Публичный профиль') && footerContent.includes('Секретный режим'), 'Два режима видимости')
-  })
-
-  // 31-35: Проверка принципов открытости и приватности
-  it('разъясняет свободу приватности: возможность открыться миру или оставаться в полной секретности', () => {
-    assert.ok(footerContent.includes('Полный контроль видимости'), 'Разъяснение контроля видимости')
-  })
-
-  it('утверждает правило «Стрик не сгорает» в колонке ритма', () => {
-    assert.ok(footerContent.includes('Стрик не сгорает'), 'Термин несгораемого стрика')
-  })
-
-  it('гарантирует Zero-Training ИИ в колонке безопасности', () => {
-    assert.ok(footerContent.includes('Zero-Training ИИ'), 'Спецификация Zero-Training')
-  })
-
-  it('фиксирует 0% рекламы и трекеров в колонке открытости', () => {
-    assert.ok(footerContent.includes('0% рекламы и трекеров'), 'Гарантия отсутствия рекламы')
   })
 
   it('нижняя мастер-плашка содержит копирайт Priday Inc.', () => {
     assert.ok(footerContent.includes('Priday Inc. Все права защищены.'), 'Формулировка копирайта')
-  })
-
-  // 36-45: Проверка технических атрибутов подвала
-  it('подвал не содержит устаревшего селектора языка согласно требованиям пользователя', () => {
-    assert.ok(!footerContent.includes('СНГ · Русский'), 'Селектор локали убран')
-  })
-
-  it('подвал не содержит системного индикатора статуса согласно требованиям пользователя', () => {
-    assert.ok(!footerContent.includes('Все системы в строю'), 'Индикатор аптайма убран')
   })
 
   it('содержит гигантский монументальный водяной знак Halftone Wordmark Priday', () => {
@@ -242,46 +207,16 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     assert.ok(footerContent.includes('rel="noreferrer"'), 'Защита от утечки opener')
   })
 
-  it('все SVG иконки имеют aria-hidden или явные заголовки для скринридеров', () => {
+  it('все элементы подвала имеют семантические теги и aria-label', () => {
     assert.ok(footerContent.includes('aria-label="Подвал сайта"'), 'Семантический тег подвала')
   })
 
-  it('мобильный аккордеон использует плавный поворот шеврона rotate-180', () => {
-    assert.ok(footerContent.includes('rotate-180'), 'Анимация шеврона при раскрытии')
-  })
-
-  it('подвал корректно сжимается на узких экранах без горизонтального переполнения', () => {
-    assert.ok(footerContent.includes('overflow-hidden'), 'Защита от горизонтального скролла')
-  })
-
-  it('поддерживает переключение состояния всех 5 колонок независимо', () => {
-    assert.ok(footerContent.includes('openSections.platform'), 'Состояние платформы')
-    assert.ok(footerContent.includes('openSections.community'), 'Состояние сообщества')
-    assert.ok(footerContent.includes('openSections.methodology'), 'Состояние методологии')
-    assert.ok(footerContent.includes('openSections.pricing'), 'Состояние тарифов')
-    assert.ok(footerContent.includes('openSections.security'), 'Состояние безопасности')
-  })
-
-  // 46-50: Дополнительные тесты структуры
-  it('кнопка раскрытия аккордеона имеет тип button во избежание сабмита', () => {
-    assert.ok(footerContent.includes('type="button"'), 'Кнопки аккордеона имеют type=button')
-  })
-
-  it('ссылки в мобильном аккордеоне имеют достаточный отступ для тач-нажатий', () => {
-    assert.ok(footerContent.includes('block py-0.5'), 'Ссылки имеют комфортную зону тапа')
-  })
-
-  it('микро-бейджи тарифов и фич в подвале имеют контрастный читаемый текст', () => {
-    assert.ok(footerContent.includes('bg-emerald-500/20 text-emerald-400'), 'Контраст бейджа Free')
-    assert.ok(footerContent.includes('bg-[#2997ff]/20 text-[#2997ff]'), 'Контраст бейджа ИИ')
-  })
-
-  it('подвал содержит ссылку на связь с создателем и центр заботы', () => {
-    assert.ok(footerContent.includes('/support'), 'Ссылка на поддержку')
-  })
-
-  it('подвал содержит ссылку на безопасность и шифрование данных', () => {
-    assert.ok(footerContent.includes('/privacy#encryption'), 'Ссылка на криптографию')
+  it('подвал не содержит удалённых мёртвых ссылок на /platform, /community, /reviews', () => {
+    assert.ok(!footerContent.includes('href="/platform"'), 'Ссылка на /platform удалена')
+    assert.ok(!footerContent.includes('href="/community"'), 'Ссылка на /community удалена')
+    assert.ok(!footerContent.includes('href="/reviews"'), 'Ссылка на /reviews удалена')
+    assert.ok(!footerContent.includes('href="/modes"'), 'Ссылка на /modes удалена')
+    assert.ok(!footerContent.includes('href="/support"'), 'Ссылка на /support удалена')
   })
 })
 

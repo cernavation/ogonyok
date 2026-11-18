@@ -164,8 +164,8 @@ describe('ШАГ 14: Аудит кода гостевого лендинга и 
 
     // Согласие с условиями
     assert.match(authCode, /agreedToTerms/i)
-    assert.match(authCode, /\/terms/)
-    assert.match(authCode, /\/privacy/)
+    assert.match(authCode, /\/legal#terms|\/terms/)
+    assert.match(authCode, /\/legal#privacy|\/privacy/)
   })
 
   it('файлы скриншотов в public/landing/ сгенерированы и не пустые', () => {

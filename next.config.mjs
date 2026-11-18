@@ -33,6 +33,21 @@ const nextConfig = {
     ],
   },
   devIndicators: false,
+  async redirects() {
+    return [
+      { source: '/community', destination: '/', permanent: true },
+      { source: '/modes', destination: '/', permanent: true },
+      { source: '/platform', destination: '/', permanent: true },
+      { source: '/how-it-works', destination: '/', permanent: true },
+      { source: '/examples', destination: '/', permanent: true },
+      { source: '/manifesto', destination: '/', permanent: true },
+      { source: '/reviews', destination: '/', permanent: true },
+      { source: '/support', destination: '/', permanent: true },
+      { source: '/telegram', destination: '/', permanent: true },
+      { source: '/privacy', destination: '/legal', permanent: true },
+      { source: '/terms', destination: '/legal', permanent: true },
+    ]
+  },
   async headers() {
     const csp = [
       "default-src 'self'",

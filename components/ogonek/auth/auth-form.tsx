@@ -752,12 +752,12 @@ export function AuthForm({
             />
             <span className="text-[12px] text-[#86868b] leading-tight">
               Согласен с{' '}
-              <Link href="/terms" className="text-[#2997ff] hover:underline">
+              <Link href="/legal#terms" className="text-[#2997ff] hover:underline">
                 Условиями сервиса
               </Link>{' '}
               и{' '}
-              <Link href="/privacy" className="text-[#2997ff] hover:underline">
-                Политикой Local-first
+              <Link href="/legal#privacy" className="text-[#2997ff] hover:underline">
+                Политикой конфиденциальности
               </Link>
             </span>
           </label>
