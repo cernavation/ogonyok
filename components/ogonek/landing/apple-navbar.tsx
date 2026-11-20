@@ -3,22 +3,26 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import {
+  type Locale,
+  getLandingContent,
+  getLocaleFromPath,
+  buildLocaleUrl,
+  LOCALES,
+} from '@/src/content/i18n'
 
 interface AppleNavbarProps {
   onOpenAuth?: (mode: 'signin' | 'register') => void
+  locale?: Locale
 }
 
-/* ── Primary direct links visible on desktop ──────────────────────── */
-const NAV_LINKS = [
-  { label: 'Как это работает', href: '/#how' },
-  { label: 'ИИ-наставник', href: '/ai' },
-  { label: 'Примеры', href: '/#quotes' },
-  { label: 'Тарифы', href: '/#pricing' },
-]
-
-export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
+export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+
+  // Determine current active locale from prop or URL
+  const activeLocale = propLocale || getLocaleFromPath(pathname)
+  const content = getLandingContent(activeLocale)
 
   // Apple-grade UX: lock body scroll and support Escape key
   useEffect(() => {
@@ -50,6 +54,21 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
     }
   }
 
+  // Locale-aware direct navigation links
+  const homeHref = activeLocale === 'ru' ? '/ru' : `/${activeLocale}`
+  const howHref = `${homeHref}#how`
+  const quotesHref = `${homeHref}#quotes`
+  const pricingHref = `${homeHref}#pricing`
+  const aiHref = `/ai/${activeLocale}`
+  const legalHref = `/legal/${activeLocale}`
+
+  const navLinks = [
+    { label: content.nav.how, href: howHref },
+    { label: content.nav.ai, href: aiHref },
+    { label: content.nav.quotes, href: quotesHref },
+    { label: content.nav.pricing, href: pricingHref },
+  ]
+
   return (
     <header
       className="fixed top-0 left-0 right-0 z-50 h-12 transition-all duration-300"
@@ -60,12 +79,12 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
       }}
     >
-      <div className="max-w-[1200px] mx-auto h-full px-5 sm:px-8 flex items-center justify-between">
+      <div className="max-w-[1240px] mx-auto h-full px-4 sm:px-6 md:px-8 flex items-center justify-between gap-4">
         {/* Apple-style Logo with Project SVG Flame */}
         <Link
-          href="/"
+          href={homeHref}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none shrink-0"
-          aria-label="Priday — главная страница"
+          aria-label={`Priday — ${content.nav.home}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
             <defs>
@@ -85,8 +104,8 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-6 lg:gap-8 shrink-0" aria-label="Разделы сайта">
-          {NAV_LINKS.map((item) => {
+        <nav className="hidden md:flex items-center gap-5 lg:gap-7 shrink-0" aria-label="Разделы сайта">
+          {navLinks.map((item) => {
             const isActive = pathname === item.href
             return (
               <Link
@@ -104,21 +123,47 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
           })}
         </nav>
 
-        {/* Right CTA Actions: Signin + Register */}
-        <div className="hidden sm:flex items-center gap-3 shrink-0">
+        {/* Right Section: Desktop Language Switcher + Signin + Register */}
+        <div className="hidden sm:flex items-center gap-2.5 sm:gap-3 shrink-0">
+          {/* Desktop Language Switcher (RU | RO | EN) */}
+          <div
+            className="hidden md:flex items-center p-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[11px] font-mono tracking-wider select-none shrink-0"
+            role="group"
+            aria-label="Language selector"
+          >
+            {LOCALES.map((lang) => {
+              const isActive = activeLocale === lang
+              return (
+                <Link
+                  key={lang}
+                  href={buildLocaleUrl(pathname, lang)}
+                  className={`px-2 py-0.5 rounded-full transition-all duration-200 ${
+                    isActive
+                      ? 'bg-white/20 text-white font-semibold shadow-sm'
+                      : 'text-[#86868b] hover:text-[#d2d2d7]'
+                  }`}
+                  aria-current={isActive ? 'true' : undefined}
+                  aria-label={`Switch to ${lang.toUpperCase()}`}
+                >
+                  {lang.toUpperCase()}
+                </Link>
+              )
+            })}
+          </div>
+
           <button
             type="button"
             onClick={() => handleAuthAction('signin')}
-            className="text-[13px] text-[#d2d2d7] hover:text-[#f5f5f7] transition-colors px-3 py-1.5 cursor-pointer font-normal"
+            className="text-[13px] text-[#d2d2d7] hover:text-[#f5f5f7] transition-colors px-2.5 sm:px-3 py-1.5 cursor-pointer font-normal whitespace-nowrap shrink-0"
           >
-            Войти
+            {content.nav.signin}
           </button>
           <button
             type="button"
             onClick={() => handleAuthAction('register')}
-            className="apple-btn-primary !px-4 !py-1.5 !text-[12px] !font-medium"
+            className="apple-btn-primary !px-3.5 sm:!px-4 !py-1.5 !text-[12px] !font-medium whitespace-nowrap shrink-0"
           >
-            Начать
+            {content.nav.signup}
           </button>
         </div>
 
@@ -126,7 +171,7 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 text-[#f5f5f7] focus:outline-none"
+          className="md:hidden flex flex-col justify-center items-center w-8 h-8 gap-1.5 text-[#f5f5f7] focus:outline-none shrink-0"
           aria-label={mobileOpen ? 'Закрыть меню' : 'Открыть меню'}
           aria-expanded={mobileOpen}
         >
@@ -152,17 +197,17 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
         >
           <div className="space-y-6">
             <div className="text-[11px] font-mono tracking-wider uppercase text-[#86868b] px-2">
-              Навигация
+              {content.nav.navigation}
             </div>
             <nav className="flex flex-col space-y-3">
               <Link
-                href="/"
+                href={homeHref}
                 onClick={() => setMobileOpen(false)}
-                className="text-[18px] font-medium text-white px-2 py-1.5 hover:text-[#2997ff] transition-colors"
+                className="text-[18px] font-medium text-white px-2 py-1.5 hover:text-[#FF4D00] transition-colors"
               >
-                Главная
+                {content.nav.home}
               </Link>
-              {NAV_LINKS.map((item) => (
+              {navLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -173,29 +218,57 @@ export function AppleNavbar({ onOpenAuth }: AppleNavbarProps) {
                 </Link>
               ))}
               <Link
-                href="/legal"
+                href={legalHref}
                 onClick={() => setMobileOpen(false)}
                 className="text-[15px] font-normal text-[#86868b] px-2 py-1.5 hover:text-white transition-colors"
               >
-                Условия и конфиденциальность
+                {content.nav.legal}
               </Link>
             </nav>
+
+            {/* Mobile Language Switcher (Moved directly into burger as requested) */}
+            <div className="pt-4 border-t border-white/10">
+              <div className="text-[11px] font-mono tracking-wider uppercase text-[#86868b] px-2 mb-3">
+                {content.nav.langLabel}
+              </div>
+              <div className="grid grid-cols-3 gap-2 px-1">
+                {LOCALES.map((lang) => {
+                  const isActive = activeLocale === lang
+                  return (
+                    <Link
+                      key={lang}
+                      href={buildLocaleUrl(pathname, lang)}
+                      aria-label={`Switch to ${lang.toUpperCase()}`}
+                      data-lang={lang}
+                      onClick={() => setMobileOpen(false)}
+                      className={`py-2.5 px-3 rounded-xl text-center text-[13px] font-mono font-medium transition-all duration-200 border ${
+                        isActive
+                          ? 'bg-[#FF4D00] text-white border-[#FF4D00] shadow-[0_0_15px_rgba(255,77,0,0.35)]'
+                          : 'bg-white/[0.04] text-[#86868b] border-white/10 hover:text-white hover:bg-white/[0.08]'
+                      }`}
+                    >
+                      {lang.toUpperCase()}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="pt-8 border-t border-white/10 flex flex-col gap-3">
+          <div className="pt-6 border-t border-white/10 flex flex-col gap-3">
             <button
               type="button"
               onClick={() => handleAuthAction('register')}
               className="apple-btn-primary w-full !py-3.5 !text-[15px] text-center"
             >
-              Начать свою летопись
+              {content.nav.mobileCta}
             </button>
             <button
               type="button"
               onClick={() => handleAuthAction('signin')}
               className="w-full py-3 rounded-full bg-white/[0.06] text-white text-[14px] font-medium text-center hover:bg-white/[0.1] transition-colors"
             >
-              Войти в аккаунт
+              {content.nav.mobileSignin}
             </button>
           </div>
         </div>

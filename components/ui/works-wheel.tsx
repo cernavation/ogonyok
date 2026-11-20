@@ -35,6 +35,9 @@ export interface WorksWheelProps
   trackRef?: React.RefObject<HTMLElement | null>;
   /** Notifies parent of turn and interpolation factor m (0 = ring, 1 = drum) */
   onTurnChange?: (turn: number, m: number, activeIndex: number) => void;
+  galleryLabel?: string;
+  hintLabel?: string;
+  scrollDownLabel?: string;
 }
 
 /* Geometry tuned for +40% larger cards and grand resting ring */
@@ -83,6 +86,9 @@ export function WorksWheel({
   action = "Открыть",
   trackRef,
   onTurnChange,
+  galleryLabel = "Интерактивная галерея",
+  hintLabel = "Нажми на карточку или листай страницу вниз",
+  scrollDownLabel = "Скролль вниз ↓",
   className,
   ...props
 }: WorksWheelProps) {
@@ -641,17 +647,17 @@ export function WorksWheel({
         className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 transition-opacity duration-300"
       >
         <span className="text-[#2997ff] text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
-          Интерактивная галерея
+          {galleryLabel}
         </span>
         <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-white max-w-[240px] sm:max-w-[340px] md:max-w-[420px] leading-tight drop-shadow-lg">
           {label}
         </h3>
         <p className="text-[#86868b] text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2.5 max-w-[220px] sm:max-w-[320px] drop-shadow">
-          Нажми на карточку или листай страницу вниз
+          {hintLabel}
         </p>
         <div className="mt-3 sm:mt-4 flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[11px] sm:text-xs text-[#a1a1a6]">
           <span className="inline-block size-1.5 sm:size-2 rounded-full bg-[#0071e3] animate-pulse" />
-          Скролль вниз ↓
+          {scrollDownLabel}
         </div>
       </div>
 

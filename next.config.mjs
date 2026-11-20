@@ -46,6 +46,12 @@ const nextConfig = {
       { source: '/telegram', destination: '/', permanent: true },
       { source: '/privacy', destination: '/legal', permanent: true },
       { source: '/terms', destination: '/legal', permanent: true },
+      { source: '/ru/ai', destination: '/ai/ru', permanent: false },
+      { source: '/ro/ai', destination: '/ai/ro', permanent: false },
+      { source: '/en/ai', destination: '/ai/en', permanent: false },
+      { source: '/ru/legal', destination: '/legal/ru', permanent: false },
+      { source: '/ro/legal', destination: '/legal/ro', permanent: false },
+      { source: '/en/legal', destination: '/legal/en', permanent: false },
     ]
   },
   async headers() {

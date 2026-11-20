@@ -70,6 +70,11 @@ export function Preloader() {
   const timerStarted = useRef(false)
 
   useEffect(() => {
+    if (typeof window !== "undefined" && ((window as any).__PRIDAY_SKIP_PRELOADER__ || window.location.search.includes("skip_preloader=1"))) {
+      setMounted(false)
+      return
+    }
+
     if (timerStarted.current) return
     timerStarted.current = true
 

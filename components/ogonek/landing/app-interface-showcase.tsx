@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import type { Locale } from "@/src/content/i18n";
 
 export interface PointerItem {
   id: string;
@@ -26,150 +27,441 @@ export interface ScreenTab {
   pointers: PointerItem[];
 }
 
-const SCREENS: ScreenTab[] = [
-  {
-    id: "feed",
-    label: "Лента дня",
-    title: "Лента с гордостями",
-    desktopImage: "/landing/screens/feed.png",
-    mobileImage: "/landing/screens/mobile-feed.png",
-    pointers: [
+function getLocalizedScreens(locale: Locale): ScreenTab[] {
+  if (locale === "ro") {
+    return [
       {
-        id: "streak",
-        title: "Стрик",
-        subtitle: "Счётчик дней подряд",
-        targetX: 68,
-        targetY: 6,
-        badgeX: 52,
-        badgeY: 3,
-        align: "left",
+        id: "feed",
+        label: "Fluxul zilei",
+        title: "Fluxul cu victorii",
+        desktopImage: "/landing/screens/feed.png",
+        mobileImage: "/landing/screens/mobile-feed.png",
+        pointers: [
+          {
+            id: "streak",
+            title: "Serie",
+            subtitle: "Zile consecutive",
+            targetX: 68,
+            targetY: 6,
+            badgeX: 52,
+            badgeY: 3,
+            align: "left",
+          },
+          {
+            id: "pride",
+            title: "Mândria zilei",
+            subtitle: "Câmp de scriere",
+            targetX: 36,
+            targetY: 28,
+            badgeX: 12,
+            badgeY: 24,
+            align: "left",
+          },
+          {
+            id: "gratitude",
+            title: "Recunoștințe",
+            subtitle: "Ritualul de seară",
+            targetX: 36,
+            targetY: 58,
+            badgeX: 12,
+            badgeY: 54,
+            align: "left",
+          },
+          {
+            id: "friends",
+            title: "Prieteni",
+            subtitle: "Secțiunea prieteni",
+            targetX: 82,
+            targetY: 32,
+            badgeX: 74,
+            badgeY: 18,
+            align: "right",
+          },
+        ],
       },
       {
-        id: "pride",
-        title: "Гордость дня",
-        subtitle: "Поле записи",
-        targetX: 36,
-        targetY: 28,
-        badgeX: 12,
-        badgeY: 24,
-        align: "left",
+        id: "analytics",
+        label: "Statistici",
+        title: "Pagina de statistici",
+        desktopImage: "/landing/screens/analytics.png",
+        mobileImage: "/landing/screens/mobile-analytics.png",
+        pointers: [
+          {
+            id: "ai-eval",
+            title: "Evaluare AI",
+            subtitle: "Stea și analiză",
+            targetX: 38,
+            targetY: 28,
+            badgeX: 14,
+            badgeY: 22,
+            align: "left",
+          },
+          {
+            id: "streak-dynamics",
+            title: "Serie",
+            subtitle: "Graficul dinamicii",
+            targetX: 64,
+            targetY: 28,
+            badgeX: 74,
+            badgeY: 18,
+            align: "right",
+          },
+        ],
       },
       {
-        id: "gratitude",
-        title: "Благодарности",
-        subtitle: "Вечерний ритуал",
-        targetX: 36,
-        targetY: 58,
-        badgeX: 12,
-        badgeY: 54,
-        align: "left",
+        id: "leaderboard",
+        label: "Clasament",
+        title: "Tabelul liderilor",
+        desktopImage: "/landing/screens/leaderboard.png",
+        mobileImage: "/landing/screens/mobile-leaderboard.png",
+        pointers: [
+          {
+            id: "rank",
+            title: "Clasament",
+            subtitle: "Top participanți",
+            targetX: 50,
+            targetY: 35,
+            badgeX: 22,
+            badgeY: 26,
+            align: "left",
+          },
+          {
+            id: "streak-leaders",
+            title: "Serie",
+            subtitle: "Recordurile comunității",
+            targetX: 68,
+            targetY: 48,
+            badgeX: 75,
+            badgeY: 40,
+            align: "right",
+          },
+        ],
       },
       {
-        id: "friends",
-        title: "Друзья",
-        subtitle: "Блок друзей",
-        targetX: 82,
-        targetY: 32,
-        badgeX: 74,
-        badgeY: 18,
-        align: "right",
+        id: "chats",
+        label: "Chaturi",
+        title: "Chaturi și apeluri",
+        desktopImage: "/landing/screens/chats.png",
+        mobileImage: "/landing/screens/mobile-chats.png",
+        pointers: [
+          {
+            id: "friends-chats",
+            title: "Prieteni",
+            subtitle: "Lista de dialoguri",
+            targetX: 28,
+            targetY: 38,
+            badgeX: 10,
+            badgeY: 28,
+            align: "left",
+          },
+          {
+            id: "reactions",
+            title: "Recunoștințe",
+            subtitle: "Sprijin pentru victorii",
+            targetX: 65,
+            targetY: 48,
+            badgeX: 72,
+            badgeY: 38,
+            align: "right",
+          },
+        ],
       },
-    ],
-  },
-  {
-    id: "analytics",
-    label: "Статистика",
-    title: "Страница статистики",
-    desktopImage: "/landing/screens/analytics.png",
-    mobileImage: "/landing/screens/mobile-analytics.png",
-    pointers: [
-      {
-        id: "ai-eval",
-        title: "Оценка ИИ",
-        subtitle: "Звезда и анализ",
-        targetX: 38,
-        targetY: 28,
-        badgeX: 14,
-        badgeY: 22,
-        align: "left",
-      },
-      {
-        id: "streak-dynamics",
-        title: "Стрик",
-        subtitle: "График динамики",
-        targetX: 64,
-        targetY: 28,
-        badgeX: 74,
-        badgeY: 18,
-        align: "right",
-      },
-    ],
-  },
-  {
-    id: "leaderboard",
-    label: "Рейтинг",
-    title: "Таблица лидеров",
-    desktopImage: "/landing/screens/leaderboard.png",
-    mobileImage: "/landing/screens/mobile-leaderboard.png",
-    pointers: [
-      {
-        id: "rank",
-        title: "Рейтинг",
-        subtitle: "Топ участников",
-        targetX: 50,
-        targetY: 35,
-        badgeX: 22,
-        badgeY: 26,
-        align: "left",
-      },
-      {
-        id: "streak-leaders",
-        title: "Стрик",
-        subtitle: "Рекорды платформы",
-        targetX: 68,
-        targetY: 48,
-        badgeX: 75,
-        badgeY: 40,
-        align: "right",
-      },
-    ],
-  },
-  {
-    id: "chats",
-    label: "Чаты",
-    title: "Чаты и звонки",
-    desktopImage: "/landing/screens/chats.png",
-    mobileImage: "/landing/screens/mobile-chats.png",
-    pointers: [
-      {
-        id: "friends-chats",
-        title: "Друзья",
-        subtitle: "Список диалогов",
-        targetX: 28,
-        targetY: 38,
-        badgeX: 10,
-        badgeY: 28,
-        align: "left",
-      },
-      {
-        id: "reactions",
-        title: "Благодарности",
-        subtitle: "Поддержка побед",
-        targetX: 65,
-        targetY: 48,
-        badgeX: 72,
-        badgeY: 38,
-        align: "right",
-      },
-    ],
-  },
-];
+    ];
+  }
 
-export function AppInterfaceShowcase() {
+  if (locale === "en") {
+    return [
+      {
+        id: "feed",
+        label: "Daily Feed",
+        title: "Feed with victories",
+        desktopImage: "/landing/screens/feed.png",
+        mobileImage: "/landing/screens/mobile-feed.png",
+        pointers: [
+          {
+            id: "streak",
+            title: "Streak",
+            subtitle: "Consecutive days",
+            targetX: 68,
+            targetY: 6,
+            badgeX: 52,
+            badgeY: 3,
+            align: "left",
+          },
+          {
+            id: "pride",
+            title: "Daily pride",
+            subtitle: "Journal input",
+            targetX: 36,
+            targetY: 28,
+            badgeX: 12,
+            badgeY: 24,
+            align: "left",
+          },
+          {
+            id: "gratitude",
+            title: "Gratitude",
+            subtitle: "Evening ritual",
+            targetX: 36,
+            targetY: 58,
+            badgeX: 12,
+            badgeY: 54,
+            align: "left",
+          },
+          {
+            id: "friends",
+            title: "Friends",
+            subtitle: "Circle section",
+            targetX: 82,
+            targetY: 32,
+            badgeX: 74,
+            badgeY: 18,
+            align: "right",
+          },
+        ],
+      },
+      {
+        id: "analytics",
+        label: "Analytics",
+        title: "Statistics overview",
+        desktopImage: "/landing/screens/analytics.png",
+        mobileImage: "/landing/screens/mobile-analytics.png",
+        pointers: [
+          {
+            id: "ai-eval",
+            title: "AI Review",
+            subtitle: "Rating & insights",
+            targetX: 38,
+            targetY: 28,
+            badgeX: 14,
+            badgeY: 22,
+            align: "left",
+          },
+          {
+            id: "streak-dynamics",
+            title: "Streak",
+            subtitle: "Momentum chart",
+            targetX: 64,
+            targetY: 28,
+            badgeX: 74,
+            badgeY: 18,
+            align: "right",
+          },
+        ],
+      },
+      {
+        id: "leaderboard",
+        label: "Leaderboard",
+        title: "Community standings",
+        desktopImage: "/landing/screens/leaderboard.png",
+        mobileImage: "/landing/screens/mobile-leaderboard.png",
+        pointers: [
+          {
+            id: "rank",
+            title: "Leaderboard",
+            subtitle: "Top members",
+            targetX: 50,
+            targetY: 35,
+            badgeX: 22,
+            badgeY: 26,
+            align: "left",
+          },
+          {
+            id: "streak-leaders",
+            title: "Streak",
+            subtitle: "Community records",
+            targetX: 68,
+            targetY: 48,
+            badgeX: 75,
+            badgeY: 40,
+            align: "right",
+          },
+        ],
+      },
+      {
+        id: "chats",
+        label: "Chats",
+        title: "Private messenger",
+        desktopImage: "/landing/screens/chats.png",
+        mobileImage: "/landing/screens/mobile-chats.png",
+        pointers: [
+          {
+            id: "friends-chats",
+            title: "Friends",
+            subtitle: "Direct conversations",
+            targetX: 28,
+            targetY: 38,
+            badgeX: 10,
+            badgeY: 28,
+            align: "left",
+          },
+          {
+            id: "reactions",
+            title: "Gratitude",
+            subtitle: "Victory reactions",
+            targetX: 65,
+            targetY: 48,
+            badgeX: 72,
+            badgeY: 38,
+            align: "right",
+          },
+        ],
+      },
+    ];
+  }
+
+  // Default: Russian
+  return [
+    {
+      id: "feed",
+      label: "Лента дня",
+      title: "Лента с гордостями",
+      desktopImage: "/landing/screens/feed.png",
+      mobileImage: "/landing/screens/mobile-feed.png",
+      pointers: [
+        {
+          id: "streak",
+          title: "Стрик",
+          subtitle: "Счётчик дней подряд",
+          targetX: 68,
+          targetY: 6,
+          badgeX: 52,
+          badgeY: 3,
+          align: "left",
+        },
+        {
+          id: "pride",
+          title: "Гордость дня",
+          subtitle: "Поле записи",
+          targetX: 36,
+          targetY: 28,
+          badgeX: 12,
+          badgeY: 24,
+          align: "left",
+        },
+        {
+          id: "gratitude",
+          title: "Благодарности",
+          subtitle: "Вечерний ритуал",
+          targetX: 36,
+          targetY: 58,
+          badgeX: 12,
+          badgeY: 54,
+          align: "left",
+        },
+        {
+          id: "friends",
+          title: "Друзья",
+          subtitle: "Блок друзей",
+          targetX: 82,
+          targetY: 32,
+          badgeX: 74,
+          badgeY: 18,
+          align: "right",
+        },
+      ],
+    },
+    {
+      id: "analytics",
+      label: "Статистика",
+      title: "Страница статистики",
+      desktopImage: "/landing/screens/analytics.png",
+      mobileImage: "/landing/screens/mobile-analytics.png",
+      pointers: [
+        {
+          id: "ai-eval",
+          title: "Оценка ИИ",
+          subtitle: "Звезда и анализ",
+          targetX: 38,
+          targetY: 28,
+          badgeX: 14,
+          badgeY: 22,
+          align: "left",
+        },
+        {
+          id: "streak-dynamics",
+          title: "Стрик",
+          subtitle: "График динамики",
+          targetX: 64,
+          targetY: 28,
+          badgeX: 74,
+          badgeY: 18,
+          align: "right",
+        },
+      ],
+    },
+    {
+      id: "leaderboard",
+      label: "Рейтинг",
+      title: "Таблица лидеров",
+      desktopImage: "/landing/screens/leaderboard.png",
+      mobileImage: "/landing/screens/mobile-leaderboard.png",
+      pointers: [
+        {
+          id: "rank",
+          title: "Рейтинг",
+          subtitle: "Топ участников",
+          targetX: 50,
+          targetY: 35,
+          badgeX: 22,
+          badgeY: 26,
+          align: "left",
+        },
+        {
+          id: "streak-leaders",
+          title: "Стрик",
+          subtitle: "Рекорды платформы",
+          targetX: 68,
+          targetY: 48,
+          badgeX: 75,
+          badgeY: 40,
+          align: "right",
+        },
+      ],
+    },
+    {
+      id: "chats",
+      label: "Чаты",
+      title: "Чаты и звонки",
+      desktopImage: "/landing/screens/chats.png",
+      mobileImage: "/landing/screens/mobile-chats.png",
+      pointers: [
+        {
+          id: "friends-chats",
+          title: "Друзья",
+          subtitle: "Список диалогов",
+          targetX: 28,
+          targetY: 38,
+          badgeX: 10,
+          badgeY: 28,
+          align: "left",
+        },
+        {
+          id: "reactions",
+          title: "Благодарности",
+          subtitle: "Поддержка побед",
+          targetX: 65,
+          targetY: 48,
+          badgeX: 72,
+          badgeY: 38,
+          align: "right",
+        },
+      ],
+    },
+  ];
+}
+
+interface AppInterfaceShowcaseProps {
+  locale?: Locale;
+}
+
+export function AppInterfaceShowcase({ locale = "ru" }: AppInterfaceShowcaseProps) {
   const [activeTab, setActiveTab] = React.useState<"feed" | "analytics" | "leaderboard" | "chats">("feed");
   const [deviceMode, setDeviceMode] = React.useState<"desktop" | "phone">("desktop");
   const [isVisible, setIsVisible] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const screens = React.useMemo(() => getLocalizedScreens(locale), [locale]);
 
   React.useEffect(() => {
     const el = containerRef.current;
@@ -186,7 +478,10 @@ export function AppInterfaceShowcase() {
     return () => observer.disconnect();
   }, []);
 
-  const currentScreen = SCREENS.find((s) => s.id === activeTab) || SCREENS[0];
+  const currentScreen = screens.find((s) => s.id === activeTab) || screens[0];
+
+  const windowLabel = locale === "ro" ? "Fereastră" : locale === "en" ? "Window" : "Окно";
+  const phoneLabel = locale === "ro" ? "Telefon" : locale === "en" ? "Phone" : "Телефон";
 
   return (
     <div ref={containerRef} className="w-full">
@@ -194,7 +489,7 @@ export function AppInterfaceShowcase() {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 sm:mb-10">
         {/* Screen Tabs */}
         <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#16161a] border border-white/10 shadow-lg overflow-x-auto max-w-full">
-          {SCREENS.map((screen) => {
+          {screens.map((screen) => {
             const isActive = screen.id === activeTab;
             return (
               <button
@@ -225,14 +520,14 @@ export function AppInterfaceShowcase() {
                 ? "bg-white/15 text-white"
                 : "text-[#86868b] hover:text-white"
             )}
-            title="Показать в окне компьютера"
+            title="Desktop window"
           >
             <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="2" y="3" width="20" height="14" rx="2" />
               <line x1="8" y1="21" x2="16" y2="21" />
               <line x1="12" y1="17" x2="12" y2="21" />
             </svg>
-            Окно
+            {windowLabel}
           </button>
           <button
             type="button"
@@ -243,13 +538,13 @@ export function AppInterfaceShowcase() {
                 ? "bg-white/15 text-white"
                 : "text-[#86868b] hover:text-white"
             )}
-            title="Показать в рамке телефона"
+            title="Mobile phone"
           >
             <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="5" y="2" width="14" height="20" rx="3" />
               <line x1="12" y1="18" x2="12.01" y2="18" strokeWidth="2.5" />
             </svg>
-            Телефон
+            {phoneLabel}
           </button>
         </div>
       </div>
@@ -271,7 +566,7 @@ export function AppInterfaceShowcase() {
               </div>
               <div className="flex items-center gap-2 text-xs font-mono text-[#86868b]">
                 <span className="size-1.5 rounded-full bg-[#FF4D00] animate-pulse" />
-                <span>ogonek.app — {currentScreen.title}</span>
+                <span>priday.app — {currentScreen.title}</span>
               </div>
               <div className="w-12 hidden sm:block" />
             </div>
@@ -298,124 +593,86 @@ export function AppInterfaceShowcase() {
                       markerHeight="6"
                       orient="auto-start-reverse"
                     >
-                      <path d="M 0 1 L 8 5 L 0 9 z" fill="#FF4D00" />
+                      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#FF4D00" />
                     </marker>
-                    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="0" stdDeviation="2" floodColor="#FF4D00" floodOpacity="0.8" />
-                    </filter>
                   </defs>
 
-                  {currentScreen.pointers.map((p, idx) => {
-                    const delayClass =
-                      idx === 0
-                        ? "delay-[150ms]"
-                        : idx === 1
-                        ? "delay-[300ms]"
-                        : idx === 2
-                        ? "delay-[450ms]"
-                        : "delay-[600ms]";
-
-                    // Calculate path from badge center to target point
-                    const startX = p.badgeX > p.targetX ? p.badgeX - 1 : p.badgeX + 15;
-                    const startY = p.badgeY + 2.5;
-                    const endX = p.targetX;
-                    const endY = p.targetY;
-                    const midX = (startX + endX) / 2;
+                  {currentScreen.pointers.map((pointer, idx) => {
+                    const startX = pointer.badgeX + (pointer.align === "right" ? -2 : 14);
+                    const startY = pointer.badgeY + 3;
+                    const endX = pointer.targetX;
+                    const endY = pointer.targetY;
 
                     return (
-                      <g
-                        key={p.id}
-                        className={cn(
-                          "transition-all duration-700 ease-out",
-                          delayClass,
-                          isVisible ? "opacity-100" : "opacity-0"
-                        )}
-                      >
-                        {/* Thin orange #FF4D00 connecting curved line */}
-                        <path
-                          d={`M ${startX}% ${startY}% C ${midX}% ${startY}%, ${midX}% ${endY}%, ${endX}% ${endY}%`}
-                          fill="none"
+                      <g key={pointer.id} className="transition-opacity duration-500" style={{ opacity: isVisible ? 1 : 0, transitionDelay: `${idx * 150}ms` }}>
+                        <line
+                          x1={`${startX}%`}
+                          y1={`${startY}%`}
+                          x2={`${endX}%`}
+                          y2={`${endY}%`}
                           stroke="#FF4D00"
-                          strokeWidth="1.5"
-                          strokeDasharray="4 2"
-                          filter="url(#glow-orange)"
+                          strokeWidth="1.75"
+                          strokeDasharray="4 3"
                           markerEnd="url(#arrow-orange)"
+                          className="drop-shadow-[0_0_6px_rgba(255,77,0,0.6)]"
+                        />
+                        <circle
+                          cx={`${endX}%`}
+                          cy={`${endY}%`}
+                          r="4"
+                          fill="#FF4D00"
+                          className="animate-ping"
+                          style={{ animationDuration: "2.5s" }}
+                        />
+                        <circle
+                          cx={`${endX}%`}
+                          cy={`${endY}%`}
+                          r="3"
+                          fill="#FF4D00"
+                          className="drop-shadow-[0_0_6px_rgba(255,77,0,0.8)]"
                         />
                       </g>
                     );
                   })}
                 </svg>
 
-                {/* Badges & Pulsing Target Anchors */}
-                {currentScreen.pointers.map((p, idx) => {
-                  const delayClass =
-                    idx === 0
-                      ? "delay-[150ms]"
-                      : idx === 1
-                      ? "delay-[300ms]"
-                      : idx === 2
-                      ? "delay-[450ms]"
-                      : "delay-[600ms]";
-
-                  return (
-                    <React.Fragment key={p.id}>
-                      {/* Pulsing target point on the screenshot element */}
-                      <div
-                        className={cn(
-                          "absolute -translate-x-1/2 -translate-y-1/2 transition-all duration-500",
-                          delayClass,
-                          isVisible ? "opacity-100 scale-100" : "opacity-0 scale-50"
-                        )}
-                        style={{ left: `${p.targetX}%`, top: `${p.targetY}%` }}
-                      >
-                        <span className="relative flex size-3.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF4D00] opacity-75" />
-                          <span className="relative inline-flex rounded-full size-3.5 bg-[#FF4D00] border-2 border-white shadow-[0_0_12px_#FF4D00]" />
+                {currentScreen.pointers.map((pointer, idx) => (
+                  <div
+                    key={pointer.id}
+                    className="absolute z-20 pointer-events-auto transition-all duration-500"
+                    style={{
+                      left: `${pointer.badgeX}%`,
+                      top: `${pointer.badgeY}%`,
+                      opacity: isVisible ? 1 : 0,
+                      transform: isVisible ? "translateY(0)" : "translateY(8px)",
+                      transitionDelay: `${idx * 150}ms`,
+                    }}
+                  >
+                    <div className="group cursor-default flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-[#FF4D00]/50 shadow-[0_4px_16px_rgba(0,0,0,0.8),0_0_12px_rgba(255,77,0,0.3)] hover:scale-105 transition-transform">
+                      <span className="size-1.5 rounded-full bg-[#FF4D00] shadow-[0_0_6px_#FF4D00]" />
+                      <div className="flex flex-col text-left leading-none">
+                        <span className="text-[12px] font-semibold text-white tracking-tight">
+                          {pointer.title}
+                        </span>
+                        <span className="text-[10px] text-[#a1a1a6] mt-0.5">
+                          {pointer.subtitle}
                         </span>
                       </div>
-
-                      {/* Callout Badge (Orange accent, up to 3 words) */}
-                      <div
-                        className={cn(
-                          "absolute transition-all duration-500 ease-out",
-                          delayClass,
-                          isVisible
-                            ? "opacity-100 translate-y-0 scale-100"
-                            : "opacity-0 translate-y-3 scale-95"
-                        )}
-                        style={{ left: `${p.badgeX}%`, top: `${p.badgeY}%` }}
-                      >
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/85 backdrop-blur-md border border-[#FF4D00]/50 shadow-[0_8px_24px_rgba(0,0,0,0.8),0_0_15px_rgba(255,77,0,0.3)] pointer-events-auto">
-                          <span className="size-2 rounded-full bg-[#FF4D00] shadow-[0_0_8px_#FF4D00]" />
-                          <div className="flex flex-col text-left">
-                            <span className="text-[13px] font-bold text-white leading-tight">
-                              {p.title}
-                            </span>
-                            <span className="text-[11px] font-medium text-[#FF4D00] leading-tight">
-                              {p.subtitle}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       ) : (
-        /* ── Smartphone Mockup Frame with Soft Shadow & Ambient Glow ── */
+        /* ── Mobile Phone Frame (Dynamic Island + Soft Border) ── */
         <div className="relative mx-auto max-w-[340px]">
-          {/* Ambient soft orange ember aura */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-[#FF4D00]/20 via-transparent to-[#FF4D00]/20 blur-2xl opacity-40 pointer-events-none -z-10" />
-
-          <div className="relative rounded-[40px] p-3 bg-[#1c1c20] border border-white/[0.15] shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_40px_rgba(255,77,0,0.12)]">
-            {/* Phone Screen Container with Dynamic Island */}
-            <div className="relative rounded-[32px] overflow-hidden bg-black aspect-[9/19.5]">
-              {/* Dynamic Island */}
-              <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-24 h-5 bg-black rounded-full z-30 border border-white/[0.08]" />
-
+          <div className="relative rounded-[44px] bg-[#1a1a1e] p-3 border-4 border-[#2c2c30] shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_40px_rgba(255,77,0,0.1)]">
+            <div className="relative rounded-[36px] overflow-hidden bg-black aspect-[9/19.5]">
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-30 flex items-center justify-end px-2.5">
+                <span className="size-2 rounded-full bg-[#1c1c1e]" />
+              </div>
               <img
                 src={currentScreen.mobileImage}
                 alt={currentScreen.title}
@@ -427,49 +684,25 @@ export function AppInterfaceShowcase() {
         </div>
       )}
 
-      {/* ── Mobile Layout (<768px): Structured list UNDER the screenshot, not over it! ── */}
-      <div className="md:hidden mt-6 flex flex-col gap-2.5">
-        <span className="text-xs uppercase tracking-wider text-[#FF4D00] font-semibold text-center mb-1">
-          Ключевые элементы интерфейса
-        </span>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {currentScreen.pointers.map((p, idx) => {
-            const delayClass =
-              idx === 0
-                ? "delay-[100ms]"
-                : idx === 1
-                ? "delay-[200ms]"
-                : idx === 2
-                ? "delay-[300ms]"
-                : "delay-[400ms]";
-
-            return (
-              <div
-                key={p.id}
-                className={cn(
-                  "flex items-center gap-3 p-3 rounded-xl bg-[#141418] border border-white/[0.08] shadow-md transition-all duration-500",
-                  delayClass,
-                  isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-                )}
-              >
-                <div className="size-8 rounded-lg bg-[#FF4D00]/15 border border-[#FF4D00]/40 flex items-center justify-center shrink-0">
-                  <span className="size-2 rounded-full bg-[#FF4D00] shadow-[0_0_8px_#FF4D00]" />
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="text-[14px] font-semibold text-white leading-tight">
-                    {p.title}
-                  </span>
-                  <span className="text-[12px] text-[#FF4D00] font-medium leading-tight mt-0.5">
-                    {p.subtitle}
-                  </span>
-                </div>
+      {/* Mobile/Tablet Fallback Description Cards (<768px) */}
+      <div className="md:hidden mt-6 grid grid-cols-2 gap-2.5">
+        {currentScreen.pointers.map((pointer) => (
+          <div
+            key={pointer.id}
+            className="p-3 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-start gap-2"
+          >
+            <span className="size-1.5 rounded-full bg-[#FF4D00] mt-1 shrink-0" />
+            <div>
+              <div className="text-xs font-semibold text-white tracking-tight">
+                {pointer.title}
               </div>
-            );
-          })}
-        </div>
+              <div className="text-[11px] text-[#86868b] mt-0.5">
+                {pointer.subtitle}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
-
-export default AppInterfaceShowcase;

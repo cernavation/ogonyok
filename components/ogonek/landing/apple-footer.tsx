@@ -3,9 +3,19 @@
 import React from 'react'
 import Link from 'next/link'
 import { ArrowUp } from 'lucide-react'
+import { usePathname } from 'next/navigation'
 import { HalftoneWordmarkCanvas } from '@/components/ui/halftone-wordmark-footer'
+import { type Locale, getLandingContent, getLocaleFromPath } from '@/src/content/i18n'
 
-export function AppleFooter() {
+interface AppleFooterProps {
+  locale?: Locale
+}
+
+export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
+  const pathname = usePathname()
+  const activeLocale = propLocale || getLocaleFromPath(pathname)
+  const content = getLandingContent(activeLocale)
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -13,6 +23,8 @@ export function AppleFooter() {
   const handleOpenAuth = (mode: 'login' | 'register') => {
     window.dispatchEvent(new CustomEvent('open-auth-modal', { detail: { mode } }))
   }
+
+  const legalHref = activeLocale === 'ru' ? '/legal' : `/legal/${activeLocale}`
 
   return (
     <footer
@@ -25,7 +37,7 @@ export function AppleFooter() {
         aria-hidden="true"
       />
 
-      <div className="max-w-[1200px] mx-auto px-5 sm:px-8 relative z-10">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         {/* ── 1. HEADER ROW: BRAND & STYLED ACTION BUTTONS ──────────────────── */}
         <div className="fade-up pb-8 border-b border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
@@ -43,11 +55,11 @@ export function AppleFooter() {
                 />
               </svg>
               <h3 className="text-[17px] sm:text-[19px] font-semibold text-white tracking-tight">
-                Личная летопись побед и дисциплины
+                {content.footer?.title || 'Личная летопись побед и дисциплины'}
               </h3>
             </div>
             <p className="text-[13px] text-[#86868b] max-w-[540px] leading-relaxed">
-              Фиксируй настоящие преодоления каждый вечер. Твой путь в Priday принадлежит только тебе.
+              {content.footer?.tagline || 'Фиксируй настоящие преодоления каждый вечер. Твой путь в Priday принадлежит только тебе.'}
             </p>
           </div>
 
@@ -58,7 +70,7 @@ export function AppleFooter() {
               onClick={() => handleOpenAuth('register')}
               className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#f56900] to-[#ff8c00] hover:from-[#ff7714] hover:to-[#ffa024] text-white font-semibold text-[13px] shadow-[0_4px_20px_rgba(245,105,0,0.35)] hover:shadow-[0_6px_25px_rgba(245,105,0,0.5)] transition-all active:scale-95 cursor-pointer flex items-center gap-2"
             >
-              <span>Начать летопись</span>
+              <span>{content.footer?.ctaBtn || 'Начать летопись'}</span>
               <span className="text-white/80">→</span>
             </button>
 
@@ -67,7 +79,7 @@ export function AppleFooter() {
               onClick={() => handleOpenAuth('login')}
               className="px-4 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-white/20 text-[#f5f5f7] font-medium text-[13px] transition-all active:scale-95 cursor-pointer"
             >
-              Войти
+              {content.footer?.signinBtn || 'Войти'}
             </button>
 
             <button
@@ -76,7 +88,7 @@ export function AppleFooter() {
               className="px-3.5 py-2.5 rounded-full bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-[#86868b] hover:text-white transition-all cursor-pointer flex items-center gap-1.5 text-[12px]"
               title="Прокрутить страницу наверх"
             >
-              <span>Наверх</span>
+              <span>{content.footer?.scrollTop || 'Наверх'}</span>
               <ArrowUp size={13} />
             </button>
           </div>
@@ -87,15 +99,15 @@ export function AppleFooter() {
           <div className="flex items-center gap-2 text-[#86868b]">
             <span className="font-medium text-[#f5f5f7]">Priday</span>
             <span>·</span>
-            <span>© {new Date().getFullYear()} Priday Inc. Все права защищены.</span>
+            <span>© {new Date().getFullYear()} {content.footer?.copyright || 'Priday Inc. Все права защищены.'}</span>
           </div>
 
           <div className="flex items-center gap-6">
             <Link
-              href="/legal"
+              href={legalHref} /* href="/legal" */
               className="text-[#86868b] hover:text-[#d2d2d7] transition-colors text-[12px] underline-offset-4 hover:underline"
             >
-              Условия и конфиденциальность
+              {content.footer?.legalLink || 'Условия и конфиденциальность'}
             </Link>
 
             {/* Small Telegram Icon Link */}
