@@ -69,23 +69,7 @@ export function LegacyMigrationBanner({
     isPausedRef.current = false
 
     try {
-      let daysToMigrate: any[] = []
-      // Загружаем 705 подлинных дней из локального файла public/seeds/ogonek-import.v1.json
-      try {
-        const res = await fetch('/seeds/ogonek-import.v1.json')
-        if (res.ok) {
-          const json = await res.json()
-          if (json.days && Array.isArray(json.days) && json.days.length > 0) {
-            daysToMigrate = json.days
-          }
-        }
-      } catch (err) {
-        console.warn('Could not fetch seeds:', err)
-      }
-
-      if (!daysToMigrate || daysToMigrate.length === 0) {
-        daysToMigrate = localDays
-      }
+      let daysToMigrate: any[] = localDays
 
       if (!daysToMigrate || daysToMigrate.length === 0) {
         onNotify('Данные для переноса не найдены')

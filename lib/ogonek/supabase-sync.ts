@@ -401,8 +401,35 @@ export function clearSupabaseConfig(): void {
 
 export function readSession(): SupabaseSession | null {
   const session = readJson<SupabaseSession>(SUPABASE_SESSION_STORAGE_KEY)
-  if (!session || typeof session.accessToken !== 'string' || !session.accessToken) return null
-  return session
+  if (session && typeof session.accessToken === 'string' && session.accessToken) return session
+
+  // Проверяем сессию из стандартного ключа @supabase/supabase-js
+  if (typeof window !== 'undefined') {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          const raw = localStorage.getItem(key)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed && parsed.access_token && parsed.user?.id) {
+              const adapted: SupabaseSession = {
+                accessToken: parsed.access_token,
+                refreshToken: parsed.refresh_token ?? '',
+                userId: parsed.user.id,
+                email: parsed.user.email ?? null,
+                expiresAt: parsed.expires_at ? parsed.expires_at * 1000 : Date.now() + 3600000,
+                anonymous: parsed.user.is_anonymous ?? false,
+              }
+              return adapted
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  return null
 }
 
 export function writeSession(session: SupabaseSession | null): void {
@@ -762,7 +789,7 @@ function isSessionFresh(session: SupabaseSession): boolean {
   return session.expiresAt - Date.now() > SESSION_REFRESH_MARGIN_MS
 }
 
-/** Гарантирует валидную сессию: обновляет токен или входит анонимно */
+/** Гарантирует валидную сессию: обновляет токен или возвращает ошибку отсутствия сессии */
 export async function ensureSession(
   config: SupabaseConfig
 ): Promise<{ ok: true; session: SupabaseSession } | { ok: false; error: string }> {
@@ -777,7 +804,8 @@ export async function ensureSession(
     }
   }
 
-  return signInAnonymously(config)
+  // Не вызываем анонимную регистрацию без согласия, чтобы не вызывать ошибку 422
+  return { ok: false, error: 'Сессия Supabase не найдена. Требуется вход в аккаунт.' }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -2120,6 +2148,11 @@ export function startAutoSync(options: AutoSyncOptions): AutoSyncHandle {
     }
     if (!isOnline()) {
       refreshOnlineStatus()
+      return
+    }
+    const session = readSession()
+    if (!session) {
+      // Нет активной сессии пользователя — не спамим запросами
       return
     }
     running = true

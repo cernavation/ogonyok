@@ -28,3 +28,6 @@ node_modules
 pnpm-lock.yaml
 pnpm-workspace.yaml
 
+# Temporary migration scripts
+scripts/migrate-ogonyok.mjs
+

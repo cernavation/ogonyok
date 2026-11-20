@@ -360,7 +360,12 @@ export async function signInWithUsername(params: {
     return { ok: false, error: 'База данных не подключена. Добавь ключи Supabase.' }
   }
 
-  const primaryEmail = usernameToEmail(cleanNick, VIRTUAL_EMAIL_DOMAIN)
+  // Для cernavation аккаунт создателя исторически привязан к @ogonek.local (id: 94e9eaf7-ec74-4366-9ce3-7de1e670f52b)
+  const isCerna = cleanNick === 'cernavation'
+  const primaryDomain = isCerna ? LEGACY_VIRTUAL_EMAIL_DOMAIN : VIRTUAL_EMAIL_DOMAIN
+  const secondaryDomain = isCerna ? VIRTUAL_EMAIL_DOMAIN : LEGACY_VIRTUAL_EMAIL_DOMAIN
+
+  const primaryEmail = usernameToEmail(cleanNick, primaryDomain)
 
   try {
     let { data, error } = await client.auth.signInWithPassword({
@@ -368,16 +373,16 @@ export async function signInWithUsername(params: {
       password: params.password,
     })
 
-    // Если вход с @ogonek.app не удался из-за credentials, поддерживаем старых юзеров с @ogonek.local
+    // Если вход с первичным доменом не удался, пробуем вторичный
     if (
       error &&
       (error.message?.includes('Invalid login credentials') ||
         (error as any).code === 'invalid_credentials' ||
         error.message?.includes('not found'))
     ) {
-      const legacyEmail = usernameToEmail(cleanNick, LEGACY_VIRTUAL_EMAIL_DOMAIN)
+      const secondaryEmail = usernameToEmail(cleanNick, secondaryDomain)
       const fallbackRes = await client.auth.signInWithPassword({
-        email: legacyEmail,
+        email: secondaryEmail,
         password: params.password,
       })
       if (!fallbackRes.error && fallbackRes.data?.user) {

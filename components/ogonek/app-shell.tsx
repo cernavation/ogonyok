@@ -162,6 +162,11 @@ export function AppShell() {
     setUnreadNotificationsCount,
     markNotificationRead,
     markAllNotificationsRead,
+    addDay,
+    updateDay,
+    saveDayDirectlyToSupabase,
+    loadDaysFromCloud,
+    loadProfileFromCloud,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -1072,23 +1077,7 @@ export function AppShell() {
     },
   })
 
-  // Auto-seed history ТОЛЬКО в тестовом демо-режиме (Требование 3)
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEMO_MODE === '1' && state.days.length <= 2) {
-      fetch('/seeds/ogonek-import.v1.json')
-        .then((res) => {
-          if (!res.ok) throw new Error('Not found')
-          return res.json()
-        })
-        .then((data) => {
-          if (data && Array.isArray(data.days) && data.days.length > 2) {
-            importState(data)
-            notify(`Загружена летопись демо-режима (${data.days.length} дней)!`)
-          }
-        })
-        .catch(() => {})
-    }
-  }, [state.days.length, importState, notify])
+
 
   // Onboarding event listener & automation events
   useEffect(() => {
@@ -1231,14 +1220,102 @@ export function AppShell() {
     }
   }, [view])
 
+  // Всегда загружаем актуальные дни и профиль напрямую из Supabase (единственный источник правды)
+  useEffect(() => {
+    loadDaysFromCloud()
+    loadProfileFromCloud()
+  }, [loadDaysFromCloud, loadProfileFromCloud])
+
   const handleSaveComposer = useCallback(
-    (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => {
+    async (payload: ComposerPayload, editingDayId?: number, dateISO?: string): Promise<{ ok: boolean; error?: string }> => {
+      let dayToSave: Day
       if (editingDayId != null) {
-        updateDayWithPayload(editingDayId, payload)
-        notify(`День #${editingDayId} успешно сохранён!`)
+        const existing = state.days.find((d) => d.id === editingDayId)
+        if (!existing) return { ok: false, error: 'Запись не найдена' }
+        dayToSave = {
+          ...existing,
+          title: payload.prides[0] || payload.gratitudes[0] || existing.title,
+          photos: payload.photo ? [payload.photo] : existing.photos,
+          media_url: payload.photo || existing.media_url,
+          visibility: payload.visibility || existing.visibility,
+          groupId: payload.groupId ?? existing.groupId,
+          groupName: payload.groupName ?? existing.groupName,
+          targetGroupIds: payload.targetGroupIds || existing.targetGroupIds,
+          score: payload.score ?? payload.aiScore ?? existing.score,
+          aiScore: payload.aiScore ?? payload.score ?? existing.aiScore,
+          aiVerdict: payload.aiVerdict ?? existing.aiVerdict,
+          prides: payload.prides.map((text, idx) => ({
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            scale: payload.ratings?.[idx]?.scale ?? 8,
+            score: payload.ratings?.[idx]?.score ?? 8,
+            overcome: payload.ratings?.[idx]?.overcome ?? 1,
+            visibility: payload.prideVisibilities?.[idx] ?? payload.visibility ?? 'private',
+            groupId: payload.prideGroupIds?.[idx] ?? payload.groupId ?? null,
+            targetGroupIds: payload.targetGroupIds,
+          })),
+          gratitudes: payload.gratitudes.map((text, idx) => ({
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            visibility: payload.gratitudeVisibilities?.[idx] ?? payload.visibility ?? 'private',
+            groupId: payload.gratitudeGroupIds?.[idx] ?? payload.groupId ?? null,
+            targetGroupIds: payload.targetGroupIds,
+          })),
+        }
       } else {
-        addNewDay(payload, dateISO)
-        notify('День сохранён в локальное хранилище. Стрик продолжается!')
+        const maxId = state.days.reduce((max, d) => Math.max(max, d.id), 0)
+        const newId = maxId + 1
+        const computedDate = dateISO || new Date().toISOString()
+        dayToSave = {
+          id: newId,
+          title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
+          tags: ['Для тебя', '🔥 Гордости', '❤️ Благодарности'],
+          dateISO: computedDate,
+          status: 'normal',
+          visibility: payload.visibility || 'private',
+          groupId: payload.groupId || null,
+          groupName: payload.groupName,
+          targetGroupIds: payload.targetGroupIds || [],
+          photos: payload.photo ? [payload.photo] : [],
+          media_url: payload.photo || null,
+          score: payload.score ?? payload.aiScore,
+          aiScore: payload.aiScore ?? payload.score,
+          aiVerdict: payload.aiVerdict,
+          user_id: state.auth.activeAccountId || (state.profile as any)?.id || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b',
+          userId: state.auth.activeAccountId || (state.profile as any)?.id || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b',
+          prides: payload.prides.map((text, idx) => ({
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            scale: payload.ratings?.[idx]?.scale ?? 8,
+            score: payload.ratings?.[idx]?.score ?? 8,
+            overcome: payload.ratings?.[idx]?.overcome ?? 1,
+            visibility: payload.prideVisibilities?.[idx] ?? payload.visibility ?? 'private',
+            groupId: payload.prideGroupIds?.[idx] ?? payload.groupId ?? null,
+            targetGroupIds: payload.targetGroupIds,
+          })),
+          gratitudes: payload.gratitudes.map((text, idx) => ({
+            num: String(idx + 1).padStart(2, '0'),
+            text,
+            visibility: payload.gratitudeVisibilities?.[idx] ?? payload.visibility ?? 'private',
+            groupId: payload.gratitudeGroupIds?.[idx] ?? payload.groupId ?? null,
+            targetGroupIds: payload.targetGroupIds,
+          })),
+        }
+      }
+
+      // Сохраняем напрямую в Supabase (единственный источник правды)
+      const saveRes = await saveDayDirectlyToSupabase(dayToSave)
+      if (!saveRes.ok) {
+        return saveRes
+      }
+
+      // Обновляем стор только после подтверждённого сохранения в базе Supabase
+      if (editingDayId != null) {
+        updateDay(dayToSave)
+        notify(`День #${editingDayId} успешно сохранён в Supabase!`)
+      } else {
+        addDay(dayToSave)
+        notify('День успешно сохранён в Supabase! Стрик продолжается!')
         const nextCount = state.days.length + 1
         if (nextCount > 0 && nextCount % 100 === 0) {
           const currentTier = subStatus.effectiveTier || state.profile.subscription_tier || 'free'
@@ -1249,10 +1326,12 @@ export function AppShell() {
           }
         }
       }
+
       setComposer(false)
       setEditingDay(null)
+      return { ok: true }
     },
-    [updateDayWithPayload, addNewDay, notify, state.days.length, state.profile.subscription_tier]
+    [state.days, state.auth.activeAccountId, state.profile, saveDayDirectlyToSupabase, updateDay, addDay, notify, subStatus.effectiveTier]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(

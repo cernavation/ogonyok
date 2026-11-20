@@ -133,6 +133,8 @@ function getDayPhotoCandidate(day: Day | null | undefined): string | null {
   return null
 }
 
+export const DRAFT_STORAGE_KEY = 'priday_draft'
+
 type Props = {
   initialDraft?: ComposerDraft | null
   editingDay?: Day | null
@@ -143,7 +145,7 @@ type Props = {
   onSaveDraft?: (draft: ComposerDraft) => void
   onClearDraft?: () => void
   onClose: () => void
-  onSaved: (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => void
+  onSaved: (payload: ComposerPayload, editingDayId?: number, dateISO?: string) => Promise<{ ok: boolean; error?: string } | void> | void
   soundEnabled?: boolean
   /** Уведомление пользователя (тосты) — для публикации в Сторис */
   onNotify?: (message: string) => void
@@ -152,7 +154,7 @@ type Props = {
 function getCachedComposerDraft(): ComposerDraft | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem('ogonek.draft.composer')
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY) || localStorage.getItem('ogonek.draft.composer')
     return raw ? (JSON.parse(raw) as ComposerDraft) : null
   } catch {
     return null
@@ -432,8 +434,9 @@ export function Composer({
         evaluations,
       }
 
-      // 1. Синхронное резервное сохранение
+      // 1. Синхронное резервное сохранение черновика
       try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload))
         localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
       } catch {}
 
@@ -749,14 +752,24 @@ export function Composer({
     setIsPublishing(true)
     try {
       const finalPhotoUrl = await uploadPhotoIfSelected()
+      const payload = buildPayload(evaluations, undefined, undefined, finalPhotoUrl)
+      const res = await onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      if (res && typeof res === 'object' && 'ok' in res && res.ok === false) {
+        onNotify?.(`❌ ${res.error || 'Ошибка при сохранении в Supabase'}`)
+        setIsPublishing(false)
+        return
+      }
       playSuccess(soundEnabled)
-      onSaved(buildPayload(evaluations, undefined, undefined, finalPhotoUrl), editingDay?.id, editingDay ? undefined : dateISO)
       if (!editingDay) {
         try {
+          localStorage.removeItem(DRAFT_STORAGE_KEY)
           localStorage.removeItem('ogonek.draft.composer')
         } catch {}
         onClearDraft?.()
       }
+      onClose()
+    } catch (err: any) {
+      onNotify?.(`❌ Ошибка сохранения: ${err?.message || 'Не удалось сохранить запись'}`)
     } finally {
       setIsPublishing(false)
     }
@@ -770,19 +783,28 @@ export function Composer({
     setShowCeremonyModal(false)
     setEvaluations(evalMap)
     setRatingsAreDefault(false)
-    playSuccess(soundEnabled)
 
     setIsPublishing(true)
     try {
       const finalPhotoUrl = await uploadPhotoIfSelected()
       const payload = buildPayload(evalMap, avgScore, mentorWord, finalPhotoUrl)
-      onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      const res = await onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      if (res && typeof res === 'object' && 'ok' in res && res.ok === false) {
+        onNotify?.(`❌ ${res.error || 'Ошибка при сохранении в Supabase'}`)
+        setIsPublishing(false)
+        return
+      }
+      playSuccess(soundEnabled)
       if (!editingDay) {
         try {
+          localStorage.removeItem(DRAFT_STORAGE_KEY)
           localStorage.removeItem('ogonek.draft.composer')
         } catch {}
         onClearDraft?.()
       }
+      onClose()
+    } catch (err: any) {
+      onNotify?.(`❌ Ошибка сохранения: ${err?.message || 'Не удалось сохранить запись'}`)
     } finally {
       setIsPublishing(false)
     }
@@ -1218,9 +1240,16 @@ export function Composer({
               ? `Заполните минимум ${userLevel} гордости`
               : 'Опубликовать день'
           }
-          className="x-primary-btn px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] disabled:opacity-40 shadow-sm"
+          className="x-primary-btn px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5"
         >
-          {isPublishing ? 'Запись…' : 'Записать'}
+          {isPublishing ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>Запись…</span>
+            </>
+          ) : (
+            'Записать'
+          )}
         </button>
       </div>
 

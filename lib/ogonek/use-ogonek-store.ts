@@ -466,7 +466,6 @@ export function getSnapshot(): OgonekStoreState {
   if (!isInitialized) {
     cachedState = loadStore()
     cachedState = migrateSplitDays(cachedState)
-    cachedState = ensureDemoComments(cachedState)
     cachedState = ensureSanitizedMessengerState(cachedState)
     isInitialized = true
     initSupabaseSessionSync()
@@ -664,9 +663,6 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
       visibility: day.visibility || 'public',
-      group_id: day.groupId || null,
-      target_group_ids: Array.isArray(day.targetGroupIds) ? day.targetGroupIds : [],
-      attached_targets: day.attached_targets || (day as any).attachedTargets || null,
       client_updated_at: nowISO,
     }
 
@@ -680,33 +676,19 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
       overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
       visibility: p.visibility || day.visibility || 'public',
-      group_id: p.groupId || (p.visibility === 'group' ? day.groupId : null) || null,
-      target_group_ids: Array.isArray(p.targetGroupIds) && p.targetGroupIds.length > 0
-        ? p.targetGroupIds
-        : (Array.isArray(day.targetGroupIds) ? day.targetGroupIds : []),
       client_updated_at: nowISO,
     }))
 
-    const gratitudeRows = (day.gratitudes || []).map((g, idx) => {
-      const gVis = (typeof g === 'object' && g.visibility) || day.visibility || 'public'
-      const gGroup = (typeof g === 'object' && g.groupId) || (gVis === 'group' ? day.groupId : null) || null
-      const gTargets = (typeof g === 'object' && Array.isArray(g.targetGroupIds) && g.targetGroupIds.length > 0)
-        ? g.targetGroupIds
-        : (Array.isArray(day.targetGroupIds) ? day.targetGroupIds : [])
-      return {
-        user_id: uid,
-        day_client_id: clientId,
-        client_id: `${clientId}_g_${idx + 1}`,
-        position: idx,
-        num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
-        text: typeof g === 'string' ? g : g?.text || '',
-        rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
-        visibility: gVis,
-        group_id: gGroup,
-        target_group_ids: gTargets,
-        client_updated_at: nowISO,
-      }
-    })
+    const gratitudeRows = (day.gratitudes || []).map((g, idx) => ({
+      user_id: uid,
+      day_client_id: clientId,
+      client_id: `${clientId}_g_${idx + 1}`,
+      position: idx,
+      num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+      text: typeof g === 'string' ? g : g?.text || '',
+      rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
+      client_updated_at: nowISO,
+    }))
 
     // Шаг 17: Оптимизация — сохранение дня со всеми записями и стриком одним атомарным RPC
     const allDays = getSnapshot().days
@@ -723,27 +705,11 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
 
     const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
     if (isOffline) {
-      enqueueOfflineMutation('save_day_bundle', bundlePayload)
-      return { ok: true }
+      return { ok: false, error: 'Отсутствует подключение к интернету. Проверьте сеть и повторите попытку.' }
     }
 
-    try {
-      const rpcRes = await saveDayBundleRpc(bundlePayload)
-      if (rpcRes.ok) {
-        return { ok: true }
-      }
-      if (rpcRes.error && !rpcRes.error.toLowerCase().includes('function') && !rpcRes.error.toLowerCase().includes('not found')) {
-        // Сетевая ошибка или таймаут
-        enqueueOfflineMutation('save_day_bundle', bundlePayload)
-        return { ok: false, error: rpcRes.error }
-      }
-    } catch {
-      // Исключение RPC вызова
-      enqueueOfflineMutation('save_day_bundle', bundlePayload)
-    }
-
-    // Фолбэк на раздельный upsert при отсутствии функции save_day_bundle в тестовом окружении
-    const [dayRes] = await Promise.all([
+    // Прямой upsert в таблицы Supabase: days, prides, gratitudes
+    const [dayRes, prideRes, gratRes] = await Promise.all([
       supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' }),
       prideRows.length > 0
         ? supabase.from('prides').upsert(prideRows, { onConflict: 'user_id,client_id' })
@@ -753,27 +719,38 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
         : Promise.resolve({ error: null }),
     ])
 
-    if (dayRes.error) {
+    if (dayRes?.error) {
       console.error('[Ogonek] Error upserting day to Supabase:', dayRes.error)
-      enqueueOfflineMutation('save_day_bundle', bundlePayload)
       return { ok: false, error: dayRes.error.message }
     }
+    if (prideRes?.error) {
+      console.error('[Ogonek] Error upserting prides to Supabase:', prideRes.error)
+      return { ok: false, error: prideRes.error.message }
+    }
+    if (gratRes?.error) {
+      console.error('[Ogonek] Error upserting gratitudes to Supabase:', gratRes.error)
+      return { ok: false, error: gratRes.error.message }
+    }
 
-    await supabase
-      .from('profiles')
-      .update({
-        streak_count: finalStreak,
-        streak: finalStreak,
-        updated_at: nowISO,
-      })
-      .eq('id', uid)
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          streak_count: finalStreak,
+          streak: finalStreak,
+          updated_at: nowISO,
+        })
+        .eq('id', uid)
+    } catch {}
 
     return { ok: true }
   } catch (err: any) {
     console.error('[Ogonek] Failed to sync day to Supabase:', err)
-    return { ok: false, error: err?.message }
+    return { ok: false, error: err?.message || 'Не удалось сохранить запись в Supabase' }
   }
 }
+
+export const saveDayDirectlyToSupabase = syncDayToSupabase
 
 /**
  * Выгрузка всех дней (включая дни из локального хранилища) в Supabase
@@ -1226,7 +1203,36 @@ export function useOgonekStore() {
    * 2. Удаляет день и связанные записи из Supabase (public.days, public.prides, public.gratitudes).
    */
   const deleteDay = useCallback(
-    async (dayId: number) => {
+    async (dayId: number): Promise<{ ok: boolean; error?: string }> => {
+      const snap = getSnapshot()
+      const uid =
+        snap.auth?.activeAccountId ||
+        (snap.profile as any)?.id ||
+        (snap.profile?.username?.toLowerCase() === 'cernavation' ? '94e9eaf7-ec74-4366-9ce3-7de1e670f52b' : null)
+
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        return { ok: false, error: 'Отсутствует подключение к интернету для удаления записи' }
+      }
+
+      const supabase = getSupabase()
+      if (supabase && uid) {
+        const clientId = String(dayId)
+        try {
+          const { error: delErr } = await supabase.from('days').delete().match({ user_id: uid, client_id: clientId })
+          if (delErr) {
+            console.error('[Ogonek] Error deleting day from Supabase:', delErr)
+            return { ok: false, error: delErr.message }
+          }
+          await Promise.allSettled([
+            supabase.from('prides').delete().match({ user_id: uid, day_client_id: clientId }),
+            supabase.from('gratitudes').delete().match({ user_id: uid, day_client_id: clientId }),
+          ])
+        } catch (err: any) {
+          console.error('[Ogonek] Error deleting day from Supabase:', err)
+          return { ok: false, error: err?.message || 'Ошибка удаления из базы данных' }
+        }
+      }
+
       updateStore((prev) => {
         const nextDays = prev.days.filter((d) => d.id !== dayId)
         const newStreak = calculateStreak(nextDays)
@@ -1241,34 +1247,17 @@ export function useOgonekStore() {
         }
       })
 
-      const uid = getSnapshot().auth?.activeAccountId
-      if (typeof navigator !== 'undefined' && !navigator.onLine && uid) {
-        enqueueOfflineMutation('delete_day', { userId: uid, clientId: String(dayId) })
-        return
-      }
-
-      try {
-        const supabase = getSupabase()
-        if (supabase && uid) {
-          const clientId = String(dayId)
-          await Promise.allSettled([
-            supabase.from('prides').delete().match({ user_id: uid, day_client_id: clientId }),
-            supabase.from('gratitudes').delete().match({ user_id: uid, day_client_id: clientId }),
-            supabase.from('days').delete().match({ user_id: uid, client_id: clientId }),
-            supabase.from('diary_days').delete().match({ user_id: uid, day_number: dayId }),
-          ])
+      if (supabase && uid) {
+        try {
           const currentStreak = calculateStreak(getSnapshot().days)
           await supabase
             .from('profiles')
             .update({ streak_count: currentStreak, updated_at: new Date().toISOString() })
             .eq('id', uid)
-        }
-      } catch (err) {
-        console.error('[Ogonek] Error deleting day from Supabase:', err)
-        if (uid) {
-          enqueueOfflineMutation('delete_day', { userId: uid, clientId: String(dayId) })
-        }
+        } catch {}
       }
+
+      return { ok: true }
     },
     [updateStore]
   )
@@ -5808,15 +5797,28 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Ручная или фоновая загрузка всех дней пользователя из Supabase в стор */
+  /** Ручная или фоновая загрузка всех дней пользователя напрямую из Supabase в стор */
   const loadDaysFromCloud = useCallback(
     async (overrideUserId?: string) => {
       const snap = getSnapshot()
-      const uid = overrideUserId || snap.auth.activeAccountId || (snap.profile as any)?.id
-      const username = (snap.profile?.username || '').toLowerCase()
-      if (username !== 'cernavation' && !overrideUserId) return { ok: false, count: 0 }
       const supabase = getSupabase()
-      if (!supabase || !uid) return { ok: false, count: 0 }
+      if (!supabase) return { ok: false, count: 0, error: 'Supabase client unavailable' }
+
+      const username = (snap.profile?.username || '').toLowerCase()
+      let uid =
+        overrideUserId ||
+        snap.auth.activeAccountId ||
+        (snap.profile as any)?.id ||
+        (username === 'cernavation' ? '94e9eaf7-ec74-4366-9ce3-7de1e670f52b' : null)
+
+      if (!uid) {
+        try {
+          const { data: sData } = await supabase.auth.getSession()
+          if (sData?.session?.user?.id) uid = sData.session.user.id
+        } catch {}
+      }
+
+      if (!uid) return { ok: false, count: 0, error: 'No user ID' }
 
       try {
         const { data: cloudDays, error } = await supabase
@@ -5825,11 +5827,17 @@ export function useOgonekStore() {
           .eq('user_id', uid)
           .order('date_iso', { ascending: false })
 
-        if (!error && Array.isArray(cloudDays) && cloudDays.length > 0) {
-          const mapped = cloudDays.map(mapCloudDayToDay)
+        if (!error && Array.isArray(cloudDays)) {
+          const mapped = cloudDays.map(mapCloudDayToDay).sort((a, b) => b.id - a.id)
+          const newStreak = calculateStreak(mapped)
           updateStore((prev) => ({
             ...prev,
             days: mapped,
+            profile: {
+              ...prev.profile,
+              streak: newStreak,
+              streak_count: newStreak,
+            },
           }))
           return { ok: true, count: mapped.length }
         }
@@ -6213,6 +6221,7 @@ export function useOgonekStore() {
     removeAccount,
     loadDaysFromCloud,
     loadProfileFromCloud,
+    saveDayDirectlyToSupabase,
     provisionDemoAccountSecrets,
   }
 }

@@ -7,15 +7,29 @@ import {
   frame,
   motionValue,
   useInView,
+  useReducedMotion,
   type MotionValue,
-} from "motion/react";
+} from "framer-motion";
 
-import {
-  ReducedMotionConfig,
-  useShouldReduceMotion,
-} from "@animate-ui/react/utils/motion";
-import { usePageVisible } from "@animate-ui/react/utils/use-page-visible";
 import { cn } from "@/lib/utils";
+
+function useShouldReduceMotion() {
+  return Boolean(useReducedMotion());
+}
+
+function usePageVisible() {
+  const [visible, setVisible] = React.useState(true);
+  React.useEffect(() => {
+    const handle = () => setVisible(document.visibilityState === "visible");
+    document.addEventListener("visibilitychange", handle);
+    return () => document.removeEventListener("visibilitychange", handle);
+  }, []);
+  return visible;
+}
+
+function ReducedMotionConfig({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}
 
 const CHARACTERS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]<>()/+=*#$_&;:~^";

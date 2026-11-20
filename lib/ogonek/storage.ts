@@ -780,20 +780,20 @@ const isDemoEnv = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_DEM
 
 export const DEFAULT_STORE_STATE: OgonekStoreState = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
-  days: isDemoEnv ? INITIAL_DAYS : [],
+  days: [],
   verifiedAchievements: DEFAULT_VERIFIED_ACHIEVEMENTS,
-  morningIntentions: isDemoEnv ? DEMO_MORNING_FOCUS.intentions : {},
-  morningFocusHistory: isDemoEnv ? DEMO_MORNING_FOCUS.history : {},
+  morningIntentions: {},
+  morningFocusHistory: {},
   composerDraft: null,
-  evidenceItems: isDemoEnv ? EVIDENCE_ITEMS : [],
-  evidenceFavorites: isDemoEnv ? ['ev-1', 'ev-2'] : [],
+  evidenceItems: [],
+  evidenceFavorites: [],
   soundEnabled: true,
   soundVolume: 0.8,
   unreadChatCount: 0,
   unreadNotificationsCount: 0,
   notifications: [],
   pinEnabled: false,
-  isDemo: isDemoEnv,
+  isDemo: false,
   customEmojis: DEFAULT_CUSTOM_EMOJIS,
   dayReactions: {},
   myReactions: {},
@@ -947,15 +947,9 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         }
       }
 
-      const days: Day[] = Array.isArray(parsed.days) && parsed.days.length > 0
-        ? parsed.days
-        : DEFAULT_STORE_STATE.days
-
-      const sortedDays = [...days].sort((a, b) => {
-        const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
-        const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
-        return tb - ta // newest first
-      })
+      // Дни всегда читаются напрямую из Supabase (единственный источник правды)
+      const days: Day[] = []
+      const sortedDays: Day[] = []
 
       const morningIntentions =
         parsed.morningIntentions && typeof parsed.morningIntentions === 'object'
@@ -1083,7 +1077,10 @@ export function saveStoreImmediate(
   adapter: StorageAdapter = defaultStorageAdapter
 ): void {
   try {
-    const serialized = JSON.stringify(state)
+    // В localStorage сохраняем только настройки UI и профиль;
+    // дни НЕ сохраняются в localStorage — Supabase является единственным источником правды.
+    const { days: _unused, ...stateWithoutDays } = state
+    const serialized = JSON.stringify({ ...stateWithoutDays, days: [] })
     adapter.setItem(STORAGE_KEY, serialized)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
