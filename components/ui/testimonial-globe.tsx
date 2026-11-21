@@ -18,6 +18,10 @@ export interface GlobeTestimonial {
   city: string;
   /** Short country code such as "MD", "GB", "US". */
   country?: string;
+  /** Author name (e.g. "Dan M.", "Michael B.") */
+  author?: string;
+  /** Formatted location string (e.g. "USA, New York", "Kenya, Nairobi") */
+  location?: string;
   /** Topic category (e.g. "Семья", "Спорт", "Работа") */
   topic?: string;
   /** Pin latitude in degrees (south is negative). */
@@ -182,6 +186,38 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+  MD: "Moldova",
+  GB: "UK",
+  US: "USA",
+  JP: "Japan",
+  AU: "Australia",
+  KE: "Kenya",
+  BR: "Brazil",
+  DE: "Germany",
+  IN: "India",
+  CA: "Canada",
+  TR: "Turkey",
+  KR: "South Korea",
+  MX: "Mexico",
+  ZA: "South Africa",
+  PL: "Poland",
+  KZ: "Kazakhstan",
+  GE: "Georgia",
+  FR: "France",
+  NO: "Norway",
+  SG: "Singapore",
+};
+
+export function formatGlobeLocation(item: GlobeTestimonial): string {
+  if (item.location) return item.location;
+  const country = item.country ? (COUNTRY_NAMES[item.country] || item.country) : "";
+  if (country && item.city) {
+    return `${country}, ${item.city}`;
+  }
+  return item.city || country || "";
+}
+
 interface QuoteCardProps {
   item: GlobeTestimonial;
   index: number;
@@ -237,30 +273,47 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
       </blockquote>
 
       <figcaption className={cx("relative mt-auto flex items-center justify-between border-t border-white/[0.08]", roomy ? "pt-5 mt-5" : "pt-3.5 mt-3")}>
-        <div className="flex items-center gap-3">
-          <span
-            className={cx(
-              "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
-              roomy ? "size-9" : "size-8",
-            )}
-          >
-            {index + 1}
-          </span>
-          <div className="flex flex-col text-left">
-            <span className="text-[15px] font-semibold text-white leading-tight">
-              {item.city}
+        <div className="flex items-center gap-3 min-w-0">
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.author || item.city}
+              width={roomy ? 40 : 36}
+              height={roomy ? 40 : 36}
+              className={cx(
+                "relative shrink-0 rounded-full object-cover border border-white/20 shadow-sm ring-1 ring-white/10 select-none",
+                roomy ? "size-10" : "size-9",
+              )}
+              loading="lazy"
+            />
+          ) : (
+            <span
+              className={cx(
+                "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
+                roomy ? "size-9" : "size-8",
+              )}
+            >
+              {index + 1}
             </span>
-            {item.country && (
-              <span className="text-xs text-[#86868b] font-medium">
+          )}
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-[15px] font-semibold text-white leading-tight truncate">
+              {item.author || item.city}
+            </span>
+            {item.author ? (
+              <span className="text-xs text-[#86868b] font-medium truncate">
+                {item.city}
+              </span>
+            ) : item.country ? (
+              <span className="text-xs text-[#86868b] font-medium truncate">
                 {item.country}
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 
-        <span className="text-xs font-mono text-[#86868b]">
-          {item.lat > 0 ? `${item.lat.toFixed(1)}°N` : `${Math.abs(item.lat).toFixed(1)}°S`},{' '}
-          {item.lng > 0 ? `${item.lng.toFixed(1)}°E` : `${Math.abs(item.lng).toFixed(1)}°W`}
+        <span className="text-xs font-mono text-[#86868b] tracking-tight shrink-0 pl-2">
+          {formatGlobeLocation(item)}
         </span>
       </figcaption>
     </figure>
