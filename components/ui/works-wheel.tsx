@@ -241,17 +241,14 @@ export function WorksWheel({
         const hasFocus = isHovered || isSelected;
 
         if (card) {
-          // Extra 3D pop when focused
-          const zLift = hasFocus ? (m < 0.25 ? 55 : 30) : 0;
-          card.style.transform =
-            place(
-              d * (360 / count),
-              drumDeg,
-              ringR,
-              drumR,
-              bow,
-              m,
-            ) + (zLift ? ` translateZ(${zLift}px)` : "");
+          card.style.transform = place(
+            d * (360 / count),
+            drumDeg,
+            ringR,
+            drumR,
+            bow,
+            m,
+          );
 
           // Calculate base opacity
           let baseOp = 1;
@@ -266,12 +263,14 @@ export function WorksWheel({
             }
           }
 
-          // Focused card is fully opaque; other cards slightly dimmed
+          // In drum mode (m > 0.25), focused card is fully opaque; other cards slightly dimmed
           let targetOp = baseOp;
-          if (hasFocus) {
-            targetOp = 1.0;
-          } else if (anyFocus) {
-            targetOp = baseOp * 0.32;
+          if (m > 0.25) {
+            if (hasFocus) {
+              targetOp = 1.0;
+            } else if (anyFocus) {
+              targetOp = baseOp * 0.32;
+            }
           }
 
           const curOp = currentOpacities.current[i] ?? targetOp;
@@ -290,14 +289,8 @@ export function WorksWheel({
         const face = card?.firstElementChild as HTMLElement | null;
         if (face) {
           const baseScale = lerp(ringScale, 1, m);
-
-          // Enlarge smoothly when hovered or selected
-          let targetScale = baseScale;
-          if (hasFocus) {
-            targetScale = m < 0.25 ? Math.min(0.86, ringScale * 1.95) : baseScale * 1.06;
-          } else if (anyFocus) {
-            targetScale = baseScale * 0.94;
-          }
+          // Pure scroll-driven scale: strictly no hover enlargement
+          const targetScale = baseScale;
 
           const curScale = currentScales.current[i] ?? targetScale;
           const nextScale = curScale + (targetScale - curScale) * (reduced ? 1 : 0.18);
@@ -305,13 +298,15 @@ export function WorksWheel({
           face.style.transform = `scale(${nextScale.toFixed(4)})`;
 
           // Subtitle / Full phrase overlay opacity:
-          // Shows full phrase when focused (hovered or selected)
+          // Shows in drum mode when front or focused
           let targetSubOp = 0;
-          if (hasFocus) {
-            targetSubOp = 1.0;
-          } else if (m > 0.25) {
-            targetSubOp =
-              clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
+          if (m > 0.25) {
+            if (hasFocus) {
+              targetSubOp = 1.0;
+            } else {
+              targetSubOp =
+                clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
+            }
           } else {
             targetSubOp = 0;
           }
@@ -327,11 +322,10 @@ export function WorksWheel({
         }
       }
 
-      // Center ring label opacity: soften when a card is focused in ring mode
+      // Center ring label opacity: fades out smoothly as user scrolls into drum
       if (labelRef.current) {
         const ringLabelBase = 1 - m;
-        const ringLabelOp = anyFocus && m < 0.3 ? ringLabelBase * 0.15 : ringLabelBase;
-        labelRef.current.style.opacity = ringLabelOp.toFixed(3);
+        labelRef.current.style.opacity = Math.max(0, ringLabelBase).toFixed(3);
       }
 
       // Left title overlay opacity in drum mode
@@ -566,19 +560,16 @@ export function WorksWheel({
                   <span
                     className={cn(
                       "relative block size-full overflow-hidden rounded-2xl bg-[#16161a] border transition-all duration-300",
-                      hasFocus
+                      isSelected
                         ? "border-[#2997ff]/60 shadow-[0_24px_80px_rgba(0,113,227,0.35),0_32px_70px_rgba(0,0,0,0.95)] ring-1 ring-[#2997ff]/50"
-                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)] group-hover:border-white/30",
+                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)]",
                     )}
                   >
                     <img
                       src={item.image}
                       alt={item.title}
                       draggable={false}
-                      className={cn(
-                        "size-full object-cover select-none transition-all duration-300",
-                        hasFocus ? "scale-105 brightness-105" : "group-hover:scale-[1.02]",
-                      )}
+                      className="size-full object-cover select-none"
                     />
 
                     {/* Category tag pill in top-left corner of each card */}
