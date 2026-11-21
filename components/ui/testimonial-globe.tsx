@@ -370,22 +370,38 @@ const Pin = React.memo(function Pin({
       <span
         data-pin-face
         className={cx(
-          "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border border-white/20 shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
+          "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border overflow-hidden shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
           RING[tone],
           featured
-            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_20px_#FF4D00]"
-            : "ring-1 hover:scale-110 hover:border-white/40",
+            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_24px_rgba(255,77,0,0.65)]"
+            : "ring-1 border-white/30 hover:scale-115 hover:border-white/60",
         )}
       >
-        <span
-          className={cx(
-            "rounded-full transition-all duration-200",
-            featured
-              ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
-              : "size-2 bg-white/80 group-hover/pin:bg-white",
-          )}
-        />
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.author || item.city}
+            className="w-full h-full object-cover select-none pointer-events-none rounded-full"
+            loading="lazy"
+            draggable={false}
+          />
+        ) : (
+          <span
+            className={cx(
+              "rounded-full transition-all duration-200",
+              featured
+                ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
+                : "size-2 bg-white/80 group-hover/pin:bg-white",
+            )}
+          />
+        )}
       </span>
+      {featured && (
+        <span
+          className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-[#FF4D00] border-2 border-[#16161a] shadow-[0_0_6px_#FF4D00] pointer-events-none z-10"
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 });
@@ -444,7 +460,7 @@ export function TestimonialGlobe({
     0,
     Math.round(width === 0 ? Math.min(size, 320) : wide ? Math.min(size, inner * 0.48) : Math.min(size, 320, inner * 0.8)),
   );
-  const pinSize = diameter >= 380 ? 32 : diameter >= 300 ? 28 : 24;
+  const pinSize = diameter >= 380 ? 36 : diameter >= 300 ? 30 : 26;
   const columnGap = width >= 1024 ? 72 : 36;
   const roomy = wide && Math.min(inner - diameter - columnGap, 544) >= 400;
   const ready = glState !== "pending";
