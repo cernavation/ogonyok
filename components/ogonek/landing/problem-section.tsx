@@ -112,14 +112,14 @@ const PROBLEM_TEXTS: Record<
       desc: 'Всё, что осталось незаконченным, крутится в голове ночью. Если записать день, мысли перестают держаться за ночь.',
     },
     calendar: {
-      title: 'Что ты делал 12 марта? Не помнишь.',
+      title: 'Что ты делал 2 недели назад? Не помнишь.',
       desc: 'Сотни дней сливаются в серый шум. Остаются два-три ярких. Остальные как будто не жили.',
     },
     treadmill: {
       title: 'Сто дней в движении. Результата не видно.',
       desc: 'Занят всё время, но непонятно, куда идёшь. Нужен не ещё один план, а честный взгляд на то, что ты на самом деле делал.',
     },
-    finalLine: 'Проблема не в тебе. Просто никто не записывал твои победы.',
+    finalLine: 'Проблема не в тебе. А в твоем подходе.',
   },
   ro: {
     head: {
@@ -127,14 +127,14 @@ const PROBLEM_TEXTS: Record<
       desc: 'Tot ce a rămas neterminat îți revine în minte noaptea. Când îți așterni ziua pe hârtie, gândurile se liniștesc.',
     },
     calendar: {
-      title: 'Ce ai făcut pe 12 martie? Nu-ți amintești.',
+      title: 'Ce ai făcut acum 2 săptămâni? Nu-ți amintești.',
       desc: 'Sute de zile se pierd într-un zgomot cenușiu. Rămân doar două-trei memorabile. Celelalte parcă nici n-au fost trăite.',
     },
     treadmill: {
       title: 'O sută de zile în mișcare. Niciun rezultat vizibil.',
       desc: 'Mereu ocupat, dar fără să știi încotro te îndrepți. Nu ai nevoie de încă un plan, ci de o privire sinceră asupra a ceea ce ai făcut cu adevărat.',
     },
-    finalLine: 'Problema nu ești tu. Pur și simplu nimeni nu ți-a notat victoriile.',
+    finalLine: 'Problema nu ești tu. Ci abordarea ta.',
   },
   en: {
     head: {
@@ -142,14 +142,14 @@ const PROBLEM_TEXTS: Record<
       desc: 'Everything left undone keeps spinning in your head at night. Once you write down your day, the thoughts stop keeping you awake.',
     },
     calendar: {
-      title: "What did you do on March 12th? You don't remember.",
+      title: "What did you do 2 weeks ago? You don't remember.",
       desc: 'Hundreds of days blur into gray noise. Only two or three stand out. The rest are as if you never lived them.',
     },
     treadmill: {
       title: 'A hundred days of motion. No visible result.',
       desc: "Constantly busy, yet unsure where you're headed. You don't need another plan—you need an honest look at what you actually accomplished.",
     },
-    finalLine: "The problem isn't you. Nobody was writing down your wins.",
+    finalLine: "The problem isn't you. It's your approach.",
   },
 }
 
