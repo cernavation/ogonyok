@@ -12,6 +12,7 @@ import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { AppInterfaceShowcase } from './app-interface-showcase'
+import { ProblemSection } from './problem-section'
 import {
   type Locale,
   getLandingContent,
@@ -126,6 +127,11 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ПРОБЛЕМА (Мысли кипят, серый шум дней, бег на месте)
+          ═══════════════════════════════════════════════════════════ */}
+      <ProblemSection locale={locale} />
 
       {/* ═══════════════════════════════════════════════════════════
           2. «ГОРЖУСЬ ТЕМ, ЧТО…» (Кольцо из 9 карточек)
