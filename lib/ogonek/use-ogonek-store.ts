@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useCallback, useMemo, useState, useSyncExternalStore } from 'react'
 import { getSupabase } from './supabase-client'
 import {
   updateProfileInDb,
@@ -666,51 +666,65 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       client_updated_at: nowISO,
     }
 
-    const prideRows = (day.prides || []).map((p, idx) => ({
-      user_id: uid,
-      day_client_id: clientId,
-      client_id: `${clientId}_p_${idx + 1}`,
-      position: idx,
-      num: String(p.num || idx + 1).padStart(2, '0'),
-      text: p.text || '',
-      scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
-      overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
-      visibility: p.visibility || day.visibility || 'public',
-      client_updated_at: nowISO,
-    }))
+    const prideRows = (day.prides || []).map((p, idx) => {
+      const rawScale =
+        typeof p.scale === 'number' && !isNaN(p.scale)
+          ? p.scale
+          : typeof (p as any).score === 'number' && !isNaN((p as any).score)
+            ? (p as any).score
+            : 7
+      const cleanScale = Math.max(1, Math.min(10, Math.round(Number(rawScale))))
+      const rawOvercome = typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 1
+      const cleanOvercome = Math.max(0, Math.min(3, Math.round(Number(rawOvercome))))
 
-    const gratitudeRows = (day.gratitudes || []).map((g, idx) => ({
-      user_id: uid,
-      day_client_id: clientId,
-      client_id: `${clientId}_g_${idx + 1}`,
-      position: idx,
-      num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
-      text: typeof g === 'string' ? g : g?.text || '',
-      rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
-      client_updated_at: nowISO,
-    }))
+      return {
+        user_id: uid,
+        day_client_id: clientId,
+        client_id: `${clientId}_p_${idx + 1}`,
+        position: idx,
+        num: String(p.num || idx + 1).padStart(2, '0'),
+        text: typeof p.text === 'string' ? p.text : '',
+        scale: cleanScale,
+        overcome: cleanOvercome,
+        visibility: p.visibility || day.visibility || 'public',
+        client_updated_at: nowISO,
+      }
+    })
 
-    // Шаг 17: Оптимизация — сохранение дня со всеми записями и стриком одним атомарным RPC
-    const allDays = getSnapshot().days
-    const newStreak = calculateStreak(allDays)
-    const maxDayNum = allDays.reduce((max, d) => Math.max(max, d.id), day.id)
-    const finalStreak = Math.max(newStreak, maxDayNum, allDays.length)
+    const gratitudeRows = (day.gratitudes || []).map((g, idx) => {
+      const rawRating =
+        typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating)
+          ? g.rating
+          : 10
+      const cleanRating = Math.max(1, Math.min(10, Math.round(Number(rawRating))))
+      const text = typeof g === 'string' ? g : (g?.text || '')
 
-    const bundlePayload = {
-      day: dayRow,
-      prides: prideRows,
-      gratitudes: gratitudeRows,
-      streak: finalStreak,
-    }
+      return {
+        user_id: uid,
+        day_client_id: clientId,
+        client_id: `${clientId}_g_${idx + 1}`,
+        position: idx,
+        num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+        text,
+        rating: cleanRating,
+        client_updated_at: nowISO,
+      }
+    })
 
     const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
     if (isOffline) {
       return { ok: false, error: 'Отсутствует подключение к интернету. Проверьте сеть и повторите попытку.' }
     }
 
-    // Прямой upsert в таблицы Supabase: days, prides, gratitudes
-    const [dayRes, prideRes, gratRes] = await Promise.all([
-      supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' }),
+    // 1. Атомарный upsert дня в public.days
+    const { error: dayErr } = await supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' })
+    if (dayErr) {
+      console.error('[Ogonek] Error upserting day to Supabase:', dayErr)
+      return { ok: false, error: dayErr.message }
+    }
+
+    // 2. Вставка гордостей и благодарностей
+    const [prideRes, gratRes] = await Promise.all([
       prideRows.length > 0
         ? supabase.from('prides').upsert(prideRows, { onConflict: 'user_id,client_id' })
         : Promise.resolve({ error: null }),
@@ -719,18 +733,24 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
         : Promise.resolve({ error: null }),
     ])
 
-    if (dayRes?.error) {
-      console.error('[Ogonek] Error upserting day to Supabase:', dayRes.error)
-      return { ok: false, error: dayRes.error.message }
+    // 3. Защита от «зомби-дней»: если гордости или благодарности упали — делаем rollback дня!
+    if (prideRes?.error || gratRes?.error) {
+      const failMsg = prideRes?.error?.message || gratRes?.error?.message || 'Ошибка сохранения записей дня'
+      console.error('[Ogonek] Error saving prides or gratitudes, rolling back day to prevent zombie record:', failMsg)
+      try {
+        await supabase.from('prides').delete().eq('user_id', uid).eq('day_client_id', clientId)
+        await supabase.from('gratitudes').delete().eq('user_id', uid).eq('day_client_id', clientId)
+        await supabase.from('days').delete().eq('user_id', uid).eq('client_id', clientId)
+      } catch (rbErr) {
+        console.error('[Ogonek] Rollback error:', rbErr)
+      }
+      return { ok: false, error: failMsg }
     }
-    if (prideRes?.error) {
-      console.error('[Ogonek] Error upserting prides to Supabase:', prideRes.error)
-      return { ok: false, error: prideRes.error.message }
-    }
-    if (gratRes?.error) {
-      console.error('[Ogonek] Error upserting gratitudes to Supabase:', gratRes.error)
-      return { ok: false, error: gratRes.error.message }
-    }
+
+    const allDays = getSnapshot().days
+    const newStreak = calculateStreak(allDays)
+    const maxDayNum = allDays.reduce((max, d) => Math.max(max, d.id), day.id)
+    const finalStreak = Math.max(newStreak, maxDayNum, allDays.length)
 
     try {
       await supabase
@@ -793,31 +813,52 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
       }))
 
       const prideRows = chunk.flatMap((d) =>
-        (d.prides || []).map((p, idx) => ({
-          user_id: uid,
-          day_client_id: String(d.id),
-          client_id: `${d.id}_p_${idx + 1}`,
-          position: idx,
-          num: String(p.num || idx + 1).padStart(2, '0'),
-          text: p.text || '',
-          scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
-          overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
-          visibility: p.visibility || d.visibility || 'public',
-          client_updated_at: nowISO,
-        }))
+        (d.prides || []).map((p, idx) => {
+          const rawScale =
+            typeof p.scale === 'number' && !isNaN(p.scale)
+              ? p.scale
+              : typeof (p as any).score === 'number' && !isNaN((p as any).score)
+                ? (p as any).score
+                : 7
+          const cleanScale = Math.max(1, Math.min(10, Math.round(Number(rawScale))))
+          const rawOvercome = typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 1
+          const cleanOvercome = Math.max(0, Math.min(3, Math.round(Number(rawOvercome))))
+
+          return {
+            user_id: uid,
+            day_client_id: String(d.id),
+            client_id: `${d.id}_p_${idx + 1}`,
+            position: idx,
+            num: String(p.num || idx + 1).padStart(2, '0'),
+            text: typeof p.text === 'string' ? p.text : '',
+            scale: cleanScale,
+            overcome: cleanOvercome,
+            visibility: p.visibility || d.visibility || 'public',
+            client_updated_at: nowISO,
+          }
+        })
       )
 
       const gratitudeRows = chunk.flatMap((d) =>
-        (d.gratitudes || []).map((g, idx) => ({
-          user_id: uid,
-          day_client_id: String(d.id),
-          client_id: `${d.id}_g_${idx + 1}`,
-          position: idx,
-          num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
-          text: typeof g === 'string' ? g : g?.text || '',
-          rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
-          client_updated_at: nowISO,
-        }))
+        (d.gratitudes || []).map((g, idx) => {
+          const rawRating =
+            typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating)
+              ? g.rating
+              : 10
+          const cleanRating = Math.max(1, Math.min(10, Math.round(Number(rawRating))))
+          const text = typeof g === 'string' ? g : (g?.text || '')
+
+          return {
+            user_id: uid,
+            day_client_id: String(d.id),
+            client_id: `${d.id}_g_${idx + 1}`,
+            position: idx,
+            num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+            text,
+            rating: cleanRating,
+            client_updated_at: nowISO,
+          }
+        })
       )
 
       await Promise.all([
@@ -868,17 +909,25 @@ export function subscribe(callback: () => void): () => void {
 
   const handleCustom = (e: Event) => {
     const customEvent = e as CustomEvent<OgonekStoreState>
-    if (customEvent.detail && Array.isArray((customEvent.detail as any).days)) {
+    if (customEvent.detail && Array.isArray((customEvent.detail as any).days) && (customEvent.detail as any).days.length > 0) {
       cachedState = customEvent.detail
     } else {
-      cachedState = loadStore()
+      const fresh = loadStore()
+      if (cachedState.days && cachedState.days.length > 0 && (!fresh.days || fresh.days.length === 0)) {
+        fresh.days = cachedState.days
+      }
+      cachedState = fresh
     }
     callback()
   }
 
   const handleStorage = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY || e.key === 'ogonyok.v3.store') {
-      cachedState = loadStore()
+      const fresh = loadStore()
+      if (cachedState.days && cachedState.days.length > 0 && (!fresh.days || fresh.days.length === 0)) {
+        fresh.days = cachedState.days
+      }
+      cachedState = fresh
       callback()
     }
   }
@@ -1028,8 +1077,11 @@ export function useActiveAccountId(): string | null {
   return useOgonekSelector((s) => s.auth?.activeAccountId || null)
 }
 
+let isCloudDaysInitialLoading = true
+
 export function useOgonekStore() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
+  const [isCloudDaysLoading, setIsCloudDaysLoading] = useState(isCloudDaysInitialLoading)
 
   const currentUser: CurrentUser = useMemo(() => {
     return getMemoizedCurrentUser(state)
@@ -3288,6 +3340,9 @@ export function useOgonekStore() {
     (newState: OgonekStoreState) => {
       updateStore((prev) => ({
         ...newState,
+        days: (Array.isArray(newState.days) && newState.days.length > 0)
+          ? newState.days
+          : prev.days,
         // Защита от импорта без новых полей (старые архивы / сторонние JSON)
         comments: newState.comments ?? {},
         customEmojis: newState.customEmojis ?? [],
@@ -5828,22 +5883,32 @@ export function useOgonekStore() {
           .order('date_iso', { ascending: false })
 
         if (!error && Array.isArray(cloudDays)) {
-          const mapped = cloudDays.map(mapCloudDayToDay).sort((a, b) => b.id - a.id)
-          const newStreak = calculateStreak(mapped)
-          updateStore((prev) => ({
-            ...prev,
-            days: mapped,
-            profile: {
-              ...prev.profile,
-              streak: newStreak,
-              streak_count: newStreak,
-            },
-          }))
-          return { ok: true, count: mapped.length }
+          if (cloudDays.length > 0 || snap.days.length === 0) {
+            const mapped = cloudDays.map(mapCloudDayToDay).sort((a, b) => b.id - a.id)
+            const newStreak = calculateStreak(mapped)
+            updateStore((prev) => ({
+              ...prev,
+              days: mapped,
+              profile: {
+                ...prev.profile,
+                streak: newStreak,
+                streak_count: newStreak,
+              },
+            }))
+            isCloudDaysInitialLoading = false
+            setIsCloudDaysLoading(false)
+            return { ok: true, count: mapped.length }
+          }
+          isCloudDaysInitialLoading = false
+          setIsCloudDaysLoading(false)
+          return { ok: true, count: snap.days.length }
         }
         return { ok: false, count: 0, error: error?.message }
       } catch (err: any) {
         return { ok: false, count: 0, error: err?.message }
+      } finally {
+        isCloudDaysInitialLoading = false
+        setIsCloudDaysLoading(false)
       }
     },
     [updateStore]
@@ -6222,6 +6287,7 @@ export function useOgonekStore() {
     loadDaysFromCloud,
     loadProfileFromCloud,
     saveDayDirectlyToSupabase,
+    isCloudDaysLoading,
     provisionDemoAccountSecrets,
   }
 }

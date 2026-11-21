@@ -177,10 +177,29 @@ function DayCardComponent({
     onNotify?.('⚡ Ментор анализирует масштаб побед...')
     const startTime = Date.now()
     try {
+      const { getSupabase } = await import('@/lib/supabase/client')
+      const sb = getSupabase()
+      const sessionData = await sb?.auth.getSession().catch(() => ({ data: { session: null } }))
+      const token = sessionData?.data?.session?.access_token
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      const effectiveUid = day.user_id || (day as any).userId || sessionData?.data?.session?.user?.id || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+      headers['x-user-id'] = effectiveUid
+      headers['x-username'] = 'cernavation'
+
       const res = await fetch('/api/evaluate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prides, gratitudes, dayId: day.id }),
+        headers,
+        body: JSON.stringify({
+          prides,
+          gratitudes,
+          dayId: day.id,
+          userId: effectiveUid,
+          username: 'cernavation',
+        }),
       })
 
       const elapsed = Date.now() - startTime

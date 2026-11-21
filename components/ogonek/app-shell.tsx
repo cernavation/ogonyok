@@ -167,6 +167,7 @@ export function AppShell() {
     saveDayDirectlyToSupabase,
     loadDaysFromCloud,
     loadProfileFromCloud,
+    isCloudDaysLoading,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -1229,8 +1230,13 @@ export function AppShell() {
   const handleSaveComposer = useCallback(
     async (payload: ComposerPayload, editingDayId?: number, dateISO?: string): Promise<{ ok: boolean; error?: string }> => {
       let dayToSave: Day
-      if (editingDayId != null) {
-        const existing = state.days.find((d) => d.id === editingDayId)
+      const computedDate = dateISO || new Date().toISOString()
+      const targetDateKey = computedDate.slice(0, 10)
+      const existingByDate = editingDayId == null ? state.days.find((d) => (d.dateISO || '').slice(0, 10) === targetDateKey) : null
+      const isExisting = editingDayId != null || Boolean(existingByDate)
+
+      if (isExisting) {
+        const existing = editingDayId != null ? state.days.find((d) => d.id === editingDayId) : existingByDate!
         if (!existing) return { ok: false, error: 'Запись не найдена' }
         dayToSave = {
           ...existing,
@@ -1265,7 +1271,6 @@ export function AppShell() {
       } else {
         const maxId = state.days.reduce((max, d) => Math.max(max, d.id), 0)
         const newId = maxId + 1
-        const computedDate = dateISO || new Date().toISOString()
         dayToSave = {
           id: newId,
           title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
@@ -1309,10 +1314,19 @@ export function AppShell() {
         return saveRes
       }
 
+      // Очищаем черновики после успешного сохранения в Supabase
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('priday_draft')
+          localStorage.removeItem('ogonek.draft.composer')
+        } catch {}
+      }
+      clearComposerDraft()
+
       // Обновляем стор только после подтверждённого сохранения в базе Supabase
-      if (editingDayId != null) {
+      if (isExisting) {
         updateDay(dayToSave)
-        notify(`День #${editingDayId} успешно сохранён в Supabase!`)
+        notify(`День #${dayToSave.id} успешно сохранён в Supabase!`)
       } else {
         addDay(dayToSave)
         notify('День успешно сохранён в Supabase! Стрик продолжается!')
@@ -1331,7 +1345,7 @@ export function AppShell() {
       setEditingDay(null)
       return { ok: true }
     },
-    [state.days, state.auth.activeAccountId, state.profile, saveDayDirectlyToSupabase, updateDay, addDay, notify, subStatus.effectiveTier]
+    [state.days, state.auth.activeAccountId, state.profile, saveDayDirectlyToSupabase, clearComposerDraft, updateDay, addDay, notify, subStatus.effectiveTier]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(
@@ -1341,6 +1355,7 @@ export function AppShell() {
           userId={state.auth.activeAccountId ?? undefined}
           currentUsername={state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)?.snapshot?.username || state.profile.username}
           days={state.days}
+          isCloudLoading={isCloudDaysLoading}
           morningIntentions={state.morningIntentions}
           morningFocusHistory={state.morningFocusHistory}
           onSaveMorningIntentions={saveMorningIntentions}

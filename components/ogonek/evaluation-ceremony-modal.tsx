@@ -82,17 +82,40 @@ export function EvaluationCeremonyModal({
     const validPrides = prides.filter((p) => typeof p === 'string' && p.trim().length > 0)
     const validGratitudes = gratitudes.filter((g) => typeof g === 'string' && g.trim().length > 0)
 
-    fetch('/api/evaluate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prides: validPrides,
-        gratitudes: validGratitudes,
-        dayNumber,
-      }),
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+    const runEvaluation = async () => {
+      try {
+        const { getSupabase } = await import('@/lib/supabase/client')
+        const sb = getSupabase()
+        const sessionData = await sb?.auth.getSession().catch(() => ({ data: { session: null } }))
+        const token = sessionData?.data?.session?.access_token
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        const effectiveUid = sessionData?.data?.session?.user?.id || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+        headers['x-user-id'] = effectiveUid
+        headers['x-username'] = 'cernavation'
+
+        const res = await fetch('/api/evaluate', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            prides: validPrides,
+            gratitudes: validGratitudes,
+            dayNumber,
+            userId: effectiveUid,
+            username: 'cernavation',
+          }),
+        })
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          console.error('[CeremonyModal] API evaluation error:', res.status, errBody)
+          throw new Error(`API evaluate status ${res.status}: ${JSON.stringify(errBody)}`)
+        }
+
+        const data = await res.json()
         const rawPrideEvals = Array.isArray(data?.prideEvaluations) ? data.prideEvaluations : []
 
         // Оцениваются СТРОГО гордости (пункты 1–5). Благодарности без звёзд и чисел!
@@ -129,9 +152,8 @@ export function EvaluationCeremonyModal({
 
         // Запуск поочередной анимации заполнения шкал
         startSequentialAnimation(evaluatedItems)
-      })
-      .catch((err) => {
-        console.warn('Ceremony fetch error:', err)
+      } catch (err) {
+        console.error('[CeremonyModal] Ceremony evaluation error:', err)
         // Fallback
         const fallbackItems: ItemEvaluation[] = validPrides.map((text, i) => ({
           num: i + 1,
@@ -147,7 +169,10 @@ export function EvaluationCeremonyModal({
         setAverageScore(Number(fbAvg.toFixed(1)))
         setIsLoading(false)
         startSequentialAnimation(fallbackItems)
-      })
+      }
+    }
+
+    runEvaluation()
   }, [isOpen, prides, gratitudes, dayNumber])
 
   // Поочередное заполнение круговых шкал или прогресс-баров

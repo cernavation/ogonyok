@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, Flame, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile, Users } from 'lucide-react'
+import { Check, Copy, Flame, Loader2, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile, Users } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
@@ -53,6 +53,7 @@ type Props = {
   soundEnabled?: boolean
   userId?: string
   currentUsername?: string
+  isCloudLoading?: boolean
 }
 
 export function HomeView({
@@ -79,6 +80,7 @@ export function HomeView({
   soundEnabled = true,
   userId,
   currentUsername,
+  isCloudLoading,
 }: Props) {
   const { state, currentUser, loadDaysFromCloud, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
@@ -491,7 +493,12 @@ export function HomeView({
           />
         )}
 
-        {days.length === 0 ? (
+        {isCloudLoading && days.length === 0 ? (
+          <div className="py-20 flex flex-col items-center justify-center gap-3 text-[var(--muted)]">
+            <Loader2 size={32} className="animate-spin text-[var(--accent)]" />
+            <span className="text-sm font-medium">Загрузка летописи из Supabase...</span>
+          </div>
+        ) : days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />

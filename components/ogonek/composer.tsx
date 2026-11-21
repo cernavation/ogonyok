@@ -434,14 +434,12 @@ export function Composer({
         evaluations,
       }
 
-      // 1. Синхронное резервное сохранение черновика
-      try {
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload))
-        localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
-      } catch {}
-
-      // 2. Дебаунсированная синхронизация с внешним хранилищем
+      // 1. Дебаунсированное сохранение черновика (не блокирует печать и стек Undo)
       const timer = setTimeout(() => {
+        try {
+          localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload))
+          localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
+        } catch {}
         onSaveDraft?.(draftPayload)
       }, 500)
       return () => clearTimeout(timer)
@@ -553,12 +551,33 @@ export function Composer({
 
     if (isOnline && filledPrides.length > 0) {
       try {
+        const { getSupabase } = await import('@/lib/supabase/client')
+        const sb = getSupabase()
+        const sessionData = await sb?.auth.getSession().catch(() => ({ data: { session: null } }))
+        const token = sessionData?.data?.session?.access_token
+
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`
+        }
+        const effectiveUid = sessionData?.data?.session?.user?.id || '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+        headers['x-user-id'] = effectiveUid
+        headers['x-username'] = 'cernavation'
+
         const res = await fetch('/api/evaluate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prides: filledPrides, gratitudes: filledGratitudes }),
+          headers,
+          body: JSON.stringify({
+            prides: filledPrides,
+            gratitudes: filledGratitudes,
+            userId: effectiveUid,
+            username: 'cernavation',
+          }),
         })
-        if (res.ok) {
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}))
+          console.error('[computeEvaluations] API returned non-OK status:', res.status, errBody)
+        } else {
           const data = (await res.json()) as any
           const list = Array.isArray(data.prideEvaluations) && data.prideEvaluations.length > 0
             ? data.prideEvaluations
@@ -586,7 +605,7 @@ export function Composer({
           }
         }
       } catch (err) {
-        console.warn('Network error during computeEvaluations:', err)
+        console.error('[computeEvaluations] Network or evaluation error:', err)
       }
     }
 
@@ -918,73 +937,8 @@ export function Composer({
       }
     }
 
-    // 2. Получаем вставленный текст
-    const pastedText = e.clipboardData?.getData('text')
-    if (!pastedText) return
-
-    // (c) Одиночная ссылка отдельно: остаётся ссылкой, слот не переключается
-    if (isSingleUrl(pastedText)) {
-      return
-    }
-
-    // (b) Список (нумерация, маркеры или несколько абзацев): раскладываем по слотам (до 3)
-    const listItems = parseListItems(pastedText)
-    if (listItems && listItems.length >= 2) {
-      e.preventDefault()
-      const prevPrides = [...prides]
-      const prevGratitudes = [...gratitudes]
-      const prevSlot = activeSlot
-      const activeValues = tab === 'pride' ? prides : gratitudes
-
-      const distResult = distributeListItems(activeValues, activeSlot, listItems)
-
-      if (tab === 'pride') {
-        setPrides(distResult.newValues)
-      } else {
-        setGratitudes(distResult.newValues)
-      }
-
-      setActiveSlot(distResult.nextFocusSlot)
-
-      const labelPlural = tab === 'pride' ? 'гордостям' : 'благодарностям'
-      showSmartToast(`Разложил по ${distResult.distributedCount} ${labelPlural}`, () => {
-        if (tab === 'pride') {
-          setPrides(prevPrides)
-        } else {
-          setGratitudes(prevGratitudes)
-        }
-        setActiveSlot(prevSlot)
-        onNotify?.('Вставка списка отменена')
-      })
-      return
-    }
-
-    // (d) Вставка длиннее лимита тарифа (> maxChars):
-    // не обрезаем тихо, оставляем в текущем слоте для показа красного счётчика и кнопки «Разложить остаток»
-    if (pastedText.length > maxChars) {
-      e.preventDefault()
-      handleActiveChange(pastedText)
-      return
-    }
-
-    // (a) Большой кусок текста (>= 120 символов, не одна ссылка)
-    if (pastedText.trim().length >= 120) {
-      e.preventDefault()
-      const activeValues = tab === 'pride' ? prides : gratitudes
-      const result = handleLargeTextPaste(activeValues, activeSlot, pastedText.trim())
-
-      if (tab === 'pride') {
-        setPrides(result.newValues)
-      } else {
-        setGratitudes(result.newValues)
-      }
-
-      setActiveSlot(result.nextFocusSlot)
-
-      const labelItem = tab === 'pride' ? 'гордость' : 'благодарность'
-      showSmartToast(`Вставлено в ${labelItem} №${result.targetSlot + 1}`)
-      return
-    }
+    // 2. Для любого обычного текста НЕ вызываем e.preventDefault()!
+    // Нативная вставка браузера сохраняет стандартный стек отмены Cmd + Z (Undo).
   }
 
   const handleActiveChange = (val: string) => {

@@ -947,9 +947,15 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         }
       }
 
-      // Дни всегда читаются напрямую из Supabase (единственный источник правды)
-      const days: Day[] = []
-      const sortedDays: Day[] = []
+      const days: Day[] = Array.isArray(parsed.days) && parsed.days.length > 0
+        ? parsed.days
+        : DEFAULT_STORE_STATE.days
+
+      const sortedDays = [...days].sort((a, b) => {
+        const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86400000
+        const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86400000
+        return tb - ta
+      })
 
       const morningIntentions =
         parsed.morningIntentions && typeof parsed.morningIntentions === 'object'
@@ -1077,10 +1083,7 @@ export function saveStoreImmediate(
   adapter: StorageAdapter = defaultStorageAdapter
 ): void {
   try {
-    // В localStorage сохраняем только настройки UI и профиль;
-    // дни НЕ сохраняются в localStorage — Supabase является единственным источником правды.
-    const { days: _unused, ...stateWithoutDays } = state
-    const serialized = JSON.stringify({ ...stateWithoutDays, days: [] })
+    const serialized = JSON.stringify(state)
     adapter.setItem(STORAGE_KEY, serialized)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(

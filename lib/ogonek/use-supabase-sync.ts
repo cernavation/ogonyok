@@ -77,7 +77,10 @@ export function useSupabaseSync(options: UseSupabaseSyncOptions = {}): UseSupaba
     const handle = startAutoSync({
       getState: () => stateRef.current,
       onState: (next) => {
-        // Серверные данные изменили локальное состояние — фиксируем в сторе.
+        // Никогда не затираем загруженные дни пустым массивом
+        if (stateRef.current.days && stateRef.current.days.length > 0 && (!next.days || next.days.length === 0)) {
+          return
+        }
         importState(next)
         setMetaTick((tick) => tick + 1)
       },
