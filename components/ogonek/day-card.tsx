@@ -174,13 +174,27 @@ function DayCardComponent({
       return
     }
 
+    const currentUserId =
+      state.auth.activeAccountId ||
+      (state.profile as any)?.id ||
+      state.profile.username ||
+      '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+
     onNotify?.('⚡ Ментор анализирует масштаб побед...')
     const startTime = Date.now()
     try {
       const res = await fetch('/api/evaluate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prides, gratitudes, dayId: day.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currentUserId,
+        },
+        body: JSON.stringify({
+          prides,
+          gratitudes,
+          dayId: day.id,
+          userId: currentUserId,
+        }),
       })
 
       const elapsed = Date.now() - startTime

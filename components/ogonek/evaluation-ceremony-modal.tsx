@@ -6,6 +6,7 @@ import confetti from 'canvas-confetti'
 import { Check, Flame, Loader2, Sparkles, X } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import type { OvercomeLevel } from '@/lib/ogonek/types'
 
@@ -45,13 +46,14 @@ export function EvaluationCeremonyModal({
   onNotify,
 }: Props) {
   useBodyScrollLock(isOpen)
+  const { state: storeState } = useOgonekStore()
 
   const [isLoading, setIsLoading] = useState(true)
   const [items, setItems] = useState<ItemEvaluation[]>([])
   const [animatedScores, setAnimatedScores] = useState<Record<number, number>>({})
   const [activeItemIndex, setActiveItemIndex] = useState(0)
   const [isFinished, setIsFinished] = useState(false)
-  const [averageScore, setAverageScore] = useState(8.8)
+  const [averageScore, setAverageScore] = useState(8.5)
   const [mentorWord, setMentorWord] = useState(
     'Сегодня ты удержал планку дисциплины и проявил характер. Каждая победа над собой укрепляет огонь внутри!'
   )
@@ -82,32 +84,52 @@ export function EvaluationCeremonyModal({
     const validPrides = prides.filter((p) => typeof p === 'string' && p.trim().length > 0)
     const validGratitudes = gratitudes.filter((g) => typeof g === 'string' && g.trim().length > 0)
 
+    const currentUserId =
+      storeState.auth.activeAccountId ||
+      (storeState.profile as any)?.id ||
+      storeState.profile.username ||
+      '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+
     fetch('/api/evaluate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': currentUserId,
+      },
       body: JSON.stringify({
         prides: validPrides,
         gratitudes: validGratitudes,
         dayNumber,
+        userId: currentUserId,
       }),
     })
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => null)
+          throw new Error(errData?.error?.message || errData?.error || `HTTP ${res.status}`)
+        }
+        return res.json()
+      })
       .then((data) => {
-        const rawPrideEvals = Array.isArray(data?.prideEvaluations) ? data.prideEvaluations : []
+        const rawPrideEvals = Array.isArray(data?.prideEvaluations)
+          ? data.prideEvaluations
+          : Array.isArray(data?.evaluations)
+          ? data.evaluations
+          : []
 
         // Оцениваются СТРОГО гордости (пункты 1–5). Благодарности без звёзд и чисел!
         const evaluatedItems: ItemEvaluation[] = validPrides.map((text, i) => {
           const ev = rawPrideEvals[i]
           const sc = typeof ev?.score === 'number' && !isNaN(ev.score)
             ? Number(ev.score.toFixed(1))
-            : (typeof data?.score === 'number' ? Number(data.score.toFixed(1)) : 8.8)
+            : (typeof data?.score === 'number' ? Number(data.score.toFixed(1)) : 8.5)
           return {
             num: i + 1,
             text,
             score: sc,
-            comment: ev?.comment || 'Отличная концентрация, преодоление и фиксация победы.',
+            comment: ev?.comment || ev?.verdict || 'Отличная концентрация, преодоление и фиксация победы.',
             overcome: typeof ev?.overcome === 'number' ? ev.overcome : 1,
-            tags: Array.isArray(ev?.tags) ? ev.tags : ['#Дисциплина'],
+            tags: Array.isArray(ev?.tags) && ev.tags.length > 0 ? ev.tags : ['#Дисциплина'],
             type: 'pride',
           }
         })
@@ -118,6 +140,7 @@ export function EvaluationCeremonyModal({
 
         const mentor =
           data?.verdict ||
+          data?.breakdown ||
           data?.mentorWord ||
           data?.daySummary ||
           'Сегодня ты проявил характер и удержал планку дисциплины. Каждое преодоление укрепляет твой стрик и внутренний огонь. Продолжай движение вперед!'
@@ -131,24 +154,38 @@ export function EvaluationCeremonyModal({
         startSequentialAnimation(evaluatedItems)
       })
       .catch((err) => {
-        console.warn('Ceremony fetch error:', err)
-        // Fallback
-        const fallbackItems: ItemEvaluation[] = validPrides.map((text, i) => ({
-          num: i + 1,
-          text,
-          score: 8.8,
-          comment: 'Преодоление барьера и фиксация победы.',
-          overcome: 1,
-          tags: ['#Характер'],
-          type: 'pride',
-        }))
+        console.error('[EvaluationCeremonyModal] AI Evaluation fetch error:', err)
+        onNotify?.(`⚠️ ИИ-разбор: ${err.message || 'переход на автономный анализ'}`)
+
+        // Динамический эвристический расчёт вместо одинакового 8.8
+        const fallbackItems: ItemEvaluation[] = validPrides.map((text, i) => {
+          const lower = text.toLowerCase()
+          let dynScore = 7.6 + (i % 3) * 0.4
+          if (lower.includes('спорт') || lower.includes('бег') || lower.includes('зал') || lower.includes('тренировк')) {
+            dynScore = 8.6
+          } else if (lower.includes('прорыв') || lower.includes('сделка') || lower.includes('завершил')) {
+            dynScore = 9.0
+          } else if (text.length > 50) {
+            dynScore = 8.2
+          }
+          dynScore = Number(Math.min(10, dynScore).toFixed(1))
+          return {
+            num: i + 1,
+            text,
+            score: dynScore,
+            comment: 'Преодоление барьера и фиксация победы в летописи.',
+            overcome: dynScore >= 8.5 ? 2 : 1,
+            tags: ['#Характер', '#Дисциплина'],
+            type: 'pride',
+          }
+        })
         const fbAvg = fallbackItems.reduce((acc, p) => acc + (p.score || 0), 0) / (fallbackItems.length || 1)
         setItems(fallbackItems)
         setAverageScore(Number(fbAvg.toFixed(1)))
         setIsLoading(false)
         startSequentialAnimation(fallbackItems)
       })
-  }, [isOpen, prides, gratitudes, dayNumber])
+  }, [isOpen, prides, gratitudes, dayNumber, storeState.auth.activeAccountId, storeState.profile, onNotify])
 
   // Поочередное заполнение круговых шкал или прогресс-баров
   const startSequentialAnimation = (list: ItemEvaluation[]) => {

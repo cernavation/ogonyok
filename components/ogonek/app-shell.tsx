@@ -1220,10 +1220,18 @@ export function AppShell() {
     }
   }, [view])
 
+  const [isInitialLoadingDays, setIsInitialLoadingDays] = useState(() => state.days.length === 0)
+
   // Всегда загружаем актуальные дни и профиль напрямую из Supabase (единственный источник правды)
   useEffect(() => {
-    loadDaysFromCloud()
+    let active = true
+    loadDaysFromCloud().finally(() => {
+      if (active) setIsInitialLoadingDays(false)
+    })
     loadProfileFromCloud()
+    return () => {
+      active = false
+    }
   }, [loadDaysFromCloud, loadProfileFromCloud])
 
   const handleSaveComposer = useCallback(
@@ -1263,9 +1271,14 @@ export function AppShell() {
           })),
         }
       } else {
-        const maxId = state.days.reduce((max, d) => Math.max(max, d.id), 0)
-        const newId = maxId + 1
         const computedDate = dateISO || new Date().toISOString()
+        const targetDateStr = computedDate.slice(0, 10)
+        // Защита от дублей дней на одну и ту же дату (например #745, #746 при повторном нажатии «Записать»)
+        const sameDateDay = state.days.find(
+          (d) => d.dateISO && d.dateISO.slice(0, 10) === targetDateStr
+        )
+        const maxId = state.days.reduce((max, d) => Math.max(max, d.id), 0)
+        const newId = sameDateDay ? sameDateDay.id : maxId + 1
         dayToSave = {
           id: newId,
           title: payload.prides[0] || payload.gratitudes[0] || 'Запись дня',
@@ -1309,6 +1322,15 @@ export function AppShell() {
         return saveRes
       }
 
+      // Очищаем черновик сразу после успешного сохранения
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('priday_draft')
+          localStorage.removeItem('ogonek.draft.composer')
+        }
+      } catch {}
+      clearComposerDraft()
+
       // Обновляем стор только после подтверждённого сохранения в базе Supabase
       if (editingDayId != null) {
         updateDay(dayToSave)
@@ -1341,6 +1363,7 @@ export function AppShell() {
           userId={state.auth.activeAccountId ?? undefined}
           currentUsername={state.auth.accounts.find((a) => a.id === state.auth.activeAccountId)?.snapshot?.username || state.profile.username}
           days={state.days}
+          isLoading={isInitialLoadingDays}
           morningIntentions={state.morningIntentions}
           morningFocusHistory={state.morningFocusHistory}
           onSaveMorningIntentions={saveMorningIntentions}

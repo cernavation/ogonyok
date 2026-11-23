@@ -48,19 +48,41 @@ export interface DayEvaluationResult {
 
 // Zod-схема валидации гордости от ИИ
 export const PrideEvaluationSchema = z.object({
-  num: z.number().int().positive().default(1),
-  score: z.number().min(1.0).max(10.0),
-  comment: z.string().min(1).default('Действие зафиксировано в летописи.'),
-  overcome: z.number().int().min(0).max(3).default(1),
-  tags: z.array(z.string()).default(['#Дисциплина']),
+  num: z.coerce.number().default(1),
+  score: z.coerce.number().min(1.0).max(10.0),
+  comment: z.string().optional().default('Действие зафиксировано в летописи.'),
+  verdict: z.string().optional(),
+  overcome: z.coerce.number().min(0).max(3).default(1),
+  tags: z.array(z.string()).optional().default(['#Дисциплина']),
 })
 
 // Zod-схема ответа всего дня от ИИ
 export const DayEvaluationSchema = z.object({
-  prideEvaluations: z.array(PrideEvaluationSchema).min(1),
-  breakdown: z.string().min(1),
+  prideEvaluations: z.array(PrideEvaluationSchema).optional(),
+  evaluations: z.array(PrideEvaluationSchema).optional(),
+  items: z.array(PrideEvaluationSchema).optional(),
+  prides: z.array(PrideEvaluationSchema).optional(),
+  breakdown: z.string().optional(),
+  summary: z.string().optional(),
   verdict: z.string().optional().default(''),
 })
+
+/**
+ * Безопасное извлечение JSON из markdown или сырого текста
+ */
+export function extractJsonString(raw: string): string {
+  if (!raw) return ''
+  const codeBlockMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i)
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    return codeBlockMatch[1].trim()
+  }
+  const firstBrace = raw.indexOf('{')
+  const lastBrace = raw.lastIndexOf('}')
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return raw.slice(firstBrace, lastBrace + 1).trim()
+  }
+  return raw.trim()
+}
 
 // In-memory fallback для кэша ответов ИИ
 const localAiCache = new Map<string, DayEvaluationResult>()
@@ -237,6 +259,12 @@ async function callGemini(
     throw new Error('GEMINI_API_KEY_NOT_CONFIGURED')
   }
 
+  // Google AI Studio ключи Gemini начинаются с AIzaSy. Невалидные токены пропускаем сразу к DeepSeek.
+  if (!apiKey.startsWith('AIzaSy') && !apiKey.startsWith('AIza')) {
+    console.warn(`[AI_GATEWAY]: GEMINI_API_KEY format unsupported (${apiKey.slice(0, 8)}...), cascading immediately to DeepSeek`)
+    throw new Error('GEMINI_API_KEY_INVALID_FORMAT')
+  }
+
   const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
@@ -266,6 +294,11 @@ async function callGemini(
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '')
+        console.error(`[AI_GATEWAY]: Gemini HTTP ${response.status}: ${errorText}`)
+        // Ошибки авторизации (401/403) не исправятся повтором — переходим к DeepSeek сразу
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(`Gemini auth error ${response.status}: ${errorText}`)
+        }
         throw new Error(`Gemini status ${response.status}: ${errorText}`)
       }
 
@@ -365,34 +398,55 @@ function parseAndValidateDayJson(
   tier: SubscriptionTier
 ): DayEvaluationResult | null {
   try {
-    const clean = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/i, '')
-      .trim()
+    const clean = extractJsonString(rawText)
+    if (!clean) {
+      console.error('[AI_VALIDATION] Empty JSON after extraction from:', rawText.slice(0, 200))
+      return null
+    }
 
     const parsed = JSON.parse(clean)
     const validated = DayEvaluationSchema.safeParse(parsed)
 
     if (!validated.success) {
+      console.error('[AI_VALIDATION] Schema validation failed:', validated.error.format())
       return null
     }
 
     const data = validated.data
-    // Если тариф PRO — строго убираем напутствие ментора
-    const verdict = tier === 'ultra' ? (data.verdict || '') : ''
+    const prideEvaluations = (
+      data.prideEvaluations ||
+      data.evaluations ||
+      data.items ||
+      data.prides ||
+      []
+    ).map((p, i) => ({
+      num: p.num || i + 1,
+      score: Number(p.score.toFixed(1)),
+      comment: p.comment || p.verdict || 'Действие зафиксировано в летописи.',
+      overcome: p.overcome ?? 1,
+      tags: Array.isArray(p.tags) && p.tags.length > 0 ? p.tags : ['#Дисциплина'],
+    }))
 
-    const prideEvaluations = data.prideEvaluations
+    if (prideEvaluations.length === 0) {
+      console.error('[AI_VALIDATION] No pride evaluations found in response')
+      return null
+    }
+
+    // Если тариф PRO — строго убираем напутствие ментора
+    const verdict = tier === 'ultra' ? (data.verdict || data.summary || '') : ''
+    const breakdown = data.breakdown || data.summary || data.verdict || 'День сохранён в летописи.'
+
     const prideScoresSum = prideEvaluations.reduce((acc, p) => acc + p.score, 0)
     const finalScore = Number((prideScoresSum / prideEvaluations.length).toFixed(1))
 
     return {
       prideEvaluations,
-      breakdown: data.breakdown,
+      breakdown,
       verdict,
       score: finalScore,
     }
-  } catch {
+  } catch (err: any) {
+    console.error('[AI_VALIDATION] JSON parse error:', err?.message, 'Raw text:', rawText.slice(0, 300))
     return null
   }
 }

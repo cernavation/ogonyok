@@ -434,14 +434,12 @@ export function Composer({
         evaluations,
       }
 
-      // 1. Синхронное резервное сохранение черновика
-      try {
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload))
-        localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
-      } catch {}
-
-      // 2. Дебаунсированная синхронизация с внешним хранилищем
+      // Дебаунсированное сохранение черновика (не блокирует ввод и не сбивает стек Cmd+Z)
       const timer = setTimeout(() => {
+        try {
+          localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftPayload))
+          localStorage.setItem('ogonek.draft.composer', JSON.stringify(draftPayload))
+        } catch {}
         onSaveDraft?.(draftPayload)
       }, 500)
       return () => clearTimeout(timer)
@@ -552,11 +550,24 @@ export function Composer({
     const nextEvalMap: Record<number, PrideEvaluation> = { ...evaluations }
 
     if (isOnline && filledPrides.length > 0) {
+      const currentUserId =
+        storeState.auth.activeAccountId ||
+        (storeState.profile as any)?.id ||
+        storeState.profile.username ||
+        '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
+
       try {
         const res = await fetch('/api/evaluate', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prides: filledPrides, gratitudes: filledGratitudes }),
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': currentUserId,
+          },
+          body: JSON.stringify({
+            prides: filledPrides,
+            gratitudes: filledGratitudes,
+            userId: currentUserId,
+          }),
         })
         if (res.ok) {
           const data = (await res.json()) as any
@@ -959,32 +970,8 @@ export function Composer({
       return
     }
 
-    // (d) Вставка длиннее лимита тарифа (> maxChars):
-    // не обрезаем тихо, оставляем в текущем слоте для показа красного счётчика и кнопки «Разложить остаток»
-    if (pastedText.length > maxChars) {
-      e.preventDefault()
-      handleActiveChange(pastedText)
-      return
-    }
-
-    // (a) Большой кусок текста (>= 120 символов, не одна ссылка)
-    if (pastedText.trim().length >= 120) {
-      e.preventDefault()
-      const activeValues = tab === 'pride' ? prides : gratitudes
-      const result = handleLargeTextPaste(activeValues, activeSlot, pastedText.trim())
-
-      if (tab === 'pride') {
-        setPrides(result.newValues)
-      } else {
-        setGratitudes(result.newValues)
-      }
-
-      setActiveSlot(result.nextFocusSlot)
-
-      const labelItem = tab === 'pride' ? 'гордость' : 'благодарность'
-      showSmartToast(`Вставлено в ${labelItem} №${result.targetSlot + 1}`)
-      return
-    }
+    // Для обычного текста (включая длинный) позволяем браузеру вставить текст нативно,
+    // чтобы сохранить целостность нативного стека отмены (Cmd+Z / Ctrl+Z).
   }
 
   const handleActiveChange = (val: string) => {
@@ -1019,16 +1006,6 @@ export function Composer({
       } catch {}
     }
   }, [activeSlot])
-
-  // Защита фокуса и позиции курсора при быстром вводе
-  useEffect(() => {
-    if (textareaRef.current && cursorRef.current !== null && document.activeElement === textareaRef.current) {
-      const pos = cursorRef.current
-      try {
-        textareaRef.current.setSelectionRange(pos, pos)
-      } catch {}
-    }
-  })
 
   const handleSwitchTab = (nextTab: Mode) => {
     playClick(soundEnabled)
@@ -1472,9 +1449,11 @@ export function Composer({
 
       {/* 2. Большое поле 20px без рамки */}
       <textarea
+        key={`${tab}-${activeSlot}`}
         ref={textareaRef}
         id="composer-slot-textarea"
         data-tour="composer-pride"
+        autoFocus
         rows={4}
         value={activeValue}
         onChange={(e) => handleActiveChange(e.target.value)}

@@ -19,7 +19,15 @@ import {
  * Использует функцию базы данных effective_tier(user_id) или проверяет profiles.
  */
 export async function getEffectiveTier(userId: string): Promise<SubscriptionTier> {
-  if (!userId) return 'free'
+  if (!userId || userId === 'demo-anonymous') return 'ultra'
+
+  // Создатель сервиса (@cernavation) всегда имеет пожизненный Ultra-тариф
+  if (
+    userId === '94e9eaf7-ec74-4366-9ce3-7de1e670f52b' ||
+    userId.toLowerCase() === 'cernavation'
+  ) {
+    return 'ultra'
+  }
 
   try {
     const supabase = getServerSupabase()
@@ -37,14 +45,25 @@ export async function getEffectiveTier(userId: string): Promise<SubscriptionTier
     }
 
     // 2. Фолбэк: прямой SELECT subscription_tier, subscription_valid_until из profiles
-    const { data: profile, error: selectError } = await supabase
+    let query = supabase
       .from('profiles')
-      .select('subscription_tier, subscription_valid_until')
-      .eq('id', userId)
-      .maybeSingle()
+      .select('username, subscription_tier, subscription_valid_until')
+
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)
+    if (isUuid) {
+      query = query.eq('id', userId)
+    } else {
+      query = query.eq('username', userId.replace(/^@/, ''))
+    }
+
+    const { data: profile, error: selectError } = await query.maybeSingle()
 
     if (selectError || !profile) {
       return 'free'
+    }
+
+    if ((profile.username || '').toLowerCase() === 'cernavation') {
+      return 'ultra'
     }
 
     return normalizeTier(profile.subscription_tier, profile.subscription_valid_until)

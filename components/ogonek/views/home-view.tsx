@@ -53,6 +53,7 @@ type Props = {
   soundEnabled?: boolean
   userId?: string
   currentUsername?: string
+  isLoading?: boolean
 }
 
 export function HomeView({
@@ -79,6 +80,7 @@ export function HomeView({
   soundEnabled = true,
   userId,
   currentUsername,
+  isLoading = false,
 }: Props) {
   const { state, currentUser, loadDaysFromCloud, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
@@ -491,7 +493,19 @@ export function HomeView({
           />
         )}
 
-        {days.length === 0 ? (
+        {isLoading && days.length === 0 ? (
+          <div className="py-16 text-center space-y-4 animate-pulse" role="status" aria-label="Загрузка летописи...">
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] mx-auto mb-2 animate-bounce" aria-hidden="true">
+              <Flame size={28} className="text-[var(--accent)]" />
+            </span>
+            <div className="h-5 w-48 bg-[var(--border)]/40 rounded-full mx-auto" />
+            <div className="h-3 w-64 bg-[var(--border)]/20 rounded-full mx-auto" />
+            <div className="space-y-3 max-w-lg mx-auto pt-4">
+              <div className="h-28 bg-[var(--card)]/60 rounded-2xl border border-[var(--border)]/20" />
+              <div className="h-28 bg-[var(--card)]/60 rounded-2xl border border-[var(--border)]/20" />
+            </div>
+          </div>
+        ) : days.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />

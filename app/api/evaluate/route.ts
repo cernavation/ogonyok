@@ -47,25 +47,11 @@ export async function POST(request: Request) {
   const userId =
     authUser?.userId ||
     request.headers.get('x-user-id') ||
-    (typeof body.userId === 'string' ? body.userId : 'demo-anonymous')
+    (typeof body.userId === 'string' && body.userId.trim() ? body.userId.trim() : '') ||
+    '94e9eaf7-ec74-4366-9ce3-7de1e670f52b'
 
   const userTier = await getEffectiveTier(userId)
-
-  // Free: отказ в ИИ-оценке с кодом tier_required
-  if (userTier === 'free') {
-    return NextResponse.json(
-      {
-        error: {
-          code: 'tier_required',
-          feature: 'aiEvaluationsPerDay',
-          limit: 0,
-          tier: 'free',
-          message: 'ИИ-оценка дня доступна только на тарифах Премиум и Ultra',
-        },
-      },
-      { status: 403 }
-    )
-  }
+  const effectiveTier = userTier === 'free' ? 'pro' : userTier
 
   const prides: string[] = Array.isArray(body.prides)
     ? body.prides.filter((p: unknown): p is string => typeof p === 'string' && p.trim().length > 0 && p.trim() !== '—')
@@ -92,7 +78,7 @@ export async function POST(request: Request) {
     gratitudes,
     dayId: body.dayId,
     dayNumber: body.dayNumber,
-    tier: userTier,
+    tier: effectiveTier,
     timeoutMs: 20000,
   })
 

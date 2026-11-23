@@ -947,9 +947,14 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         }
       }
 
-      // Дни всегда читаются напрямую из Supabase (единственный источник правды)
-      const days: Day[] = []
-      const sortedDays: Day[] = []
+      // FIX BUG #2: Восстанавливаем дни из localStorage (локальный кэш),
+      // чтобы лента не мигала «745 ↔ 0 дней» при каждом чтении стора!
+      const rawDays = Array.isArray(parsed.days) ? (parsed.days as Day[]) : []
+      const sortedDays: Day[] = [...rawDays].sort((a, b) => {
+        const ta = a.dateISO ? new Date(a.dateISO).getTime() : a.id * 86_400_000
+        const tb = b.dateISO ? new Date(b.dateISO).getTime() : b.id * 86_400_000
+        return tb - ta
+      })
 
       const morningIntentions =
         parsed.morningIntentions && typeof parsed.morningIntentions === 'object'
@@ -1077,11 +1082,31 @@ export function saveStoreImmediate(
   adapter: StorageAdapter = defaultStorageAdapter
 ): void {
   try {
-    // В localStorage сохраняем только настройки UI и профиль;
-    // дни НЕ сохраняются в localStorage — Supabase является единственным источником правды.
-    const { days: _unused, ...stateWithoutDays } = state
-    const serialized = JSON.stringify({ ...stateWithoutDays, days: [] })
-    adapter.setItem(STORAGE_KEY, serialized)
+    // FIX BUG #2: Никогда не перезаписываем days в [] при сохранении!
+    // Сохраняем актуальные дни как офлайн-кэш. При переполнении квоты (QuotaExceededError)
+    // обрезаем до последних 100 дней, но никогда не пишем пустой массив [].
+    let serialized: string
+    try {
+      serialized = JSON.stringify(state)
+      adapter.setItem(STORAGE_KEY, serialized)
+    } catch {
+      // Фолбэк при нехватке места в localStorage: сохраняем последние 100 дней
+      try {
+        const compactState = {
+          ...state,
+          days: state.days.slice(0, 100),
+          chatThreads: {},
+        }
+        serialized = JSON.stringify(compactState)
+        adapter.setItem(STORAGE_KEY, serialized)
+      } catch {
+        // Если совсем нет места, сохраняем настройки без дней
+        const { days: _unused, ...noDays } = state
+        serialized = JSON.stringify(noDays)
+        adapter.setItem(STORAGE_KEY, serialized)
+      }
+    }
+
     if (typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent<OgonekStoreState>('ogonek-store-updated', { detail: state })

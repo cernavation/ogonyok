@@ -1103,8 +1103,10 @@ export function buildRemoteDataset(state: OgonekStoreState, userId: string): Rem
 /** onConflict-ключ для каждой таблицы (совпадает с unique-ограничениями схемы) */
 export const ON_CONFLICT: Record<SupabaseTable, string> = {
   profiles: 'id',
-  days: 'user_id,date_iso',
-  prides: 'day_id,position',
+  // FIX BUG #1: days UNIQUE constraint is (user_id, client_id), NOT (user_id, date_iso)!
+  // Using wrong ON_CONFLICT caused duplicate day entries for the same client_id.
+  days: 'user_id,client_id',
+  prides: 'user_id,client_id',
   gratitudes: 'user_id,client_id',
   achievements_verifications: 'user_id,client_id',
   stories: 'user_id,client_id',

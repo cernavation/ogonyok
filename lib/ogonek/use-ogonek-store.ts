@@ -657,7 +657,16 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       user_id: uid,
       client_id: clientId,
       day_number: day.id,
-      title: (day.title || `День #${day.id}`).slice(0, 300),
+      // FIX: НЕ обрезаем title — schema check(char_length <= 300) защитит от превышения.
+      // Первая гордость в title обычно короче 300 символов; если длиннее — обрежем умно по слову.
+      title: (() => {
+        const raw = day.title || `День #${day.id}`
+        if (raw.length <= 300) return raw
+        // Обрезаем по границе слова, а не на полуслове
+        const cut = raw.slice(0, 297)
+        const lastSpace = cut.lastIndexOf(' ')
+        return (lastSpace > 200 ? cut.slice(0, lastSpace) : cut) + '…'
+      })(),
       tags: Array.isArray(day.tags) ? day.tags : [],
       photos: Array.isArray(day.photos) && day.photos.length > 0 ? day.photos : (day.media_url ? [day.media_url] : []),
       date_iso: day.dateISO || nowISO,
@@ -708,30 +717,51 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       return { ok: false, error: 'Отсутствует подключение к интернету. Проверьте сеть и повторите попытку.' }
     }
 
-    // Прямой upsert в таблицы Supabase: days, prides, gratitudes
-    const [dayRes, prideRes, gratRes] = await Promise.all([
-      supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' }),
-      prideRows.length > 0
-        ? supabase.from('prides').upsert(prideRows, { onConflict: 'user_id,client_id' })
-        : Promise.resolve({ error: null }),
-      gratitudeRows.length > 0
-        ? supabase.from('gratitudes').upsert(gratitudeRows, { onConflict: 'user_id,client_id' })
-        : Promise.resolve({ error: null }),
-    ])
+    // ── FIX BUG #1: Последовательная вставка (day → prides → gratitudes) ────
+    // Prides и gratitudes имеют FK на days(user_id, client_id).
+    // Параллельный Promise.all вызывал FK violation → «зомби-день» без записей.
+    // Также: при дубле (повторном нажатии «Записать» для той же даты) upsert
+    // по on_conflict='user_id,client_id' безопасно перезаписывает существующий день.
 
+    // Шаг 1: Вставляем/обновляем день
+    const dayRes = await supabase.from('days').upsert(dayRow, { onConflict: 'user_id,client_id' })
     if (dayRes?.error) {
       console.error('[Ogonek] Error upserting day to Supabase:', dayRes.error)
-      return { ok: false, error: dayRes.error.message }
-    }
-    if (prideRes?.error) {
-      console.error('[Ogonek] Error upserting prides to Supabase:', prideRes.error)
-      return { ok: false, error: prideRes.error.message }
-    }
-    if (gratRes?.error) {
-      console.error('[Ogonek] Error upserting gratitudes to Supabase:', gratRes.error)
-      return { ok: false, error: gratRes.error.message }
+      return { ok: false, error: `Ошибка записи дня: ${dayRes.error.message}` }
     }
 
+    // Шаг 2: Вставляем гордости (после дня, чтобы FK не упал)
+    if (prideRows.length > 0) {
+      const prideRes = await supabase.from('prides').upsert(prideRows, { onConflict: 'user_id,client_id' })
+      if (prideRes?.error) {
+        console.error('[Ogonek] Error upserting prides to Supabase:', prideRes.error)
+        // Откатываем «зомби-день»: удаляем день, если записи не сохранились
+        try {
+          await supabase.from('days').delete().eq('user_id', uid).eq('client_id', clientId)
+        } catch (rollbackErr) {
+          console.error('[Ogonek] Rollback failed for zombie day:', rollbackErr)
+        }
+        return { ok: false, error: `Ошибка записи гордостей: ${prideRes.error.message}` }
+      }
+    }
+
+    // Шаг 3: Вставляем благодарности (после дня, чтобы FK не упал)
+    if (gratitudeRows.length > 0) {
+      const gratRes = await supabase.from('gratitudes').upsert(gratitudeRows, { onConflict: 'user_id,client_id' })
+      if (gratRes?.error) {
+        console.error('[Ogonek] Error upserting gratitudes to Supabase:', gratRes.error)
+        // Откатываем: удаляем уже записанные prides и day
+        try {
+          await supabase.from('prides').delete().eq('user_id', uid).eq('day_client_id', clientId)
+          await supabase.from('days').delete().eq('user_id', uid).eq('client_id', clientId)
+        } catch (rollbackErr) {
+          console.error('[Ogonek] Rollback failed for zombie day:', rollbackErr)
+        }
+        return { ok: false, error: `Ошибка записи благодарностей: ${gratRes.error.message}` }
+      }
+    }
+
+    // Шаг 4: Обновляем streak в профиле (best-effort, не критично)
     try {
       await supabase
         .from('profiles')
@@ -782,7 +812,9 @@ export async function syncAllDaysToSupabase(days: Day[], overrideUid?: string) {
         user_id: uid,
         client_id: String(d.id),
         day_number: d.id,
-        title: (d.title || `День #${d.id}`).slice(0, 300),
+        title: ((d.title || `День #${d.id}`).length <= 300
+          ? (d.title || `День #${d.id}`)
+          : (() => { const r = (d.title || `День #${d.id}`).slice(0, 297); const sp = r.lastIndexOf(' '); return (sp > 200 ? r.slice(0, sp) : r) + '…' })()),
         tags: Array.isArray(d.tags) ? d.tags : [],
         photos: Array.isArray(d.photos) ? d.photos : [],
         date_iso: d.dateISO || nowISO,
@@ -868,17 +900,27 @@ export function subscribe(callback: () => void): () => void {
 
   const handleCustom = (e: Event) => {
     const customEvent = e as CustomEvent<OgonekStoreState>
-    if (customEvent.detail && Array.isArray((customEvent.detail as any).days)) {
+    if (customEvent.detail && Array.isArray((customEvent.detail as any).days) && (customEvent.detail as any).days.length > 0) {
       cachedState = customEvent.detail
     } else {
-      cachedState = loadStore()
+      const fresh = loadStore()
+      // FIX BUG #2: Никогда не затираем уже загруженные дни пустым массивом!
+      if ((!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
+        fresh.days = cachedState.days
+      }
+      cachedState = fresh
     }
     callback()
   }
 
   const handleStorage = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY || e.key === 'ogonyok.v3.store') {
-      cachedState = loadStore()
+      const fresh = loadStore()
+      // FIX BUG #2: Никогда не затираем уже загруженные дни пустым массивом при storage-событиях!
+      if ((!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
+        fresh.days = cachedState.days
+      }
+      cachedState = fresh
       callback()
     }
   }
@@ -1064,7 +1106,6 @@ export function useOgonekStore() {
       let createdDay: Day | null = null
       updateStore((prev) => {
         const maxId = prev.days.reduce((max, d) => Math.max(max, d.id), 0)
-        const newId = maxId + 1
 
         // Compute next date: last day's date + 1 calendar day
         let computedDate = dateISO
@@ -1081,6 +1122,11 @@ export function useOgonekStore() {
           nextDate.setDate(nextDate.getDate() + 1)
           computedDate = nextDate.toISOString()
         }
+
+        // Защита от дублей дней на одну и ту же дату (например #745, #746 при повторном нажатии «Записать»)
+        const targetDateStr = computedDate.slice(0, 10)
+        const sameDateDay = prev.days.find((d) => d.dateISO && d.dateISO.slice(0, 10) === targetDateStr)
+        const newId = sameDateDay ? sameDateDay.id : maxId + 1
 
         const newPrideEntries: PrideEntry[] = payload.prides.map((text, idx) => {
           const r = payload.ratings?.[idx]
@@ -3288,6 +3334,8 @@ export function useOgonekStore() {
     (newState: OgonekStoreState) => {
       updateStore((prev) => ({
         ...newState,
+        // FIX BUG #2: Никогда не затираем уже загруженные дни пустым массивом при фоновом импорте/синхронизации!
+        days: Array.isArray(newState.days) && newState.days.length > 0 ? newState.days : prev.days,
         // Защита от импорта без новых полей (старые архивы / сторонние JSON)
         comments: newState.comments ?? {},
         customEmojis: newState.customEmojis ?? [],
