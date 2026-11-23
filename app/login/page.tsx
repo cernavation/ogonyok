@@ -10,8 +10,20 @@ import { AuthForm } from '@/components/ogonek/auth/auth-form'
 export default function LoginPage() {
   const router = useRouter()
 
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ogonek.store.v1')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
+          window.location.replace('/app')
+        }
+      }
+    } catch {}
+  }, [])
+
   const handleAuthenticated = (accountId: string) => {
-    router.push('/')
+    window.location.href = '/app'
   }
 
   return (

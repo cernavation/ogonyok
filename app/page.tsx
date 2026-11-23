@@ -1,5 +1,5 @@
-import { AppShell } from '@/components/ogonek/app-shell'
+import { LocaleLandingView } from '@/components/ogonek/landing/locale-landing-view'
 
-export default function Page() {
-  return <AppShell />
+export default function RootPage() {
+  return <LocaleLandingView locale="ru" />
 }

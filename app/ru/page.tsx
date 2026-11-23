@@ -1,4 +1,4 @@
-import { LandingPage } from '@/components/ogonek/landing/landing-page'
+import { LocaleLandingView } from '@/components/ogonek/landing/locale-landing-view'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 }
 
 export default function RuLandingPage() {
-  return <LandingPage locale="ru" />
+  return <LocaleLandingView locale="ru" />
 }

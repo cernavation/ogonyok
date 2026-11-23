@@ -35,6 +35,7 @@ const nextConfig = {
   devIndicators: false,
   async redirects() {
     return [
+      { source: '/feed', destination: '/app', permanent: false },
       { source: '/community', destination: '/', permanent: true },
       { source: '/modes', destination: '/', permanent: true },
       { source: '/platform', destination: '/', permanent: true },

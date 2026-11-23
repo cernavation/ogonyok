@@ -64,16 +64,50 @@ function preloadVideo(src: string, timeoutMs = 6000): Promise<void> {
 }
 
 export function Preloader() {
-  const [mounted, setMounted] = useState(true)
+  const [mounted, setMounted] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
   const [progress, setProgress] = useState(10)
   const timerStarted = useRef(false)
 
   useEffect(() => {
-    if (typeof window !== "undefined" && ((window as any).__PRIDAY_SKIP_PRELOADER__ || window.location.search.includes("skip_preloader=1"))) {
-      setMounted(false)
+    if (typeof window === "undefined") return
+
+    // Never show preloader inside the app, login, register, or if already shown in this session
+    const path = window.location.pathname
+    const isAppRoute =
+      path.startsWith('/app') ||
+      path.startsWith('/feed') ||
+      path.startsWith('/chats') ||
+      path.startsWith('/login') ||
+      path.startsWith('/register') ||
+      path.startsWith('/auth')
+
+    const alreadyPreloaded = sessionStorage.getItem('priday_preloaded') === '1'
+
+    // Check if user is signed in
+    let isUserLoggedIn = false
+    try {
+      const raw = localStorage.getItem('ogonek.store.v1')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
+          isUserLoggedIn = true
+        }
+      }
+    } catch {}
+
+    if (
+      isAppRoute ||
+      alreadyPreloaded ||
+      isUserLoggedIn ||
+      (window as any).__PRIDAY_SKIP_PRELOADER__ ||
+      window.location.search.includes("skip_preloader=1")
+    ) {
       return
     }
+
+    // Only if first visit to public landing page, mount preloader
+    setMounted(true)
 
     if (timerStarted.current) return
     timerStarted.current = true
@@ -82,9 +116,7 @@ export function Preloader() {
     const originalOverflow = document.body.style.overflow
     document.body.style.overflow = "hidden"
 
-    const MIN_TIME = 3000 // 3.0 seconds minimum display time
-    const startTime = performance.now()
-
+    const MIN_TIME = 600 // Быстрый и плавный показ 600 мс
     let loadedCount = 0
     const totalCount = HEAVY_ASSETS.length
 
@@ -94,10 +126,10 @@ export function Preloader() {
       setProgress((prev) => Math.max(prev, Math.round(assetRatio * 85)))
     }
 
-    // Preload all heavy assets in background
+    // Preload heavy assets with max 1.5s timeout
     const assetPromises = HEAVY_ASSETS.map((asset) => {
       if (asset.endsWith(".mp4") || asset.endsWith(".webm")) {
-        return preloadVideo(asset).then(updateProgress)
+        return preloadVideo(asset, 1500).then(updateProgress)
       } else {
         return preloadImage(asset).then(updateProgress)
       }
@@ -105,19 +137,22 @@ export function Preloader() {
 
     const minTimePromise = new Promise((resolve) => setTimeout(resolve, MIN_TIME))
 
-    Promise.all([Promise.all(assetPromises), minTimePromise]).then(() => {
+    const dismiss = () => {
       setProgress(100)
-      // Small 150ms buffer at 100% before initiating smooth fade-out
+      try {
+        sessionStorage.setItem('priday_preloaded', '1')
+      } catch {}
       setTimeout(() => {
         setIsExiting(true)
         document.body.style.overflow = originalOverflow
 
-        // Unmount after transition duration
         setTimeout(() => {
           setMounted(false)
-        }, 750)
-      }, 150)
-    })
+        }, 300)
+      }, 100)
+    }
+
+    Promise.all([Promise.all(assetPromises), minTimePromise]).then(dismiss).catch(dismiss)
 
     return () => {
       document.body.style.overflow = originalOverflow

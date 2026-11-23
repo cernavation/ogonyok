@@ -34,6 +34,26 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
   const content = getLandingContent(locale)
   const stories = LOCALIZED_STORIES[locale] || LOCALIZED_STORIES.ru
 
+  // Автоматический перевод авторизованного пользователя в приложение (/app)
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    const isExplicitLandingView =
+      window.location.search.includes('landing=1') ||
+      window.location.search.includes('view=landing')
+    if (isExplicitLandingView) return
+
+    try {
+      const raw = localStorage.getItem('ogonek.store.v1')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
+          window.location.replace('/app')
+          return
+        }
+      }
+    } catch {}
+  }, [])
+
   const openAuth = (mode: AuthMode) => setAuthModal(mode)
   const closeAuth = () => setAuthModal(null)
 
@@ -53,7 +73,11 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           initialMode={authModal}
           onAuthenticated={(accountId) => {
             closeAuth()
-            onAuthenticated?.(accountId)
+            if (onAuthenticated) {
+              onAuthenticated(accountId)
+            } else {
+              window.location.href = '/app'
+            }
           }}
         />
       )}

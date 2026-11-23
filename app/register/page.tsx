@@ -47,6 +47,18 @@ export default function RegisterPage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [selectedRhythm, setSelectedRhythm] = useState(2) // 3 гордости по умолчанию
 
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ogonek.store.v1')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
+          window.location.replace('/app')
+        }
+      }
+    } catch {}
+  }, [])
+
   const handleRhythmSelect = (flames: number) => {
     setSelectedRhythm(flames)
     setStep(2)
@@ -60,7 +72,7 @@ export default function RegisterPage() {
     } catch (e) {
       // Ignore if field is not typed in mock
     }
-    router.push('/')
+    window.location.href = '/app'
   }
 
   return (

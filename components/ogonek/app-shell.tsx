@@ -68,8 +68,8 @@ const MilestoneModal = dynamic(
   { ssr: false }
 )
 
-export function AppShell() {
-  const [view, setView] = useState<ViewId>('home')
+export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}) {
+  const [view, setView] = useState<ViewId>(initialView)
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null)
   const [composer, setComposer] = useState(false)
   const [editingDay, setEditingDay] = useState<Day | null>(null)

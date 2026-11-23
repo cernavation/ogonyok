@@ -5985,7 +5985,7 @@ export function useOgonekStore() {
     [activateAccount]
   )
 
-  /** Выход из аккаунта: очищает сессию, ставит currentUser = null и переводит на экран входа */
+  /** Выход из аккаунта: очищает сессию, ставит currentUser = null и переводит на лендинг */
   const signOut = useCallback(() => {
     const nowISO = new Date().toISOString()
     try {
@@ -6003,6 +6003,12 @@ export function useOgonekStore() {
         updatedAtISO: nowISO,
       },
     }))
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('priday_preloaded')
+      } catch {}
+      window.location.href = '/ru'
+    }
   }, [updateStore])
 
   /**
