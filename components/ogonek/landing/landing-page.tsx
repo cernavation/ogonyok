@@ -12,39 +12,38 @@ import type { AuthMode } from '../auth/auth-form'
 import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { AppInterfaceShowcase } from './app-interface-showcase'
-import storiesData from '@/src/content/stories.json'
+import { ProblemSection } from './problem-section'
 import {
-  HERO_CONTENT,
-  PRIDE_WHEEL_CONTENT,
-  HOW_IT_WORKS_CONTENT,
-  TEMPO_CONTENT,
-  AI_ANALYSIS_CONTENT,
-  FRIENDS_FAMILY_CONTENT,
-  GLOBE_CONTENT,
-  PRIVACY_CONTENT,
-  FACTS_CONTENT,
-  PRICING_CONTENT,
-  FINAL_CTA_CONTENT,
-} from '@/src/content/landing'
+  type Locale,
+  getLandingContent,
+  LOCALIZED_STORIES,
+} from '@/src/content/i18n'
 
 type Props = {
   onNotify?: (msg: string) => void
   onAuthenticated?: (accountId: string) => void
+  locale?: Locale
 }
 
-export function LandingPage({ onNotify, onAuthenticated }: Props) {
+export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props) {
   const containerRef = useScrollReveal()
   const modesTrackRef = React.useRef<HTMLDivElement>(null)
   const [authModal, setAuthModal] = useState<AuthMode | null>(null)
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
 
+  const content = getLandingContent(locale)
+  const stories = LOCALIZED_STORIES[locale] || LOCALIZED_STORIES.ru
+
   const openAuth = (mode: AuthMode) => setAuthModal(mode)
   const closeAuth = () => setAuthModal(null)
 
+  const aiHref = `/ai/${locale}`
+  const legalPrivacyHref = `/legal/${locale}#privacy`
+
   return (
     <div className="landing" ref={containerRef}>
-      {/* ── Fixed Apple Header ──────────────────────────────────────── */}
-      <AppleNavbar onOpenAuth={openAuth} />
+      {/* ── Fixed Apple Header with Desktop & Mobile Language Switchers ─ */}
+      <AppleNavbar onOpenAuth={openAuth} locale={locale} />
 
       {/* ── Auth Modal ──────────────────────────────────────────────── */}
       {authModal && (
@@ -64,18 +63,18 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="hero"
-        className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-28 sm:pt-36 md:pt-40 pb-20 sm:pb-28 md:pb-32 px-5 sm:px-8 scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Главный экран Огонёк"
+        className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-28 sm:pt-36 md:pt-40 pb-20 sm:pb-28 md:pb-32 px-4 sm:px-6 md:px-8 scroll-mt-24 sm:scroll-mt-32"
+        aria-label="Главный экран Priday"
       >
         {/* Full-width video slot in background */}
         <div className="absolute inset-0 z-0 w-full h-full">
           <MediaSlot
-            name={HERO_CONTENT.videoSrc}
+            name={content.hero.videoSrc}
             poster="mode-sport.jpg"
             width={2560}
             height={1440}
             ratio="16:9"
-            alt="Видео-витрина главного экрана Огонёк"
+            alt="Видео-витрина главного экрана Priday"
             priority
             rounded={false}
             fill
@@ -94,40 +93,45 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               />
             </svg>
             <span className="apple-eyebrow !text-[#FF4D00]">
-              {HERO_CONTENT.eyebrow}
+              {content.hero.eyebrow}
             </span>
           </div>
 
           <h1 className="apple-hero-title apple-hero-shadow fade-blur delay-75 mb-6 sm:mb-8 max-w-[960px] text-wrap-balance">
-            {HERO_CONTENT.title}
+            {content.hero.title}
           </h1>
 
-          <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[680px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[19px] md:text-[20px] leading-[1.35] font-normal text-wrap-balance">
-            {HERO_CONTENT.subtitle}
+          <p className="apple-body apple-hero-subtitle apple-hero-shadow fade-up delay-150 max-w-[720px] mb-8 sm:mb-10 !text-[#f5f5f7] text-[17px] sm:text-[19px] md:text-[20px] leading-[1.38] font-normal text-wrap-balance">
+            {content.hero.subtitle}
           </p>
 
-          <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap mb-6 sm:mb-8">
+          <div className="fade-scale delay-200 flex items-center justify-center gap-3.5 sm:gap-4 flex-wrap mb-6 sm:mb-8">
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="apple-btn-primary !px-8 !py-3.5 !text-[15px] cursor-pointer"
+              className="apple-btn-primary !px-7 sm:!px-8 !py-3.5 !text-[15px] cursor-pointer whitespace-nowrap"
             >
-              {HERO_CONTENT.ctaPrimary}&nbsp;→
+              {content.hero.ctaPrimary}&nbsp;→
             </button>
             <button
               type="button"
               onClick={() => openAuth('signin')}
-              className="apple-btn-ghost !px-6 !py-3.5 !text-[15px] cursor-pointer"
+              className="apple-btn-ghost !px-6 !py-3.5 !text-[15px] cursor-pointer whitespace-nowrap"
             >
-              {HERO_CONTENT.ctaSecondary}&nbsp;›
+              {content.hero.ctaSecondary}&nbsp;›
             </button>
           </div>
 
-          <div className="fade-up delay-250 text-[12px] sm:text-[13px] font-mono text-[#c7c7cc] apple-hero-shadow tracking-wider">
-            {HERO_CONTENT.trustBadge}
+          <div className="fade-up delay-250 text-[12px] sm:text-[13px] font-mono text-[#c7c7cc] apple-hero-shadow tracking-wider px-2">
+            {content.hero.trustBadge}
           </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          ПРОБЛЕМА (Мысли кипят, серый шум дней, бег на месте)
+          ═══════════════════════════════════════════════════════════ */}
+      <ProblemSection locale={locale} />
 
       {/* ═══════════════════════════════════════════════════════════
           2. «ГОРЖУСЬ ТЕМ, ЧТО…» (Кольцо из 9 карточек)
@@ -137,30 +141,33 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         ref={modesTrackRef}
         className="relative bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         style={{ height: '480vh' }}
-        aria-label="Горжусь тем, что"
+        aria-label={content.prideWheel.title}
       >
         <div className="apple-ambient-orb w-[700px] h-[700px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10 pointer-events-none" />
 
         {/* Section Header */}
-        <div className="modes-header-block relative z-20 max-w-[1200px] mx-auto px-5 sm:px-8 pt-24 sm:pt-32 md:pt-40 pb-16 sm:pb-24 text-center sm:text-left">
+        <div className="modes-header-block relative z-20 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-32 md:pt-40 pb-16 sm:pb-24 text-center sm:text-left">
           <div className="fade-up mb-3 sm:mb-4">
-            <span className="apple-eyebrow">{PRIDE_WHEEL_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow">{content.prideWheel.eyebrow}</span>
           </div>
           <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[920px]">
-            {PRIDE_WHEEL_CONTENT.title}
+            {content.prideWheel.title}
           </h2>
           <p className="apple-body fade-up delay-100 max-w-[680px] text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            {PRIDE_WHEEL_CONTENT.subtitle}
+            {content.prideWheel.subtitle}
           </p>
         </div>
 
         {/* Pinned Interactive Wheel */}
-        <div className="sticky top-0 h-screen w-full flex flex-col justify-center items-center overflow-visible z-10 px-4 sm:px-8">
+        <div className="sticky top-0 h-screen w-full flex flex-col justify-center items-center overflow-visible z-10 px-3 sm:px-6 md:px-8">
           <div className="relative z-20 w-full max-w-[1440px] mx-auto flex-1 flex items-center justify-center min-h-0 overflow-visible">
             <WorksWheel
-              items={PRIDE_WHEEL_CONTENT.items}
-              label={PRIDE_WHEEL_CONTENT.wheelLabel}
-              action="В летопись"
+              items={content.prideWheel.items}
+              label={content.prideWheel.wheelLabel}
+              action={content.prideWheel.actionText}
+              galleryLabel={content.prideWheel.galleryLabel}
+              hintLabel={content.prideWheel.hintLabel}
+              scrollDownLabel={content.prideWheel.scrollDownLabel}
               trackRef={modesTrackRef}
             />
           </div>
@@ -173,33 +180,33 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="how"
         className="relative py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Как это работает"
+        aria-label={content.howItWorks.title}
       >
         <div id="showcase" className="scroll-mt-24 sm:scroll-mt-32" />
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00] top-1/4 -left-32 -z-0 opacity-10 pointer-events-none" />
 
-        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[820px] mx-auto mb-12 sm:mb-16">
-            <span className="apple-eyebrow fade-up block mb-4 !text-[#FF4D00]">{HOW_IT_WORKS_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4 !text-[#FF4D00]">{content.howItWorks.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-6">
-              {HOW_IT_WORKS_CONTENT.title}
+              {content.howItWorks.title}
             </h2>
             <p className="apple-body fade-up delay-100 max-w-[700px] mx-auto text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              {HOW_IT_WORKS_CONTENT.subtitle}
+              {content.howItWorks.subtitle}
             </p>
           </div>
 
-          {/* Interactive Interface Showcase with real screenshots & orange pointers */}
+          {/* Interactive Interface Showcase with localized pointers and tabs */}
           <div className="fade-scale delay-150 mb-16 sm:mb-20">
-            <AppInterfaceShowcase />
+            <AppInterfaceShowcase locale={locale} />
           </div>
 
           {/* 3 Actionable Ritual Steps */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-[1100px] mx-auto">
-            {HOW_IT_WORKS_CONTENT.steps.map((item, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-[1100px] mx-auto items-stretch">
+            {content.howItWorks.steps.map((item) => (
               <div
                 key={item.step}
-                className="apple-card p-6 sm:p-7 bg-[#121215]/80 border border-white/[0.08] rounded-2xl flex flex-col justify-between"
+                className="apple-card p-6 sm:p-7 bg-[#121215]/80 border border-white/[0.08] rounded-2xl flex flex-col justify-between min-h-[180px]"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-3">
@@ -226,25 +233,25 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="levels"
         className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Выбор темпа"
+        aria-label={content.tempo.title}
       >
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="fade-up mb-4">
-            <span className="apple-eyebrow">{TEMPO_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow">{content.tempo.eyebrow}</span>
           </div>
           <h2 className="apple-section-title fade-up delay-75 mb-6 sm:mb-7">
-            {TEMPO_CONTENT.title}
+            {content.tempo.title}
           </h2>
-          <p className="apple-body fade-up delay-150 max-w-[680px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            {TEMPO_CONTENT.subtitle}
+          <p className="apple-body fade-up delay-150 max-w-[680px] mb-12 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            {content.tempo.subtitle}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
-            {TEMPO_CONTENT.levels.map((lvl) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4 items-stretch">
+            {content.tempo.levels.map((lvl) => (
               <div
                 key={lvl.count}
                 onClick={() => openAuth('register')}
-                className={`apple-card apple-card-hover fade-up ${lvl.delay} p-5 sm:p-5.5 flex flex-col justify-between cursor-pointer group ${
+                className={`apple-card apple-card-hover fade-up ${lvl.delay} p-5 sm:p-5.5 flex flex-col justify-between min-h-[220px] sm:min-h-[240px] cursor-pointer group ${
                   lvl.extreme
                     ? 'apple-card-extreme border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210] sm:col-span-2 lg:col-span-1'
                     : 'bg-[#161617]'
@@ -272,7 +279,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-1 tracking-tight leading-snug">
                     {lvl.title}
                   </h3>
-                  <div className="text-[12px] font-medium text-[#f56900] mb-3">
+                  <div className="text-[12px] font-medium text-[#f56900] mb-2.5">
                     {lvl.sub}
                   </div>
                   <p className="text-[13px] leading-relaxed text-[#86868b] group-hover:text-[#a1a1a6] transition-colors">
@@ -289,7 +296,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
               onClick={() => openAuth('register')}
               className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors cursor-pointer"
             >
-              <span>Выбрать свой темп и начать летопись →</span>
+              <span>{content.tempo.cta}</span>
             </button>
           </div>
         </div>
@@ -301,27 +308,27 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="ai"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
-        aria-label="ИИ-анализ"
+        aria-label={content.aiAnalysis.title}
       >
         <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#FF4D00]/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none" />
 
-        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[840px] mx-auto mb-10 sm:mb-14">
-            <span className="apple-eyebrow fade-up block mb-4">{AI_ANALYSIS_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4">{content.aiAnalysis.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              {AI_ANALYSIS_CONTENT.title}
+              {content.aiAnalysis.title}
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              {AI_ANALYSIS_CONTENT.subtitle}
+              {content.aiAnalysis.subtitle}
             </p>
           </div>
 
           {/* Три короткие карточки */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-[1040px] mx-auto mb-12 sm:mb-16">
-            {AI_ANALYSIS_CONTENT.cards.map((card, idx) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-[1040px] mx-auto mb-12 sm:mb-16 items-stretch">
+            {content.aiAnalysis.cards.map((card, idx) => (
               <div
                 key={card.id}
-                className={`fade-up delay-${(idx + 1) * 75} p-6 sm:p-7 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between group`}
+                className={`fade-up delay-${(idx + 1) * 75} p-6 sm:p-7 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between group min-h-[190px]`}
               >
                 <div>
                   <div
@@ -371,19 +378,19 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
                 </div>
                 <span className="text-[11px] sm:text-[12px] font-mono text-[#86868b]">
-                  Огонёк — Аналитика и рост
+                  {content.aiAnalysis.windowTitle}
                 </span>
                 <span className="text-[11px] font-mono text-emerald-400">
-                  AI Active
+                  {content.aiAnalysis.statusBadge}
                 </span>
               </div>
 
               <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#0a0a0c]">
                 <picture>
-                  <source media="(max-width: 640px)" srcSet={AI_ANALYSIS_CONTENT.mobileScreenshot} />
+                  <source media="(max-width: 640px)" srcSet={content.aiAnalysis.mobileScreenshot} />
                   <img
-                    src={AI_ANALYSIS_CONTENT.screenshot}
-                    alt="Реальный скриншот страницы статистики и ИИ-анализа Огонёк"
+                    src={content.aiAnalysis.screenshot}
+                    alt={content.aiAnalysis.title}
                     className="w-full h-auto object-cover block"
                     loading="lazy"
                   />
@@ -393,10 +400,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
             <div className="mt-8 text-center">
               <Link
-                href="/ai"
+                href={aiHref}
                 className="inline-flex items-center gap-2 text-[15px] font-medium text-[#FF4D00] hover:text-[#ff6b26] transition-colors cursor-pointer"
               >
-                <span>Подробнее о том, как работает ИИ в Огоньке →</span>
+                <span>{content.aiAnalysis.learnMore}</span>
               </Link>
             </div>
           </div>
@@ -409,16 +416,16 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="friends"
         className="py-16 sm:py-20 md:py-28 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Друзья и семья"
+        aria-label={content.friendsFamily.title}
       >
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[820px] mx-auto mb-12 sm:mb-16">
-            <span className="apple-eyebrow fade-up block mb-4">{FRIENDS_FAMILY_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4">{content.friendsFamily.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              {FRIENDS_FAMILY_CONTENT.title}
+              {content.friendsFamily.title}
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              {FRIENDS_FAMILY_CONTENT.subtitle}
+              {content.friendsFamily.subtitle}
             </p>
           </div>
 
@@ -428,8 +435,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <div className="lg:col-span-8 fade-scale delay-150">
               <div className="apple-card overflow-hidden p-2 sm:p-3 bg-[#141416] border border-white/10 shadow-2xl rounded-[24px]">
                 <img
-                  src={FRIENDS_FAMILY_CONTENT.screenshot}
-                  alt="Лента друзей, реакции и чаты Огонёк"
+                  src={content.friendsFamily.screenshot}
+                  alt={content.friendsFamily.title}
                   className="w-full h-auto rounded-[18px] object-cover"
                 />
               </div>
@@ -437,7 +444,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
             {/* Feature Highlights */}
             <div className="lg:col-span-4 flex flex-col gap-4 fade-up delay-200">
-              {FRIENDS_FAMILY_CONTENT.features.map((feat, idx) => (
+              {content.friendsFamily.features.map((feat) => (
                 <div
                   key={feat.title}
                   className="p-5 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-white/20 transition-all"
@@ -459,7 +466,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                 onClick={() => openAuth('register')}
                 className="apple-btn-primary !py-3.5 !text-[14px] w-full text-center mt-2 cursor-pointer"
               >
-                Попробовать вместе с друзьями →
+                {content.friendsFamily.cta}
               </button>
             </div>
           </div>
@@ -472,14 +479,14 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="quotes"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Примеры записей"
+        aria-label={content.globe.title}
       >
         <TestimonialGlobe
-          items={storiesData.globeStories as any}
-          extraItems={storiesData.extraStories as any}
-          eyebrow={GLOBE_CONTENT.eyebrow}
-          heading={GLOBE_CONTENT.title}
-          caption={GLOBE_CONTENT.subtitle}
+          items={stories.globeStories as any}
+          extraItems={stories.extraStories as any}
+          eyebrow={content.globe.eyebrow}
+          heading={content.globe.title}
+          caption={content.globe.subtitle}
           autoRotate
           rotationSpeed={0.08}
         />
@@ -491,29 +498,29 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="privacy"
         className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Приватность и секретный режим"
+        aria-label={content.privacy.title}
       >
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="fade-up mb-4 flex items-center gap-2">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="apple-eyebrow">{PRIVACY_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow">{content.privacy.eyebrow}</span>
           </div>
 
           <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6 max-w-[920px]">
-            {PRIVACY_CONTENT.title}
+            {content.privacy.title}
           </h2>
 
-          <p className="apple-body fade-up delay-150 max-w-[740px] mb-14 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-            {PRIVACY_CONTENT.subtitle}
+          <p className="apple-body fade-up delay-150 max-w-[740px] mb-12 sm:mb-16 md:mb-20 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
+            {content.privacy.subtitle}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-            {PRIVACY_CONTENT.cards.map((card, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+            {content.privacy.cards.map((card) => (
               <div
                 key={card.title}
-                className="apple-card apple-card-hover fade-up p-6 sm:p-7 bg-[#161617] flex flex-col justify-between min-h-[220px]"
+                className="apple-card apple-card-hover fade-up p-6 sm:p-7 bg-[#161617] flex flex-col justify-between min-h-[230px]"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -534,10 +541,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
 
           <div className="mt-12 text-center fade-up delay-200">
             <Link
-              href="/legal#privacy"
+              href={legalPrivacyHref}
               className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
             >
-              <span>{PRIVACY_CONTENT.readMoreText}</span>
+              <span>{content.privacy.readMoreText}</span>
             </Link>
           </div>
         </div>
@@ -549,25 +556,25 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="numbers"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Факты"
+        aria-label={content.facts.title}
       >
         <div id="open" className="scroll-mt-24 sm:scroll-mt-32" />
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[760px] mx-auto mb-14 sm:mb-18 md:mb-20">
-            <span className="apple-eyebrow fade-up block mb-4">{FACTS_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4">{content.facts.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-6">
-              {FACTS_CONTENT.title}
+              {content.facts.title}
             </h2>
             <p className="apple-body fade-up delay-150 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              {FACTS_CONTENT.subtitle}
+              {content.facts.subtitle}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto">
-            {FACTS_CONTENT.facts.map((fact, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1240px] mx-auto items-stretch">
+            {content.facts.facts.map((fact) => (
               <div
                 key={fact.label}
-                className="apple-card apple-card-hover fade-scale p-8 text-center bg-[#161617] flex flex-col justify-between rounded-[24px]"
+                className="apple-card apple-card-hover fade-scale p-8 text-center bg-[#161617] flex flex-col justify-between rounded-[24px] min-h-[220px]"
               >
                 <div>
                   <span className="apple-shimmer-text block text-[42px] sm:text-[50px] font-bold tracking-tight leading-none mb-3 font-mono">
@@ -592,18 +599,18 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="pricing"
         className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
-        aria-label="Тарифы и подписка"
+        aria-label={content.pricing.title}
       >
         <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00]/10 top-1/2 right-1/4 -z-0 pointer-events-none" />
 
-        <div className="relative z-10 max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[800px] mx-auto mb-12 sm:mb-16">
-            <span className="apple-eyebrow fade-up block mb-4">{PRICING_CONTENT.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4">{content.pricing.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-5 sm:mb-6">
-              {PRICING_CONTENT.title}
+              {content.pricing.title}
             </h2>
             <p className="apple-body fade-up delay-100 text-[#86868b] text-[17px] sm:text-[19px] leading-relaxed">
-              {PRICING_CONTENT.subtitle}
+              {content.pricing.subtitle}
             </p>
 
             {/* Billing Switcher */}
@@ -617,7 +624,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     : 'text-[#86868b] hover:text-white'
                 }`}
               >
-                Ежемесячно
+                {content.pricing.monthlyToggle}
               </button>
               <button
                 type="button"
@@ -628,43 +635,45 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                     : 'text-[#86868b] hover:text-white'
                 }`}
               >
-                <span>На год</span>
+                <span>{content.pricing.yearlyToggle}</span>
                 <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">
-                  -20%
+                  {content.pricing.saveBadge}
                 </span>
               </button>
             </div>
           </div>
 
           {/* 3 Tier Cards with Spotlight Glow */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1200px] mx-auto items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1240px] mx-auto items-stretch">
             {/* TIER 1: FREE */}
             <GlowCard
               glowColor="green"
               customSize
-              className="p-8 sm:p-10 flex flex-col justify-between fade-up delay-150"
+              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-150 min-h-[580px]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
                   <div className="text-[12px] font-mono text-[#00c7be] uppercase tracking-wider mb-2 font-semibold">
-                    БАЗОВЫЙ ПЛАН
+                    {content.pricing.tiers[0].badge}
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    Базовый
+                    {content.pricing.tiers[0].name}
                   </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6">
-                    Всё необходимое для ежедневной летописи и стрика.
+                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                    {content.pricing.tiers[0].desc}
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
                     <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                      0 MDL
+                      {content.pricing.tiers[0].priceMonthly}
                     </span>
-                    <span className="text-[14px] text-[#86868b] ml-2">/ навсегда</span>
+                    <span className="text-[14px] text-[#86868b] ml-2">
+                      {content.pricing.tiers[0].period}
+                    </span>
                   </div>
 
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                    {PRICING_CONTENT.tiers[0].features.map((feat) => (
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
+                    {content.pricing.tiers[0].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3">
                         <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="20 6 9 17 4 12" />
@@ -680,44 +689,48 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
                 >
-                  Начать бесплатно
+                  {content.pricing.tiers[0].cta}
                 </button>
               </div>
             </GlowCard>
 
-            {/* TIER 2: PRO (РЕКОМЕНДУЕМЫЙ С ТОНКОЙ ОРАНЖЕВОЙ РАМКОЙ) */}
+            {/* TIER 2: PRO */}
             <GlowCard
               glowColor="orange"
               customSize
-              className="p-8 sm:p-10 flex flex-col justify-between fade-scale delay-200 relative border border-[#FF4D00] shadow-[0_0_30px_rgba(255,77,0,0.12)]"
+              className="p-7 sm:p-9 flex flex-col justify-between fade-scale delay-200 relative border border-[#FF4D00] shadow-[0_0_30px_rgba(255,77,0,0.12)] min-h-[580px]"
             >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF4D00] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20">
-                ★ Рекомендуемый
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF4D00] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20 whitespace-nowrap">
+                {content.pricing.recommendedBadge}
               </div>
 
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
                   <div className="text-[12px] font-mono text-[#FF4D00] uppercase tracking-wider mb-2 font-semibold">
-                    РЕКОМЕНДУЕМЫЙ ПЛАН
+                    {content.pricing.tiers[1].badge}
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    Премиум
+                    {content.pricing.tiers[1].name}
                   </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6">
-                    Официальная верификация и умный ИИ-анализ каждого дня.
+                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                    {content.pricing.tiers[1].desc}
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
                     <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                      {billingCycle === 'yearly' ? '240 MDL' : '25 MDL'}
+                      {billingCycle === 'yearly'
+                        ? content.pricing.tiers[1].priceYearly
+                        : content.pricing.tiers[1].priceMonthly}
                     </span>
                     <span className="text-[14px] text-[#86868b] ml-2">
-                      {billingCycle === 'yearly' ? '/ год (~20 MDL/мес)' : '/ месяц'}
+                      {billingCycle === 'yearly'
+                        ? content.pricing.tiers[1].periodYearly
+                        : content.pricing.tiers[1].periodMonthly}
                     </span>
                   </div>
 
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8">
-                    {PRICING_CONTENT.tiers[1].features.map((feat, idx) => (
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8 min-h-[220px]">
+                    {content.pricing.tiers[1].features.map((feat, idx) => (
                       <li key={feat} className={`flex items-center gap-3 ${idx < 2 ? 'font-medium text-white' : ''}`}>
                         <svg className="w-4 h-4 text-[#FF4D00] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="20 6 9 17 4 12" />
@@ -733,7 +746,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold cursor-pointer"
                 >
-                  Выбрать
+                  {content.pricing.tiers[1].cta}
                 </button>
               </div>
             </GlowCard>
@@ -742,31 +755,35 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             <GlowCard
               glowColor="orange"
               customSize
-              className="p-8 sm:p-10 flex flex-col justify-between fade-up delay-300"
+              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-300 min-h-[580px]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
                   <div className="text-[12px] font-mono text-[#f5b942] uppercase tracking-wider mb-2 font-semibold">
-                    КЛУБ ОСНОВАТЕЛЕЙ
+                    {content.pricing.tiers[2].badge}
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    Основатель Ultra
+                    {content.pricing.tiers[2].name}
                   </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6">
-                    Максимальная глубина, персональный ментор и золотой статус.
+                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                    {content.pricing.tiers[2].desc}
                   </p>
 
                   <div className="mb-8 pb-6 border-b border-white/[0.08]">
                     <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                      {billingCycle === 'yearly' ? '480 MDL' : '50 MDL'}
+                      {billingCycle === 'yearly'
+                        ? content.pricing.tiers[2].priceYearly
+                        : content.pricing.tiers[2].priceMonthly}
                     </span>
                     <span className="text-[14px] text-[#86868b] ml-2">
-                      {billingCycle === 'yearly' ? '/ год (~40 MDL/мес)' : '/ месяц'}
+                      {billingCycle === 'yearly'
+                        ? content.pricing.tiers[2].periodYearly
+                        : content.pricing.tiers[2].periodMonthly}
                     </span>
                   </div>
 
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8">
-                    {PRICING_CONTENT.tiers[2].features.map((feat) => (
+                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
+                    {content.pricing.tiers[2].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3 font-medium text-white">
                         <svg className="w-4 h-4 text-[#f5b942] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="20 6 9 17 4 12" />
@@ -782,7 +799,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10 hover:border-white/20"
                 >
-                  Выбрать
+                  {content.pricing.tiers[2].cta}
                 </button>
               </div>
             </GlowCard>
@@ -792,17 +809,17 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
           <div className="mt-12 p-6 sm:p-8 rounded-[24px] bg-gradient-to-r from-[#0071e3]/15 via-[#00c7be]/10 to-transparent border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 fade-up">
             <div>
               <h4 className="text-[17px] font-semibold text-white tracking-tight">
-                Как именно работает нейросетевой наставник?
+                {content.pricing.aiCalloutTitle}
               </h4>
               <p className="text-[14px] text-[#86868b] mt-1">
-                Изучите 4 ключевые задачи ИИ, шкалу преодоления 1–10★ и гарантии Zero-Training.
+                {content.pricing.aiCalloutDesc}
               </p>
             </div>
             <Link
-              href="/ai"
+              href={aiHref}
               className="apple-btn-secondary !px-6 !py-3 !text-[14px] whitespace-nowrap shrink-0 hover:bg-white/[0.14] transition-all"
             >
-              Подробнее об ИИ Огонёк →
+              {content.pricing.aiCalloutBtn}
             </Link>
           </div>
         </div>
@@ -814,18 +831,18 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
       <section
         id="together"
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Финальный призыв к действию"
+        aria-label={content.finalCta.title}
       >
-        <div className="max-w-[1200px] mx-auto px-5 sm:px-8">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="apple-card apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[500px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#121214]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
               <MediaSlot
-                name={FINAL_CTA_CONTENT.image}
+                name={content.finalCta.image}
                 width={2560}
                 height={1100}
                 ratio="21:9"
-                alt="Зажги свой огонёк"
+                alt={content.finalCta.title}
                 rounded={false}
                 fill
                 isHero
@@ -840,10 +857,10 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
             {/* Overlaid Banner Content */}
             <div className="relative z-20 max-w-[700px] mx-auto flex flex-col items-center">
               <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[34px] sm:!text-[50px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
-                {FINAL_CTA_CONTENT.title}
+                {content.finalCta.title}
               </h2>
               <p className="apple-body fade-up delay-150 !text-white max-w-[580px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
-                {FINAL_CTA_CONTENT.subtitle}
+                {content.finalCta.subtitle}
               </p>
               <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
                 <button
@@ -851,7 +868,7 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
                   onClick={() => openAuth('register')}
                   className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold cursor-pointer"
                 >
-                  {FINAL_CTA_CONTENT.ctaButton} →
+                  {content.finalCta.ctaButton} →
                 </button>
               </div>
             </div>
@@ -859,8 +876,8 @@ export function LandingPage({ onNotify, onAuthenticated }: Props) {
         </div>
       </section>
 
-      {/* ── Apple Universal Footer ─────────────────────────────────── */}
-      <AppleFooter />
+      {/* ── Apple Universal Footer with Language Link ───────────────── */}
+      <AppleFooter locale={locale} />
     </div>
   )
 }

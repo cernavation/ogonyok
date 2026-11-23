@@ -14,6 +14,8 @@ import { useSupabaseSync } from '@/lib/ogonek/use-supabase-sync'
  * (кнопки и статус живут в панели «Синхронизация с Supabase» в Настройках).
  */
 export function SupabaseSyncBootstrap() {
-  useSupabaseSync({ autoSync: true })
+  // Чистый Supabase-режим (SSOT) управляется useOgonekStore (loadDaysFromCloud / syncDayToSupabase).
+  // Фоновый legacy-планировщик отключён во избежание сброса и мигания стейта.
+  useSupabaseSync({ autoSync: false })
   return null
 }

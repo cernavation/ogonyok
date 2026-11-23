@@ -315,8 +315,14 @@ async function callGemini(
           totalTokens: usage.totalTokenCount || 0,
         },
       }
-    } catch (err) {
+    } catch (err: any) {
       lastError = err
+      const statusMatch = String(err?.message || '').match(/status\s+(\d+)/i)
+      const statusNum = statusMatch ? parseInt(statusMatch[1], 10) : 0
+      // Don't retry non-recoverable client/auth errors (400, 401, 403, 404)
+      if (statusNum >= 400 && statusNum < 500) {
+        break
+      }
       if (attempt === 1) {
         await new Promise((r) => setTimeout(r, 400))
       }
@@ -379,8 +385,14 @@ async function callDeepSeek(
           totalTokens: usage.total_tokens || 0,
         },
       }
-    } catch (err) {
+    } catch (err: any) {
       lastError = err
+      const statusMatch = String(err?.message || '').match(/status\s+(\d+)/i)
+      const statusNum = statusMatch ? parseInt(statusMatch[1], 10) : 0
+      // Don't retry non-recoverable client/auth errors (400, 401, 403, 404)
+      if (statusNum >= 400 && statusNum < 500) {
+        break
+      }
       if (attempt === 1) {
         await new Promise((r) => setTimeout(r, 400))
       }
@@ -611,8 +623,11 @@ async function executeEvaluateDayWithAI(
           console.warn('[AI_VALIDATION]: Gemini JSON failed Zod schema, retrying once')
         }
       } catch (geminiError: any) {
-        if (attempt === 1) {
-          console.warn(`[AI_FALLBACK]: Gemini attempt 1 failed (${geminiError?.message})`)
+        console.warn(`[AI_FALLBACK]: Gemini attempt ${attempt} failed (${geminiError?.message})`)
+        const statusMatch = String(geminiError?.message || '').match(/status\s+(\d+)/i)
+        const statusNum = statusMatch ? parseInt(statusMatch[1], 10) : 0
+        if (statusNum >= 400 && statusNum < 500) {
+          break
         }
       }
     }

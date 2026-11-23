@@ -35,6 +35,9 @@ export interface WorksWheelProps
   trackRef?: React.RefObject<HTMLElement | null>;
   /** Notifies parent of turn and interpolation factor m (0 = ring, 1 = drum) */
   onTurnChange?: (turn: number, m: number, activeIndex: number) => void;
+  galleryLabel?: string;
+  hintLabel?: string;
+  scrollDownLabel?: string;
 }
 
 /* Geometry tuned for +40% larger cards and grand resting ring */
@@ -83,6 +86,9 @@ export function WorksWheel({
   action = "Открыть",
   trackRef,
   onTurnChange,
+  galleryLabel = "Интерактивная галерея",
+  hintLabel = "Нажми на карточку или листай страницу вниз",
+  scrollDownLabel = "Скролль вниз ↓",
   className,
   ...props
 }: WorksWheelProps) {
@@ -235,17 +241,14 @@ export function WorksWheel({
         const hasFocus = isHovered || isSelected;
 
         if (card) {
-          // Extra 3D pop when focused
-          const zLift = hasFocus ? (m < 0.25 ? 55 : 30) : 0;
-          card.style.transform =
-            place(
-              d * (360 / count),
-              drumDeg,
-              ringR,
-              drumR,
-              bow,
-              m,
-            ) + (zLift ? ` translateZ(${zLift}px)` : "");
+          card.style.transform = place(
+            d * (360 / count),
+            drumDeg,
+            ringR,
+            drumR,
+            bow,
+            m,
+          );
 
           // Calculate base opacity
           let baseOp = 1;
@@ -260,12 +263,14 @@ export function WorksWheel({
             }
           }
 
-          // Focused card is fully opaque; other cards slightly dimmed
+          // In drum mode (m > 0.25), focused card is fully opaque; other cards slightly dimmed
           let targetOp = baseOp;
-          if (hasFocus) {
-            targetOp = 1.0;
-          } else if (anyFocus) {
-            targetOp = baseOp * 0.32;
+          if (m > 0.25) {
+            if (hasFocus) {
+              targetOp = 1.0;
+            } else if (anyFocus) {
+              targetOp = baseOp * 0.32;
+            }
           }
 
           const curOp = currentOpacities.current[i] ?? targetOp;
@@ -284,14 +289,8 @@ export function WorksWheel({
         const face = card?.firstElementChild as HTMLElement | null;
         if (face) {
           const baseScale = lerp(ringScale, 1, m);
-
-          // Enlarge smoothly when hovered or selected
-          let targetScale = baseScale;
-          if (hasFocus) {
-            targetScale = m < 0.25 ? Math.min(0.86, ringScale * 1.95) : baseScale * 1.06;
-          } else if (anyFocus) {
-            targetScale = baseScale * 0.94;
-          }
+          // Pure scroll-driven scale: strictly no hover enlargement
+          const targetScale = baseScale;
 
           const curScale = currentScales.current[i] ?? targetScale;
           const nextScale = curScale + (targetScale - curScale) * (reduced ? 1 : 0.18);
@@ -299,13 +298,15 @@ export function WorksWheel({
           face.style.transform = `scale(${nextScale.toFixed(4)})`;
 
           // Subtitle / Full phrase overlay opacity:
-          // Shows full phrase when focused (hovered or selected)
+          // Shows in drum mode when front or focused
           let targetSubOp = 0;
-          if (hasFocus) {
-            targetSubOp = 1.0;
-          } else if (m > 0.25) {
-            targetSubOp =
-              clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
+          if (m > 0.25) {
+            if (hasFocus) {
+              targetSubOp = 1.0;
+            } else {
+              targetSubOp =
+                clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
+            }
           } else {
             targetSubOp = 0;
           }
@@ -321,11 +322,10 @@ export function WorksWheel({
         }
       }
 
-      // Center ring label opacity: soften when a card is focused in ring mode
+      // Center ring label opacity: fades out smoothly as user scrolls into drum
       if (labelRef.current) {
         const ringLabelBase = 1 - m;
-        const ringLabelOp = anyFocus && m < 0.3 ? ringLabelBase * 0.15 : ringLabelBase;
-        labelRef.current.style.opacity = ringLabelOp.toFixed(3);
+        labelRef.current.style.opacity = Math.max(0, ringLabelBase).toFixed(3);
       }
 
       // Left title overlay opacity in drum mode
@@ -560,19 +560,16 @@ export function WorksWheel({
                   <span
                     className={cn(
                       "relative block size-full overflow-hidden rounded-2xl bg-[#16161a] border transition-all duration-300",
-                      hasFocus
+                      isSelected
                         ? "border-[#2997ff]/60 shadow-[0_24px_80px_rgba(0,113,227,0.35),0_32px_70px_rgba(0,0,0,0.95)] ring-1 ring-[#2997ff]/50"
-                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)] group-hover:border-white/30",
+                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)]",
                     )}
                   >
                     <img
                       src={item.image}
                       alt={item.title}
                       draggable={false}
-                      className={cn(
-                        "size-full object-cover select-none transition-all duration-300",
-                        hasFocus ? "scale-105 brightness-105" : "group-hover:scale-[1.02]",
-                      )}
+                      className="size-full object-cover select-none"
                     />
 
                     {/* Category tag pill in top-left corner of each card */}
@@ -641,17 +638,17 @@ export function WorksWheel({
         className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 transition-opacity duration-300"
       >
         <span className="text-[#2997ff] text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
-          Интерактивная галерея
+          {galleryLabel}
         </span>
         <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-white max-w-[240px] sm:max-w-[340px] md:max-w-[420px] leading-tight drop-shadow-lg">
           {label}
         </h3>
         <p className="text-[#86868b] text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2.5 max-w-[220px] sm:max-w-[320px] drop-shadow">
-          Нажми на карточку или листай страницу вниз
+          {hintLabel}
         </p>
         <div className="mt-3 sm:mt-4 flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[11px] sm:text-xs text-[#a1a1a6]">
           <span className="inline-block size-1.5 sm:size-2 rounded-full bg-[#0071e3] animate-pulse" />
-          Скролль вниз ↓
+          {scrollDownLabel}
         </div>
       </div>
 

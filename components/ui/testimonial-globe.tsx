@@ -18,6 +18,10 @@ export interface GlobeTestimonial {
   city: string;
   /** Short country code such as "MD", "GB", "US". */
   country?: string;
+  /** Author name (e.g. "Dan M.", "Michael B.") */
+  author?: string;
+  /** Formatted location string (e.g. "USA, New York", "Kenya, Nairobi") */
+  location?: string;
   /** Topic category (e.g. "Семья", "Спорт", "Работа") */
   topic?: string;
   /** Pin latitude in degrees (south is negative). */
@@ -182,6 +186,38 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   );
 }
 
+const COUNTRY_NAMES: Record<string, string> = {
+  MD: "Moldova",
+  GB: "UK",
+  US: "USA",
+  JP: "Japan",
+  AU: "Australia",
+  KE: "Kenya",
+  BR: "Brazil",
+  DE: "Germany",
+  IN: "India",
+  CA: "Canada",
+  TR: "Turkey",
+  KR: "South Korea",
+  MX: "Mexico",
+  ZA: "South Africa",
+  PL: "Poland",
+  KZ: "Kazakhstan",
+  GE: "Georgia",
+  FR: "France",
+  NO: "Norway",
+  SG: "Singapore",
+};
+
+export function formatGlobeLocation(item: GlobeTestimonial): string {
+  if (item.location) return item.location;
+  const country = item.country ? (COUNTRY_NAMES[item.country] || item.country) : "";
+  if (country && item.city) {
+    return `${country}, ${item.city}`;
+  }
+  return item.city || country || "";
+}
+
 interface QuoteCardProps {
   item: GlobeTestimonial;
   index: number;
@@ -237,30 +273,47 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
       </blockquote>
 
       <figcaption className={cx("relative mt-auto flex items-center justify-between border-t border-white/[0.08]", roomy ? "pt-5 mt-5" : "pt-3.5 mt-3")}>
-        <div className="flex items-center gap-3">
-          <span
-            className={cx(
-              "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
-              roomy ? "size-9" : "size-8",
-            )}
-          >
-            {index + 1}
-          </span>
-          <div className="flex flex-col text-left">
-            <span className="text-[15px] font-semibold text-white leading-tight">
-              {item.city}
+        <div className="flex items-center gap-3 min-w-0">
+          {item.image ? (
+            <img
+              src={item.image}
+              alt={item.author || item.city}
+              width={roomy ? 40 : 36}
+              height={roomy ? 40 : 36}
+              className={cx(
+                "relative shrink-0 rounded-full object-cover border border-white/20 shadow-sm ring-1 ring-white/10 select-none",
+                roomy ? "size-10" : "size-9",
+              )}
+              loading="lazy"
+            />
+          ) : (
+            <span
+              className={cx(
+                "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
+                roomy ? "size-9" : "size-8",
+              )}
+            >
+              {index + 1}
             </span>
-            {item.country && (
-              <span className="text-xs text-[#86868b] font-medium">
+          )}
+          <div className="flex flex-col text-left min-w-0">
+            <span className="text-[15px] font-semibold text-white leading-tight truncate">
+              {item.author || item.city}
+            </span>
+            {item.author ? (
+              <span className="text-xs text-[#86868b] font-medium truncate">
+                {item.city}
+              </span>
+            ) : item.country ? (
+              <span className="text-xs text-[#86868b] font-medium truncate">
                 {item.country}
               </span>
-            )}
+            ) : null}
           </div>
         </div>
 
-        <span className="text-xs font-mono text-[#86868b]">
-          {item.lat > 0 ? `${item.lat.toFixed(1)}°N` : `${Math.abs(item.lat).toFixed(1)}°S`},{' '}
-          {item.lng > 0 ? `${item.lng.toFixed(1)}°E` : `${Math.abs(item.lng).toFixed(1)}°W`}
+        <span className="text-xs font-mono text-[#86868b] tracking-tight shrink-0 pl-2">
+          {formatGlobeLocation(item)}
         </span>
       </figcaption>
     </figure>
@@ -317,22 +370,38 @@ const Pin = React.memo(function Pin({
       <span
         data-pin-face
         className={cx(
-          "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border border-white/20 shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
+          "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border overflow-hidden shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
           RING[tone],
           featured
-            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_20px_#FF4D00]"
-            : "ring-1 hover:scale-110 hover:border-white/40",
+            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_24px_rgba(255,77,0,0.65)]"
+            : "ring-1 border-white/30 hover:scale-115 hover:border-white/60",
         )}
       >
-        <span
-          className={cx(
-            "rounded-full transition-all duration-200",
-            featured
-              ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
-              : "size-2 bg-white/80 group-hover/pin:bg-white",
-          )}
-        />
+        {item.image ? (
+          <img
+            src={item.image}
+            alt={item.author || item.city}
+            className="w-full h-full object-cover select-none pointer-events-none rounded-full"
+            loading="lazy"
+            draggable={false}
+          />
+        ) : (
+          <span
+            className={cx(
+              "rounded-full transition-all duration-200",
+              featured
+                ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
+                : "size-2 bg-white/80 group-hover/pin:bg-white",
+            )}
+          />
+        )}
       </span>
+      {featured && (
+        <span
+          className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-[#FF4D00] border-2 border-[#16161a] shadow-[0_0_6px_#FF4D00] pointer-events-none z-10"
+          aria-hidden="true"
+        />
+      )}
     </button>
   );
 });
@@ -391,7 +460,7 @@ export function TestimonialGlobe({
     0,
     Math.round(width === 0 ? Math.min(size, 320) : wide ? Math.min(size, inner * 0.48) : Math.min(size, 320, inner * 0.8)),
   );
-  const pinSize = diameter >= 380 ? 32 : diameter >= 300 ? 28 : 24;
+  const pinSize = diameter >= 380 ? 36 : diameter >= 300 ? 30 : 26;
   const columnGap = width >= 1024 ? 72 : 36;
   const roomy = wide && Math.min(inner - diameter - columnGap, 544) >= 400;
   const ready = glState !== "pending";
