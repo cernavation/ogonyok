@@ -17,7 +17,6 @@ import { EveningReview } from '../evening-review'
 import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
-import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import {
   getFeedUnreadSummary,
   getFollowingFeedPosts,
@@ -692,23 +691,6 @@ export function HomeView({
       )}
 
       <div className="feed-content">
-        {filter === 'Мои гордости' && isOwner && userId && (
-          <div className="px-4 pt-3">
-            <LegacyMigrationBanner
-              userId={userId}
-              localDaysCount={days.length}
-              localDays={days}
-              soundEnabled={soundEnabled}
-              onNotify={onNotify}
-              onCompleted={() => {
-                setTimeout(() => {
-                  window.location.reload()
-                }, 1200)
-              }}
-            />
-          </div>
-        )}
-
         {filter === 'Мои гордости' && (
           <>
             <QuickFocus

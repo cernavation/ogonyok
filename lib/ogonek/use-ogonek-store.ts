@@ -52,6 +52,10 @@ import {
 } from '../supabase/api.ts'
 import { enqueueOfflineMutation } from './offline-queue.ts'
 import { canScheduleMessage } from './permissions.ts'
+import {
+  fetchAllUserTableRows,
+  assembleHydratedCloudDays,
+} from './cloud-diary-loader.ts'
 
 export type CurrentUser = {
   id: string
@@ -537,13 +541,14 @@ function initSupabaseSessionSync() {
       }
     })
 
-    // Одноразовая фоновая выгрузка всех локальных дней @cernavation в Supabase
+    // Одноразовая фоновая выгрузка только локальных (ещё не загруженных из облака) дней @cernavation в Supabase
     if (typeof window !== 'undefined') {
       const snap = getSnapshot()
       const isCernavation = (snap.profile?.username || '').toLowerCase() === 'cernavation'
-      if (isCernavation && snap.days && snap.days.length > 0) {
+      const localOnlyDays = (snap.days || []).filter((d) => !d.cloudId)
+      if (isCernavation && localOnlyDays.length > 0 && (!snap.days || snap.days.every((d) => !d.cloudId))) {
         setTimeout(() => {
-          autoSyncCernavationDaysToCloud(snap.days, snap.auth?.activeAccountId || undefined)
+          autoSyncCernavationDaysToCloud(localOnlyDays, snap.auth?.activeAccountId || undefined)
         }, 1000)
       }
     }
@@ -773,14 +778,22 @@ function stripLegacyDemoComments(state: OgonekStoreState): OgonekStoreState {
  */
 export function mapCloudDayToDay(row: any): Day {
   const dayId = Number(row.client_id || row.day_number || row.id)
+  const sortEntries = (a: any, b: any) => {
+    const posA = typeof a?.position === 'number' && !Number.isNaN(a.position) ? a.position : Number.MAX_SAFE_INTEGER
+    const posB = typeof b?.position === 'number' && !Number.isNaN(b.position) ? b.position : Number.MAX_SAFE_INTEGER
+    if (posA !== posB) return posA - posB
+    return String(a?.num ?? '').localeCompare(String(b?.num ?? ''), 'en', { numeric: true })
+  }
+
   const prides: PrideEntry[] = Array.isArray(row.prides)
     ? [...row.prides]
-        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .sort(sortEntries)
         .map((p: any) => ({
           num: String(p.num || '01'),
           text: p.text || '',
           scale: Number(p.scale ?? 0),
           overcome: (Number(p.overcome) || 0) as OvercomeLevel,
+          aiComment: p.ai_comment || p.aiComment || undefined,
           visibility: (p.visibility || row.visibility || 'public') as VisibilityLevel,
           groupId: p.group_id || null,
           targetGroupIds: Array.isArray(p.target_group_ids) ? p.target_group_ids : [],
@@ -789,7 +802,7 @@ export function mapCloudDayToDay(row: any): Day {
 
   const gratitudes: (string | GratitudeEntry)[] = Array.isArray(row.gratitudes)
     ? [...row.gratitudes]
-        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        .sort(sortEntries)
         .map((g: any) => ({
           num: g.num ? String(g.num) : undefined,
           text: g.text || '',
@@ -811,6 +824,9 @@ export function mapCloudDayToDay(row: any): Day {
     visibility: (row.visibility || 'public') as VisibilityLevel,
     groupId: row.group_id || null,
     targetGroupIds: Array.isArray(row.target_group_ids) ? row.target_group_ids : [],
+    aiScore: typeof row.ai_score === 'number' ? row.ai_score : undefined,
+    score: typeof row.ai_score === 'number' ? row.ai_score : undefined,
+    aiVerdict: row.ai_verdict || undefined,
     user_id: row.user_id,
     userId: row.user_id,
     attached_targets: row.attached_targets || null,
@@ -7772,42 +7788,15 @@ export function useOgonekStore() {
       if (!uid) return { ok: false, count: 0, error: 'No user ID' }
 
       try {
+        // PostgREST ограничивает выдачу 1 000 строками на запрос; выгружаем days, prides и gratitudes постранично по 1 000 строк
         const [daysRes, pridesRes, gratRes, groupsRes] = await Promise.all([
-          supabase
-            .from('days')
-            .select('*')
-            .eq('user_id', uid)
-            .order('date_iso', { ascending: false }),
-          supabase
-            .from('prides')
-            .select('*')
-            .eq('user_id', uid)
-            .order('position', { ascending: true }),
-          supabase
-            .from('gratitudes')
-            .select('*')
-            .eq('user_id', uid)
-            .order('position', { ascending: true }),
+          fetchAllUserTableRows<any>(supabase, 'days', uid, 'date_iso', false),
+          fetchAllUserTableRows<any>(supabase, 'prides', uid, 'position', true),
+          fetchAllUserTableRows<any>(supabase, 'gratitudes', uid, 'position', true),
           getUserChatGroupsFromDb(uid).catch(() => ({ ok: false, groups: [] as any[] })),
         ])
 
-        if (!daysRes.error && Array.isArray(daysRes.data)) {
-          const pridesByDay = new Map<string, any[]>()
-          for (const p of pridesRes.data ?? []) {
-            const k = String(p.day_client_id || p.day_id || '')
-            if (!k) continue
-            const arr = pridesByDay.get(k) ?? []
-            arr.push(p)
-            pridesByDay.set(k, arr)
-          }
-          const gratsByDay = new Map<string, any[]>()
-          for (const g of gratRes.data ?? []) {
-            const k = String(g.day_client_id || g.day_id || '')
-            if (!k) continue
-            const arr = gratsByDay.get(k) ?? []
-            arr.push(g)
-            gratsByDay.set(k, arr)
-          }
+        if (!daysRes.error) {
           const groupTitleMap = new Map<string, string>()
           for (const g of groupsRes.groups ?? []) {
             groupTitleMap.set(g.id.toLowerCase(), g.title)
@@ -7819,14 +7808,9 @@ export function useOgonekStore() {
             }
           }
 
-          const mapped = daysRes.data
-            .map((row: any) => {
-              const clientKey = String(row.client_id || row.day_number || row.id)
-              const hydratedRow = {
-                ...row,
-                prides: pridesByDay.get(clientKey) ?? pridesByDay.get(String(row.id)) ?? [],
-                gratitudes: gratsByDay.get(clientKey) ?? gratsByDay.get(String(row.id)) ?? [],
-              }
+          const hydratedRows = assembleHydratedCloudDays(daysRes.rows, pridesRes.rows, gratRes.rows)
+          const mapped = hydratedRows
+            .map((hydratedRow: any) => {
               const d = mapCloudDayToDay(hydratedRow)
               if (d.groupId) {
                 const gName = groupTitleMap.get(String(d.groupId).toLowerCase())
@@ -7848,7 +7832,7 @@ export function useOgonekStore() {
           }))
           return { ok: true, count: mapped.length }
         }
-        return { ok: false, count: 0, error: daysRes.error?.message }
+        return { ok: false, count: 0, error: daysRes.error }
       } catch (err: any) {
         return { ok: false, count: 0, error: err?.message }
       }

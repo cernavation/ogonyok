@@ -105,6 +105,7 @@ export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsL
   if (prev.isHighlighted !== next.isHighlighted) return false
   if (prev.isOwnerOverride !== next.isOwnerOverride) return false
   if (prev.day.id !== next.day.id) return false
+  if (prev.day.user_id !== next.day.user_id || prev.day.userId !== next.day.userId) return false
   if (prev.day.dateISO !== next.day.dateISO) return false
   if (prev.day.visibility !== next.day.visibility) return false
   if (prev.day.groupId !== next.day.groupId) return false
@@ -112,7 +113,7 @@ export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsL
   if ((prev.day as any).updatedAtISO !== (next.day as any).updatedAtISO) return false
   if ((prev.day as any).updated_at !== (next.day as any).updated_at) return false
 
-  // Гордости (длина, текст, оценка scale, преодоление overcome, видимость)
+  // Гордости (длина, текст, оценка scale, преодоление overcome, видимость, группа, AI-комментарий)
   const prevPrides = prev.day.prides || []
   const nextPrides = next.day.prides || []
   if (prevPrides.length !== nextPrides.length) return false
@@ -123,6 +124,8 @@ export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsL
       p1?.text !== p2?.text ||
       p1?.scale !== p2?.scale ||
       p1?.visibility !== p2?.visibility ||
+      p1?.groupId !== p2?.groupId ||
+      (p1 as any)?.aiComment !== (p2 as any)?.aiComment ||
       (p1 as any)?.overcome !== (p2 as any)?.overcome
     ) {
       return false

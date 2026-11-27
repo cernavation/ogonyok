@@ -35,11 +35,13 @@ export function LegacyMigrationBanner({
   const [done, setDone] = useState(false)
   const [availableCount, setAvailableCount] = useState<number>(localDaysCount)
 
+  const hasCloudSyncedDays = Array.isArray(localDays) && localDays.some((d) => Boolean(d?.cloudId || d?.user_id || d?.userId))
+
   useEffect(() => {
     if (!userId) return
     const isMigrated = localStorage.getItem(`ogonek_legacy_migrated_${userId}`) === 'true'
     const isDismissed = localStorage.getItem(`ogonek_legacy_banner_dismissed_${userId}`) === 'true'
-    if (isMigrated || isDismissed) {
+    if (isMigrated || isDismissed || hasCloudSyncedDays) {
       setDismissed(true)
       return
     }
@@ -49,9 +51,10 @@ export function LegacyMigrationBanner({
     } else {
       setAvailableCount(705)
     }
-  }, [userId, localDaysCount])
+  }, [userId, localDaysCount, hasCloudSyncedDays])
 
-  if (!userId || dismissed || done) {
+  // Никогда не показываем ложный баннер переноса, если дни уже загружены из Supabase или не требуют переноса
+  if (!userId || dismissed || done || hasCloudSyncedDays || !localDays || localDays.length === 0) {
     return null
   }
 

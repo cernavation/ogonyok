@@ -49,6 +49,11 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import type { Day, OgonekProfile, OgonekStoreState, ViewId } from '@/lib/ogonek/types'
 import { getSupabase } from '@/lib/supabase/client'
 import {
+  collectDayChildEntries,
+  fetchAllUserTableRows,
+  indexDayChildEntries,
+} from '@/lib/ogonek/cloud-diary-loader'
+import {
   getProfile,
   getFriendshipCounts,
   checkFriendshipFollow,
@@ -213,26 +218,6 @@ export function ProfileView({
 
           const currentUid = storeState.auth.activeAccountId
           const supabase = getSupabase()
-          const fetchAllRows = async (table: 'days' | 'prides' | 'gratitudes', orderCol: string, ascending: boolean) => {
-            if (!supabase) return []
-            const allRows: any[] = []
-            const pageSize = 1000
-            let from = 0
-            while (true) {
-              const { data, error } = await supabase
-                .from(table)
-                .select('*')
-                .eq('user_id', prof.id)
-                .order(orderCol, { ascending })
-                .range(from, from + pageSize - 1)
-              if (error || !data || data.length === 0) break
-              allRows.push(...data)
-              if (data.length < pageSize) break
-              from += pageSize
-            }
-            return allRows
-          }
-
           const [
             counts,
             followingStatus,
@@ -240,9 +225,9 @@ export function ProfileView({
             mutualCount,
             posts,
             viewerGroupsRes,
-            daysData,
-            allPrides,
-            allGratitudes,
+            daysRes,
+            pridesRes,
+            gratsRes,
           ] = await Promise.all([
             getFriendshipCounts(prof.id),
             currentUid ? checkFriendshipFollow(currentUid, prof.id) : Promise.resolve(false),
@@ -250,10 +235,13 @@ export function ProfileView({
             currentUid ? getMutualFriendsCount(currentUid, prof.id) : Promise.resolve(0),
             getUserPosts(prof.id),
             currentUid ? getUserChatGroupsFromDb(currentUid) : Promise.resolve({ ok: true, groups: [] }),
-            fetchAllRows('days', 'day_number', false),
-            fetchAllRows('prides', 'position', true),
-            fetchAllRows('gratitudes', 'position', true),
+            supabase ? fetchAllUserTableRows<any>(supabase, 'days', prof.id, 'day_number', false) : Promise.resolve({ rows: [] as any[] }),
+            supabase ? fetchAllUserTableRows<any>(supabase, 'prides', prof.id, 'position', true) : Promise.resolve({ rows: [] as any[] }),
+            supabase ? fetchAllUserTableRows<any>(supabase, 'gratitudes', prof.id, 'position', true) : Promise.resolve({ rows: [] as any[] }),
           ])
+          const daysData = daysRes.rows
+          const allPrides = pridesRes.rows
+          const allGratitudes = gratsRes.rows
 
           if (cancelled) return
           setForeignCounts(counts)
@@ -288,35 +276,8 @@ export function ProfileView({
           }
 
           if (daysData && daysData.length > 0) {
-            const pridesByClient = new Map<string, any[]>()
-            const pridesByDayId = new Map<string, any[]>()
-            for (const p of allPrides) {
-              if (p.day_client_id) {
-                const list = pridesByClient.get(String(p.day_client_id)) || []
-                list.push(p)
-                pridesByClient.set(String(p.day_client_id), list)
-              }
-              if (p.day_id) {
-                const list = pridesByDayId.get(String(p.day_id)) || []
-                list.push(p)
-                pridesByDayId.set(String(p.day_id), list)
-              }
-            }
-
-            const gratsByClient = new Map<string, any[]>()
-            const gratsByDayId = new Map<string, any[]>()
-            for (const g of allGratitudes) {
-              if (g.day_client_id) {
-                const list = gratsByClient.get(String(g.day_client_id)) || []
-                list.push(g)
-                gratsByClient.set(String(g.day_client_id), list)
-              }
-              if (g.day_id) {
-                const list = gratsByDayId.get(String(g.day_id)) || []
-                list.push(g)
-                gratsByDayId.set(String(g.day_id), list)
-              }
-            }
+            const indexedPrides = indexDayChildEntries(allPrides)
+            const indexedGratitudes = indexDayChildEntries(allGratitudes)
 
             const isEntryVisibleToViewer = (
               visRaw: string | null | undefined,
@@ -349,16 +310,8 @@ export function ProfileView({
                 continue
               }
 
-              const clientKey = d.client_id ? String(d.client_id) : ''
-              const idKey = d.id ? String(d.id) : ''
-              const rawPrides =
-                (clientKey && pridesByClient.get(clientKey)) ||
-                (idKey && pridesByDayId.get(idKey)) ||
-                []
-              const rawGrats =
-                (clientKey && gratsByClient.get(clientKey)) ||
-                (idKey && gratsByDayId.get(idKey)) ||
-                []
+              const rawPrides = collectDayChildEntries(d, indexedPrides)
+              const rawGrats = collectDayChildEntries(d, indexedGratitudes)
 
               const visiblePrides = rawPrides
                 .filter((p: any) => {
