@@ -175,6 +175,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     markAllNotificationsRead,
     addDay,
     updateDay,
+    publishDayToGroupChat,
+    notifyFriendsOfPublishedDay,
     saveDayDirectlyToSupabase,
     loadDaysFromCloud,
     loadProfileFromCloud,
@@ -327,6 +329,24 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       dismissDesktopToast(toast.id)
       if (toast.type === 'friend_request') {
         openFriendsModal('friends')
+      } else if (toast.type === 'friend_day') {
+        const targetTab = toast.targetTab || 'friends'
+        setView('home')
+        if (typeof window !== 'undefined' && toast.dayId != null) {
+          const params = new URLSearchParams({
+            tab: targetTab,
+            highlightDay: String(toast.dayId),
+          })
+          if (toast.actorId) params.set('authorId', toast.actorId)
+          window.history.pushState(null, '', `/app?${params.toString()}`)
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent('ogonek:focus-feed-day', {
+                detail: { tab: targetTab, dayId: toast.dayId, userId: toast.actorId || null },
+              })
+            )
+          }, 60)
+        }
       } else if (toast.peerId) {
         setView('messages')
         updateStore((prev: OgonekStoreState) => ({
@@ -594,6 +614,26 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           const nextNotifCount = unreadNotifRef.current + 1
           unreadNotifRef.current = nextNotifCount
           setUnreadNotificationsCount(nextNotifCount)
+          updateStore((prev: OgonekStoreState) => {
+            const list = prev.notifications ?? []
+            if (list.some((n) => n.id === notif.id)) return prev
+            return {
+              ...prev,
+              notifications: [
+                {
+                  id: notif.id,
+                  type: notif.type,
+                  title: notif.title || 'Уведомление',
+                  body: notif.body || '',
+                  data: notif.data || {},
+                  isRead: Boolean(notif.is_read),
+                  createdAtISO: notif.created_at || new Date().toISOString(),
+                },
+                ...list,
+              ].slice(0, 50),
+            }
+          })
+
           if (notif.type === 'friend_request') {
             playFriendRequestSound(soundVolumeRef.current, soundEnabledRef.current)
             showDesktopToast({
@@ -603,6 +643,22 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
               avatarUrl: notif.data?.fromAvatar,
               mediaType: 'text',
               peerId: notif.data?.fromUserId,
+            })
+          } else if (notif.type === 'friend_day') {
+            playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('ogonek:refresh-feed-badges'))
+            }
+            showDesktopToast({
+              type: 'friend_day',
+              title: notif.data?.actorName || notif.title || 'Друг',
+              body: notif.body || `Записал(а) гордости за День #${notif.data?.dayNumber || notif.data?.dayId || ''}`,
+              avatarUrl: notif.data?.actorAvatar || undefined,
+              verified: Boolean(notif.data?.actorVerified),
+              dayId: notif.data?.dayId ? Number(notif.data.dayId) : undefined,
+              actorId: notif.data?.actorId || null,
+              targetTab: notif.data?.tab === 'following' ? 'following' : 'friends',
+              mediaType: 'text',
             })
           } else if (notif.type === 'missed_call') {
             playMissedCallSound(soundVolumeRef.current, soundEnabledRef.current)
@@ -1056,6 +1112,9 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         setActiveChatFriend(detail.chatId)
       }
       navigate(targetView, detail.userId ?? null)
+      if (detail.url && typeof window !== 'undefined') {
+        window.history.replaceState(null, '', detail.url)
+      }
     }
     window.addEventListener('ogonek:navigate-view', handler)
     return () => window.removeEventListener('ogonek:navigate-view', handler)
@@ -1516,6 +1575,14 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         }
       }
 
+      // Авто-пост в чат выбранной группы (с защитой от дублей) + уведомление взаимным друзьям
+      if (dayToSave.visibility === 'group' && dayToSave.groupId) {
+        void publishDayToGroupChat(dayToSave, dayToSave.groupId)
+      }
+      if (dayToSave.visibility !== 'private') {
+        void notifyFriendsOfPublishedDay(dayToSave)
+      }
+
       setComposer(false)
       setEditingDay(null)
       return { ok: true }
@@ -1653,6 +1720,9 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           onToggleFollow={toggleFollow}
           onNotify={notify}
           onOpenFriends={openFriendsModal}
+          onLightbox={setLightbox}
+          onEditDay={handleEditDay}
+          onPinToVault={handlePinToVault}
           soundEnabled={state.soundEnabled}
         />
       ),

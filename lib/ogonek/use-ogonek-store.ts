@@ -34,6 +34,10 @@ import {
   unfollowUser,
   createChatGroupInDb,
   updateChatGroupInDb,
+  extractDbGroupUuid,
+  getUserChatGroupsFromDb,
+  getGroupMessagesFromDb,
+  updateFeedViewedAtInDb,
   saveDayBundleRpc,
   loadPridaySystemMessagesDb,
   markPridaySystemMessagesReadDb,
@@ -125,6 +129,7 @@ import {
   DEFAULT_CHAT_FOLDERS,
   DEFAULT_CHAT_SETTINGS,
   MY_CHAT_ID,
+  buildDayAttachment,
   emptyMessengerState,
   emptyThread,
   getDirectThreadKey,
@@ -454,6 +459,10 @@ async function hydrateStateFromSupabaseSession(
       signedIn: true,
       updatedAtISO: nowISO,
     },
+    lastViewedFriendsFeedAt:
+      dbProfile?.last_viewed_friends_feed_at || cachedState.lastViewedFriendsFeedAt || null,
+    lastViewedFollowingFeedAt:
+      dbProfile?.last_viewed_following_feed_at || cachedState.lastViewedFollowingFeedAt || null,
   }
   saveStore(cachedState, undefined, true)
   emitChange()
@@ -836,6 +845,19 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
     const clientId = String(day.id)
     const nowISO = new Date().toISOString()
 
+    const resolveGroupUuid = (rawGid?: string | null): string | null => {
+      if (!rawGid) return null
+      const direct = extractDbGroupUuid(rawGid)
+      if (direct) return direct
+      const threadMeta = snap.chatThreads?.[rawGid]?.groupMeta
+      if (threadMeta?.dbId) return extractDbGroupUuid(threadMeta.dbId)
+      return null
+    }
+
+    const dayVis = normalizeVisibility(day.visibility)
+    const dayGroupUuid = dayVis === 'group' ? resolveGroupUuid(day.groupId) : null
+    const dayTargetGroups = dayGroupUuid ? [dayGroupUuid] : []
+
     const dayRow = {
       user_id: uid,
       client_id: clientId,
@@ -854,33 +876,54 @@ export async function syncDayToSupabase(day: Day, overrideUid?: string): Promise
       photos: Array.isArray(day.photos) && day.photos.length > 0 ? day.photos : (day.media_url ? [day.media_url] : []),
       date_iso: day.dateISO || nowISO,
       status: day.status === 'missed' ? 'missed' : 'normal',
-      visibility: day.visibility || 'public',
+      visibility: dayVis,
+      group_id: dayGroupUuid,
+      target_group_ids: dayTargetGroups,
       client_updated_at: nowISO,
     }
 
-    const prideRows = (day.prides || []).map((p, idx) => ({
-      user_id: uid,
-      day_client_id: clientId,
-      client_id: `${clientId}_p_${idx + 1}`,
-      position: idx,
-      num: String(p.num || idx + 1).padStart(2, '0'),
-      text: p.text || '',
-      scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
-      overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
-      visibility: p.visibility || day.visibility || 'public',
-      client_updated_at: nowISO,
-    }))
+    const prideRows = (day.prides || []).map((p, idx) => {
+      const pVis = dayVis === 'private' ? 'private' : normalizeVisibility(p.visibility || dayVis)
+      const pGroupUuid = pVis === 'group' ? (resolveGroupUuid(p.groupId) ?? dayGroupUuid) : null
+      return {
+        user_id: uid,
+        day_client_id: clientId,
+        client_id: `${clientId}_p_${idx + 1}`,
+        position: idx,
+        num: String(p.num || idx + 1).padStart(2, '0'),
+        text: p.text || '',
+        scale: typeof p.scale === 'number' && !isNaN(p.scale) ? p.scale : 7,
+        overcome: typeof p.overcome === 'number' && !isNaN(p.overcome) ? p.overcome : 0,
+        visibility: pVis,
+        group_id: pGroupUuid,
+        target_group_ids: pGroupUuid ? [pGroupUuid] : [],
+        client_updated_at: nowISO,
+      }
+    })
 
-    const gratitudeRows = (day.gratitudes || []).map((g, idx) => ({
-      user_id: uid,
-      day_client_id: clientId,
-      client_id: `${clientId}_g_${idx + 1}`,
-      position: idx,
-      num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
-      text: typeof g === 'string' ? g : g?.text || '',
-      rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
-      client_updated_at: nowISO,
-    }))
+    const gratitudeRows = (day.gratitudes || []).map((g, idx) => {
+      const gVis =
+        typeof g === 'object' && g?.visibility
+          ? (dayVis === 'private' ? 'private' : normalizeVisibility(g.visibility))
+          : dayVis
+      const gGroupUuid =
+        gVis === 'group'
+          ? (resolveGroupUuid(typeof g === 'object' ? g?.groupId : null) ?? dayGroupUuid)
+          : null
+      return {
+        user_id: uid,
+        day_client_id: clientId,
+        client_id: `${clientId}_g_${idx + 1}`,
+        position: idx,
+        num: typeof g === 'object' && g.num ? String(g.num) : String(idx + 1).padStart(2, '0'),
+        text: typeof g === 'string' ? g : g?.text || '',
+        rating: typeof g === 'object' && typeof g.rating === 'number' && !isNaN(g.rating) ? g.rating : 10,
+        visibility: gVis,
+        group_id: gGroupUuid,
+        target_group_ids: gGroupUuid ? [gGroupUuid] : [],
+        client_updated_at: nowISO,
+      }
+    })
 
     // Шаг 17: Оптимизация — сохранение дня со всеми записями и стриком одним атомарным RPC
     const allDays = getSnapshot().days
@@ -4263,33 +4306,287 @@ export function useOgonekStore() {
      ЭТАП 9 — ПРИВАТНОСТЬ ДНЯ И ГОРДОСТЕЙ
      ══════════════════════════════════════════════════════════════════════ */
 
-  /** Меняет приватность всего дня и синхронно обновляет приватность всех пунктов гордостей */
+  /** Публикует авто-пост с днём в чат группы (строго 1 раз для связки day_id + group_id) */
+  const publishDayToGroupChat = useCallback(
+    async (
+      day: Day,
+      groupKeyOrId: string,
+      explicitGroupMeta?: ChatGroupMeta | null
+    ): Promise<{ ok: boolean; alreadyPosted?: boolean }> => {
+      if (!day || !groupKeyOrId) return { ok: false }
+      const snap = getSnapshot()
+      let uid = snap.auth?.activeAccountId || null
+      if (!uid || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)) {
+        try {
+          const s = await getSupabase()?.auth.getSession()
+          if (s?.data?.session?.user?.id) uid = s.data.session.user.id
+        } catch {}
+      }
+
+      const threads = snap.chatThreads ?? {}
+      const cleanRaw = groupKeyOrId.trim()
+      const dbUuid =
+        extractDbGroupUuid(cleanRaw) ||
+        extractDbGroupUuid(explicitGroupMeta?.dbId) ||
+        extractDbGroupUuid(threads[cleanRaw]?.groupMeta?.dbId) ||
+        (() => {
+          const found = Object.values(threads).find(
+            (t) =>
+              t.groupMeta &&
+              (t.groupMeta.id === cleanRaw || t.groupMeta.dbId === cleanRaw || t.groupMeta.title === day.groupName)
+          )
+          return extractDbGroupUuid(found?.groupMeta?.dbId || found?.groupMeta?.id)
+        })()
+
+      // Находим канонический threadKey в локальном chatThreads
+      const existingThreadEntry = Object.entries(threads).find(([tid, t]) => {
+        if (!t.groupMeta) return false
+        return (
+          tid === cleanRaw ||
+          t.groupMeta.id === cleanRaw ||
+          (dbUuid && (t.groupMeta.dbId === dbUuid || extractDbGroupUuid(tid) === dbUuid || extractDbGroupUuid(t.groupMeta.id) === dbUuid))
+        )
+      })
+
+      const targetThreadId = existingThreadEntry?.[0] || (dbUuid ? `group-${dbUuid}` : cleanRaw)
+      const groupMeta = existingThreadEntry?.[1]?.groupMeta || explicitGroupMeta || null
+      const dedupeKey = `${day.id}:${dbUuid || targetThreadId}`
+
+      const alreadyPostedList = snap.postedGroupDays ?? []
+      const existingMessages = existingThreadEntry?.[1]?.messages ?? []
+      const alreadyInMessages = existingMessages.some(
+        (m) =>
+          m.attachment?.kind === 'day' &&
+          m.attachment?.dayId === day.id &&
+          (m.attachment?.groupId === dbUuid ||
+            m.attachment?.groupId === targetThreadId ||
+            m.id === `group-day-${day.id}-${dbUuid || targetThreadId}`)
+      )
+      if (alreadyPostedList.includes(dedupeKey) || alreadyInMessages) {
+        return { ok: true, alreadyPosted: true }
+      }
+
+      const authorName = snap.profile?.displayName || `@${snap.profile?.username || 'user'}`
+      const firstPrideText = (day.prides || []).find((p) => p.text && p.text !== '—')?.text || day.title || ''
+      const teaser = firstPrideText.length > 140 ? `${firstPrideText.slice(0, 137)}...` : firstPrideText
+      const groupTitle = groupMeta?.title || day.groupName || 'Группа'
+      const msgText = teaser
+        ? `${authorName} записал(а) гордости за День #${day.id}\n«${teaser}»`
+        : `${authorName} записал(а) гордости за День #${day.id}`
+
+      const dayAttachment = buildDayAttachment(
+        {
+          ...day,
+          visibility: 'group',
+          groupId: dbUuid || targetThreadId,
+          groupName: groupTitle,
+          user_id: uid || day.user_id || day.userId,
+        },
+        {
+          name: snap.profile?.displayName || 'Автор',
+          username: snap.profile?.username,
+          avatarUrl: snap.profile?.avatarImage ?? null,
+          avatarColor: snap.profile?.avatarColor,
+          verified: Boolean(snap.profile?.verified),
+        }
+      )
+
+      // Ужимаем title вложения до 360 символов чтобы JSON строка гарантированно укладывалась в лимит 4KB
+      const compactAttachment = {
+        ...dayAttachment,
+        title: dayAttachment.title.length > 360 ? `${dayAttachment.title.slice(0, 357)}...` : dayAttachment.title,
+        groupId: dbUuid || targetThreadId,
+        groupName: groupTitle,
+        authorId: uid || day.user_id || null,
+        targetTab: 'friends' as const,
+        actionLabel: 'Перейти к дню →',
+      }
+
+      const deterministicId = `group-day-${day.id}-${dbUuid || targetThreadId}`.slice(0, 76)
+      const localMsg = {
+        ...makeChatMessage({
+          authorId: MY_CHAT_ID,
+          text: msgText,
+          attachment: compactAttachment,
+          status: 'sent',
+          read: true,
+        }),
+        id: deterministicId,
+      }
+
+      updateStore((prev) => {
+        const curThreads = prev.chatThreads ?? {}
+        const curThread = threadOf(curThreads, targetThreadId)
+        const dedupedMsgs = curThread.messages.some((m) => m.id === deterministicId)
+          ? curThread.messages
+          : [...curThread.messages, localMsg]
+        const nextPosted = Array.from(new Set([...(prev.postedGroupDays ?? []), dedupeKey])).slice(-200)
+        return {
+          ...prev,
+          postedGroupDays: nextPosted,
+          chatThreads: {
+            ...curThreads,
+            [targetThreadId]: {
+              ...curThread,
+              groupMeta: curThread.groupMeta || groupMeta || {
+                id: targetThreadId,
+                dbId: dbUuid,
+                title: groupTitle,
+                avatarColor: '#ff7a18',
+                avatarEmoji: '👥',
+                memberIds: [MY_CHAT_ID],
+                createdAtISO: new Date().toISOString(),
+                createdBy: MY_CHAT_ID,
+              },
+              messages: dedupedMsgs,
+            },
+          },
+        }
+      }, true)
+
+      if (uid && dbUuid) {
+        const dbThreadKey = `group:group-${dbUuid}`
+        await sendDirectMessageToDb({
+          userId: uid,
+          authorId: uid,
+          recipientId: `group-${dbUuid}`,
+          threadKey: dbThreadKey,
+          body: msgText,
+          clientId: deterministicId,
+          attachment: compactAttachment,
+          type: 'pride_card',
+        }).catch(() => {})
+      }
+
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /** Отмечает время последнего просмотра вкладки ленты «Друзья» или «Подписки» (сброс бейджа) */
+  const markFeedTabViewed = useCallback(
+    (tab: 'friends' | 'following') => {
+      const nowISO = new Date().toISOString()
+      const uid = getSnapshot().auth?.activeAccountId
+      updateStore(
+        (prev) => ({
+          ...prev,
+          ...(tab === 'friends'
+            ? { lastViewedFriendsFeedAt: nowISO }
+            : { lastViewedFollowingFeedAt: nowISO }),
+        }),
+        true
+      )
+      void updateFeedViewedAtInDb(uid, tab, nowISO)
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(new CustomEvent('ogonek:refresh-feed-badges', { detail: { tab } }))
+        } catch {}
+      }
+    },
+    [updateStore]
+  )
+
+  /** Уведомляет друзей (и колокольчик) о новой не-private публикации дня */
+  const notifyFriendsOfPublishedDay = useCallback(async (day: Day) => {
+    if (!day || normalizeVisibility(day.visibility) === 'private') return
+    const supabase = getSupabase()
+    let headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (supabase) {
+      try {
+        const { data } = await supabase.auth.getSession()
+        if (data?.session?.access_token) {
+          headers = {
+            ...headers,
+            Authorization: `Bearer ${data.session.access_token}`,
+          }
+        }
+      } catch {}
+    }
+    const snap = getSnapshot()
+    const resolvedGroupUuid =
+      day.visibility === 'group'
+        ? extractDbGroupUuid(day.groupId) ||
+          extractDbGroupUuid(snap.chatThreads?.[day.groupId || '']?.groupMeta?.dbId)
+        : null
+
+    await fetch('/api/friends/notify-day', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        dayId: day.id,
+        visibility: normalizeVisibility(day.visibility),
+        groupId: resolvedGroupUuid,
+        groupName: day.groupName || null,
+        title: day.prides?.[0]?.text || day.title || `День #${day.id}`,
+      }),
+    }).catch(() => {})
+  }, [])
+
+  /** Меняет приватность всего дня и синхронно обновляет приватность всех пунктов гордостей и благодарностей */
   const setDayVisibility = useCallback(
     async (dayId: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
+      const clearGroup = next !== 'group'
+      let updatedDaySnapshot: Day | null = null
+
       updateStore((prev) => ({
         ...prev,
-        days: prev.days.map((d) =>
-          d.id === dayId
-            ? { ...d, visibility: next, prides: d.prides.map((p) => ({ ...p, visibility: next })) }
-            : d
-        ),
-      }))
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const nextDay: Day = {
+            ...d,
+            visibility: next,
+            ...(clearGroup ? { groupId: null, groupName: undefined, targetGroupIds: [] } : {}),
+            prides: d.prides.map((p) => ({
+              ...p,
+              visibility: next,
+              ...(clearGroup ? { groupId: null, groupName: undefined, targetGroupIds: [] } : {}),
+            })),
+            gratitudes: d.gratitudes.map((g) =>
+              typeof g === 'string'
+                ? { text: g, visibility: next, ...(clearGroup ? { groupId: null, groupName: undefined, targetGroupIds: [] } : {}) }
+                : { ...g, visibility: next, ...(clearGroup ? { groupId: null, groupName: undefined, targetGroupIds: [] } : {}) }
+            ),
+          }
+          updatedDaySnapshot = nextDay
+          return nextDay
+        }),
+      }), true)
 
       try {
         const supabase = getSupabase()
-        const uid = getSnapshot().auth?.activeAccountId
+        let uid = getSnapshot().auth?.activeAccountId || null
+        if ((!uid || !/^[0-9a-f-]{36}$/i.test(uid)) && supabase) {
+          const s = await supabase.auth.getSession().catch(() => null)
+          uid = s?.data?.session?.user?.id || uid
+        }
         if (supabase && uid) {
-          await Promise.allSettled([
+          const patch: Record<string, any> = {
+            visibility: next,
+            ...(clearGroup ? { group_id: null, target_group_ids: [] } : {}),
+          }
+          const [dayUpdRes] = await Promise.all([
             supabase
               .from('days')
-              .update({ visibility: next })
-              .match({ user_id: uid, client_id: String(dayId) }),
+              .update(patch)
+              .match({ user_id: uid, client_id: String(dayId) })
+              .select('id'),
             supabase
               .from('prides')
-              .update({ visibility: next })
+              .update(patch)
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+            supabase
+              .from('gratitudes')
+              .update(patch)
               .match({ user_id: uid, day_client_id: String(dayId) }),
           ])
+          if (
+            updatedDaySnapshot &&
+            (!dayUpdRes?.data || dayUpdRes.data.length === 0)
+          ) {
+            await syncDayToSupabase(updatedDaySnapshot, uid)
+          }
         }
       } catch (err) {
         console.error('[Ogonek] Error updating day and prides visibility in Supabase:', err)
@@ -4298,86 +4595,146 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Меняет аудиторию дня (Лично / Друзьям / Всем / Группе) */
+  /** Меняет аудиторию дня (Лично / Друзьям / Публично / Группе) */
   const setDayAudience = useCallback(
     async (dayId: number, level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
       const next = normalizeVisibility(level)
-      const cleanGroupId = level === 'group' ? (groupId || null) : null
-      const cleanGroupName = level === 'group' ? groupName : undefined
+      const snap = getSnapshot()
+      const cleanThreadOrGroupId = next === 'group' ? (groupId || null) : null
+      const dbGroupUuid =
+        next === 'group'
+          ? extractDbGroupUuid(groupId) || extractDbGroupUuid(snap.chatThreads?.[groupId || '']?.groupMeta?.dbId)
+          : null
+      const resolvedGroupId = next === 'group' ? (dbGroupUuid || cleanThreadOrGroupId) : null
+      const cleanGroupName = next === 'group' ? groupName : undefined
+      let updatedDaySnapshot: Day | null = null
 
       updateStore((prev) => ({
         ...prev,
-        days: prev.days.map((d) =>
-          d.id === dayId
-            ? {
-                ...d,
-                visibility: next,
-                groupId: cleanGroupId,
-                groupName: cleanGroupName,
-                prides: d.prides.map((p) => ({
-                  ...p,
-                  visibility: next,
-                  groupId: cleanGroupId,
-                  groupName: cleanGroupName,
-                })),
-                gratitudes: d.gratitudes.map((g) =>
-                  typeof g === 'string'
-                    ? { text: g, visibility: next, groupId: cleanGroupId, groupName: cleanGroupName }
-                    : { ...g, visibility: next, groupId: cleanGroupId, groupName: cleanGroupName }
-                ),
-              }
-            : d
-        ),
-      }))
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const nextDay: Day = {
+            ...d,
+            visibility: next,
+            groupId: resolvedGroupId,
+            groupName: cleanGroupName,
+            targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+            prides: d.prides.map((p) => ({
+              ...p,
+              visibility: next,
+              groupId: resolvedGroupId,
+              groupName: cleanGroupName,
+              targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+            })),
+            gratitudes: d.gratitudes.map((g) =>
+              typeof g === 'string'
+                ? {
+                    text: g,
+                    visibility: next,
+                    groupId: resolvedGroupId,
+                    groupName: cleanGroupName,
+                    targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+                  }
+                : {
+                    ...g,
+                    visibility: next,
+                    groupId: resolvedGroupId,
+                    groupName: cleanGroupName,
+                    targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+                  }
+            ),
+          }
+          updatedDaySnapshot = nextDay
+          return nextDay
+        }),
+      }), true)
 
       try {
         const supabase = getSupabase()
-        const uid = getSnapshot().auth?.activeAccountId
+        let uid = snap.auth?.activeAccountId || null
+        if ((!uid || !/^[0-9a-f-]{36}$/i.test(uid)) && supabase) {
+          const s = await supabase.auth.getSession().catch(() => null)
+          uid = s?.data?.session?.user?.id || uid
+        }
         if (supabase && uid) {
-          await Promise.allSettled([
+          const patch = {
+            visibility: next,
+            group_id: dbGroupUuid,
+            target_group_ids: dbGroupUuid ? [dbGroupUuid] : [],
+          }
+          const [dayUpdRes] = await Promise.all([
             supabase
               .from('days')
-              .update({ visibility: next, group_id: cleanGroupId })
-              .match({ user_id: uid, client_id: String(dayId) }),
+              .update(patch)
+              .match({ user_id: uid, client_id: String(dayId) })
+              .select('id'),
             supabase
               .from('prides')
-              .update({ visibility: next, group_id: cleanGroupId })
+              .update(patch)
               .match({ user_id: uid, day_client_id: String(dayId) }),
             supabase
               .from('gratitudes')
-              .update({ visibility: next, group_id: cleanGroupId })
+              .update(patch)
               .match({ user_id: uid, day_client_id: String(dayId) }),
           ])
+          if (
+            updatedDaySnapshot &&
+            (!dayUpdRes?.data || dayUpdRes.data.length === 0)
+          ) {
+            await syncDayToSupabase(updatedDaySnapshot, uid)
+          }
         }
       } catch (err) {
         console.error('[Ogonek] Error updating day audience in Supabase:', err)
       }
+
+      if (next === 'group' && updatedDaySnapshot && cleanThreadOrGroupId) {
+        void publishDayToGroupChat(updatedDaySnapshot, cleanThreadOrGroupId)
+      }
+      if (next !== 'private' && updatedDaySnapshot) {
+        void notifyFriendsOfPublishedDay(updatedDaySnapshot)
+      }
     },
-    [updateStore]
+    [updateStore, publishDayToGroupChat, notifyFriendsOfPublishedDay]
   )
 
-  /** Меняет приватность конкретной гордости дня */
+  /** Меняет приватность конкретной гордости дня (корректно обновляет в Supabase по day_client_id + position/client_id) */
   const setPrideVisibility = useCallback(
     async (dayId: number, index: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
+      let updatedDaySnapshot: Day | null = null
+
       updateStore((prev) => ({
         ...prev,
         days: prev.days.map((d) => {
           if (d.id !== dayId) return d
           const prides = d.prides.map((p, i) => (i === index ? { ...p, visibility: next } : p))
-          return { ...d, prides }
+          const nextDay = { ...d, prides }
+          updatedDaySnapshot = nextDay
+          return nextDay
         }),
-      }))
+      }), true)
 
       try {
         const supabase = getSupabase()
-        const uid = getSnapshot().auth?.activeAccountId
+        let uid = getSnapshot().auth?.activeAccountId || null
+        if ((!uid || !/^[0-9a-f-]{36}$/i.test(uid)) && supabase) {
+          const s = await supabase.auth.getSession().catch(() => null)
+          uid = s?.data?.session?.user?.id || uid
+        }
         if (supabase && uid) {
-          const clientId = `day:${dayId}:pride:${index}`
-          await supabase
+          const canonicalClientId = `${dayId}_p_${index + 1}`
+          const { data: updatedRows } = await supabase
             .from('prides')
             .update({ visibility: next })
-            .match({ user_id: uid, client_id: clientId })
+            .eq('user_id', uid)
+            .eq('day_client_id', String(dayId))
+            .or(`position.eq.${index},client_id.eq.${canonicalClientId}`)
+            .select('id')
+
+          if (updatedDaySnapshot && (!updatedRows || updatedRows.length === 0)) {
+            await syncDayToSupabase(updatedDaySnapshot, uid)
+          }
         }
       } catch (err) {
         console.error('[Ogonek] Error updating pride visibility in Supabase:', err)
@@ -4387,35 +4744,95 @@ export function useOgonekStore() {
   )
 
   /**
-   * Применяет один уровень приватности ко всему дню сразу:
-   * и к самому дню, и ко всем его гордостям.
+   * Применяет один уровень приватности (и опциональную группу) ко всему дню сразу:
+   * к самому дню, ко всем его гордостям и ко всем благодарностям.
    */
   const setAllPridesVisibility = useCallback(
-    async (dayId: number, level: VisibilityLevel) => {
+    async (dayId: number, level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
       const next = normalizeVisibility(level)
+      const snap = getSnapshot()
+      const currentDay = snap.days.find((d) => d.id === dayId)
+      const effectiveGroupId = next === 'group' ? (groupId ?? currentDay?.groupId ?? null) : null
+      const effectiveGroupName = next === 'group' ? (groupName ?? currentDay?.groupName) : undefined
+      const dbGroupUuid =
+        next === 'group'
+          ? extractDbGroupUuid(effectiveGroupId) ||
+            extractDbGroupUuid(snap.chatThreads?.[effectiveGroupId || '']?.groupMeta?.dbId)
+          : null
+      let updatedDaySnapshot: Day | null = null
+
       updateStore((prev) => ({
         ...prev,
-        days: prev.days.map((d) =>
-          d.id === dayId
-            ? { ...d, visibility: next, prides: d.prides.map((p) => ({ ...p, visibility: next })) }
-            : d
-        ),
-      }))
+        days: prev.days.map((d) => {
+          if (d.id !== dayId) return d
+          const nextDay: Day = {
+            ...d,
+            visibility: next,
+            groupId: dbGroupUuid || effectiveGroupId,
+            groupName: effectiveGroupName,
+            targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+            prides: d.prides.map((p) => ({
+              ...p,
+              visibility: next,
+              groupId: dbGroupUuid || effectiveGroupId,
+              groupName: effectiveGroupName,
+              targetGroupIds: dbGroupUuid ? [dbGroupUuid] : [],
+            })),
+            gratitudes: d.gratitudes.map((g) =>
+              typeof g === 'string'
+                ? {
+                    text: g,
+                    visibility: next,
+                    groupId: dbGroupUuid || effectiveGroupId,
+                    groupName: effectiveGroupName,
+                  }
+                : {
+                    ...g,
+                    visibility: next,
+                    groupId: dbGroupUuid || effectiveGroupId,
+                    groupName: effectiveGroupName,
+                  }
+            ),
+          }
+          updatedDaySnapshot = nextDay
+          return nextDay
+        }),
+      }), true)
 
       try {
         const supabase = getSupabase()
-        const uid = getSnapshot().auth?.activeAccountId
+        let uid = snap.auth?.activeAccountId || null
+        if ((!uid || !/^[0-9a-f-]{36}$/i.test(uid)) && supabase) {
+          const s = await supabase.auth.getSession().catch(() => null)
+          uid = s?.data?.session?.user?.id || uid
+        }
         if (supabase && uid) {
-          await Promise.allSettled([
+          const patch = {
+            visibility: next,
+            group_id: dbGroupUuid,
+            target_group_ids: dbGroupUuid ? [dbGroupUuid] : [],
+          }
+          const [dayUpdRes] = await Promise.all([
             supabase
               .from('days')
-              .update({ visibility: next })
-              .match({ user_id: uid, client_id: String(dayId) }),
+              .update(patch)
+              .match({ user_id: uid, client_id: String(dayId) })
+              .select('id'),
             supabase
               .from('prides')
-              .update({ visibility: next })
+              .update(patch)
+              .match({ user_id: uid, day_client_id: String(dayId) }),
+            supabase
+              .from('gratitudes')
+              .update(patch)
               .match({ user_id: uid, day_client_id: String(dayId) }),
           ])
+          if (
+            updatedDaySnapshot &&
+            (!dayUpdRes?.data || dayUpdRes.data.length === 0)
+          ) {
+            await syncDayToSupabase(updatedDaySnapshot, uid)
+          }
         }
       } catch (err) {
         console.error('[Ogonek] Error updating all prides visibility in Supabase:', err)
@@ -4776,13 +5193,24 @@ export function useOgonekStore() {
       // Запись строки в таблицу public.direct_messages Supabase
       if (!isScheduled) {
         try {
-          const currentUserId = getSnapshot().auth?.activeAccountId
+          const snapNow = getSnapshot()
+          const currentUserId = snapNow.auth?.activeAccountId
           if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
-            const symmetricThreadKey = getDirectThreadKey(currentUserId, friendId)
+            const targetGroupMeta = snapNow.chatThreads?.[friendId]?.groupMeta
+            const groupDbUuid = targetGroupMeta
+              ? extractDbGroupUuid(targetGroupMeta.dbId) || extractDbGroupUuid(friendId)
+              : extractDbGroupUuid(friendId)
+            const dbRecipient = targetGroupMeta || friendId.startsWith('group-')
+              ? (groupDbUuid ? `group-${groupDbUuid}` : friendId)
+              : friendId
+            const symmetricThreadKey =
+              targetGroupMeta || friendId.startsWith('group-')
+                ? (groupDbUuid ? `group:group-${groupDbUuid}` : `group:${friendId}`)
+                : getDirectThreadKey(currentUserId, friendId)
             sendDirectMessageToDb({
               userId: currentUserId,
               authorId: currentUserId,
-              recipientId: friendId,
+              recipientId: dbRecipient,
               threadKey: symmetricThreadKey,
               body: clean,
               clientId: message.id,
@@ -5015,17 +5443,43 @@ export function useOgonekStore() {
         }
       })
 
-      // Синхронизация создания группы в Supabase в фоновом режиме
+      // Синхронизация создания группы в Supabase и сохранение реального DB UUID (dbId)
+      const creatorUid = snap.auth?.activeAccountId || MY_CHAT_ID
       createChatGroupInDb({
         id: groupId,
         title: cleanTitle,
         avatarColor,
         avatarEmoji,
         avatarImage: avatarImage ?? null,
-        creatorId: MY_CHAT_ID,
+        creatorId: creatorUid,
         memberIds: eligibleMembers,
         description,
-      }).catch(() => {})
+      })
+        .then((res) => {
+          const dbUuid = res?.groupId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(res.groupId)
+            ? res.groupId.toLowerCase()
+            : null
+          if (!dbUuid) return
+          updateStore((prev) => {
+            const curThreads = prev.chatThreads ?? {}
+            const curThread = curThreads[groupId]
+            if (!curThread?.groupMeta) return prev
+            return {
+              ...prev,
+              chatThreads: {
+                ...curThreads,
+                [groupId]: {
+                  ...curThread,
+                  groupMeta: {
+                    ...curThread.groupMeta,
+                    dbId: dbUuid,
+                  },
+                },
+              },
+            }
+          }, true)
+        })
+        .catch(() => {})
 
       return groupId
     },
@@ -5994,18 +6448,23 @@ export function useOgonekStore() {
   const resolvePeerIdFromRecord = useCallback(
     (msg: DirectMessageRecord, currentUserId?: string | null): string | null => {
       if (!msg) return null
+      if (msg.thread_key) {
+        if (msg.thread_key.startsWith('group:')) {
+          const raw = msg.thread_key.slice('group:'.length)
+          return raw.startsWith('group-') ? raw : `group-${raw}`
+        }
+        if (msg.thread_key.startsWith('group-')) {
+          return msg.thread_key
+        }
+      }
       const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
       if (isMine && msg.recipient_id === currentUserId) {
         return 'saved-messages'
       }
       let peerId = isMine ? msg.recipient_id || null : msg.author_id || null
       if (!peerId && msg.thread_key && currentUserId) {
-        if (msg.thread_key.startsWith('group:')) {
-          peerId = msg.thread_key.slice('group:'.length)
-        } else {
-          const parts = msg.thread_key.split('_')
-          peerId = parts.find((p) => p !== currentUserId) || parts[0] || null
-        }
+        const parts = msg.thread_key.split('_')
+        peerId = parts.find((p) => p !== currentUserId) || parts[0] || null
       }
       if (!peerId || peerId === 'ilonmusk-seed' || peerId === 'cernavation-seed') return null
       return peerId
@@ -6336,18 +6795,37 @@ export function useOgonekStore() {
       }
       if (!uid || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return false
 
-      const [res, pridayDbMessages] = await Promise.all([
+      const [res, pridayDbMessages, dbGroupsRes] = await Promise.all([
         getAllUserDirectMessages(uid),
         loadPridaySystemMessagesDb(uid),
+        getUserChatGroupsFromDb(uid),
       ])
       if (!res.ok) return false
 
+      const dbGroups = dbGroupsRes.ok ? dbGroupsRes.groups : []
+      const dbGroupMessages =
+        dbGroups.length > 0
+          ? await getGroupMessagesFromDb(dbGroups.map((g) => g.id))
+          : []
+
+      const allCombinedRowsMap = new Map<string, DirectMessageRecord>()
+      for (const row of [...res.messages, ...dbGroupMessages]) {
+        const k = String(row.id || row.client_id || '')
+        if (k) allCombinedRowsMap.set(k, row)
+      }
+
       const byPeer: Record<string, DirectMessageRecord[]> = {}
-      for (const row of res.messages) {
+      for (const row of allCombinedRowsMap.values()) {
         const peerId = resolvePeerIdFromRecord(row, uid)
         if (!peerId || isPridayChat(peerId)) continue
         if (!byPeer[peerId]) byPeer[peerId] = []
         byPeer[peerId].push(row)
+      }
+
+      const dbGroupByKey = new Map<string, (typeof dbGroups)[number]>()
+      for (const g of dbGroups) {
+        dbGroupByKey.set(`group-${g.id}`, g)
+        dbGroupByKey.set(g.id, g)
       }
 
       const peerIds = Object.keys(byPeer).filter(
@@ -6361,7 +6839,9 @@ export function useOgonekStore() {
           id !== 'ilonmusk-seed' &&
           id !== 'cernavation-seed'
       )
-      const allProfileIds = Array.from(new Set([...peerIds, ...existingIds]))
+      const allProfileIds = Array.from(
+        new Set([...peerIds, ...existingIds, ...dbGroups.flatMap((g) => g.memberIds)])
+      )
       const profilesMap = await getProfilesByIds(allProfileIds)
 
       updateStore((prev) => {
@@ -6401,10 +6881,43 @@ export function useOgonekStore() {
           messages: mergedPridayMessages,
         }
 
+        // 0.5 Группы из Supabase (обеспечиваем единый threadKey group-${dbId} с сохранённым dbId)
+        for (const g of dbGroups) {
+          const canonicalKey = `group-${g.id}`
+          const matchingLocal = Object.entries(currentThreads).find(
+            ([tid, t]) =>
+              tid === canonicalKey ||
+              t.groupMeta?.dbId === g.id ||
+              (t.groupMeta?.title === g.title && t.groupMeta?.memberIds?.includes(MY_CHAT_ID))
+          )
+          const prevThread = matchingLocal?.[1] ?? emptyThread()
+          nextThreads[canonicalKey] = {
+            ...prevThread,
+            groupMeta: {
+              ...(prevThread.groupMeta ?? {}),
+              id: canonicalKey,
+              dbId: g.id,
+              title: g.title,
+              avatarColor: g.avatarColor,
+              avatarEmoji: g.avatarEmoji,
+              avatarImage: g.avatarImage,
+              memberIds: Array.from(new Set([MY_CHAT_ID, ...g.memberIds.filter((id) => id !== uid)])),
+              adminIds: g.adminIds,
+              adminsOnly: g.adminsOnly,
+              description: g.description,
+              createdAtISO: g.createdAtISO,
+              createdBy: g.creatorId === uid ? MY_CHAT_ID : g.creatorId,
+              role: g.role,
+            },
+          }
+        }
+
         // 1. Все актуальные переписки из Supabase
         for (const [peerId, rows] of Object.entries(byPeer)) {
-          const prevThread = currentThreads[peerId] ?? emptyThread()
-          const profile = profilesMap[peerId] || getCachedProfileSync(peerId)
+          const dbGroup = dbGroupByKey.get(peerId)
+          const destKey = dbGroup ? `group-${dbGroup.id}` : peerId
+          const prevThread = nextThreads[destKey] ?? currentThreads[destKey] ?? emptyThread()
+          const profile = !dbGroup ? (profilesMap[peerId] || getCachedProfileSync(peerId)) : null
           const peerMeta = profile
             ? {
                 ...prevThread.peerMeta,
@@ -6418,10 +6931,12 @@ export function useOgonekStore() {
                     : prevThread.peerMeta?.verified,
               }
             : prevThread.peerMeta
-          const mappedMessages = rows.map((r) => mapRecordToChatMessage(r, uid))
+          const mappedMessages = rows
+            .map((r) => mapRecordToChatMessage(r, uid))
+            .sort((a, b) => new Date(a.createdAtISO).getTime() - new Date(b.createdAtISO).getTime())
           const prevReadMs = prevThread.readAtISO ? new Date(prevThread.readAtISO).getTime() : 0
           const hasRecentOptimisticRead = prevReadMs > 0 && Date.now() - prevReadMs < 15000
-          nextThreads[peerId] = {
+          nextThreads[destKey] = {
             ...prevThread,
             readAtISO: hasRecentOptimisticRead ? prevThread.readAtISO : null,
             peerMeta,
@@ -6436,7 +6951,10 @@ export function useOgonekStore() {
           if (fId === 'ilonmusk-seed' || fId === 'cernavation-seed') continue
           const isGroup = fId.startsWith('group-') || Boolean(prevThread.groupMeta)
           if (isGroup) {
-            nextThreads[fId] = prevThread
+            const matchedDb = prevThread.groupMeta?.dbId && nextThreads[`group-${prevThread.groupMeta.dbId}`]
+            if (!matchedDb) {
+              nextThreads[fId] = prevThread
+            }
             continue
           }
           // Если у 1-на-1 чата в Supabase больше нет сообщений, очищаем локальный кэш сообщений, сохраняя peerMeta!
@@ -7254,14 +7772,70 @@ export function useOgonekStore() {
       if (!uid) return { ok: false, count: 0, error: 'No user ID' }
 
       try {
-        const { data: cloudDays, error } = await supabase
-          .from('days')
-          .select('*, prides(*), gratitudes(*)')
-          .eq('user_id', uid)
-          .order('date_iso', { ascending: false })
+        const [daysRes, pridesRes, gratRes, groupsRes] = await Promise.all([
+          supabase
+            .from('days')
+            .select('*')
+            .eq('user_id', uid)
+            .order('date_iso', { ascending: false }),
+          supabase
+            .from('prides')
+            .select('*')
+            .eq('user_id', uid)
+            .order('position', { ascending: true }),
+          supabase
+            .from('gratitudes')
+            .select('*')
+            .eq('user_id', uid)
+            .order('position', { ascending: true }),
+          getUserChatGroupsFromDb(uid).catch(() => ({ ok: false, groups: [] as any[] })),
+        ])
 
-        if (!error && Array.isArray(cloudDays)) {
-          const mapped = cloudDays.map(mapCloudDayToDay).sort((a, b) => b.id - a.id)
+        if (!daysRes.error && Array.isArray(daysRes.data)) {
+          const pridesByDay = new Map<string, any[]>()
+          for (const p of pridesRes.data ?? []) {
+            const k = String(p.day_client_id || p.day_id || '')
+            if (!k) continue
+            const arr = pridesByDay.get(k) ?? []
+            arr.push(p)
+            pridesByDay.set(k, arr)
+          }
+          const gratsByDay = new Map<string, any[]>()
+          for (const g of gratRes.data ?? []) {
+            const k = String(g.day_client_id || g.day_id || '')
+            if (!k) continue
+            const arr = gratsByDay.get(k) ?? []
+            arr.push(g)
+            gratsByDay.set(k, arr)
+          }
+          const groupTitleMap = new Map<string, string>()
+          for (const g of groupsRes.groups ?? []) {
+            groupTitleMap.set(g.id.toLowerCase(), g.title)
+          }
+          for (const t of Object.values(snap.chatThreads ?? {})) {
+            if (t.groupMeta) {
+              groupTitleMap.set((t.groupMeta.dbId || t.groupMeta.id).toLowerCase(), t.groupMeta.title)
+              groupTitleMap.set(t.groupMeta.id.toLowerCase(), t.groupMeta.title)
+            }
+          }
+
+          const mapped = daysRes.data
+            .map((row: any) => {
+              const clientKey = String(row.client_id || row.day_number || row.id)
+              const hydratedRow = {
+                ...row,
+                prides: pridesByDay.get(clientKey) ?? pridesByDay.get(String(row.id)) ?? [],
+                gratitudes: gratsByDay.get(clientKey) ?? gratsByDay.get(String(row.id)) ?? [],
+              }
+              const d = mapCloudDayToDay(hydratedRow)
+              if (d.groupId) {
+                const gName = groupTitleMap.get(String(d.groupId).toLowerCase())
+                if (gName) d.groupName = gName
+              }
+              return d
+            })
+            .sort((a, b) => b.id - a.id)
+
           const newStreak = calculateStreak(mapped)
           updateStore((prev) => ({
             ...prev,
@@ -7274,7 +7848,7 @@ export function useOgonekStore() {
           }))
           return { ok: true, count: mapped.length }
         }
-        return { ok: false, count: 0, error: error?.message }
+        return { ok: false, count: 0, error: daysRes.error?.message }
       } catch (err: any) {
         return { ok: false, count: 0, error: err?.message }
       }
@@ -7688,6 +8262,9 @@ export function useOgonekStore() {
     setDayAudience,
     setPrideVisibility,
     setAllPridesVisibility,
+    publishDayToGroupChat,
+    markFeedTabViewed,
+    notifyFriendsOfPublishedDay,
     loadCommentsForTargets,
     addComment,
     addReply,

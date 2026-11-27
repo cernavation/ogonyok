@@ -486,6 +486,11 @@ export function buildDayAttachment(
     dayDateISO: day.dateISO ?? null,
     photo: day.photos?.[0] ?? null,
     visibility: normalizeVisibility(day.visibility),
+    authorId: day.user_id || day.userId || null,
+    groupId: day.groupId ?? null,
+    groupName: day.groupName ?? null,
+    targetTab: day.groupId || day.visibility === 'friends' || day.visibility === 'group' ? 'friends' : undefined,
+    actionLabel: 'Перейти к дню →',
   }
 }
 
@@ -1247,7 +1252,7 @@ export function buildDemoThreads(now: Date = new Date()): ChatThreads {
 
 const CHAT_ATTACHMENT_KINDS: ChatAttachmentKind[] = ['pride', 'gratitude', 'day', 'story', 'achievement']
 
-function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
+export function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
   if (!value || typeof value !== 'object') return null
   const a = value as Partial<ChatAttachment>
   const kind =
@@ -1258,7 +1263,7 @@ function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
 
   return {
     kind,
-    title: typeof a.title === 'string' && a.title.trim() ? a.title.trim().slice(0, 200) : 'Карточка',
+    title: typeof a.title === 'string' && a.title.trim() ? a.title.trim().slice(0, 600) : 'Карточка',
     subtitle: typeof a.subtitle === 'string' ? a.subtitle.slice(0, 240) : '',
     emoji: typeof a.emoji === 'string' && a.emoji.trim() ? a.emoji.trim().slice(0, 8) : '✨',
     from: typeof a.from === 'string' && a.from ? a.from.slice(0, 40) : '#1a0f0a',
@@ -1269,8 +1274,19 @@ function sanitizeChatAttachment(value: unknown): ChatAttachment | null {
       typeof a.prideIndex === 'number' && Number.isFinite(a.prideIndex) ? a.prideIndex : null,
     storyId: typeof a.storyId === 'string' && a.storyId ? a.storyId.slice(0, 80) : null,
     author: typeof a.author === 'string' && a.author ? a.author.slice(0, 80) : null,
+    authorUsername: typeof a.authorUsername === 'string' && a.authorUsername ? a.authorUsername.slice(0, 80) : null,
+    authorAvatar: typeof a.authorAvatar === 'string' && a.authorAvatar ? a.authorAvatar.slice(0, 2000) : null,
+    authorAvatarColor: typeof a.authorAvatarColor === 'string' && a.authorAvatarColor ? a.authorAvatarColor.slice(0, 40) : null,
+    authorVerified: Boolean(a.authorVerified),
+    rating: typeof a.rating === 'number' && Number.isFinite(a.rating) ? a.rating : null,
+    dayDateISO: typeof a.dayDateISO === 'string' && a.dayDateISO ? a.dayDateISO : null,
     photo: typeof a.photo === 'string' && a.photo ? a.photo.slice(0, 2000) : null,
     visibility: normalizeVisibility(a.visibility),
+    authorId: typeof a.authorId === 'string' && a.authorId ? a.authorId.slice(0, 80) : null,
+    groupId: typeof a.groupId === 'string' && a.groupId ? a.groupId.slice(0, 80) : null,
+    groupName: typeof a.groupName === 'string' && a.groupName ? a.groupName.slice(0, 120) : null,
+    targetTab: a.targetTab === 'friends' || a.targetTab === 'following' ? a.targetTab : undefined,
+    actionLabel: typeof a.actionLabel === 'string' && a.actionLabel ? a.actionLabel.slice(0, 60) : null,
   }
 }
 

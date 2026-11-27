@@ -168,6 +168,42 @@ export function ChatAttachmentModal({
               />
             </div>
           )}
+
+          {attachment.kind === 'day' && attachment.dayId != null && (
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  const tab = attachment.targetTab || 'friends'
+                  const params = new URLSearchParams({
+                    tab,
+                    highlightDay: String(attachment.dayId),
+                  })
+                  if (attachment.authorId) params.set('authorId', attachment.authorId)
+                  onClose()
+                  window.dispatchEvent(
+                    new CustomEvent('ogonek:navigate-view', {
+                      detail: { view: 'home', url: `/app?${params.toString()}` },
+                    })
+                  )
+                  setTimeout(() => {
+                    window.dispatchEvent(
+                      new CustomEvent('ogonek:focus-feed-day', {
+                        detail: {
+                          tab,
+                          dayId: attachment.dayId,
+                          userId: attachment.authorId || null,
+                        },
+                      })
+                    )
+                  }, 60)
+                }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] hover:bg-[#ff6d38] px-4 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)] transition-all active:scale-95 cursor-pointer"
+              >
+                <span>{attachment.actionLabel || 'Перейти к дню →'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </motion.div>
     </motion.div>,

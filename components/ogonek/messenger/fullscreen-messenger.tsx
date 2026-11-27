@@ -146,7 +146,17 @@ export function FullscreenMessenger({
   }, [cleanInitial, cleanStore, state.chatThreads])
 
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
+  const [newChatInitialMode, setNewChatInitialMode] = useState<'direct' | 'group'>('direct')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const onOpenGroup = () => {
+      setNewChatInitialMode('group')
+      setIsNewChatOpen(true)
+    }
+    window.addEventListener('ogonek:open-group-creator', onOpenGroup)
+    return () => window.removeEventListener('ogonek:open-group-creator', onOpenGroup)
+  }, [])
 
   const notify = useCallback((message: string) => {
     setToastMsg(message)
@@ -376,7 +386,11 @@ export function FullscreenMessenger({
       {/* Modal: New Chat / Group Wizard */}
       {isNewChatOpen && (
         <NewChatModal
-          onClose={() => setIsNewChatOpen(false)}
+          initialMode={newChatInitialMode}
+          onClose={() => {
+            setIsNewChatOpen(false)
+            setNewChatInitialMode('direct')
+          }}
           onOpenThread={handleSelectThread}
           onNotify={notify}
           soundEnabled={state?.soundEnabled ?? true}

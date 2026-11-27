@@ -34,6 +34,7 @@ type Props = {
   onOpenThread?: (threadId: string) => void
   onNotify: (message: string) => void
   soundEnabled?: boolean
+  initialMode?: 'direct' | 'group'
 }
 
 const GROUP_GRADIENTS = [
@@ -66,9 +67,10 @@ export function NewChatModal({
   onOpenThread,
   onNotify,
   soundEnabled = true,
+  initialMode = 'direct',
 }: Props) {
   const { state, startChatWithFriend, createGroupChat } = useOgonekStore()
-  const [mode, setMode] = useState<'direct' | 'group'>('direct')
+  const [mode, setMode] = useState<'direct' | 'group'>(initialMode)
   const [groupStep, setGroupStep] = useState<1 | 2>(1)
   const [query, setQuery] = useState('')
 

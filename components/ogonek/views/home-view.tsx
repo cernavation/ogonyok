@@ -18,7 +18,12 @@ import { QuickFocus } from '../quick-focus'
 import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
-import { getFriendFeedPosts } from '@/lib/ogonek/social'
+import {
+  getFeedUnreadSummary,
+  getFollowingFeedPosts,
+  getFriendFeedPosts,
+  type FriendFeedPost,
+} from '@/lib/ogonek/social'
 import { scopedDayCommentTarget } from '@/lib/ogonek/comments'
 import { subscribeToCommentsRealtime } from '@/lib/supabase/api'
 import { NotificationsPopover } from '../notifications'
@@ -84,7 +89,15 @@ export function HomeView({
   currentUsername,
   isLoading = false,
 }: Props) {
-  const { state, currentUser, loadDaysFromCloud, loadCommentsForTargets, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
+  const {
+    state,
+    currentUser,
+    loadDaysFromCloud,
+    loadCommentsForTargets,
+    markAllNotificationsRead,
+    markNotificationRead,
+    markFeedTabViewed,
+  } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUsername || currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
@@ -105,80 +118,233 @@ export function HomeView({
   const [historyOpen, setHistoryOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [serverFriendDays, setServerFriendDays] = useState<Day[]>([])
+  const [serverFollowingDays, setServerFollowingDays] = useState<Day[]>([])
   const [loadingFriendFeed, setLoadingFriendFeed] = useState(false)
+  const [loadingFollowingFeed, setLoadingFollowingFeed] = useState(false)
+  const [friendsUnread, setFriendsUnread] = useState(0)
+  const [followingUnread, setFollowingUnread] = useState(0)
+  const [highlightedTarget, setHighlightedTarget] = useState<{ dayId: number; authorId?: string | null } | null>(null)
+  const [feedReloadNonce, setFeedReloadNonce] = useState(0)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   const userGroups = useMemo(() => {
     const threads = state.chatThreads ?? {}
+    const seen = new Set<string>()
     const list: ChatGroupMeta[] = []
     Object.values(threads).forEach((t) => {
-      if (t.groupMeta) list.push(t.groupMeta)
+      if (t.groupMeta) {
+        const key = t.groupMeta.dbId || t.groupMeta.id
+        if (!seen.has(key)) {
+          seen.add(key)
+          list.push(t.groupMeta)
+        }
+      }
     })
     return list
   }, [state.chatThreads])
 
   const currentUserId = currentUser?.id || state.auth.activeAccountId || userId
 
-  // Загрузка постов друзей с сервера Supabase при выборе вкладки «Друзья»
+  const mapFeedPostToDay = (p: FriendFeedPost): Day => ({
+    id: Number(p.dayNumber || p.id) || 1,
+    cloudId: String(p.dayUuid || p.id),
+    user_id: p.userId,
+    userId: p.userId,
+    dateISO: p.dayDate || p.createdAt || new Date().toISOString(),
+    title: p.title || `День #${p.dayNumber || 1}`,
+    visibility: p.visibility || 'friends',
+    groupId: p.groupId || null,
+    groupName: p.groupName || undefined,
+    photos: Array.isArray(p.photos) ? p.photos : [],
+    score: typeof p.score === 'number' ? p.score : undefined,
+    aiScore: typeof p.aiScore === 'number' ? p.aiScore : undefined,
+    aiVerdict: p.aiVerdict || undefined,
+    tags: [],
+    prides: (p.prides || []).map((pr, idx) => ({
+      num: String(idx + 1),
+      text: pr.text,
+      scale: Number(pr.scale ?? 8),
+      overcome: (Number(pr.overcome ?? 1) as any),
+      visibility: (pr.visibility || p.visibility || 'friends') as any,
+      groupId: pr.groupId ?? p.groupId ?? null,
+    })),
+    gratitudes: (p.gratitudes || []).map((gr, idx) => ({
+      num: String(idx + 1),
+      text: gr.text,
+      rating: typeof gr.rating === 'number' ? gr.rating : 10,
+      visibility: (gr.visibility || p.visibility || 'friends') as any,
+      groupId: gr.groupId ?? p.groupId ?? null,
+    })),
+    author: {
+      id: p.userId,
+      username: p.username,
+      displayName: p.displayName,
+      avatarImage: p.avatarUrl || undefined,
+      avatarColor: p.avatarColor || '#FF5C00',
+      verified: p.verified,
+      streak: p.streak,
+    } as any,
+  })
+
+  // Инициализация вкладки из URL (?tab=friends&highlightDay=...) и подписка на глубокие ссылки из чатов/уведомлений
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const applyDeepLink = (tabParam?: string | null, hlDay?: number | null, authorId?: string | null) => {
+      if (tabParam === 'friends') {
+        setFilter('Друзья')
+        markFeedTabViewed?.('friends')
+        setFriendsUnread(0)
+        setFeedReloadNonce((n) => n + 1)
+      } else if (tabParam === 'following') {
+        setFilter('Подписки')
+        markFeedTabViewed?.('following')
+        setFollowingUnread(0)
+        setFeedReloadNonce((n) => n + 1)
+      }
+      if (hlDay && Number.isFinite(hlDay)) {
+        setVisibleCount((prev) => Math.max(prev, 60))
+        setHighlightedTarget({ dayId: hlDay, authorId: authorId || null })
+      }
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab')
+    const hlRaw = params.get('highlightDay')
+    const authorParam = params.get('authorId')
+    if (tabParam || hlRaw) {
+      applyDeepLink(tabParam, hlRaw ? Number(hlRaw) : null, authorParam)
+    }
+
+    const onFocusDay = (e: any) => {
+      const d = e?.detail || {}
+      applyDeepLink(d.tab || 'friends', d.dayId ? Number(d.dayId) : null, d.userId || null)
+    }
+    window.addEventListener('ogonek:focus-feed-day', onFocusDay)
+    return () => window.removeEventListener('ogonek:focus-feed-day', onFocusDay)
+  }, [markFeedTabViewed])
+
+  // Плавный скролл и оранжевая подсветка дня на ~2.5 секунды
+  useEffect(() => {
+    if (!highlightedTarget?.dayId) return
+    const timerFind = setTimeout(() => {
+      const selector = highlightedTarget.authorId
+        ? `[data-day-number="${highlightedTarget.dayId}"][data-day-author="${highlightedTarget.authorId}"]`
+        : `[data-day-number="${highlightedTarget.dayId}"]`
+      const el =
+        document.querySelector(selector) ||
+        document.getElementById(`day-card-${highlightedTarget.dayId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 180)
+    const timerClear = setTimeout(() => {
+      setHighlightedTarget(null)
+    }, 2600)
+    return () => {
+      clearTimeout(timerFind)
+      clearTimeout(timerClear)
+    }
+  }, [highlightedTarget, serverFriendDays.length, serverFollowingDays.length, filter])
+
+  // Загрузка бейджей непрочитанных постов на вкладках «Друзья» и «Подписки»
+  useEffect(() => {
+    if (!currentUserId || currentUserId.startsWith('anon-') || currentUserId.startsWith('acct-guest')) {
+      setFriendsUnread(0)
+      setFollowingUnread(0)
+      return
+    }
+    let cancelled = false
+    const refreshBadges = async () => {
+      const summary = await getFeedUnreadSummary({
+        viewerId: currentUserId,
+        sinceFriendsAt: state.lastViewedFriendsFeedAt ?? null,
+        sinceFollowingAt: state.lastViewedFollowingFeedAt ?? null,
+      })
+      if (cancelled) return
+      setFriendsUnread(filter === 'Друзья' ? 0 : summary.friendsUnread)
+      setFollowingUnread(filter === 'Подписки' ? 0 : summary.followingUnread)
+    }
+    void refreshBadges()
+
+    const onRefresh = () => void refreshBadges()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ogonek:refresh-feed-badges', onRefresh)
+    }
+    return () => {
+      cancelled = true
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ogonek:refresh-feed-badges', onRefresh)
+      }
+    }
+  }, [
+    currentUserId,
+    filter,
+    state.lastViewedFriendsFeedAt,
+    state.lastViewedFollowingFeedAt,
+  ])
+
+  // Загрузка реальной хронологической ленты «Друзья» из Supabase (public + friends + group участника)
   useEffect(() => {
     if (filter !== 'Друзья') return
+    if (!currentUserId || currentUserId.startsWith('anon-') || currentUserId.startsWith('acct-guest')) {
+      setServerFriendDays([])
+      setLoadingFriendFeed(false)
+      return
+    }
     let cancelled = false
     const fetchFriendsFeed = async () => {
       setLoadingFriendFeed(true)
       try {
-        const posts = await getFriendFeedPosts({ viewerId: currentUserId })
+        const posts = await getFriendFeedPosts({
+          viewerId: currentUserId,
+          tab: 'friends',
+          limit: 40,
+        })
         if (cancelled) return
-        if (Array.isArray(posts) && posts.length > 0) {
-          const mapped: Day[] = posts.map((p) => ({
-            id: Number(p.dayNumber || p.id) || 1,
-            cloudId: String(p.dayUuid || p.id),
-            user_id: p.userId,
-            userId: p.userId,
-            day_number: Number(p.dayNumber || 1),
-            dateISO: p.dayDate || new Date().toISOString(),
-            title: p.title || `День пользователя @${p.username}`,
-            visibility: p.visibility || 'friends',
-            tags: [],
-            prides: p.prides.map((pr, idx) => ({
-              num: String(idx + 1),
-              text: pr.text,
-              scale: Number(pr.scale ?? 8),
-              overcome: 1,
-              category: pr.category,
-              visibility: (p.visibility || 'friends') as any,
-            })),
-            gratitudes: p.gratitudes.map((gr, idx) => ({
-              num: String(idx + 1),
-              text: gr.text,
-              category: gr.category,
-              visibility: (p.visibility || 'friends') as any,
-            })),
-            author: {
-              id: p.userId,
-              username: p.username,
-              displayName: p.displayName,
-              avatarImage: p.avatarUrl || undefined,
-              avatarColor: p.avatarColor || undefined,
-              verified: p.verified,
-              streak: p.streak,
-            } as any,
-          }))
-          setServerFriendDays(mapped)
-        }
+        setServerFriendDays(Array.isArray(posts) ? posts.map(mapFeedPostToDay) : [])
       } catch (err) {
         console.error('Failed to load friends feed:', err)
+        if (!cancelled) setServerFriendDays([])
       } finally {
         if (!cancelled) setLoadingFriendFeed(false)
       }
     }
-    fetchFriendsFeed()
+    void fetchFriendsFeed()
     return () => {
       cancelled = true
     }
-  }, [filter, currentUserId])
-  const followingIds = useMemo(() => {
-    return Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])]))
-  }, [state.followingIds, state.exploreFollowingIds])
+  }, [filter, currentUserId, feedReloadNonce])
+
+  // Загрузка реальной хронологической ленты «Подписки» (только public посты подписок) из Supabase
+  useEffect(() => {
+    if (filter !== 'Подписки') return
+    if (!currentUserId || currentUserId.startsWith('anon-') || currentUserId.startsWith('acct-guest')) {
+      setServerFollowingDays([])
+      setLoadingFollowingFeed(false)
+      return
+    }
+    let cancelled = false
+    const fetchFollowingFeed = async () => {
+      setLoadingFollowingFeed(true)
+      try {
+        const posts = await getFollowingFeedPosts({
+          viewerId: currentUserId,
+          limit: 40,
+        })
+        if (cancelled) return
+        setServerFollowingDays(Array.isArray(posts) ? posts.map(mapFeedPostToDay) : [])
+      } catch (err) {
+        console.error('Failed to load following feed:', err)
+        if (!cancelled) setServerFollowingDays([])
+      } finally {
+        if (!cancelled) setLoadingFollowingFeed(false)
+      }
+    }
+    void fetchFollowingFeed()
+    return () => {
+      cancelled = true
+    }
+  }, [filter, currentUserId, feedReloadNonce])
 
   const handleCopyInvite = () => {
     playClick(soundEnabled)
@@ -222,42 +388,37 @@ export function HomeView({
       })
     }
     if (filter === 'Друзья') {
-      let baseList = serverFriendDays.length > 0 ? serverFriendDays : days.filter((d) => {
-        const uid = d.user_id || (d as any).userId
-        if (!uid) return false
-        const isMine =
-          (currentUserId && uid === currentUserId) ||
-          (currentUser?.id && uid === currentUser.id) ||
-          (state.auth.activeAccountId && uid === state.auth.activeAccountId)
-        if (isMine) return false
-        return (state.friendIds ?? []).includes(uid)
-      })
-
+      let baseList = serverFriendDays
       if (selectedGroupFilter) {
         baseList = baseList.filter((d) => {
+          const normSelected = selectedGroupFilter.replace(/^group-/i, '').toLowerCase()
+          const dGid = d.groupId ? String(d.groupId).replace(/^group-/i, '').toLowerCase() : null
+          if (dGid && dGid === normSelected) return true
           if (d.groupId === selectedGroupFilter || d.groupName === selectedGroupFilter) return true
-          const inPrides = d.prides?.some((p) => p.groupId === selectedGroupFilter || p.groupName === selectedGroupFilter)
+          const inPrides = d.prides?.some(
+            (p) =>
+              p.groupId === selectedGroupFilter ||
+              p.groupName === selectedGroupFilter ||
+              (p.groupId && String(p.groupId).replace(/^group-/i, '').toLowerCase() === normSelected)
+          )
           if (inPrides) return true
-          const inGrats = (d.gratitudes as any)?.some((g: any) => typeof g === 'object' && (g.groupId === selectedGroupFilter || g.groupName === selectedGroupFilter))
+          const inGrats = (d.gratitudes as any)?.some(
+            (g: any) =>
+              typeof g === 'object' &&
+              (g.groupId === selectedGroupFilter ||
+                g.groupName === selectedGroupFilter ||
+                (g.groupId && String(g.groupId).replace(/^group-/i, '').toLowerCase() === normSelected))
+          )
           return inGrats
         })
       }
       return baseList
     }
     if (filter === 'Подписки') {
-      return days.filter((d) => {
-        const uid = d.user_id || (d as any).userId
-        if (!uid) return false
-        const isMine =
-          (currentUserId && uid === currentUserId) ||
-          (currentUser?.id && uid === currentUser.id) ||
-          (state.auth.activeAccountId && uid === state.auth.activeAccountId)
-        if (isMine) return false
-        return followingIds.includes(uid)
-      })
+      return serverFollowingDays
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, followingIds, serverFriendDays, state.friendIds])
+  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, serverFriendDays, serverFollowingDays, selectedGroupFilter])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
@@ -353,6 +514,15 @@ export function HomeView({
     playClick(soundEnabled)
     setFilter(tab)
     setVisibleCount(CHUNK_SIZE)
+    if (tab === 'Друзья') {
+      setFriendsUnread(0)
+      markFeedTabViewed?.('friends')
+      setFeedReloadNonce((n) => n + 1)
+    } else if (tab === 'Подписки') {
+      setFollowingUnread(0)
+      markFeedTabViewed?.('following')
+      setFeedReloadNonce((n) => n + 1)
+    }
   }
 
   return (
@@ -393,10 +563,16 @@ export function HomeView({
           </div>
         </div>
 
-        {/* Tabs with Twitter Blue underline indicator */}
+        {/* Tabs with X.com underline indicator & unread circular badges */}
         <div className="tabs" role="tablist" aria-label="Фильтры ленты">
           {FEED_TABS.map((tab) => {
             const isSelected = filter === tab
+            const unreadBadge =
+              tab === 'Друзья'
+                ? (isSelected ? 0 : friendsUnread)
+                : tab === 'Подписки'
+                ? (isSelected ? 0 : followingUnread)
+                : 0
             return (
               <button
                 key={tab}
@@ -406,7 +582,17 @@ export function HomeView({
                 className={isSelected ? 'selected' : ''}
                 onClick={() => handleTabClick(tab)}
               >
-                {tab}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <span>{tab}</span>
+                  {unreadBadge > 0 && (
+                    <span
+                      data-testid={tab === 'Друзья' ? 'friends-tab-unread' : 'following-tab-unread'}
+                      className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5a1f] text-white text-[10.5px] font-bold leading-none tabular-nums"
+                    >
+                      {unreadBadge > 99 ? '99+' : unreadBadge}
+                    </span>
+                  )}
+                </span>
               </button>
             )
           })}
@@ -506,7 +692,7 @@ export function HomeView({
       )}
 
       <div className="feed-content">
-        {isOwner && userId && (
+        {filter === 'Мои гордости' && isOwner && userId && (
           <div className="px-4 pt-3">
             <LegacyMigrationBanner
               userId={userId}
@@ -523,31 +709,37 @@ export function HomeView({
           </div>
         )}
 
-        <QuickFocus
-          initialFocus={morningIntentions?.[todayKey]}
-          record={todayFocusRecord}
-          stats={focusFlameStats}
-          onSave={(focus) => onSaveMorningIntentions?.(todayKey, focus)}
-          onOpenHistory={() => setHistoryOpen(true)}
-          onFocusReview={handleScrollToReview}
-          notify={onNotify}
-          soundEnabled={soundEnabled}
-        />
+        {filter === 'Мои гордости' && (
+          <>
+            <QuickFocus
+              initialFocus={morningIntentions?.[todayKey]}
+              record={todayFocusRecord}
+              stats={focusFlameStats}
+              onSave={(focus) => onSaveMorningIntentions?.(todayKey, focus)}
+              onOpenHistory={() => setHistoryOpen(true)}
+              onFocusReview={handleScrollToReview}
+              notify={onNotify}
+              soundEnabled={soundEnabled}
+            />
 
-        {todayFocusRecord && onMarkMorningFocusDone && onMarkMorningFocusMissed && onCompleteEveningReview && onReopenEveningReview && (
-          <EveningReview
-            dateKey={todayKey}
-            record={todayFocusRecord}
-            notify={onNotify}
-            soundEnabled={soundEnabled}
-            onMarkDone={onMarkMorningFocusDone}
-            onMarkMissed={onMarkMorningFocusMissed}
-            onComplete={onCompleteEveningReview}
-            onReopen={onReopenEveningReview}
-          />
+            {todayFocusRecord && onMarkMorningFocusDone && onMarkMorningFocusMissed && onCompleteEveningReview && onReopenEveningReview && (
+              <EveningReview
+                dateKey={todayKey}
+                record={todayFocusRecord}
+                notify={onNotify}
+                soundEnabled={soundEnabled}
+                onMarkDone={onMarkMorningFocusDone}
+                onMarkMissed={onMarkMorningFocusMissed}
+                onComplete={onCompleteEveningReview}
+                onReopen={onReopenEveningReview}
+              />
+            )}
+          </>
         )}
 
-        {isLoading && days.length === 0 ? (
+        {((filter === 'Мои гордости' && isLoading && filteredDays.length === 0) ||
+          (filter === 'Друзья' && loadingFriendFeed && filteredDays.length === 0) ||
+          (filter === 'Подписки' && loadingFollowingFeed && filteredDays.length === 0)) ? (
           <div className="py-16 text-center space-y-4 animate-pulse" role="status" aria-label="Загрузка летописи...">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] mx-auto mb-2 animate-bounce" aria-hidden="true">
               <Flame size={28} className="text-[var(--accent)]" />
@@ -559,7 +751,7 @@ export function HomeView({
               <div className="h-28 bg-[var(--card)]/60 rounded-2xl border border-[var(--border)]/20" />
             </div>
           </div>
-        ) : days.length === 0 ? (
+        ) : filter === 'Мои гордости' && filteredDays.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
@@ -592,17 +784,28 @@ export function HomeView({
           </div>
         ) : filteredDays.length > 0 ? (
           <>
-            {visibleDays.map((day) => (
-              <DayCard
-                key={day.id}
-                day={day}
-                onLightbox={onLightbox}
-                onNotify={onNotify}
-                onPinToVault={onPinToVault}
-                onEdit={onEditDay}
-                soundEnabled={soundEnabled}
-              />
-            ))}
+            {visibleDays.map((day) => {
+              const cardAuthor = day.user_id || day.userId || null
+              const isCardHighlighted = Boolean(
+                highlightedTarget &&
+                  highlightedTarget.dayId === day.id &&
+                  (!highlightedTarget.authorId || highlightedTarget.authorId === cardAuthor)
+              )
+              return (
+                <DayCard
+                  key={`${cardAuthor || 'me'}-${day.cloudId || day.id}`}
+                  day={day}
+                  onLightbox={onLightbox}
+                  onNotify={onNotify}
+                  onPinToVault={onPinToVault}
+                  onEdit={onEditDay}
+                  onOpenProfile={onOpenProfile}
+                  isHighlighted={isCardHighlighted}
+                  isOwnerOverride={filter === 'Мои гордости' ? true : undefined}
+                  soundEnabled={soundEnabled}
+                />
+              )
+            })}
 
             {visibleCount < filteredDays.length && (
               <div ref={sentinelRef} className="feed-chunk-loader py-6 text-center">
@@ -624,22 +827,36 @@ export function HomeView({
               </div>
             )}
           </>
-        ) : filter === 'Друзья' || filter === 'Подписки' ? (
-          <div className="empty-state p-8 my-6 mx-4 rounded-3xl bg-[var(--bg-elev)] border border-[var(--border)] text-center flex flex-col items-center justify-center gap-3">
-            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mb-1" aria-hidden="true">
-              <Users size={24} className="text-[#ff6b35]" />
+        ) : filter === 'Друзья' ? (
+          <div className="empty-state p-8 my-6 mx-4 rounded-2xl bg-[#060608] border border-white/[0.12] text-center flex flex-col items-center justify-center gap-3">
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff5a1f]/10 text-[#ff5a1f] mb-1" aria-hidden="true">
+              <Users size={24} className="text-[#ff5a1f]" />
             </span>
-            <p className="font-semibold text-base text-[var(--text)] max-w-md mx-auto leading-relaxed">
-              Здесь будут победы ваших друзей. Поделитесь ссылкой с друзьями, чтобы держать стрик вместе!
+            <p className="font-semibold text-[15px] text-white max-w-md mx-auto leading-relaxed">
+              {selectedGroupFilter
+                ? 'В этой группе пока нет публикаций от друзей'
+                : 'Друзья ещё не публиковали гордости'}
             </p>
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="mt-2 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text)] text-[var(--bg)] font-bold text-sm hover:opacity-90 active:scale-95 transition-all shadow-sm cursor-pointer"
+              className="mt-1 inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white text-black font-bold text-xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
             >
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              <span>{copied ? 'Ссылка скопирована!' : 'Скопировать приглашение'}</span>
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              <span>{copied ? 'Ссылка скопирована!' : 'Пригласить друзей'}</span>
             </button>
+          </div>
+        ) : filter === 'Подписки' ? (
+          <div className="empty-state p-8 my-6 mx-4 rounded-2xl bg-[#060608] border border-white/[0.12] text-center flex flex-col items-center justify-center gap-2.5">
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/[0.06] text-white/70 mb-1" aria-hidden="true">
+              <Flame size={22} />
+            </span>
+            <p className="font-semibold text-[15px] text-white max-w-md mx-auto leading-relaxed">
+              В подписках пока нет публичных записей
+            </p>
+            <p className="text-xs text-[#71767b] max-w-sm">
+              Подписывайтесь на интересных участников через поиск — здесь появятся их открытые гордости.
+            </p>
           </div>
         ) : (
           <div className="empty-state p-8 text-center" role="status">

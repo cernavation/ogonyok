@@ -66,10 +66,31 @@ export interface FriendFeedPost {
   lastSeenAt?: string | null
   dayDate: string
   title: string
-  visibility: 'public' | 'friends'
+  visibility: 'public' | 'friends' | 'group'
+  groupId?: string | null
+  groupName?: string | null
+  photos?: string[]
+  score?: number | null
+  aiScore?: number | null
+  aiVerdict?: string | null
   createdAt: string
-  prides: Array<{ id: string; text: string; scale?: number; category?: string }>
-  gratitudes: Array<{ id: string; text: string; category?: string }>
+  prides: Array<{
+    id: string
+    text: string
+    scale?: number
+    overcome?: number
+    visibility?: 'public' | 'friends' | 'group' | 'private'
+    groupId?: string | null
+    category?: string
+  }>
+  gratitudes: Array<{
+    id: string
+    text: string
+    rating?: number
+    visibility?: 'public' | 'friends' | 'group' | 'private'
+    groupId?: string | null
+    category?: string
+  }>
 }
 
 /**
@@ -584,17 +605,41 @@ export async function getFriendRequestsApi(
 }
 
 /**
- * Загрузить посты ленты друзей
+ * Загрузить посты ленты друзей или подписок с бэкенда Supabase
  */
 export async function getFriendFeedPosts(
-  options?: { limit?: number; offset?: number; viewerId?: string | null }
+  options?: { limit?: number; offset?: number; viewerId?: string | null; tab?: 'friends' | 'following' }
 ): Promise<FriendFeedPost[]> {
-  const limit = options?.limit ?? 20
+  const limit = options?.limit ?? 30
   const offset = options?.offset ?? 0
   const viewerId = options?.viewerId ?? null
+  const tab = options?.tab ?? 'friends'
 
   const supabase = getSupabase()
+  let headers: Record<string, string> = {}
   if (supabase) {
+    try {
+      const { data: sData } = await supabase.auth.getSession()
+      const token = sData?.session?.access_token
+      if (token) headers = { Authorization: `Bearer ${token}` }
+    } catch {}
+  }
+
+  try {
+    const params = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+      tab,
+    })
+    if (viewerId) params.set('viewerId', viewerId)
+    const res = await fetch(`/api/friends/feed?${params.toString()}`, { headers })
+    if (res.ok) {
+      const json = await res.json()
+      if (Array.isArray(json.posts)) return json.posts
+    }
+  } catch {}
+
+  if (supabase && tab === 'friends') {
     try {
       const { data, error } = await supabase.rpc('get_friend_feed_v1', {
         p_limit: limit,
@@ -605,6 +650,8 @@ export async function getFriendFeedPosts(
       if (!error && Array.isArray(data)) {
         return data.map((r: any) => ({
           id: String(r.day_id || r.day_uuid),
+          dayUuid: r.day_uuid || null,
+          dayNumber: r.day_id ? Number(r.day_id) : null,
           userId: r.user_id,
           username: r.username,
           displayName: r.display_name || `@${r.username}`,
@@ -614,6 +661,9 @@ export async function getFriendFeedPosts(
           dayDate: r.day_date,
           title: r.title || '',
           visibility: r.visibility || 'friends',
+          groupId: r.group_id || null,
+          groupName: r.group_name || null,
+          photos: Array.isArray(r.photos) ? r.photos : [],
           createdAt: r.created_at,
           prides: Array.isArray(r.prides) ? r.prides : [],
           gratitudes: Array.isArray(r.gratitudes) ? r.gratitudes : [],
@@ -622,18 +672,46 @@ export async function getFriendFeedPosts(
     } catch {}
   }
 
-  // Fallback к API роуту
+  return []
+}
+
+export async function getFollowingFeedPosts(
+  options?: { limit?: number; offset?: number; viewerId?: string | null }
+): Promise<FriendFeedPost[]> {
+  return getFriendFeedPosts({ ...options, tab: 'following' })
+}
+
+export async function getFeedUnreadSummary(options?: {
+  viewerId?: string | null
+  sinceFriendsAt?: string | null
+  sinceFollowingAt?: string | null
+}): Promise<{ friendsUnread: number; followingUnread: number }> {
+  const supabase = getSupabase()
+  let headers: Record<string, string> = {}
+  if (supabase) {
+    try {
+      const { data: sData } = await supabase.auth.getSession()
+      const token = sData?.session?.access_token
+      if (token) headers = { Authorization: `Bearer ${token}` }
+    } catch {}
+  }
+
   try {
-    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) })
-    if (viewerId) params.set('viewerId', viewerId)
-    const res = await fetch(`/api/friends/feed?${params.toString()}`)
+    const params = new URLSearchParams({ summary: '1' })
+    if (options?.viewerId) params.set('viewerId', options.viewerId)
+    if (options?.sinceFriendsAt) params.set('sinceFriendsAt', options.sinceFriendsAt)
+    if (options?.sinceFollowingAt) params.set('sinceFollowingAt', options.sinceFollowingAt)
+    const res = await fetch(`/api/friends/feed?${params.toString()}`, { headers })
     if (res.ok) {
       const json = await res.json()
-      if (Array.isArray(json.posts)) return json.posts
+      return {
+        friendsUnread: Math.max(0, Number(json.friendsUnread || 0)),
+        followingUnread: Math.max(0, Number(json.followingUnread || 0)),
+      }
     }
   } catch {}
 
-  return []
+  return { friendsUnread: 0, followingUnread: 0 }
 }
 
 /**

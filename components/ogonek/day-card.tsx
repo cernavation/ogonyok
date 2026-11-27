@@ -73,6 +73,9 @@ type Props = {
   onNotify?: (msg: string) => void
   onPinToVault?: (fact: string) => void
   onEdit?: (day: Day) => void
+  onOpenProfile?: (userId?: string | null) => void
+  isHighlighted?: boolean
+  isOwnerOverride?: boolean
   soundEnabled?: boolean
 }
 
@@ -82,6 +85,9 @@ function DayCardComponent({
   onNotify,
   onPinToVault,
   onEdit,
+  onOpenProfile,
+  isHighlighted = false,
+  isOwnerOverride,
   soundEnabled = true,
 }: Props) {
   const {
@@ -96,7 +102,6 @@ function DayCardComponent({
     updateDay,
   } = useOgonekStore()
 
-  const target = dayTarget(day.id)
   const postAuthorId =
     day.user_id ||
     day.userId ||
@@ -104,6 +109,27 @@ function DayCardComponent({
     currentUser?.id ||
     state.auth?.activeAccountId ||
     null
+  const dayAuthor = (day as any).author as
+    | {
+        id?: string
+        username?: string
+        displayName?: string
+        avatarImage?: string | null
+        avatarColor?: string | null
+        verified?: boolean
+      }
+    | undefined
+  const isForeignDayAuthor = Boolean(
+    dayAuthor &&
+      ((dayAuthor.id && currentUser?.id && dayAuthor.id !== currentUser.id) ||
+        (dayAuthor.username &&
+          state.profile?.username &&
+          dayAuthor.username.toLowerCase() !== state.profile.username.toLowerCase()))
+  )
+  const target =
+    !isForeignDayAuthor || !postAuthorId || (currentUser?.id && postAuthorId === currentUser.id)
+      ? dayTarget(day.id)
+      : `u:${postAuthorId}:day:${day.id}`
   const commentsTarget = scopedDayCommentTarget(day.id, postAuthorId)
   const commentsCount = filterRealComments(state.comments?.[commentsTarget] ?? []).length
   const reactionCounts = state.dayReactions[target] ?? {}
@@ -122,24 +148,24 @@ function DayCardComponent({
 
   const dayVisibility = normalizeVisibility(day.visibility)
 
-  const dayAuthor = (day as any).author as
-    | {
-        id?: string
-        username?: string
-        displayName?: string
-        avatarImage?: string | null
-        avatarColor?: string | null
-        verified?: boolean
+  const resolvedGroupName = useMemo(() => {
+    const explicit =
+      day.groupName ||
+      day.prides?.find((p) => p.groupName)?.groupName ||
+      (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName
+    if (explicit) return explicit
+    const gid = day.groupId || day.prides?.find((p) => p.groupId)?.groupId
+    if (!gid) return null
+    const cleanGid = String(gid).replace(/^group-/i, '').toLowerCase()
+    for (const [tid, t] of Object.entries(state.chatThreads ?? {})) {
+      if (!t.groupMeta) continue
+      const candidateId = String(t.groupMeta.dbId || t.groupMeta.id || tid).replace(/^group-/i, '').toLowerCase()
+      if (candidateId === cleanGid || tid === gid || t.groupMeta.id === gid) {
+        return t.groupMeta.title
       }
-    | undefined
-
-  const isForeignDayAuthor = Boolean(
-    dayAuthor &&
-      ((dayAuthor.id && currentUser?.id && dayAuthor.id !== currentUser.id) ||
-        (dayAuthor.username &&
-          state.profile?.username &&
-          dayAuthor.username.toLowerCase() !== state.profile.username.toLowerCase()))
-  )
+    }
+    return null
+  }, [day.groupName, day.groupId, day.prides, day.gratitudes, state.chatThreads])
 
   const displayName = isForeignDayAuthor
     ? dayAuthor?.displayName || `@${dayAuthor?.username || 'user'}`
@@ -186,20 +212,59 @@ function DayCardComponent({
       ? rawAvatar
       : null)
 
-  const firstPride = useMemo(() => {
-    return day.prides?.find((p) => p.text && p.text !== '—')
-  }, [day.prides])
+  const viewerUid = currentUser?.id || state.auth?.activeAccountId || null
+  const dayOwnerId = day.user_id || day.userId || dayAuthor?.id || null
+  const viewerUsername = (state.profile?.username || currentUser?.username || '').toLowerCase()
+  const dayOwnerUsername = (dayAuthor?.username || '').toLowerCase()
+  const isOwner =
+    typeof isOwnerOverride === 'boolean'
+      ? isOwnerOverride
+      : Boolean(
+          (dayOwnerId && viewerUid && dayOwnerId.toLowerCase() === viewerUid.toLowerCase()) ||
+            (dayOwnerUsername && viewerUsername && dayOwnerUsername === viewerUsername) ||
+            (!dayOwnerId && !dayOwnerUsername && !isForeignDayAuthor)
+        )
+
+  const handleNavigateAuthor = () => {
+    const targetId = dayOwnerId || dayAuthor?.username || null
+    if (!targetId) return
+    playClick(soundEnabled)
+    if (onOpenProfile) {
+      onOpenProfile(targetId)
+      return
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:navigate-view', {
+          detail: { view: 'profile', userId: targetId },
+        })
+      )
+    }
+  }
+
+  const visiblePrides = useMemo(() => {
+    const raw = (day.prides || []).filter((p) => p.text && p.text !== '—')
+    if (isOwner) return raw
+    return raw.filter((p) => {
+      const eff = dayVisibility === 'private' ? 'private' : (p.visibility || dayVisibility || 'public')
+      return eff !== 'private'
+    })
+  }, [day.prides, dayVisibility, isOwner])
+
+  const firstPride = visiblePrides[0]
 
   const otherPrides = useMemo(() => {
-    return (day.prides || []).filter((p) => p !== firstPride && p.text && p.text !== '—')
-  }, [day.prides, firstPride])
+    return visiblePrides.slice(1)
+  }, [visiblePrides])
 
   const otherGratitudes = useMemo(() => {
     return (day.gratitudes || []).filter((g) => {
       const t = typeof g === 'string' ? g : g.text
-      return t && t !== '—'
+      if (!t || t === '—') return false
+      if (!isOwner && typeof g === 'object' && g.visibility === 'private') return false
+      return true
     })
-  }, [day.gratitudes])
+  }, [day.gratitudes, isOwner])
 
   const handleAiEvaluateDay = async () => {
     setOptionsModalOpen(false)
@@ -386,8 +451,14 @@ function DayCardComponent({
   return (
     <>
       <article
-        className="border-b border-[var(--line)] px-4 py-4 hover:bg-white/[0.02] transition-colors duration-150 cursor-pointer"
+        className={`border-b border-[var(--line)] px-4 py-4 transition-all duration-500 ${
+          isHighlighted
+            ? 'ring-2 ring-inset ring-[#ff5a1f]/80 bg-[#ff5a1f]/[0.06] shadow-[0_0_28px_rgba(255,90,31,0.22)]'
+            : 'hover:bg-white/[0.02]'
+        }`}
         id={`day-card-${day.id}`}
+        data-day-number={day.id}
+        data-day-author={postAuthorId || ''}
       >
         <div className="flex gap-3">
           {/* Avatar with unified component */}
@@ -399,6 +470,7 @@ function DayCardComponent({
               username={username}
               initials={initials}
               size={40}
+              onClick={handleNavigateAuthor}
             />
           </div>
 
@@ -407,18 +479,26 @@ function DayCardComponent({
             {/* Header row: Name, handle, date, Day badge, score, options */}
             <div className="flex items-start justify-between gap-2 mb-2">
               <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
+                <button
+                  type="button"
+                  onClick={handleNavigateAuthor}
+                  className="font-bold text-[15px] text-[var(--text)] tracking-tight hover:underline text-left cursor-pointer"
+                >
                   {displayName}
-                </span>
+                </button>
                 {isAuthorVerified && <VerifiedBadge size="sm" />}
-                {dayVisibility !== 'public' && (
-                  <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
+                {isOwner && dayVisibility !== 'public' && (
+                  <span title={dayVisibility === 'private' ? 'Личный день' : dayVisibility === 'friends' ? 'Только для друзей' : 'Для группы'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
                     <Lock size={13} />
                   </span>
                 )}
-                <span className="text-[13px] text-[var(--muted)] font-normal">
+                <button
+                  type="button"
+                  onClick={handleNavigateAuthor}
+                  className="text-[13px] text-[var(--muted)] font-normal hover:underline cursor-pointer"
+                >
                   @{username} · {dateStr}
-                </span>
+                </button>
                 {averageScore !== null && (
                   <span
                     className="inline-flex items-center gap-0.5 text-[13px] text-amber-400 font-bold bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full"
@@ -432,25 +512,27 @@ function DayCardComponent({
                 >
                   День #{day.id}
                 </span>
-                {(day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName) && (
+                {dayVisibility === 'group' && resolvedGroupName && (
                   <span
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30"
-                    title={`Аудитория: группа «${day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName}»`}
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-[#ff5a1f]/15 text-[#ff8a5c] border border-[#ff5a1f]/35"
+                    title={`Аудитория: группа «${resolvedGroupName}»`}
                   >
-                    👥 {day.groupName || day.prides?.find((p) => p.groupName)?.groupName || (day.gratitudes as any)?.find((g: any) => typeof g === 'object' && g.groupName)?.groupName}
+                    👥 {resolvedGroupName}
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-1 flex-none">
-                <IconButton
-                  icon={<MoreHorizontal size={18} />}
-                  label="Опции дня"
-                  size="sm"
-                  data-testid="day-options-btn"
-                  onClick={() => setOptionsModalOpen(true)}
-                />
-              </div>
+              {isOwner && (
+                <div className="flex items-center gap-1 flex-none">
+                  <IconButton
+                    icon={<MoreHorizontal size={18} />}
+                    label="Опции дня"
+                    size="sm"
+                    data-testid="day-options-btn"
+                    onClick={() => setOptionsModalOpen(true)}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Post body — ТЕКСТ ПОСТОВ */}
@@ -464,7 +546,7 @@ function DayCardComponent({
                     {Number(firstPride.score ?? firstPride.scale).toFixed(1)}★
                   </span>
                 )}
-                {firstPride && (() => {
+                {isOwner && firstPride && (() => {
                   const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
                   const isPub = effectiveVisibility === 'public'
                   return (
@@ -546,38 +628,40 @@ function DayCardComponent({
                                   {Number(p.score ?? p.scale).toFixed(1)}★
                                 </span>
                               )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  playClick(soundEnabled)
-                                  const nextVis = isPub ? 'private' : 'public'
-                                  setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
-                                  onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
-                                }}
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
-                                  isPub
-                                    ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
-                                    : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
-                                }`}
-                                title={
-                                  isPub
-                                    ? '🌐 Публично (видят все) — нажми для переключения'
-                                    : '🔒 Лично (видит только автор) — нажми для переключения'
-                                }
-                                aria-label="Видимость гордости"
-                              >
-                                {isPub ? (
-                                  <>
-                                    <Globe size={10} className="text-sky-400" />
-                                    <span>Публично</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Lock size={10} className="text-zinc-400" />
-                                    <span>Лично</span>
-                                  </>
-                                )}
-                              </button>
+                              {isOwner && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    playClick(soundEnabled)
+                                    const nextVis = isPub ? 'private' : 'public'
+                                    setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
+                                    onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
+                                  }}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
+                                    isPub
+                                      ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
+                                      : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
+                                  }`}
+                                  title={
+                                    isPub
+                                      ? '🌐 Публично (видят все) — нажми для переключения'
+                                      : '🔒 Лично (видит только автор) — нажми для переключения'
+                                  }
+                                  aria-label="Видимость гордости"
+                                >
+                                  {isPub ? (
+                                    <>
+                                      <Globe size={10} className="text-sky-400" />
+                                      <span>Публично</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock size={10} className="text-zinc-400" />
+                                      <span>Лично</span>
+                                    </>
+                                  )}
+                                </button>
+                              )}
                             </div>
                           )
                         })}
@@ -651,13 +735,15 @@ function DayCardComponent({
               </div>
             )}
 
-            {/* 5 канонических IconButton в футере поста (X.com standard: Ответить, В копилку, Priday, Поделиться, Ещё) */}
+            {/* Действия с публикацией: 5 кнопок владельцу, строго 3 кнопки зрителю (💬, 🔥, ↗) */}
             <div
-              className="flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--line)] max-w-[460px]"
+              className={`flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--line)] ${
+                isOwner ? 'max-w-[460px]' : 'max-w-[300px]'
+              }`}
               role="group"
               aria-label="Действия с публикацией"
             >
-              {/* 1. Ответить */}
+              {/* 1. Комментарии */}
               <IconButton
                 icon={<MessageCircle size={18} />}
                 label="Ответить"
@@ -668,16 +754,18 @@ function DayCardComponent({
                 onClick={() => setShowComments((prev) => !prev)}
               />
 
-              {/* 2. В копилку */}
-              <IconButton
-                icon={<BookmarkPlus size={18} />}
-                label="В копилку"
-                tooltip="В копилку"
-                variant="default"
-                onClick={handlePinTopFact}
-              />
+              {/* 2. В копилку (только автору) */}
+              {isOwner && (
+                <IconButton
+                  icon={<BookmarkPlus size={18} />}
+                  label="В копилку"
+                  tooltip="В копилку"
+                  variant="default"
+                  onClick={handlePinTopFact}
+                />
+              )}
 
-              {/* 3. 🔥 Priday */}
+              {/* 3. 🔥 Огонёк */}
               <IconButton
                 icon={<Flame size={18} className={liked ? 'fill-[var(--accent)] text-[var(--accent)]' : ''} />}
                 label={liked ? 'Убрать огонь' : 'Огонь'}
@@ -697,14 +785,16 @@ function DayCardComponent({
                 onClick={() => setShareModalOpen(true)}
               />
 
-              {/* 5. ⋯ Ещё */}
-              <IconButton
-                icon={<MoreHorizontal size={18} />}
-                label="Ещё"
-                tooltip="Ещё"
-                variant="default"
-                onClick={() => setOptionsModalOpen(true)}
-              />
+              {/* 5. ⋯ Ещё (только автору) */}
+              {isOwner && (
+                <IconButton
+                  icon={<MoreHorizontal size={18} />}
+                  label="Ещё"
+                  tooltip="Ещё"
+                  variant="default"
+                  onClick={() => setOptionsModalOpen(true)}
+                />
+              )}
             </div>
 
             {/* Раскрывающийся в 1 клик блок комментариев */}
@@ -723,17 +813,19 @@ function DayCardComponent({
         </div>
       </article>
 
-      {/* Меню «⋯» опций дня */}
-      <DayOptionsModal
-        isOpen={optionsModalOpen}
-        day={day}
-        onClose={() => setOptionsModalOpen(false)}
-        onEdit={onEdit}
-        onShare={() => setShareModalOpen(true)}
-        onAiEvaluate={handleAiEvaluateDay}
-        onNotify={onNotify}
-        soundEnabled={soundEnabled}
-      />
+      {/* Меню «⋯» опций дня — строго только владельцу поста */}
+      {isOwner && (
+        <DayOptionsModal
+          isOpen={optionsModalOpen}
+          day={day}
+          onClose={() => setOptionsModalOpen(false)}
+          onEdit={onEdit}
+          onShare={() => setShareModalOpen(true)}
+          onAiEvaluate={handleAiEvaluateDay}
+          onNotify={onNotify}
+          soundEnabled={soundEnabled}
+        />
+      )}
 
       {shareModalOpen && (
         <ShareCardModal

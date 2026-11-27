@@ -55,6 +55,7 @@ import {
   toggleFriendshipFollow,
   getMutualFriendsCount,
   getUserPosts,
+  getUserChatGroupsFromDb,
   type ProfileRecord,
   type PostRecord,
 } from '@/lib/supabase/api'
@@ -62,6 +63,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { useUserPresenceStatus } from '@/lib/supabase/presence'
 import { registerFriendProfile } from '@/lib/ogonek/friends'
 import { canMessageUser } from '@/lib/ogonek/privacy'
+import { DayCard } from '../day-card'
 import { EditProfileModal } from '../edit-profile-modal'
 import { FriendsManager } from '../friends-manager'
 import { ShareProfileModal } from '../share-profile-modal'
@@ -80,6 +82,9 @@ interface Props {
   onToggleFollow?: (friendId: string) => unknown
   onNotify: (message: string) => void
   onOpenFriends?: (tab?: any) => void
+  onLightbox?: (url: string) => void
+  onEditDay?: (day: Day) => void
+  onPinToVault?: (fact: string) => void
   soundEnabled: boolean
 }
 
@@ -117,6 +122,9 @@ export function ProfileView({
   onToggleFollow,
   onNotify,
   onOpenFriends,
+  onLightbox,
+  onEditDay,
+  onPinToVault,
   soundEnabled,
 }: Props) {
   const normalizedTarget = targetUserId?.replace(/^@+/, '').toLowerCase()
@@ -231,7 +239,7 @@ export function ProfileView({
             targetFollowsMeStatus,
             mutualCount,
             posts,
-            daysCountRes,
+            viewerGroupsRes,
             daysData,
             allPrides,
             allGratitudes,
@@ -241,9 +249,7 @@ export function ProfileView({
             currentUid ? checkFriendshipFollow(prof.id, currentUid) : Promise.resolve(false),
             currentUid ? getMutualFriendsCount(currentUid, prof.id) : Promise.resolve(0),
             getUserPosts(prof.id),
-            supabase
-              ? supabase.from('days').select('*', { count: 'exact', head: true }).eq('user_id', prof.id)
-              : Promise.resolve({ count: null }),
+            currentUid ? getUserChatGroupsFromDb(currentUid) : Promise.resolve({ ok: true, groups: [] }),
             fetchAllRows('days', 'day_number', false),
             fetchAllRows('prides', 'position', true),
             fetchAllRows('gratitudes', 'position', true),
@@ -251,6 +257,7 @@ export function ProfileView({
 
           if (cancelled) return
           setForeignCounts(counts)
+          const mutualFriend = Boolean(followingStatus && targetFollowsMeStatus)
           setIsFollowingUser(
             followingStatus ||
             (storeState.followingIds ?? []).includes(prof.id) ||
@@ -259,79 +266,192 @@ export function ProfileView({
           setTargetFollowsMe(targetFollowsMeStatus)
           setMutualFriendsCount(mutualCount)
           setForeignPosts(posts)
-          const dbExactDaysCount =
-            typeof (daysCountRes as any)?.count === 'number'
-              ? (daysCountRes as any).count
-              : daysData.length > 0
-              ? daysData.length
-              : null
-          setForeignDaysCount(dbExactDaysCount)
+
+          const viewerGroupIds = new Set<string>()
+          const groupNamesById = new Map<string, string>()
+          for (const g of viewerGroupsRes.groups || []) {
+            if (g.id) {
+              viewerGroupIds.add(String(g.id))
+              if (g.title) groupNamesById.set(String(g.id), g.title)
+            }
+          }
+          for (const [threadKey, th] of Object.entries(storeState.chatThreads || {})) {
+            if (th?.groupMeta || threadKey.startsWith('group-')) {
+              const rawId = th.groupMeta?.dbId || threadKey.replace(/^group-/, '')
+              if (rawId) {
+                viewerGroupIds.add(String(rawId))
+                if (th.groupMeta?.title && !groupNamesById.has(String(rawId))) {
+                  groupNamesById.set(String(rawId), th.groupMeta.title)
+                }
+              }
+            }
+          }
 
           if (daysData && daysData.length > 0) {
-            const pridesByDay = new Map<string, any[]>()
+            const pridesByClient = new Map<string, any[]>()
+            const pridesByDayId = new Map<string, any[]>()
             for (const p of allPrides) {
-              const list = pridesByDay.get(p.day_client_id) || []
-              list.push(p)
-              pridesByDay.set(p.day_client_id, list)
-            }
-            const gratsByDay = new Map<string, any[]>()
-            for (const g of allGratitudes) {
-              const list = gratsByDay.get(g.day_client_id) || []
-              list.push(g)
-              gratsByDay.set(g.day_client_id, list)
+              if (p.day_client_id) {
+                const list = pridesByClient.get(String(p.day_client_id)) || []
+                list.push(p)
+                pridesByClient.set(String(p.day_client_id), list)
+              }
+              if (p.day_id) {
+                const list = pridesByDayId.get(String(p.day_id)) || []
+                list.push(p)
+                pridesByDayId.set(String(p.day_id), list)
+              }
             }
 
-            const mapped: Day[] = daysData.map((d: any) => {
-              const dayVis = d.visibility || 'public'
-              const rawPrides = pridesByDay.get(d.client_id) || []
-              return {
-                id: d.day_number || parseInt(d.client_id, 10) || 1,
-                dateISO: d.date_iso || d.created_at,
-                title: d.title || `День #${d.day_number || 1}`,
-                tags: Array.isArray(d.tags) ? d.tags : [],
-                photos: Array.isArray(d.photos) ? d.photos : [],
-                visibility: dayVis,
-                prides: rawPrides.map((p: any) => ({
+            const gratsByClient = new Map<string, any[]>()
+            const gratsByDayId = new Map<string, any[]>()
+            for (const g of allGratitudes) {
+              if (g.day_client_id) {
+                const list = gratsByClient.get(String(g.day_client_id)) || []
+                list.push(g)
+                gratsByClient.set(String(g.day_client_id), list)
+              }
+              if (g.day_id) {
+                const list = gratsByDayId.get(String(g.day_id)) || []
+                list.push(g)
+                gratsByDayId.set(String(g.day_id), list)
+              }
+            }
+
+            const isEntryVisibleToViewer = (
+              visRaw: string | null | undefined,
+              groupIds: string[]
+            ): boolean => {
+              const vis = visRaw || 'public'
+              if (vis === 'private') return false
+              if (vis === 'friends') return mutualFriend
+              if (vis === 'group') {
+                return groupIds.some((gid) => viewerGroupIds.has(gid))
+              }
+              return vis === 'public'
+            }
+
+            const mapped: Day[] = []
+            for (const d of daysData as any[]) {
+              const dayVis = (d.visibility || 'public') as 'private' | 'friends' | 'group' | 'public'
+              const dayGroupIds = Array.from(
+                new Set(
+                  [
+                    ...(Array.isArray(d.target_group_ids) ? d.target_group_ids : []),
+                    ...(d.group_id ? [d.group_id] : []),
+                  ]
+                    .filter(Boolean)
+                    .map(String)
+                )
+              )
+
+              if (!isEntryVisibleToViewer(dayVis, dayGroupIds)) {
+                continue
+              }
+
+              const clientKey = d.client_id ? String(d.client_id) : ''
+              const idKey = d.id ? String(d.id) : ''
+              const rawPrides =
+                (clientKey && pridesByClient.get(clientKey)) ||
+                (idKey && pridesByDayId.get(idKey)) ||
+                []
+              const rawGrats =
+                (clientKey && gratsByClient.get(clientKey)) ||
+                (idKey && gratsByDayId.get(idKey)) ||
+                []
+
+              const visiblePrides = rawPrides
+                .filter((p: any) => {
+                  const pGroupIds = Array.from(
+                    new Set(
+                      [
+                        ...(Array.isArray(p.target_group_ids) ? p.target_group_ids : []),
+                        ...(p.group_id ? [p.group_id] : []),
+                        ...dayGroupIds,
+                      ]
+                        .filter(Boolean)
+                        .map(String)
+                    )
+                  )
+                  return isEntryVisibleToViewer(p.visibility || dayVis, pGroupIds)
+                })
+                .map((p: any) => ({
                   num: p.num || '01',
                   text: p.text || '',
                   scale: typeof p.scale === 'number' ? p.scale : 8,
                   overcome: p.overcome ?? 1,
-                  visibility: p.visibility || dayVis,
-                })),
-                gratitudes: (gratsByDay.get(d.client_id) || []).map((g: any) => ({
+                  aiComment: p.ai_comment || undefined,
+                  visibility: (p.visibility || dayVis) as 'private' | 'friends' | 'group' | 'public',
+                  groupId: p.group_id ? String(p.group_id) : (dayGroupIds[0] || null),
+                  targetGroupIds: Array.isArray(p.target_group_ids) ? p.target_group_ids.map(String) : dayGroupIds,
+                }))
+
+              const visibleGrats = rawGrats
+                .filter((g: any) => {
+                  const gGroupIds = Array.from(
+                    new Set(
+                      [
+                        ...(Array.isArray(g.target_group_ids) ? g.target_group_ids : []),
+                        ...(g.group_id ? [g.group_id] : []),
+                        ...dayGroupIds,
+                      ]
+                        .filter(Boolean)
+                        .map(String)
+                    )
+                  )
+                  return isEntryVisibleToViewer(g.visibility || dayVis, gGroupIds)
+                })
+                .map((g: any) => ({
                   text: g.text || '',
                   rating: g.rating ?? 9,
-                })),
+                  visibility: (g.visibility || dayVis) as 'private' | 'friends' | 'group' | 'public',
+                  groupId: g.group_id ? String(g.group_id) : (dayGroupIds[0] || null),
+                  targetGroupIds: Array.isArray(g.target_group_ids) ? g.target_group_ids.map(String) : dayGroupIds,
+                }))
+
+              const dayPhotos = Array.isArray(d.photos) ? d.photos : []
+              if (visiblePrides.length === 0 && visibleGrats.length === 0 && dayPhotos.length === 0) {
+                continue
               }
-            })
+
+              const primaryGroupId = d.group_id
+                ? String(d.group_id)
+                : dayGroupIds[0] || null
+
+              mapped.push({
+                id: d.day_number || parseInt(d.client_id, 10) || 1,
+                cloudId: d.id ? String(d.id) : undefined,
+                user_id: prof.id,
+                userId: prof.id,
+                dateISO: d.date_iso || d.created_at,
+                title: d.title || `День #${d.day_number || 1}`,
+                tags: Array.isArray(d.tags) ? d.tags : [],
+                photos: dayPhotos,
+                visibility: dayVis,
+                groupId: primaryGroupId,
+                groupName: primaryGroupId ? (groupNamesById.get(primaryGroupId) || undefined) : undefined,
+                targetGroupIds: dayGroupIds,
+                aiScore: typeof d.ai_score === 'number' ? d.ai_score : undefined,
+                aiVerdict: d.ai_verdict || undefined,
+                author: {
+                  id: prof.id,
+                  displayName: prof.display_name || (prof.username ? `@${prof.username}` : 'Пользователь'),
+                  username: prof.username || '',
+                  avatarUrl: prof.avatar_image || prof.avatar_url || null,
+                  avatarColor: prof.avatar_color || '#FF5C00',
+                  verified: Boolean(prof.verified),
+                  lastSeenAt: prof.last_seen_at || null,
+                },
+                prides: visiblePrides,
+                gratitudes: visibleGrats,
+              })
+            }
 
             setForeignDays(mapped)
+            setForeignDaysCount(mapped.length)
           } else {
-            const streakTotal = prof.streak_count ?? prof.streak ?? 0
-            if (streakTotal > 0) {
-              const count = streakTotal
-              const synthesized: Day[] = []
-              const now = new Date()
-              for (let i = 0; i < count; i++) {
-                const dayNum = streakTotal - i
-                const d = new Date(now)
-                d.setDate(d.getDate() - i)
-                synthesized.push({
-                  id: dayNum,
-                  dateISO: d.toISOString(),
-                  title: `День #${dayNum}`,
-                  tags: [],
-                  visibility: 'private',
-                  prides: [
-                    { num: '01', text: 'Скрытая гордость', scale: 8, overcome: 1, visibility: 'private' },
-                  ],
-                  gratitudes: [],
-                })
-              }
-              setForeignDays(synthesized)
-            } else {
-              setForeignDays([])
-            }
+            setForeignDays([])
+            setForeignDaysCount(0)
           }
           setForeignDaysLoaded(true)
         }
@@ -403,12 +523,8 @@ export function ProfileView({
           (storeState.profile as any)?.streak ?? 0,
           storeState.days.length
         )
-      : Math.max(
-          foreignDaysCount ?? 0,
-          foreignDays.length,
-          foreignProfile?.streak_count ?? foreignProfile?.streak ?? 0
-        )
-    const finalStreak = isAuthorUser ? Math.max(rawStreak, 720) : rawStreak
+      : (foreignProfile?.streak_count ?? foreignProfile?.streak ?? foreignDays.length)
+    const finalStreak = isOwnProfile && isAuthorUser ? Math.max(rawStreak, 720) : rawStreak
 
     if (isOwnProfile) {
       return {
@@ -447,6 +563,10 @@ export function ProfileView({
 
   const effectiveDays: Day[] = useMemo(() => {
     const rawDays = isOwnProfile ? (Array.isArray(storeState?.days) ? storeState.days : []) : foreignDays
+    if (!isOwnProfile) {
+      return [...rawDays].sort((a, b) => b.id - a.id)
+    }
+
     const streakTotal = isAuthorUser
       ? Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, rawDays.length, 720)
       : Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, rawDays.length)
@@ -548,7 +668,6 @@ export function ProfileView({
 
   // Truncation & Chunking: показ по 30 дней без искусственного потолка в 50 записей
   const [visibleCount, setVisibleCount] = useState(30)
-  const [expandedCards, setExpandedCards] = useState<Record<number, boolean>>({})
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'public'>('all')
 
   const stats: ProfileStats = useMemo(
@@ -556,18 +675,24 @@ export function ProfileView({
     [days, followingCount, displayProfile]
   )
 
-  // Число дней дневника (из реального DB count / days.length без скачков 740 <-> 752)
+  // Число дней дневника (для чужого профиля строго реальное количество доступных дней)
   const profileDaysCount = useMemo(() => {
+    if (!isOwnProfile) {
+      return foreignDaysCount ?? days.length
+    }
     const fromProfile = displayProfile.streak_count || displayProfile.streak || 0
-    return Math.max(foreignDaysCount ?? 0, fromProfile, days.length, stats.totalDays || 0)
-  }, [foreignDaysCount, displayProfile.streak_count, displayProfile.streak, days.length, stats.totalDays])
+    return Math.max(fromProfile, days.length, stats.totalDays || 0)
+  }, [isOwnProfile, foreignDaysCount, displayProfile.streak_count, displayProfile.streak, days.length, stats.totalDays])
 
-  // Число записей выводить как (profile.streak_count || days.length) * 10 (или точный count из базы)
+  // Число записей
   const profileEntriesCount = useMemo(() => {
     const calculated = stats.totalPrides + stats.totalGratitudes
+    if (!isOwnProfile) {
+      return calculated
+    }
     const expected = profileDaysCount * 10
     return Math.max(calculated, expected)
-  }, [stats.totalPrides, stats.totalGratitudes, profileDaysCount])
+  }, [isOwnProfile, stats.totalPrides, stats.totalGratitudes, profileDaysCount])
 
   const recentDays = useMemo(() => {
     return [...days].sort((a, b) => b.id - a.id)
@@ -590,11 +715,13 @@ export function ProfileView({
     return filteredDays.slice(0, visibleCount)
   }, [filteredDays, visibleCount])
 
-  // Collect all gratitudes across all days
+  // Collect all gratitudes across all days (never leaking private entries to viewers)
   const allGratitudes = useMemo(() => {
     const list: { dayId: number; dateISO?: string; text: string }[] = []
     recentDays.forEach((day) => {
+      if (!isOwnProfile && day.visibility === 'private') return
       day.gratitudes.forEach((g) => {
+        if (!isOwnProfile && typeof g === 'object' && g?.visibility === 'private') return
         const text = typeof g === 'string' ? g : g?.text
         if (text && text !== '—') {
           list.push({ dayId: day.id, dateISO: day.dateISO, text })
@@ -602,7 +729,7 @@ export function ProfileView({
       })
     })
     return list
-  }, [recentDays])
+  }, [recentDays, isOwnProfile])
 
   const paginatedGratitudes = useMemo(() => {
     return allGratitudes.slice(0, visibleCount)
@@ -1170,7 +1297,7 @@ export function ProfileView({
       <div className="px-4 sm:px-6">
         {/* TAB 1: ЗАПИСИ */}
         {activeTab === 'days' && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col">
             {/* Сверху фильтры: Все дни / Только публичные */}
             <div className="flex items-center justify-between gap-2 pt-1 pb-3 border-b border-[var(--border)]">
               <div className="inline-flex items-center p-1 rounded-full bg-[var(--bg-elev)] border border-[var(--border)]" role="tablist" aria-label="Фильтр записей">
@@ -1188,7 +1315,7 @@ export function ProfileView({
                       : 'text-[var(--text-2)] hover:text-[var(--text)]'
                   }`}
                 >
-                  Все дни ({days.length})
+                  {isOwnProfile ? `Все дни (${days.length})` : `Все доступные (${days.length})`}
                 </button>
                 <button
                   type="button"
@@ -1210,12 +1337,16 @@ export function ProfileView({
 
               {!isOwnProfile && (
                 <span className="text-[12px] text-[var(--text-3)] hidden sm:flex items-center gap-1 font-medium">
-                  <Lock size={12} /> Стелс-хронология
+                  <Lock size={12} /> Только открытые вам записи
                 </span>
               )}
             </div>
 
-            {paginatedDays.length === 0 && foreignPosts.length === 0 && (
+            {!isOwnProfile && !foreignDaysLoaded ? (
+              <div className="py-12 text-center text-[13px] text-[var(--text-3)]">
+                Загружаем доступные записи…
+              </div>
+            ) : paginatedDays.length === 0 && foreignPosts.length === 0 ? (
               <div className="py-16 text-center text-[var(--text-2)]">
                 <div className="w-12 h-12 rounded-full bg-[var(--bg-elev)] border border-[var(--border)] flex items-center justify-center mx-auto mb-3 text-[var(--text-3)]">
                   <FileText size={22} />
@@ -1224,18 +1355,18 @@ export function ProfileView({
                   {isOwnProfile
                     ? 'У вас пока нет записей'
                     : timelineFilter === 'public'
-                    ? 'Нет открытых записей'
-                    : 'Пока нет записей в летописи'}
+                    ? 'Нет публичных записей'
+                    : 'Пока нет доступных записей'}
                 </p>
                 <p className="text-[13px] text-[var(--text-2)] max-w-xs mx-auto">
                   {isOwnProfile
                     ? 'Заполните свой первый день силы на главной странице'
                     : timelineFilter === 'public'
-                    ? 'Переключитесь на вкладку «Все дни», чтобы увидеть доказательства стрика 🔒'
-                    : 'Когда пользователь начнет вести летопись, дни появятся здесь'}
+                    ? 'Переключитесь на «Все доступные», чтобы увидеть записи для друзей или общих групп'
+                    : 'Когда пользователь откроет вам доступ или опубликует гордости, они появятся здесь'}
                 </p>
               </div>
-            )}
+            ) : null}
 
             {/* Foreign public posts if present */}
             {foreignPosts.length > 0 && (
@@ -1263,168 +1394,27 @@ export function ProfileView({
               </div>
             )}
 
-            {paginatedDays.map((day) => {
-              const isExpanded = Boolean(expandedCards[day.id])
-              const avg = dayAvgScale(day)
-              const isDayPublic = (day.visibility ?? 'public') === 'public'
-              const publicPrides = day.prides.filter(
-                (p) => isDayPublic && (p.visibility ?? day.visibility ?? 'public') === 'public' && p.text && p.text !== '—'
-              )
-              const allPridesHidden = !isOwnProfile && publicPrides.length === 0
-
-              return (
-                <div
-                  key={day.id}
-                  className="border-b border-[var(--border)] py-4 transition-colors"
-                >
-                  {/* Заголовок: День #N · {дата} */}
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-[13px] font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]">
-                        День #{day.id} · {formatDayDate(day.dateISO)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {avg !== null && (isOwnProfile || !allPridesHidden) && (
-                        <span className="text-[13px] font-bold text-amber-500">
-                          ★ {avg}
-                        </span>
-                      )}
-                      {(isOwnProfile || !allPridesHidden) && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedDayModal(day)}
-                          className="min-h-[34px] px-2 py-1 text-[13px] text-[var(--text)] dark:text-[var(--accent)] font-bold hover:underline inline-flex items-center"
-                        >
-                          Подробнее →
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {!isOwnProfile && allPridesHidden ? (
-                    /* Если все пункты скрыты: стильная плашка «🔒 Запись скрыта автором» с замком */
-                    <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text-2)] my-1">
-                      <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-zinc-400 flex-none">
-                        <Lock size={15} />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[14px] font-semibold text-[var(--text)] flex items-center gap-1.5">
-                          🔒 Запись скрыта автором
-                        </span>
-                        <span className="text-[12px] text-[var(--text-3)]">
-                          Победы и рефлексия зафиксированы в летописи
-                        </span>
-                      </div>
-                    </div>
-                  ) : !isOwnProfile ? (
-                    /* Если часть пунктов публичная: отображаются ТОЛЬКО публичные пункты, а скрытые пункты выводятся как «🔒 Скрытая гордость» */
-                    <div className="flex flex-col gap-1.5 pt-1">
-                      {day.title && isDayPublic && (
-                        <p className="text-[15px] font-medium text-[var(--text)] mb-1">
-                          {day.title}
-                        </p>
-                      )}
-                      <div className="flex flex-col gap-1.5 text-sm">
-                        {day.prides.slice(0, 5).map((p, idx) => {
-                          const isPridePublic = isDayPublic && (p.visibility ?? day.visibility ?? 'public') === 'public'
-                          if (isPridePublic) {
-                            return (
-                              <div key={idx} className="flex items-baseline gap-2 py-0.5">
-                                <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">
-                                  {idx + 1}.
-                                </span>
-                                <span className="text-[var(--text)] leading-relaxed">{p.text}</span>
-                                {typeof p.scale === 'number' && p.scale > 0 && (
-                                  <span className="text-[11px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.2 rounded-full flex-none">
-                                    ★ {p.scale}
-                                  </span>
-                                )}
-                              </div>
-                            )
-                          }
-                          return (
-                            <div key={idx} className="flex items-center gap-2 py-0.5 text-zinc-500">
-                              <span className="text-zinc-500 text-xs font-bold flex-none">{idx + 1}.</span>
-                              <span className="text-xs font-medium italic flex items-center gap-1.5 bg-zinc-800/40 px-2 py-0.5 rounded-md border border-zinc-800 text-zinc-400">
-                                <Lock size={11} className="text-zinc-500" /> Скрытая гордость
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Свой профиль */
-                    <div>
-                      <p className="text-[16px] leading-[22px] text-[var(--text)] mb-2">
-                        {day.title}
-                      </p>
-
-                      <div className={isExpanded ? '' : 'line-clamp-4'}>
-                        <div className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-300">
-                          {day.prides.slice(0, 5).map((p, idx) => {
-                            const isPridePrivate = (p.visibility ?? day.visibility) === 'private'
-                            const isPrideFriendsOnly = (p.visibility ?? day.visibility) === 'friends'
-                            const canViewFriends = isOwnProfile || isMutualFriend
-
-                            if (isPrideFriendsOnly && !canViewFriends) {
-                              return (
-                                <div key={idx} className="flex items-baseline gap-2 text-zinc-500">
-                                  <span className="text-zinc-500 text-xs font-bold flex-none">
-                                    {idx + 1}.
-                                  </span>
-                                  <span className="flex-1 italic text-xs">Запись доступна только друзьям</span>
-                                  <span className="text-[10px] text-amber-500/80 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 flex items-center gap-0.5 flex-none" title="Для друзей">
-                                    <Users size={9} /> Для друзей
-                                  </span>
-                                </div>
-                              )
-                            }
-
-                            return (
-                              <div key={idx} className="flex items-baseline gap-2">
-                                <span className="text-[var(--text)] dark:text-[var(--accent)] text-xs font-bold flex-none">
-                                  {idx + 1}.
-                                </span>
-                                <span className="flex-1">{p.text}</span>
-                                {isPridePrivate && (
-                                  <span className="text-[10px] text-zinc-400 px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 flex items-center gap-0.5 flex-none" title="Личная гордость">
-                                    <Lock size={9} /> Лично
-                                  </span>
-                                )}
-                                {isPrideFriendsOnly && canViewFriends && (
-                                  <span className="text-[10px] text-emerald-400 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-0.5 flex-none" title="Для друзей">
-                                    <Users size={9} /> Друзья
-                                  </span>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {day.prides.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedCards((prev) => ({ ...prev, [day.id]: !isExpanded }))
-                          }
-                          className="mt-2 min-h-[34px] px-2.5 py-1 text-[13px] font-bold text-[var(--text)] dark:text-[var(--accent)] hover:underline inline-flex items-center rounded-lg hover:bg-white/5"
-                        >
-                          {isExpanded ? 'Свернуть' : 'Показать ещё…'}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {paginatedDays.length > 0 && (
+              <div className="-mx-4 sm:-mx-6 border-t border-[var(--border)]">
+                {paginatedDays.map((day) => (
+                  <DayCard
+                    key={`${day.user_id || day.userId || (isOwnProfile ? 'own' : 'foreign')}-${day.cloudId || day.id}`}
+                    day={day}
+                    onLightbox={onLightbox || (() => {})}
+                    onNotify={onNotify}
+                    onPinToVault={isOwnProfile ? onPinToVault : undefined}
+                    onEdit={isOwnProfile ? onEditDay : undefined}
+                    onOpenProfile={(targetUid) => onNavigate('profile', targetUid ?? null)}
+                    isOwnerOverride={isOwnProfile}
+                    soundEnabled={soundEnabled}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Chunking: Показать ещё 30 записей */}
             {filteredDays.length > visibleCount && (
-              <div className="pt-2 text-center">
+              <div className="pt-4 text-center">
                 <Button
                   variant="outline"
                   onClick={() => setVisibleCount((prev) => prev + 30)}
@@ -1625,35 +1615,30 @@ export function ProfileView({
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--text)] dark:text-[var(--accent)] mb-2 flex items-center gap-1.5">
                 <Flame size={14} className="fill-current text-[var(--accent)]" />
-                Гордости дня (5)
+                Гордости дня
               </h4>
               <div className="flex flex-col gap-2">
-                {selectedDayModal.prides.slice(0, 5).map((p, idx) => {
-                  const isPridePublic =
-                    (selectedDayModal.visibility ?? 'public') === 'public' &&
-                    (p.visibility ?? selectedDayModal.visibility ?? 'public') === 'public'
-                  const displayPrivate = !isOwnProfile && !isPridePublic
-                  return (
+                {selectedDayModal.prides
+                  .filter((p) => {
+                    if (isOwnProfile) return true
+                    const pVis = p.visibility ?? selectedDayModal.visibility ?? 'public'
+                    return pVis !== 'private'
+                  })
+                  .slice(0, 5)
+                  .map((p, idx) => (
                     <div
                       key={idx}
                       className="p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--line)] flex items-start justify-between gap-2 text-xs"
                     >
                       <div className="flex items-start gap-2">
                         <span className="font-bold text-[var(--text)] dark:text-[var(--accent)] mt-0.5">{idx + 1}.</span>
-                        {displayPrivate ? (
-                          <span className="text-[var(--muted)] italic flex items-center gap-1.5">
-                            <Lock size={12} /> Скрытая гордость
-                          </span>
-                        ) : (
-                          <span className="font-medium text-[var(--text)]">{p.text}</span>
-                        )}
+                        <span className="font-medium text-[var(--text)]">{p.text}</span>
                       </div>
-                      {!displayPrivate && p.scale > 0 && (
+                      {p.scale > 0 && (
                         <span className="font-bold text-amber-500 flex-none">{p.scale}★</span>
                       )}
                     </div>
-                  )
-                })}
+                  ))}
               </div>
             </div>
 
@@ -1661,20 +1646,23 @@ export function ProfileView({
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-[#f91880] mb-2 flex items-center gap-1.5">
                 <Heart size={14} className="fill-[#f91880] text-[#f91880]" />
-                Благодарности дня (5)
+                Благодарности дня
               </h4>
               <div className="flex flex-col gap-2">
-                {selectedDayModal.gratitudes.slice(0, 5).map((g, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-xl bg-[var(--surface-subtle,#16181c)] border border-[var(--line)] flex items-start gap-2 text-xs"
-                  >
-                    <span className="font-bold text-[#f91880] mt-0.5">{idx + 1}.</span>
-                    <span className="font-medium text-[var(--text)]">
-                      {typeof g === 'string' ? g : (g?.text || '')}
-                    </span>
-                  </div>
-                ))}
+                {selectedDayModal.gratitudes
+                  .filter((g) => isOwnProfile || typeof g === 'string' || g?.visibility !== 'private')
+                  .slice(0, 5)
+                  .map((g, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2.5 rounded-xl bg-[var(--surface-subtle,#16181c)] border border-[var(--line)] flex items-start gap-2 text-xs"
+                    >
+                      <span className="font-bold text-[#f91880] mt-0.5">{idx + 1}.</span>
+                      <span className="font-medium text-[var(--text)]">
+                        {typeof g === 'string' ? g : (g?.text || '')}
+                      </span>
+                    </div>
+                  ))}
               </div>
             </div>
 

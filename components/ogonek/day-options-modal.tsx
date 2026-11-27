@@ -3,22 +3,20 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
-import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import {
   Sparkles,
   Pencil,
   Share2,
-  Shield,
   Trash2,
   AlertTriangle,
   X,
-  Loader2,
   Users,
+  UsersRound,
   Check,
   Globe,
   Lock,
+  Plus,
 } from 'lucide-react'
-import { VisibilitySwitcher } from './visibility-switcher'
 import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import { playClick } from '@/lib/ogonek/sound'
 import type { Day, VisibilityLevel, ChatGroupMeta } from '@/lib/ogonek/types'
@@ -50,47 +48,136 @@ export function DayOptionsModal({
   useBodyScrollLock(isOpen)
   const {
     state,
-    setDayVisibility,
     setDayAudience,
     setAllPridesVisibility,
     deleteDay,
     updateDay,
+    loadChatThreadsFromCloud,
   } = useOgonekStore()
+
+  const dayVisibility = normalizeVisibility(day.visibility)
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
-  const [showAudiencePicker, setShowAudiencePicker] = useState(false)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null)
+  const [groupListExpanded, setGroupListExpanded] = useState(dayVisibility === 'group')
+  const [syncedAllPrides, setSyncedAllPrides] = useState(false)
+  const [savingAll, setSavingAll] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setGroupListExpanded(normalizeVisibility(day.visibility) === 'group')
+    setSyncedAllPrides(false)
+    // Подтягиваем актуальный список групп из Supabase при открытии опций
+    if (loadChatThreadsFromCloud) {
+      void loadChatThreadsFromCloud().catch(() => {})
+    }
+  }, [isOpen, day.id, day.visibility, loadChatThreadsFromCloud])
 
   const userGroups = useMemo(() => {
     const threads = state.chatThreads ?? {}
+    const seen = new Set<string>()
     const list: ChatGroupMeta[] = []
     Object.values(threads).forEach((t) => {
-      if (t.groupMeta) list.push(t.groupMeta)
+      if (t.groupMeta) {
+        const key = t.groupMeta.dbId || t.groupMeta.id
+        if (!seen.has(key)) {
+          seen.add(key)
+          list.push(t.groupMeta)
+        }
+      }
     })
     return list
   }, [state.chatThreads])
 
-  const currentAudienceLabel = useMemo(() => {
-    if (day.visibility === 'group') {
-      return day.groupName ? `👥 ${day.groupName}` : '👥 Группе'
-    }
-    if (day.visibility === 'friends') return '👥 Друзьям'
-    if (day.visibility === 'private') return '🔒 Лично'
-    return '🌐 Всем'
-  }, [day.visibility, day.groupName])
+  const hasExistingEvaluation = useMemo(() => {
+    if (typeof day.score === 'number' && day.score > 0) return true
+    if (typeof day.aiScore === 'number' && day.aiScore > 0) return true
+    if (typeof day.aiVerdict === 'string' && day.aiVerdict.trim().length > 0) return true
+    return (day.prides || []).some((p) => typeof p.score === 'number' && p.score > 0)
+  }, [day.score, day.aiScore, day.aiVerdict, day.prides])
 
-  const handleSelectAudience = async (level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
-    playClick(soundEnabled)
-    if (setDayAudience) {
-      await setDayAudience(day.id, level, groupId, groupName)
-    } else {
-      setDayVisibility(day.id, level)
+  const selectedGroupMeta = useMemo(() => {
+    if (dayVisibility !== 'group') return null
+    return (
+      userGroups.find(
+        (g) =>
+          (day.groupId && (g.id === day.groupId || g.dbId === day.groupId)) ||
+          (day.groupName && g.title === day.groupName)
+      ) || null
+    )
+  }, [dayVisibility, userGroups, day.groupId, day.groupName])
+
+  const currentAudienceLabel = useMemo(() => {
+    if (dayVisibility === 'group') {
+      const gTitle = selectedGroupMeta?.title || day.groupName
+      return gTitle ? `👥 ${gTitle}` : '👥 Группе'
     }
-    const label = level === 'group' ? `👥 ${groupName || 'Группе'}` : level === 'friends' ? '👥 Друзьям' : level === 'private' ? '🔒 Лично' : '🌐 Всем'
-    onNotify?.(`Аудитория дня #${day.id} изменена на: ${label}`)
-    setShowAudiencePicker(false)
+    if (dayVisibility === 'friends') return '👥 Друзьям'
+    if (dayVisibility === 'private') return '🔒 Лично'
+    return '🌐 Публично'
+  }, [dayVisibility, selectedGroupMeta?.title, day.groupName])
+
+  const handleSelectAudience = async (mode: VisibilityLevel) => {
+    playClick(soundEnabled)
+    if (mode === 'group') {
+      setGroupListExpanded(true)
+      // Если ровно 1 группа и группа ещё не выбрана — можно сразу привязать или дать выбрать в списке
+      return
+    }
+    setGroupListExpanded(false)
+    setSyncedAllPrides(false)
+    await setDayAudience(day.id, mode, null, undefined)
+    const label =
+      mode === 'friends'
+        ? '👥 Друзьям'
+        : mode === 'private'
+        ? '🔒 Лично'
+        : '🌐 Публично'
+    onNotify?.(`Видимость дня #${day.id}: ${label}`)
+  }
+
+  const handleSelectGroup = async (g: ChatGroupMeta) => {
+    playClick(soundEnabled)
+    setSyncedAllPrides(false)
+    await setDayAudience(day.id, 'group', g.dbId || g.id, g.title)
+    onNotify?.(`День #${day.id} опубликован в группу «${g.title}»`)
+  }
+
+  const handleApplyToAllPrides = async () => {
+    playClick(soundEnabled)
+    setSavingAll(true)
+    try {
+      await setAllPridesVisibility(
+        day.id,
+        dayVisibility,
+        selectedGroupMeta?.dbId || selectedGroupMeta?.id || day.groupId,
+        selectedGroupMeta?.title || day.groupName
+      )
+      setSyncedAllPrides(true)
+      const label =
+        dayVisibility === 'group'
+          ? selectedGroupMeta?.title || day.groupName || 'Группе'
+          : visibilityMeta(dayVisibility).shortLabel
+      onNotify?.(`Режим «${label}» применён ко всем гордостям и благодарностям дня`)
+    } finally {
+      setSavingAll(false)
+    }
+  }
+
+  const handleOpenCreateGroup = () => {
+    playClick(soundEnabled)
+    onClose()
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:navigate-view', {
+          detail: { view: 'messages' },
+        })
+      )
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('ogonek:open-group-creator'))
+      }, 80)
+    }
   }
 
   const handleOpenAiCeremony = () => {
@@ -141,30 +228,6 @@ export function DayOptionsModal({
     onClose()
   }
 
-  const photoCandidate =
-    (day as any)?.media_url ||
-    (day as any)?.mediaUrl ||
-    (day as any)?.item?.media_url ||
-    (Array.isArray(day?.photos) && day.photos.length > 0 ? day.photos[0] : null) ||
-    (Array.isArray(day?.prides)
-      ? (day.prides.find((p: any) => p?.media_url || p?.photos?.[0]) as any)?.media_url ||
-        (day.prides.find((p: any) => p?.photos?.[0]) as any)?.photos?.[0]
-      : null)
-
-  useEffect(() => {
-    if (photoCandidate) {
-      let cancelled = false
-      resolvePhotoUrl(photoCandidate).then((url) => {
-        if (!cancelled && url) setPhotoUrl(url)
-      })
-      return () => {
-        cancelled = true
-      }
-    } else {
-      setPhotoUrl(null)
-    }
-  }, [photoCandidate])
-
   if (!isOpen) return null
 
   if (showCeremony) {
@@ -172,7 +235,9 @@ export function DayOptionsModal({
       <EvaluationCeremonyModal
         isOpen={true}
         prides={(day.prides || []).map((p) => p.text).filter((t): t is string => Boolean(t && t !== '—'))}
-        gratitudes={(day.gratitudes || []).map((g) => (typeof g === 'string' ? g : g.text)).filter((t): t is string => Boolean(t && t !== '—'))}
+        gratitudes={(day.gratitudes || [])
+          .map((g) => (typeof g === 'string' ? g : g.text))
+          .filter((t): t is string => Boolean(t && t !== '—'))}
         dayNumber={day.id}
         soundEnabled={soundEnabled}
         onClose={() => {
@@ -184,8 +249,6 @@ export function DayOptionsModal({
       />
     )
   }
-
-  const dayVisibility = normalizeVisibility(day.visibility)
 
   const handleDeleteConfirm = async () => {
     playClick(soundEnabled)
@@ -203,145 +266,225 @@ export function DayOptionsModal({
     }
   }
 
+  const modes: Array<{
+    id: VisibilityLevel
+    label: string
+    hint: string
+    icon: React.ReactNode
+    activeClass: string
+  }> = [
+    {
+      id: 'private',
+      label: 'Лично',
+      hint: 'Только мне',
+      icon: <Lock size={14} />,
+      activeClass: 'border-white/40 bg-white/[0.12] text-white',
+    },
+    {
+      id: 'friends',
+      label: 'Друзьям',
+      hint: 'Взаимным друзьям',
+      icon: <Users size={14} />,
+      activeClass: 'border-emerald-400/50 bg-emerald-500/15 text-emerald-300',
+    },
+    {
+      id: 'group',
+      label: 'Группе',
+      hint: 'Выбрать группу',
+      icon: <UsersRound size={14} />,
+      activeClass: 'border-[#ff5a1f]/60 bg-[#ff5a1f]/15 text-[#ff8a5c]',
+    },
+    {
+      id: 'public',
+      label: 'Публично',
+      hint: 'Видно всем',
+      icon: <Globe size={14} />,
+      activeClass: 'border-[#1d9bf0]/50 bg-[#1d9bf0]/15 text-[#60a5fa]',
+    },
+  ]
+
   return (
     <>
-      {/* Главное меню опций дня */}
       <div
         className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
         onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Опции дня #${day.id}`}
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.15 }}
-          className="w-full max-w-sm rounded-2xl p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-4"
-          style={{ background: '#060608', border: '1px solid rgba(255,255,255,0.14)' }}
+          exit={{ opacity: 0, scale: 0.96 }}
+          transition={{ duration: 0.14 }}
+          className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3.5 bg-[#060608] border border-white/[0.14] text-[#e7e9ea]"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid #2f3336' }}>
-            <h3 className="font-bold text-[var(--text)] text-base">
-              Опции дня #{day.id}
-            </h3>
+          {/* Шапка модалки (без огромного фото-превью) */}
+          <div className="flex items-center justify-between pb-2.5 border-b border-white/[0.1]">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <h3 className="font-bold text-white text-[16px]">
+                Опции дня #{day.id}
+              </h3>
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-white/75 truncate">
+                {currentAudienceLabel}
+              </span>
+            </div>
             <button
               type="button"
               onClick={onClose}
-              className="text-[var(--text-2)] hover:text-[var(--text)] p-1 rounded-full"
+              className="w-8 h-8 flex items-center justify-center rounded-full text-white/60 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
               aria-label="Закрыть"
             >
               <X size={18} />
             </button>
           </div>
 
-          {photoUrl && (
-            <div className="relative w-full max-h-[350px] my-1 rounded-2xl overflow-hidden bg-black/50 border border-[#2f3336] flex items-center justify-center">
-              <img
-                src={photoUrl}
-                className="max-h-[350px] w-auto object-contain rounded-xl"
-                alt="Фото дня"
-              />
+          {/* Единый блок управления видимостью «Кому видно» */}
+          <div className="rounded-2xl border border-white/[0.12] bg-black p-3.5 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[13px] font-bold text-white">Кому видно</span>
+              <span className="text-[11px] text-[#71767b]">
+                {dayVisibility === 'private'
+                  ? 'Видно только тебе'
+                  : dayVisibility === 'friends'
+                  ? 'Попадёт в ленту «Друзья»'
+                  : dayVisibility === 'group'
+                  ? selectedGroupMeta?.title || day.groupName
+                    ? `Только группе «${selectedGroupMeta?.title || day.groupName}»`
+                    : 'Выбери группу ниже'
+                  : 'Видно в подписках и профиле'}
+              </span>
             </div>
-          )}
 
-          <div className="flex flex-col gap-1.5">
-            <button
-              type="button"
-              onClick={handleOpenAiCeremony}
-              className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-            >
-              <Sparkles size={16} className="text-amber-500" />
-              <span>Оценить с ИИ</span>
-            </button>
-
-            {/* Пункт «Кому видно» (CONTRACT Шаг 09: смена аудитории прямо из ленты) */}
-            <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                onClick={() => {
-                  playClick(soundEnabled)
-                  setShowAudiencePicker(!showAudiencePicker)
-                }}
-                className="flex items-center justify-between w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <Users size={16} className="text-[#1d9bf0]" />
-                  <span>Кому видно</span>
-                </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/10 text-[var(--text-2)] flex items-center gap-1">
-                  {currentAudienceLabel} ▾
-                </span>
-              </button>
-
-              {showAudiencePicker && (
-                <div className="p-2 rounded-xl bg-black/40 border border-[#2f3336] flex flex-col gap-1 mb-1">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Кому видно день">
+              {modes.map((m) => {
+                const isSelected = m.id === 'group' ? (dayVisibility === 'group' || groupListExpanded) : (!groupListExpanded && dayVisibility === m.id)
+                const isActiveMode = m.id === 'group' ? dayVisibility === 'group' || groupListExpanded : dayVisibility === m.id && !groupListExpanded
+                return (
                   <button
+                    key={m.id}
                     type="button"
-                    onClick={() => handleSelectAudience('private')}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
-                      day.visibility === 'private' ? 'bg-white/15 text-white font-bold' : 'text-zinc-300 hover:bg-white/5'
+                    role="radio"
+                    aria-checked={dayVisibility === m.id}
+                    onClick={() => void handleSelectAudience(m.id)}
+                    className={`flex flex-col items-start gap-0.5 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer ${
+                      isActiveMode || (isSelected && m.id === 'group' && groupListExpanded)
+                        ? m.activeClass
+                        : 'border-white/[0.1] bg-white/[0.02] text-white/75 hover:bg-white/[0.06] hover:text-white'
                     }`}
                   >
-                    <span className="flex items-center gap-2">
-                      <Lock size={12} className="text-zinc-400" /> Лично (только мне)
+                    <div className="flex items-center gap-1.5 text-[12.5px] font-bold leading-tight">
+                      {m.icon}
+                      <span>{m.label}</span>
+                    </div>
+                    <span className="text-[10.5px] opacity-70 leading-tight truncate w-full">
+                      {m.hint}
                     </span>
-                    {day.visibility === 'private' && <Check size={13} className="text-zinc-300" />}
                   </button>
+                )
+              })}
+            </div>
 
-                  <button
-                    type="button"
-                    onClick={() => handleSelectAudience('friends')}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
-                      day.visibility === 'friends' ? 'bg-amber-500/20 text-amber-300 font-bold' : 'text-zinc-300 hover:bg-white/5'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Users size={12} className="text-amber-400" /> Друзьям
-                    </span>
-                    {day.visibility === 'friends' && <Check size={13} className="text-amber-400" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleSelectAudience('public')}
-                    className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
-                      day.visibility === 'public' ? 'bg-blue-500/20 text-[#1d9bf0] font-bold' : 'text-zinc-300 hover:bg-white/5'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Globe size={12} className="text-[#1d9bf0]" /> Всем (глобальная лента)
-                    </span>
-                    {day.visibility === 'public' && <Check size={13} className="text-[#1d9bf0]" />}
-                  </button>
-
-                  {userGroups.length > 0 && (
-                    <>
-                      <div className="my-1 border-t border-[#2f3336]" />
-                      <div className="text-[10px] uppercase font-bold text-zinc-500 px-2 py-0.5">
-                        Группы:
-                      </div>
+            {/* Раскрывающийся список групп при выборе режима «Группе» */}
+            {groupListExpanded && (
+              <div className="pt-2 border-t border-white/[0.08] flex flex-col gap-1.5 animate-in fade-in duration-150">
+                {userGroups.length > 0 ? (
+                  <>
+                    <div className="text-[11px] font-semibold text-[#71767b] px-1">
+                      Выбери группу для публикации:
+                    </div>
+                    <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-0.5">
                       {userGroups.map((g) => {
-                        const isG = day.visibility === 'group' && (day.groupId === g.id || day.groupName === g.title)
+                        const isPicked =
+                          dayVisibility === 'group' &&
+                          ((day.groupId && (day.groupId === g.id || day.groupId === g.dbId)) ||
+                            (day.groupName && day.groupName === g.title))
                         return (
                           <button
                             key={g.id}
                             type="button"
-                            onClick={() => handleSelectAudience('group', g.id, g.title)}
-                            className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium ${
-                              isG ? 'bg-purple-500/20 text-purple-300 font-bold' : 'text-zinc-300 hover:bg-white/5'
+                            onClick={() => void handleSelectGroup(g)}
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left text-[13px] transition-colors cursor-pointer ${
+                              isPicked
+                                ? 'border-[#ff5a1f]/60 bg-[#ff5a1f]/15 text-white font-semibold'
+                                : 'border-white/[0.08] bg-white/[0.02] text-white/80 hover:bg-white/[0.06]'
                             }`}
                           >
-                            <span className="flex items-center gap-2">
-                              <span>{g.avatarEmoji || '👥'}</span> {g.title}
+                            <span className="flex items-center gap-2 min-w-0">
+                              <span className="text-base leading-none shrink-0">
+                                {g.avatarEmoji || '👥'}
+                              </span>
+                              <span className="truncate">{g.title}</span>
                             </span>
-                            {isG && <Check size={13} className="text-purple-400" />}
+                            {isPicked ? (
+                              <span className="w-4 h-4 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shrink-0">
+                                <Check size={11} strokeWidth={3} />
+                              </span>
+                            ) : (
+                              <span className="w-4 h-4 rounded-full border border-white/25 shrink-0" />
+                            )}
                           </button>
                         )
                       })}
-                    </>
-                  )}
-                </div>
-              )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl border border-white/[0.08] bg-white/[0.02]">
+                    <span className="text-[12.5px] text-white/70">
+                      У тебя пока нет групп
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleOpenCreateGroup}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff5a1f] hover:opacity-90 text-white text-[12px] font-bold transition-opacity shrink-0 cursor-pointer"
+                    >
+                      <Plus size={13} />
+                      <span>Создать группу</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Компактная строка синхронизации всех пунктов дня */}
+            <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2">
+              <button
+                type="button"
+                disabled={savingAll}
+                onClick={() => void handleApplyToAllPrides()}
+                className={`inline-flex items-center gap-2 text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-50 ${
+                  syncedAllPrides
+                    ? 'text-emerald-400'
+                    : 'text-white/75 hover:text-white'
+                }`}
+              >
+                <span
+                  className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
+                    syncedAllPrides
+                      ? 'bg-emerald-500 border-emerald-500 text-black'
+                      : 'border-white/30 bg-transparent'
+                  }`}
+                >
+                  {syncedAllPrides && <Check size={11} strokeWidth={3} />}
+                </span>
+                <span>Применить ко всем гордостям дня</span>
+              </button>
             </div>
+          </div>
+
+          {/* Действия дня */}
+          <div className="flex flex-col gap-1">
+            {!hasExistingEvaluation && (
+              <button
+                type="button"
+                onClick={handleOpenAiCeremony}
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-[13.5px] font-medium text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+              >
+                <Sparkles size={16} className="text-amber-400 shrink-0" />
+                <span>Оценить с ИИ</span>
+              </button>
+            )}
 
             {onEdit && (
               <button
@@ -351,9 +494,9 @@ export function DayOptionsModal({
                   onClose()
                   onEdit(day)
                 }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-[13.5px] font-medium text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               >
-                <Pencil size={16} className="text-[var(--accent)]" />
+                <Pencil size={16} className="text-[#ff6b35] shrink-0" />
                 <span>Редактировать день</span>
               </button>
             )}
@@ -366,89 +509,29 @@ export function DayOptionsModal({
                   onClose()
                   onShare(day)
                 }}
-                className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors"
+                className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-[13.5px] font-medium text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               >
-                <Share2 size={16} className="text-emerald-500" />
+                <Share2 size={16} className="text-emerald-400 shrink-0" />
                 <span>Экспорт карточки (SVG / PNG)</span>
               </button>
             )}
 
-            {/* Пункт «Удалить этот день» с красной иконкой */}
             <button
               type="button"
               onClick={() => {
                 playClick(soundEnabled)
                 setConfirmDeleteOpen(true)
               }}
-              className="flex items-center gap-3 w-full p-2.5 rounded-xl text-left text-sm font-medium text-rose-500 hover:bg-rose-500/10 transition-colors"
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-[13.5px] font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
             >
-              <Trash2 size={16} className="text-rose-500" />
-              <span className="font-semibold">Удалить этот день</span>
-            </button>
-          </div>
-
-          {/* Блок приватности дня */}
-          <div className="p-3 rounded-2xl flex flex-col gap-2" style={{ background: '#0d0e10', border: '1px solid #2f3336' }}>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-[var(--text-2)] flex items-center gap-1.5">
-                <Shield size={13} className="text-[#FF5C00]" /> Приватность дня
-              </span>
-              <span
-                className="text-xs font-bold"
-                style={{ color: visibilityMeta(dayVisibility).color }}
-              >
-                {visibilityMeta(dayVisibility).shortLabel}
-              </span>
-            </div>
-            <div className="pt-1">
-              <VisibilitySwitcher
-                value={dayVisibility}
-                onChange={(level) => {
-                  setDayVisibility(day.id, level)
-                  onNotify?.(`Приватность дня: ${visibilityMeta(level).shortLabel}`)
-                }}
-                soundEnabled={soundEnabled}
-              />
-            </div>
-            <button
-              type="button"
-              className="mt-1 text-xs text-[var(--text-3)] hover:text-[var(--text)] underline text-left"
-              onClick={() => {
-                playClick(soundEnabled)
-                setAllPridesVisibility(day.id, dayVisibility)
-                onNotify?.('Приватность применена ко всем гордостям')
-                onClose()
-              }}
-            >
-              Применить ко всем гордостям дня
-            </button>
-            <button
-              type="button"
-              className="mt-1 text-xs text-rose-400 hover:text-rose-300 underline text-left"
-              onClick={async () => {
-                playClick(soundEnabled)
-                const { getSupabase } = await import('@/lib/ogonek/supabase-client')
-                const supabase = getSupabase()
-                if (supabase && state.auth?.activeAccountId) {
-                  await supabase
-                    .from('days')
-                    .update({ visibility: dayVisibility })
-                    .eq('user_id', state.auth.activeAccountId)
-                }
-                for (const d of state.days ?? []) {
-                  setDayVisibility(d.id, dayVisibility)
-                }
-                onNotify?.(`Приватность "${visibilityMeta(dayVisibility).shortLabel}" применена ко всем дням`)
-                onClose()
-              }}
-            >
-              Применить ко всем дням
+              <Trash2 size={16} className="text-rose-500 shrink-0" />
+              <span>Удалить этот день</span>
             </button>
           </div>
         </motion.div>
       </div>
 
-      {/* Стильная модалка подтверждения удаления */}
+      {/* Подтверждение удаления */}
       {confirmDeleteOpen && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
@@ -467,10 +550,10 @@ export function DayOptionsModal({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <h4 className="text-lg font-bold text-[var(--text)] leading-snug">
+              <h4 className="text-lg font-bold text-white leading-snug">
                 Удалить День #{day.id} из летописи?
               </h4>
-              <p className="text-sm text-[var(--text-2)] leading-relaxed">
+              <p className="text-sm text-[#71767b] leading-relaxed">
                 Это действие нельзя отменить. Записи гордостей, благодарностей и прогресс стрика будут обновлены.
               </p>
             </div>
@@ -480,7 +563,7 @@ export function DayOptionsModal({
                 type="button"
                 disabled={isDeleting}
                 onClick={() => setConfirmDeleteOpen(false)}
-                className="flex-1 py-2.5 rounded-full border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-full border border-white/[0.14] text-sm font-semibold text-white hover:bg-white/[0.06] transition-colors disabled:opacity-50"
               >
                 Отмена
               </button>

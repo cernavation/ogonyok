@@ -722,6 +722,12 @@ export type ChatAttachment = {
   /** Фото-фон: id из IndexedDB, data URL или blob */
   photo: string | null
   visibility: VisibilityLevel
+  /** Контекст публикации дня в группу и глубокой ссылки в ленту */
+  authorId?: string | null
+  groupId?: string | null
+  groupName?: string | null
+  targetTab?: 'friends' | 'following'
+  actionLabel?: string | null
 }
 
 /** Реакция на конкретное сообщение чата */
@@ -872,6 +878,8 @@ export type ChatMessage = {
 /** Метаданные группового чата */
 export type ChatGroupMeta = {
   id: string
+  /** UUID группы в public.chat_groups (если синхронизирована с Supabase) */
+  dbId?: string | null
   title: string
   avatarColor: string
   avatarEmoji?: string
@@ -941,7 +949,7 @@ export type ChatThreadState = {
 
 export type OgonekNotification = {
   id: string
-  type: 'friend_request' | 'friend_accepted' | 'missed_call' | 'milestone' | 'message' | 'system'
+  type: 'friend_request' | 'friend_accepted' | 'missed_call' | 'milestone' | 'message' | 'friend_day' | 'system'
   title: string
   body: string
   data?: Record<string, any>
@@ -1134,6 +1142,11 @@ export type OgonekStoreState = {
   /* ── ЭТАП 18 — АВТОРИЗАЦИЯ И ПЕРЕКЛЮЧЕНИЕ АККАУНТОВ ──────────────────── */
   /** Локальные аккаунты, активная личность, счётчики входов и защита от перебора */
   auth: AuthState
+  /** Временные отметки последнего просмотра вкладок «Друзья» / «Подписки» (ISO) */
+  lastViewedFriendsFeedAt?: string | null
+  lastViewedFollowingFeedAt?: string | null
+  /** Защита от повторного авто-поста дня в чат группы: `${dayId}:${groupUuid}` */
+  postedGroupDays?: string[]
 }
 
 /* ────────────────────────────────────────────────────────────────────────

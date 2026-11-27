@@ -109,6 +109,28 @@ export function NotificationsPopover({
 
     if (n.type === 'friend_request' || n.type === 'friend_accepted') {
       onOpenFriends?.()
+    } else if (n.type === 'friend_day') {
+      const targetTab = n.data?.tab === 'following' ? 'following' : 'friends'
+      const dayId = n.data?.dayId || n.data?.dayNumber
+      const actorId = n.data?.actorId || null
+      if (typeof window !== 'undefined' && dayId != null) {
+        const params = new URLSearchParams({
+          tab: targetTab,
+          highlightDay: String(dayId),
+        })
+        if (actorId) params.set('authorId', String(actorId))
+        window.history.pushState(null, '', `/app?${params.toString()}`)
+        onNavigate?.('home')
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent('ogonek:focus-feed-day', {
+              detail: { tab: targetTab, dayId: Number(dayId), userId: actorId },
+            })
+          )
+        }, 60)
+      } else {
+        onNavigate?.('home')
+      }
     } else if (n.type === 'missed_call' || n.type === 'message') {
       const peerId = n.data?.fromUserId || n.data?.friendId
       if (peerId && onOpenChat) {
@@ -292,6 +314,12 @@ function NotificationRow({
         return (
           <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-500 flex items-center justify-center shrink-0">
             <Flame size={16} className="fill-amber-500" />
+          </div>
+        )
+      case 'friend_day':
+        return (
+          <div className="w-8 h-8 rounded-full bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center shrink-0">
+            <Flame size={16} />
           </div>
         )
       case 'message':

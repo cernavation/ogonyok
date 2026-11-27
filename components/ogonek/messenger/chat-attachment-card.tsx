@@ -22,6 +22,43 @@ export function ChatAttachmentCard({ attachment, compact = false, onClick }: Pro
     Boolean(onClick) &&
     !compact &&
     (attachment.title.length > 85 || Boolean(photoSrc) || attachment.kind === 'pride')
+  const showJumpToDay =
+    !compact &&
+    attachment.kind === 'day' &&
+    attachment.dayId != null
+
+  const handleJumpToDay = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (typeof window === 'undefined' || attachment.dayId == null) return
+    const tab = attachment.targetTab || 'friends'
+    const params = new URLSearchParams({
+      tab,
+      highlightDay: String(attachment.dayId),
+    })
+    if (attachment.authorId) {
+      params.set('authorId', attachment.authorId)
+    }
+    const targetUrl = `/app?${params.toString()}`
+    window.dispatchEvent(
+      new CustomEvent('ogonek:navigate-view', {
+        detail: {
+          view: 'home',
+          url: targetUrl,
+        },
+      })
+    )
+    setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('ogonek:focus-feed-day', {
+          detail: {
+            tab,
+            dayId: attachment.dayId,
+            userId: attachment.authorId || null,
+          },
+        })
+      )
+    }, 60)
+  }
 
   return (
     <div
@@ -94,6 +131,15 @@ export function ChatAttachmentCard({ attachment, compact = false, onClick }: Pro
             </p>
             {!compact && attachment.subtitle && (
               <p className="mt-0.5 line-clamp-2 text-[11px] text-white/70">{attachment.subtitle}</p>
+            )}
+            {showJumpToDay && (
+              <button
+                type="button"
+                onClick={handleJumpToDay}
+                className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] hover:bg-[#ff6d38] px-3 py-1.5 text-[11.5px] font-bold text-white shadow-[0_2px_10px_rgba(255,90,31,0.35)] transition-all active:scale-95 cursor-pointer"
+              >
+                <span>{attachment.actionLabel || 'Перейти к дню →'}</span>
+              </button>
             )}
           </div>
         </div>

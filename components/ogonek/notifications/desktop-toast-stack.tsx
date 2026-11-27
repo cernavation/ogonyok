@@ -20,10 +20,13 @@ import { UserAvatar, VerifiedBadge } from '../ui'
 
 export type DesktopToast = {
   id: string
-  type: 'chat' | 'friend_request' | 'missed_call' | 'milestone' | 'system'
+  type: 'chat' | 'friend_request' | 'missed_call' | 'milestone' | 'friend_day' | 'system'
   variant?: 'default' | 'milestone'
   milestoneTier?: 10 | 50 | 100
   days?: number
+  dayId?: number
+  actorId?: string | null
+  targetTab?: 'friends' | 'following'
   title: string
   body: string
   avatarUrl?: string

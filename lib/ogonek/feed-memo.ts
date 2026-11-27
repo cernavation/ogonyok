@@ -3,10 +3,13 @@ import type { Day, PrideEntry, GratitudeEntry, VisibilityLevel } from './types'
 export type DayCardPropsLike = {
   day: Day
   soundEnabled?: boolean
+  isHighlighted?: boolean
+  isOwnerOverride?: boolean
   onLightbox?: (url: string) => void
   onNotify?: (msg: string) => void
   onPinToVault?: (fact: string) => void
   onEdit?: (day: Day) => void
+  onOpenProfile?: (userId?: string | null) => void
 }
 
 export type DayEntriesPropsLike = {
@@ -99,9 +102,13 @@ export function getMemoizedCurrentUser(state: {
  */
 export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsLike): boolean {
   if (prev.soundEnabled !== next.soundEnabled) return false
+  if (prev.isHighlighted !== next.isHighlighted) return false
+  if (prev.isOwnerOverride !== next.isOwnerOverride) return false
   if (prev.day.id !== next.day.id) return false
   if (prev.day.dateISO !== next.day.dateISO) return false
   if (prev.day.visibility !== next.day.visibility) return false
+  if (prev.day.groupId !== next.day.groupId) return false
+  if (prev.day.groupName !== next.day.groupName) return false
   if ((prev.day as any).updatedAtISO !== (next.day as any).updatedAtISO) return false
   if ((prev.day as any).updated_at !== (next.day as any).updated_at) return false
 

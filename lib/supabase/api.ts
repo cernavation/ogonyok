@@ -2410,7 +2410,12 @@ export async function sendDirectMessageToDb(params: {
       error = retry.error
     }
 
-    if (error) return { ok: false, error: error.message }
+    if (error) {
+      if (error.code === '23505') {
+        return { ok: true, message: payload as unknown as DirectMessageRecord }
+      }
+      return { ok: false, error: error.message }
+    }
     return { ok: true, message: data as DirectMessageRecord }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка отправки сообщения' }
@@ -3052,6 +3057,170 @@ export async function getCallSession(sessionId: string): Promise<CallSessionReco
   }
 }
 
+export function extractDbGroupUuid(value?: string | null): string | null {
+  if (!value || typeof value !== 'string') return null
+  const stripped = value.trim().replace(/^group:/i, '').replace(/^group-/i, '')
+  return UUID_REGEX.test(stripped) ? stripped.toLowerCase() : null
+}
+
+/**
+ * Загрузить группы пользователя из Supabase (chat_groups + chat_group_members)
+ */
+export async function getUserChatGroupsFromDb(userId: string): Promise<{
+  ok: boolean
+  groups: Array<{
+    id: string
+    title: string
+    avatarColor: string
+    avatarEmoji?: string
+    avatarImage?: string | null
+    creatorId: string
+    adminsOnly: boolean
+    description: string
+    createdAtISO: string
+    memberIds: string[]
+    adminIds: string[]
+    role: 'owner' | 'admin' | 'member'
+  }>
+}> {
+  const supabase = getSupabase()
+  if (!supabase || !userId || !UUID_REGEX.test(userId)) {
+    return { ok: false, groups: [] }
+  }
+
+  try {
+    const [memberRowsRes, ownedRowsRes] = await Promise.all([
+      supabase
+        .from('chat_group_members')
+        .select('group_id, role')
+        .eq('user_id', userId),
+      supabase
+        .from('chat_groups')
+        .select('*')
+        .eq('creator_id', userId),
+    ])
+
+    const roleByGroup = new Map<string, 'owner' | 'admin' | 'member'>()
+    const groupIdsSet = new Set<string>()
+
+    if (Array.isArray(memberRowsRes.data)) {
+      for (const r of memberRowsRes.data) {
+        if (r.group_id) {
+          groupIdsSet.add(r.group_id)
+          roleByGroup.set(r.group_id, (r.role as any) || 'member')
+        }
+      }
+    }
+    if (Array.isArray(ownedRowsRes.data)) {
+      for (const g of ownedRowsRes.data) {
+        if (g.id) {
+          groupIdsSet.add(g.id)
+          if (!roleByGroup.has(g.id)) roleByGroup.set(g.id, 'owner')
+        }
+      }
+    }
+
+    const groupIds = Array.from(groupIdsSet)
+    if (groupIds.length === 0) return { ok: true, groups: [] }
+
+    const [groupsRes, allMembersRes] = await Promise.all([
+      supabase.from('chat_groups').select('*').in('id', groupIds),
+      supabase.from('chat_group_members').select('group_id, user_id, role').in('group_id', groupIds),
+    ])
+
+    if (groupsRes.error || !Array.isArray(groupsRes.data)) {
+      return { ok: false, groups: [] }
+    }
+
+    const membersByGroup = new Map<string, string[]>()
+    const adminsByGroup = new Map<string, string[]>()
+    if (Array.isArray(allMembersRes.data)) {
+      for (const m of allMembersRes.data) {
+        if (!m.group_id || !m.user_id) continue
+        const list = membersByGroup.get(m.group_id) ?? []
+        list.push(m.user_id)
+        membersByGroup.set(m.group_id, list)
+        if (m.role === 'owner' || m.role === 'admin') {
+          const aList = adminsByGroup.get(m.group_id) ?? []
+          aList.push(m.user_id)
+          adminsByGroup.set(m.group_id, aList)
+        }
+      }
+    }
+
+    const groups = groupsRes.data.map((g: any) => ({
+      id: String(g.id),
+      title: g.title || 'Группа',
+      avatarColor: g.avatar_color || '#ff7a18',
+      avatarEmoji: g.avatar_emoji || '🔥',
+      avatarImage: g.avatar_image || null,
+      creatorId: String(g.creator_id || userId),
+      adminsOnly: Boolean(g.admins_only),
+      description: g.description || '',
+      createdAtISO: g.created_at || new Date().toISOString(),
+      memberIds: Array.from(new Set([String(g.creator_id || userId), ...(membersByGroup.get(g.id) ?? [])])),
+      adminIds: Array.from(new Set([String(g.creator_id || userId), ...(adminsByGroup.get(g.id) ?? [])])),
+      role: roleByGroup.get(g.id) || (g.creator_id === userId ? 'owner' : 'member'),
+    }))
+
+    return { ok: true, groups }
+  } catch {
+    return { ok: false, groups: [] }
+  }
+}
+
+/**
+ * Загрузить сообщения групповых чатов по списку UUID групп
+ */
+export async function getGroupMessagesFromDb(
+  groupUuids: string[],
+  limit = 400
+): Promise<DirectMessageRecord[]> {
+  const supabase = getSupabase()
+  const cleanIds = Array.from(new Set(groupUuids.filter((id) => UUID_REGEX.test(id))))
+  if (!supabase || cleanIds.length === 0) return []
+
+  try {
+    const keys = cleanIds.flatMap((id) => [`group:group-${id}`, `group:${id}`, `group-${id}`, id])
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('*')
+      .in('thread_key', keys)
+      .order('sent_at', { ascending: true })
+      .limit(limit)
+
+    if (error || !Array.isArray(data)) return []
+    return data as DirectMessageRecord[]
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Обновить время последнего просмотра вкладок «Друзья» / «Подписки» в public.profiles
+ */
+export async function updateFeedViewedAtInDb(
+  userId: string | null | undefined,
+  tab: 'friends' | 'following',
+  iso: string
+): Promise<void> {
+  const supabase = getSupabase()
+  if (!supabase) return
+  let uid = userId && UUID_REGEX.test(userId) ? userId : null
+  if (!uid) {
+    try {
+      const { data } = await supabase.auth.getSession()
+      uid = data?.session?.user?.id || null
+    } catch {}
+  }
+  if (!uid || !UUID_REGEX.test(uid)) return
+
+  const column = tab === 'friends' ? 'last_viewed_friends_feed_at' : 'last_viewed_following_feed_at'
+  try {
+    await supabase.from('profiles').update({ [column]: iso }).eq('id', uid)
+  } catch {}
+}
+
 /**
  * Сохранить новую группу чата в Supabase
  */
@@ -3070,8 +3239,16 @@ export async function createChatGroupInDb(group: {
   if (!supabase) return { ok: true, groupId: group.id || `group-${Date.now()}` }
 
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(group.creatorId)
-    if (!isUuid) return { ok: true, groupId: group.id || `group-${Date.now()}` }
+    let resolvedCreatorId = UUID_REGEX.test(group.creatorId || '') ? group.creatorId : null
+    if (!resolvedCreatorId) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        if (sessionData?.session?.user?.id) {
+          resolvedCreatorId = sessionData.session.user.id
+        }
+      } catch {}
+    }
+    if (!resolvedCreatorId) return { ok: true, groupId: group.id || `group-${Date.now()}` }
 
     const { data, error } = await supabase
       .from('chat_groups')
@@ -3080,7 +3257,7 @@ export async function createChatGroupInDb(group: {
         avatar_color: group.avatarColor || '#ff7a18',
         avatar_emoji: group.avatarEmoji || '🔥',
         avatar_image: group.avatarImage || null,
-        creator_id: group.creatorId,
+        creator_id: resolvedCreatorId,
         admins_only: Boolean(group.adminsOnly),
         description: group.description || '',
       })
@@ -3092,12 +3269,12 @@ export async function createChatGroupInDb(group: {
 
     // Добавляем создателя как владельца (owner)
     if (groupId) {
-      const membersToInsert = Array.from(new Set([group.creatorId, ...group.memberIds]))
-        .filter((id) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+      const membersToInsert = Array.from(new Set([resolvedCreatorId, ...group.memberIds]))
+        .filter((id) => UUID_REGEX.test(id))
         .map((userId) => ({
           group_id: groupId,
           user_id: userId,
-          role: userId === group.creatorId ? 'owner' : 'member',
+          role: userId === resolvedCreatorId ? 'owner' : 'member',
         }))
 
       if (membersToInsert.length > 0) {

@@ -1073,6 +1073,17 @@ export function loadStore(adapter: StorageAdapter = defaultStorageAdapter): Ogon
         streak: sanitizeStreakSettings(parsed.streak),
         monthlyKpis: sanitizeMonthlyKpis(parsed.monthlyKpis),
         auth: sanitizeAuthState(parsed.auth),
+        lastViewedFriendsFeedAt:
+          typeof parsed.lastViewedFriendsFeedAt === 'string' && parsed.lastViewedFriendsFeedAt
+            ? parsed.lastViewedFriendsFeedAt
+            : null,
+        lastViewedFollowingFeedAt:
+          typeof parsed.lastViewedFollowingFeedAt === 'string' && parsed.lastViewedFollowingFeedAt
+            ? parsed.lastViewedFollowingFeedAt
+            : null,
+        postedGroupDays: Array.isArray(parsed.postedGroupDays)
+          ? parsed.postedGroupDays.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(-200)
+          : [],
       }
     } catch {
       // Corrupt JSON: save recovery copy and return defaults
