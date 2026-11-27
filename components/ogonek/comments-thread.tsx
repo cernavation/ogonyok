@@ -147,7 +147,6 @@ export function CommentsThread({
   } | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({})
-  const [loadingInitial, setLoadingInitial] = useState(false)
   const [gifOpen, setGifOpen] = useState(false)
   const [emojiPickerAnchor, setEmojiPickerAnchor] = useState<{
     top: number
@@ -215,16 +214,8 @@ export function CommentsThread({
     if (!target || !isSignedUuid) return
     let cancelled = false
 
-    if ((state.comments?.[target]?.length ?? 0) === 0) {
-      setLoadingInitial(true)
-    }
-
     const hints = { [target]: effectivePostAuthorId }
-    void loadCommentsForTargets([target], hints)
-      .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setLoadingInitial(false)
-      })
+    void loadCommentsForTargets([target], hints).catch(() => {})
 
     let rtTimer: ReturnType<typeof setTimeout> | null = null
     const unsubscribe = subscribeToCommentsRealtime(() => {
@@ -992,12 +983,7 @@ export function CommentsThread({
       )}
 
       {/* Список комментариев */}
-      {loadingInitial && total === 0 ? (
-        <div className="py-3 text-[13px] text-[#71767b] flex items-center gap-2">
-          <Loader2 size={14} className="animate-spin" />
-          <span>Загрузка комментариев...</span>
-        </div>
-      ) : total > 0 ? (
+      {total > 0 ? (
         <div className="mt-2 divide-y divide-white/[0.06]">
           {tree.map((node) => renderComment(node, 0))}
         </div>

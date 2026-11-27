@@ -294,5 +294,12 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
     assert.ok(threadSrc.includes('Ответ для '), 'Показывается понятная плашка режима ответа')
     assert.ok(threadSrc.includes('ForwardToChatModal'), 'Кнопка Поделиться интегрирована с модалкой пересылки')
     assert.ok(threadSrc.includes('toggleCommentReaction'), 'Реакции на комментарии сохраняются в сторе и БД')
+    assert.ok(!threadSrc.includes('Загрузка комментариев...'), 'Удалена мигающая заглушка загрузки комментариев')
+
+    const dayCardSrc = readRepoFile('components/ogonek/day-card.tsx')
+    assert.ok(dayCardSrc.includes('mt-3 mb-3.5'), 'Под блоком фото добавлен гармоничный отступ до полосы действий')
+
+    const apiSrc = readRepoFile('lib/supabase/api.ts')
+    assert.ok(apiSrc.includes('client_id: clientId'), 'createCommentInDb всегда передаёт непустой client_id')
   })
 })

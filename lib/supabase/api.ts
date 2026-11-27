@@ -1385,8 +1385,13 @@ export async function createCommentInDb(params: {
         : null
 
   const parentUuid = params.parentId && UUID_REGEX.test(params.parentId) ? params.parentId : null
+  const clientId =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `cm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
   const insertRow: Record<string, any> = {
     user_id: authUid,
+    client_id: clientId,
     target_key: params.targetKey,
     day_client_id: extractDayNumberFromTarget(params.targetKey),
     parent_id: parentUuid,

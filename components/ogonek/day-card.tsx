@@ -620,7 +620,7 @@ function DayCardComponent({
 
             {/* Photos */}
             {photoUrls.length > 0 && (
-              <div className="mt-3">
+              <div className="mt-3 mb-3.5">
                 <div
                   className={`overflow-hidden rounded-2xl border border-[var(--line)] ${
                     photoUrls.length === 1 ? '' : 'grid grid-cols-2 gap-0.5'
