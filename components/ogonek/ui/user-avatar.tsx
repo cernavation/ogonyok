@@ -70,7 +70,11 @@ export function UserAvatar({
   className = '',
   onClick,
 }: UserAvatarProps) {
-  const rawImage = avatarUrl || avatarImage || src || null
+  const rawImageCandidate = avatarUrl || avatarImage || src || null
+  const rawImage =
+    typeof rawImageCandidate === 'string' && rawImageCandidate.trim().length > 0
+      ? rawImageCandidate
+      : null
   const resolvedPhotoUrl = usePhotoUrl(rawImage)
   const effectiveSrc =
     resolvedPhotoUrl ||

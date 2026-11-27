@@ -51,17 +51,25 @@ interface Props {
 }
 
 function profileRecordToSocialUser(p: ProfileRecord): SocialUser {
+  const safeUsername = typeof p?.username === 'string' && p.username ? p.username : 'user'
+  const rawLevel = Number(p?.level ?? 1)
+  const rawStreak = Number(p?.streak_count ?? p?.streak ?? 0)
   return {
-    id: p.id,
-    username: p.username || 'user',
-    displayName: p.display_name || `@${p.username || 'user'}`,
-    avatarUrl: p.avatar_image || p.avatar_url || null,
-    avatarColor: p.avatar_color || '#FF5C00',
-    bio: p.bio || '',
-    city: p.city || '',
-    streak: Number(p.streak_count ?? p.streak ?? 0),
-    verified: Boolean(p.verified),
-    difficultyLevel: Number(p.level || 1),
+    id: String(p?.id || ''),
+    username: safeUsername,
+    displayName: (typeof p?.display_name === 'string' && p.display_name) || `@${safeUsername}`,
+    avatarUrl:
+      typeof p?.avatar_image === 'string' && p.avatar_image
+        ? p.avatar_image
+        : typeof p?.avatar_url === 'string' && p.avatar_url
+          ? p.avatar_url
+          : null,
+    avatarColor: (typeof p?.avatar_color === 'string' && p.avatar_color) || '#FF5C00',
+    bio: typeof p?.bio === 'string' ? p.bio : '',
+    city: typeof p?.city === 'string' ? p.city : '',
+    streak: Number.isFinite(rawStreak) ? rawStreak : 0,
+    verified: Boolean(p?.verified),
+    difficultyLevel: Number.isFinite(rawLevel) && rawLevel > 0 ? rawLevel : 1,
     friendshipStatus: 'accepted',
     isFollowing: true,
     allowMessagesFrom: resolveAllowMessagesFrom(p),
@@ -92,15 +100,22 @@ export function FriendsModal({
     updateStore,
   } = useOgonekStore()
 
-  const viewerId = currentUser?.id || state.auth.activeAccountId || null
-  const currentUsername = currentUser?.username || state.profile.username || 'user'
-  const currentDisplayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
+  const viewerId = currentUser?.id || state?.auth?.activeAccountId || null
+  const currentUsername = currentUser?.username || state?.profile?.username || 'user'
+  const currentDisplayName = currentUser?.displayName || state?.profile?.displayName || 'Пользователь'
 
   const [activeTab, setActiveTab] = useState<FriendsTab>(
     initialTab === 'groups' ? 'groups' : 'friends'
   )
 
-  const friendIds = useMemo(() => state.friendIds ?? [], [state.friendIds])
+  useEffect(() => {
+    setActiveTab(initialTab === 'groups' ? 'groups' : 'friends')
+  }, [initialTab])
+
+  const friendIds = useMemo(
+    () => (Array.isArray(state?.friendIds) ? state.friendIds.filter((id): id is string => typeof id === 'string' && Boolean(id)) : []),
+    [state?.friendIds]
+  )
 
   // Мгновенный синхронный старт из кэша/стора без пустого чёрного экрана
   const syncSeededFriends = useMemo(() => {
@@ -115,13 +130,13 @@ export function FriendsModal({
       if (mock) {
         out.push({
           id: mock.id,
-          username: mock.username,
-          displayName: mock.name,
+          username: mock.username || 'user',
+          displayName: mock.name || `@${mock.username || 'user'}`,
           avatarUrl: mock.avatarUrl || null,
-          avatarColor: mock.avatarColor,
-          bio: mock.bio,
-          city: mock.city,
-          streak: mock.streak,
+          avatarColor: mock.avatarColor || '#FF5C00',
+          bio: mock.bio || '',
+          city: mock.city || '',
+          streak: Number.isFinite(Number(mock.streak)) ? Number(mock.streak) : 0,
           verified: Boolean(mock.verified),
           friendshipStatus: 'accepted',
           isFollowing: true,
@@ -153,15 +168,38 @@ export function FriendsModal({
   const [editGroupEmoji, setEditGroupEmoji] = useState('👥')
 
   const menuContainerRef = useRef<HTMLDivElement>(null)
+  const mountedRef = useRef(true)
+  const hasFriendsRef = useRef(syncSeededFriends.length > 0)
+
+  useEffect(() => {
+    hasFriendsRef.current = friends.length > 0
+  }, [friends.length])
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const chatGroups = useMemo(() => {
-    const threads = state.chatThreads ?? {}
+    const threads = state?.chatThreads ?? {}
     const list: ChatGroupMeta[] = []
     Object.values(threads).forEach((t) => {
-      if (t.groupMeta) list.push(t.groupMeta)
+      if (t && typeof t === 'object' && t.groupMeta && typeof t.groupMeta === 'object') {
+        list.push({
+          ...t.groupMeta,
+          memberIds: Array.isArray(t.groupMeta.memberIds)
+            ? t.groupMeta.memberIds.filter((id): id is string => typeof id === 'string' && Boolean(id))
+            : [],
+          adminIds: Array.isArray(t.groupMeta.adminIds)
+            ? t.groupMeta.adminIds.filter((id): id is string => typeof id === 'string' && Boolean(id))
+            : [],
+        })
+      }
     })
     return list
-  }, [state.chatThreads])
+  }, [state?.chatThreads])
 
   const selectedGroup = useMemo(() => {
     if (!selectedGroupId) return null
@@ -174,45 +212,54 @@ export function FriendsModal({
   }, [chatGroups, viewerId])
 
   const groupFeedDays = useMemo(() => {
-    if (!selectedGroupId) return []
-    return (state.days || []).filter((d) => {
+    if (!selectedGroupId || !Array.isArray(state?.days)) return []
+    return state.days.filter((d) => {
+      if (!d || typeof d !== 'object') return false
       if (d.groupId === selectedGroupId) return true
-      if (d.targetGroupIds && d.targetGroupIds.includes(selectedGroupId)) return true
+      if (Array.isArray(d.targetGroupIds) && d.targetGroupIds.includes(selectedGroupId)) return true
       if (
-        d.prides?.some(
+        Array.isArray(d.prides) &&
+        d.prides.some(
           (p) =>
-            p.groupId === selectedGroupId ||
-            (p.targetGroupIds && p.targetGroupIds.includes(selectedGroupId))
+            p &&
+            typeof p === 'object' &&
+            (p.groupId === selectedGroupId ||
+              (Array.isArray(p.targetGroupIds) && p.targetGroupIds.includes(selectedGroupId)))
         )
       ) {
         return true
       }
       return Boolean(
-        (d.gratitudes as any)?.some(
-          (g: any) =>
-            typeof g === 'object' &&
-            (g.groupId === selectedGroupId ||
-              (g.targetGroupIds && g.targetGroupIds.includes(selectedGroupId)))
-        )
+        Array.isArray(d.gratitudes) &&
+          (d.gratitudes as any).some(
+            (g: any) =>
+              g &&
+              typeof g === 'object' &&
+              (g.groupId === selectedGroupId ||
+                (Array.isArray(g.targetGroupIds) && g.targetGroupIds.includes(selectedGroupId)))
+          )
       )
     })
-  }, [state.days, selectedGroupId])
+  }, [state?.days, selectedGroupId])
 
   const loadFriends = useCallback(async () => {
     if (!viewerId || viewerId.startsWith('anon-') || viewerId.startsWith('acct-guest')) {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
       return
     }
-    setLoading((prev) => prev || friends.length === 0)
+    if (mountedRef.current) {
+      setLoading((prev) => prev || !hasFriendsRef.current)
+    }
     try {
       const list = await getFriendsListApi(viewerId)
-      setFriends(list)
+      if (!mountedRef.current) return
+      setFriends(Array.isArray(list) ? list.filter((u): u is SocialUser => Boolean(u && typeof u === 'object' && u.id)) : [])
     } catch (err) {
       console.error('Failed to load friends:', err)
     } finally {
-      setLoading(false)
+      if (mountedRef.current) setLoading(false)
     }
-  }, [viewerId, friends.length])
+  }, [viewerId])
 
   useEffect(() => {
     void loadFriends()
@@ -587,18 +634,18 @@ export function FriendsModal({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <span className="font-bold text-[14px] text-[var(--text,#fff)] truncate group-hover:underline">
-                              {friend.displayName}
+                              {friend.displayName || `@${friend.username || 'user'}`}
                             </span>
                             {friend.verified && <VerifiedBadge size="xs" />}
                           </div>
                           <div className="flex items-center gap-1.5 text-[12px] text-[var(--muted,#71767b)] mt-0.5">
-                            <span className="truncate">@{friend.username}</span>
-                            {friend.streak > 0 && (
+                            <span className="truncate">@{friend.username || 'user'}</span>
+                            {Number(friend.streak) > 0 && (
                               <>
                                 <span>·</span>
                                 <span className="text-[#FF5C00] font-semibold inline-flex items-center gap-0.5 shrink-0">
                                   <Flame size={11} className="fill-[#FF5C00]" />
-                                  {friend.streak}
+                                  {Number(friend.streak)}
                                 </span>
                               </>
                             )}
@@ -890,7 +937,7 @@ export function FriendsModal({
                         </button>
                       </div>
 
-                      {selectedGroup.memberIds.map((mId) => {
+                      {(selectedGroup.memberIds ?? []).map((mId) => {
                         const isMemberOwner = mId === selectedGroup.createdBy
                         const isMe = mId === viewerId
                         const friendInfo = friends.find((f) => f.id === mId)
@@ -899,9 +946,9 @@ export function FriendsModal({
                           ? currentDisplayName || `@${currentUsername}`
                           : friendInfo?.displayName ||
                             cached?.display_name ||
-                            (cached?.username ? `@${cached.username}` : `@${mId.slice(0, 8)}`)
+                            (cached?.username ? `@${cached.username}` : `@${String(mId || '').slice(0, 8)}`)
                         const mVerified = Boolean(
-                          isMe ? state.profile.verified : friendInfo?.verified ?? cached?.verified
+                          isMe ? state?.profile?.verified : friendInfo?.verified ?? cached?.verified
                         )
 
                         return (
@@ -1191,7 +1238,7 @@ export function FriendsModal({
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-2">
-              {friends.filter((f) => !selectedGroup.memberIds.includes(f.id) && f.allowGroupInvitesFrom !== 'nobody').length === 0 ? (
+              {friends.filter((f) => !(selectedGroup.memberIds ?? []).includes(f.id) && f.allowGroupInvitesFrom !== 'nobody').length === 0 ? (
                 <p className="py-6 text-center text-xs text-[var(--muted,#71767b)] leading-relaxed">
                   {friends.length === 0
                     ? 'Чтобы создать группу или добавить участников, сначала добавь друзей (взаимная подписка)'
@@ -1199,7 +1246,7 @@ export function FriendsModal({
                 </p>
               ) : (
                 friends
-                  .filter((f) => !selectedGroup.memberIds.includes(f.id) && f.allowGroupInvitesFrom !== 'nobody')
+                  .filter((f) => !(selectedGroup.memberIds ?? []).includes(f.id) && f.allowGroupInvitesFrom !== 'nobody')
                   .map((f) => (
                     <div
                       key={f.id}

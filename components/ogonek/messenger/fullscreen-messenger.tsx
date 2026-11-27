@@ -321,6 +321,7 @@ export function FullscreenMessenger({
         {/* Column 3: Chat Stream & Composer */}
         <main className="flex-1 h-full min-w-0 bg-[var(--bg)]">
           <MessengerChatPane
+            key={activeThreadId || 'none'}
             friendId={activeThreadId || null}
             currentUserId={resolvedUserId}
             onBack={undefined}
@@ -361,6 +362,7 @@ export function FullscreenMessenger({
         ) : (
           <div className="w-full h-full flex flex-col min-w-0">
             <MessengerChatPane
+              key={activeThreadId}
               friendId={activeThreadId}
               currentUserId={resolvedUserId}
               onBack={handleBackToList}

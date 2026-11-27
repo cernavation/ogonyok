@@ -547,8 +547,9 @@ export function subscribeToFollows(userId: string, onChange: () => void) {
     return () => {}
   }
 
+  const channelName = `follows-sync-${userId}-${Math.random().toString(36).slice(2, 8)}`
   const channel = supabase
-    .channel(`follows-sync-${userId}`)
+    .channel(channelName)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'follows' },

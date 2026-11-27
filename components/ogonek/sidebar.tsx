@@ -393,17 +393,18 @@ export function Sidebar({
           aria-current={isActive ? 'page' : undefined}
         >
           <div className="w-11 h-11 flex items-center justify-center shrink-0 relative">
-            <NavIcon id={id} isActive={isActive} size={23} />
-            {id === 'messages' && unread > 0 && (
-              <span
-                className={`${
-                  isCollapsed ? 'flex' : 'flex xl:hidden'
-                } absolute top-1 right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#FF5C00] text-white text-[10px] font-bold items-center justify-center leading-none shadow-sm pointer-events-none z-10 ring-2 ring-[var(--bg)]`}
-                aria-label={`${unread} непрочитанных`}
-              >
-                {unreadBadgeLabel}
-              </span>
-            )}
+            <div className="relative flex items-center justify-center w-6 h-6">
+              <NavIcon id={id} isActive={isActive} size={23} />
+              {id === 'messages' && unread > 0 && (
+                <span
+                  data-testid="sidebar-chats-unread-badge"
+                  className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5a1f] text-white text-[11px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10 ring-2 ring-black"
+                  aria-label={`${unread} непрочитанных`}
+                >
+                  {unreadBadgeLabel}
+                </span>
+              )}
+            </div>
           </div>
           <span
             className={`${labelVisibilityClass} text-[16px] leading-tight ${
@@ -412,14 +413,6 @@ export function Sidebar({
           >
             {label}
           </span>
-          {id === 'messages' && unread > 0 && !isCollapsed && (
-            <span
-              className="hidden xl:inline-flex items-center justify-center ml-auto min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#FF5C00] text-white text-[11px] font-bold leading-none shadow-sm shrink-0"
-              aria-label={`${unread} непрочитанных`}
-            >
-              {unreadBadgeLabel}
-            </span>
-          )}
         </button>
       </Tooltip>
     )

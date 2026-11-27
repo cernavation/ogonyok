@@ -32,7 +32,8 @@ describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModa
 
     const sidebarSrc = readRepoFile('components/ogonek/sidebar.tsx')
     assert.ok(sidebarSrc.includes("unread > 9 ? '9+' : String(unread)"), 'Sidebar форматирует 1, 2, 9+')
-    assert.ok(sidebarSrc.includes('hidden xl:inline-flex items-center justify-center ml-auto'), 'В развёрнутом сайдбаре капсула справа от Чаты')
+    assert.ok(sidebarSrc.includes('absolute -top-1 -right-1.5 min-w-[18px] h-[18px]'), 'Оранжевый бейдж размещён прямо на углу иконки Чаты в обоих режимах сайдбара')
+    assert.ok(!sidebarSrc.includes('hidden xl:inline-flex items-center justify-center ml-auto'), 'Старый дублирующий бейдж справа (ml-auto) удалён')
 
     const storeSrc = readRepoFile('lib/ogonek/use-ogonek-store.ts')
     assert.ok(storeSrc.includes('unreadChatCount: totalUnread(nextThreads)'), 'markThreadRead и Realtime синхронизируют unreadChatCount')

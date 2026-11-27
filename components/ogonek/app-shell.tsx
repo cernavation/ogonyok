@@ -34,6 +34,8 @@ import { LandingPage } from './landing/landing-page'
 import { ChatWindow } from './messenger/chat-window'
 import { FullscreenMessenger } from './messenger/fullscreen-messenger'
 import { CallErrorBoundary } from './messenger/call-error-boundary'
+import { FriendsModal } from './friends/friends-modal'
+import { FriendsModalErrorBoundary } from './friends/friends-modal-error-boundary'
 import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
 import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
@@ -68,7 +70,6 @@ const Lightbox = dynamic(() => import('./lightbox').then((m) => m.Lightbox), { s
 const ProfileModal = dynamic(() => import('./profile-modal').then((m) => m.ProfileModal), { ssr: false })
 const OnboardingModal = dynamic(() => import('./onboarding-modal').then((m) => m.OnboardingModal), { ssr: false })
 const OnboardingTour = dynamic(() => import('./tour/onboarding-tour').then((m) => m.OnboardingTour), { ssr: false })
-const FriendsModal = dynamic(() => import('./friends/friends-modal').then((m) => m.FriendsModal), { ssr: false })
 const PremiumModal = dynamic(() => import('./premium-modal').then((m) => m.PremiumModal), { ssr: false })
 const UpgradeModal = dynamic(() => import('./upgrade-modal').then((m) => m.UpgradeModal), { ssr: false })
 const MilestoneModal = dynamic(
@@ -1797,27 +1798,6 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
               onNavigate={navigate}
             />
           )}
-          {friendsModalOpen && (
-            <FriendsModal
-              initialTab={friendsModalTab}
-              onClose={() => setFriendsModalOpen(false)}
-              onNavigateToUser={(uid) => {
-                setFriendsModalOpen(false)
-                navigate('profile', uid)
-              }}
-              onStartChatWithUser={(uid) => {
-                setFriendsModalOpen(false)
-                setActiveChatFriend(uid)
-                navigate('messages')
-              }}
-              onOpenExplore={() => {
-                setFriendsModalOpen(false)
-                navigate('explore')
-              }}
-              onNotify={notify}
-              soundEnabled={state.soundEnabled}
-            />
-          )}
           {onboardingOpen && (
             <OnboardingModal
               isOpen={onboardingOpen}
@@ -1925,6 +1905,30 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
             />
           )}
         </AnimatePresence>
+
+        {friendsModalOpen && (
+          <FriendsModalErrorBoundary onClose={() => setFriendsModalOpen(false)}>
+            <FriendsModal
+              initialTab={friendsModalTab}
+              onClose={() => setFriendsModalOpen(false)}
+              onNavigateToUser={(uid) => {
+                setFriendsModalOpen(false)
+                navigate('profile', uid)
+              }}
+              onStartChatWithUser={(uid) => {
+                setFriendsModalOpen(false)
+                setActiveChatFriend(uid)
+                navigate('messages')
+              }}
+              onOpenExplore={() => {
+                setFriendsModalOpen(false)
+                navigate('explore')
+              }}
+              onNotify={notify}
+              soundEnabled={state.soundEnabled}
+            />
+          </FriendsModalErrorBoundary>
+        )}
 
         <AnimatePresence>
           {locked && <AppLockScreen onUnlocked={handleUnlocked} reason={lockReason} />}

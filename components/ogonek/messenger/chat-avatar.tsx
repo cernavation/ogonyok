@@ -46,26 +46,16 @@ export function ChatAvatar({
     return friendId
   })()
 
-  if (isPridayChat(friendId) || isPridayChat(targetUserId)) {
-    return (
-      <div
-        className="rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#FF5C00] to-[#E53900] text-white flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgba(255,92,0,0.4)] border border-white/20"
-        style={{ width: size, height: size }}
-        aria-label="Priday"
-      >
-        <Flame size={Math.max(16, Math.round(size * 0.54))} fill="currentColor" strokeWidth={1.8} />
-      </div>
-    )
-  }
+  const isPriday = isPridayChat(friendId) || isPridayChat(targetUserId)
 
-  const friend = targetUserId ? getFriend(targetUserId) : undefined
-  const thread = friendId ? state?.chatThreads?.[friendId] : undefined
+  const friend = !isPriday && targetUserId ? getFriend(targetUserId) : undefined
+  const thread = !isPriday && friendId ? state?.chatThreads?.[friendId] : undefined
   const peerMeta = thread?.peerMeta
-  const cachedSync = targetUserId ? getCachedProfileSync(targetUserId) : null
+  const cachedSync = !isPriday && targetUserId ? getCachedProfileSync(targetUserId) : null
   const [liveProfile, setLiveProfile] = useState<ProfileRecord | null>(cachedSync)
 
   useEffect(() => {
-    if (!targetUserId || friend || !UUID_REGEX.test(targetUserId)) {
+    if (isPriday || !targetUserId || friend || !UUID_REGEX.test(targetUserId)) {
       setLiveProfile(null)
       return
     }
@@ -98,7 +88,19 @@ export function ChatAvatar({
     return () => {
       cancelled = true
     }
-  }, [targetUserId, friend, friendId, updateThreadPeerMeta])
+  }, [isPriday, targetUserId, friend, friendId, updateThreadPeerMeta])
+
+  if (isPriday) {
+    return (
+      <div
+        className="rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#FF5C00] to-[#E53900] text-white flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgba(255,92,0,0.4)] border border-white/20"
+        style={{ width: size, height: size }}
+        aria-label="Priday"
+      >
+        <Flame size={Math.max(16, Math.round(size * 0.54))} fill="currentColor" strokeWidth={1.8} />
+      </div>
+    )
+  }
 
   const effectiveProfile = liveProfile || cachedSync
   const displayName =
