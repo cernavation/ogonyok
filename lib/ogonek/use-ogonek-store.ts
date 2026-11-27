@@ -457,6 +457,11 @@ async function hydrateStateFromSupabaseSession(
   }
   saveStore(cachedState, undefined, true)
   emitChange()
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('ogonek:auth-hydrated', { detail: { userId } }))
+    } catch {}
+  }
   void syncEvidenceVaultForUser(userId)
   return true
 }
@@ -3735,10 +3740,10 @@ export function useOgonekStore() {
         for (const [targetKey, fetchedList] of Object.entries(res.commentsByTarget)) {
           const prevList = nextComments[targetKey] ?? []
           const prevSig = JSON.stringify(
-            prevList.map((c) => [c.id, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.reactions || [], c.avatarUrl])
+            prevList.map((c) => [c.id, c.parentId, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.isMine, c.reactions || [], c.avatarUrl])
           )
           const nextSig = JSON.stringify(
-            fetchedList.map((c) => [c.id, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.reactions || [], c.avatarUrl])
+            fetchedList.map((c) => [c.id, c.parentId, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.isMine, c.reactions || [], c.avatarUrl])
           )
           if (prevSig !== nextSig) {
             nextComments[targetKey] = fetchedList
@@ -3936,11 +3941,33 @@ export function useOgonekStore() {
                 ),
               },
             }
-          })
+          }, true)
           return { ok: false, liked: prevLiked, error: res.error || 'Не удалось обновить лайк' }
         }
+        const reconciledLiked = typeof res.liked === 'boolean' ? res.liked : willLike
+        const reconciledCount = typeof res.count === 'number' ? res.count : undefined
+        updateStore((prev) => {
+          const list = prev.comments?.[target] ?? []
+          return {
+            ...prev,
+            comments: {
+              ...prev.comments,
+              [target]: list.map((c) =>
+                c.id === commentId
+                  ? {
+                      ...c,
+                      likedByMe: reconciledLiked,
+                      likes: reconciledCount !== undefined ? reconciledCount : c.likes,
+                    }
+                  : c
+              ),
+            },
+          }
+        }, true)
+        return { ok: true, liked: reconciledLiked }
       }
 
+      saveStore(getSnapshot(), undefined, true)
       return { ok: true, liked: willLike }
     },
     [updateStore]

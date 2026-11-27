@@ -299,9 +299,21 @@ export function HomeView({
       }, 260)
     })
 
+    const onAuthHydrated = () => {
+      if (!cancelled) {
+        void loadCommentsForTargets(targets, visibleCommentTargetHints).catch(() => {})
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ogonek:auth-hydrated', onAuthHydrated)
+    }
+
     return () => {
       cancelled = true
       if (rtTimer) clearTimeout(rtTimer)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ogonek:auth-hydrated', onAuthHydrated)
+      }
       unsubscribe()
     }
   }, [visibleCommentTargetsKey, currentUserId, loadCommentsForTargets, visibleCommentTargetHints])

@@ -20,6 +20,10 @@ import {
   scopedDayCommentTarget,
   scopedPrideCommentTarget,
 } from '../lib/ogonek/comments.ts'
+import {
+  POPULAR_EMOJIS,
+  searchEmojis,
+} from '../lib/ogonek/messenger.ts'
 import type { Comment } from '../lib/ogonek/types.ts'
 
 function readRepoFile(relPath: string): string {
@@ -254,11 +258,11 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
     assert.ok(sqlSrc.includes("NOTIFY pgrst, 'reload schema'"), 'SQL завершается обновлением schema cache PostgREST')
   })
 
-  it('7. Апгрейд комментариев: 3 уровня глубины, авторост инпута, превью GIF, реакции и шеринг', () => {
+  it('7. Апгрейд комментариев: плоские 2 уровня, авторост инпута, превью GIF, реакции и шеринг', () => {
     assert.equal(MAX_COMMENT_LENGTH, 2000)
     assert.deepEqual([...COMMENT_QUICK_REACTIONS], ['🔥', '❤️', '😂', '👏', '💯', '😮'])
 
-    // Проверяем 3-уровневое дерево и привязку ответа на 3-й уровень к 3-му уровню
+    // Проверяем 2-уровневое дерево и привязку любого ответа внутри ветки к корню (без 3-й лесенки)
     const lvl1: Comment = {
       id: 'c1',
       parentId: null,
@@ -272,16 +276,17 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
     }
     const lvl2: Comment = { ...lvl1, id: 'c2', parentId: 'c1', text: 'Lvl 2', createdAt: '2026-11-27T10:01:00Z' }
     const lvl3: Comment = { ...lvl1, id: 'c3', parentId: 'c2', text: 'Lvl 3', createdAt: '2026-11-27T10:02:00Z' }
-    const lvl4Attempt: Comment = { ...lvl1, id: 'c4', parentId: 'c3', text: 'Should stay lvl 3', createdAt: '2026-11-27T10:03:00Z' }
+    const lvl4Attempt: Comment = { ...lvl1, id: 'c4', parentId: 'c3', text: 'Should flatten to lvl 2', createdAt: '2026-11-27T10:03:00Z' }
 
     assert.equal(resolveReplyParentId(lvl1, 0), 'c1')
-    assert.equal(resolveReplyParentId(lvl2, 1), 'c2')
-    assert.equal(resolveReplyParentId(lvl3, 2), 'c2', 'Ответ на 3-м уровне крепится к 2-му родителю (остаётся на 3-м уровне)')
+    assert.equal(resolveReplyParentId(lvl2, 1, 'c1'), 'c1', 'Ответ на 2-й уровень крепится к 1-му корню')
+    assert.equal(resolveReplyParentId(lvl3, 1, 'c1'), 'c1', 'Глубокие ответы тоже крепятся к 1-му корню')
 
     const tree = buildCommentTree([lvl1, lvl2, lvl3, lvl4Attempt])
     assert.equal(tree.length, 1)
     assert.equal(countThreadReplies(tree[0]), 3)
-    assert.equal(tree[0].replies[0].replies.length, 2, 'Уровень 4 выравнивается на 3-й уровень')
+    assert.equal(tree[0].replies.length, 3, 'Все ответы выровнены в один плоский 2-й уровень')
+    assert.ok(tree[0].replies.every((r) => r.replies.length === 0), 'Нет 3-й лесенки вложенности')
 
     const threadSrc = readRepoFile('components/ogonek/comments-thread.tsx')
     assert.ok(threadSrc.includes('rounded-2xl'), 'Инпут использует rounded-2xl вместо узкой капсулы')
@@ -301,5 +306,52 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
 
     const apiSrc = readRepoFile('lib/supabase/api.ts')
     assert.ok(apiSrc.includes('client_id: clientId'), 'createCommentInDb всегда передаёт непустой client_id')
+  })
+
+  it('8. Полировка: иконки действий на 1 линии, белые сердца, кликабельные @mentions и двуязычный поиск эмодзи', () => {
+    const threadSrc = readRepoFile('components/ogonek/comments-thread.tsx')
+    assert.ok(threadSrc.includes('min-h-[28px]'), 'Панель действий выровнена по одной горизонтальной линии')
+    assert.ok(threadSrc.includes('h-7 inline-flex items-center gap-1.5'), 'Кнопки панели действий одной высоты h-7')
+    assert.ok(threadSrc.includes('title="Ответить"'), 'Кнопка ответа заменена на минималистичную иконку с title="Ответить"')
+    assert.ok(!threadSrc.includes('<span>Ответить</span>'), 'Убрана текстовая подпись Ответить')
+    assert.ok(threadSrc.includes('fill-white text-white'), 'Активное сердце лайка строго белое (fill-white text-white)')
+    assert.ok(threadSrc.includes('text-white/45 hover:text-white/80'), 'Неактивное сердце нейтрального белого контура')
+    assert.ok(!threadSrc.includes('#f91880'), 'В комментариях полностью удалён розовый цвет лайка #f91880')
+    assert.ok(threadSrc.includes('renderCommentText'), 'Упоминания @username в комментариях кликабельны')
+    assert.ok(threadSrc.includes('text-[#ff6b35] font-medium hover:underline'), 'Упоминания в комментариях выделены оранжевым акцентом')
+
+    const cssSrc = readRepoFile('app/globals.css')
+    assert.ok(!cssSrc.includes('.story-viewer__icon.is-active {\n  color: var(--pink);'), 'Лайк-сердце в story viewer больше не розовое')
+
+    const bubbleSrc = readRepoFile('components/ogonek/messenger/chat-message-bubble.tsx')
+    assert.ok(
+      bubbleSrc.includes("text-white font-semibold underline decoration-white/60 hover:decoration-white"),
+      'Упоминания в исходящих оранжевых пузырях чата высококонтрастные (белые)'
+    )
+    assert.ok(
+      bubbleSrc.includes("text-[#ff7a45] font-medium hover:underline"),
+      'Упоминания во входящих тёмных пузырях чата остаются оранжевыми'
+    )
+
+    const apiSrc = readRepoFile('lib/supabase/api.ts')
+    assert.ok(apiSrc.includes('effectiveViewerId = sessionData.session.user.id'), 'fetchCommentsForTargets резолвит session.user.id для честного likedByMe после F5')
+    assert.ok(apiSrc.includes('exactLiked'), 'toggleCommentLikeInDb пересчитывает точный count и liked из comment_likes')
+
+    // Проверяем двуязычный поиск эмодзи (RU + EN) и вкладку Недавние
+    assert.ok(searchEmojis('огонь', 'smileys', POPULAR_EMOJIS).includes('🔥'))
+    assert.ok(searchEmojis('fire', 'smileys', POPULAR_EMOJIS).includes('🔥'))
+    assert.ok(searchEmojis('огонек', 'smileys', POPULAR_EMOJIS).includes('🔥'))
+    assert.ok(searchEmojis('сердце', 'smileys', POPULAR_EMOJIS).includes('❤️'))
+    assert.ok(searchEmojis('heart', 'smileys', POPULAR_EMOJIS).includes('❤️'))
+    assert.ok(searchEmojis('смех', 'smileys', POPULAR_EMOJIS).includes('😂'))
+    assert.ok(searchEmojis('lol', 'smileys', POPULAR_EMOJIS).includes('😂'))
+    assert.ok(searchEmojis('ракета', 'smileys', POPULAR_EMOJIS).includes('🚀'))
+    assert.ok(searchEmojis('muscle', 'smileys', POPULAR_EMOJIS).includes('💪'))
+    assert.deepEqual(searchEmojis('несуществующееслово12345', 'smileys', POPULAR_EMOJIS), [])
+    assert.ok(searchEmojis('', 'recent', POPULAR_EMOJIS).length >= 9, 'Вкладка Недавние никогда не пустая')
+
+    const pickerSrc = readRepoFile('components/ogonek/messenger/chat-emoji-picker.tsx')
+    assert.ok(pickerSrc.includes('POPULAR_EMOJIS'), 'Популярные эмодзи добавлены в быстрый доступ')
+    assert.ok(pickerSrc.includes('Ничего не найдено'), 'При пустом поиске отображается аккуратная заглушка')
   })
 })

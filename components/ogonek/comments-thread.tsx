@@ -227,13 +227,25 @@ export function CommentsThread({
       }, 220)
     })
 
+    const onAuthHydrated = () => {
+      if (!cancelled) {
+        void loadCommentsForTargets([target], hints).catch(() => {})
+      }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ogonek:auth-hydrated', onAuthHydrated)
+    }
+
     return () => {
       cancelled = true
       if (rtTimer) clearTimeout(rtTimer)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ogonek:auth-hydrated', onAuthHydrated)
+      }
       unsubscribe()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [target, isSignedUuid, effectivePostAuthorId])
+  }, [target, viewerId, isSignedUuid, effectivePostAuthorId])
 
   const handleNavigateProfile = useCallback(
     (authorId?: string | null) => {
@@ -301,28 +313,34 @@ export function CommentsThread({
   )
 
   const handleReplyClick = useCallback(
-    (node: CommentNode, depth: number) => {
+    (node: CommentNode, depth: number, rootCommentId?: string | null) => {
       playClick(soundEnabled)
-      const resolvedParentId = resolveReplyParentId(node, depth)
+      const resolvedParentId = resolveReplyParentId(node, depth, rootCommentId)
       const mention = node.username ? `@${node.username.replace(/^@/, '')} ` : ''
       setReplyTo({
         parentId: resolvedParentId,
-        branchId: node.id,
+        branchId: resolvedParentId,
         username: node.username || null,
         author: node.author,
       })
 
-      // При ответе на 3-й уровень (или если упоминание отсутствует) мягко подставляем @username
-      if (depth >= 2 && mention) {
+      // При ответе на 2-й уровень подставляем @username автора, оставляя ветку на 2-м уровне
+      if (depth >= 1 && mention) {
         setDraft((prev) => {
           const clean = prev.trimStart()
-          if (clean.startsWith(mention.trim())) return prev
+          if (clean.toLowerCase().startsWith(mention.trim().toLowerCase())) return prev
           return clean ? `${mention}${clean}` : mention
         })
       }
 
       setTimeout(() => {
-        inputRef.current?.focus()
+        const el = inputRef.current
+        if (!el) return
+        el.focus()
+        try {
+          const len = el.value.length
+          el.setSelectionRange(len, len)
+        } catch {}
       }, 20)
     },
     [soundEnabled]
@@ -476,7 +494,35 @@ export function CommentsThread({
   const myAvatarColor =
     currentUser?.avatarColor || cachedMe?.avatar_color || state.profile?.avatarColor || '#FF5C00'
 
-  const renderComment = (node: CommentNode, depth: number): ReactNode => {
+  const renderCommentText = useCallback(
+    (text: string) => {
+      const tokens = text.split(/(@[a-zA-Z0-9._]{2,32})/g)
+      return tokens.map((token, idx) => {
+        if (/^@[a-zA-Z0-9._]{2,32}$/.test(token) && token.toLowerCase() !== '@priday.life') {
+          return (
+            <button
+              key={`mention-${idx}`}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                const cleanHandle = token.replace(/^@+/, '').trim()
+                if (cleanHandle) {
+                  handleNavigateProfile(cleanHandle)
+                }
+              }}
+              className="text-[#ff6b35] font-medium hover:underline cursor-pointer inline"
+            >
+              {token}
+            </button>
+          )
+        }
+        return <span key={`txt-${idx}`}>{token}</span>
+      })
+    },
+    [handleNavigateProfile]
+  )
+
+  const renderComment = (node: CommentNode, depth: number, rootCommentId?: string): ReactNode => {
     const showDelete = canDeleteComment(node, viewerId, effectivePostAuthorId)
     const isDeleting = Boolean(deletingIds[node.id])
     const profileClickable = Boolean(node.authorId)
@@ -488,8 +534,9 @@ export function CommentsThread({
     const verified = Boolean(node.verified ?? cachedAuthor?.verified)
 
     const avatarSize = compact || depth > 0 ? 26 : 30
+    const branchRootId = depth === 0 ? node.id : rootCommentId || node.parentId || node.id
     const childCount = countThreadReplies(node)
-    const hasReplies = node.replies.length > 0 && depth < 2
+    const hasReplies = node.replies.length > 0 && depth < 1
     const isBranchExpanded = Boolean(expandedBranches[node.id])
     const reactionList = node.reactions ?? []
     const isReactionPickerOpen = openReactionPickerId === node.id
@@ -502,7 +549,7 @@ export function CommentsThread({
       ? node.text.replace(/!\[\]\([^)]+\)/g, '').trim()
       : node.text
 
-    const railMarginClass = depth === 0 ? 'ml-[14px] pl-4' : 'ml-[12px] pl-3.5'
+    const railMarginClass = 'ml-[14px] pl-4'
 
     return (
       <div
@@ -564,13 +611,13 @@ export function CommentsThread({
             </div>
 
             {visibleText && (
-              <p className="text-[14px] leading-[20px] text-[#e7e9ea] mt-0.5 whitespace-pre-wrap break-words">
-                {visibleText}
+              <p className="text-[14px] leading-[20px] text-[#e7e9ea] mt-1 whitespace-pre-wrap break-words">
+                {renderCommentText(visibleText)}
               </p>
             )}
 
             {effectiveGifUrl && (
-              <div className="mt-1.5">
+              <div className="mt-2">
                 <CommentGifImage
                   gifUrl={effectiveGifUrl}
                   alt="GIF в комментарии"
@@ -581,7 +628,7 @@ export function CommentsThread({
 
             {/* Пилюли эмодзи-реакций */}
             {reactionList.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {reactionList.map((r) => (
                   <button
                     key={r.emoji}
@@ -602,40 +649,48 @@ export function CommentsThread({
               </div>
             )}
 
-            {/* Полная 5-кнопочная панель действий в стиле X.com на всех 3 уровнях */}
-            <div className="relative flex items-center gap-1 mt-1 -ml-2 flex-wrap">
+            {/* Полная 5-иконочная панель действий в стиле X.com строго на одной линии */}
+            <div className="relative flex items-center gap-4 min-h-[28px] mt-1.5">
               {/* 1. Ответить (+ счётчик ответов в ветке) */}
               <button
                 type="button"
-                onClick={() => handleReplyClick(node, depth)}
+                onClick={() => handleReplyClick(node, depth, branchRootId)}
+                title="Ответить"
                 aria-label="Ответить на комментарий"
-                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors cursor-pointer"
+                className="h-7 inline-flex items-center gap-1.5 text-[12px] text-white/45 hover:text-[#1d9bf0] transition-colors cursor-pointer"
               >
-                <MessageCircle size={14} />
-                <span>Ответить</span>
+                <MessageCircle size={15} />
                 {childCount > 0 && (
-                  <span className="tabular-nums text-[11px] text-[#71767b]">({childCount})</span>
+                  <span className="tabular-nums text-[12px] leading-none">{childCount}</span>
                 )}
               </button>
 
-              {/* 2. Лайк (comment_likes) */}
+              {/* 2. Лайк (comment_likes) — строго белое сердце */}
               <button
                 type="button"
                 onClick={() => void handleLike(node.id)}
                 aria-pressed={node.likedByMe}
                 aria-label={node.likedByMe ? 'Убрать лайк' : 'Лайкнуть комментарий'}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-colors cursor-pointer ${
+                title={node.likedByMe ? 'Убрать лайк' : 'Нравится'}
+                className={`h-7 inline-flex items-center gap-1.5 text-[12px] transition-colors cursor-pointer ${
                   node.likedByMe
-                    ? 'text-[#f91880]'
-                    : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
+                    ? 'text-white'
+                    : 'text-white/45 hover:text-white/80'
                 }`}
               >
-                <Heart size={14} fill={node.likedByMe ? 'currentColor' : 'none'} />
-                {node.likes > 0 && <span className="tabular-nums font-semibold">{node.likes}</span>}
+                <Heart
+                  size={15}
+                  className={node.likedByMe ? 'fill-white text-white' : ''}
+                />
+                {node.likes > 0 && (
+                  <span className={`tabular-nums text-[12px] leading-none ${node.likedByMe ? 'text-white font-semibold' : ''}`}>
+                    {node.likes}
+                  </span>
+                )}
               </button>
 
               {/* 3. Быстрые эмодзи-реакции (comment_reactions) */}
-              <div className="relative" data-comment-popover>
+              <div className="relative inline-flex items-center" data-comment-popover>
                 <button
                   type="button"
                   onClick={() => {
@@ -645,13 +700,14 @@ export function CommentsThread({
                   }}
                   aria-expanded={isReactionPickerOpen}
                   aria-label="Добавить реакцию на комментарий"
-                  className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-[12px] transition-colors cursor-pointer ${
+                  title="Добавить реакцию"
+                  className={`h-7 inline-flex items-center gap-1.5 text-[12px] transition-colors cursor-pointer ${
                     isReactionPickerOpen
-                      ? 'text-[#ffad5a] bg-[#ff5a1f]/15'
-                      : 'text-[#71767b] hover:text-[#ffad5a] hover:bg-[#ff5a1f]/10'
+                      ? 'text-[#ffad5a]'
+                      : 'text-white/45 hover:text-[#ffad5a]'
                   }`}
                 >
-                  <SmilePlus size={14} />
+                  <SmilePlus size={15} />
                 </button>
 
                 {isReactionPickerOpen && (
@@ -681,7 +737,7 @@ export function CommentsThread({
               </div>
 
               {/* 4. Поделиться */}
-              <div className="relative" data-comment-popover>
+              <div className="relative inline-flex items-center" data-comment-popover>
                 <button
                   type="button"
                   onClick={() => {
@@ -691,13 +747,14 @@ export function CommentsThread({
                   }}
                   aria-expanded={isShareOpen}
                   aria-label="Поделиться комментарием"
-                  className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-[12px] transition-colors cursor-pointer ${
+                  title="Поделиться"
+                  className={`h-7 inline-flex items-center gap-1.5 text-[12px] transition-colors cursor-pointer ${
                     isShareOpen
-                      ? 'text-[#e7e9ea] bg-white/[0.08]'
-                      : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.06]'
+                      ? 'text-white'
+                      : 'text-white/45 hover:text-white/80'
                   }`}
                 >
-                  <Share2 size={13} />
+                  <Share2 size={14} />
                 </button>
 
                 {isShareOpen && (
@@ -733,12 +790,13 @@ export function CommentsThread({
                     disabled={isDeleting}
                     onClick={() => void handleDelete(node.id)}
                     aria-label="Удалить комментарий"
-                    className="inline-flex items-center justify-center rounded-full px-2 py-1 text-[12px] text-[#71767b] hover:text-[#f4212e] hover:bg-[#f4212e]/10 transition-colors cursor-pointer disabled:opacity-50"
+                    title="Удалить"
+                    className="h-7 inline-flex items-center gap-1.5 text-[12px] text-white/45 hover:text-[#f4212e] transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {isDeleting ? (
-                      <Loader2 size={13} className="animate-spin" />
+                      <Loader2 size={14} className="animate-spin" />
                     ) : (
-                      <Trash2 size={13} />
+                      <Trash2 size={14} />
                     )}
                   </button>
                 </Tooltip>
@@ -764,7 +822,7 @@ export function CommentsThread({
               </button>
             ) : (
               <div>
-                <div>{node.replies.map((child) => renderComment(child, depth + 1))}</div>
+                <div>{node.replies.map((child) => renderComment(child, depth + 1, branchRootId))}</div>
                 <button
                   type="button"
                   onClick={() => {

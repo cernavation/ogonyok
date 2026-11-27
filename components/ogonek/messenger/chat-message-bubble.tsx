@@ -267,7 +267,11 @@ export function ChatMessageBubble({
               e.stopPropagation()
               openMentionProfile(token)
             }}
-            className="font-bold text-[#ff7a18] hover:underline cursor-pointer inline"
+            className={`cursor-pointer inline ${
+              isMine
+                ? 'text-white font-semibold underline decoration-white/60 hover:decoration-white'
+                : 'text-[#ff7a45] font-medium hover:underline'
+            }`}
           >
             {token}
           </button>
@@ -280,7 +284,14 @@ export function ChatMessageBubble({
         <span key={`txt-${idx}`}>
           {parts.map((part, i) =>
             part.toLowerCase() === q.toLowerCase() ? (
-              <mark key={i} className="bg-[#ff7a18] text-white rounded px-0.5">
+              <mark
+                key={i}
+                className={
+                  isMine
+                    ? 'bg-white text-[#c2410c] font-semibold rounded px-0.5'
+                    : 'bg-[#ff7a18] text-white rounded px-0.5'
+                }
+              >
                 {part}
               </mark>
             ) : (
@@ -668,7 +679,7 @@ export function ChatMessageBubble({
                       : 'border-[var(--accent)] bg-[var(--bg-hover)] text-[var(--text)]'
                   }`}
                 >
-                  <span className="text-[11px] font-bold text-[var(--text)] dark:text-[var(--accent)] leading-none mb-0.5">
+                  <span className={`text-[11px] font-bold leading-none mb-0.5 ${isMine ? 'text-white' : 'text-[var(--text)] dark:text-[var(--accent)]'}`}>
                     {message.replyTo.authorId === 'me' ? 'Ты' : authorName}
                   </span>
                   <span className="truncate text-xs opacity-90 leading-tight">

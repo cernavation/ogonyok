@@ -217,22 +217,41 @@ export function clearProfileMemoryCache() {
  */
 export async function getProfile(userIdOrUsername: string): Promise<ProfileRecord | null> {
   const supabase = getSupabase()
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrUsername)
+  const clean = userIdOrUsername.trim()
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean)
   if (supabase) {
-    let q = supabase.from('profiles').select('*')
     if (isUuid) {
-      q = q.eq('id', userIdOrUsername)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', clean)
+        .maybeSingle()
+      if (!error && data) return cacheProfileRecord(mapProfileRecord(data))
     } else {
-      q = q.eq('username', userIdOrUsername.replace(/^@/, ''))
+      const cleanUsername = clean.replace(/^@+/, '')
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('username', cleanUsername)
+        .maybeSingle()
+      if (!error && data) return cacheProfileRecord(mapProfileRecord(data))
+      const escaped = cleanUsername.replace(/[\\%_]/g, (m) => `\\${m}`)
+      const fallbackRes = await supabase
+        .from('profiles')
+        .select('*')
+        .ilike('username', escaped)
+        .limit(1)
+        .maybeSingle()
+      if (!fallbackRes.error && fallbackRes.data) {
+        return cacheProfileRecord(mapProfileRecord(fallbackRes.data))
+      }
     }
-    const { data, error } = await q.maybeSingle()
-    if (!error && data) return cacheProfileRecord(mapProfileRecord(data))
-    return getCachedProfileSync(userIdOrUsername)
+    return getCachedProfileSync(clean)
   }
 
-  const cleanUser = userIdOrUsername.replace(/^@/, '').toLowerCase()
+  const cleanUser = clean.replace(/^@+/, '').toLowerCase()
   const fallback = FALLBACK_SEED_PROFILES.find(
-    (p) => p.id === userIdOrUsername || p.username.toLowerCase() === cleanUser
+    (p) => p.id === clean || p.username.toLowerCase() === cleanUser
   )
   return fallback ?? null
 }
@@ -1179,7 +1198,7 @@ function mapCommentRowToDomain(
       ? Boolean(likeStats?.likedByMe)
       : Boolean(row.liked_by_me),
     reactions: reactionSummaries && reactionSummaries.length > 0 ? reactionSummaries : undefined,
-    isMine: Boolean(viewerId && authorId && authorId === viewerId),
+    isMine: Boolean(viewerId && authorId && authorId.toLowerCase() === viewerId.toLowerCase()),
   }
 }
 
@@ -1197,6 +1216,15 @@ export async function fetchCommentsForTargets(
 
   const supabase = getSupabase()
   if (!supabase) return { ok: false, commentsByTarget: {}, error: 'База данных не подключена' }
+
+  let effectiveViewerId = viewerId && UUID_REGEX.test(viewerId) ? viewerId : null
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (sessionData?.session?.user?.id) {
+      effectiveViewerId = sessionData.session.user.id
+    }
+  } catch {}
+  const normalizedViewerId = effectiveViewerId ? effectiveViewerId.toLowerCase() : null
 
   const queryKeys = new Set<string>()
   const legacyToScoped = new Map<string, Array<{ canonical: string; ownerId: string | null }>>()
@@ -1262,7 +1290,7 @@ export async function fetchCommentsForTargets(
       if (!cid) continue
       const entry = likesMap.get(cid) ?? { count: 0, likedByMe: false }
       entry.count += 1
-      if (viewerId && row.user_id === viewerId) {
+      if (normalizedViewerId && String(row.user_id || '').toLowerCase() === normalizedViewerId) {
         entry.likedByMe = true
       }
       likesMap.set(cid, entry)
@@ -1282,7 +1310,7 @@ export async function fetchCommentsForTargets(
       }
       const prev = eMap.get(emoji) ?? { count: 0, reactedByMe: false }
       prev.count += 1
-      if (viewerId && row.user_id === viewerId) {
+      if (normalizedViewerId && String(row.user_id || '').toLowerCase() === normalizedViewerId) {
         prev.reactedByMe = true
       }
       eMap.set(emoji, prev)
@@ -1330,7 +1358,7 @@ export async function fetchCommentsForTargets(
       likeStats,
       likesTableAvailable,
       reactionList,
-      viewerId,
+      effectiveViewerId,
       postAuthorHintByTarget?.[destination] ?? null
     )
     if (!result[destination]) result[destination] = []
@@ -1436,7 +1464,7 @@ export async function toggleCommentLikeInDb(params: {
   userId?: string | null
   commentId: string
   willLike: boolean
-}): Promise<{ ok: boolean; liked?: boolean; error?: string }> {
+}): Promise<{ ok: boolean; liked?: boolean; count?: number; error?: string }> {
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'База данных не подключена' }
 
@@ -1461,23 +1489,37 @@ export async function toggleCommentLikeInDb(params: {
       .from('comment_likes')
       .insert({ comment_id: params.commentId, user_id: authUid })
 
-    if (error) {
-      if (error.code === '23505') return { ok: true, liked: true }
+    if (error && error.code !== '23505') {
       return { ok: false, error: error.message }
     }
-    return { ok: true, liked: true }
+  } else {
+    const { error } = await supabase
+      .from('comment_likes')
+      .delete()
+      .eq('comment_id', params.commentId)
+      .eq('user_id', authUid)
+
+    if (error) {
+      return { ok: false, error: error.message }
+    }
   }
 
-  const { error } = await supabase
-    .from('comment_likes')
-    .delete()
-    .eq('comment_id', params.commentId)
-    .eq('user_id', authUid)
+  try {
+    const { data: rowsAfter, error: countErr } = await supabase
+      .from('comment_likes')
+      .select('user_id')
+      .eq('comment_id', params.commentId)
 
-  if (error) {
-    return { ok: false, error: error.message }
-  }
-  return { ok: true, liked: false }
+    if (!countErr && Array.isArray(rowsAfter)) {
+      const exactCount = rowsAfter.length
+      const exactLiked = rowsAfter.some(
+        (r: any) => String(r.user_id || '').toLowerCase() === authUid!.toLowerCase()
+      )
+      return { ok: true, liked: exactLiked, count: exactCount }
+    }
+  } catch {}
+
+  return { ok: true, liked: params.willLike }
 }
 
 /**

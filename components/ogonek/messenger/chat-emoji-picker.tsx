@@ -3,7 +3,14 @@
 import { Search, Sparkles, Smile, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { EMOJI_CATEGORIES, STICKER_PACK, type ChatSticker } from '@/lib/ogonek/messenger'
+import {
+  EMOJI_CATEGORIES,
+  EMOJI_SETS,
+  POPULAR_EMOJIS,
+  STICKER_PACK,
+  searchEmojis,
+  type ChatSticker,
+} from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 
 type Props = {
@@ -19,58 +26,11 @@ type Props = {
 }
 
 const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿']
-
-// Comprehensive categorized emojis
-const EMOJI_SETS: Record<string, string[]> = {
-  smileys: [
-    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '🥹', '😊',
-    '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙',
-    '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎',
-    '🥸', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁',
-    '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
-    '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
-    '🤗', '🤔', '🫣', '🤭', '🫢', '🫡', '🤫', '🫠', '🤐', '🤨',
-  ],
-  gestures: [
-    '👋', '🤚', '🖐', '✋', '🖖', '🫱', '🫲', '🫳', '🫴', '👌',
-    '🤌', '🤏', '✌️', '🤞', '🫰', '🤟', '🤘', '🤙', '👈', '👉',
-    '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜',
-    '👏', '🙌', '🫶', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳',
-    '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀',
-  ],
-  animals: [
-    '🔥', '✨', '⚡️', '🌟', '⭐️', '☀️', '🌱', '🌿', '🍀', '🌲',
-    '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯',
-    '🦁', '🐮', '🐷', '🐸', '🐵', '🐔', '🐧', '🐦', '🦅', '🦉',
-    '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🪱', '🐛', '🦋', '🐌',
-  ],
-  food: [
-    '☕️', '🍵', '🧃', '🥤', '🧋', '🍺', '🍻', '🍷', '🥂', '🥃',
-    '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🫐', '🍒',
-    '🥑', '🥦', '🥕', '🌽', '🌶', '🥐', '🥯', '🍞', '🥖', '🥨',
-    '🧀', '🥚', '🍳', '🥞', '🧇', '🥓', '🥩', '🍗', '🍖', '🌭',
-    '🍔', '🍟', '🍕', '🥪', '🥙', '🧆', '🌮', '🌯', '🥗', '🥘',
-  ],
-  activity: [
-    '⚽️', '🏀', '🏈', '⚾️', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱',
-    '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳️',
-    '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷',
-    '⛸', '🥌', '🎿', '⛷', '🏂', '🪂', '🏋️', '🤼', '🤸', '🤺',
-    '⛹️', '🏊', '🚴', '🚵', '🏃', '🧗', '🏆', '🥇', '🥈', '🥉',
-  ],
-  travel: [
-    '🚗', '🚕', '🚙', '🚌', '🚎', '🏎', '🚓', '🚑', '🚒', '🚐',
-    '🛻', '🚚', '🚛', '🚜', '🛵', '🏍', '🛺', '🚲', '🛴', '🚀',
-    '🛸', '🚁', '🛶', '⛵️', '🚤', '🛳', '⛴', '🚢', '✈️', '🛫',
-    '🌍', '🌎', '🌏', '🗺', '🏔', '⛰', '🌋', '🗻', '🏕', '🏖',
-  ],
-  objects: [
-    '💡', '🕯', '🔦', '⏰', '⏱', '🧭', '📱', '💻', '⌨️', '🖥',
-    '🔋', '🔌', '💎', '🔑', '🔒', '❤️', '🧡', '💛', '💚', '💙',
-    '💜', '🖤', '🤍', '🤎', '💔', '❤️‍🔥', '❤️‍🩹', '❣️', '💕', '💞',
-    '💓', '💗', '💖', '💘', '💝', '🎁', '🎉', '🎊', '🎈', '🪄',
-  ],
-}
+const RECENT_STORAGE_KEY = 'priday_recent_emojis_v1'
+const DEFAULT_RECENTS: string[] = [
+  ...POPULAR_EMOJIS,
+  '🙏', '🤝', '⚡️', '🎉', '🏆', '🎯', '🥳',
+]
 
 export function ChatEmojiPicker({
   onPickEmoji,
@@ -86,9 +46,18 @@ export function ChatEmojiPicker({
   const [category, setCategory] = useState<string>('smileys')
   const [search, setSearch] = useState('')
   const [skinTone, setSkinTone] = useState('')
-  const [recents, setRecents] = useState<string[]>([
-    '🔥', '❤️', '💪', '👏', '🚀', '✨', '🙏', '🤝', '⚡️', '🎉', '🏆', '🎯'
-  ])
+  const [recents, setRecents] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_RECENTS
+    try {
+      const raw = window.localStorage.getItem(RECENT_STORAGE_KEY)
+      if (!raw) return DEFAULT_RECENTS
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter((x): x is string => typeof x === 'string' && x.length > 0).slice(0, 24)
+      }
+    } catch {}
+    return DEFAULT_RECENTS
+  })
 
   useEffect(() => {
     const handleOutside = (e: MouseEvent) => {
@@ -117,21 +86,23 @@ export function ChatEmojiPicker({
     return emoji
   }
 
-  const filteredEmojis = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) {
-      if (category === 'recent') return recents
-      return EMOJI_SETS[category] ?? EMOJI_SETS.smileys
-    }
-    // Search across all sets
-    const all = Object.values(EMOJI_SETS).flat()
-    return Array.from(new Set(all)).filter((e) => e.includes(q))
-  }, [search, category, recents])
+  const filteredEmojis = useMemo(
+    () => searchEmojis(search, category, recents, EMOJI_SETS),
+    [search, category, recents]
+  )
 
   const handleEmojiClick = (emoji: string) => {
     const toned = applyTone(emoji)
     playClick(soundEnabled)
-    setRecents((prev) => [toned, ...prev.filter((x) => x !== toned)].slice(0, 20))
+    setRecents((prev) => {
+      const next = [toned, ...prev.filter((x) => x !== toned)].slice(0, 24)
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(next))
+        } catch {}
+      }
+      return next
+    })
     onPickEmoji(toned)
   }
 
@@ -204,9 +175,19 @@ export function ChatEmojiPicker({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Поиск эмодзи..."
-                className="w-full rounded-lg border border-white/10 bg-black/30 py-1 pl-8 pr-3 text-xs text-white placeholder-[#71767b] outline-none focus:border-[#ff7a18]"
+                placeholder="Поиск: огонь, сердце, cool..."
+                className="w-full rounded-lg border border-white/10 bg-black/30 py-1 pl-8 pr-6 text-xs text-white placeholder-[#71767b] outline-none focus:border-[#ff7a18]"
               />
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => setSearch('')}
+                  aria-label="Очистить поиск"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[#71767b] hover:text-white cursor-pointer"
+                >
+                  <X size={12} />
+                </button>
+              )}
             </div>
 
             {/* Выбор тона кожи */}
@@ -227,42 +208,65 @@ export function ChatEmojiPicker({
             </div>
           </div>
 
-          {/* Панель категорий */}
+          {/* Панель категорий и быстрые популярные эмодзи */}
           {!search && (
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-white/5 px-2 py-1 bg-black/10">
-              {EMOJI_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    setCategory(cat.id)
-                  }}
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm transition-colors ${
-                    category === cat.id ? 'bg-white/15 text-[#ffad5a]' : 'text-[#71767b] hover:text-white'
-                  }`}
-                  title={cat.label}
-                >
-                  {cat.icon}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-white/5 px-2 py-1 bg-black/10">
+                {EMOJI_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setCategory(cat.id)
+                    }}
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm transition-colors ${
+                      category === cat.id ? 'bg-white/15 text-[#ffad5a]' : 'text-[#71767b] hover:text-white'
+                    }`}
+                    title={cat.label}
+                  >
+                    {cat.icon}
+                  </button>
+                ))}
+              </div>
+              {category !== 'recent' && (
+                <div className="flex items-center justify-between gap-0.5 border-b border-white/5 px-2.5 py-1 bg-white/[0.02]">
+                  {POPULAR_EMOJIS.map((emoji) => (
+                    <button
+                      key={`pop-${emoji}`}
+                      type="button"
+                      onClick={() => handleEmojiClick(emoji)}
+                      className="flex h-7 w-7 items-center justify-center rounded-lg text-base hover:bg-white/10 hover:scale-115 transition-transform cursor-pointer"
+                      title="Быстрый выбор"
+                    >
+                      {applyTone(emoji)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {/* Сетка эмодзи */}
           <div className="flex-1 overflow-y-auto p-2 scroll-smooth">
-            <div className="grid grid-cols-8 gap-1">
-              {filteredEmojis.map((emoji, idx) => (
-                <button
-                  key={`${emoji}-${idx}`}
-                  type="button"
-                  onClick={() => handleEmojiClick(emoji)}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-xl hover:bg-white/10 hover:scale-125 transition-transform"
-                >
-                  {applyTone(emoji)}
-                </button>
-              ))}
-            </div>
+            {filteredEmojis.length > 0 ? (
+              <div className="grid grid-cols-8 gap-1">
+                {filteredEmojis.map((emoji, idx) => (
+                  <button
+                    key={`${emoji}-${idx}`}
+                    type="button"
+                    onClick={() => handleEmojiClick(emoji)}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-xl hover:bg-white/10 hover:scale-125 transition-transform"
+                  >
+                    {applyTone(emoji)}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-[#71767b]">
+                Ничего не найдено
+              </div>
+            )}
           </div>
         </>
       ) : (

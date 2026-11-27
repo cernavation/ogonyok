@@ -4856,7 +4856,8 @@ kbd {
   background: rgba(0, 0, 0, 0.65);
 }
 .story-viewer__icon.is-active {
-  color: var(--pink);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
 }
 .story-viewer__icon.is-danger:hover {
   color: #ff5c5c;

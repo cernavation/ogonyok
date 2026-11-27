@@ -62,18 +62,19 @@ export function extractDayNumberFromTarget(target?: string | null): string | nul
 }
 
 /**
- * Разрешает реальный parentId при ответе на комментарий с ограничением до 3 уровней глубины:
+ * Разрешает реальный parentId при ответе на комментарий с плоской 2-уровневой вложенностью:
  *  - Уровень 1 (depth 0): корневой комментарий (parentId = null)
- *  - Уровень 2 (depth 1): ответ на корень
- *  - Уровень 3 (depth 2): ответ на уровень 2
- * При ответе на комментарий 3-го уровня ответ прикрепляется на 3-й уровень (к тому же родителю 2-го уровня).
+ *  - Уровень 2 (depth >= 1): все ответы (и ответы на ответы) крепятся под 1-й уровень (rootParentId),
+ *    без 3-й «лесенки» вложенности.
  */
 export function resolveReplyParentId(
   node: Pick<Comment, 'id' | 'parentId'>,
-  depth: number
+  depth: number,
+  rootParentId?: string | null
 ): string {
-  if (depth >= 2 && node.parentId) {
-    return node.parentId
+  if (depth >= 1) {
+    if (rootParentId) return rootParentId
+    if (node.parentId) return node.parentId
   }
   return node.id
 }
@@ -116,8 +117,9 @@ export function filterRealComments(list: readonly Comment[]): Comment[] {
 }
 
 /**
- * Собирает плоский список комментариев в дерево ответов (хронологически),
- * строго ограничивая вложенность до 3 уровней (depth 0 -> depth 1 -> depth 2).
+ * Собирает плоский список комментариев в 2-уровневое дерево ответов (хронологически):
+ *  - Уровень 1: корневые комментарии (parentId = null)
+ *  - Уровень 2: все ответы (включая ответы на ответы) крепятся напрямую к корневому комментарию.
  */
 export function buildCommentTree(comments: readonly Comment[]): CommentNode[] {
   const clean = filterRealComments(comments)
@@ -132,30 +134,25 @@ export function buildCommentTree(comments: readonly Comment[]): CommentNode[] {
     parentMap.set(comment.id, comment.parentId ?? null)
   }
 
-  // Находим уровень глубины каждого узла и, если цепочка глубже 2 (т.е. 4+ уровень),
-  // подтягиваем узел к ближайшему предку уровня 2, чтобы он стал на 3-й уровень.
-  const getDepthAndLevel2Ancestor = (id: string): { depth: number; level2ParentId: string | null } => {
+  // Любой комментарий с предком прикрепляется к корневому предку 1-го уровня (depth = 1).
+  const getRootAncestorId = (id: string): string | null => {
     const chain: string[] = []
     let curr: string | null | undefined = parentMap.get(id)
     const seen = new Set<string>([id])
     while (curr && byId.has(curr) && !seen.has(curr)) {
       seen.add(curr)
-      chain.unshift(curr) // от корня до непосредственного родителя
+      chain.unshift(curr) // chain[0] = корневой комментарий 1-го уровня
       curr = parentMap.get(curr)
     }
-    // chain[0] = уровень 1 (depth 0), chain[1] = уровень 2 (depth 1)
-    if (chain.length <= 2) {
-      return { depth: chain.length, level2ParentId: chain[chain.length - 1] ?? null }
-    }
-    return { depth: 2, level2ParentId: chain[1] }
+    return chain[0] ?? null
   }
 
   const roots: CommentNode[] = []
   for (const comment of sorted) {
     const node = byId.get(comment.id)!
-    const { level2ParentId } = getDepthAndLevel2Ancestor(comment.id)
-    if (level2ParentId && byId.has(level2ParentId) && level2ParentId !== node.id) {
-      byId.get(level2ParentId)!.replies.push(node)
+    const rootAncestorId = getRootAncestorId(comment.id)
+    if (rootAncestorId && byId.has(rootAncestorId) && rootAncestorId !== node.id) {
+      byId.get(rootAncestorId)!.replies.push(node)
     } else {
       roots.push(node)
     }

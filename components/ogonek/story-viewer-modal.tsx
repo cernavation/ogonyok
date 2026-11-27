@@ -643,12 +643,12 @@ export function StoryViewerModal({
           ) : (
             <button
               type="button"
-              className={`story-viewer__icon ${liked ? 'is-active' : ''}`}
+              className={`story-viewer__icon ${liked ? 'is-active text-white' : '!text-white/55 hover:!text-white'}`}
               onClick={() => handleReaction('heart', '❤️', 'Любовь')}
               aria-label={liked ? 'Убрать поддержку' : 'Поддержать'}
               aria-pressed={liked}
             >
-              <Heart size={17} fill={liked ? 'currentColor' : 'none'} />
+              <Heart size={17} className={liked ? 'fill-white text-white' : ''} />
             </button>
           )}
           <button

@@ -119,9 +119,11 @@ export function ProfileView({
   onOpenFriends,
   soundEnabled,
 }: Props) {
+  const normalizedTarget = targetUserId?.replace(/^@+/, '').toLowerCase()
+  const normalizedOwnUsername = (storeState.profile.username || '').replace(/^@+/, '').toLowerCase()
   const isOwnProfile = !targetUserId ||
     targetUserId === storeState.auth.activeAccountId ||
-    targetUserId === storeState.profile.username ||
+    (Boolean(normalizedTarget) && Boolean(normalizedOwnUsername) && normalizedTarget === normalizedOwnUsername) ||
     targetUserId === 'me'
 
   const [foreignProfile, setForeignProfile] = useState<ProfileRecord | null>(null)
