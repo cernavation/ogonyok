@@ -65,9 +65,12 @@ describe('Stage 2: Social Core SSOT, Unified Avatar & VerifiedBadge, Story Heade
     assert.equal(mineViewable!.avatarColor, '#2196f3')
   })
 
-  it('VerifiedBadge использует единый синий #1d9bf0 и внедрён во всех чатах и социальных экранах', () => {
+  it('VerifiedBadge использует единый фирменный #d76737 с чёрной галочкой и внедрён во всех чатах и социальных экранах', () => {
     const badgeSrc = readRepoFile('components/ogonek/ui/verified-badge.tsx')
-    assert.ok(badgeSrc.includes('#1d9bf0'), 'VerifiedBadge обязан использовать единый цвет #1d9bf0')
+    assert.ok(
+      badgeSrc.includes('#d76737') && badgeSrc.includes('#000000'),
+      'VerifiedBadge обязан использовать единый цвет #d76737 и чёрную галочку #000000'
+    )
 
     const filesUsingVerifiedBadge = [
       'components/ogonek/messenger/messenger-dialog-list.tsx',

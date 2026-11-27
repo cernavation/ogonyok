@@ -117,7 +117,7 @@ describe('Точечные фиксы — комментарии без эмод
     assert.ok(railSrc.includes('computeWeeklyMilestoneProgress'))
     assert.ok(railSrc.includes('rhythm-big-milestone'))
     assert.ok(railSrc.includes('rhythm-hundred-progress'))
-    assert.ok(railSrc.includes('from-[#ff5a1f] to-[#ff9f1c]'))
+    assert.ok(railSrc.includes('bg-white/45'))
     assert.ok(railSrc.includes('bg-white/90'))
     assert.ok(railSrc.includes('h-1.5'))
     assert.ok(!railSrc.includes('До вехи'), 'Старая запутывающая подпись «До вехи» удалена')

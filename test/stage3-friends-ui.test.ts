@@ -10,7 +10,7 @@ function readRepoFile(relPath: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
 }
 
-describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModal, Blue VerifiedBadge', () => {
+describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModal, VerifiedBadge', () => {
   it('1. Счётчик непрочитанных игнорирует прочитанные сообщения из Supabase и загружается в AppShell на Главной', () => {
     const dbThreadAfterF5: ChatThreadState = {
       ...emptyThread(),
@@ -68,7 +68,7 @@ describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModa
     assert.ok(src.includes('Написать'), 'Есть оранжевая кнопка Написать')
     assert.ok(src.includes('Открыть профиль'), 'Есть кнопка Открыть профиль')
     assert.ok(src.includes('Убрать из друзей') && src.includes('Заблокировать'), 'Есть меню ... с Убрать из друзей и Заблокировать')
-    assert.ok(src.includes('VerifiedBadge'), 'Используется единый синий VerifiedBadge')
+    assert.ok(src.includes('VerifiedBadge'), 'Используется единый VerifiedBadge')
     assert.ok(!src.includes('Позвать'), 'Удалена кнопка Позвать')
     assert.ok(!src.includes('дней вместе') && !src.includes('friend-story-card'), 'Удалены гигантские градиентные плитки и фейковая метрика')
     assert.ok(!src.includes('Уже друзья'), 'Удалены 3 дублирующие кнопки статуса')
@@ -84,15 +84,16 @@ describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModa
     assert.ok(!src.includes('Входящие заявки') && !src.includes("activeTab === 'following'"), 'Удалены лишние вкладки Заявки / Подписки / Поиск')
   })
 
-  it('5. Единая синяя галочка VerifiedBadge (#1d9bf0) во всех местах, включая .account-menu__verified', () => {
+  it('5. Единая фирменная галочка VerifiedBadge (#d76737 с чёрной галочкой) во всех местах, включая .account-menu__verified', () => {
     const badgeSrc = readRepoFile('components/ogonek/ui/verified-badge.tsx')
-    assert.ok(badgeSrc.includes("backgroundColor: '#1d9bf0'"), 'VerifiedBadge фиксирует #1d9bf0 стилем и классом')
+    assert.ok(badgeSrc.includes("backgroundColor: '#d76737'"), 'VerifiedBadge фиксирует #d76737 стилем и классом')
+    assert.ok(badgeSrc.includes("color: '#000000'"), 'Галочка внутри VerifiedBadge строго #000000 для максимального контраста')
 
     const cssSrc = readRepoFile('app/globals.css')
     const accMenuBlock = cssSrc.slice(
       cssSrc.indexOf('.account-menu__verified'),
-      cssSrc.indexOf('.account-menu__verified') + 90
+      cssSrc.indexOf('.account-menu__verified') + 95
     )
-    assert.ok(accMenuBlock.includes('color: #1d9bf0;'), '.account-menu__verified окрашен строго в #1d9bf0')
+    assert.ok(accMenuBlock.includes('#d76737'), '.account-menu__verified окрашен в фирменный #d76737')
   })
 })

@@ -24,29 +24,20 @@ export function FocusFlame({ stats, compact = false, className = '', onClick, ti
   const inner = (
     <>
       <span
-        className="relative inline-flex items-center justify-center flex-none rounded-full"
+        className="relative inline-flex items-center justify-center flex-none rounded-full bg-white/[0.06] border border-white/[0.1]"
         style={{
           width: compact ? 34 : 46,
           height: compact ? 34 : 46,
-          background: 'radial-gradient(circle at 50% 62%, rgba(255,166,0,0.22), rgba(255,107,53,0.05) 70%, transparent)',
-          boxShadow: stats.currentStreak > 0 ? `0 0 18px ${tier.color}55` : 'none',
         }}
         aria-hidden="true"
       >
         <Flame
-          size={compact ? 22 : 30}
+          size={compact ? 20 : 28}
           strokeWidth={1.6}
-          style={{
-            color: stats.currentStreak > 0 ? tier.color : '#4b5563',
-            fill: stats.currentStreak > 0 ? `${tier.color}33` : 'transparent',
-          }}
+          className={stats.currentStreak > 0 ? 'text-white/75' : 'text-white/35'}
         />
         <span
-          className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-center font-extrabold tabular-nums"
-          style={{
-            background: stats.currentStreak > 0 ? tier.color : '#2f3336',
-            color: stats.currentStreak > 0 ? '#1a0f00' : '#9aa4af',
-          }}
+          className="absolute -bottom-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] leading-[18px] text-center font-bold tabular-nums bg-white/[0.14] text-white/90 border border-white/[0.16]"
         >
           {stats.currentStreak}
         </span>

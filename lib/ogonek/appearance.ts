@@ -90,7 +90,7 @@ export type AccentPreset = {
 }
 
 export const ACCENT_PRESETS: AccentPreset[] = [
-  { id: 'flame', label: 'Priday', color: '#FF5C00', strong: '#E65300', soft: 'rgba(255,92,0,0.12)' },
+  { id: 'flame', label: 'Priday', color: '#d76737', strong: '#bd562b', soft: 'rgba(215,103,55,0.14)' },
   { id: 'blue', label: 'Небесный', color: '#1D9BF0', strong: '#1A8CD8', soft: 'rgba(29,155,240,0.12)' },
   { id: 'violet', label: 'Аметист', color: '#7856FF', strong: '#6742ED', soft: 'rgba(120,86,255,0.12)' },
   { id: 'emerald', label: 'Изумруд', color: '#00BA7C', strong: '#009664', soft: 'rgba(0,186,124,0.12)' },
@@ -138,7 +138,15 @@ export function getDarkenedForLight(hex: string): string {
 }
 
 export function computeAccentDetails(hex: string) {
-  const rgb = hexToRgb(hex) || { r: 255, g: 92, b: 0 }
+  if (typeof hex === 'string' && hex.trim().toLowerCase() === '#d76737') {
+    return {
+      color: '#d76737',
+      hover: '#e0784b',
+      soft: 'rgba(215, 103, 55, 0.14)',
+      contrast: '#000000',
+    }
+  }
+  const rgb = hexToRgb(hex) || { r: 215, g: 103, b: 55 }
   const lum = getLuminance(rgb.r, rgb.g, rgb.b)
   // Contrast text: black if relative luminance > 0.179 (WCAG mathematical midpoint), else white
   const contrast = lum > 0.179 ? '#000000' : '#FFFFFF'
@@ -151,6 +159,31 @@ export function computeAccentDetails(hex: string) {
   const hb = Math.min(255, Math.max(0, Math.round(rgb.b * factor)))
   const hover = `#${hr.toString(16).padStart(2, '0')}${hg.toString(16).padStart(2, '0')}${hb.toString(16).padStart(2, '0')}`
   return { color: hex, hover, soft, contrast }
+}
+
+/**
+ * Кастомные/альтернативные акценты разрешены строго на тарифе Ultra.
+ * Для Free и Pro принудительно возвращается единый фирменный акцент `flame` (#d76737).
+ */
+export function resolveEffectiveAccentForTier(
+  accent: AccentId,
+  subscriptionTier?: string | null,
+  subscriptionExpiresAt?: string | null,
+  username?: string | null
+): AccentId {
+  const isCerna =
+    typeof username === 'string' && username.toLowerCase().replace(/^@/, '') === 'cernavation'
+  const cleanTier = typeof subscriptionTier === 'string' ? subscriptionTier.trim().toLowerCase() : ''
+  const isExpired =
+    Boolean(subscriptionExpiresAt) &&
+    !isCerna &&
+    !Number.isNaN(new Date(subscriptionExpiresAt as string).getTime()) &&
+    new Date(subscriptionExpiresAt as string).getTime() < Date.now()
+  const isUltra = (isCerna && (!cleanTier || cleanTier === 'free')) || (cleanTier === 'ultra' && !isExpired)
+  if (isUltra) {
+    return isAccentId(accent) ? accent : DEFAULT_ACCENT
+  }
+  return DEFAULT_ACCENT
 }
 
 /* ── Размер шрифта / масштаб интерфейса ──────────────────────────────────── */
@@ -217,7 +250,7 @@ export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Do
   }
 
   // Расчёт и применение переменных акцента
-  let accentHex = '#FF5C00'
+  let accentHex = '#d76737'
   if (typeof settings.accent === 'string' && settings.accent.startsWith('#')) {
     root.setAttribute('data-accent', 'custom')
     accentHex = settings.accent
@@ -235,7 +268,7 @@ export function applyAppearanceToDocument(settings: AppearanceSettings, doc?: Do
   root.style.setProperty('--accent-contrast', details.contrast)
   root.style.setProperty('--accent-text', details.contrast)
   root.style.setProperty('--orange', details.color)
-  root.style.setProperty('--blue', '#1D9BF0')
+  root.style.setProperty('--blue', details.color)
 
   // Подсказываем браузеру схему
   const scheme = getThemePreset(settings.theme).scheme

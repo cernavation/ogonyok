@@ -349,7 +349,7 @@ export function StoriesBar({
       {variant === 'rail' && (
         <header className="stories-rail__head">
           <h2 className="stories-rail__title">
-            <Sparkles size={17} className="text-[#ff8a50]" aria-hidden="true" />
+            <Sparkles size={17} className="text-[#d76737]" aria-hidden="true" />
             Сторис друзей
           </h2>
           <span className="stories-rail__badge">
@@ -412,7 +412,7 @@ export function StoriesBar({
               >
                 <span
                   className="story-ring__ring"
-                  style={{ background: viewed ? '#3a3f45' : viewable.avatarColor }}
+                  style={{ background: viewed ? '#3a3f45' : 'var(--accent, #d76737)' }}
                 >
                   <span className="story-ring__inner">
                     <span
@@ -453,7 +453,7 @@ export function StoriesBar({
           >
             <span className="story-ring__ring" style={{ background: 'transparent' }}>
               <span className="story-ring__inner">
-                <Eye size={18} className="text-[#1d9bf0]" aria-hidden="true" />
+                <Eye size={18} className="text-white/65 hover:text-white transition-colors" aria-hidden="true" />
               </span>
             </span>
             <span className="story-ring__name w-20 text-[11px] leading-tight text-center whitespace-nowrap">Все истории</span>

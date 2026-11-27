@@ -453,7 +453,7 @@ function DayCardComponent({
       <article
         className={`border-b border-[var(--line)] px-4 py-4 transition-all duration-500 ${
           isHighlighted
-            ? 'ring-2 ring-inset ring-[#ff5a1f]/80 bg-[#ff5a1f]/[0.06] shadow-[0_0_28px_rgba(255,90,31,0.22)]'
+            ? 'ring-2 ring-inset ring-[#d76737]/80 bg-[#d76737]/[0.06] shadow-[0_0_24px_rgba(215,103,55,0.18)]'
             : 'hover:bg-white/[0.02]'
         }`}
         id={`day-card-${day.id}`}
@@ -501,20 +501,20 @@ function DayCardComponent({
                 </button>
                 {averageScore !== null && (
                   <span
-                    className="inline-flex items-center gap-0.5 text-[13px] text-amber-400 font-bold bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-full"
+                    className="inline-flex items-center gap-0.5 text-[12px] text-white/75 font-semibold bg-white/[0.06] border border-white/[0.1] px-2 py-0.5 rounded-full"
                     title={`Балл дня: ${Number(day.score ?? averageScore).toFixed(1)}/10`}
                   >
                     ★ {Number(day.score ?? averageScore).toFixed(1)}
                   </span>
                 )}
                 <span
-                  className="text-[12px] px-2 py-0.5 rounded-full font-bold bg-[var(--accent-soft)] text-[var(--text)] dark:text-[var(--accent)]"
+                  className="text-[12px] px-2 py-0.5 rounded-full font-semibold bg-white/[0.06] border border-white/[0.1] text-white/80"
                 >
                   День #{day.id}
                 </span>
                 {dayVisibility === 'group' && resolvedGroupName && (
                   <span
-                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-[#ff5a1f]/15 text-[#ff8a5c] border border-[#ff5a1f]/35"
+                    className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-semibold bg-white/[0.06] text-white/75 border border-white/[0.1]"
                     title={`Аудитория: группа «${resolvedGroupName}»`}
                   >
                     👥 {resolvedGroupName}
@@ -542,7 +542,7 @@ function DayCardComponent({
               </p>
               <div className="flex items-center gap-2 flex-none">
                 {firstPride && ((typeof firstPride.score === 'number' && firstPride.score > 0) || (typeof firstPride.scale === 'number' && firstPride.scale > 0)) && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-white/[0.06] border border-white/[0.1] text-white/75">
                     {Number(firstPride.score ?? firstPride.scale).toFixed(1)}★
                   </span>
                 )}
@@ -559,11 +559,7 @@ function DayCardComponent({
                         setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
                         onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
                       }}
-                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-none transition-all ${
-                        isPub
-                          ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
-                          : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
-                      }`}
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.06] text-white/75 hover:bg-white/[0.1] hover:text-white flex-none transition-colors cursor-pointer"
                       title={
                         isPub
                           ? '🌐 Публично (видят все) — нажми для переключения'
@@ -573,12 +569,12 @@ function DayCardComponent({
                     >
                       {isPub ? (
                         <>
-                          <Globe size={11} className="text-sky-400" />
+                          <Globe size={11} className="text-white/55" />
                           <span>Публично</span>
                         </>
                       ) : (
                         <>
-                          <Lock size={11} className="text-zinc-400" />
+                          <Lock size={11} className="text-white/55" />
                           <span>Лично</span>
                         </>
                       )}
@@ -624,7 +620,7 @@ function DayCardComponent({
                               </span>
                               <span className="flex-1 break-words text-[15px] leading-6 font-normal text-[var(--text)]">{p.text}</span>
                               {((typeof p.score === 'number' && p.score > 0) || (typeof p.scale === 'number' && p.scale > 0)) && (
-                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-black/60 border border-[#2f3336] text-[#e7e9ea]">
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold shrink-0 bg-white/[0.06] border border-white/[0.1] text-white/75">
                                   {Number(p.score ?? p.scale).toFixed(1)}★
                                 </span>
                               )}
@@ -637,11 +633,7 @@ function DayCardComponent({
                                     setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
                                     onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
                                   }}
-                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border flex-none transition-all ${
-                                    isPub
-                                      ? 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:bg-sky-500/20'
-                                      : 'text-zinc-400 bg-zinc-800/80 border-zinc-700 hover:bg-zinc-700'
-                                  }`}
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-white/[0.1] bg-white/[0.06] text-white/75 hover:bg-white/[0.1] hover:text-white flex-none transition-colors cursor-pointer"
                                   title={
                                     isPub
                                       ? '🌐 Публично (видят все) — нажми для переключения'
@@ -651,12 +643,12 @@ function DayCardComponent({
                                 >
                                   {isPub ? (
                                     <>
-                                      <Globe size={10} className="text-sky-400" />
+                                      <Globe size={10} className="text-white/55" />
                                       <span>Публично</span>
                                     </>
                                   ) : (
                                     <>
-                                      <Lock size={10} className="text-zinc-400" />
+                                      <Lock size={10} className="text-white/55" />
                                       <span>Лично</span>
                                     </>
                                   )}

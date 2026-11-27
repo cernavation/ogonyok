@@ -100,6 +100,7 @@ export function SettingsView({
             subscriptionExpiresAt={
               state.profile.subscription_expires_at || (state.profile as any)?.subscription_valid_until
             }
+            subscriptionUsername={state.profile.username}
             onSetTheme={onSetTheme}
             onSetAccent={onSetAccent}
             onSetFontScale={onSetFontScale}

@@ -146,7 +146,7 @@ export function FeedSettingsMenu({
             <Settings2 size={14} aria-hidden="true" />
             <span className="feed-settings-menu__item-text">
               <b>Все настройки</b>
-              <small>Тема, акцент, шрифт и синхронизация</small>
+              <small>Тема, шрифт, плотность и синхронизация</small>
             </span>
           </button>
         </motion.div>

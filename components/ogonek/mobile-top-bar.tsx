@@ -74,8 +74,8 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
           onClick={() => onNavigate('home')}
           aria-label="На главную"
         >
-          <span className="w-7 h-7 rounded-full bg-[var(--accent,#FF6A1A)]/10 flex items-center justify-center">
-            <Flame size={16} className="text-[var(--accent,#FF6A1A)] fill-[var(--accent,#FF6A1A)]/20" />
+          <span className="w-7 h-7 rounded-full bg-[#d76737]/15 flex items-center justify-center">
+            <Flame size={16} className="text-[#d76737] fill-[#d76737]/20" />
           </span>
           <span className="font-bold text-[17px] tracking-tight text-[var(--text)]">Priday</span>
         </button>
@@ -90,7 +90,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
               className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--surface-subtle,#1d1f23)] border border-[var(--border)] active:scale-95 transition-transform"
               aria-label={`Текущий стрик: ${streak} дней`}
             >
-              <Flame size={14} className="text-[#ff6b35] fill-[#ff6b35]" />
+              <Flame size={14} className="text-[#d76737] fill-[#d76737]" />
               <span className="text-[12px] font-bold text-[var(--text)]">{streak}</span>
             </button>
           )}

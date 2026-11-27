@@ -134,10 +134,13 @@ function getDayPhotoCandidate(day: Day | null | undefined): string | null {
 }
 
 export const DRAFT_STORAGE_KEY = 'priday_draft'
+export const SKIP_PUBLIC_WARNING_STORAGE_KEY = 'priday_skip_public_warning'
 
 type Props = {
   initialDraft?: ComposerDraft | null
   editingDay?: Day | null
+  /** Действие быстрого запуска с Главной ('photo' | 'date') */
+  initialAction?: 'photo' | 'date' | null
   /** Next new day id (for display in title) */
   nextDayId?: number
   /** Next new day date ISO string (auto-populated from last day + 1) */
@@ -164,6 +167,7 @@ function getCachedComposerDraft(): ComposerDraft | null {
 export function Composer({
   initialDraft: passedInitialDraft,
   editingDay,
+  initialAction = null,
   nextDayId,
   nextDayDateISO,
   onSaveDraft,
@@ -374,7 +378,13 @@ export function Composer({
   })
 
   const [audienceMenuOpen, setAudienceMenuOpen] = useState(false)
+  const audienceBtnRef = useRef<HTMLButtonElement | null>(null)
+  const audienceMenuRef = useRef<HTMLDivElement | null>(null)
+  const [audiencePos, setAudiencePos] = useState<{ top: number; left: number; width: number } | null>(null)
   const [showPublicWarning, setShowPublicWarning] = useState(false)
+  const [dontShowPublicWarningAgain, setDontShowPublicWarningAgain] = useState(false)
+  const [showHelpGuide, setShowHelpGuide] = useState(false)
+  const dateInputRef = useRef<HTMLInputElement | null>(null)
 
   /** Модалка торжественной ИИ-оценки дня */
   const [showCeremonyModal, setShowCeremonyModal] = useState(false)
@@ -400,6 +410,51 @@ export function Composer({
       setDateISO(nextDayDateISO)
     }
   }, [nextDayDateISO, editingDay, initialDraft])
+
+  useEffect(() => {
+    if (!audienceMenuOpen) {
+      setAudiencePos(null)
+      return
+    }
+    const updatePos = () => {
+      if (!audienceBtnRef.current || typeof window === 'undefined') return
+      const rect = audienceBtnRef.current.getBoundingClientRect()
+      const menuWidth = 256
+      const viewportW = window.innerWidth
+      const viewportH = window.innerHeight
+      const left = Math.max(12, Math.min(rect.right - menuWidth, viewportW - menuWidth - 12))
+      const spaceBelow = viewportH - rect.bottom - 12
+      const estimatedHeight = 290
+      const top =
+        spaceBelow >= 210 || rect.top < 240
+          ? rect.bottom + 6
+          : Math.max(12, rect.top - estimatedHeight - 6)
+      setAudiencePos({ top, left, width: menuWidth })
+    }
+    updatePos()
+    const onOutside = (e: MouseEvent) => {
+      const target = e.target as Node | null
+      if (!target) return
+      if (audienceBtnRef.current?.contains(target)) return
+      if (audienceMenuRef.current?.contains(target)) return
+      setAudienceMenuOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAudienceMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', updatePos)
+    window.addEventListener('scroll', updatePos, true)
+    document.addEventListener('mousedown', onOutside)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('resize', updatePos)
+      window.removeEventListener('scroll', updatePos, true)
+      document.removeEventListener('mousedown', onOutside)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [audienceMenuOpen])
 
   const previewRef = useRef<string | null>(preview)
 
@@ -531,6 +586,35 @@ export function Composer({
   )
   const tierLimits = getTierLimits(userTier)
   const maxChars = tierLimits.maxCharsPerEntry
+
+  const didRunInitialActionRef = useRef(false)
+  useEffect(() => {
+    if (!initialAction || didRunInitialActionRef.current) return
+    didRunInitialActionRef.current = true
+    const timer = setTimeout(() => {
+      if (initialAction === 'photo') {
+        if (tierLimits.maxPhotosPerDay === 0) {
+          window.dispatchEvent(
+            new CustomEvent('ogonek:open-upgrade', {
+              detail: { feature: 'photos', force: true },
+            })
+          )
+          onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
+        } else {
+          fileInputRef.current?.click()
+        }
+      } else if (initialAction === 'date') {
+        const input = dateInputRef.current
+        if (input) {
+          input.focus()
+          try {
+            ;(input as any).showPicker?.()
+          } catch {}
+        }
+      }
+    }, 60)
+    return () => clearTimeout(timer)
+  }, [initialAction, tierLimits.maxPhotosPerDay, onNotify])
 
   // Validation: ensure no pride or gratitude exceeds maxChars
   const hasOverlongItem = useMemo(() => {
@@ -1085,6 +1169,15 @@ export function Composer({
   const requestPublicAudience = () => {
     playClick(soundEnabled)
     setAudienceMenuOpen(false)
+    if (typeof window !== 'undefined') {
+      try {
+        if (window.localStorage.getItem(SKIP_PUBLIC_WARNING_STORAGE_KEY) === '1') {
+          confirmPublicAudience()
+          return
+        }
+      } catch {}
+    }
+    setDontShowPublicWarningAgain(false)
     setShowPublicWarning(true)
   }
 
@@ -1136,6 +1229,7 @@ export function Composer({
       onClose={onClose}
       hideHeader
       closeOnEscape={storyModalIndex === null}
+      modalClassName="!w-full !max-w-[600px] !rounded-2xl !bg-[#060608] !border !border-white/[0.14]"
     >
       <div onClick={(e) => e.stopPropagation()} className="w-full">
       {/* ── X.COM CANONICAL COMPOSER ────────────────────────────────────────── */}
@@ -1158,9 +1252,9 @@ export function Composer({
               role="tab"
               aria-selected={tab === 'pride'}
               onClick={() => handleSwitchTab('pride')}
-              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] cursor-pointer ${
                 tab === 'pride'
-                  ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm'
+                  ? 'bg-[#d76737] text-black shadow-sm'
                   : 'text-[var(--text-2)] hover:text-[var(--text)]'
               }`}
             >
@@ -1172,9 +1266,9 @@ export function Composer({
               data-tour="composer-gratitude"
               aria-selected={tab === 'gratitude'}
               onClick={() => handleSwitchTab('gratitude')}
-              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] ${
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold transition-all min-h-[34px] cursor-pointer ${
                 tab === 'gratitude'
-                  ? 'bg-rose-600 text-white shadow-sm'
+                  ? 'bg-[#d76737] text-black shadow-sm'
                   : 'text-[var(--text-2)] hover:text-[var(--text)]'
               }`}
             >
@@ -1192,7 +1286,7 @@ export function Composer({
                 <div
                   key={idx}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    isFilled ? 'bg-[var(--accent)] scale-110' : 'bg-[var(--text-3)]/30'
+                    isFilled ? 'bg-[#d76737] scale-110' : 'bg-[var(--text-3)]/30'
                   }`}
                 />
               )
@@ -1217,11 +1311,11 @@ export function Composer({
               ? `Заполните минимум ${userLevel} гордости`
               : 'Опубликовать день'
           }
-          className="x-primary-btn px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5"
+          className="px-4 py-1.5 rounded-full text-[14px] font-bold min-h-[34px] bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
           {isPublishing ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-black" />
               <span>Запись…</span>
             </>
           ) : (
@@ -1231,8 +1325,13 @@ export function Composer({
       </div>
 
       {/* Переключатель слотов пунктов 1..5 */}
-      <div className="flex items-center justify-between gap-2 py-1 mb-1">
-        <div className="flex items-center gap-1.5" role="group" aria-label="Пункты записи">
+      <div className="flex items-center justify-between gap-2 py-1 mb-1 flex-wrap">
+        <div
+          className="flex items-center gap-1.5"
+          role="group"
+          aria-label="Пункты записи"
+          data-tour="composer-slots"
+        >
           {[0, 1, 2, 3, 4].map((slot) => {
             const val = currentValues[slot] || ''
             const isFilled = val.trim().length > 0
@@ -1248,12 +1347,12 @@ export function Composer({
                   playClick(soundEnabled)
                   setActiveSlot(slot)
                 }}
-                className={`relative w-8 h-8 rounded-full font-mono text-[13px] font-bold transition-all flex items-center justify-center min-h-[34px] min-w-[34px] ${
+                className={`relative w-8 h-8 rounded-full font-mono text-[13px] font-bold transition-all flex items-center justify-center min-h-[34px] min-w-[34px] cursor-pointer ${
                   isActive
-                    ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-sm ring-2 ring-[var(--accent)]/30'
+                    ? 'bg-[#d76737] text-black shadow-sm ring-2 ring-[#d76737]/30'
                     : isFilled
-                    ? 'bg-[var(--bg-elev)] text-[var(--text)] border border-[var(--accent)]'
-                    : 'bg-[var(--bg-elev)] text-[var(--text-2)] border border-[var(--border)] hover:bg-[var(--bg-hover)]'
+                    ? 'bg-white/[0.08] text-white border border-white/25 hover:bg-white/[0.12]'
+                    : 'bg-white/[0.03] text-white/50 border border-white/[0.09] hover:bg-white/[0.07]'
                 }`}
                 title={`Пункт ${slot + 1}${isFilled ? ': ' + val : ' (пусто)'}${isItemPrivate ? ' (🔒 лично)' : ''}`}
               >
@@ -1269,44 +1368,54 @@ export function Composer({
         </div>
 
         <div className="relative flex items-center gap-2">
-          {/* Оценка слота и звёзды преодоления (CONTRACT Шаг 11 & Шаг 15) */}
-          <span
-            id="composer-slot-score-badge"
-            data-tour="composer-stars"
-            className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20"
-            title={`Оценка: ${currentSlotScore ?? 8}${evaluations[activeSlot]?.overcome ? `, преодоление: уровень ${evaluations[activeSlot].overcome}` : ''}`}
-          >
-            🔥 {currentSlotScore ?? 8}
-            <span className="text-[10px] text-amber-400 font-normal">
-              {'★'.repeat(evaluations[activeSlot]?.overcome && evaluations[activeSlot].overcome > 0 ? evaluations[activeSlot].overcome : 1)}
-            </span>
-          </span>
+          {/* Компактная дата дня */}
+          {!editingDay && (
+            <label
+              className="relative h-8 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-white/[0.05] text-white/75 border border-white/[0.1] hover:border-white/25 hover:text-white transition-colors cursor-pointer"
+              title="Дата записываемого дня"
+            >
+              <CalendarDays size={13} className="text-white/55 shrink-0" />
+              <span>
+                {(() => {
+                  const d = new Date(dateISO)
+                  return Number.isFinite(d.getTime())
+                    ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+                    : 'Сегодня'
+                })()}
+              </span>
+              <input
+                ref={dateInputRef}
+                type="date"
+                aria-label="Дата дня"
+                value={dateISO.slice(0, 10)}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setDateISO(new Date(`${e.target.value}T12:00:00`).toISOString())
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </label>
+          )}
 
-          {/* Маленькая чип-кнопка «Лично ▾» (CONTRACT Шаг 09: рядом с оценкой, без увеличения высоты строки) */}
+          {/* Маленькая чип-кнопка «Лично ▾» (аудитория рендерится в Portal поверх модалки) */}
           <button
+            ref={audienceBtnRef}
             type="button"
             id="composer-audience-chip"
             data-tour="composer-audience"
             onClick={() => {
               playClick(soundEnabled)
-              setAudienceMenuOpen(!audienceMenuOpen)
+              setAudienceMenuOpen((prev) => !prev)
             }}
-            className={`h-8 px-2.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all border ${
-              currentSlotVis === 'private'
-                ? 'bg-zinc-800 text-zinc-200 border-zinc-700 hover:bg-zinc-700'
-                : currentSlotVis === 'friends'
-                ? 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
-                : currentSlotVis === 'group'
-                ? 'bg-purple-500/15 text-purple-400 border-purple-500/30 hover:bg-purple-500/25'
-                : 'bg-blue-500/15 text-[#1d9bf0] border-blue-500/30 hover:bg-blue-500/25'
-            }`}
+            className="h-8 px-2.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border bg-white/[0.06] text-white/85 border-white/[0.12] hover:bg-white/[0.1] hover:text-white cursor-pointer"
             title="Выбрать аудиторию для этой записи"
             aria-expanded={audienceMenuOpen}
           >
-            {currentSlotVis === 'private' && <Lock size={12} className="text-zinc-400" />}
-            {currentSlotVis === 'friends' && <Users size={12} className="text-amber-400" />}
-            {currentSlotVis === 'group' && <Users size={12} className="text-purple-400" />}
-            {currentSlotVis === 'public' && <Globe size={12} className="text-[#1d9bf0]" />}
+            {currentSlotVis === 'private' && <Lock size={12} className="text-white/55" />}
+            {currentSlotVis === 'friends' && <Users size={12} className="text-white/75" />}
+            {currentSlotVis === 'group' && <Users size={12} className="text-[#d76737]" />}
+            {currentSlotVis === 'public' && <Globe size={12} className="text-white/75" />}
             <span>{currentSlotAudienceLabel}</span>
             <ChevronDown size={11} className="opacity-70 ml-0.5" />
           </button>
@@ -1315,137 +1424,140 @@ export function Composer({
           <button
             type="button"
             onClick={handleApplyToAll}
-            className="text-[11px] text-[#71767b] hover:text-[#1d9bf0] transition-colors whitespace-nowrap px-1 py-1"
+            className="text-[11px] text-[#71767b] hover:text-white transition-colors whitespace-nowrap px-1 py-1 cursor-pointer"
             title={`Применить "${currentSlotAudienceLabel}" ко всем записям дня`}
           >
             Применить ко всем
           </button>
-
-          {/* Выпадающее меню выбора аудитории */}
-          {audienceMenuOpen && (
-            <div
-              className="absolute right-0 top-full mt-1.5 w-64 rounded-2xl p-2 shadow-2xl z-50 flex flex-col gap-1 border"
-              style={{ background: '#16181c', borderColor: '#2f3336' }}
-            >
-              <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                Кому видно эту запись:
-              </div>
-
-              {/* 1. Лично */}
-              <button
-                type="button"
-                id="composer-audience-option-private"
-                onClick={() => selectAudience('private')}
-                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left ${
-                  currentSlotVis === 'private'
-                    ? 'bg-white/10 text-white font-semibold'
-                    : 'text-[var(--text-2)] hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Lock size={13} className="text-zinc-400" />
-                  <div>
-                    <div>Лично</div>
-                    <div className="text-[10px] text-[var(--muted)] font-normal">Только в моем дневнике</div>
-                  </div>
-                </div>
-                {currentSlotVis === 'private' && <Check size={14} className="text-zinc-300" />}
-              </button>
-
-              {/* 2. Друзьям */}
-              <button
-                type="button"
-                id="composer-audience-option-friends"
-                onClick={() => selectAudience('friends')}
-                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left ${
-                  currentSlotVis === 'friends'
-                    ? 'bg-amber-500/15 text-amber-300 font-semibold'
-                    : 'text-[var(--text-2)] hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Users size={13} className="text-amber-400" />
-                  <div>
-                    <div>Друзьям</div>
-                    <div className="text-[10px] text-[var(--muted)] font-normal">Видно только подтверждённым друзьям</div>
-                  </div>
-                </div>
-                {currentSlotVis === 'friends' && <Check size={14} className="text-amber-400" />}
-              </button>
-
-              {/* 3. Всем */}
-              <button
-                type="button"
-                id="composer-audience-option-public"
-                onClick={requestPublicAudience}
-                className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left ${
-                  currentSlotVis === 'public'
-                    ? 'bg-blue-500/15 text-[#1d9bf0] font-semibold'
-                    : 'text-[var(--text-2)] hover:bg-white/5 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Globe size={13} className="text-[#1d9bf0]" />
-                  <div>
-                    <div>Всем</div>
-                    <div className="text-[10px] text-[var(--muted)] font-normal">Глобальная лента Priday</div>
-                  </div>
-                </div>
-                {currentSlotVis === 'public' && <Check size={14} className="text-[#1d9bf0]" />}
-              </button>
-
-              {/* Разделитель и секция групп */}
-              <div className="my-1 border-t border-[var(--line)]" />
-              <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--muted)] flex items-center justify-between">
-                <span>Группы:</span>
-                {userGroups.length === 0 && (
-                  <span className="text-[10px] font-normal normal-case text-zinc-500">нет созданных</span>
-                )}
-              </div>
-
-              {userGroups.map((g) => {
-                const isGroupSelected = currentSlotVis === 'group' && currentSlotGroupId === g.id
-                return (
-                  <button
-                    key={g.id}
-                    type="button"
-                    onClick={() => selectGroupAudience(g.id, g.title)}
-                    className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left ${
-                      isGroupSelected
-                        ? 'bg-purple-500/15 text-purple-300 font-semibold'
-                        : 'text-[var(--text-2)] hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-purple-500/20 text-purple-300">
-                        {g.avatarEmoji || '👥'}
-                      </span>
-                      <div>
-                        <div>{g.title}</div>
-                        <div className="text-[10px] text-[var(--muted)] font-normal">
-                          {g.memberIds.length} уч.
-                        </div>
-                      </div>
-                    </div>
-                    {isGroupSelected && <Check size={14} className="text-purple-400" />}
-                  </button>
-                )
-              })}
-
-              <div className="my-1 border-t border-[var(--line)]" />
-
-              {/* Пункт «Применить ко всем записям дня» */}
-              <button
-                type="button"
-                onClick={handleApplyToAll}
-                className="w-full px-2.5 py-2 rounded-xl text-xs font-semibold text-left text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors flex items-center gap-2"
-              >
-                <span>Применить ко всем записям дня</span>
-              </button>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Выпадающее меню аудитории через React Portal поверх всей модалки */}
+      {audienceMenuOpen &&
+        audiencePos &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={audienceMenuRef}
+            role="menu"
+            aria-label="Выбрать аудиторию"
+            className="rounded-2xl p-2 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-1 border border-white/[0.14]"
+            style={{
+              position: 'fixed',
+              top: audiencePos.top,
+              left: audiencePos.left,
+              width: audiencePos.width,
+              zIndex: 120,
+              background: '#08080a',
+            }}
+          >
+            <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white/45">
+              Кому видно эту запись:
+            </div>
+
+            {/* 1. Лично */}
+            <button
+              type="button"
+              id="composer-audience-option-private"
+              onClick={() => selectAudience('private')}
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left cursor-pointer ${
+                currentSlotVis === 'private'
+                  ? 'bg-white/[0.1] text-white font-semibold'
+                  : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Lock size={13} className="text-white/55" />
+                <div>
+                  <div>Лично</div>
+                  <div className="text-[10px] text-white/45 font-normal">Только в моём дневнике</div>
+                </div>
+              </div>
+              {currentSlotVis === 'private' && <Check size={14} className="text-[#d76737]" />}
+            </button>
+
+            {/* 2. Друзьям */}
+            <button
+              type="button"
+              id="composer-audience-option-friends"
+              onClick={() => selectAudience('friends')}
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left cursor-pointer ${
+                currentSlotVis === 'friends'
+                  ? 'bg-white/[0.1] text-white font-semibold'
+                  : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Users size={13} className="text-white/55" />
+                <div>
+                  <div>Друзьям</div>
+                  <div className="text-[10px] text-white/45 font-normal">Видно подтверждённым друзьям</div>
+                </div>
+              </div>
+              {currentSlotVis === 'friends' && <Check size={14} className="text-[#d76737]" />}
+            </button>
+
+            {/* 3. Всем */}
+            <button
+              type="button"
+              id="composer-audience-option-public"
+              onClick={requestPublicAudience}
+              className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left cursor-pointer ${
+                currentSlotVis === 'public'
+                  ? 'bg-white/[0.1] text-white font-semibold'
+                  : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Globe size={13} className="text-white/55" />
+                <div>
+                  <div>Всем</div>
+                  <div className="text-[10px] text-white/45 font-normal">Глобальная лента Priday</div>
+                </div>
+              </div>
+              {currentSlotVis === 'public' && <Check size={14} className="text-[#d76737]" />}
+            </button>
+
+            {/* Разделитель и секция групп */}
+            <div className="my-1 border-t border-white/[0.08]" />
+            <div className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white/45 flex items-center justify-between">
+              <span>Группы:</span>
+              {userGroups.length === 0 && (
+                <span className="text-[10px] font-normal normal-case text-white/35">нет созданных</span>
+              )}
+            </div>
+
+            {userGroups.map((g) => {
+              const isGroupSelected = currentSlotVis === 'group' && currentSlotGroupId === g.id
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => selectGroupAudience(g.id, g.title)}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-colors text-left cursor-pointer ${
+                    isGroupSelected
+                      ? 'bg-[#d76737]/15 text-white font-semibold'
+                      : 'text-white/75 hover:bg-white/[0.06] hover:text-white'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-white/[0.08] text-white">
+                      {g.avatarEmoji || '👥'}
+                    </span>
+                    <div>
+                      <div>{g.title}</div>
+                      <div className="text-[10px] text-white/45 font-normal">
+                        {g.memberIds.length} уч.
+                      </div>
+                    </div>
+                  </div>
+                  {isGroupSelected && <Check size={14} className="text-[#d76737]" />}
+                </button>
+              )
+            })}
+          </div>,
+          document.body
+        )}
 
       {/* 2. Большое поле 20px без рамки */}
       <textarea
@@ -1511,7 +1623,7 @@ export function Composer({
             ? 'Что получилось? Чем гордишься сегодня?'
             : 'За что благодарен сегодня?')
         }
-        className="w-full bg-transparent text-[20px] leading-[28px] text-[var(--text)] placeholder:text-[var(--text-3)] border-0 outline-none resize-none p-0 focus:ring-0 my-3 min-h-[130px]"
+        className="w-full bg-transparent text-[20px] leading-[28px] text-[var(--text)] placeholder:text-[var(--text-3)] border-0 outline-none resize-none p-0 focus:ring-0 my-3 min-h-[190px] sm:min-h-[210px]"
         aria-label={`Пункт ${activeSlot + 1}`}
       />
 
@@ -1576,7 +1688,7 @@ export function Composer({
 
               {/* Строка 1: Гордости */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#ff6b35] flex items-center gap-1 w-24 shrink-0">
+                <span className="text-[11px] font-bold text-[#d76737] flex items-center gap-1 w-24 shrink-0">
                   🔥 Гордости:
                 </span>
                 <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к гордостям">
@@ -1589,7 +1701,7 @@ export function Composer({
                         onClick={() => handleToggleTarget('pride', num)}
                         className={`w-6 h-6 rounded-full text-xs flex items-center justify-center transition ${
                           active
-                            ? 'bg-[#ff6b35] text-white font-bold ring-2 ring-[#ff6b35]/40'
+                            ? 'bg-[#d76737] text-black font-bold ring-2 ring-[#d76737]/40'
                             : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/10'
                         }`}
                         title={`Привязать к Гордости #${num}`}
@@ -1604,7 +1716,7 @@ export function Composer({
 
               {/* Строка 2: Благодарности */}
               <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-[#f91880] flex items-center gap-1 w-24 shrink-0">
+                <span className="text-[11px] font-bold text-white/75 flex items-center gap-1 w-24 shrink-0">
                   ❤️ Благ-сти:
                 </span>
                 <div className="flex items-center gap-1.5" role="group" aria-label="Привязка к благодарностям">
@@ -1617,7 +1729,7 @@ export function Composer({
                         onClick={() => handleToggleTarget('gratitude', num)}
                         className={`w-6 h-6 rounded-full text-xs flex items-center justify-center transition ${
                           active
-                            ? 'bg-[#f91880] text-white font-bold ring-2 ring-[#f91880]/40'
+                            ? 'bg-[#d76737] text-black font-bold ring-2 ring-[#d76737]/40'
                             : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/10'
                         }`}
                         title={`Привязать к Благодарности #${num}`}
@@ -1634,7 +1746,30 @@ export function Composer({
         </div>
       )}
 
-      {/* 3. Под полем ряд иконок: СТРОГО 2 ДЕЙСТВИЯ (Фото дня и Подсказка ❓), справа счётчик */}
+      {/* Короткая памятка «Как записывать гордости» при клике по ? */}
+      {showHelpGuide && (
+        <div
+          id="composer-help-guide"
+          className="mb-2.5 rounded-xl border border-white/[0.12] bg-[#0a0a0c] p-3 text-xs text-white/80 flex items-start justify-between gap-3"
+        >
+          <div className="space-y-1">
+            <p className="font-semibold text-white">Как записывать гордости</p>
+            <p className="text-white/65 leading-relaxed">
+              Запиши 1–5 конкретных преодолений или побед дня и 1–5 благодарностей. Слот выбирается сверху, а видимость каждой записи можно задать кнопкой аудитории («Лично», «Друзьям» или «Всем»).
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowHelpGuide(false)}
+            aria-label="Скрыть подсказку"
+            className="w-6 h-6 rounded-full flex items-center justify-center text-white/45 hover:text-white hover:bg-white/[0.08] shrink-0 cursor-pointer"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* 3. Нижняя панель: слева только фото, справа компактная ?-подсказка и 1/5 */}
       <div className="flex items-center justify-between pt-2.5 border-t border-[var(--border)]">
         <div className="flex items-center gap-1.5" role="group" aria-label="Инструменты записи">
           {/* Фото / Медиа */}
@@ -1652,7 +1787,7 @@ export function Composer({
                 onNotify?.('Прикрепление фото доступно на тарифе Премиум (на Базовом — 0 фото/день)')
               }
             }}
-            className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors cursor-pointer min-h-[40px] min-w-[40px]"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
             title="Прикрепить фото дня"
             aria-label="Прикрепить фото дня"
           >
@@ -1665,40 +1800,31 @@ export function Composer({
               className="sr-only"
             />
           </label>
-
-          {/* «Нужна идея?» — контекстная подсказка */}
-          <Tooltip content="Нужна идея?">
-            <button
-              type="button"
-              onClick={handleHintQuestion}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[#71767b] hover:text-[var(--text)] hover:bg-[var(--bg-hover)] transition-colors min-h-[40px] min-w-[40px]"
-              title="Нужна идея? (подставит контекстный вопрос в плейсхолдер)"
-              aria-label="Нужна идея?"
-            >
-              <HelpCircle className="w-4 h-4 text-[#71767b]" />
-            </button>
-          </Tooltip>
-
-          {/* ИИ-оценка по тарифам (Шаг 15) */}
-          <Tooltip content="ИИ-оценка по тарифам">
-            <button
-              type="button"
-              data-tour="composer-ai-eval"
-              id="composer-ai-eval-btn"
-              onClick={handleEvaluateAi}
-              disabled={isEvaluating}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--accent,#FF6A1A)] hover:text-white hover:bg-[var(--accent,#FF6A1A)]/20 transition-colors min-h-[40px] min-w-[40px]"
-              title="ИИ-оценка по тарифам"
-              aria-label="ИИ-оценка по тарифам"
-            >
-              <Sparkles className={`w-4 h-4 ${isEvaluating ? 'animate-spin' : ''}`} />
-            </button>
-          </Tooltip>
         </div>
 
-        {/* Справа счётчик пунктов */}
+        {/* Справа компактная подсказка ? + счётчик 1/5 */}
         <div className="flex items-center gap-2">
-          <span className="text-[13px] font-bold text-[var(--text-2)] font-mono">
+          <Tooltip content="Как записывать гордости">
+            <button
+              type="button"
+              data-tour="composer-help"
+              id="composer-help-btn"
+              onClick={() => {
+                playClick(soundEnabled)
+                setShowHelpGuide((prev) => !prev)
+              }}
+              aria-expanded={showHelpGuide}
+              aria-label="Как записывать гордости"
+              className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                showHelpGuide
+                  ? 'bg-white/[0.12] text-white'
+                  : 'text-white/45 hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              <HelpCircle className="w-4 h-4" />
+            </button>
+          </Tooltip>
+          <span className="text-[13px] font-bold text-white/70 font-mono tabular-nums">
             {activeSlot + 1}/5
           </span>
         </div>
@@ -1746,7 +1872,7 @@ export function Composer({
       {showPublicWarning && (
         <div
           id="composer-public-warning-modal"
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
+          className="fixed inset-0 z-[130] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setShowPublicWarning(false)}
         >
           <div
@@ -1754,19 +1880,29 @@ export function Composer({
             style={{ background: '#060608', borderColor: 'rgba(255,255,255,0.14)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
-              <Globe size={18} className="text-[#1d9bf0]" />
+            <div className="flex items-center gap-2.5 text-white font-bold text-sm">
+              <Globe size={18} className="text-[#d76737]" />
               <span>Публичная запись</span>
             </div>
             <p className="text-xs text-[var(--text-2)] leading-relaxed">
               Эта запись появится в общей глобальной ленте и будет видна всем пользователям сервиса.
               Убедись, что текст не содержит конфиденциальных личных данных.
             </p>
+            <label className="flex items-center gap-2 text-xs text-white/75 cursor-pointer select-none pt-0.5">
+              <input
+                id="composer-public-warning-skip"
+                type="checkbox"
+                checked={dontShowPublicWarningAgain}
+                onChange={(e) => setDontShowPublicWarningAgain(e.target.checked)}
+                className="w-4 h-4 rounded border-white/25 bg-black accent-[#d76737] cursor-pointer"
+              />
+              <span>Не показывать больше</span>
+            </label>
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowPublicWarning(false)}
-                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[var(--muted)] hover:text-white"
+                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[var(--muted)] hover:text-white cursor-pointer"
               >
                 Отмена
               </button>
@@ -1774,10 +1910,15 @@ export function Composer({
                 type="button"
                 id="composer-public-warning-confirm"
                 onClick={() => {
+                  if (dontShowPublicWarningAgain && typeof window !== 'undefined') {
+                    try {
+                      window.localStorage.setItem(SKIP_PUBLIC_WARNING_STORAGE_KEY, '1')
+                    } catch {}
+                  }
                   confirmPublicAudience()
                   setShowPublicWarning(false)
                 }}
-                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#1d9bf0] text-white hover:bg-[#1a8cd8] transition"
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black transition-colors cursor-pointer"
               >
                 Понятно, открыть всем
               </button>
@@ -1838,7 +1979,7 @@ export function Composer({
                 type="button"
                 id="composer-photo-upsell-close"
                 onClick={() => setShowPhotoUpsell(false)}
-                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[var(--accent)] text-white hover:opacity-90 transition"
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#d76737] hover:bg-[#e0784b] text-black transition-colors cursor-pointer"
               >
                 Понятно
               </button>

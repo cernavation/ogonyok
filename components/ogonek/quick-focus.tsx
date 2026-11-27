@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown, ChevronUp, History, Moon, Target, Sparkles } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, History, Moon, Target } from 'lucide-react'
 import { FocusFlame } from './focus-flame'
 import {
   MORNING_FOCUS_PLACEHOLDERS,
@@ -12,7 +12,6 @@ import {
 } from '@/lib/ogonek/morning-focus'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { MorningFocusRecord } from '@/lib/ogonek/types'
-import { Button } from './ui'
 
 const PLACEHOLDERS = MORNING_FOCUS_PLACEHOLDERS
 
@@ -94,8 +93,8 @@ export function QuickFocus({
         aria-expanded={isExpanded}
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-6 h-6 rounded-lg bg-[var(--accent-soft)] flex items-center justify-center text-[var(--accent)] flex-none">
-            <Target size={14} className="stroke-[2.5]" />
+          <div className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center text-white/50 flex-none">
+            <Target size={14} className="stroke-[2.2]" />
           </div>
           <span className="text-[14px] font-semibold text-[var(--text)] tracking-tight flex-none">
             Утренний фокус
@@ -110,12 +109,10 @@ export function QuickFocus({
         <div className="flex items-center gap-2 flex-none pl-2">
           {locked && hasFocus && (
             <span
-              className={`px-2.5 py-0.5 rounded-full text-[13px] font-bold ${
+              className={`px-2.5 py-0.5 rounded-full text-[13px] font-semibold border ${
                 percent >= 100
-                  ? 'bg-emerald-500/10 text-emerald-500'
-                  : percent > 0
-                  ? 'bg-amber-500/10 text-amber-500'
-                  : 'bg-[var(--bg-elev)] text-[var(--text-2)]'
+                  ? 'bg-white/[0.1] border-white/[0.16] text-white'
+                  : 'bg-white/[0.05] border-white/[0.1] text-white/70'
               }`}
             >
               {percent}%
@@ -152,9 +149,9 @@ export function QuickFocus({
                 {focus.map((val, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-[var(--bg-elev)] border border-[var(--border)] focus-within:border-[var(--accent)]"
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-black border border-white/[0.1] focus-within:border-white/30 transition-colors"
                   >
-                    <span className="text-[13px] font-bold text-[var(--accent)] w-4 text-center">
+                    <span className="text-xs font-mono font-semibold text-white/35 w-4 text-center">
                       {i + 1}
                     </span>
                     <input
@@ -163,62 +160,60 @@ export function QuickFocus({
                       onChange={(e) => handleInputChange(i as 0 | 1 | 2, e.target.value)}
                       placeholder={PLACEHOLDERS[i]}
                       aria-label={`Фокус ${i + 1}`}
-                      className="flex-1 bg-transparent text-[14px] text-[var(--text)] placeholder:text-[var(--text-3)] outline-none disabled:opacity-75"
+                      className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 outline-none disabled:opacity-75"
                     />
                   </div>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2 pt-1 flex-wrap" role="group" aria-label="Действия с фокусом">
-                {!locked && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={!hasFocus}
-                    className="font-bold min-h-[36px]"
-                  >
-                    <Check size={14} /> Сохранить фокус
-                  </Button>
-                )}
+              <div className="flex items-center justify-between gap-2 pt-1 flex-wrap" role="group" aria-label="Действия с фокусом">
+                <div className="flex items-center gap-2">
+                  {!locked && (
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={!hasFocus}
+                      className="h-8 px-4 rounded-full bg-white text-black hover:bg-white/90 disabled:opacity-40 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Check size={13} /> Сохранить
+                    </button>
+                  )}
 
-                {locked && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setLocked(false)}
-                    className="min-h-[36px]"
-                  >
-                    Изменить
-                  </Button>
-                )}
+                  {locked && (
+                    <button
+                      type="button"
+                      onClick={() => setLocked(false)}
+                      className="h-8 px-3.5 rounded-full bg-transparent border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      Изменить
+                    </button>
+                  )}
 
-                {locked && hasFocus && onFocusReview && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      playClick(soundEnabled)
-                      onFocusReview()
-                    }}
-                    className="min-h-[36px]"
-                  >
-                    <Moon size={14} /> Вечерняя сверка
-                  </Button>
-                )}
+                  {locked && hasFocus && onFocusReview && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        onFocusReview()
+                      }}
+                      className="h-8 px-3.5 rounded-full bg-transparent border border-white/[0.12] text-white/70 hover:text-white hover:bg-white/[0.06] text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Moon size={13} /> Вечерняя сверка
+                    </button>
+                  )}
+                </div>
 
                 {onOpenHistory && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
+                    type="button"
                     onClick={() => {
                       playClick(soundEnabled)
                       onOpenHistory()
                     }}
-                    className="min-h-[36px]"
+                    className="h-8 px-3.5 rounded-full bg-transparent border border-white/[0.12] text-white/70 hover:text-white hover:bg-white/[0.06] text-xs font-medium inline-flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <History size={14} /> История
-                  </Button>
+                    <History size={13} /> История
+                  </button>
                 )}
               </div>
             </div>

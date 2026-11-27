@@ -614,7 +614,7 @@ export function CommentsThread({
                 onClick={() => handleReplyClick(node, depth, branchRootId)}
                 title="Ответить"
                 aria-label="Ответить на комментарий"
-                className="h-7 inline-flex items-center gap-1.5 text-[12px] text-white/45 hover:text-[#1d9bf0] transition-colors cursor-pointer"
+                className="h-7 inline-flex items-center gap-1.5 text-[12px] text-white/45 hover:text-[#d76737] transition-colors cursor-pointer"
               >
                 <MessageCircle size={15} />
                 {childCount > 0 && (
@@ -676,7 +676,7 @@ export function CommentsThread({
                       onClick={() => handleForwardComment(node)}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-left text-[#e7e9ea] hover:bg-white/[0.06] font-medium transition-colors cursor-pointer"
                     >
-                      <Forward size={13} className="text-[#ff5a1f]" />
+                      <Forward size={13} className="text-[#d76737]" />
                       <span>Переслать другу</span>
                     </button>
                     <button
@@ -724,7 +724,7 @@ export function CommentsThread({
                   playClick(soundEnabled)
                   setExpandedBranches((prev) => ({ ...prev, [node.id]: true }))
                 }}
-                className="inline-flex items-center gap-1.5 py-1.5 text-[12px] font-semibold text-[#ff5a1f] hover:text-[#ffad5a] hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1.5 py-1.5 text-[12px] font-semibold text-[#d76737] hover:text-[#e0784b] hover:underline cursor-pointer"
               >
                 <ChevronDown size={14} />
                 <span>Показать ответы ({childCount})</span>
@@ -765,7 +765,7 @@ export function CommentsThread({
         >
           <span className="truncate">
             Ответ для{' '}
-            <span className="text-[#ff5a1f] font-semibold">
+            <span className="text-[#d76737] font-semibold">
               {replyTo.username ? `@${replyTo.username.replace(/^@/, '')}` : replyTo.author}
             </span>
           </span>
@@ -793,7 +793,7 @@ export function CommentsThread({
           />
         </div>
 
-        <div className="flex-1 min-w-0 rounded-2xl bg-[#060608] border border-white/[0.12] focus-within:border-[#ff5a1f]/65 transition-colors px-3 py-2">
+        <div className="flex-1 min-w-0 rounded-2xl bg-[#060608] border border-white/[0.12] focus-within:border-[#d76737]/65 transition-colors px-3 py-2">
           <textarea
             ref={inputRef}
             value={draft}
@@ -850,7 +850,7 @@ export function CommentsThread({
                   aria-expanded={Boolean(emojiPickerAnchor)}
                   className={`h-7 w-7 rounded-full inline-flex items-center justify-center transition-colors cursor-pointer ${
                     emojiPickerAnchor
-                      ? 'text-[#ff5a1f] bg-[#ff5a1f]/15'
+                      ? 'text-[#d76737] bg-[#d76737]/15'
                       : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.06]'
                   }`}
                 >
@@ -869,7 +869,7 @@ export function CommentsThread({
                   aria-label="Выбрать GIF"
                   className={`h-7 px-2 rounded-full text-[11px] font-bold transition-colors cursor-pointer ${
                     selectedGifUrl
-                      ? 'text-[#ff5a1f] bg-[#ff5a1f]/15'
+                      ? 'text-[#d76737] bg-[#d76737]/15'
                       : 'text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.06]'
                   }`}
                 >
@@ -892,7 +892,7 @@ export function CommentsThread({
                 aria-label="Отправить комментарий"
                 className={`h-7 w-7 rounded-full inline-flex items-center justify-center transition-all ${
                   canSubmit && !submitting
-                    ? 'bg-[#ff5a1f] text-white hover:opacity-90 active:scale-95 cursor-pointer'
+                    ? 'bg-[#d76737] text-black hover:bg-[#e0784b] active:scale-95 cursor-pointer'
                     : 'bg-white/[0.06] text-[#71767b] cursor-not-allowed'
                 }`}
               >

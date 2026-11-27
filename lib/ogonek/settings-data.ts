@@ -41,7 +41,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSectionItem[] = [
   {
     id: 'appearance',
     label: 'Внешний вид',
-    hint: 'Тема, акцент, шрифт и звуки',
+    hint: 'Тема, шрифт, плотность и звуки',
     icon: Palette,
   },
   {

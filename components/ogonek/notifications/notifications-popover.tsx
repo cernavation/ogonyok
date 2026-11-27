@@ -318,7 +318,7 @@ function NotificationRow({
         )
       case 'friend_day':
         return (
-          <div className="w-8 h-8 rounded-full bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-full bg-[#d76737]/15 text-[#d76737] flex items-center justify-center shrink-0">
             <Flame size={16} />
           </div>
         )

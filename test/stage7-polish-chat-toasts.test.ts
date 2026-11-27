@@ -155,7 +155,7 @@ describe('Этап 7: Полировка модалок, живого чата P
     assert.ok(
       toastSrc.includes("variant?: 'default' | 'milestone'") &&
         toastSrc.includes('milestone-festive-toast') &&
-        toastSrc.includes('border-[#ff5a1f]/40') &&
+        toastSrc.includes('border-[#d76737]/40') &&
         toastSrc.includes('border-amber-400/50'),
       'DesktopToastStack реализует праздничный variant: milestone для 10/50 и 100 дней'
     )

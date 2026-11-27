@@ -22,7 +22,7 @@ describe('Этап 6: Чистая эстетика X.com (Pure Black + тонк
     )
     assert.ok(
       src.includes('bg-black hover:bg-white/[0.03] rounded-full') &&
-        src.includes('border border-white/[0.12] focus-within:border-[#ff5a1f]/70'),
+        src.includes('border border-white/[0.12] focus-within:border-[#d76737]/70'),
       'Поиск по дневнику оформлен в стиле X.com Pure Black'
     )
     assert.ok(
@@ -65,7 +65,7 @@ describe('Этап 6: Чистая эстетика X.com (Pure Black + тонк
       'Строки друзей имеют мягкий hover и аккуратную стрелку'
     )
     assert.ok(
-      src.includes('Показать всех') && src.includes('text-[#ff5a1f]') && src.includes('hover:underline'),
+      src.includes('Показать всех') && src.includes('text-white/60 hover:text-white') && src.includes('hover:bg-white/[0.03]'),
       'Внизу аккуратная ссылка Показать всех'
     )
     assert.ok(

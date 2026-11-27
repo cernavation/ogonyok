@@ -292,14 +292,14 @@ export function DayOptionsModal({
       label: 'Группе',
       hint: 'Выбрать группу',
       icon: <UsersRound size={14} />,
-      activeClass: 'border-[#ff5a1f]/60 bg-[#ff5a1f]/15 text-[#ff8a5c]',
+      activeClass: 'border-[#d76737]/60 bg-[#d76737]/15 text-[#e0784b]',
     },
     {
       id: 'public',
       label: 'Публично',
       hint: 'Видно всем',
       icon: <Globe size={14} />,
-      activeClass: 'border-[#1d9bf0]/50 bg-[#1d9bf0]/15 text-[#60a5fa]',
+      activeClass: 'border-white/30 bg-white/[0.09] text-white',
     },
   ]
 
@@ -407,7 +407,7 @@ export function DayOptionsModal({
                             onClick={() => void handleSelectGroup(g)}
                             className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-left text-[13px] transition-colors cursor-pointer ${
                               isPicked
-                                ? 'border-[#ff5a1f]/60 bg-[#ff5a1f]/15 text-white font-semibold'
+                                ? 'border-[#d76737]/60 bg-[#d76737]/15 text-white font-semibold'
                                 : 'border-white/[0.08] bg-white/[0.02] text-white/80 hover:bg-white/[0.06]'
                             }`}
                           >
@@ -418,7 +418,7 @@ export function DayOptionsModal({
                               <span className="truncate">{g.title}</span>
                             </span>
                             {isPicked ? (
-                              <span className="w-4 h-4 rounded-full bg-[#ff5a1f] text-white flex items-center justify-center shrink-0">
+                              <span className="w-4 h-4 rounded-full bg-[#d76737] text-black flex items-center justify-center shrink-0">
                                 <Check size={11} strokeWidth={3} />
                               </span>
                             ) : (
@@ -437,7 +437,7 @@ export function DayOptionsModal({
                     <button
                       type="button"
                       onClick={handleOpenCreateGroup}
-                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#ff5a1f] hover:opacity-90 text-white text-[12px] font-bold transition-opacity shrink-0 cursor-pointer"
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black text-[12px] font-bold transition-colors shrink-0 cursor-pointer"
                     >
                       <Plus size={13} />
                       <span>Создать группу</span>
@@ -496,7 +496,7 @@ export function DayOptionsModal({
                 }}
                 className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-left text-[13.5px] font-medium text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
               >
-                <Pencil size={16} className="text-[#ff6b35] shrink-0" />
+                <Pencil size={16} className="text-[#d76737] shrink-0" />
                 <span>Редактировать день</span>
               </button>
             )}

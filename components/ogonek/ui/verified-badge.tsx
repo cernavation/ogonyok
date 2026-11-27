@@ -22,7 +22,7 @@ const SIZE_MAP: Record<VerifiedBadgeSize, { box: number; icon: number }> = {
 }
 
 /**
- * Единый синий значок верификации Priday (#1d9bf0) —
+ * Единый значок верификации Priday (#d76737 с чёрной галочкой #000000) —
  * используется везде: лента, сторис, чаты, поиск, профиль, рейтинг и модалки.
  */
 export function VerifiedBadge({
@@ -38,19 +38,19 @@ export function VerifiedBadge({
 
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full bg-[#1d9bf0] text-white shrink-0 select-none ${
+      className={`inline-flex items-center justify-center rounded-full bg-[#d76737] text-black shrink-0 select-none ${
         bordered ? 'ring-2 ring-[var(--bg)]' : ''
       } ${className}`}
       style={{
         width: boxPx,
         height: boxPx,
-        backgroundColor: '#1d9bf0',
-        color: '#ffffff',
+        backgroundColor: '#d76737',
+        color: '#000000',
       }}
       title={title}
       aria-label={title}
     >
-      <Check size={iconPx} strokeWidth={3.25} />
+      <Check size={iconPx} strokeWidth={3.25} className="text-black" />
     </span>
   )
 }

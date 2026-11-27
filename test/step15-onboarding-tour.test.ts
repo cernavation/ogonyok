@@ -10,9 +10,9 @@ describe('Step 15 — Интерактивный онбординг-тур с п
 
     const expectedTargets = [
       'composer-pride',
-      'composer-stars',
+      'composer-slots',
       'composer-gratitude',
-      'composer-ai-eval',
+      'composer-help',
       'composer-audience',
       'nav-streak',
       'nav-friends',
@@ -51,12 +51,12 @@ describe('Step 15 — Интерактивный онбординг-тур с п
   it('файлы компонентов содержат требуемые data-tour атрибуты', () => {
     const root = process.cwd()
 
-    // 1. composer.tsx: composer-pride, composer-stars, composer-gratitude, composer-ai-eval, composer-audience, composer-save
+    // 1. composer.tsx: composer-pride, composer-slots, composer-gratitude, composer-help, composer-audience, composer-save
     const composerSrc = fs.readFileSync(path.join(root, 'components/ogonek/composer.tsx'), 'utf-8')
     assert.ok(composerSrc.includes('data-tour="composer-pride"'), 'composer.tsx должен содержать data-tour="composer-pride"')
-    assert.ok(composerSrc.includes('data-tour="composer-stars"'), 'composer.tsx должен содержать data-tour="composer-stars"')
+    assert.ok(composerSrc.includes('data-tour="composer-slots"'), 'composer.tsx должен содержать data-tour="composer-slots"')
     assert.ok(composerSrc.includes('data-tour="composer-gratitude"'), 'composer.tsx должен содержать data-tour="composer-gratitude"')
-    assert.ok(composerSrc.includes('data-tour="composer-ai-eval"'), 'composer.tsx должен содержать data-tour="composer-ai-eval"')
+    assert.ok(composerSrc.includes('data-tour="composer-help"'), 'composer.tsx должен содержать data-tour="composer-help"')
     assert.ok(composerSrc.includes('data-tour="composer-audience"'), 'composer.tsx должен содержать data-tour="composer-audience"')
     assert.ok(composerSrc.includes('data-tour="composer-save"'), 'composer.tsx должен содержать data-tour="composer-save"')
 

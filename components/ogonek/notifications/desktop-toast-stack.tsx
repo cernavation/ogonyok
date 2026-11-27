@@ -206,8 +206,8 @@ function ToastCard({
 
   const cardSurfaceClass = isMilestone
     ? isCentury
-      ? 'bg-gradient-to-br from-amber-500/[0.16] via-[#0a0a0c]/95 to-[#ff5a1f]/[0.12] border border-amber-400/50 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]'
-      : 'bg-gradient-to-br from-[#ff5a1f]/[0.16] via-[#0a0a0c]/95 to-amber-500/[0.08] border border-[#ff5a1f]/40 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_26px_rgba(255,90,31,0.22),inset_0_1px_0_rgba(255,255,255,0.1)]'
+      ? 'bg-gradient-to-br from-amber-500/[0.16] via-[#0a0a0c]/95 to-[#d76737]/[0.12] border border-amber-400/50 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]'
+      : 'bg-gradient-to-br from-[#d76737]/[0.16] via-[#0a0a0c]/95 to-amber-500/[0.08] border border-[#d76737]/40 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_26px_rgba(215,103,55,0.22),inset_0_1px_0_rgba(255,255,255,0.1)]'
     : 'bg-[#0a0a0c]/92 border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.06)]'
 
   return (
@@ -241,7 +241,7 @@ function ToastCard({
               transition={{ duration: 0.95, delay: sp.delay, ease: 'easeOut' }}
               style={{ width: sp.size, height: sp.size }}
               className={`absolute rounded-full ${
-                sp.gold ? 'bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.9)]' : 'bg-[#ff5a1f] shadow-[0_0_6px_rgba(255,90,31,0.9)]'
+                sp.gold ? 'bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.9)]' : 'bg-[#d76737] shadow-[0_0_6px_rgba(215,103,55,0.8)]'
               }`}
             />
           ))}
@@ -254,8 +254,8 @@ function ToastCard({
           <div
             className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${
               isCentury
-                ? 'bg-gradient-to-br from-amber-400/30 to-[#ff5a1f]/30 text-amber-300 border-amber-400/50 shadow-[0_0_16px_rgba(245,158,11,0.35)]'
-                : 'bg-gradient-to-br from-[#ff5a1f]/30 to-amber-500/20 text-[#ff7a45] border-[#ff5a1f]/45 shadow-[0_0_14px_rgba(255,90,31,0.3)]'
+                ? 'bg-gradient-to-br from-amber-400/30 to-[#d76737]/30 text-amber-300 border-amber-400/50 shadow-[0_0_16px_rgba(245,158,11,0.35)]'
+                : 'bg-gradient-to-br from-[#d76737]/30 to-amber-500/20 text-[#e0784b] border-[#d76737]/45 shadow-[0_0_14px_rgba(215,103,55,0.3)]'
             }`}
           >
             {isCentury ? (
@@ -265,7 +265,7 @@ function ToastCard({
             )}
           </div>
         ) : toast.type === 'friend_request' ? (
-          <div className="w-9 h-9 rounded-full bg-[#1d9bf0]/15 text-[#1d9bf0] flex items-center justify-center shrink-0 ring-1 ring-[#1d9bf0]/30">
+          <div className="w-9 h-9 rounded-full bg-white/[0.08] text-white/80 flex items-center justify-center shrink-0 ring-1 ring-white/[0.14]">
             <UserPlus size={16} />
           </div>
         ) : toast.type === 'missed_call' ? (
@@ -274,7 +274,7 @@ function ToastCard({
           </div>
         ) : isPridaySender ? (
           <div
-            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#ff5a1f] to-[#E53900] text-white flex items-center justify-center shrink-0 ring-1 ring-white/[0.18] shadow-[0_2px_10px_rgba(255,90,31,0.4)]"
+            className="w-9 h-9 rounded-full bg-[#d76737] text-black flex items-center justify-center shrink-0 ring-1 ring-white/[0.18]"
             aria-hidden="true"
           >
             <Flame size={18} fill="currentColor" strokeWidth={1.8} />
@@ -341,7 +341,7 @@ function ToastCard({
               <span>Отправлено ✓</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 rounded-full bg-white/[0.06] border border-white/[0.09] focus-within:border-[#ff5a1f]/60 focus-within:bg-black/60 pl-3.5 pr-1 py-1 transition-all">
+            <div className="flex items-center gap-1.5 rounded-full bg-white/[0.06] border border-white/[0.09] focus-within:border-[#d76737]/60 focus-within:bg-black/60 pl-3.5 pr-1 py-1 transition-all">
               <input
                 type="text"
                 value={replyText}
@@ -355,7 +355,7 @@ function ToastCard({
                 aria-label="Отправить ответ"
                 className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
                   hasDraft && !isSending
-                    ? 'bg-[#ff5a1f] text-white shadow-[0_0_14px_rgba(255,90,31,0.55)] hover:opacity-95 active:scale-95 cursor-pointer'
+                    ? 'bg-[#d76737] text-black hover:bg-[#e0784b] active:bg-[#bd562b] active:scale-95 cursor-pointer'
                     : 'bg-white/10 text-white/35 cursor-default'
                 }`}
               >

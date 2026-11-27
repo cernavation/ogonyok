@@ -439,7 +439,7 @@ export const TIER_FEATURES_LIST: Record<SubscriptionTier, TierFeatureItem[]> = {
     { id: 'ai', text: '1 ИИ-оценка дня нейросетью', included: true, highlight: true },
     { id: 'video', text: 'Зашифрованные видеозвонки HD', included: true },
     { id: 'groups', text: 'До 5 групп (до 25 участников в каждой)', included: true },
-    { id: 'badge', text: 'Синяя галочка и значок ★ PREMIUM', included: true },
+    { id: 'badge', text: 'Фирменная галочка и значок ★ PREMIUM', included: true },
     { id: 'analytics', text: 'Расширенная аналитика и когорты стрика', included: true },
     { id: 'stories', text: 'До 5 историй и 20 отложенных сообщений', included: true },
   ],

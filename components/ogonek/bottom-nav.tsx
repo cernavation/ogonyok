@@ -86,7 +86,7 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
               )}
               {id === 'messages' && unread > 0 && (
                 <span
-                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none"
+                  className="absolute top-2 right-[calc(50%-6px)] min-w-[16px] h-[16px] px-0.5 rounded-full bg-[#d76737] text-black text-[10px] font-bold flex items-center justify-center leading-none"
                   aria-label={`${unread} непрочитанных`}
                 >
                   {unread > 99 ? '99+' : unread}
@@ -123,14 +123,14 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
       {view !== 'settings' && view !== 'messages' && view !== 'leaderboard' && view !== 'premium' && (
         <button
           type="button"
-          className="fixed bottom-16 right-4 z-[51] w-14 h-14 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-lg active:scale-95 transition-transform md:hidden"
+          className="fixed bottom-16 right-4 z-[51] w-14 h-14 rounded-full bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black flex items-center justify-center shadow-lg active:scale-95 transition-all md:hidden"
           aria-label="Записать день"
           onClick={() => {
             playClick(state.soundEnabled)
             onCompose()
           }}
         >
-          <Plus size={26} strokeWidth={2.5} />
+          <Plus size={26} strokeWidth={2.5} className="text-black" />
         </button>
       )}
     </>

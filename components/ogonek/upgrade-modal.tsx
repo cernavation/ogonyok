@@ -73,10 +73,10 @@ export const UPGRADE_FEATURES_CONFIG: Record<string, UpgradeFeatureDetail> = {
     iconColor: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
   },
   accent: {
-    title: 'Эксклюзивный цвет оформления',
-    subtitle: 'Кастомные HEX-цвета и оформление профиля',
+    title: 'Расширенная персонализация',
+    subtitle: 'Особый статус основателя и привилегии Ultra',
     benefit:
-      'Тариф Основатель Ultra открывает полную свободу персонализации интерфейса: любой цвет акцента и статус основателя.',
+      'Тариф Основатель Ultra открывает максимальные лимиты летописи, полный доступ к Evidence Vault и статус основателя.',
     requiredTier: 'ultra',
     icon: Palette,
     iconColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',

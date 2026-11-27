@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Copy, Flame, MoreHorizontal, Plus, Image as ImageIcon, Sparkles, Smile, Users } from 'lucide-react'
+import { Calendar, Check, Copy, Flame, MoreHorizontal, Plus, Image as ImageIcon, Users } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FEED_TABS } from '@/lib/ogonek/data'
@@ -11,7 +11,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ChatGroupMeta, Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
-import { Button, UserAvatar } from '../ui'
+import { UserAvatar } from '../ui'
 import { DayCard } from '../day-card'
 import { EveningReview } from '../evening-review'
 import { QuickFocus } from '../quick-focus'
@@ -49,6 +49,7 @@ type Props = {
   onNotify: (msg: string) => void
   onPinToVault?: (fact: string) => void
   onCompose?: () => void
+  onComposeAction?: (action: 'photo' | 'date') => void
   onNavigate?: (view: ViewId) => void
   onEditDay?: (day: Day) => void
   streak?: number
@@ -76,6 +77,7 @@ export function HomeView({
   onNotify,
   onPinToVault,
   onCompose,
+  onComposeAction,
   onNavigate,
   onEditDay,
   streak,
@@ -586,7 +588,7 @@ export function HomeView({
                   {unreadBadge > 0 && (
                     <span
                       data-testid={tab === 'Друзья' ? 'friends-tab-unread' : 'following-tab-unread'}
-                      className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5a1f] text-white text-[10.5px] font-bold leading-none tabular-nums"
+                      className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#d76737] text-black text-[10.5px] font-bold leading-none tabular-nums"
                     >
                       {unreadBadge > 99 ? '99+' : unreadBadge}
                     </span>
@@ -606,7 +608,7 @@ export function HomeView({
             onClick={() => setSelectedGroupFilter(null)}
             className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
               selectedGroupFilter === null
-                ? 'bg-[var(--accent)] text-white shadow-sm'
+                ? 'bg-[#d76737] text-black font-bold shadow-sm'
                 : 'bg-white/5 text-[var(--muted)] hover:text-white'
             }`}
           >
@@ -621,7 +623,7 @@ export function HomeView({
                 onClick={() => setSelectedGroupFilter(isSelected ? null : g.id)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
                   isSelected
-                    ? 'bg-purple-600 text-white shadow-sm'
+                    ? 'bg-white text-black font-bold shadow-sm'
                     : 'bg-white/5 text-[var(--muted)] hover:text-white'
                 }`}
               >
@@ -663,28 +665,53 @@ export function HomeView({
               Чем гордишься сегодня?
             </div>
             <div className="flex items-center justify-between pt-2 border-t border-[var(--line)] mt-1">
-              <div className="flex items-center gap-1 -ml-2 text-[var(--accent)]" aria-label="Инструменты записи">
-                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
+              <div className="flex items-center gap-1 -ml-2" aria-label="Инструменты записи">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    playClick(soundEnabled)
+                    if (onComposeAction) {
+                      onComposeAction('photo')
+                    } else {
+                      onCompose?.()
+                    }
+                  }}
+                  aria-label="Добавить фото к дню"
+                  title="Добавить фото"
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-white/45 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                >
                   <ImageIcon size={18} />
-                </span>
-                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
-                  <Sparkles size={18} />
-                </span>
-                <span className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--accent-soft)] transition-colors">
-                  <Smile size={18} />
-                </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    playClick(soundEnabled)
+                    if (onComposeAction) {
+                      onComposeAction('date')
+                    } else {
+                      onCompose?.()
+                    }
+                  }}
+                  aria-label="Выбрать дату дня"
+                  title="Выбрать дату"
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-white/45 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                >
+                  <Calendar size={18} />
+                </button>
               </div>
-              <Button
-                variant="primary"
-                size="sm"
+              <button
+                type="button"
                 onClick={(e) => {
                   e.stopPropagation()
+                  playClick(soundEnabled)
                   onCompose?.()
                 }}
-                className="font-bold min-h-[36px]"
+                className="rounded-full bg-white text-black hover:bg-white/90 px-4 min-h-[34px] text-[13px] font-bold transition-colors cursor-pointer"
               >
                 Записать
-              </Button>
+              </button>
             </div>
           </div>
         </div>
@@ -735,8 +762,8 @@ export function HomeView({
           </div>
         ) : filter === 'Мои гордости' && filteredDays.length === 0 ? (
           <div className="empty-state py-12 text-center" role="status">
-            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#ff6b35]/10 text-[#ff6b35] mx-auto mb-2" aria-hidden="true">
-              <Flame size={28} className="fill-[#ff6b35]/20 text-[#ff6b35]" />
+            <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#d76737]/10 text-[#d76737] mx-auto mb-2" aria-hidden="true">
+              <Flame size={28} className="fill-[#d76737]/20 text-[#d76737]" />
             </span>
             <h2 className="empty-state__title text-lg font-bold mt-2">Твой путь в Priday готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">

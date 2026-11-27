@@ -54,17 +54,9 @@ export function FlameIcon({
           width={size}
           height={size}
           viewBox="0 0 24 24"
-          fill="url(#graceFlameGrad)"
+          fill="#d76737"
           aria-hidden="true"
-          className="animate-pulse"
         >
-          <defs>
-            <linearGradient id="graceFlameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffb703" />
-              <stop offset="50%" stopColor="#fb8500" />
-              <stop offset="100%" stopColor="#d90429" />
-            </linearGradient>
-          </defs>
           <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
         </svg>
         {hoursLeft !== undefined && hoursLeft !== null && (
@@ -74,7 +66,7 @@ export function FlameIcon({
     )
   }
 
-  // Safe status
+  // Safe status — благородный тёплый акцент #d76737 без кислотного свечения
   return (
     <span
       className={`flame-icon flame--safe ${className}`}
@@ -85,16 +77,9 @@ export function FlameIcon({
         width={size}
         height={size}
         viewBox="0 0 24 24"
-        fill="url(#safeFlameGrad)"
+        fill="#d76737"
         aria-hidden="true"
-        className="flame-pulse-glow"
       >
-        <defs>
-          <linearGradient id="safeFlameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#ffa600" />
-            <stop offset="100%" stopColor="#ff6b35" />
-          </linearGradient>
-        </defs>
         <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
       </svg>
     </span>

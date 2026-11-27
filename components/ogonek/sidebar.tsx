@@ -398,7 +398,7 @@ export function Sidebar({
               {id === 'messages' && unread > 0 && (
                 <span
                   data-testid="sidebar-chats-unread-badge"
-                  className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5a1f] text-white text-[11px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10 ring-2 ring-black"
+                  className="absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#d76737] text-black text-[11px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10 ring-2 ring-black"
                   aria-label={`${unread} непрочитанных`}
                 >
                   {unreadBadgeLabel}
@@ -466,15 +466,15 @@ export function Sidebar({
           <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
             <button
               type="button"
-              className="x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] rounded-full w-11 xl:w-full h-11 xl:h-12 p-0 xl:px-5 flex items-center justify-center my-2 overflow-hidden cursor-pointer shrink-0"
+              className="x-compose-btn bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black active:scale-[0.98] rounded-full w-11 xl:w-full h-11 xl:h-12 p-0 xl:px-5 flex items-center justify-center my-2 overflow-hidden cursor-pointer shrink-0 transition-colors"
               onClick={() => {
                 playClick(state.soundEnabled)
                 onCompose()
               }}
               aria-label="Записать день"
             >
-              <Plus size={22} strokeWidth={2.5} className="xl:hidden shrink-0" />
-              <span className="hidden xl:inline whitespace-nowrap">Записать</span>
+              <Plus size={22} strokeWidth={2.5} className="xl:hidden shrink-0 text-black" />
+              <span className="hidden xl:inline whitespace-nowrap font-bold text-black">Записать</span>
             </button>
           </Tooltip>
         )}

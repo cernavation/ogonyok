@@ -99,12 +99,13 @@ body[data-theme='dim'] {
 /* 1. Огонёк (Flame) */
 :root,
 html[data-accent='flame'] {
-  --accent: #FF5C00;
-  --accent-hover: #E65300;
-  --accent-soft: rgba(255, 92, 0, 0.14);
+  --accent: #d76737;
+  --accent-hover: #e0784b;
+  --accent-active: #bd562b;
+  --accent-soft: rgba(215, 103, 55, 0.14);
   --accent-contrast: #000000;
-  --orange: #FF5C00;
-  --blue: #FF5C00;
+  --orange: #d76737;
+  --blue: #d76737;
 }
 
 /* 2. Небо (Blue) */

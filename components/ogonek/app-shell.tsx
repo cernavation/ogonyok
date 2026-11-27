@@ -83,6 +83,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
   const [view, setView] = useState<ViewId>(initialView)
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null)
   const [composer, setComposer] = useState(false)
+  const [composerAction, setComposerAction] = useState<'photo' | 'date' | null>(null)
   const [editingDay, setEditingDay] = useState<Day | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [hotkeysModal, setHotkeysModal] = useState(false)
@@ -992,6 +993,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
   const handleCloseComposer = useCallback(() => {
     setComposer(false)
+    setComposerAction(null)
     setEditingDay(null)
   }, [])
 
@@ -1631,6 +1633,12 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           onOpenFriends={openFriendsModal}
           onCompose={() => {
             setEditingDay(null)
+            setComposerAction(null)
+            setComposer(true)
+          }}
+          onComposeAction={(action) => {
+            setEditingDay(null)
+            setComposerAction(action)
             setComposer(true)
           }}
           onNavigate={navigate}
@@ -1806,6 +1814,11 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         accent={state.accent}
         fontScale={state.fontScale}
         feedDensity={state.feedDensity}
+        subscriptionTier={state.profile.subscription_tier}
+        subscriptionExpiresAt={
+          state.profile.subscription_expires_at || (state.profile as any)?.subscription_valid_until
+        }
+        username={state.profile.username}
       />
       <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-clip" data-locked={locked ? 'true' : undefined}>
         <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
@@ -1871,7 +1884,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                         type="button"
                         id="renew-expiring-subscription-btn"
                         onClick={() => setPremiumModalOpen(true)}
-                        className="px-3 py-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white font-bold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
+                        className="px-3 py-1 rounded-full bg-[#d76737] text-black hover:bg-[#e0784b] font-bold transition-colors shrink-0 shadow-sm"
                       >
                         Продлить
                       </button>
@@ -1921,6 +1934,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
               key={editingDay ? `composer-day-${editingDay.id}` : 'composer-day-new'}
               initialDraft={state.composerDraft}
               editingDay={editingDay}
+              initialAction={composerAction}
               nextDayId={editingDay ? undefined : getNextDayId()}
               nextDayDateISO={editingDay ? undefined : getNextDayDate()}
               onSaveDraft={saveComposerDraft}

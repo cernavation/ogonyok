@@ -208,7 +208,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
         </div>
       ) : active.length === 0 ? (
         <div className="p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] text-center">
-          <div className="w-8 h-8 rounded-full bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center mx-auto mb-2">
+          <div className="w-8 h-8 rounded-full bg-white/[0.06] text-white/55 flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
           </div>
           <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет друзей</p>
@@ -220,7 +220,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#ff5a1f] text-white text-xs font-bold hover:opacity-90 transition-all active:scale-95 cursor-pointer"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-white text-black text-xs font-bold hover:bg-white/90 transition-all active:scale-95 cursor-pointer"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}</span>
@@ -269,8 +269,8 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
                         </span>
                         {friend.verified && <VerifiedBadge size="xs" />}
                       </div>
-                      <span className="inline-flex items-center gap-0.5 text-[11px] text-[#ff5a1f] font-semibold shrink-0">
-                        <Flame size={10} className="fill-[#ff5a1f]" aria-hidden="true" />
+                      <span className="inline-flex items-center gap-0.5 text-[11px] text-white/45 font-semibold shrink-0">
+                        <Flame size={10} className="fill-white/40 text-white/45" aria-hidden="true" />
                         {friend.streak}
                       </span>
                     </div>
@@ -305,7 +305,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
         <button
           type="button"
           id="btn-open-friends-modal"
-          className="mt-1.5 -mx-2 w-[calc(100%+16px)] px-2 py-2 rounded-xl text-left text-[14px] font-medium text-[#ff5a1f] hover:bg-white/[0.03] hover:underline transition-colors cursor-pointer"
+          className="mt-1.5 -mx-2 w-[calc(100%+16px)] px-2 py-2 rounded-xl text-left text-[13px] font-medium text-white/60 hover:text-white hover:bg-white/[0.03] transition-colors cursor-pointer"
           onClick={onOpenFriends || (() => onNavigate('profile'))}
         >
           Показать всех

@@ -13,9 +13,18 @@ type Props = {
   closeOnEscape?: boolean
   /** Скрыть дефолтный заголовок для кастомного хедера (композер X) */
   hideHeader?: boolean
+  /** Дополнительный класс контейнера .modal */
+  modalClassName?: string
 }
 
-export function ModalShell({ title, onClose, children, closeOnEscape = true, hideHeader = false }: Props) {
+export function ModalShell({
+  title,
+  onClose,
+  children,
+  closeOnEscape = true,
+  hideHeader = false,
+  modalClassName = '',
+}: Props) {
   useBodyScrollLock(true)
   const modalRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
@@ -89,7 +98,7 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
       <motion.div
         ref={modalRef}
         tabIndex={-1}
-        className="modal outline-none overflow-x-hidden w-full max-w-full"
+        className={`modal outline-none overflow-x-hidden w-full max-w-full ${modalClassName}`}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}

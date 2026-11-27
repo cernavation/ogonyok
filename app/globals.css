@@ -356,9 +356,9 @@ main.main-content {
   bottom: 0;
   left: 20%;
   right: 20%;
-  height: 4px;
-  border-radius: 4px;
-  background: var(--accent);
+  height: 2px;
+  border-radius: 9999px;
+  background: var(--accent, #d76737);
 }
 
 .feed-content {
@@ -1702,17 +1702,18 @@ kbd {
   position: absolute;
   top: -6px;
   right: -8px;
-  background: #d90429;
-  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 8px;
   font-weight: 700;
-  padding: 1px 3px;
+  padding: 1px 4px;
   border-radius: 6px;
   line-height: 1;
 }
 
 .flame-pulse-glow {
-  filter: drop-shadow(0 0 6px rgba(255, 107, 53, 0.45));
+  filter: none;
 }
 
 /* Missed Day Placeholder */
@@ -4398,7 +4399,7 @@ kbd {
   height: 64px;
   border-radius: 50%;
   padding: 2px;
-  background: linear-gradient(135deg, #ff6b35, #ffa600, #f91880);
+  background: var(--accent, #d76737);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4463,23 +4464,28 @@ kbd {
   font-weight: 700;
 }
 
-/* Просмотренный — серый */
+/* Просмотренный — спокойный графитовый контур */
+.story-ring.is-viewed .story-ring__ring {
+  background: rgba(255, 255, 255, 0.2);
+}
 .story-ring.is-viewed .story-ring__name {
   color: var(--muted);
   font-weight: 600;
 }
 
-/* Моя история: активный огонь / пустой пунктир */
+/* Моя история: спокойный огонёк #d76737 / пустой пунктир */
 .story-ring.is-mine-active .story-ring__ring {
-  background: conic-gradient(from 210deg, #ff6b35, #ffa600, #f91880, #ff6b35);
+  background: var(--accent, #d76737);
 }
 .story-ring.is-empty .story-ring__ring {
-  border: 2px dashed var(--line);
+  background: transparent;
+  border: 2px dashed rgba(255, 255, 255, 0.16);
   padding: 2px;
 }
 
 .story-ring.is-all .story-ring__ring {
-  border: 1px solid var(--line);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 2px;
 }
 
@@ -4491,8 +4497,8 @@ kbd {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #FF5C00;
-  color: #fff;
+  background: var(--accent, #d76737);
+  color: var(--accent-contrast, #000000);
   border: 2px solid var(--bg);
   display: grid;
   place-items: center;
@@ -4505,8 +4511,8 @@ kbd {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--blue);
-  color: #fff;
+  background: var(--accent, #d76737);
+  color: var(--accent-contrast, #000000);
   border: 2px solid var(--bg);
   font-size: 13px;
   font-weight: 900;
@@ -9858,6 +9864,7 @@ html[data-accent] .text-\[\#5cb8f5\],
 html[data-accent] .text-\[\#FF5C00\],
 html[data-accent] .text-\[\#ff7a18\],
 html[data-accent] .text-\[\#FF6A1A\],
+html[data-accent] .text-\[\#d76737\],
 html[data-accent] .text-orange-500 {
   color: var(--accent) !important;
 }
@@ -9866,6 +9873,7 @@ html[data-accent] .bg-\[\#1d9bf0\],
 html[data-accent] .bg-\[\#FF5C00\],
 html[data-accent] .bg-\[\#ff7a18\],
 html[data-accent] .bg-\[\#FF6A1A\],
+html[data-accent] .bg-\[\#d76737\],
 html[data-accent] .bg-orange-500 {
   background-color: var(--accent) !important;
 }
@@ -9874,13 +9882,15 @@ html[data-accent] .border-\[\#1d9bf0\],
 html[data-accent] .border-\[\#FF5C00\],
 html[data-accent] .border-\[\#ff7a18\],
 html[data-accent] .border-\[\#FF6A1A\],
+html[data-accent] .border-\[\#d76737\],
 html[data-accent] .border-orange-500 {
   border-color: var(--accent) !important;
 }
 
 html[data-accent] .hover\:bg-\[\#1d9bf0\]:hover,
 html[data-accent] .hover\:bg-\[\#FF5C00\]:hover,
-html[data-accent] .hover\:bg-\[\#ff7a18\]:hover {
+html[data-accent] .hover\:bg-\[\#ff7a18\]:hover,
+html[data-accent] .hover\:bg-\[\#e0784b\]:hover {
   background-color: var(--accent-hover, var(--accent)) !important;
 }
 
@@ -13510,7 +13520,7 @@ html[data-theme='apple-light'] .dynamics-bar {
 
 .account-menu__verified {
   flex: none;
-  color: #1d9bf0;
+  color: var(--accent, #d76737);
 }
 
 .account-menu__meta small {

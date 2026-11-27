@@ -80,14 +80,14 @@ describe('Этап 5: Фикс крашей #300/#310 (Priday), FriendsModal и 
     )
   })
 
-  it('3. Оранжевый бейдж Чаты закреплён прямо в правом верхнем углу иконки в свёрнутом и развёрнутом сайдбаре', () => {
+  it('3. Фирменный бейдж Чаты (#d76737 с чёрным текстом) закреплён прямо в правом верхнем углу иконки в свёрнутом и развёрнутом сайдбаре', () => {
     const sidebarSrc = readRepoFile('components/ogonek/sidebar.tsx')
     assert.ok(
       sidebarSrc.includes('data-testid="sidebar-chats-unread-badge"'),
       'Присутствует единый бейдж непрочитанных на иконке Чаты'
     )
     assert.ok(
-      sidebarSrc.includes('absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#ff5a1f] text-white text-[11px] font-bold flex items-center justify-center'),
+      sidebarSrc.includes('absolute -top-1 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#d76737] text-black text-[11px] font-bold flex items-center justify-center'),
       'Бейдж оформлен в правом верхнем углу самой иконки'
     )
     assert.ok(

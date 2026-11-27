@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react'
 import {
   Check,
   LayoutGrid,
-  Lock,
   Moon,
   Palette,
   Pipette,
@@ -37,6 +36,7 @@ type Props = {
   soundEnabled: boolean
   subscriptionTier?: string | null
   subscriptionExpiresAt?: string | null
+  subscriptionUsername?: string | null
   onSetTheme: (theme: ThemeMode) => void
   onSetAccent: (accent: AccentId) => void
   onSetFontScale: (scale: FontScaleId) => void
@@ -71,7 +71,7 @@ function HexColorInput({
     <input
       type="text"
       value={localHex}
-      placeholder="#FF5C00"
+      placeholder="#d76737"
       onChange={(e) => {
         const val = e.target.value
         setLocalHex(val)
@@ -105,6 +105,7 @@ export function AppearancePanel({
   soundEnabled,
   subscriptionTier,
   subscriptionExpiresAt,
+  subscriptionUsername,
   onSetTheme,
   onSetAccent,
   onSetFontScale,
@@ -113,7 +114,7 @@ export function AppearancePanel({
   onResetAppearance,
   onNotify,
 }: Props) {
-  const isFree = normalizeTier(subscriptionTier, subscriptionExpiresAt) === 'free'
+  const isUltra = normalizeTier(subscriptionTier, subscriptionExpiresAt, subscriptionUsername) === 'ultra'
 
   return (
     <div className="flex flex-col gap-5 p-4 sm:p-5" aria-label="Настройки внешнего вида">
@@ -157,116 +158,94 @@ export function AppearancePanel({
         </div>
       </div>
 
-      {/* ── 2. Акцентный цвет ────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
-        <div>
-          <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
-            <Palette size={16} className="text-[var(--accent)]" /> Акцентный цвет
-          </h3>
-          <p className="text-[13px] text-[var(--text-2)] mt-0.5">
-            Главный цвет кнопок, бейджей и активных элементов интерфейса
-          </p>
-        </div>
+      {/* ── 2. Акцентный цвет (доступно только на Ultra) ─────────────── */}
+      {isUltra && (
+        <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">
+          <div>
+            <h3 className="text-[15px] font-bold text-[var(--text)] flex items-center gap-2">
+              <Palette size={16} className="text-[var(--accent)]" /> Акцентный цвет
+            </h3>
+            <p className="text-[13px] text-[var(--text-2)] mt-0.5">
+              Главный цвет кнопок, бейджей и активных элементов интерфейса
+            </p>
+          </div>
 
-        {/* 6 Пресетов */}
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2" role="radiogroup" aria-label="Акцентный цвет">
-          {ACCENT_PRESETS.map((a) => {
-            const active = accent === a.id
-            return (
-              <button
-                key={a.id}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                onClick={() => {
-                  onSetAccent(a.id)
-                  playClick(soundEnabled)
-                }}
-                className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border text-center transition-all ${
-                  active
-                    ? 'border-[var(--text)] bg-[var(--bg-elev)] shadow-sm'
-                    : 'border-[var(--border)] bg-[var(--bg-elev)]/50 hover:border-[var(--border-strong)]'
-                }`}
-              >
-                <span
-                  className="w-5 h-5 rounded-full shadow-sm mb-1"
-                  style={{ background: a.color }}
+          {/* 6 Пресетов */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2" role="radiogroup" aria-label="Акцентный цвет">
+            {ACCENT_PRESETS.map((a) => {
+              const active = accent === a.id
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => {
+                    onSetAccent(a.id)
+                    playClick(soundEnabled)
+                  }}
+                  className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border text-center transition-all ${
+                    active
+                      ? 'border-[var(--text)] bg-[var(--bg-elev)] shadow-sm'
+                      : 'border-[var(--border)] bg-[var(--bg-elev)]/50 hover:border-[var(--border-strong)]'
+                  }`}
+                >
+                  <span
+                    className="w-5 h-5 rounded-full shadow-sm mb-1"
+                    style={{ background: a.color }}
+                  />
+                  <span className="text-[12px] font-semibold text-[var(--text)] text-center w-full break-words">
+                    {a.label}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Выбор своего цвета (Color Picker) */}
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border border-[var(--border)] mt-1">
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <input
+                  type="color"
+                  id="settings-custom-color-picker"
+                  value={accent.startsWith('#') ? accent : '#d76737'}
+                  onChange={(e) => {
+                    onSetAccent(e.target.value as any)
+                  }}
+                  className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
+                  aria-label="Выбрать свой цвет"
                 />
-                <span className="text-[12px] font-semibold text-[var(--text)] text-center w-full break-words">
-                  {a.label}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Выбор своего цвета (Color Picker) */}
-        <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--bg-elev)]/60 border border-[var(--border)] mt-1">
-          <div className="flex items-center gap-2.5">
-            <div className="relative">
-              <input
-                type="color"
-                id="settings-custom-color-picker"
-                value={accent.startsWith('#') ? accent : '#FF5C00'}
-                onChange={(e) => {
-                  const val = e.target.value
-                  if (isFree) {
-                    window.dispatchEvent(
-                      new CustomEvent('ogonek:open-upgrade', {
-                        detail: { feature: 'accent', requiredTier: 'ultra', force: true },
-                      })
-                    )
-                    onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
-                    return
-                  }
-                  onSetAccent(val as any)
-                }}
-                className="w-9 h-9 rounded-full cursor-pointer opacity-0 absolute inset-0 z-10"
-                aria-label="Выбрать свой цвет"
-              />
-              <div
-                className="w-9 h-9 rounded-full border-2 border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-105"
-                style={{
-                  background: accent.startsWith('#') ? accent : 'var(--accent)',
-                }}
-              >
-                <Pipette size={14} className="text-white drop-shadow" />
+                <div
+                  className="w-9 h-9 rounded-full border-2 border-white/20 shadow-sm flex items-center justify-center transition-transform hover:scale-105"
+                  style={{
+                    background: accent.startsWith('#') ? accent : 'var(--accent)',
+                  }}
+                >
+                  <Pipette size={14} className="text-black drop-shadow" />
+                </div>
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-[var(--text)] flex items-center gap-1.5">
+                  <span>Свой цвет (HEX)</span>
+                </p>
+                <p className="text-[12px] text-[var(--text-2)]">
+                  {accent.startsWith('#') ? accent.toUpperCase() : 'Выбери любой оттенок'}
+                </p>
               </div>
             </div>
-            <div>
-              <p className="text-[13px] font-bold text-[var(--text)] flex items-center gap-1.5">
-                <span>Свой цвет (HEX)</span>
-                {isFree && <Lock size={12} className="text-amber-400" />}
-              </p>
-              <p className="text-[12px] text-[var(--text-2)]">
-                {accent.startsWith('#')
-                  ? accent.toUpperCase()
-                  : isFree
-                  ? 'Доступно на тарифе Ultra'
-                  : 'Выбери любой оттенок'}
-              </p>
+
+            <div className="flex items-center gap-2">
+              <HexColorInput
+                currentAccent={accent}
+                onSetAccent={(val) => {
+                  onSetAccent(val)
+                }}
+              />
             </div>
           </div>
-
-          <div className="flex items-center gap-2">
-            <HexColorInput
-              currentAccent={accent}
-              onSetAccent={(val) => {
-                if (isFree) {
-                  window.dispatchEvent(
-                    new CustomEvent('ogonek:open-upgrade', {
-                      detail: { feature: 'accent', requiredTier: 'ultra', force: true },
-                    })
-                  )
-                  onNotify('Кастомный цвет акцента доступен на тарифе Ultra')
-                  return
-                }
-                onSetAccent(val)
-              }}
-            />
-          </div>
         </div>
-      </div>
+      )}
 
       {/* ── 3. Размер шрифта ────────────────────────────────────────────── */}
       <div className="flex flex-col gap-3 pt-3 border-t border-[var(--border)]">

@@ -379,7 +379,7 @@ export function EvaluationCeremonyModal({
                         className={`text-xs sm:text-sm font-black transition-all ${
                           isGold
                             ? 'text-amber-400 font-bold drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]'
-                            : 'text-[#ff6b35] font-bold'
+                            : 'text-[#d76737] font-bold'
                         } ${isTen ? 'scale-110' : ''}`}
                       >
                         ★ {currentScore.toFixed(1)}
@@ -393,7 +393,7 @@ export function EvaluationCeremonyModal({
                       className={`h-full rounded-full transition-all duration-200 ${
                         isGold
                           ? 'bg-gradient-to-r from-amber-400 to-yellow-300 shadow-[0_0_12px_rgba(251,191,36,0.4)]'
-                          : 'bg-[#ff6b35]'
+                          : 'bg-[#d76737]'
                       }`}
                       style={{ width: `${Math.min(100, (currentScore / 10) * 100)}%` }}
                     />
