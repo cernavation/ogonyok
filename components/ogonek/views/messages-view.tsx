@@ -4,7 +4,7 @@ import { ArrowLeft, MessageCircle, MessageSquarePlus, Search, Sparkles, Users } 
 import { useEffect, useMemo, useState } from 'react'
 
 import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
-import { isGroupThread, sortThreadIds, totalUnread } from '@/lib/ogonek/messenger'
+import { isGroupThread, isPridayChat, sortThreadIds, totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore, type CurrentUser } from '@/lib/ogonek/use-ogonek-store'
@@ -102,7 +102,7 @@ export function MessagesView({
 
   const isChatAvailable =
     Boolean(activeFriendId) &&
-    (Boolean(getFriend(activeFriendId!)) || isGroupThread(threads[activeFriendId!], activeFriendId!))
+    (isPridayChat(activeFriendId!) || Boolean(getFriend(activeFriendId!)) || isGroupThread(threads[activeFriendId!], activeFriendId!))
 
   if (!currentUserId && !currentUser && !state?.auth?.signedIn) {
     return (

@@ -17,6 +17,7 @@ import { createPortal } from 'react-dom'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { getFriend, type FriendProfile } from '@/lib/ogonek/friends'
 import { getInitials } from '@/lib/ogonek/initials'
+import { canMessageUser } from '@/lib/ogonek/privacy'
 import { blockUserApi } from '@/lib/ogonek/social'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -156,8 +157,19 @@ export function FriendDetailModal({
   const isOnline = friend?.presence === 'online'
 
   const statusText = isFriend ? 'Друзья ✓' : isFollowing ? 'Вы подписаны' : 'Не в друзьях'
+  const dmPerm = useMemo(() => {
+    return canMessageUser({
+      viewerId,
+      targetProfile: liveRecord,
+      isMutualFriend: isFriend,
+    })
+  }, [viewerId, liveRecord, isFriend])
 
   const handleMessage = () => {
+    if (!dmPerm.allowed) {
+      onNotify(dmPerm.reason || 'Пользователь ограничил получение личных сообщений')
+      return
+    }
     playClick(soundEnabled)
     setActiveChatFriend(friendId)
     onClose()
@@ -372,11 +384,17 @@ export function FriendDetailModal({
             <div className="grid grid-cols-2 gap-2.5 pt-1">
               <button
                 type="button"
+                aria-disabled={!dmPerm.allowed}
+                title={!dmPerm.allowed ? dmPerm.reason : undefined}
                 onClick={handleMessage}
-                className="h-11 px-4 rounded-full bg-[#FF5C00] hover:opacity-90 text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shadow-sm"
+                className={`h-11 px-4 rounded-full text-[13px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${
+                  dmPerm.allowed
+                    ? 'bg-[#FF5C00] hover:opacity-90 text-white active:scale-[0.98] cursor-pointer'
+                    : 'bg-[var(--surface2,#202327)] text-[var(--text-3)] opacity-60 cursor-not-allowed'
+                }`}
               >
                 <MessageCircle size={15} />
-                <span>Написать</span>
+                <span>{dmPerm.allowed ? 'Написать' : 'ЛС закрыты'}</span>
               </button>
 
               <button

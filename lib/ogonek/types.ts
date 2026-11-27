@@ -835,6 +835,13 @@ export type ChatMessage = {
     isVideo?: boolean
     status?: string
   } | null
+  /** Метаданные системных уведомлений от официального бота Priday (подписка/дружба/поддержка) */
+  actorMeta?: {
+    actorId?: string | null
+    actorUsername?: string | null
+    actorDisplayName?: string | null
+    kind?: 'welcome' | 'canned' | 'support_user' | 'support_reply' | 'follow' | 'mutual'
+  } | null
 }
 
 /** Метаданные группового чата */
@@ -1143,6 +1150,12 @@ export type PrivacySettings = {
   whoCanCall?: InteractionAudience
   /** Кто видит статус «в сети» ('everyone' | 'friends' | 'nobody') */
   whoCanSeeOnline?: InteractionAudience
+  /** Скрытая личность: скрывает профиль из поиска и рекомендаций */
+  isHiddenFromSearch?: boolean
+  /** Кто может писать мне сообщения ('everyone' | 'friends' | 'nobody') */
+  allowMessagesFrom?: InteractionAudience
+  /** Кто может добавлять меня в группы ('friends' | 'nobody') */
+  allowGroupInvitesFrom?: 'friends' | 'nobody'
   /** Показывать длину стрика публично */
   showStreakPublicly: boolean
   /** Показывать верифицированные бейджи публично */

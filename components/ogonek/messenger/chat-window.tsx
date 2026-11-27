@@ -25,6 +25,8 @@ import {
   chatDayKey,
   formatChatDayLabel,
   isGroupThread,
+  isPridayChat,
+  isDeletableChat,
   threadOf,
   threadTitle,
 } from '@/lib/ogonek/messenger'
@@ -319,8 +321,8 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
 
           <div className="mcw__ident min-w-0 flex-1">
             <span className="mcw__name text-sm sm:text-base font-bold text-[var(--text)] whitespace-nowrap overflow-visible flex items-center gap-1.5">
-              <span>{title}</span>
-              {(friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
+              <span>{isPridayChat(friendId) ? 'Priday' : title}</span>
+              {(isPridayChat(friendId) || friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
             </span>
 
             <span className="mcw__status text-xs text-[var(--text-2)] whitespace-nowrap block">
@@ -331,6 +333,8 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                   <span className="animate-pulse delay-100">.</span>
                   <span className="animate-pulse delay-200">.</span>
                 </span>
+              ) : isPridayChat(friendId) ? (
+                <span className="text-[var(--text-2)]">официальный аккаунт · @priday.life</span>
               ) : isGroup ? (
                 <span className="text-[var(--text-2)]">
                   {thread.groupMeta?.memberIds.length ?? 3} участников · 2 в сети
@@ -406,14 +410,16 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                   {thread.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
                   <span>{thread.muted ? 'Включить уведомления' : 'Отключить уведомления'}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10"
-                >
-                  <Trash2 size={15} />
-                  <span>Очистить историю</span>
-                </button>
+                {isDeletableChat(friendId) && (
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10"
+                  >
+                    <Trash2 size={15} />
+                    <span>Очистить историю</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

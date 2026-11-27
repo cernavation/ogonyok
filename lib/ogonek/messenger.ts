@@ -35,6 +35,21 @@ import {
   type VisibilityLevel,
 } from './types.ts'
 import { normalizeVisibility } from './visibility.ts'
+import {
+  PRIDAY_CHAT_ID,
+  PRIDAY_THREAD_PEER_META,
+  isPridayChat,
+  isDeletableChat,
+  ensurePridayThreadInThreads,
+} from './priday-system-chat.ts'
+
+export {
+  PRIDAY_CHAT_ID,
+  PRIDAY_THREAD_PEER_META,
+  isPridayChat,
+  isDeletableChat,
+  ensurePridayThreadInThreads,
+}
 
 /** Идентификатор автора-пользователя в переписке */
 export const MY_CHAT_ID = 'me'
@@ -315,6 +330,7 @@ export function unreadCountForFolder(
 
 /** Заголовок треда для списка: имя друга, группы или id (БЕЗ сырых UUID в UI!) */
 export function threadTitle(friendOrId: FriendProfile | string | undefined | null, thread?: ChatThreadState | null): string {
+  if (typeof friendOrId === 'string' && isPridayChat(friendOrId)) return 'Priday'
   if (thread?.groupMeta?.title) return thread.groupMeta.title
   if (thread?.peerMeta?.name && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(thread.peerMeta.name)) {
     return thread.peerMeta.name
@@ -741,6 +757,7 @@ export function makeChatMessage(input: {
   media?: ChatMessageMedia | null
   linkPreview?: ChatLinkPreview | null
   call_meta?: { durationSeconds?: number; isVideo?: boolean; status?: string } | null
+  actorMeta?: ChatMessage['actorMeta']
 }): ChatMessage {
   const text = (input.text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
   const linkUrl = !input.linkPreview && !input.attachment && !input.media ? extractUrl(text) : null
@@ -781,6 +798,7 @@ export function makeChatMessage(input: {
     media: input.media ?? null,
     linkPreview,
     call_meta: input.call_meta ?? null,
+    actorMeta: input.actorMeta ?? null,
   }
 }
 
@@ -883,6 +901,7 @@ function sanitizeChatMessages(value: unknown, _validFriendIds?: Set<string>): Ch
       pinned: Boolean(m.pinned),
       media,
       linkPreview: m.linkPreview && typeof m.linkPreview === 'object' ? (m.linkPreview as any) : null,
+      actorMeta: (m as any).actorMeta && typeof (m as any).actorMeta === 'object' ? (m as any).actorMeta : null,
     })
   }
 
@@ -958,7 +977,18 @@ export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}):
       draft: typeof t.draft === 'string' ? t.draft.slice(0, CHAT_MESSAGE_LIMIT) : '',
       archived: Boolean(t.archived),
       pinnedMessageId: typeof t.pinnedMessageId === 'string' ? t.pinnedMessageId : null,
-      groupMeta: t.groupMeta && typeof t.groupMeta === 'object' ? (t.groupMeta as any) : null,
+      peerMeta:
+        cleanId === PRIDAY_CHAT_ID
+          ? { ...PRIDAY_THREAD_PEER_META }
+          : t.peerMeta && typeof t.peerMeta === 'object'
+          ? (t.peerMeta as any)
+          : undefined,
+      groupMeta:
+        cleanId === PRIDAY_CHAT_ID
+          ? null
+          : t.groupMeta && typeof t.groupMeta === 'object'
+          ? (t.groupMeta as any)
+          : null,
     }
   }
 

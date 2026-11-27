@@ -179,9 +179,11 @@ export function ExploreView({
     return []
   }, [days, query, activeTag])
 
-  // Реальные пользователи из базы Supabase
+  // Реальные пользователи из базы Supabase (скрытые пользователи не попадают в поиск и рекомендации)
   const communityUsers = useMemo(() => {
-    return dbProfiles.map((p) => ({
+    return dbProfiles
+      .filter((p) => !p.is_hidden_from_search && !p.is_anonymous && p.who_can_find !== 'nobody')
+      .map((p) => ({
       id: p.id,
       name: p.display_name || `@${p.username}`,
       username: p.username,

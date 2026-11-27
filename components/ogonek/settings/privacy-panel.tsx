@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState, type ComponentType } from 'react'
 import {
   BadgeCheck,
   Check,
+  EyeOff,
   Flame,
   Globe,
   Lock,
@@ -170,11 +171,12 @@ export function PrivacyPanel({ onNotify }: Props) {
   const isDefault =
     privacy.profileVisibility === 'public' &&
     privacy.commentPolicy === 'everyone' &&
-    privacy.chatPolicy === 'friends' &&
+    !privacy.isHiddenFromSearch &&
+    (privacy.allowMessagesFrom ?? privacy.whoCanMessage) === 'everyone' &&
+    (privacy.allowGroupInvitesFrom ?? 'friends') === 'friends' &&
     privacy.whoCanFind === 'everyone' &&
-    privacy.whoCanMessage === 'everyone' &&
-    privacy.whoCanCall === 'everyone' &&
-    privacy.whoCanSeeOnline === 'everyone' &&
+    privacy.whoCanCall === 'friends' &&
+    privacy.whoCanSeeOnline === 'friends' &&
     privacy.defaultDayVisibility === 'public' &&
     privacy.showStreakPublicly &&
     privacy.showBadgesPublicly &&
@@ -193,10 +195,19 @@ export function PrivacyPanel({ onNotify }: Props) {
   }
 
   const handleToggle = (toggle: (typeof TOGGLES)[number]) => {
-    const current = privacy[toggle.key]
-    updatePrivacy({ [toggle.key]: !current } as Partial<PrivacySettings>)
+    const current = Boolean(privacy[toggle.key])
+    const nextVal = !current
+    if (toggle.key === 'searchableByUsername') {
+      updatePrivacy({
+        searchableByUsername: nextVal,
+        isHiddenFromSearch: !nextVal,
+        whoCanFind: nextVal ? 'everyone' : 'nobody',
+      })
+    } else {
+      updatePrivacy({ [toggle.key]: nextVal } as Partial<PrivacySettings>)
+    }
     playClick(sound)
-    onNotify(!current ? toggle.onLabel : toggle.offLabel)
+    onNotify(nextVal ? toggle.onLabel : toggle.offLabel)
   }
 
   const handleReset = () => {
@@ -268,13 +279,58 @@ export function PrivacyPanel({ onNotify }: Props) {
               <Lock size={10} /> {activeVisibility.shortLabel}
             </span>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--bg)] border border-[var(--border)] text-[var(--text-2)] flex items-center gap-1">
-              <MessageSquare size={10} /> Сообщения: {privacy.whoCanMessage === 'everyone' ? 'Все' : privacy.whoCanMessage === 'friends' ? 'Друзья' : 'Никто'}
+              <MessageSquare size={10} /> Сообщения: {(privacy.allowMessagesFrom ?? privacy.whoCanMessage) === 'everyone' ? 'Все' : (privacy.allowMessagesFrom ?? privacy.whoCanMessage) === 'friends' ? 'Друзья' : 'Никто'}
             </span>
             <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[var(--bg)] border border-[var(--border)] text-[var(--text-2)] flex items-center gap-1">
-              <Phone size={10} /> Звонки: {privacy.whoCanCall === 'everyone' ? 'Все' : privacy.whoCanCall === 'friends' ? 'Друзья' : 'Никто'}
+              <Users size={10} /> Группы: {(privacy.allowGroupInvitesFrom ?? 'friends') === 'nobody' ? 'Никто' : 'Друзья'}
             </span>
           </div>
         </div>
+      </div>
+
+      {/* ── 0. Скрытая личность (скрыть меня из поиска) ─────────────────── */}
+      <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div className="min-w-0 pr-2">
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <EyeOff size={15} className="text-[var(--accent)] shrink-0" />
+            <span>Скрытая личность (скрыть меня из поиска)</span>
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5 leading-snug">
+            {privacy.isHiddenFromSearch
+              ? 'Аккаунт скрыт: профиль не отображается в разделе «Поиск» и в рекомендациях у других пользователей'
+              : 'Когда включено, тебя нельзя найти через Поиск и рекомендации, но переписки с друзьями продолжают работать'}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={Boolean(privacy.isHiddenFromSearch)}
+          aria-label="Скрытая личность (скрыть меня из поиска)"
+          onClick={() => {
+            const nextHidden = !privacy.isHiddenFromSearch
+            playClick(sound)
+            updatePrivacy({
+              isHiddenFromSearch: nextHidden,
+              whoCanFind: nextHidden ? 'nobody' : 'everyone',
+              searchableByUsername: !nextHidden,
+            })
+            onNotify(
+              nextHidden
+                ? 'Скрытая личность включена: аккаунт убран из Поиска'
+                : 'Скрытая личность выключена: профиль снова виден в Поиске'
+            )
+          }}
+          className={`w-11 h-6 rounded-full transition-colors relative flex items-center px-0.5 shrink-0 ${
+            privacy.isHiddenFromSearch ? 'bg-[var(--accent)]' : 'bg-zinc-800'
+          }`}
+        >
+          <span
+            className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${
+              privacy.isHiddenFromSearch ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
       </div>
 
       {/* ── 1. Кто может находить меня в поиске ─────────────────────────── */}
@@ -298,7 +354,11 @@ export function PrivacyPanel({ onNotify }: Props) {
                 aria-checked={active}
                 onClick={() => {
                   playClick(sound)
-                  updatePrivacy({ whoCanFind: opt.id })
+                  updatePrivacy({
+                    whoCanFind: opt.id,
+                    isHiddenFromSearch: opt.id === 'nobody',
+                    searchableByUsername: opt.id !== 'nobody',
+                  })
                   onNotify(`Поиск: ${opt.label}`)
                 }}
                 className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
@@ -321,12 +381,13 @@ export function PrivacyPanel({ onNotify }: Props) {
             <MessageSquare size={15} className="text-[var(--accent)]" /> Кто может писать мне сообщения
           </h3>
           <p className="text-[12px] text-[var(--text-2)] mt-0.5">
-            Применяется на уровне сервера PostgreSQL RLS: входящие диалоги от других будут заблокированы
+            Применяется в интерфейсе и на уровне PostgreSQL RLS: кнопка «Написать» и отправка диалогов учитывают этот фильтр
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Кто может писать мне">
           {ACCESS_OPTIONS.map((opt) => {
-            const active = (privacy.whoCanMessage || 'everyone') === opt.id
+            const currentMsgAudience = privacy.allowMessagesFrom ?? privacy.whoCanMessage ?? 'everyone'
+            const active = currentMsgAudience === opt.id
             return (
               <button
                 key={opt.id}
@@ -335,8 +396,53 @@ export function PrivacyPanel({ onNotify }: Props) {
                 aria-checked={active}
                 onClick={() => {
                   playClick(sound)
-                  updatePrivacy({ whoCanMessage: opt.id })
+                  updatePrivacy({
+                    allowMessagesFrom: opt.id,
+                    whoCanMessage: opt.id,
+                    chatPolicy: opt.id,
+                  })
                   onNotify(`Сообщения: ${opt.label}`)
+                }}
+                className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
+                  active
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--text)]'
+                    : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border-strong)]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── 2.5. Кто может добавлять меня в группы ──────────────────────── */}
+      <div className="flex flex-col gap-2.5 p-3.5 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
+        <div>
+          <h3 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
+            <Users size={15} className="text-[var(--accent)]" /> Кто может добавлять меня в группы
+          </h3>
+          <p className="text-[12px] text-[var(--text-2)] mt-0.5">
+            В группы Priday могут добавлять только взаимные друзья, или вы можете полностью отключить приглашения
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Кто может добавлять меня в группы">
+          {[
+            { id: 'friends' as const, label: 'Только друзья' },
+            { id: 'nobody' as const, label: 'Никто' },
+          ].map((opt) => {
+            const currentGroupPolicy = privacy.allowGroupInvitesFrom || 'friends'
+            const active = currentGroupPolicy === opt.id
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => {
+                  playClick(sound)
+                  updatePrivacy({ allowGroupInvitesFrom: opt.id })
+                  onNotify(`Группы: ${opt.label}`)
                 }}
                 className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all text-center ${
                   active

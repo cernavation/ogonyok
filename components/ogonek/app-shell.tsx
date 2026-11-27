@@ -178,6 +178,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     syncSocialGraphFromCloud,
     loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
+    receivePridaySystemNotification,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
   } = useOgonekStore()
@@ -525,6 +526,37 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         (payload) => {
           const notif = payload.new as any
           if (!notif) return
+
+          // Уведомления от официального бота Priday (новая подписка / взаимная дружба / поддержка)
+          if (
+            notif.type === 'priday_follow' ||
+            notif.type === 'priday_mutual' ||
+            notif.type === 'priday_support_reply'
+          ) {
+            receivePridaySystemNotification(notif)
+            if (notif.type === 'priday_mutual' && notif.data?.actorId) {
+              const actorId = notif.data.actorId
+              updateStore((prev: OgonekStoreState) => ({
+                ...prev,
+                followerIds: Array.from(new Set([...(prev.followerIds ?? []), actorId])),
+                friendIds: Array.from(new Set([...(prev.friendIds ?? []), actorId])),
+              }))
+            }
+            const viewingPriday =
+              viewRef.current === 'messages' && activeChatFriendRef.current === 'priday-official'
+            if (!viewingPriday) {
+              playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+              showDesktopToast({
+                type: 'chat',
+                title: 'Priday',
+                body: notif.body || 'Новое системное сообщение',
+                mediaType: 'text',
+                peerId: 'priday-official',
+              })
+            }
+            return
+          }
+
           const nextNotifCount = unreadNotifRef.current + 1
           unreadNotifRef.current = nextNotifCount
           setUnreadNotificationsCount(nextNotifCount)
@@ -561,10 +593,12 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     currentUser?.id,
     state.auth?.activeAccountId,
     receiveIncomingChatMessage,
+    receivePridaySystemNotification,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
     showDesktopToast,
     setUnreadNotificationsCount,
+    updateStore,
   ])
 
   // Событие вех достижения стрика «🔥 Поздравляем! 300 дней»

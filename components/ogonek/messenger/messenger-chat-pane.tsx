@@ -36,11 +36,15 @@ import {
   formatChatDayLabel,
   getDirectThreadKey,
   isGroupThread,
+  isPridayChat,
+  isDeletableChat,
   QUICK_REPLIES,
   threadOf,
   threadTitle,
   unreadCount,
 } from '@/lib/ogonek/messenger'
+import { PRIDAY_QUICK_ACTIONS } from '@/lib/ogonek/priday-system-chat'
+import { canMessageUser } from '@/lib/ogonek/privacy'
 import { resolveEmojiChar } from '@/lib/ogonek/reactions'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type {
@@ -214,15 +218,18 @@ export function MessengerChatPane({
   const thread = friendId ? threadOf(state.chatThreads ?? {}, friendId) : null
   const isGroup = friendId ? isGroupThread(thread ?? undefined, friendId) : false
   const isSaved = friendId === 'saved-messages'
-  const friend = targetPeerId && !isGroup && !isSaved ? getFriend(targetPeerId) : null
+  const isPriday = friendId ? isPridayChat(friendId) : false
+  const friend = targetPeerId && !isGroup && !isSaved && !isPriday ? getFriend(targetPeerId) : null
   const cachedPeerProfile =
-    targetPeerId && !friend && !isGroup && !isSaved ? getCachedProfileSync(targetPeerId) : null
+    targetPeerId && !friend && !isGroup && !isSaved && !isPriday ? getCachedProfileSync(targetPeerId) : null
   const activePeerProfile = peerProfile || cachedPeerProfile
 
   const isUuid = (s?: string | null) =>
     typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 
-  let title = isSaved
+  let title = isPriday
+    ? 'Priday'
+    : isSaved
     ? 'Избранное'
     : friend
     ? friend.name
@@ -240,7 +247,7 @@ export function MessengerChatPane({
   }
 
   useEffect(() => {
-    if (targetPeerId && !friend && !isGroup && !isSaved) {
+    if (targetPeerId && !friend && !isGroup && !isSaved && !isPriday) {
       const cached = getCachedProfileSync(targetPeerId)
       if (cached) setPeerProfile(cached)
       getProfile(targetPeerId).then((p) => {
@@ -249,7 +256,19 @@ export function MessengerChatPane({
     } else {
       setPeerProfile(null)
     }
-  }, [targetPeerId, friend, isGroup, isSaved])
+  }, [targetPeerId, friend, isGroup, isSaved, isPriday])
+
+  const dmPermission = useMemo(() => {
+    if (isGroup || isSaved || isPriday || !targetPeerId || !activePeerProfile) {
+      return { allowed: true as const, policy: 'everyone' as const }
+    }
+    const isMutualFriend = (state.friendIds ?? []).includes(targetPeerId)
+    return canMessageUser({
+      viewerId: currentUserId,
+      targetProfile: activePeerProfile,
+      isMutualFriend,
+    })
+  }, [isGroup, isSaved, isPriday, targetPeerId, activePeerProfile, state.friendIds, currentUserId])
 
   // Активировать поле ввода сообщения при открытии чата
   useEffect(() => {
@@ -440,7 +459,7 @@ export function MessengerChatPane({
 
   // Загрузка и сверка сообщений из базы Supabase при открытии диалога (источник истины)
   useEffect(() => {
-    if (!friendId || !currentUserId || isGroup || isSaved) return
+    if (!friendId || !currentUserId || isGroup || isSaved || isPriday) return
     let cancelled = false
 
     getDirectMessages(currentUserId, friendId)
@@ -453,21 +472,21 @@ export function MessengerChatPane({
     return () => {
       cancelled = true
     }
-  }, [friendId, currentUserId, isGroup, isSaved, reconcileThreadMessages])
+  }, [friendId, currentUserId, isGroup, isSaved, isPriday, reconcileThreadMessages])
 
   // Пометка прочитанным при открытии (в локальном сторе и в Supabase)
   useEffect(() => {
     if (friendId) {
       markThreadRead(friendId)
-      if (currentUserId && !isGroup && !isSaved) {
+      if (currentUserId && !isGroup && !isSaved && !isPriday) {
         markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
       }
     }
-  }, [friendId, allMessages.length, markThreadRead, currentUserId, isGroup, isSaved])
+  }, [friendId, allMessages.length, markThreadRead, currentUserId, isGroup, isSaved, isPriday])
 
   // 1. Жизненный цикл Supabase Realtime подписки на сообщения диалога (INSERT / UPDATE / DELETE)
   useEffect(() => {
-    if (!friendId || !currentUserId || isGroup || isSaved) return
+    if (!friendId || !currentUserId || isGroup || isSaved || isPriday) return
 
     const supabase = getSupabase()
     if (!supabase) return
@@ -626,6 +645,10 @@ export function MessengerChatPane({
     }
 
     if (!canSend) return
+    if (!dmPermission.allowed) {
+      onNotify(dmPermission.reason || 'Отправка сообщений ограничена настройками приватности')
+      return
+    }
 
     const replyPayload: ChatMessageReply | null = replyingTo
       ? {
@@ -805,7 +828,7 @@ export function MessengerChatPane({
               <span className="text-[16px] sm:text-[20px] font-[800] text-[var(--text)] truncate leading-tight">
                 {title}
               </span>
-              {(friend?.verified || activePeerProfile?.verified || thread?.peerMeta?.verified) && (
+              {(isPriday || friend?.verified || activePeerProfile?.verified || thread?.peerMeta?.verified) && (
                 <VerifiedBadge size="sm" />
               )}
             </div>
@@ -816,6 +839,8 @@ export function MessengerChatPane({
                   <span>{typingName} печатает</span>
                   <span className="tracking-widest">…</span>
                 </span>
+              ) : isPriday ? (
+                'официальный аккаунт · @priday.life'
               ) : isSaved ? (
                 'Личные заметки и сохранённое'
               ) : isGroup ? (
@@ -866,34 +891,38 @@ export function MessengerChatPane({
                     {thread?.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
                     {thread?.muted ? 'Включить уведомления' : 'Отключить уведомления'}
                   </button>
-                  <div className="h-[1px] bg-[var(--border)] my-1" />
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setMenuOpen(false)
-                      if (window.confirm('Очистить всю историю этого чата?')) {
-                        await clearThreadMessages(friendId)
-                        onNotify('История переписки очищена')
-                      }
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <Trash2 size={15} /> Очистить историю
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setMenuOpen(false)
-                      if (window.confirm(`Удалить чат «${title}» навсегда?`)) {
-                        await deleteChatThread(friendId)
-                        onNotify('Чат удалён')
-                        onBack?.()
-                      }
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-rose-400 hover:bg-rose-500/10"
-                  >
-                    <Trash2 size={15} /> Удалить чат
-                  </button>
+                  {isDeletableChat(friendId) && (
+                    <>
+                      <div className="h-[1px] bg-[var(--border)] my-1" />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setMenuOpen(false)
+                          if (window.confirm('Очистить всю историю этого чата?')) {
+                            await clearThreadMessages(friendId)
+                            onNotify('История переписки очищена')
+                          }
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                      >
+                        <Trash2 size={15} /> Очистить историю
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setMenuOpen(false)
+                          if (window.confirm(`Удалить чат «${title}» навсегда?`)) {
+                            await deleteChatThread(friendId)
+                            onNotify('Чат удалён')
+                            onBack?.()
+                          }
+                        }}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-rose-400 hover:bg-rose-500/10"
+                      >
+                        <Trash2 size={15} /> Удалить чат
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -1254,8 +1283,30 @@ export function MessengerChatPane({
             </div>
           )}
 
-          {/* Быстрые ответы по кнопке «⚡» или если переписка пуста */}
-          {(showQuickChips || allMessages.length === 0) && (
+          {/* Интерактивные кнопки-чипсы для официального системного чата Priday */}
+          {isPriday && (
+            <div className="flex flex-wrap items-center gap-1.5 py-1">
+              {PRIDAY_QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    sendChatMessage(friendId, action.label)
+                    if (action.isSupport) {
+                      onNotify('Заявка передана в поддержку Priday')
+                    }
+                  }}
+                  className="h-[34px] px-3.5 rounded-full border border-[var(--accent)]/40 bg-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-white text-[var(--text)] text-xs font-semibold whitespace-nowrap transition-colors"
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Быстрые ответы по кнопке «⚡» или если переписка пуста (для обычных чатов) */}
+          {!isPriday && (showQuickChips || allMessages.length === 0) && (
             <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none no-scrollbar">
               {QUICK_REPLIES.map((reply) => (
                 <button
@@ -1274,8 +1325,13 @@ export function MessengerChatPane({
             </div>
           )}
 
-          {/* Строка ввода */}
-          {isGroup && thread?.groupMeta?.adminsOnly && !isMeAdmin ? (
+          {/* Строка ввода или блокировка по приватности */}
+          {!dmPermission.allowed ? (
+            <div className="w-full py-3 px-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-center text-xs text-[var(--text-2)] font-medium flex items-center justify-center gap-2 select-none shadow-sm">
+              <span>🔒</span>
+              <span>{dmPermission.reason}</span>
+            </div>
+          ) : isGroup && thread?.groupMeta?.adminsOnly && !isMeAdmin ? (
             <div className="w-full py-3 px-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-center text-xs text-[var(--text-2)] font-medium flex items-center justify-center gap-2 select-none shadow-sm">
               <span>🔒</span>
               <span>В этой группе только администраторы могут отправлять сообщения</span>

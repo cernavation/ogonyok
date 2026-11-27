@@ -19,6 +19,9 @@ export const DEFAULT_PRIVACY: PrivacySettings = {
   whoCanMessage: 'everyone',
   whoCanCall: 'friends',
   whoCanSeeOnline: 'friends',
+  isHiddenFromSearch: false,
+  allowMessagesFrom: 'everyone',
+  allowGroupInvitesFrom: 'friends',
   showStreakPublicly: true,
   showBadgesPublicly: true,
   showDifficultyLevelPublicly: true,
@@ -126,21 +129,30 @@ export function sanitizePrivacySettings(value: unknown): PrivacySettings {
   const bool = (raw: unknown, fallback: boolean): boolean =>
     typeof raw === 'boolean' ? raw : fallback
 
-  const whoCanFind =
-    v.whoCanFind === 'friends' || v.whoCanFind === 'nobody'
-      ? v.whoCanFind
-      : v.searchableByUsername === false
-      ? 'nobody'
+  const isHiddenFromSearch =
+    typeof v.isHiddenFromSearch === 'boolean'
+      ? v.isHiddenFromSearch
+      : v.whoCanFind === 'nobody' || v.searchableByUsername === false
+
+  const whoCanFind: InteractionAudience = isHiddenFromSearch
+    ? 'nobody'
+    : v.whoCanFind === 'friends'
+    ? 'friends'
+    : 'everyone'
+
+  const rawMessagesAudience =
+    v.allowMessagesFrom === 'everyone' || v.allowMessagesFrom === 'friends' || v.allowMessagesFrom === 'nobody'
+      ? v.allowMessagesFrom
+      : v.whoCanMessage === 'everyone' || v.whoCanMessage === 'friends' || v.whoCanMessage === 'nobody'
+      ? v.whoCanMessage
+      : v.chatPolicy === 'friends' || v.chatPolicy === 'nobody'
+      ? v.chatPolicy
       : 'everyone'
 
-  const whoCanMessage =
-    v.whoCanMessage === 'everyone' || v.whoCanMessage === 'nobody'
-      ? v.whoCanMessage
-      : v.chatPolicy === 'nobody'
-      ? 'nobody'
-      : v.chatPolicy === 'everyone'
-      ? 'everyone'
-      : 'friends'
+  const whoCanMessage: InteractionAudience = rawMessagesAudience
+  const allowMessagesFrom: InteractionAudience = rawMessagesAudience
+  const allowGroupInvitesFrom: 'friends' | 'nobody' =
+    v.allowGroupInvitesFrom === 'nobody' ? 'nobody' : 'friends'
 
   const whoCanCall =
     v.whoCanCall === 'everyone' || v.whoCanCall === 'nobody'
@@ -160,10 +172,13 @@ export function sanitizePrivacySettings(value: unknown): PrivacySettings {
     whoCanMessage,
     whoCanCall,
     whoCanSeeOnline,
+    isHiddenFromSearch,
+    allowMessagesFrom,
+    allowGroupInvitesFrom,
     showStreakPublicly: bool(v.showStreakPublicly, DEFAULT_PRIVACY.showStreakPublicly),
     showBadgesPublicly: bool(v.showBadgesPublicly, DEFAULT_PRIVACY.showBadgesPublicly),
     showDifficultyLevelPublicly: bool(v.showDifficultyLevelPublicly, DEFAULT_PRIVACY.showDifficultyLevelPublicly ?? true),
-    searchableByUsername: whoCanFind !== 'nobody' && bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
+    searchableByUsername: !isHiddenFromSearch && whoCanFind !== 'nobody' && bool(v.searchableByUsername, DEFAULT_PRIVACY.searchableByUsername),
     hideFromLeaderboards: bool(v.hideFromLeaderboards, DEFAULT_PRIVACY.hideFromLeaderboards),
     defaultDayVisibility:
       v.defaultDayVisibility === 'private' || v.defaultDayVisibility === 'friends'
@@ -195,11 +210,12 @@ export function evaluatePrivacyScore(privacy: PrivacySettings): {
     nobody: 15,
   }
   score += audienceWeight[privacy.commentPolicy]
-  score += audienceWeight[privacy.chatPolicy]
+  score += audienceWeight[privacy.allowMessagesFrom ?? privacy.chatPolicy]
   score += privacy.showStreakPublicly ? 0 : 8
   score += privacy.showBadgesPublicly ? 0 : 7
-  score += privacy.searchableByUsername ? 0 : 10
+  score += privacy.isHiddenFromSearch || !privacy.searchableByUsername ? 10 : 0
   score += privacy.hideFromLeaderboards ? 10 : 0
+  score += privacy.allowGroupInvitesFrom === 'nobody' ? 5 : 0
 
   const percent = Math.max(4, Math.min(100, score))
   const level = percent >= 70 ? 'closed' : percent >= 35 ? 'balanced' : 'open'
@@ -212,4 +228,107 @@ export function evaluatePrivacyScore(privacy: PrivacySettings): {
 export function buildPrivacySummary(privacy: PrivacySettings): string {
   const type = profileVisibilityMeta(privacy.profileVisibility).shortLabel
   return `${type} · коммент: ${describeAudience(privacy.commentPolicy)} · чат: ${describeAudience(privacy.chatPolicy)}`
+}
+
+export type PrivacyProfileLike = {
+  id?: string | null
+  is_anonymous?: boolean | null
+  is_hidden_from_search?: boolean | null
+  who_can_find?: string | null
+  who_can_message?: string | null
+  allow_messages_from?: string | null
+  allow_group_invites_from?: string | null
+  privacy?: Record<string, any> | null
+}
+
+/** Скрыт ли профиль из раздела «Поиск» и рекомендаций («Скрытая личность») */
+export function isProfileHiddenFromSearch(profile: PrivacyProfileLike | null | undefined): boolean {
+  if (!profile) return false
+  if (profile.is_anonymous === true || profile.privacy?.is_anonymous === true) return true
+  if (profile.is_hidden_from_search === true) return true
+  if (profile.who_can_find === 'nobody') return true
+  if (profile.privacy?.isHiddenFromSearch === true) return true
+  if (profile.privacy?.whoCanFind === 'nobody') return true
+  if (profile.privacy?.searchableByUsername === false) return true
+  return false
+}
+
+/** Возвращает политику входящих личных сообщений профиля */
+export function resolveAllowMessagesFrom(profile: PrivacyProfileLike | null | undefined): InteractionAudience {
+  if (!profile) return 'everyone'
+  const candidate =
+    profile.allow_messages_from ??
+    profile.who_can_message ??
+    profile.privacy?.allowMessagesFrom ??
+    profile.privacy?.whoCanMessage
+  if (candidate === 'nobody' || candidate === 'friends' || candidate === 'everyone') {
+    return candidate
+  }
+  return 'everyone'
+}
+
+/** Возвращает политику приглашений в группы профиля */
+export function resolveAllowGroupInvitesFrom(profile: PrivacyProfileLike | null | undefined): 'friends' | 'nobody' {
+  if (!profile) return 'friends'
+  const candidate = profile.allow_group_invites_from ?? profile.privacy?.allowGroupInvitesFrom
+  return candidate === 'nobody' ? 'nobody' : 'friends'
+}
+
+/** Проверяет, может ли viewerId написать личное сообщение targetProfile */
+export function canMessageUser(input: {
+  viewerId?: string | null
+  targetProfile: PrivacyProfileLike | null | undefined
+  isMutualFriend: boolean
+}): { allowed: boolean; policy: InteractionAudience; reason?: string } {
+  const { viewerId, targetProfile, isMutualFriend } = input
+  if (!targetProfile) {
+    return { allowed: true, policy: 'everyone' }
+  }
+  if (viewerId && targetProfile.id && viewerId === targetProfile.id) {
+    return { allowed: true, policy: 'everyone' }
+  }
+  const policy = resolveAllowMessagesFrom(targetProfile)
+  if (policy === 'nobody') {
+    return {
+      allowed: false,
+      policy,
+      reason: 'Пользователь запретил входящие личные сообщения в настройках приватности',
+    }
+  }
+  if (policy === 'friends' && !isMutualFriend) {
+    return {
+      allowed: false,
+      policy,
+      reason: 'Этому пользователю могут писать только друзья (нужна взаимная подписка)',
+    }
+  }
+  return { allowed: true, policy }
+}
+
+/** Проверяет, можно ли добавить targetProfile в групповой чат (строго взаимные друзья + настройка приватности) */
+export function canInviteUserToGroup(input: {
+  viewerId?: string | null
+  targetProfile: PrivacyProfileLike | null | undefined
+  isMutualFriend: boolean
+}): { allowed: boolean; reason?: string } {
+  const { viewerId, targetProfile, isMutualFriend } = input
+  if (!targetProfile) {
+    return { allowed: false, reason: 'Профиль не найден' }
+  }
+  if (viewerId && targetProfile.id && viewerId === targetProfile.id) {
+    return { allowed: false, reason: 'Нельзя пригласить самого себя' }
+  }
+  if (!isMutualFriend) {
+    return {
+      allowed: false,
+      reason: 'В группу можно добавлять только друзей (взаимная подписка)',
+    }
+  }
+  if (resolveAllowGroupInvitesFrom(targetProfile) === 'nobody') {
+    return {
+      allowed: false,
+      reason: 'Пользователь запретил добавлять себя в группы в настройках приватности',
+    }
+  }
+  return { allowed: true }
 }

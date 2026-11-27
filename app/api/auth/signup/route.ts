@@ -166,6 +166,18 @@ export async function POST(request: Request) {
       console.warn('[SIGNUP_PROFILE_WARN]:', profileError)
     }
 
+    // Сидируем приветственное сообщение в официальный системный чат Priday (без ошибки до миграции 133)
+    try {
+      await supabase.from('priday_messages').insert({
+        user_id: userId,
+        sender: 'priday',
+        kind: 'welcome',
+        body: 'Привет! Это официальный чат Priday 🔥 Здесь появляются важные новости, уведомления о новых подписчиках и друзьях, а ещё я помогу разобраться с любыми вопросами о приложении.',
+        is_read: true,
+        created_at: new Date().toISOString(),
+      })
+    } catch {}
+
     return NextResponse.json({
       ok: true,
       user: {

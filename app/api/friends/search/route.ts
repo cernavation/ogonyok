@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getServerSupabase } from '@/lib/supabase/server'
+import { isProfileHiddenFromSearch } from '@/lib/ogonek/privacy'
 import { normalizeSearchQuery, type SocialUser, type FriendshipStatus } from '@/lib/ogonek/social'
 import { FALLBACK_SEED_PROFILES } from '@/lib/supabase/api'
 
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   const { clean, spaceless, words } = normalizeSearchQuery(rawQuery)
   const supabase = getServerSupabase()
 
-  // 1. Попытка вызвать RPC search_profiles_v2
+  // 1. Попытка вызвать RPC search_profiles_v2 (с дофильтрацией скрытых профилей)
   if (supabase) {
     try {
       const { data, error } = await supabase.rpc('search_profiles_v2', {
@@ -24,7 +25,27 @@ export async function GET(request: Request) {
       })
 
       if (!error && Array.isArray(data)) {
-        const users: SocialUser[] = data.map((r: any) => ({
+        const ids = data.map((r: any) => r.id).filter(Boolean)
+        const privacyById = new Map<string, any>()
+        if (ids.length > 0) {
+          try {
+            const { data: privacyRows } = await supabase
+              .from('profiles')
+              .select('id, is_anonymous, who_can_find, privacy')
+              .in('id', ids)
+            for (const row of privacyRows || []) {
+              privacyById.set(row.id, row)
+            }
+          } catch {}
+        }
+
+        const visibleRows = data.filter((r: any) => {
+          const pRow = privacyById.get(r.id)
+          if (pRow && isProfileHiddenFromSearch(pRow)) return false
+          return !isProfileHiddenFromSearch(r)
+        })
+
+        const users: SocialUser[] = visibleRows.map((r: any) => ({
           id: r.id,
           username: r.username,
           displayName: r.display_name || `@${r.username}`,
@@ -69,8 +90,9 @@ export async function GET(request: Request) {
         .range(offset, offset + limit - 1)
 
       if (!error && Array.isArray(profiles)) {
+        const visibleProfiles = profiles.filter((p) => !isProfileHiddenFromSearch(p))
         // Подгружаем реальные подписки из `follows` и заявки из `friendships`
-        const targetIds = profiles.map((p) => p.id)
+        const targetIds = visibleProfiles.map((p) => p.id)
         let friendshipsMap: Record<string, { status: string; isRequester: boolean }> = {}
         const myFollowingSet = new Set<string>()
         const myFollowersSet = new Set<string>()
@@ -105,7 +127,7 @@ export async function GET(request: Request) {
           } catch {}
         }
 
-        const users: SocialUser[] = profiles.map((p) => {
+        const users: SocialUser[] = visibleProfiles.map((p) => {
           const isFollowing = myFollowingSet.has(p.id)
           const isFollower = myFollowersSet.has(p.id)
           const isMutual = isFollowing && isFollower

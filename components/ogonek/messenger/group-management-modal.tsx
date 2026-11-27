@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera,
@@ -20,9 +20,16 @@ import {
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { getFriend, type FriendProfile } from '@/lib/ogonek/friends'
+import { getFriend } from '@/lib/ogonek/friends'
 import { getInitials } from '@/lib/ogonek/initials'
 import { uploadChatMedia } from '@/lib/ogonek/chat-media-service'
+import { canInviteUserToGroup } from '@/lib/ogonek/privacy'
+import {
+  getCachedProfileSync,
+  getMutualFriendProfiles,
+  getProfilesByIds,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
 import type { ChatGroupMeta } from '@/lib/ogonek/types'
 
 type Props = {
@@ -62,15 +69,46 @@ export function GroupManagementModal({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const myUserId = state.auth?.activeAccountId || 'me'
 
+  const [mutualFriendProfiles, setMutualFriendProfiles] = useState<ProfileRecord[]>([])
+  const [memberProfilesMap, setMemberProfilesMap] = useState<Record<string, ProfileRecord>>({})
+
+  useEffect(() => {
+    let cancelled = false
+    if (myUserId && myUserId !== 'me' && !myUserId.startsWith('anon-')) {
+      getMutualFriendProfiles(myUserId)
+        .then((list) => {
+          if (!cancelled) setMutualFriendProfiles(list)
+        })
+        .catch(() => {})
+    }
+    const memberIds = groupMeta.memberIds.filter((id) => id !== 'me' && id !== myUserId)
+    if (memberIds.length > 0) {
+      getProfilesByIds(memberIds)
+        .then((map) => {
+          if (!cancelled) setMemberProfilesMap(map)
+        })
+        .catch(() => {})
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [myUserId, groupMeta.memberIds])
+
   const isCreator = groupMeta.createdBy === myUserId || groupMeta.createdBy === 'me'
   const adminIds = groupMeta.adminIds || (isCreator ? [myUserId] : [])
   const isMeAdmin = isCreator || adminIds.includes(myUserId) || groupMeta.role === 'admin' || groupMeta.role === 'owner'
 
-  // Friends not yet in group
-  const availableFriends: FriendProfile[] = (state.friendIds || [])
-    .map((id) => getFriend(id))
-    .filter((f): f is FriendProfile => Boolean(f))
-    .filter((f) => !groupMeta.memberIds.includes(f.id))
+  // Строго взаимные друзья, не состоящие в группе и разрешившие добавление в группы
+  const availableFriends = useMemo(() => {
+    return mutualFriendProfiles
+      .filter((p) => !groupMeta.memberIds.includes(p.id))
+      .filter((p) => canInviteUserToGroup({ viewerId: myUserId, targetProfile: p, isMutualFriend: true }).allowed)
+      .map((p) => ({
+        id: p.id,
+        name: p.display_name || `@${p.username}`,
+        username: p.username,
+      }))
+  }, [mutualFriendProfiles, groupMeta.memberIds, myUserId])
 
   const handleSaveTitle = () => {
     if (!title.trim()) {
@@ -290,8 +328,8 @@ export function GroupManagementModal({
                 </div>
 
                 {availableFriends.length === 0 ? (
-                  <p className="text-xs text-[var(--text-2)] py-2 text-center">
-                    Все ваши друзья уже в этой группе.
+                  <p className="text-xs text-[var(--text-2)] py-2 text-center leading-relaxed">
+                    Чтобы создать группу или пригласить участников, сначала добавь друзей (взаимная подписка)
                   </p>
                 ) : (
                   <div className="max-h-36 overflow-y-auto space-y-1.5 no-scrollbar">
@@ -341,10 +379,17 @@ export function GroupManagementModal({
             {/* Карточки текущих участников */}
             <div className="space-y-1.5">
               {groupMeta.memberIds.map((mId) => {
+                const liveProf = memberProfilesMap[mId] || getCachedProfileSync(mId)
                 const friend = getFriend(mId)
                 const isMe = mId === myUserId || mId === 'me'
-                const name = isMe ? 'Вы' : friend ? friend.name : `Пользователь #${mId.slice(0, 6)}`
-                const username = friend?.username ? `@${friend.username}` : ''
+                const name = isMe
+                  ? 'Вы'
+                  : liveProf?.display_name || (liveProf?.username ? `@${liveProf.username}` : friend?.name || 'Участник')
+                const username = liveProf?.username
+                  ? `@${liveProf.username}`
+                  : friend?.username
+                  ? `@${friend.username}`
+                  : ''
                 const isMemberCreator = mId === groupMeta.createdBy || (isCreator && isMe)
                 const isMemberAdmin = isMemberCreator || adminIds.includes(mId)
                 const roleLabel = isMemberCreator ? 'Владелец' : isMemberAdmin ? 'Админ' : 'Участник'

@@ -33,15 +33,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ notifications: [], unread_count: 0 })
     }
 
-    const notifications = (data || []).map((row: any) => ({
-      id: row.id,
-      type: row.type,
-      title: row.title,
-      body: row.body,
-      data: row.data || {},
-      isRead: Boolean(row.is_read),
-      createdAtISO: row.created_at,
-    }))
+    const notifications = (data || [])
+      .filter((row: any) => !String(row.type || '').startsWith('priday_'))
+      .map((row: any) => ({
+        id: row.id,
+        type: row.type,
+        title: row.title,
+        body: row.body,
+        data: row.data || {},
+        isRead: Boolean(row.is_read),
+        createdAtISO: row.created_at,
+      }))
 
     const unread_count = notifications.filter((n: any) => !n.isRead).length
 
@@ -81,6 +83,7 @@ export async function POST(request: Request) {
         .update({ is_read: true, updated_at: new Date().toISOString() })
         .eq('user_id', user.userId)
         .eq('is_read', false)
+        .not('type', 'like', 'priday_%')
 
       return NextResponse.json({ success: !error })
     }

@@ -56,7 +56,31 @@ export async function GET(request: Request) {
       }
     }
 
-    const chat_unread = unreadRows?.length || 0
+    let chat_unread = unreadRows?.length || 0
+
+    // Непрочитанные сообщения от официального бота Priday (уведомления и ответы поддержки)
+    let pridayUnread = 0
+    try {
+      const [{ count: pMsgCount, error: pMsgErr }, { count: pNotifCount }] = await Promise.all([
+        supabase
+          .from('priday_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.userId)
+          .eq('is_read', false),
+        supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.userId)
+          .in('type', ['priday_follow', 'priday_mutual', 'priday_support_reply'])
+          .eq('is_read', false),
+      ])
+      pridayUnread = Math.max(!pMsgErr && typeof pMsgCount === 'number' ? pMsgCount : 0, pNotifCount || 0)
+    } catch {}
+
+    if (pridayUnread > 0) {
+      by_thread['priday-official'] = pridayUnread
+      chat_unread += pridayUnread
+    }
 
     // Проверка непрочитанных уведомлений
     let notifications_unread = 0

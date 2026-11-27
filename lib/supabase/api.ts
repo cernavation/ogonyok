@@ -1,5 +1,16 @@
 import { getSupabase } from './client.ts'
 import { canChangeLevel, evaluateDayClosing, getTargetDayForNewEntry, type DiaryDayRecord, type EntryType } from '../ogonek/diary-engine.ts'
+import {
+  isProfileHiddenFromSearch,
+  resolveAllowGroupInvitesFrom,
+  resolveAllowMessagesFrom,
+} from '../ogonek/privacy.ts'
+import {
+  buildPridayFollowText,
+  buildPridayMutualText,
+  mapPridayRecordToChatMessage,
+} from '../ogonek/priday-system-chat.ts'
+import type { ChatMessage } from '../ogonek/types.ts'
 
 export interface ProfileRecord {
   id: string
@@ -38,6 +49,9 @@ export interface ProfileRecord {
   who_can_call?: 'everyone' | 'friends' | 'nobody'
   who_can_see_online?: 'everyone' | 'friends' | 'nobody'
   default_day_visibility?: 'private' | 'friends' | 'public'
+  is_hidden_from_search?: boolean
+  allow_messages_from?: 'everyone' | 'friends' | 'nobody'
+  allow_group_invites_from?: 'friends' | 'nobody'
   created_at?: string
   updated_at?: string
 }
@@ -76,6 +90,9 @@ export function mapProfileRecord(row: any): ProfileRecord {
     streak: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
     streak_count: typeof row.streak_count === 'number' ? row.streak_count : (typeof row.streak === 'number' ? row.streak : 0),
     is_anonymous: row.is_anonymous === true || row.privacy?.is_anonymous === true,
+    is_hidden_from_search: isProfileHiddenFromSearch(row),
+    allow_messages_from: resolveAllowMessagesFrom(row),
+    allow_group_invites_from: resolveAllowGroupInvitesFrom(row),
     tour_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
     onboarding_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
   } as ProfileRecord
@@ -279,8 +296,7 @@ export async function searchProfiles(query: string, currentUserIdOrUsername?: st
 
       if (!error && Array.isArray(data)) {
         for (const row of data as any[]) {
-          const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
-          if (isAnon) continue
+          if (isProfileHiddenFromSearch(row)) continue
 
           if (currentUserIdOrUsername) {
             if (isUuid && row.id === currentUserIdOrUsername) continue
@@ -338,8 +354,7 @@ export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: st
       const { data, error } = await q
       if (!error && Array.isArray(data)) {
         for (const row of data as any[]) {
-          const isAnon = row.is_anonymous === true || row.privacy?.is_anonymous === true
-          if (isAnon) continue
+          if (isProfileHiddenFromSearch(row)) continue
 
           if (currentUserIdOrUsername && !isUuid) {
             if (row.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) continue
@@ -353,6 +368,25 @@ export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: st
   }
 
   return results
+}
+
+/**
+ * Проверить взаимную дружбу (подписки в обе стороны) в Supabase `follows`
+ */
+export async function checkMutualFriendshipDb(userA: string, userB: string): Promise<boolean> {
+  if (!userA || !userB || userA === userB) return false
+  if (!UUID_REGEX.test(userA) || !UUID_REGEX.test(userB)) return false
+  const supabase = getSupabase()
+  if (!supabase) return false
+  try {
+    const [aToB, bToA] = await Promise.all([
+      supabase.from('follows').select('id').eq('follower_id', userA).eq('following_id', userB).maybeSingle(),
+      supabase.from('follows').select('id').eq('follower_id', userB).eq('following_id', userA).maybeSingle(),
+    ])
+    return Boolean(aToB.data && bToA.data)
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -612,6 +646,10 @@ export async function followUser(followerId: string, followingId: string): Promi
           ),
         ])
       }
+    } catch {}
+
+    try {
+      void sendPridayFollowNotificationDb({ followerId, followingId, isMutual })
     } catch {}
 
     return { ok: true, isMutual }
@@ -1373,6 +1411,9 @@ export async function updateProfileInDb(
     if (patch.who_can_call !== undefined) updates.who_can_call = patch.who_can_call
     if (patch.who_can_see_online !== undefined) updates.who_can_see_online = patch.who_can_see_online
     if (patch.default_day_visibility !== undefined) updates.default_day_visibility = patch.default_day_visibility
+    if (patch.is_hidden_from_search !== undefined) updates.is_hidden_from_search = Boolean(patch.is_hidden_from_search)
+    if (patch.allow_messages_from !== undefined) updates.allow_messages_from = patch.allow_messages_from
+    if (patch.allow_group_invites_from !== undefined) updates.allow_group_invites_from = patch.allow_group_invites_from
     if (patch.settings !== undefined) updates.settings = patch.settings
 
     // Если обновляется уровень, дублируем в settings.level для 100% совместимости
@@ -1383,7 +1424,16 @@ export async function updateProfileInDb(
       }
     }
 
-    const { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+    let { error } = await supabase.from('profiles').update(updates).eq('id', userId)
+    if (error && (error.code === '42703' || error.code === 'PGRST204' || /column/i.test(error.message || ''))) {
+      // Фолбэк до выполнения SQL-миграции 133: сохраняем через существующие колонки и JSONB privacy
+      const fallbackUpdates = { ...updates }
+      delete fallbackUpdates.is_hidden_from_search
+      delete fallbackUpdates.allow_messages_from
+      delete fallbackUpdates.allow_group_invites_from
+      const retry = await supabase.from('profiles').update(fallbackUpdates).eq('id', userId)
+      error = retry.error
+    }
     if (error) {
       return { ok: false, error: error.message }
     }
@@ -2748,3 +2798,252 @@ export {
   type FriendshipStatus,
   type FriendFeedPost,
 } from '../ogonek/social.ts'
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ОФИЦИАЛЬНЫЙ СИСТЕМНЫЙ ЧАТ Priday (УВЕДОМЛЕНИЯ О ПОДПИСКАХ, ДРУЖБЕ И ПОДДЕРЖКЕ)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const PRIDAY_NOTIF_TYPES = [
+  'priday_follow',
+  'priday_mutual',
+  'priday_support_user',
+  'priday_support_reply',
+] as const
+
+/**
+ * Отправить системное сообщение в чат Priday при подписке или взаимной дружбе.
+ * Пишет в public.notifications (уже в Supabase Realtime и с нужными RLS) и
+ * опционально дублирует в public.priday_messages, если миграция 133 уже применена.
+ */
+export async function sendPridayFollowNotificationDb(input: {
+  followerId: string
+  followingId: string
+  isMutual: boolean
+}): Promise<void> {
+  const supabase = getSupabase()
+  if (!supabase || !UUID_REGEX.test(input.followerId) || !UUID_REGEX.test(input.followingId)) return
+
+  try {
+    const profiles = await getProfilesByIds([input.followerId, input.followingId])
+    const followerProf = profiles[input.followerId]
+    const followingProf = profiles[input.followingId]
+    const nowISO = new Date().toISOString()
+
+    if (!input.isMutual) {
+      const body = buildPridayFollowText(followerProf?.username, followerProf?.display_name)
+      const dataPayload = {
+        source: 'priday_chat',
+        kind: 'follow',
+        actorId: input.followerId,
+        actorUsername: followerProf?.username || null,
+        actorDisplayName: followerProf?.display_name || null,
+      }
+      await supabase.from('notifications').insert({
+        user_id: input.followingId,
+        type: 'priday_follow',
+        title: 'Priday',
+        body,
+        data: dataPayload,
+        is_read: false,
+        created_at: nowISO,
+      })
+      return
+    }
+
+    const bodyForRecipient = buildPridayMutualText(followerProf?.username, followerProf?.display_name)
+    const bodyForFollower = buildPridayMutualText(followingProf?.username, followingProf?.display_name)
+    await supabase.from('notifications').insert([
+      {
+        user_id: input.followingId,
+        type: 'priday_mutual',
+        title: 'Priday',
+        body: bodyForRecipient,
+        data: {
+          source: 'priday_chat',
+          kind: 'mutual',
+          actorId: input.followerId,
+          actorUsername: followerProf?.username || null,
+          actorDisplayName: followerProf?.display_name || null,
+        },
+        is_read: false,
+        created_at: nowISO,
+      },
+      {
+        user_id: input.followerId,
+        type: 'priday_mutual',
+        title: 'Priday',
+        body: bodyForFollower,
+        data: {
+          source: 'priday_chat',
+          kind: 'mutual',
+          actorId: input.followingId,
+          actorUsername: followingProf?.username || null,
+          actorDisplayName: followingProf?.display_name || null,
+        },
+        is_read: false,
+        created_at: nowISO,
+      },
+    ])
+  } catch (err) {
+    console.warn('[PridaySystemChat] sendPridayFollowNotificationDb warn:', err)
+  }
+}
+
+/**
+ * Загружает историю системного чата Priday пользователя (уведомления о подписках/дружбе + переписка с поддержкой).
+ */
+export async function loadPridaySystemMessagesDb(userId: string): Promise<ChatMessage[]> {
+  const supabase = getSupabase()
+  if (!supabase || !userId || !UUID_REGEX.test(userId)) return []
+
+  const rawRows: any[] = []
+  try {
+    const [pridayRes, notifRes] = await Promise.allSettled([
+      supabase
+        .from('priday_messages')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .in('type', [...PRIDAY_NOTIF_TYPES])
+        .order('created_at', { ascending: true }),
+    ])
+
+    if (pridayRes.status === 'fulfilled' && !pridayRes.value.error && Array.isArray(pridayRes.value.data)) {
+      rawRows.push(...pridayRes.value.data)
+    }
+    if (notifRes.status === 'fulfilled' && !notifRes.value.error && Array.isArray(notifRes.value.data)) {
+      rawRows.push(...notifRes.value.data)
+    }
+  } catch {}
+
+  const seen = new Set<string>()
+  const messages: ChatMessage[] = []
+  for (const row of rawRows) {
+    const mapped = mapPridayRecordToChatMessage(row)
+    if (!mapped) continue
+    const dedupKey = mapped.dbId || `${mapped.authorId}:${mapped.createdAtISO}:${mapped.text}`
+    if (seen.has(dedupKey)) continue
+    seen.add(dedupKey)
+    messages.push(mapped)
+  }
+
+  messages.sort((a, b) => new Date(a.createdAtISO).getTime() - new Date(b.createdAtISO).getTime())
+  return messages
+}
+
+/**
+ * Помечает все системные сообщения в чате Priday прочитанными в Supabase.
+ */
+export async function markPridaySystemMessagesReadDb(userId: string): Promise<void> {
+  const supabase = getSupabase()
+  if (!supabase || !userId || !UUID_REGEX.test(userId)) return
+  try {
+    await Promise.allSettled([
+      supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .in('type', [...PRIDAY_NOTIF_TYPES])
+        .eq('is_read', false),
+      supabase
+        .from('priday_messages')
+        .update({ is_read: true })
+        .eq('user_id', userId)
+        .eq('is_read', false),
+    ])
+  } catch {}
+}
+
+/**
+ * Сохраняет обращение пользователя в поддержку Priday в Supabase (+ ответ бота).
+ */
+export async function savePridaySupportExchangeDb(input: {
+  userId: string
+  text: string
+  actionId?: string | null
+  replyText: string
+  isSupport: boolean
+}): Promise<{ ok: boolean }> {
+  const supabase = getSupabase()
+  if (!supabase || !input.userId || !UUID_REGEX.test(input.userId)) return { ok: false }
+
+  try {
+    const sessionRes = await supabase.auth.getSession()
+    const token = sessionRes?.data?.session?.access_token
+    if (token && typeof fetch !== 'undefined') {
+      const apiRes = await fetch('/api/priday/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: input.text,
+          actionId: input.actionId || null,
+        }),
+      }).catch(() => null)
+      if (apiRes?.ok) {
+        const json = await apiRes.json().catch(() => null)
+        if (json?.persisted) return { ok: true }
+      }
+    }
+  } catch {}
+
+  const nowISO = new Date().toISOString()
+  const replyISO = new Date(Date.now() + 50).toISOString()
+  try {
+    const { error: pErr } = await supabase.from('priday_messages').insert([
+      {
+        user_id: input.userId,
+        sender: 'user',
+        kind: input.isSupport ? 'support_user' : 'canned',
+        body: input.text,
+        is_read: true,
+        meta: { actionId: input.actionId || 'custom' },
+        created_at: nowISO,
+      },
+      {
+        user_id: input.userId,
+        sender: 'priday',
+        kind: input.isSupport ? 'support_reply' : 'canned',
+        body: input.replyText,
+        is_read: true,
+        meta: { actionId: input.actionId || 'custom' },
+        created_at: replyISO,
+      },
+    ])
+    if (!pErr) return { ok: true }
+  } catch {}
+
+  if (input.isSupport) {
+    try {
+      const { error: nErr } = await supabase.from('notifications').insert([
+        {
+          user_id: input.userId,
+          type: 'priday_support_user',
+          title: 'Обращение в поддержку Priday',
+          body: input.text,
+          data: { source: 'priday_chat', kind: 'support_user', actionId: input.actionId || 'custom' },
+          is_read: true,
+          created_at: nowISO,
+        },
+        {
+          user_id: input.userId,
+          type: 'priday_support_reply',
+          title: 'Priday',
+          body: input.replyText,
+          data: { source: 'priday_chat', kind: 'support_reply', actionId: input.actionId || 'custom' },
+          is_read: true,
+          created_at: replyISO,
+        },
+      ])
+      if (!nErr) return { ok: true }
+    } catch {}
+  }
+
+  return { ok: false }
+}

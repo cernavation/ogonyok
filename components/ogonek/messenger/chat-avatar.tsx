@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Flame } from 'lucide-react'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { isPridayChat } from '@/lib/ogonek/priday-system-chat'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getCachedProfileSync, getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
@@ -43,6 +45,18 @@ export function ChatAvatar({
     }
     return friendId
   })()
+
+  if (isPridayChat(friendId) || isPridayChat(targetUserId)) {
+    return (
+      <div
+        className="rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#FF5C00] to-[#E53900] text-white flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgba(255,92,0,0.4)] border border-white/20"
+        style={{ width: size, height: size }}
+        aria-label="Priday"
+      >
+        <Flame size={Math.max(16, Math.round(size * 0.54))} fill="currentColor" strokeWidth={1.8} />
+      </div>
+    )
+  }
 
   const friend = targetUserId ? getFriend(targetUserId) : undefined
   const thread = friendId ? state?.chatThreads?.[friendId] : undefined

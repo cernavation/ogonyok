@@ -32,6 +32,8 @@ import {
   filterThreadsByFolder,
   formatThreadStamp,
   isGroupThread,
+  isPridayChat,
+  isDeletableChat,
   lastMessage,
   sortThreadIds,
   summarizeMessage,
@@ -157,18 +159,24 @@ export function MessengerDialogList({
         const thread = safeThreads[id] ?? emptyThread()
         const isGroup = isGroupThread(thread, id)
         const isSaved = id === 'saved-messages'
-        const friend = !isGroup && !isSaved ? getFriend(id) : null
-        const targetUid = !isGroup && !isSaved ? getTargetUserId(id, currentUserId) : ''
+        const isPriday = isPridayChat(id)
+        const friend = !isGroup && !isSaved && !isPriday ? getFriend(id) : null
+        const targetUid = !isGroup && !isSaved && !isPriday ? getTargetUserId(id, currentUserId) : ''
         const liveProfile = targetUid && !friend ? getCachedProfileSync(targetUid) : null
-        const isVerified = Boolean(
-          liveProfile?.verified ?? friend?.verified ?? thread?.peerMeta?.verified
-        )
+        const isVerified = isPriday
+          ? true
+          : Boolean(
+              liveProfile?.verified ?? friend?.verified ?? thread?.peerMeta?.verified
+            )
 
-        let title = isSaved
+        let title = isPriday
+          ? 'Priday'
+          : isSaved
           ? 'Избранное'
           : liveProfile?.display_name || threadTitle(id, thread)
-        let username =
-          liveProfile?.username || friend?.username || thread?.peerMeta?.username || null
+        let username = isPriday
+          ? 'priday.life'
+          : liveProfile?.username || friend?.username || thread?.peerMeta?.username || null
         if (username && isUuid(username)) username = null
         if ((title && isUuid(title)) || (title === 'Собеседник' && username)) {
           title = username ? `@${username}` : title
@@ -592,30 +600,34 @@ export function MessengerDialogList({
                   onNotify?.(nowMuted ? 'Уведомления отключены' : 'Уведомления включены')
                 },
               },
-              {
-                id: 'clear',
-                label: 'Очистить историю',
-                icon: <Trash2 size={15} />,
-                dividerBefore: true,
-                onSelect: async () => {
-                  if (window.confirm(`Очистить всю историю переписки с «${contextMenu.title}»?`)) {
-                    await clearThreadMessages(contextMenu.threadId)
-                    onNotify?.('История переписки очищена')
-                  }
-                },
-              },
-              {
-                id: 'delete',
-                label: 'Удалить чат',
-                icon: <Trash2 size={15} />,
-                danger: true,
-                onSelect: async () => {
-                  if (window.confirm(`Удалить чат с «${contextMenu.title}» навсегда?`)) {
-                    await deleteChatThread(contextMenu.threadId)
-                    onNotify?.('Чат удалён')
-                  }
-                },
-              },
+              ...(isDeletableChat(contextMenu.threadId)
+                ? ([
+                    {
+                      id: 'clear',
+                      label: 'Очистить историю',
+                      icon: <Trash2 size={15} />,
+                      dividerBefore: true,
+                      onSelect: async () => {
+                        if (window.confirm(`Очистить всю историю переписки с «${contextMenu.title}»?`)) {
+                          await clearThreadMessages(contextMenu.threadId)
+                          onNotify?.('История переписки очищена')
+                        }
+                      },
+                    },
+                    {
+                      id: 'delete',
+                      label: 'Удалить чат',
+                      icon: <Trash2 size={15} />,
+                      danger: true,
+                      onSelect: async () => {
+                        if (window.confirm(`Удалить чат с «${contextMenu.title}» навсегда?`)) {
+                          await deleteChatThread(contextMenu.threadId)
+                          onNotify?.('Чат удалён')
+                        }
+                      },
+                    },
+                  ] satisfies ContextMenuItem[])
+                : []),
             ] satisfies ContextMenuItem[]
           }
         />

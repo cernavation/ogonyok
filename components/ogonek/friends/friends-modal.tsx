@@ -31,6 +31,7 @@ import {
   reportUserApi,
 } from '@/lib/ogonek/social'
 import { canAddGroupMember, canCreateGroup } from '@/lib/ogonek/permissions'
+import { resolveAllowGroupInvitesFrom, resolveAllowMessagesFrom } from '@/lib/ogonek/privacy'
 import type { ChatGroupMeta } from '@/lib/ogonek/types'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -63,6 +64,8 @@ function profileRecordToSocialUser(p: ProfileRecord): SocialUser {
     difficultyLevel: Number(p.level || 1),
     friendshipStatus: 'accepted',
     isFollowing: true,
+    allowMessagesFrom: resolveAllowMessagesFrom(p),
+    allowGroupInvitesFrom: resolveAllowGroupInvitesFrom(p),
   }
 }
 
@@ -1188,13 +1191,15 @@ export function FriendsModal({
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-2">
-              {friends.filter((f) => !selectedGroup.memberIds.includes(f.id)).length === 0 ? (
-                <p className="py-6 text-center text-xs text-[var(--muted,#71767b)]">
-                  Все друзья уже добавлены в эту группу
+              {friends.filter((f) => !selectedGroup.memberIds.includes(f.id) && f.allowGroupInvitesFrom !== 'nobody').length === 0 ? (
+                <p className="py-6 text-center text-xs text-[var(--muted,#71767b)] leading-relaxed">
+                  {friends.length === 0
+                    ? 'Чтобы создать группу или добавить участников, сначала добавь друзей (взаимная подписка)'
+                    : 'Нет доступных друзей для добавления (все уже в группе или ограничили приглашения)'}
                 </p>
               ) : (
                 friends
-                  .filter((f) => !selectedGroup.memberIds.includes(f.id))
+                  .filter((f) => !selectedGroup.memberIds.includes(f.id) && f.allowGroupInvitesFrom !== 'nobody')
                   .map((f) => (
                     <div
                       key={f.id}

@@ -17,6 +17,7 @@ import {
   Link2,
   Lock,
   MapPin,
+  MessageCircle,
   Pencil,
   Search,
   Settings,
@@ -59,6 +60,7 @@ import {
 } from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { registerFriendProfile } from '@/lib/ogonek/friends'
+import { canMessageUser } from '@/lib/ogonek/privacy'
 import { EditProfileModal } from '../edit-profile-modal'
 import { FriendsManager } from '../friends-manager'
 import { ShareProfileModal } from '../share-profile-modal'
@@ -132,7 +134,7 @@ export function ProfileView({
   const [targetFollowsMe, setTargetFollowsMe] = useState(false)
   const [mutualFriendsCount, setMutualFriendsCount] = useState(0)
   const [loadingForeign, setLoadingForeign] = useState(false)
-  const { ensureMutualFriendshipChat, syncSocialGraphFromCloud } = useOgonekStore()
+  const { ensureMutualFriendshipChat, syncSocialGraphFromCloud, startChatWithFriend } = useOgonekStore()
 
   // Свой профиль: всегда тянем честные счётчики подписок/читателей напрямую из Supabase `follows`
   useEffect(() => {
@@ -940,6 +942,53 @@ export function ProfileView({
                 >
                   {isFollowingUser ? 'Читаю' : 'Читать'}
                 </button>
+                {(() => {
+                  const targetChatId = foreignProfile?.id || targetUserId || ''
+                  const dmPerm = canMessageUser({
+                    viewerId: storeState.auth?.activeAccountId,
+                    targetProfile: foreignProfile,
+                    isMutualFriend,
+                  })
+                  return (
+                    <button
+                      type="button"
+                      aria-disabled={!dmPerm.allowed || !targetChatId}
+                      title={!dmPerm.allowed ? dmPerm.reason : 'Написать сообщение'}
+                      onClick={() => {
+                        if (!dmPerm.allowed) {
+                          onNotify(dmPerm.reason || 'Пользователь ограничил получение личных сообщений')
+                          return
+                        }
+                        if (!targetChatId) return
+                        playClick(soundEnabled)
+                        startChatWithFriend(targetChatId, {
+                          name: displayProfile.displayName,
+                          username: displayProfile.username,
+                          avatarUrl: avatarSrc || undefined,
+                          avatarColor: displayProfile.avatarColor,
+                          verified: displayProfile.verified,
+                        })
+                        if (typeof window !== 'undefined') {
+                          window.dispatchEvent(
+                            new CustomEvent('ogonek:navigate-view', {
+                              detail: { view: 'messages', chatId: targetChatId },
+                            })
+                          )
+                        } else {
+                          onNavigate('messages')
+                        }
+                      }}
+                      className={`px-4 py-1.5 rounded-full text-[14px] font-bold transition-all min-h-[36px] inline-flex items-center gap-1.5 ${
+                        dmPerm.allowed
+                          ? 'bg-[#FF5C00] text-white hover:opacity-90 shadow-sm'
+                          : 'border border-[var(--line)] bg-[var(--bg-elev)] text-[var(--text-3)] opacity-60 cursor-not-allowed'
+                      }`}
+                    >
+                      <MessageCircle size={15} />
+                      <span>Написать</span>
+                    </button>
+                  )
+                })()}
                 <button
                   type="button"
                   onClick={() => {

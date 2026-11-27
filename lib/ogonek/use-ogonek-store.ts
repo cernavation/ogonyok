@@ -35,6 +35,9 @@ import {
   createChatGroupInDb,
   updateChatGroupInDb,
   saveDayBundleRpc,
+  loadPridaySystemMessagesDb,
+  markPridaySystemMessagesReadDb,
+  savePridaySupportExchangeDb,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
 import { enqueueOfflineMutation } from './offline-queue.ts'
@@ -103,6 +106,16 @@ import {
   totalUnread,
   unreadCount,
 } from './messenger'
+import {
+  PRIDAY_CHAT_ID,
+  PRIDAY_THREAD_PEER_META,
+  PRIDAY_SUPPORT_CUSTOM_REPLY,
+  buildPridayWelcomeMessage,
+  ensurePridayThreadInThreads,
+  isPridayChat,
+  mapPridayRecordToChatMessage,
+  matchPridayQuickAction,
+} from './priday-system-chat'
 import type {
   ChatGroupMeta,
   ChatMessageForward,
@@ -364,6 +377,7 @@ async function hydrateStateFromSupabaseSession(
 
   cachedState = {
     ...cachedState,
+    chatThreads: ensurePridayThreadInThreads(cachedState.chatThreads),
     profile: sanitizeProfile({
       ...cachedState.profile,
       username,
@@ -379,6 +393,24 @@ async function hydrateStateFromSupabaseSession(
       subscription_expires_at: dbSubscriptionExpiresAt,
       subscription_valid_until: dbSubscriptionExpiresAt,
     }),
+    privacy: dbProfile
+      ? sanitizePrivacySettings({
+          ...(cachedState.privacy ?? DEFAULT_PRIVACY),
+          ...(dbProfile.privacy && typeof dbProfile.privacy === 'object' ? dbProfile.privacy : {}),
+          ...(dbProfile.who_can_find ? { whoCanFind: dbProfile.who_can_find } : {}),
+          ...(dbProfile.who_can_message ? { whoCanMessage: dbProfile.who_can_message } : {}),
+          ...(dbProfile.who_can_call ? { whoCanCall: dbProfile.who_can_call } : {}),
+          ...(dbProfile.who_can_see_online ? { whoCanSeeOnline: dbProfile.who_can_see_online } : {}),
+          ...(dbProfile.default_day_visibility ? { defaultDayVisibility: dbProfile.default_day_visibility } : {}),
+          ...(typeof dbProfile.is_hidden_from_search === 'boolean'
+            ? { isHiddenFromSearch: dbProfile.is_hidden_from_search }
+            : {}),
+          ...(dbProfile.allow_messages_from ? { allowMessagesFrom: dbProfile.allow_messages_from } : {}),
+          ...(dbProfile.allow_group_invites_from
+            ? { allowGroupInvitesFrom: dbProfile.allow_group_invites_from }
+            : {}),
+        })
+      : cachedState.privacy,
     auth: {
       ...cachedState.auth,
       accounts: [
@@ -2754,6 +2786,9 @@ export function useOgonekStore() {
           who_can_call: (nextPrivacy as PrivacySettings).whoCanCall,
           who_can_see_online: (nextPrivacy as PrivacySettings).whoCanSeeOnline,
           default_day_visibility: (nextPrivacy as PrivacySettings).defaultDayVisibility,
+          is_hidden_from_search: Boolean((nextPrivacy as PrivacySettings).isHiddenFromSearch),
+          allow_messages_from: (nextPrivacy as PrivacySettings).allowMessagesFrom ?? (nextPrivacy as PrivacySettings).whoCanMessage,
+          allow_group_invites_from: (nextPrivacy as PrivacySettings).allowGroupInvitesFrom ?? 'friends',
         } as any).catch((err: any) => {
           console.warn('[updatePrivacy] Remote update error:', err)
         })
@@ -4281,6 +4316,63 @@ export function useOgonekStore() {
       const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
       if (!clean && !attachment && !extra?.media && !extra?.poll) return null
 
+      // Специальная обработка официального системного чата Priday (FAQ-бот + поддержка в Supabase)
+      if (isPridayChat(friendId)) {
+        const userMessage = makeChatMessage({
+          authorId: MY_CHAT_ID,
+          text: clean,
+          attachment: attachment ?? null,
+          read: true,
+          status: 'read',
+          actorMeta: { kind: 'support_user' },
+        })
+
+        const matchedAction = matchPridayQuickAction(clean)
+        const replyText = matchedAction ? matchedAction.replyText : PRIDAY_SUPPORT_CUSTOM_REPLY
+        const isSupport = !matchedAction || Boolean(matchedAction.isSupport)
+        const botReply = makeChatMessage({
+          authorId: PRIDAY_CHAT_ID,
+          text: replyText,
+          createdAtISO: new Date(Date.now() + 30).toISOString(),
+          read: true,
+          status: 'read',
+          actorMeta: { kind: isSupport ? 'support_reply' : 'canned' },
+        })
+
+        updateStore((prev) => {
+          const threads = ensurePridayThreadInThreads(prev.chatThreads)
+          const pridayThread = threadOf(threads, PRIDAY_CHAT_ID)
+          const nextThreads: ChatThreads = {
+            ...threads,
+            [PRIDAY_CHAT_ID]: {
+              ...pridayThread,
+              readAtISO: new Date().toISOString(),
+              peerMeta: { ...PRIDAY_THREAD_PEER_META },
+              messages: [...pridayThread.messages, userMessage, botReply],
+              draft: '',
+            },
+          }
+          return {
+            ...prev,
+            unreadChatCount: totalUnread(nextThreads),
+            chatThreads: nextThreads,
+          }
+        }, true)
+
+        const currentUserId = getSnapshot().auth?.activeAccountId
+        if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+          void savePridaySupportExchangeDb({
+            userId: currentUserId,
+            text: clean,
+            actionId: matchedAction?.id ?? null,
+            replyText,
+            isSupport,
+          })
+        }
+
+        return userMessage
+      }
+
       const isScheduled = Boolean(extra?.scheduledForISO && new Date(extra.scheduledForISO).getTime() > Date.now())
 
       // Проверка лимитов на отложенные сообщения по тарифу (free: 3, pro: 20, ultra: 100)
@@ -4510,7 +4602,7 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Создание новой группы */
+  /** Создание новой группы (строго из взаимных друзей, не запретивших приглашения) */
   const createGroupChat = useCallback(
     (
       title: string,
@@ -4520,6 +4612,19 @@ export function useOgonekStore() {
       description = '',
       avatarImage?: string | null
     ): string => {
+      const snap = getSnapshot()
+      const friendSet = new Set(snap.friendIds ?? [])
+      const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+      const eligibleMembers = memberIds.filter((id) => {
+        if (!id || id === MY_CHAT_ID || isPridayChat(id)) return false
+        const cached = getCachedProfileSync(id)
+        if (cached?.allow_group_invites_from === 'nobody' || cached?.privacy?.allowGroupInvitesFrom === 'nobody') {
+          return false
+        }
+        if (isUuid(id) && !friendSet.has(id)) return false
+        return true
+      })
+
       const cleanTitle = (title || 'Новая группа').trim().slice(0, 100)
       const groupId = `group-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
       const groupMeta: ChatGroupMeta = {
@@ -4528,7 +4633,7 @@ export function useOgonekStore() {
         avatarColor,
         avatarEmoji,
         avatarImage: avatarImage ?? null,
-        memberIds: Array.from(new Set([MY_CHAT_ID, ...memberIds])),
+        memberIds: Array.from(new Set([MY_CHAT_ID, ...eligibleMembers])),
         adminIds: [MY_CHAT_ID],
         adminsOnly: false,
         createdAtISO: new Date().toISOString(),
@@ -4570,7 +4675,7 @@ export function useOgonekStore() {
         avatarEmoji,
         avatarImage: avatarImage ?? null,
         creatorId: MY_CHAT_ID,
-        memberIds,
+        memberIds: eligibleMembers,
         description,
       }).catch(() => {})
 
@@ -4610,16 +4715,30 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Добавить участников в группу */
+  /** Добавить участников в группу (строго взаимные друзья, не запретившие группы) */
   const addGroupMembers = useCallback(
     (groupId: string, newMemberIds: string[]) => {
       if (!groupId || !newMemberIds.length) return
+      const snap = getSnapshot()
+      const friendSet = new Set(snap.friendIds ?? [])
+      const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+      const eligible = newMemberIds.filter((id) => {
+        if (!id || id === MY_CHAT_ID || isPridayChat(id)) return false
+        const cached = getCachedProfileSync(id)
+        if (cached?.allow_group_invites_from === 'nobody' || cached?.privacy?.allowGroupInvitesFrom === 'nobody') {
+          return false
+        }
+        if (isUuid(id) && !friendSet.has(id)) return false
+        return true
+      })
+      if (eligible.length === 0) return
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, groupId)
         if (!thread.groupMeta) return prev
 
-        const updatedMembers = Array.from(new Set([...thread.groupMeta.memberIds, ...newMemberIds]))
+        const updatedMembers = Array.from(new Set([...thread.groupMeta.memberIds, ...eligible]))
         const updatedMeta: ChatGroupMeta = {
           ...thread.groupMeta,
           memberIds: updatedMembers,
@@ -4627,7 +4746,7 @@ export function useOgonekStore() {
 
         const sysMsg = makeChatMessage({
           authorId: MY_CHAT_ID,
-          text: `В группу добавлено участников: ${newMemberIds.length} 👤`,
+          text: `В группу добавлено участников: ${eligible.length} 👤`,
           system: true,
         })
 
@@ -5024,7 +5143,11 @@ export function useOgonekStore() {
         !currentUserId.startsWith('anon-') &&
         !currentUserId.startsWith('acct-guest')
       ) {
-        markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
+        if (isPridayChat(friendId)) {
+          markPridaySystemMessagesReadDb(currentUserId).catch(() => {})
+        } else {
+          markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
+        }
       }
     },
     [updateStore]
@@ -5071,6 +5194,32 @@ export function useOgonekStore() {
         } catch {}
       }
 
+      if (isPridayChat(friendId)) {
+        updateStore((prev) => {
+          const threads = ensurePridayThreadInThreads(prev.chatThreads)
+          const thread = threadOf(threads, PRIDAY_CHAT_ID)
+          const nextThreads: ChatThreads = {
+            ...threads,
+            [PRIDAY_CHAT_ID]: {
+              ...thread,
+              messages: [buildPridayWelcomeMessage(new Date().toISOString())],
+              scheduledMessages: [],
+              pinnedMessageId: null,
+              readAtISO: new Date().toISOString(),
+            },
+          }
+          return {
+            ...prev,
+            unreadChatCount: totalUnread(nextThreads),
+            chatThreads: nextThreads,
+          }
+        }, true)
+        if (uid && !uid.startsWith('anon-') && !uid.startsWith('acct-guest')) {
+          await markPridaySystemMessagesReadDb(uid)
+        }
+        return true
+      }
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
@@ -5104,7 +5253,7 @@ export function useOgonekStore() {
   /** Полностью удаляет чат из списка диалогов и удаляет переписку в Supabase */
   const deleteChatThread = useCallback(
     async (friendId: string): Promise<boolean> => {
-      if (!friendId) return false
+      if (!friendId || isPridayChat(friendId)) return false
       const snap = getSnapshot()
       let uid = snap.auth?.activeAccountId || null
       if (!uid) {
@@ -5694,6 +5843,43 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  /** Мгновенное добавление системного уведомления в официальный чат Priday (Realtime) */
+  const receivePridaySystemNotification = useCallback(
+    (notifRow: any) => {
+      const mapped = mapPridayRecordToChatMessage(notifRow)
+      if (!mapped) return
+
+      updateStore((prev) => {
+        const threads = ensurePridayThreadInThreads(prev.chatThreads)
+        const pridayThread = threadOf(threads, PRIDAY_CHAT_ID)
+        const existingMsgs = Array.isArray(pridayThread.messages) ? pridayThread.messages : []
+        const alreadyExists = existingMsgs.some(
+          (m) =>
+            (mapped.dbId && (m.dbId === mapped.dbId || m.id === mapped.id)) ||
+            (m.text === mapped.text && Math.abs(new Date(m.createdAtISO).getTime() - new Date(mapped.createdAtISO).getTime()) < 5000)
+        )
+        if (alreadyExists) return prev
+
+        const isViewingPriday = prev.chatActiveFriendId === PRIDAY_CHAT_ID && typeof window !== 'undefined' && window.location.search.includes('view=messages')
+        const finalMsg: ChatMessage = isViewingPriday ? { ...mapped, read: true, status: 'read' } : mapped
+        const nextThreads: ChatThreads = {
+          ...threads,
+          [PRIDAY_CHAT_ID]: {
+            ...pridayThread,
+            peerMeta: { ...PRIDAY_THREAD_PEER_META },
+            messages: [...existingMsgs, finalMsg],
+          },
+        }
+        return {
+          ...prev,
+          unreadChatCount: totalUnread(nextThreads),
+          chatThreads: nextThreads,
+        }
+      }, true)
+    },
+    [updateStore]
+  )
+
   /** Массовая загрузка и синхронизация всех диалогов и профилей собеседников из Supabase */
   const loadChatThreadsFromCloud = useCallback(
     async (overrideUserId?: string): Promise<boolean> => {
@@ -5707,20 +5893,30 @@ export function useOgonekStore() {
       }
       if (!uid || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return false
 
-      const res = await getAllUserDirectMessages(uid)
+      const [res, pridayDbMessages] = await Promise.all([
+        getAllUserDirectMessages(uid),
+        loadPridaySystemMessagesDb(uid),
+      ])
       if (!res.ok) return false
 
       const byPeer: Record<string, DirectMessageRecord[]> = {}
       for (const row of res.messages) {
         const peerId = resolvePeerIdFromRecord(row, uid)
-        if (!peerId) continue
+        if (!peerId || isPridayChat(peerId)) continue
         if (!byPeer[peerId]) byPeer[peerId] = []
         byPeer[peerId].push(row)
       }
 
-      const peerIds = Object.keys(byPeer).filter((id) => id !== 'saved-messages' && !id.startsWith('group-'))
+      const peerIds = Object.keys(byPeer).filter(
+        (id) => id !== 'saved-messages' && !id.startsWith('group-') && !isPridayChat(id)
+      )
       const existingIds = Object.keys(snap.chatThreads ?? {}).filter(
-        (id) => id !== 'saved-messages' && !id.startsWith('group-') && id !== 'ilonmusk-seed' && id !== 'cernavation-seed'
+        (id) =>
+          id !== 'saved-messages' &&
+          !id.startsWith('group-') &&
+          !isPridayChat(id) &&
+          id !== 'ilonmusk-seed' &&
+          id !== 'cernavation-seed'
       )
       const allProfileIds = Array.from(new Set([...peerIds, ...existingIds]))
       const profilesMap = await getProfilesByIds(allProfileIds)
@@ -5728,6 +5924,38 @@ export function useOgonekStore() {
       updateStore((prev) => {
         const currentThreads = prev.chatThreads ?? {}
         const nextThreads: ChatThreads = {}
+
+        // 0. Официальный системный чат Priday (всегда присутствует у каждого пользователя)
+        const prevPriday = currentThreads[PRIDAY_CHAT_ID]
+        const prevPridayReadMs = prevPriday?.readAtISO ? new Date(prevPriday.readAtISO).getTime() : 0
+        const hasRecentPridayRead = prevPridayReadMs > 0 && Date.now() - prevPridayReadMs < 15000
+        const hasWelcomeInDb = pridayDbMessages.some((m) => m.actorMeta?.kind === 'welcome')
+        const baseWelcome = hasWelcomeInDb
+          ? []
+          : [
+              prevPriday?.messages?.find((m) => m.actorMeta?.kind === 'welcome' || m.id === 'priday-welcome') ||
+                buildPridayWelcomeMessage(pridayDbMessages[0]?.createdAtISO || new Date().toISOString()),
+            ]
+
+        const localExtraPriday = (prevPriday?.messages ?? []).filter(
+          (lm) =>
+            lm.actorMeta?.kind === 'canned' &&
+            !pridayDbMessages.some(
+              (dm) =>
+                (dm.dbId && dm.dbId === lm.dbId) ||
+                (dm.text === lm.text && Math.abs(new Date(dm.createdAtISO).getTime() - new Date(lm.createdAtISO).getTime()) < 5000)
+            )
+        )
+        const mergedPridayMessages = [...baseWelcome, ...pridayDbMessages, ...localExtraPriday].sort(
+          (a, b) => new Date(a.createdAtISO).getTime() - new Date(b.createdAtISO).getTime()
+        )
+        nextThreads[PRIDAY_CHAT_ID] = {
+          ...(prevPriday ?? emptyThread()),
+          readAtISO: hasRecentPridayRead ? prevPriday?.readAtISO ?? null : null,
+          peerMeta: { ...PRIDAY_THREAD_PEER_META },
+          groupMeta: null,
+          messages: mergedPridayMessages,
+        }
 
         // 1. Все актуальные переписки из Supabase
         for (const [peerId, rows] of Object.entries(byPeer)) {
@@ -5760,7 +5988,7 @@ export function useOgonekStore() {
 
         // 2. Пустые локально открытые диалоги / группы / Избранное (убивая старые фантомы)
         for (const [fId, prevThread] of Object.entries(currentThreads)) {
-          if (nextThreads[fId]) continue
+          if (nextThreads[fId] || isPridayChat(fId)) continue
           if (fId === 'ilonmusk-seed' || fId === 'cernavation-seed') continue
           const isGroup = fId.startsWith('group-') || Boolean(prevThread.groupMeta)
           if (isGroup) {
@@ -5789,15 +6017,16 @@ export function useOgonekStore() {
           }
         }
 
+        const ensuredThreads = ensurePridayThreadInThreads(nextThreads)
         const nextActive =
-          prev.chatActiveFriendId && nextThreads[prev.chatActiveFriendId]
+          prev.chatActiveFriendId && ensuredThreads[prev.chatActiveFriendId]
             ? prev.chatActiveFriendId
-            : Object.keys(nextThreads)[0] ?? null
+            : Object.keys(ensuredThreads)[0] ?? null
 
         return {
           ...prev,
-          unreadChatCount: totalUnread(nextThreads),
-          chatThreads: nextThreads,
+          unreadChatCount: totalUnread(ensuredThreads),
+          chatThreads: ensuredThreads,
           chatActiveFriendId: nextActive,
         }
       }, true)
@@ -6310,7 +6539,22 @@ export function useOgonekStore() {
             .eq('id', params.userId)
             .single()
           if (dbProfile) {
-            if (dbProfile.privacy) dbPrivacy = dbProfile.privacy
+            const rawPrivacy = dbProfile.privacy && typeof dbProfile.privacy === 'object' ? dbProfile.privacy : {}
+            dbPrivacy = {
+              ...rawPrivacy,
+              ...(dbProfile.who_can_find ? { whoCanFind: dbProfile.who_can_find } : {}),
+              ...(dbProfile.who_can_message ? { whoCanMessage: dbProfile.who_can_message } : {}),
+              ...(dbProfile.who_can_call ? { whoCanCall: dbProfile.who_can_call } : {}),
+              ...(dbProfile.who_can_see_online ? { whoCanSeeOnline: dbProfile.who_can_see_online } : {}),
+              ...(dbProfile.default_day_visibility ? { defaultDayVisibility: dbProfile.default_day_visibility } : {}),
+              ...(typeof dbProfile.is_hidden_from_search === 'boolean'
+                ? { isHiddenFromSearch: dbProfile.is_hidden_from_search }
+                : {}),
+              ...(dbProfile.allow_messages_from ? { allowMessagesFrom: dbProfile.allow_messages_from } : {}),
+              ...(dbProfile.allow_group_invites_from
+                ? { allowGroupInvitesFrom: dbProfile.allow_group_invites_from }
+                : {}),
+            }
             if (dbProfile.avatar_image || dbProfile.avatar_url) {
               avatarImage = dbProfile.avatar_image || dbProfile.avatar_url
             }
@@ -6457,6 +6701,7 @@ export function useOgonekStore() {
           exploreFollowingIds: remoteGraph.followingIds,
           followerIds: remoteGraph.followerIds,
           friendIds: remoteGraph.friendIds,
+          chatThreads: ensurePridayThreadInThreads(baseState.chatThreads),
           auth: {
             ...baseState.auth,
             accounts: [
@@ -6943,6 +7188,7 @@ export function useOgonekStore() {
     startChatWithFriend,
     sendChatMessage,
     receiveIncomingChatMessage,
+    receivePridaySystemNotification,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
     reconcileThreadMessages,

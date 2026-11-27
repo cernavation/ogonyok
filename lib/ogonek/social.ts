@@ -11,6 +11,11 @@
 
 import { getSupabase } from '../supabase/client.ts'
 import type { ProfileRecord } from '../supabase/api.ts'
+import {
+  isProfileHiddenFromSearch,
+  resolveAllowGroupInvitesFrom,
+  resolveAllowMessagesFrom,
+} from './privacy.ts'
 
 export type FriendshipStatus =
   | 'none'
@@ -33,6 +38,9 @@ export interface SocialUser {
   friendshipStatus: FriendshipStatus
   isRequester?: boolean
   isFollowing?: boolean
+  isHiddenFromSearch?: boolean
+  allowMessagesFrom?: 'everyone' | 'friends' | 'nobody'
+  allowGroupInvitesFrom?: 'friends' | 'nobody'
 }
 
 export interface FriendRequestItem {
@@ -138,21 +146,47 @@ export async function searchSocialUsers(
       })
 
       if (!error && Array.isArray(data)) {
-        const users: SocialUser[] = data.map((r: any) => ({
-          id: r.id,
-          username: r.username,
-          displayName: r.display_name || `@${r.username}`,
-          avatarUrl: r.avatar_url,
-          bio: r.bio || '',
-          city: r.city || '',
-          streak: Number(r.streak || 0),
-          verified: Boolean(r.verified),
-          isFounder: Boolean(r.is_founder),
-          difficultyLevel: Number(r.difficulty_level || 1),
-          friendshipStatus: (r.friendship_status as FriendshipStatus) || 'none',
-          isRequester: Boolean(r.is_requester),
-          isFollowing: Boolean(r.is_following),
-        }))
+        const ids = data.map((r: any) => r.id).filter(Boolean)
+        const privacyById = new Map<string, any>()
+        if (ids.length > 0) {
+          try {
+            const { data: privacyRows } = await supabase
+              .from('profiles')
+              .select('id, is_anonymous, who_can_find, who_can_message, privacy')
+              .in('id', ids)
+            for (const row of privacyRows || []) {
+              privacyById.set(row.id, row)
+            }
+          } catch {}
+        }
+
+        const visibleRows = data.filter((r: any) => {
+          const pRow = privacyById.get(r.id)
+          if (pRow && isProfileHiddenFromSearch(pRow)) return false
+          return !isProfileHiddenFromSearch(r)
+        })
+
+        const users: SocialUser[] = visibleRows.map((r: any) => {
+          const pRow = privacyById.get(r.id) || r
+          return {
+            id: r.id,
+            username: r.username,
+            displayName: r.display_name || `@${r.username}`,
+            avatarUrl: r.avatar_url,
+            bio: r.bio || '',
+            city: r.city || '',
+            streak: Number(r.streak || 0),
+            verified: Boolean(r.verified),
+            isFounder: Boolean(r.is_founder),
+            difficultyLevel: Number(r.difficulty_level || 1),
+            friendshipStatus: (r.friendship_status as FriendshipStatus) || 'none',
+            isRequester: Boolean(r.is_requester),
+            isFollowing: Boolean(r.is_following),
+            isHiddenFromSearch: isProfileHiddenFromSearch(pRow),
+            allowMessagesFrom: resolveAllowMessagesFrom(pRow),
+            allowGroupInvitesFrom: resolveAllowGroupInvitesFrom(pRow),
+          }
+        })
         return { users }
       }
     } catch {}
@@ -481,7 +515,7 @@ export async function getFriendsListApi(
 
         const { data: pRows } = await supabase
           .from('profiles')
-          .select('id, username, display_name, avatar_url, avatar_image, avatar_color, bio, city, streak_count, streak, verified, level')
+          .select('*')
           .in('id', mutualIds)
 
         const pMap = new Map((pRows || []).map((p: any) => [p.id, p]))
@@ -500,6 +534,9 @@ export async function getFriendsListApi(
             difficultyLevel: Number(p?.level || 1),
             friendshipStatus: 'accepted' as FriendshipStatus,
             isFollowing: true,
+            isHiddenFromSearch: p ? isProfileHiddenFromSearch(p) : false,
+            allowMessagesFrom: p ? resolveAllowMessagesFrom(p) : 'everyone',
+            allowGroupInvitesFrom: p ? resolveAllowGroupInvitesFrom(p) : 'friends',
           }
         })
       }

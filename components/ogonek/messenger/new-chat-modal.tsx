@@ -16,7 +16,13 @@ import {
 } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-import { searchProfiles, getRecentProfiles, type ProfileRecord } from '@/lib/supabase/api'
+import {
+  getMutualFriendProfiles,
+  getRecentProfiles,
+  searchProfiles,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
+import { canInviteUserToGroup, canMessageUser } from '@/lib/ogonek/privacy'
 import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -66,9 +72,11 @@ export function NewChatModal({
   const [groupStep, setGroupStep] = useState<1 | 2>(1)
   const [query, setQuery] = useState('')
 
-  // Supabase profiles state
+  // Supabase profiles state (для личных чатов) и список строго взаимных друзей (для групп)
   const [profiles, setProfiles] = useState<ProfileRecord[]>([])
   const [loadingProfiles, setLoadingProfiles] = useState(false)
+  const [mutualFriends, setMutualFriends] = useState<ProfileRecord[]>([])
+  const [loadingMutualFriends, setLoadingMutualFriends] = useState(false)
 
   // Состояние создания группы
   const [groupTitle, setGroupTitle] = useState('')
@@ -80,9 +88,11 @@ export function NewChatModal({
   const photoInputRef = useRef<HTMLInputElement>(null)
 
   const currentUserId = state.auth?.activeAccountId ?? undefined
+  const friendIdsSet = useMemo(() => new Set(state.friendIds ?? []), [state.friendIds])
 
-  // Debounced Supabase search
+  // Debounced Supabase search для личных чатов
   useEffect(() => {
+    if (mode !== 'direct') return
     setLoadingProfiles(true)
     const timer = setTimeout(async () => {
       try {
@@ -100,17 +110,66 @@ export function NewChatModal({
       }
     }, 250)
     return () => clearTimeout(timer)
-  }, [query, currentUserId])
+  }, [query, currentUserId, mode])
+
+  // Строго взаимные друзья с правом приглашения в группы (allowGroupInvitesFrom !== 'nobody')
+  useEffect(() => {
+    if (mode !== 'group' || !currentUserId) return
+    let cancelled = false
+    setLoadingMutualFriends(true)
+    getMutualFriendProfiles(currentUserId)
+      .then((list) => {
+        if (cancelled) return
+        setMutualFriends(
+          list.filter((p) =>
+            canInviteUserToGroup({
+              viewerId: currentUserId,
+              targetProfile: p,
+              isMutualFriend: true,
+            }).allowed
+          )
+        )
+      })
+      .catch(() => {
+        if (!cancelled) setMutualFriends([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMutualFriends(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [mode, currentUserId])
+
+  const filteredGroupFriends = useMemo(() => {
+    const q = query.trim().replace(/^@+/, '').toLowerCase()
+    if (!q) return mutualFriends
+    return mutualFriends.filter((p) => {
+      const u = (p.username || '').toLowerCase()
+      const d = (p.display_name || '').toLowerCase()
+      return u.includes(q) || d.includes(q)
+    })
+  }, [mutualFriends, query])
 
   // Список уже выбранных участников как объектов
   const selectedMembers = useMemo(() => {
     return selectedMemberIds
-      .map((id) => profiles.find((p) => p.id === id))
+      .map((id) => mutualFriends.find((p) => p.id === id))
       .filter((p): p is ProfileRecord => Boolean(p))
-  }, [selectedMemberIds, profiles])
+  }, [selectedMemberIds, mutualFriends])
 
-  // Открыть личный диалог
+  // Открыть личный диалог с проверкой приватности «Кто может писать мне сообщения»
   const openDirect = (profile: ProfileRecord) => {
+    const isMutual = friendIdsSet.has(profile.id)
+    const perm = canMessageUser({
+      viewerId: currentUserId,
+      targetProfile: profile,
+      isMutualFriend: isMutual,
+    })
+    if (!perm.allowed) {
+      onNotify(perm.reason || 'Пользователь ограничил получение личных сообщений')
+      return
+    }
     playClick(soundEnabled)
     const displayName = profile.display_name || `@${profile.username}`
     const avatarUrl = profile.avatar_url || profile.avatar_image || undefined
@@ -318,29 +377,45 @@ export function NewChatModal({
                   Нет пользователей в базе
                 </div>
               ) : (
-                profiles.map((profile) => (
-                  <button
-                    key={profile.id}
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-[var(--bg-hover)] transition-colors text-left"
-                    onClick={() => openDirect(profile)}
-                  >
-                    <ProfileAvatar profile={profile} size={44} />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-bold text-[var(--text)] truncate">
-                          {profile.display_name || profile.username}
-                        </span>
-                        {profile.verified && <VerifiedBadge size="xs" />}
+                profiles.map((profile) => {
+                  const dmPerm = canMessageUser({
+                    viewerId: currentUserId,
+                    targetProfile: profile,
+                    isMutualFriend: friendIdsSet.has(profile.id),
+                  })
+                  return (
+                    <button
+                      key={profile.id}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      aria-disabled={!dmPerm.allowed}
+                      title={!dmPerm.allowed ? dmPerm.reason : undefined}
+                      className={`w-full px-4 py-3 flex items-center gap-3 transition-colors text-left ${
+                        dmPerm.allowed ? 'hover:bg-[var(--bg-hover)]' : 'opacity-55 cursor-not-allowed'
+                      }`}
+                      onClick={() => openDirect(profile)}
+                    >
+                      <ProfileAvatar profile={profile} size={44} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-bold text-[var(--text)] truncate">
+                            {profile.display_name || profile.username}
+                          </span>
+                          {profile.verified && <VerifiedBadge size="xs" />}
+                          {!dmPerm.allowed && (
+                            <span className="text-[10px] font-semibold text-[var(--text-3)] px-1.5 py-0.5 rounded-full bg-[var(--bg)] border border-[var(--border)] shrink-0">
+                              ЛС закрыты
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[var(--text-2)] truncate mt-0.5">
+                          @{profile.username}{profile.city ? ` · ${profile.city}` : ''}
+                        </p>
                       </div>
-                      <p className="text-xs text-[var(--text-2)] truncate mt-0.5">
-                        @{profile.username}{profile.city ? ` · ${profile.city}` : ''}
-                      </p>
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  )
+                })
               )}
             </div>
           </div>
@@ -378,56 +453,66 @@ export function NewChatModal({
                 </div>
               )}
 
-              {/* Поле поиска */}
+              {/* Поле поиска среди друзей */}
               <div className="relative flex items-center h-10 w-full rounded-full border border-[var(--border)] bg-[var(--bg)] px-3.5 focus-within:border-[var(--accent)] transition-colors">
                 <Search size={16} className="text-[var(--text-2)] shrink-0 mr-2" />
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Поиск по имени или @нику..."
+                  placeholder="Поиск среди друзей..."
                   className="w-full bg-transparent text-xs text-[var(--text)] placeholder:text-[var(--text-2)] outline-none"
                   autoFocus
                 />
-                {loadingProfiles && (
+                {loadingMutualFriends && (
                   <Loader2 size={14} className="animate-spin text-[var(--text-3)] shrink-0 ml-2" />
                 )}
               </div>
             </div>
 
-            {/* Список контактов с чекбоксами */}
+            {/* Список строго взаимных друзей с чекбоксами */}
             <div className="flex-1 overflow-y-auto divide-y divide-[var(--border)]/60">
-              {profiles.map((profile) => {
-                const isSelected = selectedMemberIds.includes(profile.id)
-                return (
-                  <button
-                    key={profile.id}
-                    type="button"
-                    onClick={() => toggleMember(profile.id)}
-                    className={`w-full px-4 py-3 flex items-center justify-between gap-3 transition-colors text-left ${
-                      isSelected ? 'bg-[var(--accent-soft)]/40' : 'hover:bg-[var(--bg-hover)]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ProfileAvatar profile={profile} size={42} />
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-[var(--text)] truncate">{profile.display_name || profile.username}</p>
-                        <p className="text-xs text-[var(--text-2)] truncate">@{profile.username}</p>
-                      </div>
-                    </div>
-
-                    <div
-                      className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 transition-all ${
-                        isSelected
-                          ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-text)] scale-105'
-                          : 'border-[var(--border)] bg-[var(--bg)]'
+              {!loadingMutualFriends && mutualFriends.length === 0 ? (
+                <div className="p-8 text-center text-[var(--text-2)] text-xs leading-relaxed">
+                  Чтобы создать группу, сначала добавь друзей (взаимная подписка)
+                </div>
+              ) : !loadingMutualFriends && filteredGroupFriends.length === 0 ? (
+                <div className="p-8 text-center text-[var(--text-2)] text-xs">
+                  Никого из друзей не найдено по запросу «{query}»
+                </div>
+              ) : (
+                filteredGroupFriends.map((profile) => {
+                  const isSelected = selectedMemberIds.includes(profile.id)
+                  return (
+                    <button
+                      key={profile.id}
+                      type="button"
+                      onClick={() => toggleMember(profile.id)}
+                      className={`w-full px-4 py-3 flex items-center justify-between gap-3 transition-colors text-left ${
+                        isSelected ? 'bg-[var(--accent-soft)]/40' : 'hover:bg-[var(--bg-hover)]'
                       }`}
                     >
-                      {isSelected && <Check size={13} strokeWidth={3} />}
-                    </div>
-                  </button>
-                )
-              })}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <ProfileAvatar profile={profile} size={42} />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[var(--text)] truncate">{profile.display_name || profile.username}</p>
+                          <p className="text-xs text-[var(--text-2)] truncate">@{profile.username}</p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-6 h-6 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                          isSelected
+                            ? 'border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-text)] scale-105'
+                            : 'border-[var(--border)] bg-[var(--bg)]'
+                        }`}
+                      >
+                        {isSelected && <Check size={13} strokeWidth={3} />}
+                      </div>
+                    </button>
+                  )
+                })
+              )}
             </div>
 
             {/* Нижняя кнопка перехода к шагу 2 */}

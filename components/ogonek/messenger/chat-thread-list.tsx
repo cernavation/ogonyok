@@ -85,25 +85,30 @@ export function ChatThreadList({
         if (!id) return null
         const thread = safeThreads[id] ?? emptyThread()
         const isGroup = isGroupThread(thread, id)
-        const friend = !isGroup ? getFriend(id) : null
-        const cachedPeer = !isGroup ? getCachedProfileSync(id) : null
-        let title =
-          (friend?.name && !isUuid(friend.name) ? friend.name : null) ||
-          (thread?.peerMeta?.name &&
-          thread.peerMeta.name !== 'Собеседник' &&
-          !isUuid(thread.peerMeta.name)
-            ? thread.peerMeta.name
-            : null) ||
-          cachedPeer?.display_name ||
-          (cachedPeer?.username ? `@${cachedPeer.username}` : null) ||
-          threadTitle(id, thread)
-        let username =
-          friend?.username || thread?.peerMeta?.username || cachedPeer?.username || null
+        const isPriday = id === 'priday-official'
+        const friend = !isGroup && !isPriday ? getFriend(id) : null
+        const cachedPeer = !isGroup && !isPriday ? getCachedProfileSync(id) : null
+        let title = isPriday
+          ? 'Priday'
+          : (friend?.name && !isUuid(friend.name) ? friend.name : null) ||
+            (thread?.peerMeta?.name &&
+            thread.peerMeta.name !== 'Собеседник' &&
+            !isUuid(thread.peerMeta.name)
+              ? thread.peerMeta.name
+              : null) ||
+            cachedPeer?.display_name ||
+            (cachedPeer?.username ? `@${cachedPeer.username}` : null) ||
+            threadTitle(id, thread)
+        let username = isPriday
+          ? 'priday.life'
+          : friend?.username || thread?.peerMeta?.username || cachedPeer?.username || null
         if (username && isUuid(username)) username = null
         if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
-        const verified = Boolean(
-          friend?.verified || thread?.peerMeta?.verified || cachedPeer?.verified
-        )
+        const verified = isPriday
+          ? true
+          : Boolean(
+              friend?.verified || thread?.peerMeta?.verified || cachedPeer?.verified
+            )
         return { id, isGroup, friend, thread, title, username, verified }
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item))

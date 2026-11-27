@@ -237,19 +237,59 @@ export function ChatMessageBubble({
     }
   }
 
-  // Highlight search query in text
-  const renderHighlightedText = (text: string) => {
-    if (!searchQuery.trim()) return text
-    const parts = text.split(new RegExp(`(${searchQuery.trim()})`, 'gi'))
-    return parts.map((part, i) =>
-      part.toLowerCase() === searchQuery.trim().toLowerCase() ? (
-        <mark key={i} className="bg-[#ff7a18] text-white rounded px-0.5">
-          {part}
-        </mark>
-      ) : (
-        part
-      )
+  // Highlight search query AND clickable @username mentions in text
+  const openMentionProfile = (handle: string) => {
+    const clean = handle.replace(/^@+/, '').trim()
+    const targetId =
+      message.actorMeta?.actorId &&
+      (!message.actorMeta.actorUsername ||
+        message.actorMeta.actorUsername.toLowerCase() === clean.toLowerCase())
+        ? message.actorMeta.actorId
+        : clean
+    if (!targetId || typeof window === 'undefined') return
+    window.dispatchEvent(
+      new CustomEvent('ogonek:navigate-view', {
+        detail: { view: 'profile', userId: targetId },
+      })
     )
+  }
+
+  const renderHighlightedText = (text: string) => {
+    const tokens = text.split(/(@[a-zA-Z0-9._]{2,32})/g)
+    const q = searchQuery.trim()
+    return tokens.map((token, idx) => {
+      if (/^@[a-zA-Z0-9._]{2,32}$/.test(token) && token.toLowerCase() !== '@priday.life') {
+        return (
+          <button
+            key={`mention-${idx}`}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              openMentionProfile(token)
+            }}
+            className="font-bold text-[#ff7a18] hover:underline cursor-pointer inline"
+          >
+            {token}
+          </button>
+        )
+      }
+      if (!q) return <span key={`txt-${idx}`}>{token}</span>
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const parts = token.split(new RegExp(`(${escaped})`, 'gi'))
+      return (
+        <span key={`txt-${idx}`}>
+          {parts.map((part, i) =>
+            part.toLowerCase() === q.toLowerCase() ? (
+              <mark key={i} className="bg-[#ff7a18] text-white rounded px-0.5">
+                {part}
+              </mark>
+            ) : (
+              part
+            )
+          )}
+        </span>
+      )
+    })
   }
 
   const isSticker = message.media?.type === 'sticker'
