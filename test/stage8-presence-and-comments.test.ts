@@ -10,9 +10,13 @@ import {
 import {
   buildCommentTree,
   canDeleteComment,
+  COMMENT_QUICK_REACTIONS,
+  countThreadReplies,
   filterRealComments,
   legacyTargetFromScoped,
+  MAX_COMMENT_LENGTH,
   parsePostAuthorIdFromTarget,
+  resolveReplyParentId,
   scopedDayCommentTarget,
   scopedPrideCommentTarget,
 } from '../lib/ogonek/comments.ts'
@@ -242,8 +246,53 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
 
     const sqlSrc = readRepoFile('supabase/migrations/134_presence_and_comments_v2.sql')
     assert.ok(sqlSrc.includes('last_seen_at timestamptz'), 'Миграция добавляет last_seen_at')
+    assert.ok(sqlSrc.includes('gif_url text'), 'Миграция добавляет gif_url в public.comments')
     assert.ok(sqlSrc.includes('CREATE TABLE IF NOT EXISTS public.comment_likes'), 'Миграция создаёт comment_likes')
+    assert.ok(sqlSrc.includes('CREATE TABLE IF NOT EXISTS public.comment_reactions'), 'Миграция создаёт comment_reactions')
     assert.ok(sqlSrc.includes('auth.uid() = post_author_id'), 'RLS позволяет владельцу поста удалять любые комментарии')
     assert.ok(sqlSrc.includes('REPLICA IDENTITY FULL'), 'Включён REPLICA IDENTITY FULL для Realtime delete')
+    assert.ok(sqlSrc.includes("NOTIFY pgrst, 'reload schema'"), 'SQL завершается обновлением schema cache PostgREST')
+  })
+
+  it('7. Апгрейд комментариев: 3 уровня глубины, авторост инпута, превью GIF, реакции и шеринг', () => {
+    assert.equal(MAX_COMMENT_LENGTH, 2000)
+    assert.deepEqual([...COMMENT_QUICK_REACTIONS], ['🔥', '❤️', '😂', '👏', '💯', '😮'])
+
+    // Проверяем 3-уровневое дерево и привязку ответа на 3-й уровень к 3-му уровню
+    const lvl1: Comment = {
+      id: 'c1',
+      parentId: null,
+      author: 'A',
+      initials: 'A',
+      text: 'Lvl 1',
+      createdAt: '2026-11-27T10:00:00Z',
+      likes: 0,
+      likedByMe: false,
+      isMine: true,
+    }
+    const lvl2: Comment = { ...lvl1, id: 'c2', parentId: 'c1', text: 'Lvl 2', createdAt: '2026-11-27T10:01:00Z' }
+    const lvl3: Comment = { ...lvl1, id: 'c3', parentId: 'c2', text: 'Lvl 3', createdAt: '2026-11-27T10:02:00Z' }
+    const lvl4Attempt: Comment = { ...lvl1, id: 'c4', parentId: 'c3', text: 'Should stay lvl 3', createdAt: '2026-11-27T10:03:00Z' }
+
+    assert.equal(resolveReplyParentId(lvl1, 0), 'c1')
+    assert.equal(resolveReplyParentId(lvl2, 1), 'c2')
+    assert.equal(resolveReplyParentId(lvl3, 2), 'c2', 'Ответ на 3-м уровне крепится к 2-му родителю (остаётся на 3-м уровне)')
+
+    const tree = buildCommentTree([lvl1, lvl2, lvl3, lvl4Attempt])
+    assert.equal(tree.length, 1)
+    assert.equal(countThreadReplies(tree[0]), 3)
+    assert.equal(tree[0].replies[0].replies.length, 2, 'Уровень 4 выравнивается на 3-й уровень')
+
+    const threadSrc = readRepoFile('components/ogonek/comments-thread.tsx')
+    assert.ok(threadSrc.includes('rounded-2xl'), 'Инпут использует rounded-2xl вместо узкой капсулы')
+    assert.ok(threadSrc.includes('syncTextareaHeight'), 'Реализовано авторасширение textarea до 5 строк')
+    assert.ok(threadSrc.includes('ChatEmojiPicker'), 'Подключён ChatEmojiPicker для смайликов')
+    assert.ok(threadSrc.includes('selectedGifUrl'), 'GIF хранится в отдельном стейте без вставки URL в текст')
+    assert.ok(threadSrc.includes('referrerPolicy="no-referrer"'), 'GIF рендерится с no-referrer')
+    assert.ok(threadSrc.includes('/api/giphy?img='), 'Есть фолбэк через /api/giphy?img=')
+    assert.ok(threadSrc.includes('Показать ответы'), 'Ветки сворачиваются кнопкой Показать ответы')
+    assert.ok(threadSrc.includes('Ответ для '), 'Показывается понятная плашка режима ответа')
+    assert.ok(threadSrc.includes('ForwardToChatModal'), 'Кнопка Поделиться интегрирована с модалкой пересылки')
+    assert.ok(threadSrc.includes('toggleCommentReaction'), 'Реакции на комментарии сохраняются в сторе и БД')
   })
 })

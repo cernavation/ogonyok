@@ -1,7 +1,10 @@
 import type { Comment } from './types'
 
-/** Максимальная длина одного комментария */
-export const MAX_COMMENT_LENGTH = 600
+/** Максимальная длина одного комментария (синхронизировано с SQL comments_insert <= 2000) */
+export const MAX_COMMENT_LENGTH = 2000
+
+/** Быстрые эмодзи-реакции на комментарии */
+export const COMMENT_QUICK_REACTIONS = ['🔥', '❤️', '😂', '👏', '💯', '😮'] as const
 
 export type CommentNode = Comment & { replies: CommentNode[] }
 
@@ -58,6 +61,32 @@ export function extractDayNumberFromTarget(target?: string | null): string | nul
   return match ? match[1] : null
 }
 
+/**
+ * Разрешает реальный parentId при ответе на комментарий с ограничением до 3 уровней глубины:
+ *  - Уровень 1 (depth 0): корневой комментарий (parentId = null)
+ *  - Уровень 2 (depth 1): ответ на корень
+ *  - Уровень 3 (depth 2): ответ на уровень 2
+ * При ответе на комментарий 3-го уровня ответ прикрепляется на 3-й уровень (к тому же родителю 2-го уровня).
+ */
+export function resolveReplyParentId(
+  node: Pick<Comment, 'id' | 'parentId'>,
+  depth: number
+): string {
+  if (depth >= 2 && node.parentId) {
+    return node.parentId
+  }
+  return node.id
+}
+
+/** Считает общее число потомков в ветке комментария */
+export function countThreadReplies(node: CommentNode): number {
+  let count = 0
+  for (const child of node.replies) {
+    count += 1 + countThreadReplies(child)
+  }
+  return count
+}
+
 /** Проверяет, имеет ли viewerId право удалить комментарий (автор комментария ИЛИ владелец поста) */
 export function canDeleteComment(
   comment: Pick<Comment, 'authorId' | 'isMine' | 'postAuthorId'>,
@@ -86,22 +115,47 @@ export function filterRealComments(list: readonly Comment[]): Comment[] {
   )
 }
 
-/** Собирает плоский список комментариев в дерево ответов (хронологически) */
+/**
+ * Собирает плоский список комментариев в дерево ответов (хронологически),
+ * строго ограничивая вложенность до 3 уровней (depth 0 -> depth 1 -> depth 2).
+ */
 export function buildCommentTree(comments: readonly Comment[]): CommentNode[] {
   const clean = filterRealComments(comments)
-  const byId = new Map<string, CommentNode>()
   const sorted = [...clean].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   )
 
+  const byId = new Map<string, CommentNode>()
+  const parentMap = new Map<string, string | null>()
   for (const comment of sorted) {
     byId.set(comment.id, { ...comment, replies: [] })
+    parentMap.set(comment.id, comment.parentId ?? null)
+  }
+
+  // Находим уровень глубины каждого узла и, если цепочка глубже 2 (т.е. 4+ уровень),
+  // подтягиваем узел к ближайшему предку уровня 2, чтобы он стал на 3-й уровень.
+  const getDepthAndLevel2Ancestor = (id: string): { depth: number; level2ParentId: string | null } => {
+    const chain: string[] = []
+    let curr: string | null | undefined = parentMap.get(id)
+    const seen = new Set<string>([id])
+    while (curr && byId.has(curr) && !seen.has(curr)) {
+      seen.add(curr)
+      chain.unshift(curr) // от корня до непосредственного родителя
+      curr = parentMap.get(curr)
+    }
+    // chain[0] = уровень 1 (depth 0), chain[1] = уровень 2 (depth 1)
+    if (chain.length <= 2) {
+      return { depth: chain.length, level2ParentId: chain[chain.length - 1] ?? null }
+    }
+    return { depth: 2, level2ParentId: chain[1] }
   }
 
   const roots: CommentNode[] = []
-  for (const node of byId.values()) {
-    if (node.parentId && byId.has(node.parentId) && node.parentId !== node.id) {
-      byId.get(node.parentId)!.replies.push(node)
+  for (const comment of sorted) {
+    const node = byId.get(comment.id)!
+    const { level2ParentId } = getDepthAndLevel2Ancestor(comment.id)
+    if (level2ParentId && byId.has(level2ParentId) && level2ParentId !== node.id) {
+      byId.get(level2ParentId)!.replies.push(node)
     } else {
       roots.push(node)
     }

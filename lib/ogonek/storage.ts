@@ -175,7 +175,8 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
       if (!raw || typeof raw !== 'object') continue
       const c = raw as Partial<Comment>
       const text = typeof c.text === 'string' ? c.text.trim() : ''
-      if (!text) continue
+      const gifUrl = typeof c.gifUrl === 'string' && c.gifUrl.trim() ? c.gifUrl.trim().slice(0, 1000) : null
+      if (!text && !gifUrl) continue
 
       const persona: CommentPersona = c.persona === 'support' ? 'support' : 'me'
       const rawAuthor = typeof c.author === 'string' ? c.author.trim() : ''
@@ -192,6 +193,23 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
       if (seen.has(id)) continue
       seen.add(id)
 
+      const cleanReactions = Array.isArray(c.reactions)
+        ? c.reactions
+            .filter(
+              (r: any) =>
+                r &&
+                typeof r.emoji === 'string' &&
+                r.emoji.trim().length > 0 &&
+                typeof r.count === 'number' &&
+                r.count > 0
+            )
+            .map((r: any) => ({
+              emoji: String(r.emoji).slice(0, 16),
+              count: Math.max(1, Math.round(r.count)),
+              reactedByMe: Boolean(r.reactedByMe),
+            }))
+        : undefined
+
       cleaned.push({
         id,
         parentId: typeof c.parentId === 'string' && c.parentId ? c.parentId : null,
@@ -206,7 +224,8 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
           typeof c.initials === 'string' && c.initials.trim()
             ? c.initials.trim().slice(0, 3)
             : 'П',
-        text: text.slice(0, 600),
+        text: text.slice(0, 2000),
+        gifUrl,
         createdAt:
           typeof c.createdAt === 'string' && c.createdAt
             ? c.createdAt
@@ -216,6 +235,7 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
             ? Math.round(c.likes)
             : 0,
         likedByMe: Boolean(c.likedByMe),
+        reactions: cleanReactions && cleanReactions.length > 0 ? cleanReactions : undefined,
         isMine: Boolean(c.isMine),
       })
     }

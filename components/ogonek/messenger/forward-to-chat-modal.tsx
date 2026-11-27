@@ -2,10 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { Check, Forward, Search, Send, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import { FRIEND_PROFILES, formatLastSeenStatus, getFriend } from '@/lib/ogonek/friends'
+import { FRIEND_PROFILES, formatLastSeenStatus, getFriend, type FriendProfile } from '@/lib/ogonek/friends'
+import { getInitials } from '@/lib/ogonek/initials'
+import { getMutualFriendProfiles, getProfilesByIds, type ProfileRecord } from '@/lib/supabase/api'
 import { getEffectiveLastSeenSync, usePresenceSnapshot } from '@/lib/supabase/presence'
 import { lastActivityMs, threadOf } from '@/lib/ogonek/messenger'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -49,31 +51,84 @@ export function ForwardToChatModal({
   )
   const [note, setNote] = useState(initialNote)
   const [query, setQuery] = useState('')
+  const [cloudFriends, setCloudFriends] = useState<FriendProfile[]>([])
   const presenceSnap = usePresenceSnapshot()
 
-  const friendIds = state.friendIds ?? []
+  const friendIds = useMemo(() => state.friendIds ?? [], [state.friendIds])
+  const currentUserId = state.auth?.activeAccountId || null
+
+  useEffect(() => {
+    let cancelled = false
+    const mapRecord = (p: ProfileRecord): FriendProfile => ({
+      id: p.id,
+      name: p.display_name || `@${p.username}`,
+      username: p.username,
+      initials: getInitials(p.display_name, p.username),
+      avatarUrl: p.avatar_image || p.avatar_url || null,
+      avatarColor: p.avatar_color || '#FF5C00',
+      bio: p.bio || '',
+      city: p.city || '',
+      streak: p.streak_count ?? p.streak ?? 0,
+      together: 0,
+      mutual: 0,
+      verified: Boolean(p.verified),
+      lastActive: 'недавно',
+      lastSeenAt: p.last_seen_at || null,
+      presence: 'offline',
+    })
+
+    const load = async () => {
+      try {
+        const records =
+          friendIds.length > 0
+            ? Object.values(await getProfilesByIds(friendIds))
+            : currentUserId &&
+                !currentUserId.startsWith('anon-') &&
+                !currentUserId.startsWith('acct-guest')
+              ? await getMutualFriendProfiles(currentUserId)
+              : []
+        if (!cancelled && Array.isArray(records)) {
+          setCloudFriends(records.map(mapRecord))
+        }
+      } catch {}
+    }
+    void load()
+    return () => {
+      cancelled = true
+    }
+  }, [friendIds, currentUserId])
+
   const friendSet = useMemo(() => new Set(friendIds), [friendIds])
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return FRIEND_PROFILES.filter((f) => {
-      if (!q) return true
-      return (
-        f.name.toLowerCase().includes(q) ||
-        f.username.toLowerCase().includes(q) ||
-        f.city.toLowerCase().includes(q)
-      )
-    }).sort((a, b) => {
-      // Друзья вперёд, следом по свежести диалога и присутствию
-      const af = friendSet.has(a.id) ? 1 : 0
-      const bf = friendSet.has(b.id) ? 1 : 0
-      if (af !== bf) return bf - af
-      const ta = lastActivityMs(state.chatThreads?.[a.id])
-      const tb = lastActivityMs(state.chatThreads?.[b.id])
-      if (ta !== tb) return tb - ta
-      return a.name.localeCompare(b.name)
-    })
-  }, [query, friendSet, state.chatThreads])
+    const mergedMap = new Map<string, FriendProfile>()
+    for (const f of FRIEND_PROFILES) mergedMap.set(f.id, f)
+    for (const fid of friendIds) {
+      const cached = getFriend(fid)
+      if (cached) mergedMap.set(fid, cached)
+    }
+    for (const cf of cloudFriends) mergedMap.set(cf.id, cf)
+
+    return Array.from(mergedMap.values())
+      .filter((f) => {
+        if (!q) return true
+        return (
+          f.name.toLowerCase().includes(q) ||
+          f.username.toLowerCase().includes(q) ||
+          f.city.toLowerCase().includes(q)
+        )
+      })
+      .sort((a, b) => {
+        const af = friendSet.has(a.id) ? 1 : 0
+        const bf = friendSet.has(b.id) ? 1 : 0
+        if (af !== bf) return bf - af
+        const ta = lastActivityMs(state.chatThreads?.[a.id])
+        const tb = lastActivityMs(state.chatThreads?.[b.id])
+        if (ta !== tb) return tb - ta
+        return a.name.localeCompare(b.name)
+      })
+  }, [query, friendIds, cloudFriends, friendSet, state.chatThreads])
 
   const toggle = (id: string) => {
     playClick(soundEnabled)

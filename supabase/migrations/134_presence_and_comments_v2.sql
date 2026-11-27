@@ -1,9 +1,12 @@
 -- ============================================================================
 -- 134_presence_and_comments_v2.sql
--- Задача 1: Честный онлайн-статус (profiles.last_seen_at + Realtime Presence)
--- Задача 2: Полная переделка комментариев + лайки комментариев + RLS удаление
---           для автора комментария И владельца поста (Day).
--- Идемпотентная миграция: безопасна для многократного запуска в SQL Editor.
+-- Единая идемпотентная миграция:
+--   1. Честный онлайн-статус (profiles.last_seen_at)
+--   2. Полноценные комментарии (public.comments + gif_url + ответы до 3 уровней)
+--   3. Лайки комментариев (public.comment_likes)
+--   4. Эмодзи-реакции на комментарии (public.comment_reactions)
+--   5. RLS-политики (включая удаление автором комментария ИЛИ владельцем поста)
+--   6. Realtime (REPLICA IDENTITY FULL + supabase_realtime) + reload schema
 -- ============================================================================
 
 -- 1. Честный last_seen_at в public.profiles
@@ -17,7 +20,7 @@ WHERE last_seen_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_last_seen_at
   ON public.profiles(last_seen_at DESC);
 
--- 2. Нормализация таблицы public.comments под реальные комментарии и ответы
+-- 2. Нормализация таблицы public.comments (включая gif_url)
 ALTER TABLE public.comments
   ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
   ADD COLUMN IF NOT EXISTS target_key text DEFAULT '',
@@ -29,6 +32,7 @@ ALTER TABLE public.comments
   ADD COLUMN IF NOT EXISTS author text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS initials text NOT NULL DEFAULT '',
   ADD COLUMN IF NOT EXISTS text text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS gif_url text,
   ADD COLUMN IF NOT EXISTS likes integer NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
@@ -77,7 +81,7 @@ BEGIN
   END IF;
 END $$;
 
--- Удаляем старые фейковые демо-комментарии бота «Priday поддержки» / «Огонёк поддержки», если они попадали в БД
+-- Удаляем старые фейковые демо-комментарии бота, если они попадали в БД
 DO $$
 BEGIN
   IF EXISTS (
@@ -117,7 +121,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_parent_id
 
 -- 3. RLS на public.comments:
 --    - SELECT: авторизованные пользователи видят комментарии
---    - INSERT: только от своего auth.uid()
+--    - INSERT: от своего auth.uid(), текст до 2000 символов ИЛИ указан gif_url
 --    - UPDATE: только свои комментарии
 --    - DELETE: автор комментария ИЛИ владелец поста (post_author_id / days.user_id)
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
@@ -139,7 +143,11 @@ CREATE POLICY "comments_insert"
   TO authenticated
   WITH CHECK (
     auth.uid() = user_id
-    AND length(btrim(text)) BETWEEN 1 AND 600
+    AND length(coalesce(text, '')) <= 2000
+    AND (
+      length(btrim(coalesce(text, ''))) BETWEEN 1 AND 2000
+      OR length(btrim(coalesce(gif_url, ''))) > 0
+    )
   );
 
 CREATE POLICY "comments_update"
@@ -205,9 +213,50 @@ CREATE POLICY "comment_likes_delete"
   TO authenticated
   USING (auth.uid() = user_id);
 
--- 5. REPLICA IDENTITY FULL + Realtime для comments и comment_likes
+-- 5. Таблица эмодзи-реакций на комментарии (public.comment_reactions)
+CREATE TABLE IF NOT EXISTS public.comment_reactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  comment_id uuid NOT NULL REFERENCES public.comments(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  emoji text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT uq_comment_reactions_user_emoji UNIQUE (comment_id, user_id, emoji)
+);
+
+CREATE INDEX IF NOT EXISTS idx_comment_reactions_comment_id
+  ON public.comment_reactions(comment_id);
+
+CREATE INDEX IF NOT EXISTS idx_comment_reactions_user_id
+  ON public.comment_reactions(user_id);
+
+ALTER TABLE public.comment_reactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "comment_reactions_select" ON public.comment_reactions;
+DROP POLICY IF EXISTS "comment_reactions_insert" ON public.comment_reactions;
+DROP POLICY IF EXISTS "comment_reactions_delete" ON public.comment_reactions;
+
+CREATE POLICY "comment_reactions_select"
+  ON public.comment_reactions FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "comment_reactions_insert"
+  ON public.comment_reactions FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    auth.uid() = user_id
+    AND length(btrim(emoji)) BETWEEN 1 AND 16
+  );
+
+CREATE POLICY "comment_reactions_delete"
+  ON public.comment_reactions FOR DELETE
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- 6. REPLICA IDENTITY FULL + Realtime для comments, comment_likes, comment_reactions
 ALTER TABLE public.comments REPLICA IDENTITY FULL;
 ALTER TABLE public.comment_likes REPLICA IDENTITY FULL;
+ALTER TABLE public.comment_reactions REPLICA IDENTITY FULL;
 
 DO $$
 BEGIN
@@ -225,5 +274,15 @@ BEGIN
     ) THEN
       ALTER PUBLICATION supabase_realtime ADD TABLE public.comment_likes;
     END IF;
+
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_publication_tables
+      WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'comment_reactions'
+    ) THEN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.comment_reactions;
+    END IF;
   END IF;
 END $$;
+
+-- Мгновенно обновляем schema cache PostgREST для новых колонок (gif_url) и таблиц
+NOTIFY pgrst, 'reload schema';

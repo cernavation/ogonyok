@@ -42,6 +42,7 @@ import {
   fetchCommentsForTargets,
   createCommentInDb,
   toggleCommentLikeInDb,
+  toggleCommentReactionInDb,
   deleteCommentInDb,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
@@ -3733,8 +3734,12 @@ export function useOgonekStore() {
         let changed = false
         for (const [targetKey, fetchedList] of Object.entries(res.commentsByTarget)) {
           const prevList = nextComments[targetKey] ?? []
-          const prevSig = JSON.stringify(prevList.map((c) => [c.id, c.text, c.likes, c.likedByMe, c.avatarUrl]))
-          const nextSig = JSON.stringify(fetchedList.map((c) => [c.id, c.text, c.likes, c.likedByMe, c.avatarUrl]))
+          const prevSig = JSON.stringify(
+            prevList.map((c) => [c.id, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.reactions || [], c.avatarUrl])
+          )
+          const nextSig = JSON.stringify(
+            fetchedList.map((c) => [c.id, c.text, c.gifUrl || null, c.likes, c.likedByMe, c.reactions || [], c.avatarUrl])
+          )
           if (prevSig !== nextSig) {
             nextComments[targetKey] = fetchedList
             changed = true
@@ -3763,11 +3768,16 @@ export function useOgonekStore() {
       options?: {
         parentId?: string | null
         postAuthorId?: string | null
+        gifUrl?: string | null
       }
     ): Promise<{ ok: boolean; comment?: Comment | null; error?: string }> => {
-      const trimmed = (text ?? '').trim().slice(0, 600)
-      if (!target || !trimmed) {
-        return { ok: false, error: 'Введите текст комментария' }
+      const trimmed = (text ?? '').trim().slice(0, 2000)
+      const cleanGifUrl =
+        typeof options?.gifUrl === 'string' && options.gifUrl.trim()
+          ? options.gifUrl.trim().slice(0, 1000)
+          : null
+      if (!target || (!trimmed && !cleanGifUrl)) {
+        return { ok: false, error: 'Введите текст или выберите GIF' }
       }
 
       const snap = getSnapshot()
@@ -3786,6 +3796,7 @@ export function useOgonekStore() {
           userId: uid,
           targetKey: target,
           text: trimmed,
+          gifUrl: cleanGifUrl,
           parentId: options?.parentId ?? null,
           postAuthorId: resolvedPostAuthor,
           authorName,
@@ -3821,6 +3832,7 @@ export function useOgonekStore() {
         postAuthorId: resolvedPostAuthor,
         initials,
         text: trimmed,
+        gifUrl: cleanGifUrl,
         createdAt: new Date().toISOString(),
         likes: 0,
         likedByMe: false,
@@ -3846,10 +3858,18 @@ export function useOgonekStore() {
       target: string,
       parentId: string,
       text: string,
-      postAuthorId?: string | null
+      postAuthorIdOrOptions?: string | null | { postAuthorId?: string | null; gifUrl?: string | null }
     ): Promise<{ ok: boolean; comment?: Comment | null; error?: string }> => {
       if (!parentId) return { ok: false, error: 'Родительский комментарий не найден' }
-      return addComment(target, text, { parentId, postAuthorId })
+      const opts =
+        postAuthorIdOrOptions && typeof postAuthorIdOrOptions === 'object'
+          ? postAuthorIdOrOptions
+          : { postAuthorId: postAuthorIdOrOptions ?? null }
+      return addComment(target, text, {
+        parentId,
+        postAuthorId: opts.postAuthorId ?? null,
+        gifUrl: opts.gifUrl ?? null,
+      })
     },
     [addComment]
   )
@@ -3922,6 +3942,103 @@ export function useOgonekStore() {
       }
 
       return { ok: true, liked: willLike }
+    },
+    [updateStore]
+  )
+
+  /** Переключает эмодзи-реакцию на комментарии (`public.comment_reactions`, с откатом при ошибке). */
+  const toggleCommentReaction = useCallback(
+    async (
+      target: string,
+      commentId: string,
+      emoji: string
+    ): Promise<{ ok: boolean; reacted?: boolean; error?: string }> => {
+      const cleanEmoji = (emoji || '').trim().slice(0, 16)
+      if (!target || !commentId || !cleanEmoji) {
+        return { ok: false, error: 'Некорректная реакция' }
+      }
+      const current = getSnapshot()
+      const uid = current.auth?.activeAccountId || null
+      const found = (current.comments?.[target] ?? []).find((c) => c.id === commentId)
+      if (!found) return { ok: false, error: 'Комментарий не найден' }
+
+      const prevReactions = found.reactions ? found.reactions.map((r) => ({ ...r })) : []
+      const existing = prevReactions.find((r) => r.emoji === cleanEmoji)
+      const willReact = !existing?.reactedByMe
+
+      const applyDelta = (list: typeof prevReactions, add: boolean) => {
+        const idx = list.findIndex((r) => r.emoji === cleanEmoji)
+        if (add) {
+          if (idx >= 0) {
+            return list.map((r, i) =>
+              i === idx ? { ...r, count: r.count + (r.reactedByMe ? 0 : 1), reactedByMe: true } : r
+            )
+          }
+          return [...list, { emoji: cleanEmoji, count: 1, reactedByMe: true }]
+        }
+        if (idx < 0) return list
+        const nextCount = list[idx].count - (list[idx].reactedByMe ? 1 : 0)
+        if (nextCount <= 0) return list.filter((_, i) => i !== idx)
+        return list.map((r, i) =>
+          i === idx ? { ...r, count: nextCount, reactedByMe: false } : r
+        )
+      }
+
+      const nextReactions = applyDelta(prevReactions, willReact)
+
+      updateStore((prev) => {
+        const list = prev.comments?.[target] ?? []
+        return {
+          ...prev,
+          comments: {
+            ...prev.comments,
+            [target]: list.map((c) =>
+              c.id === commentId
+                ? { ...c, reactions: nextReactions.length > 0 ? nextReactions : undefined }
+                : c
+            ),
+          },
+        }
+      })
+
+      const isSignedUuid = Boolean(
+        uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)
+      )
+      const isCommentUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        commentId
+      )
+
+      if (isSignedUuid && isCommentUuid) {
+        const res = await toggleCommentReactionInDb({
+          userId: uid,
+          commentId,
+          emoji: cleanEmoji,
+          willReact,
+        })
+        if (!res.ok) {
+          updateStore((prev) => {
+            const list = prev.comments?.[target] ?? []
+            return {
+              ...prev,
+              comments: {
+                ...prev.comments,
+                [target]: list.map((c) =>
+                  c.id === commentId
+                    ? { ...c, reactions: prevReactions.length > 0 ? prevReactions : undefined }
+                    : c
+                ),
+              },
+            }
+          })
+          return {
+            ok: false,
+            reacted: !willReact,
+            error: res.error || 'Не удалось обновить реакцию',
+          }
+        }
+      }
+
+      return { ok: true, reacted: willReact }
     },
     [updateStore]
   )
@@ -7548,6 +7665,7 @@ export function useOgonekStore() {
     addComment,
     addReply,
     toggleCommentLike,
+    toggleCommentReaction,
     deleteComment,
     getCommentsFor,
     clearComments,

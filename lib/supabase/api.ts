@@ -16,7 +16,7 @@ import {
   legacyTargetFromScoped,
 } from '../ogonek/comments.ts'
 import { getInitials } from '../ogonek/initials.ts'
-import type { ChatMessage, Comment } from '../ogonek/types.ts'
+import type { ChatMessage, Comment, CommentReactionSummary } from '../ogonek/types.ts'
 
 export interface ProfileRecord {
   id: string
@@ -1129,11 +1129,23 @@ function isLegacyDemoCommentRow(row: any): boolean {
   return false
 }
 
+function extractLegacyMarkdownGif(text: string): { cleanText: string; gifUrl: string | null } {
+  const mdMatch = text.match(/!\[\]\((https?:\/\/[^\s)]+)\)/)
+  if (mdMatch) {
+    return {
+      cleanText: text.replace(/!\[\]\([^)]+\)/g, '').trim(),
+      gifUrl: mdMatch[1],
+    }
+  }
+  return { cleanText: text, gifUrl: null }
+}
+
 function mapCommentRowToDomain(
   row: any,
   prof: ProfileRecord | null | undefined,
   likeStats: { count: number; likedByMe: boolean } | null,
   likesTableAvailable: boolean,
+  reactionSummaries: CommentReactionSummary[] | undefined,
   viewerId?: string | null,
   fallbackPostAuthorId?: string | null
 ): Comment {
@@ -1142,6 +1154,9 @@ function mapCommentRowToDomain(
   const username = prof?.username || null
   const resolvedTarget = String(row.target_key || '')
   const parsedOwner = parsePostAuthorIdFromTarget(resolvedTarget)
+  const rawText = String(row.text || '')
+  const rowGifUrl = typeof row.gif_url === 'string' && row.gif_url.trim() ? row.gif_url.trim() : null
+  const legacyParsed = !rowGifUrl ? extractLegacyMarkdownGif(rawText) : { cleanText: rawText, gifUrl: null }
 
   return {
     id: String(row.id || row.client_id),
@@ -1154,7 +1169,8 @@ function mapCommentRowToDomain(
     verified: Boolean(prof?.verified),
     postAuthorId: row.post_author_id || parsedOwner || fallbackPostAuthorId || null,
     initials: row.initials || getInitials(displayName, username || 'user'),
-    text: String(row.text || ''),
+    text: legacyParsed.cleanText,
+    gifUrl: rowGifUrl || legacyParsed.gifUrl || null,
     createdAt: row.created_at || new Date().toISOString(),
     likes: likesTableAvailable
       ? (likeStats?.count ?? 0)
@@ -1162,6 +1178,7 @@ function mapCommentRowToDomain(
     likedByMe: likesTableAvailable
       ? Boolean(likeStats?.likedByMe)
       : Boolean(row.liked_by_me),
+    reactions: reactionSummaries && reactionSummaries.length > 0 ? reactionSummaries : undefined,
     isMine: Boolean(viewerId && authorId && authorId === viewerId),
   }
 }
@@ -1220,13 +1237,20 @@ export async function fetchCommentsForTargets(
 
   let likesTableAvailable = false
   const likesMap = new Map<string, { count: number; likedByMe: boolean }>()
+  const reactionsMap = new Map<string, CommentReactionSummary[]>()
 
-  const [profilesMap, likesRes] = await Promise.all([
+  const [profilesMap, likesRes, reactionsRes] = await Promise.all([
     authorIds.length > 0 ? getProfilesByIds(authorIds) : Promise.resolve({} as Record<string, ProfileRecord>),
     commentUuids.length > 0
       ? supabase
           .from('comment_likes')
           .select('comment_id, user_id')
+          .in('comment_id', commentUuids)
+      : Promise.resolve({ data: [], error: null } as any),
+    commentUuids.length > 0
+      ? supabase
+          .from('comment_reactions')
+          .select('comment_id, user_id, emoji')
           .in('comment_id', commentUuids)
       : Promise.resolve({ data: [], error: null } as any),
   ])
@@ -1242,6 +1266,33 @@ export async function fetchCommentsForTargets(
         entry.likedByMe = true
       }
       likesMap.set(cid, entry)
+    }
+  }
+
+  if (!reactionsRes?.error && Array.isArray(reactionsRes?.data)) {
+    const byCommentEmoji = new Map<string, Map<string, { count: number; reactedByMe: boolean }>>()
+    for (const row of reactionsRes.data) {
+      const cid = String(row.comment_id || '')
+      const emoji = String(row.emoji || '').trim()
+      if (!cid || !emoji) continue
+      let eMap = byCommentEmoji.get(cid)
+      if (!eMap) {
+        eMap = new Map()
+        byCommentEmoji.set(cid, eMap)
+      }
+      const prev = eMap.get(emoji) ?? { count: 0, reactedByMe: false }
+      prev.count += 1
+      if (viewerId && row.user_id === viewerId) {
+        prev.reactedByMe = true
+      }
+      eMap.set(emoji, prev)
+    }
+    for (const [cid, eMap] of byCommentEmoji.entries()) {
+      const list: CommentReactionSummary[] = []
+      for (const [emoji, info] of eMap.entries()) {
+        list.push({ emoji, count: info.count, reactedByMe: info.reactedByMe })
+      }
+      reactionsMap.set(cid, list)
     }
   }
 
@@ -1272,11 +1323,13 @@ export async function fetchCommentsForTargets(
     const authorUid = row.user_id || row.author_id || null
     const prof = (authorUid && (profilesMap[authorUid] || getCachedProfileSync(authorUid))) || null
     const likeStats = likesMap.get(String(row.id)) ?? null
+    const reactionList = reactionsMap.get(String(row.id))
     const mapped = mapCommentRowToDomain(
       row,
       prof,
       likeStats,
       likesTableAvailable,
+      reactionList,
       viewerId,
       postAuthorHintByTarget?.[destination] ?? null
     )
@@ -1291,11 +1344,13 @@ export async function fetchCommentsForTargets(
 
 /**
  * Создать реальный комментарий или ответ в Supabase `public.comments`.
+ * Поддерживает текст (до 2000 символов), только GIF (`gif_url`), или текст + GIF вместе.
  */
 export async function createCommentInDb(params: {
   userId?: string | null
   targetKey: string
-  text: string
+  text?: string
+  gifUrl?: string | null
   parentId?: string | null
   postAuthorId?: string | null
   authorName?: string
@@ -1304,8 +1359,10 @@ export async function createCommentInDb(params: {
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'База данных не подключена' }
 
-  const trimmed = (params.text || '').trim().slice(0, 600)
-  if (!trimmed) return { ok: false, error: 'Текст комментария пустой' }
+  const trimmed = (params.text || '').trim().slice(0, 2000)
+  const cleanGifUrl =
+    typeof params.gifUrl === 'string' && params.gifUrl.trim() ? params.gifUrl.trim().slice(0, 1000) : null
+  if (!trimmed && !cleanGifUrl) return { ok: false, error: 'Введите текст или выберите GIF' }
 
   let authUid = params.userId && UUID_REGEX.test(params.userId) ? params.userId : null
   try {
@@ -1338,6 +1395,7 @@ export async function createCommentInDb(params: {
     author: (params.authorName || 'Пользователь').slice(0, 80),
     initials: (params.initials || 'П').slice(0, 4),
     text: trimmed,
+    gif_url: cleanGifUrl,
     likes: 0,
     liked_by_me: false,
     is_mine: true,
@@ -1359,6 +1417,7 @@ export async function createCommentInDb(params: {
     prof,
     { count: 0, likedByMe: false },
     true,
+    undefined,
     authUid,
     effectivePostAuthorId
   )
@@ -1417,6 +1476,61 @@ export async function toggleCommentLikeInDb(params: {
 }
 
 /**
+ * Поставить или снять эмодзи-реакцию на комментарии в `public.comment_reactions`.
+ */
+export async function toggleCommentReactionInDb(params: {
+  userId?: string | null
+  commentId: string
+  emoji: string
+  willReact: boolean
+}): Promise<{ ok: boolean; reacted?: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
+  if (!params.commentId || !UUID_REGEX.test(params.commentId)) {
+    return { ok: false, error: 'Некорректный ID комментария' }
+  }
+  const cleanEmoji = (params.emoji || '').trim().slice(0, 16)
+  if (!cleanEmoji) return { ok: false, error: 'Некорректная реакция' }
+
+  let authUid = params.userId && UUID_REGEX.test(params.userId) ? params.userId : null
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (sessionData?.session?.user?.id) {
+      authUid = sessionData.session.user.id
+    }
+  } catch {}
+
+  if (!authUid || !UUID_REGEX.test(authUid)) {
+    return { ok: false, error: 'Войдите в аккаунт, чтобы ставить реакции' }
+  }
+
+  if (params.willReact) {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .insert({ comment_id: params.commentId, user_id: authUid, emoji: cleanEmoji })
+
+    if (error) {
+      if (error.code === '23505') return { ok: true, reacted: true }
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, reacted: true }
+  }
+
+  const { error } = await supabase
+    .from('comment_reactions')
+    .delete()
+    .eq('comment_id', params.commentId)
+    .eq('user_id', authUid)
+    .eq('emoji', cleanEmoji)
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+  return { ok: true, reacted: false }
+}
+
+/**
  * Удалить комментарий из Supabase `public.comments`.
  * RLS разрешает удаление автору комментария И владельцу поста (Day).
  */
@@ -1468,6 +1582,13 @@ export function subscribeToCommentsRealtime(
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'comment_likes' },
+      () => {
+        onEvent(null)
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'comment_reactions' },
       () => {
         onEvent(null)
       }

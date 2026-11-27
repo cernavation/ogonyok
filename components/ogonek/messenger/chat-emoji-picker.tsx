@@ -12,6 +12,10 @@ type Props = {
   onClose: () => void
   soundEnabled?: boolean
   align?: 'left' | 'right'
+  /** При false рендерится без absolute bottom-full (для портала / точного позиционирования во внешнем контейнере) */
+  floating?: boolean
+  /** Скрыть вкладку стикеров (например в комментариях) */
+  hideStickers?: boolean
 }
 
 const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿']
@@ -74,6 +78,8 @@ export function ChatEmojiPicker({
   onClose,
   soundEnabled = true,
   align = 'left',
+  floating = true,
+  hideStickers = false,
 }: Props) {
   const pickerRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<'emoji' | 'stickers'>('emoji')
@@ -137,9 +143,11 @@ export function ChatEmojiPicker({
   return (
     <div
       ref={pickerRef}
-      className={`absolute bottom-full ${
-        align === 'right' ? 'right-0' : '-left-[96px] sm:left-0'
-      } mb-2 z-[70] flex h-[380px] w-[310px] sm:w-[340px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#16181c]/95 backdrop-blur-xl shadow-2xl text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-150`}
+      className={`${
+        floating
+          ? `absolute bottom-full ${align === 'right' ? 'right-0' : '-left-[96px] sm:left-0'} mb-2 z-[70]`
+          : 'relative'
+      } flex h-[360px] sm:h-[380px] w-[300px] sm:w-[340px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#16181c]/95 backdrop-blur-xl shadow-2xl text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-150`}
       role="dialog"
       aria-label="Панель эмодзи и стикеров"
     >
@@ -159,19 +167,21 @@ export function ChatEmojiPicker({
             <Smile size={14} />
             <span>Эмодзи</span>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              playClick(soundEnabled)
-              setTab('stickers')
-            }}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
-              tab === 'stickers' ? 'bg-[#ff7a18] text-white shadow-sm' : 'text-[#71767b] hover:text-white'
-            }`}
-          >
-            <Sparkles size={14} />
-            <span>Стикеры</span>
-          </button>
+          {!hideStickers && (
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                setTab('stickers')
+              }}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
+                tab === 'stickers' ? 'bg-[#ff7a18] text-white shadow-sm' : 'text-[#71767b] hover:text-white'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span>Стикеры</span>
+            </button>
+          )}
         </div>
 
         <button

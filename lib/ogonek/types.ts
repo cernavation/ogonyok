@@ -155,6 +155,12 @@ export type CommentPersona = 'me' | 'support'
  * Комментарий поддержки под днём или отдельной гордостью.
  * Хранится плоско (с parentId), а дерево ответов собирается на клиенте.
  */
+export type CommentReactionSummary = {
+  emoji: string
+  count: number
+  reactedByMe: boolean
+}
+
 export type Comment = {
   id: string
   /** Родительский комментарий для дерева ответов; null — корневой */
@@ -177,12 +183,16 @@ export type Comment = {
   initials: string
   /** Текст комментария */
   text: string
+  /** URL прикреплённой GIF-анимации (отдельное поле gif_url в БД) */
+  gifUrl?: string | null
   /** ISO-время создания */
   createdAt: string
   /** Количество лайков на комментарии */
   likes: number
   /** Поставил ли лайк текущий пользователь */
   likedByMe: boolean
+  /** Эмодзи-реакции на комментарий (🔥, ❤️, 😂, 👏, 💯, 😮) */
+  reactions?: CommentReactionSummary[]
   /** Комментарий создан текущим пользователем */
   isMine: boolean
   /** Legacy-поля (опционально для совместимости старого локального кэша) */
