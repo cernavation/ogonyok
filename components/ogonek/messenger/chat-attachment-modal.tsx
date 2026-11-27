@@ -65,7 +65,7 @@ export function ChatAttachmentModal({
 
   return createPortal(
     <motion.div
-      className="fixed inset-0 z-[130] bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+      className="fixed inset-0 z-[130] bg-black/85 backdrop-blur-[4px] flex items-center justify-center p-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export function ChatAttachmentModal({
         exit={{ opacity: 0, scale: 0.96, y: 12 }}
         transition={{ duration: 0.16 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden rounded-3xl border shadow-2xl bg-[#111317] text-white"
+        className="w-full max-w-lg max-h-[88vh] flex flex-col overflow-hidden rounded-2xl border shadow-[0_24px_80px_rgba(0,0,0,0.95)] bg-[#060608] text-white"
         style={{
           borderColor: `${attachment.accent}55`,
         }}

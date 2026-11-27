@@ -835,12 +835,14 @@ export type ChatMessage = {
     isVideo?: boolean
     status?: string
   } | null
-  /** Метаданные системных уведомлений от официального бота Priday (подписка/дружба/поддержка) */
+  /** Метаданные системных уведомлений от официального бота Priday (подписка/дружба/поддержка/веха) */
   actorMeta?: {
     actorId?: string | null
     actorUsername?: string | null
     actorDisplayName?: string | null
-    kind?: 'welcome' | 'canned' | 'support_user' | 'support_reply' | 'follow' | 'mutual'
+    milestoneDay?: number | null
+    milestoneTier?: 10 | 50 | 100 | null
+    kind?: 'welcome' | 'canned' | 'support_user' | 'support_reply' | 'follow' | 'mutual' | 'milestone'
   } | null
 }
 

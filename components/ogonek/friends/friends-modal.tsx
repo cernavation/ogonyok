@@ -480,14 +480,14 @@ export function FriendsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-[4px]"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Окно друзей"
-        className="w-full sm:max-w-[540px] max-h-[85vh] sm:max-h-[75vh] rounded-2xl bg-black border border-white/[0.14] shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col text-[var(--text,#fff)] overflow-hidden relative"
+        className="w-full sm:max-w-[540px] max-h-[85vh] sm:max-h-[75vh] rounded-2xl bg-[#060608] border border-white/[0.14] shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col text-[var(--text,#fff)] overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка модалки */}
@@ -738,15 +738,17 @@ export function FriendsModal({
                         Закрытые круги для общения и записей дня
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      id="btn-create-group"
-                      onClick={handleStartCreateGroup}
-                      className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#FF5C00] hover:opacity-90 text-white transition-all flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
-                    >
-                      <Plus size={14} />
-                      <span>Создать группу</span>
-                    </button>
+                    {chatGroups.length > 0 && (
+                      <button
+                        type="button"
+                        id="btn-create-group"
+                        onClick={handleStartCreateGroup}
+                        className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#FF5C00] hover:opacity-90 text-white transition-all flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+                      >
+                        <Plus size={14} />
+                        <span>Создать группу</span>
+                      </button>
+                    )}
                   </div>
 
                   {chatGroups.length === 0 ? (
@@ -762,6 +764,7 @@ export function FriendsModal({
                       </p>
                       <button
                         type="button"
+                        id="btn-create-group"
                         onClick={handleStartCreateGroup}
                         className="px-4 py-2 rounded-full text-xs font-bold bg-[#FF5C00] text-white hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
                       >
@@ -1009,7 +1012,7 @@ export function FriendsModal({
 
         {/* Компактная нижняя панель на вкладке «Друзья» */}
         {activeTab === 'friends' && (
-          <footer className="px-5 py-3 border-t border-white/[0.1] bg-black flex items-center gap-2.5 shrink-0">
+          <footer className="px-5 py-3 border-t border-white/[0.1] bg-[#060608] flex items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={handleOpenExplore}
@@ -1034,11 +1037,11 @@ export function FriendsModal({
       {/* Модалка жалобы */}
       {reportingUser && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setReportingUser(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3"
+            className="w-full max-w-sm rounded-2xl bg-[#060608] border border-white/[0.14] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-[var(--text,#fff)]">
@@ -1074,11 +1077,11 @@ export function FriendsModal({
       {/* Модалка создания группы */}
       {isCreatingGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setIsCreatingGroup(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3.5"
+            className="w-full max-w-sm rounded-2xl bg-[#060608] border border-white/[0.14] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
@@ -1151,11 +1154,11 @@ export function FriendsModal({
       {/* Модалка редактирования группы */}
       {isEditingGroup && selectedGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setIsEditingGroup(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3.5"
+            className="w-full max-w-sm rounded-2xl bg-[#060608] border border-white/[0.14] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
@@ -1219,11 +1222,11 @@ export function FriendsModal({
       {/* Модалка приглашения в группу */}
       {isInvitingMember && selectedGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setIsInvitingMember(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3"
+            className="w-full max-w-sm rounded-2xl bg-[#060608] border border-white/[0.14] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">

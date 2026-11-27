@@ -75,7 +75,7 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
   return (
     <div
       id="premium-modal-backdrop"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-[4px] animate-in fade-in duration-150"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -83,7 +83,7 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
     >
       <div
         id="premium-modal-container"
-        className="w-full max-w-[880px] rounded-3xl bg-[var(--surface,#16181c)] border border-[var(--line,#2f3336)] shadow-2xl p-4 sm:p-5 flex flex-col gap-3 relative animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[720px] overflow-y-auto sm:overflow-visible max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:rounded-b-none"
+        className="w-full max-w-[880px] rounded-2xl bg-[#060608] border border-white/[0.14] shadow-[0_24px_80px_rgba(0,0,0,0.95)] p-4 sm:p-5 flex flex-col gap-3 relative animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[720px] overflow-y-auto sm:overflow-visible max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:rounded-b-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

@@ -207,7 +207,7 @@ export function DayOptionsModal({
     <>
       {/* Главное меню опций дня */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
         onClick={onClose}
       >
         <motion.div
@@ -215,8 +215,8 @@ export function DayOptionsModal({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-4"
-          style={{ background: '#16181c', border: '1px solid #2f3336' }}
+          className="w-full max-w-sm rounded-2xl p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-4"
+          style={{ background: '#060608', border: '1px solid rgba(255,255,255,0.14)' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between pb-2" style={{ borderBottom: '1px solid #2f3336' }}>
@@ -451,7 +451,7 @@ export function DayOptionsModal({
       {/* Стильная модалка подтверждения удаления */}
       {confirmDeleteOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => !isDeleting && setConfirmDeleteOpen(false)}
         >
           <motion.div
@@ -459,7 +459,7 @@ export function DayOptionsModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col gap-4 border border-[#2f3336] bg-[#16181c] text-center items-center"
+            className="w-full max-w-sm rounded-2xl p-6 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-4 border border-white/[0.14] bg-[#060608] text-center items-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center">

@@ -29,7 +29,7 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekStore, usePridayTyping } from '@/lib/ogonek/use-ogonek-store'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import {
   chatDayKey,
@@ -192,6 +192,7 @@ export function MessengerChatPane({
   const [linkDismissed, setLinkDismissed] = useState(false)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [typingName, setTypingName] = useState<string | null>(null)
+  const isPridayTyping = usePridayTyping()
 
   const bodyRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -310,14 +311,32 @@ export function MessengerChatPane({
     ).length
   }, [thread])
 
-  const firstUnreadMessageId = useMemo(() => {
-    if (!thread || !thread.messages) return null
-    const readAtMs = thread.readAtISO ? new Date(thread.readAtISO).getTime() : 0
-    const firstUnread = thread.messages.find(
-      (m) => m.authorId !== 'me' && !m.system && new Date(m.createdAtISO).getTime() > readAtMs
+  // Фиксируем якорное непрочитанное сообщение только в момент входа в чат, чтобы не мигать
+  // плашкой «Новые сообщения» поверх живых ответов прямо внутри уже открытой переписки.
+  const [firstUnreadMessageId, setFirstUnreadMessageId] = useState<string | null>(() => {
+    if (!friendId || isPridayChat(friendId)) return null
+    const initThread = threadOf(state.chatThreads ?? {}, friendId)
+    if (!initThread.messages) return null
+    const readAtMs = initThread.readAtISO ? new Date(initThread.readAtISO).getTime() : 0
+    const firstUnread = initThread.messages.find(
+      (m) => m && m.authorId !== 'me' && !m.system && !m.read && new Date(m.createdAtISO).getTime() > readAtMs
     )
     return firstUnread ? firstUnread.id : null
-  }, [thread])
+  })
+
+  useEffect(() => {
+    if (!friendId || isPridayChat(friendId)) {
+      setFirstUnreadMessageId(null)
+      return
+    }
+    const initThread = threadOf(state.chatThreads ?? {}, friendId)
+    const readAtMs = initThread.readAtISO ? new Date(initThread.readAtISO).getTime() : 0
+    const firstUnread = (initThread.messages ?? []).find(
+      (m) => m && m.authorId !== 'me' && !m.system && !m.read && new Date(m.createdAtISO).getTime() > readAtMs
+    )
+    setFirstUnreadMessageId(firstUnread ? firstUnread.id : null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [friendId])
 
   // Автоматическое определение ссылки в черновике
   useEffect(() => {
@@ -570,11 +589,11 @@ export function MessengerChatPane({
     removeDeletedChatMessage,
   ])
 
-  // Автопрокрутка вниз при новом сообщении
+  // Автопрокрутка вниз при новом сообщении и появлении индикатора печатания
   useEffect(() => {
     const el = bodyRef.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [allMessages.length])
+  }, [allMessages.length, isPridayTyping, typingName])
 
   // Авторесайз текстового поля ввода
   useEffect(() => {
@@ -672,6 +691,7 @@ export function MessengerChatPane({
       onNotify('Не удалось отправить сообщение')
     }
 
+    setFirstUnreadMessageId(null)
     playSuccess(soundEnabled)
     setChatDraft(friendId, '')
     setAttachment(null)
@@ -838,6 +858,13 @@ export function MessengerChatPane({
                 <span className="text-[var(--accent)] font-semibold inline-flex items-center gap-1 animate-pulse">
                   <span>{typingName} печатает</span>
                   <span className="tracking-widest">…</span>
+                </span>
+              ) : isPriday && isPridayTyping ? (
+                <span
+                  data-testid="priday-header-typing"
+                  className="text-[#ff5a1f] font-semibold inline-flex items-center gap-1 animate-pulse"
+                >
+                  <span>печатает...</span>
                 </span>
               ) : isPriday ? (
                 'официальный аккаунт · @priday.life'
@@ -1096,6 +1123,34 @@ export function MessengerChatPane({
                 </div>
               )
             })
+          )}
+
+          {/* Живой индикатор печатания (три пульсирующие точки в тёмном пузырьке) */}
+          {((isPriday && isPridayTyping) || (!isPriday && Boolean(typingName))) && (
+            <div
+              data-testid={isPriday ? 'priday-typing-indicator' : 'peer-typing-indicator'}
+              className="flex items-end gap-2 mt-2 mb-1 animate-in fade-in slide-in-from-bottom-1 duration-200"
+              aria-live="polite"
+              aria-label={isPriday ? 'Priday печатает...' : `${typingName} печатает...`}
+            >
+              <div className="shrink-0 mb-0.5">
+                <ChatAvatar friendId={friendId} size={28} showPresence={false} ringColor="var(--bg)" />
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl rounded-bl-sm bg-[#0d0e12] border border-white/[0.12] shadow-sm">
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-white/80 animate-bounce"
+                  style={{ animationDelay: '0ms', animationDuration: '900ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-white/80 animate-bounce"
+                  style={{ animationDelay: '160ms', animationDuration: '900ms' }}
+                />
+                <span
+                  className="w-1.5 h-1.5 rounded-full bg-white/80 animate-bounce"
+                  style={{ animationDelay: '320ms', animationDuration: '900ms' }}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>

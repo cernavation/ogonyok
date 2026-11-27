@@ -67,7 +67,7 @@ export function ModalShell({ title, onClose, children, closeOnEscape = true, hid
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop"
+      className="fixed inset-0 bg-black/85 backdrop-blur-[4px] z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

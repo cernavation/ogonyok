@@ -145,7 +145,7 @@ export function FollowListModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-150"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -156,7 +156,7 @@ export function FollowListModal({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className="w-full max-w-[520px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-2xl transition-all bg-[var(--surface)] border border-[var(--line)] text-[var(--text)]"
+        className="w-full max-w-[520px] max-h-[85vh] rounded-2xl flex flex-col overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.95)] transition-all bg-[#060608] border border-white/[0.14] text-[var(--text)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка модалки */}

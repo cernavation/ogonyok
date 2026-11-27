@@ -38,6 +38,8 @@ import { normalizeVisibility } from './visibility.ts'
 import {
   PRIDAY_CHAT_ID,
   PRIDAY_THREAD_PEER_META,
+  PRIDAY_WELCOME_MSG_ID,
+  PRIDAY_WELCOME_TEXT,
   isPridayChat,
   isDeletableChat,
   ensurePridayThreadInThreads,
@@ -969,8 +971,18 @@ export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}):
     const isGroup = cleanId.startsWith('group-') || Boolean((t as any)?.groupMeta)
     if (!isGroup && !getFriend(cleanId) && cleanId.includes('unknown')) continue
 
+    const rawMessages = sanitizeChatMessages(t.messages)
+    const messages =
+      cleanId === PRIDAY_CHAT_ID
+        ? rawMessages.map((m) =>
+            m.id === PRIDAY_WELCOME_MSG_ID || m.actorMeta?.kind === 'welcome'
+              ? { ...m, text: PRIDAY_WELCOME_TEXT }
+              : m
+          )
+        : rawMessages
+
     result[cleanId] = {
-      messages: sanitizeChatMessages(t.messages),
+      messages,
       readAtISO: typeof t.readAtISO === 'string' && t.readAtISO ? t.readAtISO : null,
       muted: Boolean(t.muted),
       pinned: Boolean(t.pinned),

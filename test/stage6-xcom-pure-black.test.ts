@@ -78,15 +78,15 @@ describe('Этап 6: Чистая эстетика X.com (Pure Black + тонк
     )
   })
 
-  it('3. Карточка друга и Модалка «Друзья»: X.com backdrop, чисто-чёрный корпус и тонкие разделители', () => {
+  it('3. Карточка друга и Модалка «Друзья»: глубокий тёмный backdrop, чисто-чёрный корпус #060608 и тонкие разделители', () => {
     const detailSrc = readRepoFile('components/ogonek/friend-detail-modal.tsx')
     assert.ok(
-      detailSrc.includes('bg-[#5b7083]/25 backdrop-blur-[3px]'),
-      'FriendDetailModal использует X.com backdrop'
+      detailSrc.includes('bg-black/85 backdrop-blur-[4px]') && !detailSrc.includes('5b7083'),
+      'FriendDetailModal использует глубокое тёмное затемнение без серого оттенка'
     )
     assert.ok(
-      detailSrc.includes('rounded-2xl bg-black border border-white/[0.14]'),
-      'FriendDetailModal использует чисто-чёрный корпус с тонкой рамкой'
+      detailSrc.includes('rounded-2xl bg-[#060608] border border-white/[0.14]'),
+      'FriendDetailModal использует чисто-чёрный корпус #060608 с тонкой рамкой'
     )
     assert.ok(
       detailSrc.includes('divide-x divide-white/[0.1]') && detailSrc.includes('bg-white/[0.02]'),
@@ -95,9 +95,10 @@ describe('Этап 6: Чистая эстетика X.com (Pure Black + тонк
 
     const modalSrc = readRepoFile('components/ogonek/friends/friends-modal.tsx')
     assert.ok(
-      modalSrc.includes('bg-[#5b7083]/25 backdrop-blur-[3px]') &&
-        modalSrc.includes('rounded-2xl bg-black border border-white/[0.14]'),
-      'FriendsModal использует X.com backdrop и чисто-чёрный корпус'
+      modalSrc.includes('bg-black/85 backdrop-blur-[4px]') &&
+        !modalSrc.includes('5b7083') &&
+        modalSrc.includes('rounded-2xl bg-[#060608] border border-white/[0.14]'),
+      'FriendsModal использует глубокий тёмный backdrop и чисто-чёрный корпус #060608'
     )
     assert.ok(
       modalSrc.includes('hover:bg-white/[0.04]') && modalSrc.includes('divide-y divide-white/[0.08]'),

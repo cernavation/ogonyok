@@ -59,6 +59,7 @@ import {
   playMissedCallSound,
   playMilestoneSound,
 } from '@/lib/ogonek/sound'
+import { buildStreakMilestoneCelebration } from '@/lib/ogonek/priday-system-chat'
 import { totalUnread } from '@/lib/ogonek/messenger'
 
 // Динамические импорты тяжелых модальных окон (Zero Initial Lag, 120 FPS сплиттинг)
@@ -180,6 +181,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
     receivePridaySystemNotification,
+    deliverPridayMilestoneMessage,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
   } = useOgonekStore()
@@ -461,11 +463,15 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
         let authorName = 'Друг'
         let authorAvatar: string | undefined = undefined
+        let authorAvatarColor: string | undefined = undefined
+        let authorVerified = false
         try {
           const profile = await getProfile(newMsg.author_id)
           if (profile) {
             authorName = profile.display_name || profile.username || 'Друг'
             authorAvatar = profile.avatar_url || profile.avatar_image || undefined
+            authorAvatarColor = profile.avatar_color || undefined
+            authorVerified = Boolean(profile.verified)
           }
         } catch {}
 
@@ -497,6 +503,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           title: authorName,
           body: previewText,
           avatarUrl: authorAvatar,
+          avatarColor: authorAvatarColor,
+          verified: authorVerified,
           mediaType,
           peerId: newMsg.author_id,
           threadKey: newMsg.thread_key,
@@ -528,11 +536,12 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           const notif = payload.new as any
           if (!notif) return
 
-          // Уведомления от официального бота Priday (новая подписка / взаимная дружба / поддержка)
+          // Уведомления от официального бота Priday (новая подписка / взаимная дружба / поддержка / юбилеи)
           if (
             notif.type === 'priday_follow' ||
             notif.type === 'priday_mutual' ||
-            notif.type === 'priday_support_reply'
+            notif.type === 'priday_support_reply' ||
+            notif.type === 'priday_milestone'
           ) {
             receivePridaySystemNotification(notif)
             if (notif.type === 'priday_mutual' && notif.data?.actorId) {
@@ -546,14 +555,33 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
             const viewingPriday =
               viewRef.current === 'messages' && activeChatFriendRef.current === 'priday-official'
             if (!viewingPriday) {
-              playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
-              showDesktopToast({
-                type: 'chat',
-                title: 'Priday',
-                body: notif.body || 'Новое системное сообщение',
-                mediaType: 'text',
-                peerId: 'priday-official',
-              })
+              if (notif.type === 'priday_milestone') {
+                const daysNum = Number(notif.data?.day_number || 0)
+                const tier = (notif.data?.tier === 100 || notif.data?.tier === 50 ? notif.data.tier : 10) as 10 | 50 | 100
+                playMilestoneSound(soundVolumeRef.current, soundEnabledRef.current)
+                showDesktopToast({
+                  type: 'milestone',
+                  variant: 'milestone',
+                  milestoneTier: tier,
+                  days: daysNum || undefined,
+                  title: notif.title || 'Priday',
+                  body: notif.body || 'Юбилейный рубеж в Priday!',
+                  mediaType: 'milestone',
+                  peerId: 'priday-official',
+                  verified: true,
+                  timeoutMs: 8500,
+                })
+              } else {
+                playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+                showDesktopToast({
+                  type: 'chat',
+                  title: 'Priday',
+                  body: notif.body || 'Новое системное сообщение',
+                  mediaType: 'text',
+                  peerId: 'priday-official',
+                  verified: true,
+                })
+              }
             }
             return
           }
@@ -602,15 +630,22 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     updateStore,
   ])
 
-  // Событие вех достижения стрика «🔥 Поздравляем! 300 дней»
+  // Событие вех достижения стрика (праздничный тост для кратных 10/50/100 дней)
   useEffect(() => {
     const handleMilestone = (e: any) => {
-      const days = e?.detail?.days || 300
+      const days = Number(e?.detail?.days || 300)
+      const celebration = buildStreakMilestoneCelebration(days)
       showDesktopToast({
         type: 'milestone',
-        title: `🔥 Поздравляем! ${days} дней`,
-        body: 'Твой огонь горит непрерывно! Ты доказал силу дисциплины.',
+        variant: 'milestone',
+        milestoneTier: celebration?.tier ?? (days % 100 === 0 ? 100 : days % 50 === 0 ? 50 : 10),
+        days,
+        title: celebration?.title ?? `Поздравляем! ${days} дней 🔥`,
+        body: celebration?.text ?? `Твой огонь горит непрерывно! ${days} дней подряд.`,
         mediaType: 'milestone',
+        peerId: 'priday-official',
+        verified: true,
+        timeoutMs: 8500,
       })
       playMilestoneSound(state.soundVolume, state.soundEnabled)
     }
@@ -1337,6 +1372,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
   const handleSaveComposer = useCallback(
     async (payload: ComposerPayload, editingDayId?: number, dateISO?: string): Promise<{ ok: boolean; error?: string }> => {
       let dayToSave: Day
+      let isSameDateOverwrite = false
       if (editingDayId != null) {
         const existing = state.days.find((d) => d.id === editingDayId)
         if (!existing) return { ok: false, error: 'Запись не найдена' }
@@ -1377,6 +1413,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         const sameDateDay = state.days.find(
           (d) => d.dateISO && d.dateISO.slice(0, 10) === targetDateStr
         )
+        isSameDateOverwrite = Boolean(sameDateDay)
         const maxId = state.days.reduce((max, d) => Math.max(max, d.id), 0)
         const newId = sameDateDay ? sameDateDay.id : maxId + 1
         dayToSave = {
@@ -1435,16 +1472,41 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       if (editingDayId != null) {
         updateDay(dayToSave)
         notify(`День #${editingDayId} успешно сохранён в Supabase!`)
+      } else if (isSameDateOverwrite) {
+        addDay(dayToSave)
+        notify(`День #${dayToSave.id} обновлён!`)
       } else {
         addDay(dayToSave)
         notify('День успешно сохранён в Supabase! Стрик продолжается!')
-        const nextCount = state.days.length + 1
-        if (nextCount > 0 && nextCount % 100 === 0) {
+        const newStreak = state.days.length + 1
+        const celebration = buildStreakMilestoneCelebration(newStreak)
+        if (celebration) {
+          const delivered = deliverPridayMilestoneMessage(
+            celebration.days,
+            celebration.title,
+            celebration.text,
+            celebration.tier
+          )
+          if (delivered) {
+            playMilestoneSound(state.soundVolume, state.soundEnabled)
+            showDesktopToast({
+              type: 'milestone',
+              variant: 'milestone',
+              milestoneTier: celebration.tier,
+              days: celebration.days,
+              title: celebration.title,
+              body: celebration.text,
+              mediaType: 'milestone',
+              peerId: 'priday-official',
+              verified: true,
+              timeoutMs: 8500,
+            })
+          }
+        }
+        if (newStreak > 0 && newStreak % 100 === 0) {
           const currentTier = subStatus.effectiveTier || state.profile.subscription_tier || 'free'
-          if (currentTier === 'free') {
-            notify(`🔥 Поздравляем! ${nextCount} дней подряд. Хочешь увидеть, как ты изменился за эти ${nextCount} дней? Премиум`)
-          } else {
-            setMilestoneModal({ isOpen: true, milestoneNumber: nextCount })
+          if (currentTier !== 'free') {
+            setMilestoneModal({ isOpen: true, milestoneNumber: newStreak })
           }
         }
       }
@@ -1453,7 +1515,21 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       setEditingDay(null)
       return { ok: true }
     },
-    [state.days, state.auth.activeAccountId, state.profile, saveDayDirectlyToSupabase, updateDay, addDay, notify, subStatus.effectiveTier]
+    [
+      state.days,
+      state.auth.activeAccountId,
+      state.profile,
+      state.soundVolume,
+      state.soundEnabled,
+      clearComposerDraft,
+      saveDayDirectlyToSupabase,
+      updateDay,
+      addDay,
+      notify,
+      deliverPridayMilestoneMessage,
+      showDesktopToast,
+      subStatus.effectiveTier,
+    ]
   )
 
   const content: Record<ViewId, ReactNode> = useMemo(

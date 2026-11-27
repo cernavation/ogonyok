@@ -160,7 +160,7 @@ export function MilestoneModal({
     <AnimatePresence>
       <div
         id="milestone-modal-container"
-        className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto select-none"
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-5 overflow-y-auto select-none"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -171,7 +171,7 @@ export function MilestoneModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 16 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-2xl bg-[#0c0d0e] border border-amber-500/40 rounded-3xl p-5 sm:p-7 shadow-[0_0_60px_rgba(245,158,11,0.25)] flex flex-col gap-6 text-white my-auto max-h-[92vh] overflow-x-hidden overflow-y-auto no-scrollbar"
+          className="relative w-full max-w-2xl bg-[#060608] border border-amber-500/40 rounded-2xl p-5 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.95),0_0_60px_rgba(245,158,11,0.2)] flex flex-col gap-6 text-white my-auto max-h-[92vh] overflow-x-hidden overflow-y-auto no-scrollbar"
         >
           {/* Фоновый ореол (изолирован от scrollWidth) */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">

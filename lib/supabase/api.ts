@@ -2809,6 +2809,7 @@ const PRIDAY_NOTIF_TYPES = [
   'priday_mutual',
   'priday_support_user',
   'priday_support_reply',
+  'priday_milestone',
 ] as const
 
 /**
@@ -3047,4 +3048,88 @@ export async function savePridaySupportExchangeDb(input: {
   }
 
   return { ok: false }
+}
+
+/**
+ * Сохраняет юбилейное поздравление от Priday (кратное 10/50/100 дням) в Supabase,
+ * защищая от дублей на один и тот же day_number (например при редактировании дня).
+ */
+export async function savePridayMilestoneMessageDb(input: {
+  userId: string
+  dayNumber: number
+  title: string
+  body: string
+  tier: 10 | 50 | 100
+}): Promise<{ ok: boolean; duplicate?: boolean }> {
+  const supabase = getSupabase()
+  if (!supabase || !input.userId || !UUID_REGEX.test(input.userId)) return { ok: false }
+
+  const dayStr = String(input.dayNumber)
+  const nowISO = new Date().toISOString()
+
+  try {
+    // 1. Проверка дубля по notifications / priday_messages
+    const [existingNotif, existingPriday] = await Promise.allSettled([
+      supabase
+        .from('notifications')
+        .select('id, data')
+        .eq('user_id', input.userId)
+        .eq('type', 'priday_milestone')
+        .limit(50),
+      supabase
+        .from('priday_messages')
+        .select('id, meta')
+        .eq('user_id', input.userId)
+        .eq('kind', 'milestone')
+        .limit(50),
+    ])
+
+    if (
+      existingNotif.status === 'fulfilled' &&
+      Array.isArray(existingNotif.value.data) &&
+      existingNotif.value.data.some((r: any) => String(r?.data?.day_number ?? '') === dayStr)
+    ) {
+      return { ok: true, duplicate: true }
+    }
+    if (
+      existingPriday.status === 'fulfilled' &&
+      Array.isArray(existingPriday.value.data) &&
+      existingPriday.value.data.some((r: any) => String(r?.meta?.day_number ?? '') === dayStr)
+    ) {
+      return { ok: true, duplicate: true }
+    }
+
+    const { error: pErr } = await supabase.from('priday_messages').insert({
+      user_id: input.userId,
+      sender: 'priday',
+      kind: 'milestone',
+      body: input.body,
+      is_read: false,
+      meta: {
+        day_number: input.dayNumber,
+        tier: input.tier,
+      },
+      created_at: nowISO,
+    })
+
+    if (!pErr) return { ok: true }
+
+    const { error: nErr } = await supabase.from('notifications').insert({
+      user_id: input.userId,
+      type: 'priday_milestone',
+      title: input.title,
+      body: input.body,
+      data: {
+        source: 'priday_chat',
+        kind: 'milestone',
+        day_number: input.dayNumber,
+        tier: input.tier,
+      },
+      is_read: false,
+      created_at: nowISO,
+    })
+    return { ok: !nErr }
+  } catch {
+    return { ok: false }
+  }
 }

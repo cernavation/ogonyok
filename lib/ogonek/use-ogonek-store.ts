@@ -37,6 +37,7 @@ import {
   saveDayBundleRpc,
   loadPridaySystemMessagesDb,
   markPridaySystemMessagesReadDb,
+  savePridayMilestoneMessageDb,
   savePridaySupportExchangeDb,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
@@ -52,6 +53,29 @@ export type CurrentUser = {
   bio: string
   city: string
 } | null
+
+let pridayTypingPendingCount = 0
+const pridayTypingListeners = new Set<() => void>()
+
+function setPridayTypingDelta(delta: number) {
+  pridayTypingPendingCount = Math.max(0, pridayTypingPendingCount + delta)
+  pridayTypingListeners.forEach((cb) => cb())
+}
+
+function subscribePridayTyping(cb: () => void) {
+  pridayTypingListeners.add(cb)
+  return () => {
+    pridayTypingListeners.delete(cb)
+  }
+}
+
+export function usePridayTyping(): boolean {
+  return useSyncExternalStore(
+    subscribePridayTyping,
+    () => pridayTypingPendingCount > 0,
+    () => false
+  )
+}
 import {
   DEMO_ACCOUNT_PASSWORD,
   accountSnapshotFromProfile,
@@ -111,6 +135,7 @@ import {
   PRIDAY_THREAD_PEER_META,
   PRIDAY_SUPPORT_CUSTOM_REPLY,
   buildPridayWelcomeMessage,
+  computePridayTypingDelayMs,
   ensurePridayThreadInThreads,
   isPridayChat,
   mapPridayRecordToChatMessage,
@@ -4316,12 +4341,14 @@ export function useOgonekStore() {
       const clean = (text ?? '').trim().slice(0, CHAT_MESSAGE_LIMIT)
       if (!clean && !attachment && !extra?.media && !extra?.poll) return null
 
-      // Специальная обработка официального системного чата Priday (FAQ-бот + поддержка в Supabase)
+      // Специальная обработка официального системного чата Priday (FAQ-бот + живая задержка печатания + поддержка в Supabase)
       if (isPridayChat(friendId)) {
+        const nowISO = new Date().toISOString()
         const userMessage = makeChatMessage({
           authorId: MY_CHAT_ID,
           text: clean,
           attachment: attachment ?? null,
+          createdAtISO: nowISO,
           read: true,
           status: 'read',
           actorMeta: { kind: 'support_user' },
@@ -4330,14 +4357,6 @@ export function useOgonekStore() {
         const matchedAction = matchPridayQuickAction(clean)
         const replyText = matchedAction ? matchedAction.replyText : PRIDAY_SUPPORT_CUSTOM_REPLY
         const isSupport = !matchedAction || Boolean(matchedAction.isSupport)
-        const botReply = makeChatMessage({
-          authorId: PRIDAY_CHAT_ID,
-          text: replyText,
-          createdAtISO: new Date(Date.now() + 30).toISOString(),
-          read: true,
-          status: 'read',
-          actorMeta: { kind: isSupport ? 'support_reply' : 'canned' },
-        })
 
         updateStore((prev) => {
           const threads = ensurePridayThreadInThreads(prev.chatThreads)
@@ -4346,9 +4365,9 @@ export function useOgonekStore() {
             ...threads,
             [PRIDAY_CHAT_ID]: {
               ...pridayThread,
-              readAtISO: new Date().toISOString(),
+              readAtISO: nowISO,
               peerMeta: { ...PRIDAY_THREAD_PEER_META },
-              messages: [...pridayThread.messages, userMessage, botReply],
+              messages: [...pridayThread.messages, userMessage],
               draft: '',
             },
           }
@@ -4368,6 +4387,45 @@ export function useOgonekStore() {
             replyText,
             isSupport,
           })
+        }
+
+        const delayMs = computePridayTypingDelayMs(replyText)
+        setPridayTypingDelta(1)
+        if (typeof window !== 'undefined') {
+          window.setTimeout(() => {
+            setPridayTypingDelta(-1)
+            const replyCreatedAt = new Date().toISOString()
+            const readFloor = new Date(Date.now() + 20).toISOString()
+            const botReply = makeChatMessage({
+              authorId: PRIDAY_CHAT_ID,
+              text: replyText,
+              createdAtISO: replyCreatedAt,
+              read: true,
+              status: 'read',
+              actorMeta: { kind: isSupport ? 'support_reply' : 'canned' },
+            })
+
+            updateStore((prev) => {
+              const threads = ensurePridayThreadInThreads(prev.chatThreads)
+              const pridayThread = threadOf(threads, PRIDAY_CHAT_ID)
+              const nextThreads: ChatThreads = {
+                ...threads,
+                [PRIDAY_CHAT_ID]: {
+                  ...pridayThread,
+                  readAtISO: readFloor,
+                  peerMeta: { ...PRIDAY_THREAD_PEER_META },
+                  messages: [...pridayThread.messages, botReply],
+                },
+              }
+              return {
+                ...prev,
+                unreadChatCount: totalUnread(nextThreads),
+                chatThreads: nextThreads,
+              }
+            }, true)
+          }, delayMs)
+        } else {
+          setPridayTypingDelta(-1)
         }
 
         return userMessage
@@ -5866,6 +5924,7 @@ export function useOgonekStore() {
           ...threads,
           [PRIDAY_CHAT_ID]: {
             ...pridayThread,
+            ...(isViewingPriday ? { readAtISO: new Date(Date.now() + 20).toISOString() } : {}),
             peerMeta: { ...PRIDAY_THREAD_PEER_META },
             messages: [...existingMsgs, finalMsg],
           },
@@ -5876,6 +5935,100 @@ export function useOgonekStore() {
           chatThreads: nextThreads,
         }
       }, true)
+    },
+    [updateStore]
+  )
+
+  /** Доставляет праздничное юбилейное поздравление от Priday (10/50/100) с защитой от дублей на day_number */
+  const deliverPridayMilestoneMessage = useCallback(
+    (dayNumber: number, title: string, text: string, tier: 10 | 50 | 100): boolean => {
+      if (!dayNumber || !text) return false
+      const snap = getSnapshot()
+      const uid = snap.auth?.activeAccountId || null
+      const dedupKey = `${uid || 'local'}:${dayNumber}`
+      const lsKey = 'priday.celebrated_milestones.v1'
+
+      try {
+        if (typeof window !== 'undefined') {
+          const raw = window.localStorage.getItem(lsKey)
+          const parsed = raw ? JSON.parse(raw) : {}
+          if (parsed && typeof parsed === 'object' && parsed[dedupKey]) {
+            return false
+          }
+        }
+      } catch {}
+
+      const existingPriday = threadOf(snap.chatThreads ?? {}, PRIDAY_CHAT_ID)
+      const alreadyInThread = (existingPriday.messages ?? []).some(
+        (m) =>
+          m &&
+          (m.actorMeta?.milestoneDay === dayNumber ||
+            (m.actorMeta?.kind === 'milestone' && m.text === text))
+      )
+      if (alreadyInThread) {
+        return false
+      }
+
+      try {
+        if (typeof window !== 'undefined') {
+          const raw = window.localStorage.getItem(lsKey)
+          const parsed = raw && typeof JSON.parse(raw) === 'object' ? JSON.parse(raw) : {}
+          window.localStorage.setItem(lsKey, JSON.stringify({ ...parsed, [dedupKey]: true }))
+        }
+      } catch {}
+
+      const nowISO = new Date().toISOString()
+      const isViewingPriday =
+        snap.chatActiveFriendId === PRIDAY_CHAT_ID &&
+        typeof window !== 'undefined' &&
+        window.location.search.includes('view=messages')
+
+      const milestoneMsg = {
+        ...makeChatMessage({
+          authorId: PRIDAY_CHAT_ID,
+          text,
+          createdAtISO: nowISO,
+          read: isViewingPriday,
+          status: isViewingPriday ? 'read' : 'sent',
+          actorMeta: {
+            kind: 'milestone',
+            milestoneDay: dayNumber,
+            milestoneTier: tier,
+          },
+        }),
+        id: `priday-milestone-${dayNumber}`,
+      }
+
+      updateStore((prev) => {
+        const threads = ensurePridayThreadInThreads(prev.chatThreads)
+        const pridayThread = threadOf(threads, PRIDAY_CHAT_ID)
+        const nextThreads: ChatThreads = {
+          ...threads,
+          [PRIDAY_CHAT_ID]: {
+            ...pridayThread,
+            ...(isViewingPriday ? { readAtISO: new Date(Date.now() + 20).toISOString() } : {}),
+            peerMeta: { ...PRIDAY_THREAD_PEER_META },
+            messages: [...pridayThread.messages, milestoneMsg],
+          },
+        }
+        return {
+          ...prev,
+          unreadChatCount: totalUnread(nextThreads),
+          chatThreads: nextThreads,
+        }
+      }, true)
+
+      if (uid && !uid.startsWith('anon-') && !uid.startsWith('acct-guest')) {
+        void savePridayMilestoneMessageDb({
+          userId: uid,
+          dayNumber,
+          title,
+          body: text,
+          tier,
+        })
+      }
+
+      return true
     },
     [updateStore]
   )
@@ -5939,10 +6092,11 @@ export function useOgonekStore() {
 
         const localExtraPriday = (prevPriday?.messages ?? []).filter(
           (lm) =>
-            lm.actorMeta?.kind === 'canned' &&
+            (lm.actorMeta?.kind === 'canned' || lm.actorMeta?.kind === 'milestone') &&
             !pridayDbMessages.some(
               (dm) =>
                 (dm.dbId && dm.dbId === lm.dbId) ||
+                (lm.actorMeta?.milestoneDay && dm.actorMeta?.milestoneDay === lm.actorMeta.milestoneDay) ||
                 (dm.text === lm.text && Math.abs(new Date(dm.createdAtISO).getTime() - new Date(lm.createdAtISO).getTime()) < 5000)
             )
         )
@@ -7189,6 +7343,7 @@ export function useOgonekStore() {
     sendChatMessage,
     receiveIncomingChatMessage,
     receivePridaySystemNotification,
+    deliverPridayMilestoneMessage,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
     reconcileThreadMessages,

@@ -9,18 +9,27 @@ import {
   Mic,
   PhoneMissed,
   Send,
+  Sparkles,
+  Trophy,
   UserPlus,
   X,
 } from 'lucide-react'
 import { getInitials } from '@/lib/ogonek/initials'
+import { isPridayChat } from '@/lib/ogonek/priday-system-chat'
+import { UserAvatar, VerifiedBadge } from '../ui'
 
 export type DesktopToast = {
   id: string
   type: 'chat' | 'friend_request' | 'missed_call' | 'milestone' | 'system'
+  variant?: 'default' | 'milestone'
+  milestoneTier?: 10 | 50 | 100
+  days?: number
   title: string
   body: string
   avatarUrl?: string
+  avatarColor?: string
   initials?: string
+  verified?: boolean
   mediaType?: 'voice' | 'photo' | 'text' | 'call' | 'milestone'
   peerId?: string
   threadKey?: string
@@ -35,34 +44,42 @@ type Props = {
   onSendReply?: (toast: DesktopToast, text: string) => Promise<void> | void
 }
 
+const SPARKLE_PARTICLES = [
+  { x: -16, y: -14, delay: 0.04, size: 5, gold: true },
+  { x: 18, y: -18, delay: 0.09, size: 4, gold: false },
+  { x: 34, y: 4, delay: 0.14, size: 4, gold: true },
+  { x: -24, y: 12, delay: 0.1, size: 3.5, gold: false },
+  { x: 6, y: 22, delay: 0.18, size: 4, gold: true },
+  { x: 46, y: -10, delay: 0.06, size: 3.5, gold: false },
+] as const
+
 export function DesktopToastStack({
   toasts,
   onDismiss,
   onClickToast,
   onSendReply,
 }: Props) {
-  // По правилу шага 07: максимум 3 в стеке одновременно
   const visibleToasts = toasts.slice(-3)
 
   return (
     <div
       aria-live="polite"
       aria-label="Всплывающие уведомления"
-      className="desktop-toast-stack fixed z-50 pointer-events-none flex flex-col gap-2.5 transition-all
-        /* Desktop: справа сверху */
-        top-4 right-4 max-w-[360px] w-full
-        /* Mobile: сверху по центру с safe-area */
+      className="desktop-toast-stack fixed z-50 pointer-events-none flex flex-col gap-2.5
+        top-4 right-4 max-w-[376px] w-full
         max-sm:top-2 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:max-w-[92vw] max-sm:pt-[env(safe-area-inset-top,0px)]"
     >
-      {visibleToasts.map((toast) => (
-        <ToastCard
-          key={toast.id}
-          toast={toast}
-          onDismiss={() => onDismiss(toast.id)}
-          onClick={() => onClickToast(toast)}
-          onSendReply={onSendReply ? (text) => onSendReply(toast, text) : undefined}
-        />
-      ))}
+      <AnimatePresence initial={false} mode="popLayout">
+        {visibleToasts.map((toast) => (
+          <ToastCard
+            key={toast.id}
+            toast={toast}
+            onDismiss={() => onDismiss(toast.id)}
+            onClick={() => onClickToast(toast)}
+            onSendReply={onSendReply ? (text) => onSendReply(toast, text) : undefined}
+          />
+        ))}
+      </AnimatePresence>
     </div>
   )
 }
@@ -82,11 +99,10 @@ function ToastCard({
   const [isSending, setIsSending] = useState(false)
   const [isSent, setIsSent] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
-  const remainingTimeRef = useRef(toast.timeoutMs ?? 6000)
+  const remainingTimeRef = useRef(toast.timeoutMs ?? (toast.type === 'milestone' ? 8500 : 6500))
   const timerStartRef = useRef(Date.now())
   const timerIdRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Таймер авто-закрытия (6 секунд) с поддержкой паузы при наведении (hover)
   useEffect(() => {
     if (isPaused) {
       if (timerIdRef.current) {
@@ -121,104 +137,174 @@ function ToastCard({
       setReplyText('')
       setTimeout(() => {
         onDismiss()
-      }, 700)
+      }, 650)
     } catch {
       setIsSending(false)
     }
   }
 
-  const initials =
-    toast.initials ||
-    (toast.title ? getInitials(toast.title, '') : 'О')
+  const isMilestone = toast.variant === 'milestone' || toast.type === 'milestone'
+  const isCentury =
+    isMilestone &&
+    (toast.milestoneTier === 100 ||
+      (typeof toast.days === 'number' && toast.days >= 100 && toast.days % 100 === 0))
+  const isPridaySender = isPridayChat(toast.peerId) || toast.title === 'Priday'
+  const showVerified = Boolean(toast.verified || isPridaySender)
+  const hasDraft = replyText.trim().length > 0
+  const initials = toast.initials || (toast.title ? getInitials(toast.title, '') : 'P')
 
   const renderPreview = () => {
-    if (toast.mediaType === 'voice' || toast.body?.startsWith('🎤') || toast.body?.includes('Голосовое')) {
+    if (
+      toast.mediaType === 'voice' ||
+      toast.body?.startsWith('🎤') ||
+      toast.body?.includes('Голосовое')
+    ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[var(--accent,#FF6A1A)] font-medium">
+        <span className="flex items-center gap-1.5 text-[13px] text-[#ff5a1f] font-medium">
           <Mic size={14} className="shrink-0" />
-          <span>{toast.body || 'Голосовое сообщение'}</span>
+          <span className="truncate">{toast.body || 'Голосовое сообщение'}</span>
         </span>
       )
     }
-    if (toast.mediaType === 'photo' || toast.body?.startsWith('📷') || toast.body?.includes('Фото')) {
+    if (
+      toast.mediaType === 'photo' ||
+      toast.body?.startsWith('📷') ||
+      toast.body?.includes('Фото')
+    ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[var(--accent,#FF6A1A)] font-medium">
+        <span className="flex items-center gap-1.5 text-[13px] text-[#ff5a1f] font-medium">
           <Camera size={14} className="shrink-0" />
-          <span>{toast.body || 'Фотография'}</span>
+          <span className="truncate">{toast.body || 'Фотография'}</span>
         </span>
       )
     }
     if (toast.type === 'missed_call' || toast.body?.includes('Пропущенный звонок')) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-rose-500 font-medium">
+        <span className="flex items-center gap-1.5 text-[13px] text-rose-400 font-medium">
           <PhoneMissed size={14} className="shrink-0" />
-          <span>{toast.body || 'Пропущенный звонок'}</span>
+          <span className="truncate">{toast.body || 'Пропущенный звонок'}</span>
         </span>
       )
     }
-    if (toast.type === 'milestone') {
+    if (isMilestone) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-amber-400 font-semibold">
-          <Flame size={14} className="shrink-0 fill-amber-400" />
-          <span>{toast.body || 'Твой огонь горит непрерывно!'}</span>
-        </span>
+        <p className="text-[13px] text-white/95 font-medium leading-snug line-clamp-3">
+          {toast.body || 'Твой огонь горит непрерывно!'}
+        </p>
       )
     }
 
     return (
-      <span className="text-[13px] text-[var(--text-2,#71767b)] line-clamp-2 leading-relaxed">
+      <p className="text-[13px] text-white/90 line-clamp-2 leading-snug">
         {toast.body}
-      </span>
+      </p>
     )
   }
+
+  const cardSurfaceClass = isMilestone
+    ? isCentury
+      ? 'bg-gradient-to-br from-amber-500/[0.16] via-[#0a0a0c]/95 to-[#ff5a1f]/[0.12] border border-amber-400/50 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_32px_rgba(245,158,11,0.28),inset_0_1px_0_rgba(255,255,255,0.12)]'
+      : 'bg-gradient-to-br from-[#ff5a1f]/[0.16] via-[#0a0a0c]/95 to-amber-500/[0.08] border border-[#ff5a1f]/40 shadow-[0_22px_60px_rgba(0,0,0,0.9),0_0_26px_rgba(255,90,31,0.22),inset_0_1px_0_rgba(255,255,255,0.1)]'
+    : 'bg-[#0a0a0c]/92 border border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.06)]'
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -16, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -16, scale: 0.94, transition: { duration: 0.15 } }}
-      transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+      initial={{ opacity: 0, x: 24, y: -12, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+      exit={{ opacity: 0, x: 18, scale: 0.95, transition: { duration: 0.16 } }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onClick={onClick}
       role="alert"
-      className="desktop-toast toast-item pointer-events-auto w-full bg-[var(--surface,#16181c)]/95 backdrop-blur-xl border border-[var(--border,#2f3336)] shadow-[0_12px_36px_rgba(0,0,0,0.55)] rounded-2xl p-3 text-[var(--text,#e7e9ea)] cursor-pointer select-none transition-transform hover:scale-[1.01]"
+      data-testid={isMilestone ? 'milestone-festive-toast' : 'desktop-toast-card'}
+      data-milestone-tier={isMilestone ? String(toast.milestoneTier || (isCentury ? 100 : 10)) : undefined}
+      className={`group/toast desktop-toast toast-item pointer-events-auto relative w-full overflow-hidden backdrop-blur-xl rounded-2xl p-3.5 text-white cursor-pointer select-none transition-colors hover:border-white/[0.2] ${cardSurfaceClass}`}
     >
-      {/* Верхний ряд: Аватар + Имя + Время + Кнопка закрытия */}
-      <div className="flex items-center gap-2.5 mb-1.5">
-        {toast.type === 'milestone' ? (
-          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 border border-amber-500/30">
-            <Flame size={18} className="fill-amber-500" />
+      {/* Микро-искры для юбилейных поздравлений */}
+      {isMilestone && (
+        <div className="pointer-events-none absolute top-4 left-6 z-0" aria-hidden="true">
+          {SPARKLE_PARTICLES.map((sp, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, x: 0, y: 0, scale: 0.4 }}
+              animate={{
+                opacity: [0, 1, 0],
+                x: sp.x,
+                y: sp.y,
+                scale: [0.5, 1.15, 0.2],
+              }}
+              transition={{ duration: 0.95, delay: sp.delay, ease: 'easeOut' }}
+              style={{ width: sp.size, height: sp.size }}
+              className={`absolute rounded-full ${
+                sp.gold ? 'bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.9)]' : 'bg-[#ff5a1f] shadow-[0_0_6px_rgba(255,90,31,0.9)]'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Верхний ряд: Аватар + Имя с галочкой + Время + Закрыть */}
+      <div className="relative z-10 flex items-center gap-2.5 mb-1.5">
+        {isMilestone ? (
+          <div
+            className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${
+              isCentury
+                ? 'bg-gradient-to-br from-amber-400/30 to-[#ff5a1f]/30 text-amber-300 border-amber-400/50 shadow-[0_0_16px_rgba(245,158,11,0.35)]'
+                : 'bg-gradient-to-br from-[#ff5a1f]/30 to-amber-500/20 text-[#ff7a45] border-[#ff5a1f]/45 shadow-[0_0_14px_rgba(255,90,31,0.3)]'
+            }`}
+          >
+            {isCentury ? (
+              <Trophy size={17} />
+            ) : (
+              <Flame size={18} className="fill-current" />
+            )}
           </div>
         ) : toast.type === 'friend_request' ? (
-          <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-500/30">
+          <div className="w-9 h-9 rounded-full bg-[#1d9bf0]/15 text-[#1d9bf0] flex items-center justify-center shrink-0 ring-1 ring-[#1d9bf0]/30">
             <UserPlus size={16} />
           </div>
         ) : toast.type === 'missed_call' ? (
-          <div className="w-8 h-8 rounded-full bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0 border border-rose-500/30">
+          <div className="w-9 h-9 rounded-full bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0 ring-1 ring-rose-500/30">
             <PhoneMissed size={16} />
           </div>
-        ) : toast.avatarUrl ? (
-          <img
-            src={toast.avatarUrl}
-            alt={toast.title}
-            className="w-8 h-8 rounded-full object-cover shrink-0 border border-[var(--line,#2f3336)]"
-          />
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-[var(--surface2,#202327)] text-[var(--text)] flex items-center justify-center text-xs font-bold shrink-0 border border-[var(--line,#2f3336)]">
-            {initials.charAt(0)}
+        ) : isPridaySender ? (
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#ff5a1f] to-[#E53900] text-white flex items-center justify-center shrink-0 ring-1 ring-white/[0.18] shadow-[0_2px_10px_rgba(255,90,31,0.4)]"
+            aria-hidden="true"
+          >
+            <Flame size={18} fill="currentColor" strokeWidth={1.8} />
           </div>
+        ) : (
+          <UserAvatar
+            avatarUrl={toast.avatarUrl}
+            avatarColor={toast.avatarColor}
+            displayName={toast.title}
+            initials={initials}
+            size={36}
+            className="ring-1 ring-white/[0.14]"
+          />
         )}
 
         <div className="flex-1 min-w-0">
-          <div className="text-[13px] font-bold text-[var(--text,#e7e9ea)] truncate">
-            {toast.title}
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="text-[13.5px] font-bold text-white truncate leading-tight">
+              {toast.title}
+            </span>
+            {showVerified && <VerifiedBadge size="xs" />}
+            {isMilestone && (
+              <Sparkles
+                size={12}
+                className={isCentury ? 'text-amber-300 shrink-0 ml-0.5' : 'text-[#ff7a45] shrink-0 ml-0.5'}
+                aria-hidden="true"
+              />
+            )}
           </div>
         </div>
 
-        <span className="text-[11px] text-[var(--muted,#71767b)] shrink-0">
-          только что
+        <span className="text-[11px] text-white/45 shrink-0 font-normal">
+          сейчас
         </span>
 
         <button
@@ -227,48 +313,52 @@ function ToastCard({
             e.stopPropagation()
             onDismiss()
           }}
-          className="w-5 h-5 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text)] hover:bg-white/10 transition-colors shrink-0"
+          className="w-6 h-6 rounded-full flex items-center justify-center text-white/45 opacity-80 sm:opacity-0 sm:group-hover/toast:opacity-100 focus:opacity-100 hover:text-white hover:bg-white/10 transition-all shrink-0 cursor-pointer"
           aria-label="Закрыть уведомление"
         >
           <X size={13} />
         </button>
       </div>
 
-      {/* Ряд превью */}
-      <div className="pl-[42px] pr-1 mb-2">
+      {/* Превью сообщения */}
+      <div className="relative z-10 pl-[46px] pr-1">
         {renderPreview()}
       </div>
 
-      {/* Поле быстрого ответа (только для личных сообщений чата) */}
+      {/* Pill-поле быстрого ответа (для сообщений чата) */}
       {toast.type === 'chat' && onSendReply && (
         <form
           onSubmit={handleSendReply}
           onClick={(e) => e.stopPropagation()}
-          className="pl-[42px] flex items-center gap-1.5 mt-1"
+          className="relative z-10 pl-[46px] mt-2.5"
         >
           {isSent ? (
-            <div className="flex items-center gap-1 text-xs text-emerald-400 font-medium py-1">
-              <Check size={14} />
+            <div className="inline-flex items-center gap-1.5 text-xs text-emerald-400 font-semibold py-1 px-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/25">
+              <Check size={13} />
               <span>Отправлено ✓</span>
             </div>
           ) : (
-            <>
+            <div className="flex items-center gap-1.5 rounded-full bg-white/[0.06] border border-white/[0.09] focus-within:border-[#ff5a1f]/60 focus-within:bg-black/60 pl-3.5 pr-1 py-1 transition-all">
               <input
                 type="text"
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Быстрый ответ..."
-                className="flex-1 bg-[var(--bg,#000)]/70 border border-[var(--line,#2f3336)] focus:border-[var(--accent,#FF6A1A)] rounded-xl px-2.5 py-1 text-xs text-[var(--text,#e7e9ea)] placeholder-[var(--muted,#71767b)] focus:outline-none transition-colors"
+                className="flex-1 min-w-0 bg-transparent text-[12.5px] text-white placeholder:text-white/40 outline-none"
               />
               <button
                 type="submit"
-                disabled={!replyText.trim() || isSending}
+                disabled={!hasDraft || isSending}
                 aria-label="Отправить ответ"
-                className="w-7 h-7 rounded-xl bg-[var(--accent,#FF6A1A)] text-white flex items-center justify-center disabled:opacity-40 hover:opacity-90 active:scale-95 transition-all shrink-0"
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                  hasDraft && !isSending
+                    ? 'bg-[#ff5a1f] text-white shadow-[0_0_14px_rgba(255,90,31,0.55)] hover:opacity-95 active:scale-95 cursor-pointer'
+                    : 'bg-white/10 text-white/35 cursor-default'
+                }`}
               >
-                <Send size={12} />
+                <Send size={12} className="-ml-0.5" />
               </button>
-            </>
+            </div>
           )}
         </form>
       )}

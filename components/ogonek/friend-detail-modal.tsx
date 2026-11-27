@@ -236,7 +236,7 @@ export function FriendDetailModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -246,7 +246,7 @@ export function FriendDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={friend ? `Профиль ${friend.name}` : 'Карточка друга'}
-        className="relative w-full max-w-md rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] text-[var(--text,#fff)]"
+        className="relative w-full max-w-md rounded-2xl bg-[#060608] border border-white/[0.14] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] text-[var(--text,#fff)]"
       >
         {/* Верхние кнопки: ... меню и X закрыть */}
         <div className="flex items-center justify-end gap-1.5 mb-1">
@@ -323,7 +323,7 @@ export function FriendDetailModal({
                 initials={friend.initials}
                 size={64}
                 isOnline={isOnline}
-                ringColor="#000000"
+                ringColor="#060608"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 min-w-0">

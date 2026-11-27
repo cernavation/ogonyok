@@ -1176,7 +1176,7 @@ main.main-content {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.85);
   display: grid;
   place-items: center;
   padding: 20px;
@@ -1188,10 +1188,10 @@ main.main-content {
   width: min(100%, 580px);
   max-height: 90vh;
   overflow: auto;
-  background: var(--bg);
-  border: 1px solid var(--line);
+  background: #060608;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.95);
   padding: 23px;
 }
 

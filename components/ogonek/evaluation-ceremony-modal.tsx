@@ -284,14 +284,14 @@ export function EvaluationCeremonyModal({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 select-none overflow-y-auto"
+      className="fixed inset-0 z-50 bg-black/85 backdrop-blur-[4px] flex items-center justify-center p-3 sm:p-4 select-none overflow-y-auto"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
-        className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col gap-5 relative overflow-hidden"
+        className="w-full max-w-lg bg-[#060608] border border-white/[0.14] rounded-2xl p-5 sm:p-7 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-5 relative overflow-hidden"
       >
         {/* Glow эффект на фоне */}
         <div className="absolute -top-24 -left-24 w-60 h-60 bg-[var(--accent)]/15 rounded-full blur-3xl pointer-events-none" />

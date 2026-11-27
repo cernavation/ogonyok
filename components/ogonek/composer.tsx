@@ -1746,12 +1746,12 @@ export function Composer({
       {showPublicWarning && (
         <div
           id="composer-public-warning-modal"
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setShowPublicWarning(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-3 border"
-            style={{ background: '#16181c', borderColor: '#2f3336' }}
+            className="w-full max-w-sm rounded-2xl p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3 border"
+            style={{ background: '#060608', borderColor: 'rgba(255,255,255,0.14)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">
@@ -1815,12 +1815,12 @@ export function Composer({
       {showPhotoUpsell && (
         <div
           id="composer-photo-upsell-modal"
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px]"
           onClick={() => setShowPhotoUpsell(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl p-5 shadow-2xl flex flex-col gap-3 border"
-            style={{ background: '#16181c', borderColor: '#2f3336' }}
+            className="w-full max-w-sm rounded-2xl p-5 shadow-[0_24px_80px_rgba(0,0,0,0.95)] flex flex-col gap-3 border"
+            style={{ background: '#060608', borderColor: 'rgba(255,255,255,0.14)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-2.5 text-amber-400 font-bold text-sm">

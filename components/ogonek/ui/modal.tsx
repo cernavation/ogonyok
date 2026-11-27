@@ -39,7 +39,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-[4px] animate-in fade-in duration-150 p-0 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -52,7 +52,7 @@ export function Modal({
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.15 }}
         style={{ maxWidth }}
-        className="w-full max-h-[92vh] flex flex-col rounded-t-[20px] sm:rounded-2xl border-0 sm:border border-[var(--border)] bg-[var(--bg)] shadow-2xl text-[var(--text)] overflow-hidden"
+        className="w-full max-h-[92vh] flex flex-col rounded-t-[20px] sm:rounded-2xl border-0 sm:border border-white/[0.14] bg-[#060608] shadow-[0_24px_80px_rgba(0,0,0,0.95)] text-[var(--text)] overflow-hidden"
       >
         {/* Mobile drag bar */}
         <div className="flex sm:hidden justify-center pt-2.5 pb-1">

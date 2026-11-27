@@ -55,7 +55,13 @@ export async function GET(request: Request) {
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
-      .in('type', ['priday_follow', 'priday_mutual', 'priday_support_user', 'priday_support_reply'])
+      .in('type', [
+        'priday_follow',
+        'priday_mutual',
+        'priday_support_user',
+        'priday_support_reply',
+        'priday_milestone',
+      ])
       .order('created_at', { ascending: true })
     if (!nErr && Array.isArray(notifRows)) {
       collected.push(...notifRows)

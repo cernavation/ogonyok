@@ -254,7 +254,7 @@ export function UpgradeModal({
   return (
     <div
       id="upgrade-modal-backdrop"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-[4px] animate-in fade-in duration-150"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -262,7 +262,7 @@ export function UpgradeModal({
     >
       <div
         id="upgrade-modal-container"
-        className="w-full max-w-[480px] rounded-3xl bg-[var(--surface,#16181c)] border border-[var(--line,#2f3336)] shadow-2xl p-5 sm:p-6 flex flex-col gap-4 relative animate-in zoom-in-95 duration-150"
+        className="w-full max-w-[480px] rounded-2xl bg-[#060608] border border-white/[0.14] shadow-[0_24px_80px_rgba(0,0,0,0.95)] p-5 sm:p-6 flex flex-col gap-4 relative animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
