@@ -44,14 +44,14 @@ export class FriendsModalErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
           onClick={this.handleClose}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Ошибка окна друзей"
-            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-red-500/40 p-6 text-center shadow-2xl"
+            className="w-full max-w-sm rounded-2xl bg-black border border-red-500/40 p-6 text-center shadow-[0_20px_60px_rgba(0,0,0,0.85)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center mb-3">

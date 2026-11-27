@@ -49,7 +49,7 @@ describe('Friends & UI Stage: Unread Badge, RightRail, Friend Cards, FriendsModa
     assert.equal(getNextStreakMilestone(752).target, 800)
 
     const railSrc = readRepoFile('components/ogonek/right-rail.tsx')
-    assert.ok(railSrc.includes('gap-4'), 'RightRail использует gap-4 между карточками')
+    assert.ok(railSrc.includes('gap-3'), 'RightRail использует компактный gap-3 (12px) между карточками')
     assert.ok(railSrc.includes('Ритм недели'), 'Есть виджет Ритм недели')
     assert.ok(railSrc.includes('Фокус и намерения'), 'Есть виджет Фокус и намерения')
     assert.ok(railSrc.includes('Задать фокус дня'), 'Есть CTA Задать фокус дня при отсутствии намерений')

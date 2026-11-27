@@ -1,17 +1,14 @@
 'use client'
 
-import { ChevronRight, Copy, Check, Search, Users, Flame } from 'lucide-react'
-import { AnimatePresence } from 'framer-motion'
+import { ChevronRight, Copy, Check, Search, Flame } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
   getActiveFriends,
   pluralizeFriends,
-  presenceMeta,
   registerFriendProfile,
 } from '@/lib/ogonek/friends'
-import { buildFriendSlides } from '@/lib/ogonek/stories'
 import { getInitials } from '@/lib/ogonek/initials'
 import {
   getCachedProfileSync,
@@ -58,7 +55,6 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
   const [loadingFriends, setLoadingFriends] = useState(false)
 
   const friendIds = useMemo(() => state.friendIds ?? [], [state.friendIds])
-  const viewedStoryIds = state.viewedStoryIds ?? []
   const incoming = state.incomingFriendRequests ?? []
   const currentUserId = state.auth?.activeAccountId
 
@@ -145,12 +141,6 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
       ? `${onlineCount} в сети`
       : pluralizeFriends(totalFriendsCount)
 
-  const storyChip = (friend: FriendProfile) => {
-    const index = Math.max(0, friendIds.indexOf(friend.id))
-    const slide = buildFriendSlides(friend, index)[0]
-    return slide
-  }
-
   const openFriend = (id: string) => {
     playClick(soundEnabled)
     setOpenFriendId(id)
@@ -167,34 +157,31 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
   }
 
   return (
-    <section className="af-widget" aria-labelledby="active-friends-title">
-      <header className="af-widget__head flex items-center justify-between">
-        <h2 id="active-friends-title" className="flex items-center gap-1.5">
-          <Users size={17} className="text-[var(--accent)]" aria-hidden="true" />
+    <section
+      className="rounded-2xl border border-white/[0.11] bg-black p-4 transition-colors"
+      aria-labelledby="active-friends-title"
+    >
+      <header className="flex items-center justify-between gap-2 mb-3">
+        <h2
+          id="active-friends-title"
+          className="text-[16px] font-bold tracking-tight text-[var(--text)]"
+        >
           Друзья
         </h2>
-        <div className="flex items-center gap-2">
-          {onOpenFriends && (
-            <button
-              type="button"
-              id="btn-open-friends-modal"
-              onClick={onOpenFriends}
-              className="text-[12px] font-bold text-[var(--accent)] hover:underline cursor-pointer"
-              aria-label="Открыть окно друзей"
-            >
-              Открыть
-            </button>
+        <span className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[var(--muted)]">
+          {onlineCount > 0 && !isInitialLoading && (
+            <span className="w-2 h-2 rounded-full bg-[#00ba7c]" aria-hidden="true" />
           )}
-          <span className="af-widget__badge">{badgeText}</span>
-        </div>
+          <span>{badgeText}</span>
+        </span>
       </header>
 
       {isInitialLoading ? (
-        <div className="flex flex-col gap-2 my-2" aria-busy="true" aria-label="Загрузка друзей">
+        <div className="flex flex-col gap-2" aria-busy="true" aria-label="Загрузка друзей">
           {[0, 1].map((row) => (
             <div
               key={row}
-              className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--surface2)] border border-[var(--line)] animate-pulse"
+              className="flex items-center gap-3 p-2 rounded-xl border border-white/[0.08] bg-white/[0.02] animate-pulse"
             >
               <div className="w-9 h-9 rounded-full bg-white/10 shrink-0" />
               <div className="flex-1 space-y-1.5 min-w-0">
@@ -205,8 +192,8 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
           ))}
         </div>
       ) : active.length === 0 ? (
-        <div className="p-4 rounded-xl bg-[var(--surface2)] border border-[var(--line)] text-center my-2">
-          <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
+        <div className="p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] text-center">
+          <div className="w-8 h-8 rounded-full bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
           </div>
           <p className="text-xs font-semibold text-[var(--text)] mb-1">У тебя пока нет друзей</p>
@@ -218,7 +205,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
             <button
               type="button"
               onClick={handleCopyInvite}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--accent)] text-[var(--accent-text)] text-xs font-bold hover:opacity-90 transition-all shadow-sm active:scale-95"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#ff5a1f] text-white text-xs font-bold hover:opacity-90 transition-all active:scale-95 cursor-pointer"
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
               <span>{copied ? 'Ссылка скопирована!' : 'Скопировать ссылку-приглашение'}</span>
@@ -226,97 +213,93 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
 
             <button
               type="button"
+              id="btn-open-friends-modal"
               onClick={onOpenFriends || (() => onNavigate('explore'))}
-              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-[var(--bg-hover)] hover:bg-[var(--line)] text-[var(--text)] text-xs font-medium border border-[var(--line)] transition-all"
+              className="w-full min-h-[36px] flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-black hover:bg-white/[0.06] text-[var(--text)] text-xs font-medium border border-white/[0.14] transition-all cursor-pointer"
             >
               <Search size={14} /> <span>Найти друзей по нику</span>
             </button>
           </div>
         </div>
       ) : (
-        <ul className="af-list flex flex-col gap-2" role="group">
-          {active.map((friend) => {
-            const presence = presenceMeta(friend.presence)
-            const slide = storyChip(friend)
-            const viewed = viewedStoryIds.includes(friend.id)
-            return (
-              <li key={friend.id}>
-                <button
-                  type="button"
-                  className="af-row"
-                  onClick={() => openFriend(friend.id)}
-                  aria-label={`Открыть ${friend.name}`}
-                >
-                  <UserAvatar
-                    avatarUrl={friend.avatarUrl}
-                    avatarColor={friend.avatarColor}
-                    displayName={friend.name}
-                    username={friend.username}
-                    initials={friend.initials}
-                    size={36}
-                    isOnline={friend.presence === 'online'}
-                    ringColor="#16181c"
-                  />
+        <ul className="flex flex-col gap-0.5 list-none m-0 p-0" role="group">
+          {active.map((friend) => (
+            <li key={friend.id}>
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 px-2 py-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
+                onClick={() => openFriend(friend.id)}
+                aria-label={`Открыть ${friend.name}`}
+              >
+                <UserAvatar
+                  avatarUrl={friend.avatarUrl}
+                  avatarColor={friend.avatarColor}
+                  displayName={friend.name}
+                  username={friend.username}
+                  initials={friend.initials}
+                  size={38}
+                  isOnline={friend.presence === 'online'}
+                  ringColor="#000000"
+                />
 
-                  <span className="af-row__text">
-                    <span className="af-row__name flex items-center gap-1">
-                      <span className="truncate">{friend.name.split(/\s+/)[0]}</span>
-                      {friend.verified && <VerifiedBadge size="xs" />}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-[14px] font-bold text-[var(--text)] truncate leading-tight">
+                      {friend.name.split(/\s+/)[0]}
                     </span>
-                    <span className="af-row__sub" style={{ color: friend.presence === 'online' ? 'var(--success)' : 'var(--text-2)' }}>
-                      {presence.short} · 🔥 {friend.streak}
+                    {friend.verified && <VerifiedBadge size="xs" />}
+                  </div>
+                  <div className="text-[12px] text-[var(--muted)] truncate mt-0.5 flex items-center gap-1">
+                    <span className="truncate">@{friend.username}</span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-0.5 text-[#ff5a1f] font-semibold shrink-0">
+                      <Flame size={11} className="fill-[#ff5a1f]" aria-hidden="true" />
+                      {friend.streak}
                     </span>
-                  </span>
+                  </div>
+                </div>
 
-                  <span
-                    className={`af-story ${viewed ? 'is-viewed' : ''}`}
-                    style={{ background: `linear-gradient(150deg, ${slide.from}, ${slide.to})` }}
-                    title={viewed ? 'Сторис просмотрена' : 'Новая сторис'}
-                    aria-hidden="true"
-                  >
-                    <span>{slide.emoji}</span>
-                    {!viewed && <span className="af-story__dot" />}
-                  </span>
+                <ChevronRight
+                  size={16}
+                  className="text-[var(--muted)] group-hover:text-[var(--text)] shrink-0 transition-colors"
+                  aria-hidden="true"
+                />
+              </button>
 
-                  <ChevronRight size={16} className="af-row__chev" aria-hidden="true" />
-                </button>
-
-                {incoming.includes(friend.id) && (
-                  <span className="af-row__incoming">заявка в друзья</span>
-                )}
-              </li>
-            )
-          })}
+              {incoming.includes(friend.id) && (
+                <span className="inline-block ml-11 mb-1 text-[11px] font-bold uppercase tracking-wider text-pink-400">
+                  заявка в друзья
+                </span>
+              )}
+            </li>
+          ))}
         </ul>
       )}
 
       {active.length > 0 && (
-        <div className="af-widget__actions pt-2">
-          <button
-            type="button"
-            className="w-full py-2 px-3 rounded-full text-[13px] font-bold text-[var(--text)] bg-[var(--surface2)] hover:bg-[var(--bg-hover)] border border-[var(--border)] transition-colors min-h-[36px]"
-            onClick={onOpenFriends || (() => onNavigate('profile'))}
-          >
-            Все друзья · Открыть →
-          </button>
-        </div>
+        <button
+          type="button"
+          id="btn-open-friends-modal"
+          className="mt-1.5 -mx-2 w-[calc(100%+16px)] px-2 py-2 rounded-xl text-left text-[14px] font-medium text-[#ff5a1f] hover:bg-white/[0.03] hover:underline transition-colors cursor-pointer"
+          onClick={onOpenFriends || (() => onNavigate('profile'))}
+        >
+          Показать всех
+        </button>
       )}
 
-      <AnimatePresence>
-        {openFriendId && (
-          <FriendDetailModal
-            friendId={openFriendId}
-            onClose={() => setOpenFriendId(null)}
-            onNotify={onNotify}
-            onStartChat={(id) => {
-              setActiveChatFriend(id)
-              onNavigate('messages')
-            }}
-            onOpenProfile={(id) => onNavigate('profile', id)}
-            soundEnabled={soundEnabled}
-          />
-        )}
-      </AnimatePresence>
+      {openFriendId && (
+        <FriendDetailModal
+          friendId={openFriendId}
+          onClose={() => setOpenFriendId(null)}
+          onNotify={onNotify}
+          onStartChat={(id) => {
+            setActiveChatFriend(id)
+            onNavigate('messages')
+          }}
+          onOpenProfile={(id) => onNavigate('profile', id)}
+          soundEnabled={soundEnabled}
+        />
+      )}
     </section>
   )
 }

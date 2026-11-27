@@ -150,8 +150,6 @@ export function FriendDetailModal({
     return fallbackFriend ?? null
   }, [liveRecord, fallbackFriend])
 
-  if (typeof document === 'undefined') return null
-
   const isFriend = friendIds.includes(friendId)
   const isFollowing = followingIds.includes(friendId) || isFriend
   const isOnline = friend?.presence === 'online'
@@ -164,6 +162,8 @@ export function FriendDetailModal({
       isMutualFriend: isFriend,
     })
   }, [viewerId, liveRecord, isFriend])
+
+  if (typeof document === 'undefined') return null
 
   const handleMessage = () => {
     if (!dmPerm.allowed) {
@@ -236,7 +236,7 @@ export function FriendDetailModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -246,7 +246,7 @@ export function FriendDetailModal({
         role="dialog"
         aria-modal="true"
         aria-label={friend ? `Профиль ${friend.name}` : 'Карточка друга'}
-        className="relative w-full max-w-md rounded-3xl bg-[#16181c] border border-[var(--line,#2f3336)] p-5 shadow-2xl text-[var(--text,#fff)]"
+        className="relative w-full max-w-md rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] text-[var(--text,#fff)]"
       >
         {/* Верхние кнопки: ... меню и X закрыть */}
         <div className="flex items-center justify-end gap-1.5 mb-1">
@@ -258,7 +258,7 @@ export function FriendDetailModal({
                   playClick(soundEnabled)
                   setMenuOpen((v) => !v)
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-[var(--bg-hover,#1d1f23)] transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-white/[0.06] transition-colors cursor-pointer"
                 aria-label="Дополнительные действия"
                 aria-expanded={menuOpen}
               >
@@ -266,13 +266,13 @@ export function FriendDetailModal({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-48 rounded-2xl bg-[#1b1e23] border border-[var(--line,#2f3336)] shadow-2xl p-1.5 z-30 flex flex-col gap-0.5 text-xs">
+                <div className="absolute right-0 top-full mt-1.5 w-48 rounded-2xl bg-black border border-white/[0.14] shadow-[0_12px_36px_rgba(0,0,0,0.9)] p-1.5 z-30 flex flex-col gap-0.5 text-xs">
                   <button
                     type="button"
                     onClick={handleToggleFriend}
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/[0.06] text-left font-semibold text-[var(--text,#fff)] transition-colors cursor-pointer"
                   >
-                    {isFriend ? <UserMinus size={14} className="text-amber-400" /> : <UserPlus size={14} className="text-[#FF5C00]" />}
+                    {isFriend ? <UserMinus size={14} className="text-amber-400" /> : <UserPlus size={14} className="text-[#ff5a1f]" />}
                     <span>{isFriend ? 'Убрать из друзей' : 'Добавить в друзья'}</span>
                   </button>
                   <button
@@ -291,7 +291,7 @@ export function FriendDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-[var(--bg-hover,#1d1f23)] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-white/[0.06] transition-colors cursor-pointer"
             aria-label="Закрыть карточку друга"
           >
             <X size={18} />
@@ -306,7 +306,7 @@ export function FriendDetailModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 rounded-full text-xs font-bold bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] hover:bg-[var(--bg-hover)] transition-colors"
+              className="px-5 py-2 rounded-full text-xs font-bold bg-black border border-white/[0.18] hover:bg-white/[0.06] transition-colors cursor-pointer"
             >
               Закрыть
             </button>
@@ -323,7 +323,7 @@ export function FriendDetailModal({
                 initials={friend.initials}
                 size={64}
                 isOnline={isOnline}
-                ringColor="#16181c"
+                ringColor="#000000"
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5 min-w-0">
@@ -335,7 +335,7 @@ export function FriendDetailModal({
                 <p className="text-[13px] text-[var(--muted,#71767b)] truncate mt-0.5">
                   @{friend.username}
                 </p>
-                <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/[0.05] border border-white/[0.06]">
+                <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/[0.04] border border-white/[0.1]">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#00ba7c]' : 'bg-zinc-500'}`}
                     aria-hidden="true"
@@ -353,17 +353,17 @@ export function FriendDetailModal({
               </p>
             )}
 
-            {/* Строка из 3 аккуратных мини-метрик */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-2xl bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] px-3 py-2.5 text-center">
+            {/* Строка из 3 чистых метрик в стиле X.com с тонкими разделителями */}
+            <div className="grid grid-cols-3 rounded-2xl bg-white/[0.02] border border-white/[0.1] divide-x divide-white/[0.1]">
+              <div className="px-3 py-2.5 text-center">
                 <div className="text-[14px] font-extrabold text-[var(--text,#fff)] inline-flex items-center justify-center gap-1">
-                  <Flame size={13} className="text-[#FF5C00] fill-[#FF5C00]" />
+                  <Flame size={13} className="text-[#ff5a1f] fill-[#ff5a1f]" />
                   <span>{friend.streak} дн.</span>
                 </div>
                 <div className="text-[11px] text-[var(--muted,#71767b)] mt-0.5">Стрик</div>
               </div>
 
-              <div className="rounded-2xl bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] px-3 py-2.5 text-center">
+              <div className="px-3 py-2.5 text-center">
                 <div className="text-[13px] font-bold text-emerald-400 inline-flex items-center justify-center gap-1 truncate max-w-full">
                   {isFriend && <Check size={12} />}
                   <span className="truncate">{isFriend ? 'Друзья' : statusText}</span>
@@ -371,7 +371,7 @@ export function FriendDetailModal({
                 <div className="text-[11px] text-[var(--muted,#71767b)] mt-0.5">Статус</div>
               </div>
 
-              <div className="rounded-2xl bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] px-3 py-2.5 text-center">
+              <div className="px-3 py-2.5 text-center">
                 <div className="text-[14px] font-extrabold text-[var(--text,#fff)] inline-flex items-center justify-center gap-1">
                   <Users size={13} className="text-[var(--muted,#71767b)]" />
                   <span>{mutualCount === null ? '…' : mutualCount}</span>
@@ -387,10 +387,10 @@ export function FriendDetailModal({
                 aria-disabled={!dmPerm.allowed}
                 title={!dmPerm.allowed ? dmPerm.reason : undefined}
                 onClick={handleMessage}
-                className={`h-11 px-4 rounded-full text-[13px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm ${
+                className={`h-11 px-4 rounded-full text-[13px] font-bold flex items-center justify-center gap-2 transition-all ${
                   dmPerm.allowed
-                    ? 'bg-[#FF5C00] hover:opacity-90 text-white active:scale-[0.98] cursor-pointer'
-                    : 'bg-[var(--surface2,#202327)] text-[var(--text-3)] opacity-60 cursor-not-allowed'
+                    ? 'bg-[#ff5a1f] hover:opacity-90 text-white active:scale-[0.98] cursor-pointer'
+                    : 'bg-white/[0.04] border border-white/[0.1] text-[var(--text-3)] opacity-60 cursor-not-allowed'
                 }`}
               >
                 <MessageCircle size={15} />
@@ -400,7 +400,7 @@ export function FriendDetailModal({
               <button
                 type="button"
                 onClick={handleOpenProfile}
-                className="h-11 px-4 rounded-full bg-[var(--surface2,#202327)] hover:bg-[var(--bg-hover,#1d1f23)] border border-[var(--line,#2f3336)] text-[var(--text,#fff)] text-[13px] font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                className="h-11 px-4 rounded-full bg-black hover:bg-white/[0.06] border border-white/[0.18] text-[var(--text,#fff)] text-[13px] font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
               >
                 <ExternalLink size={15} />
                 <span>Открыть профиль</span>

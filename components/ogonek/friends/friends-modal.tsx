@@ -480,20 +480,20 @@ export function FriendsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Окно друзей"
-        className="w-full sm:max-w-[540px] max-h-[85vh] sm:max-h-[75vh] rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] shadow-2xl flex flex-col text-[var(--text,#fff)] overflow-hidden relative"
+        className="w-full sm:max-w-[540px] max-h-[85vh] sm:max-h-[75vh] rounded-2xl bg-black border border-white/[0.14] shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col text-[var(--text,#fff)] overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Шапка модалки */}
-        <header className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--line,#2f3336)] shrink-0">
+        <header className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.1] shrink-0">
           <div className="flex items-center gap-2.5">
-            <Users size={19} className="text-[#FF5C00]" />
+            <Users size={19} className="text-[#ff5a1f]" />
             <h2 className="text-[18px] font-black tracking-tight text-[var(--text,#fff)]">
               Друзья
             </h2>
@@ -503,7 +503,7 @@ export function FriendsModal({
             type="button"
             id="btn-close-friends-modal"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-[var(--bg-hover,#1d1f23)] transition-colors cursor-pointer"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-white/[0.06] transition-colors cursor-pointer"
             aria-label="Закрыть окно"
           >
             <X size={18} />
@@ -512,7 +512,7 @@ export function FriendsModal({
 
         {/* 2 чистые вкладки: Друзья (N) | Группы */}
         <nav
-          className="grid grid-cols-2 border-b border-[var(--line,#2f3336)] shrink-0"
+          className="grid grid-cols-2 border-b border-white/[0.1] shrink-0"
           role="tablist"
           aria-label="Разделы друзей"
         >
@@ -526,7 +526,7 @@ export function FriendsModal({
             }}
             className={`py-3 px-4 text-center text-[13px] font-bold border-b-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'friends'
-                ? 'border-[#FF5C00] text-[var(--text,#fff)]'
+                ? 'border-[#ff5a1f] text-[var(--text,#fff)]'
                 : 'border-transparent text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]'
             }`}
           >
@@ -545,7 +545,7 @@ export function FriendsModal({
             }}
             className={`py-3 px-4 text-center text-[13px] font-bold border-b-2 transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'groups'
-                ? 'border-[#FF5C00] text-[var(--text,#fff)]'
+                ? 'border-[#ff5a1f] text-[var(--text,#fff)]'
                 : 'border-transparent text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)]'
             }`}
           >
@@ -574,7 +574,7 @@ export function FriendsModal({
                     value={filterQuery}
                     onChange={(e) => setFilterQuery(e.target.value)}
                     placeholder="Быстрый фильтр по друзьям..."
-                    className="w-full h-9 rounded-full bg-[var(--surface2,#202327)] border border-[var(--line,#2f3336)] pl-9 pr-4 text-xs text-[var(--text,#fff)] placeholder:text-[var(--muted,#71767b)] outline-none focus:border-[#FF5C00] transition-colors"
+                    className="w-full h-9 rounded-full bg-black border border-white/[0.14] pl-9 pr-4 text-xs text-[var(--text,#fff)] placeholder:text-[var(--muted,#71767b)] outline-none focus:border-[#ff5a1f]/70 transition-colors"
                   />
                 </div>
               )}
@@ -584,7 +584,7 @@ export function FriendsModal({
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-[var(--surface2,#202327)]/50 animate-pulse"
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.08] animate-pulse"
                     >
                       <div className="w-10 h-10 rounded-full bg-white/10 shrink-0" />
                       <div className="flex-1 space-y-1.5">
@@ -596,7 +596,7 @@ export function FriendsModal({
                 </div>
               ) : filteredFriends.length === 0 ? (
                 <div className="py-8 px-4 text-center flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-[#FF5C00]/15 text-[#FF5C00] flex items-center justify-center mb-3">
+                  <div className="w-12 h-12 rounded-full bg-[#ff5a1f]/15 text-[#ff5a1f] flex items-center justify-center mb-3">
                     <Users size={22} />
                   </div>
                   <h3 className="text-[15px] font-bold text-[var(--text,#fff)] mb-1">
@@ -609,11 +609,11 @@ export function FriendsModal({
                   </p>
                 </div>
               ) : (
-                <ul className="divide-y divide-[var(--line,#2f3336)]">
+                <ul className="divide-y divide-white/[0.08]">
                   {filteredFriends.map((friend) => (
                     <li
                       key={friend.id}
-                      className="py-2.5 flex items-center justify-between gap-3 relative"
+                      className="py-2.5 px-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-colors flex items-center justify-between gap-3 relative"
                     >
                       <div
                         className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
@@ -643,8 +643,8 @@ export function FriendsModal({
                             {Number(friend.streak) > 0 && (
                               <>
                                 <span>·</span>
-                                <span className="text-[#FF5C00] font-semibold inline-flex items-center gap-0.5 shrink-0">
-                                  <Flame size={11} className="fill-[#FF5C00]" />
+                                <span className="text-[#ff5a1f] font-semibold inline-flex items-center gap-0.5 shrink-0">
+                                  <Flame size={11} className="fill-[#ff5a1f]" />
                                   {Number(friend.streak)}
                                 </span>
                               </>
@@ -661,7 +661,7 @@ export function FriendsModal({
                             onClose()
                             onStartChatWithUser?.(friend.id)
                           }}
-                          className="w-8 h-8 rounded-full bg-[var(--surface2,#202327)] hover:bg-[#FF5C00] hover:text-white border border-[var(--line,#2f3336)] text-[var(--text,#fff)] flex items-center justify-center transition-colors cursor-pointer"
+                          className="w-8 h-8 rounded-full bg-black hover:bg-[#ff5a1f] hover:border-[#ff5a1f] hover:text-white border border-white/[0.14] text-[var(--text,#fff)] flex items-center justify-center transition-colors cursor-pointer"
                           title={`Написать ${friend.displayName}`}
                           aria-label={`Написать ${friend.displayName}`}
                         >
@@ -677,7 +677,7 @@ export function FriendsModal({
                                 prev === friend.id ? null : friend.id
                               )
                             }}
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-[var(--surface2,#202327)] transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] hover:bg-white/[0.06] transition-colors cursor-pointer"
                             aria-label={`Действия для ${friend.displayName}`}
                           >
                             <MoreHorizontal size={16} />
@@ -685,7 +685,7 @@ export function FriendsModal({
 
                           {activeMenuUserId === friend.id && (
                             <div
-                              className="absolute right-0 top-full mt-1 w-44 rounded-2xl bg-[#1b1e23] border border-[var(--line,#2f3336)] shadow-2xl p-1 z-30 flex flex-col gap-0.5 text-xs"
+                              className="absolute right-0 top-full mt-1 w-44 rounded-2xl bg-black border border-white/[0.14] shadow-[0_12px_36px_rgba(0,0,0,0.9)] p-1 z-30 flex flex-col gap-0.5 text-xs"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button
@@ -776,7 +776,7 @@ export function FriendsModal({
                         return (
                           <div
                             key={g.id}
-                            className="p-3 rounded-2xl bg-[var(--surface2,#202327)]/60 border border-[var(--line,#2f3336)] flex items-center justify-between gap-3 hover:border-purple-500/40 transition-colors"
+                            className="p-3 rounded-2xl bg-white/[0.02] border border-white/[0.1] flex items-center justify-between gap-3 hover:border-purple-500/40 transition-colors"
                           >
                             <div
                               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
@@ -823,14 +823,14 @@ export function FriendsModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+                  <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
                     <button
                       type="button"
                       onClick={() => {
                         playClick(soundEnabled)
                         setSelectedGroupId(null)
                       }}
-                      className="text-xs font-bold text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                      className="text-xs font-bold text-[var(--muted,#71767b)] hover:text-[var(--text,#fff)] flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-white/[0.06] transition-colors cursor-pointer"
                     >
                       <ChevronLeft size={16} />
                       <span>Все группы</span>
@@ -841,7 +841,7 @@ export function FriendsModal({
                         type="button"
                         id="btn-open-group-chat"
                         onClick={() => handleOpenGroupChat(selectedGroup.id)}
-                        className="px-3 py-1.5 rounded-full text-xs font-bold bg-[#FF5C00] text-white hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        className="px-3 py-1.5 rounded-full text-xs font-bold bg-[#ff5a1f] text-white hover:opacity-90 transition-all flex items-center gap-1.5 cursor-pointer"
                       >
                         <MessageCircle size={13} />
                         <span>Открыть чат</span>
@@ -850,7 +850,7 @@ export function FriendsModal({
                         <button
                           type="button"
                           onClick={handleStartEditGroup}
-                          className="p-1.5 rounded-full text-[var(--muted,#71767b)] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-full text-[var(--muted,#71767b)] hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
                           title="Настройки группы"
                         >
                           <Settings size={16} />
@@ -859,7 +859,7 @@ export function FriendsModal({
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-[var(--surface2,#202327)]/60 border border-[var(--line,#2f3336)] flex items-center gap-3">
+                  <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.1] flex items-center gap-3">
                     <div
                       className="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0"
                       style={{ background: selectedGroup.avatarColor || '#a855f7' }}
@@ -876,13 +876,13 @@ export function FriendsModal({
                     </div>
                   </div>
 
-                  <div className="flex items-center border-b border-[var(--line,#2f3336)]">
+                  <div className="flex items-center border-b border-white/[0.1]">
                     <button
                       type="button"
                       onClick={() => setGroupSubTab('feed')}
                       className={`flex-1 py-2 text-xs font-bold border-b-2 transition-colors ${
                         groupSubTab === 'feed'
-                          ? 'border-[#FF5C00] text-[var(--text,#fff)]'
+                          ? 'border-[#ff5a1f] text-[var(--text,#fff)]'
                           : 'border-transparent text-[var(--muted,#71767b)]'
                       }`}
                     >
@@ -893,7 +893,7 @@ export function FriendsModal({
                       onClick={() => setGroupSubTab('members')}
                       className={`flex-1 py-2 text-xs font-bold border-b-2 transition-colors ${
                         groupSubTab === 'members'
-                          ? 'border-[#FF5C00] text-[var(--text,#fff)]'
+                          ? 'border-[#ff5a1f] text-[var(--text,#fff)]'
                           : 'border-transparent text-[var(--muted,#71767b)]'
                       }`}
                     >
@@ -911,7 +911,7 @@ export function FriendsModal({
                         groupFeedDays.map((d) => (
                           <div
                             key={d.id}
-                            className="p-3 rounded-xl bg-[var(--surface2,#202327)]/60 border border-[var(--line,#2f3336)] space-y-1"
+                            className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.1] space-y-1"
                           >
                             <div className="text-xs font-bold text-[var(--text,#fff)]">
                               День #{d.id}
@@ -930,7 +930,7 @@ export function FriendsModal({
                         <button
                           type="button"
                           onClick={() => setIsInvitingMember(true)}
-                          className="px-3 py-1 rounded-full text-xs font-bold bg-white/10 hover:bg-white/15 flex items-center gap-1 cursor-pointer"
+                          className="px-3 py-1 rounded-full text-xs font-bold bg-black border border-white/[0.14] hover:bg-white/[0.06] flex items-center gap-1 cursor-pointer"
                         >
                           <UserPlus size={13} />
                           <span>Пригласить</span>
@@ -954,7 +954,7 @@ export function FriendsModal({
                         return (
                           <div
                             key={mId}
-                            className="p-2.5 rounded-xl bg-[var(--surface2,#202327)]/60 border border-[var(--line,#2f3336)] flex items-center justify-between gap-2"
+                            className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.1] flex items-center justify-between gap-2"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               <UserAvatar
@@ -1009,11 +1009,11 @@ export function FriendsModal({
 
         {/* Компактная нижняя панель на вкладке «Друзья» */}
         {activeTab === 'friends' && (
-          <footer className="px-5 py-3 border-t border-[var(--line,#2f3336)] bg-[var(--card-bg,#16181c)] flex items-center gap-2.5 shrink-0">
+          <footer className="px-5 py-3 border-t border-white/[0.1] bg-black flex items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={handleOpenExplore}
-              className="flex-1 h-10 px-4 rounded-full bg-[#FF5C00] hover:opacity-90 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              className="flex-1 h-10 px-4 rounded-full bg-[#ff5a1f] hover:opacity-90 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
               <Search size={14} />
               <span>Найти людей</span>
@@ -1022,7 +1022,7 @@ export function FriendsModal({
             <button
               type="button"
               onClick={handleCopyInviteLink}
-              className="flex-1 h-10 px-4 rounded-full bg-[var(--surface2,#202327)] hover:bg-[var(--bg-hover,#1d1f23)] border border-[var(--line,#2f3336)] text-[var(--text,#fff)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              className="flex-1 h-10 px-4 rounded-full bg-black hover:bg-white/[0.06] border border-white/[0.18] text-[var(--text,#fff)] text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
             >
               {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
               <span>{copiedLink ? 'Скопировано!' : 'Скопировать приглашение'}</span>
@@ -1034,11 +1034,11 @@ export function FriendsModal({
       {/* Модалка жалобы */}
       {reportingUser && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
           onClick={() => setReportingUser(null)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-5 shadow-2xl flex flex-col gap-3"
+            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-[var(--text,#fff)]">
@@ -1049,7 +1049,7 @@ export function FriendsModal({
               onChange={(e) => setReportReason(e.target.value)}
               placeholder="Причина жалобы..."
               rows={3}
-              className="w-full p-3 rounded-2xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[#FF5C00] focus:outline-none resize-none"
+              className="w-full p-3 rounded-2xl bg-black text-xs text-[var(--text,#fff)] border border-white/[0.14] focus:border-[#ff5a1f] focus:outline-none resize-none"
             />
             <div className="flex items-center justify-end gap-2">
               <button
@@ -1074,14 +1074,14 @@ export function FriendsModal({
       {/* Модалка создания группы */}
       {isCreatingGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
           onClick={() => setIsCreatingGroup(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-5 shadow-2xl flex flex-col gap-3.5"
+            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
               <h3 className="text-base font-bold text-[var(--text,#fff)]">Создать группу</h3>
               <button
                 type="button"
@@ -1099,7 +1099,7 @@ export function FriendsModal({
                 value={newGroupTitle}
                 onChange={(e) => setNewGroupTitle(e.target.value)}
                 placeholder="Название: Семья, Спортсмены..."
-                className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[#FF5C00] focus:outline-none"
+                className="w-full p-2.5 rounded-xl bg-black text-xs text-[var(--text,#fff)] border border-white/[0.14] focus:border-[#ff5a1f] focus:outline-none"
                 autoFocus
               />
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -1110,7 +1110,7 @@ export function FriendsModal({
                     onClick={() => setNewGroupEmoji(emoji)}
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-all ${
                       newGroupEmoji === emoji
-                        ? 'border-[#FF5C00] bg-[#FF5C00]/20 scale-110'
+                        ? 'border-[#ff5a1f] bg-[#ff5a1f]/20 scale-110'
                         : 'border-transparent bg-white/5 hover:bg-white/10'
                     }`}
                   >
@@ -1123,11 +1123,11 @@ export function FriendsModal({
                 onChange={(e) => setNewGroupDescription(e.target.value)}
                 placeholder="Описание группы..."
                 rows={2}
-                className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[#FF5C00] focus:outline-none resize-none"
+                className="w-full p-2.5 rounded-xl bg-black text-xs text-[var(--text,#fff)] border border-white/[0.14] focus:border-[#ff5a1f] focus:outline-none resize-none"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--line,#2f3336)]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.1]">
               <button
                 type="button"
                 onClick={() => setIsCreatingGroup(false)}
@@ -1139,7 +1139,7 @@ export function FriendsModal({
                 type="button"
                 id="btn-confirm-create-group"
                 onClick={handleConfirmCreateGroup}
-                className="px-5 py-2 rounded-full text-xs font-bold bg-[#FF5C00] hover:opacity-90 text-white"
+                className="px-5 py-2 rounded-full text-xs font-bold bg-[#ff5a1f] hover:opacity-90 text-white"
               >
                 Создать
               </button>
@@ -1151,14 +1151,14 @@ export function FriendsModal({
       {/* Модалка редактирования группы */}
       {isEditingGroup && selectedGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
           onClick={() => setIsEditingGroup(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-5 shadow-2xl flex flex-col gap-3.5"
+            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3.5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
               <h3 className="text-base font-bold text-[var(--text,#fff)]">Настройки группы</h3>
               <button
                 type="button"
@@ -1172,7 +1172,7 @@ export function FriendsModal({
               type="text"
               value={editGroupTitle}
               onChange={(e) => setEditGroupTitle(e.target.value)}
-              className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[#FF5C00] focus:outline-none"
+              className="w-full p-2.5 rounded-xl bg-black text-xs text-[var(--text,#fff)] border border-white/[0.14] focus:border-[#ff5a1f] focus:outline-none"
             />
             <div className="flex items-center gap-1.5 flex-wrap">
               {['👥', '🔥', '🏃', '❤️', '🏆', '⚡', '🌟', '🎯'].map((emoji) => (
@@ -1182,7 +1182,7 @@ export function FriendsModal({
                   onClick={() => setEditGroupEmoji(emoji)}
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border transition-all ${
                     editGroupEmoji === emoji
-                      ? 'border-[#FF5C00] bg-[#FF5C00]/20 scale-110'
+                      ? 'border-[#ff5a1f] bg-[#ff5a1f]/20 scale-110'
                       : 'border-transparent bg-white/5 hover:bg-white/10'
                   }`}
                 >
@@ -1194,9 +1194,9 @@ export function FriendsModal({
               value={editGroupDescription}
               onChange={(e) => setEditGroupDescription(e.target.value)}
               rows={2}
-              className="w-full p-2.5 rounded-xl bg-[var(--surface2,#202327)] text-xs text-[var(--text,#fff)] border border-[var(--line,#2f3336)] focus:border-[#FF5C00] focus:outline-none resize-none"
+              className="w-full p-2.5 rounded-xl bg-black text-xs text-[var(--text,#fff)] border border-white/[0.14] focus:border-[#ff5a1f] focus:outline-none resize-none"
             />
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-[var(--line,#2f3336)]">
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/[0.1]">
               <button
                 type="button"
                 onClick={() => setIsEditingGroup(false)}
@@ -1207,7 +1207,7 @@ export function FriendsModal({
               <button
                 type="button"
                 onClick={handleSaveEditGroup}
-                className="px-5 py-2 rounded-full text-xs font-bold bg-[#FF5C00] hover:opacity-90 text-white"
+                className="px-5 py-2 rounded-full text-xs font-bold bg-[#ff5a1f] hover:opacity-90 text-white"
               >
                 Сохранить
               </button>
@@ -1219,14 +1219,14 @@ export function FriendsModal({
       {/* Модалка приглашения в группу */}
       {isInvitingMember && selectedGroup && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#5b7083]/25 backdrop-blur-[3px]"
           onClick={() => setIsInvitingMember(false)}
         >
           <div
-            className="w-full max-w-sm rounded-3xl bg-[var(--card-bg,#16181c)] border border-[var(--line,#2f3336)] p-5 shadow-2xl flex flex-col gap-3"
+            className="w-full max-w-sm rounded-2xl bg-black border border-white/[0.14] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.85)] flex flex-col gap-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-2 border-b border-[var(--line,#2f3336)]">
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.1]">
               <h3 className="text-base font-bold text-[var(--text,#fff)]">Добавить в группу</h3>
               <button
                 type="button"
@@ -1250,7 +1250,7 @@ export function FriendsModal({
                   .map((f) => (
                     <div
                       key={f.id}
-                      className="p-2.5 rounded-xl bg-[var(--surface2,#202327)] flex items-center justify-between gap-2"
+                      className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.1] flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2 min-w-0">
                         <UserAvatar
@@ -1273,7 +1273,7 @@ export function FriendsModal({
                       <button
                         type="button"
                         onClick={() => handleAddMemberToGroup(f.id)}
-                        className="px-3 py-1 rounded-full text-xs font-bold bg-[#FF5C00] text-white hover:opacity-90 shrink-0"
+                        className="px-3 py-1 rounded-full text-xs font-bold bg-[#ff5a1f] text-white hover:opacity-90 shrink-0"
                       >
                         Добавить
                       </button>

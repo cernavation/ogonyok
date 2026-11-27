@@ -159,13 +159,13 @@ export function RightRail({
     <aside
       ref={railRef}
       style={{ top: `${stickyTop}px` }}
-      className={`right-rail w-[350px] shrink-0 sticky self-start select-none pl-6 pr-4 pt-3 pb-6 hidden lg:flex flex-col gap-4 z-20 ${className || ''}`}
+      className={`right-rail w-[350px] shrink-0 sticky self-start select-none pl-6 pr-4 pt-3 pb-6 hidden lg:flex flex-col gap-3 z-20 ${className || ''}`}
       aria-label="Дополнительная информация"
     >
-      {/* Блок 1: Поиск */}
+      {/* Блок 1: Поиск по дневнику */}
       <div className="x-search-bar" role="search">
         <div
-          className="flex items-center gap-3 bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] rounded-full px-4 py-3 cursor-pointer transition-colors duration-150 border border-[var(--line)] focus-within:border-[var(--accent)] min-h-[44px]"
+          className="flex items-center gap-3 bg-black hover:bg-white/[0.03] rounded-full px-4 py-2.5 cursor-pointer transition-colors duration-150 border border-white/[0.12] focus-within:border-[#ff5a1f]/70 min-h-[42px]"
           role="button"
           tabIndex={0}
           onClick={() => onNavigate('explore')}
@@ -187,7 +187,7 @@ export function RightRail({
       {/* Блок 2: Твой стрик */}
       <section
         data-tour="nav-streak"
-        className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] p-4 transition-colors"
+        className="rounded-2xl border border-white/[0.11] bg-black p-4 transition-colors"
         aria-labelledby="streak-title"
       >
         <div className="flex items-center justify-between mb-3">
@@ -200,14 +200,14 @@ export function RightRail({
           <button
             type="button"
             onClick={() => onNavigate('analytics')}
-            className="text-[13px] font-normal text-[var(--muted)] hover:text-[var(--accent)] flex items-center gap-1.5 transition-colors min-h-[34px] px-2.5 py-1 rounded-full hover:bg-[var(--bg-hover)] cursor-pointer"
+            className="text-[13px] font-normal text-[var(--muted)] hover:text-[#ff5a1f] flex items-center gap-1.5 transition-colors min-h-[32px] px-2.5 py-1 rounded-full hover:bg-white/[0.04] cursor-pointer"
           >
             <BarChart3 size={14} />
             <span>Статистика</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-3.5 pt-1">
+        <div className="flex items-center gap-3.5 pt-0.5">
           <FlameIcon status={streakStatus} hoursLeft={hoursLeft} size={42} />
           <div>
             <div className="flex items-baseline gap-1.5">
@@ -232,17 +232,7 @@ export function RightRail({
         )}
       </section>
 
-      {/* Блок 3: Друзья */}
-      {onNotify && (
-        <ActiveFriendsWidget
-          onNavigate={onNavigate}
-          onNotify={onNotify}
-          onOpenFriends={onOpenFriends}
-          soundEnabled={soundEnabled}
-        />
-      )}
-
-      {/* Блок 4: Ритм недели (реальные дни + средний AI-балл + прогресс до вехи) */}
+      {/* Блок 3: Ритм недели (сразу под стриком — единая логика прогресса) */}
       <section
         onClick={() => onNavigate('analytics')}
         role="button"
@@ -253,7 +243,7 @@ export function RightRail({
             onNavigate('analytics')
           }
         }}
-        className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] hover:border-[var(--accent)]/40 p-4 transition-colors cursor-pointer"
+        className="rounded-2xl border border-white/[0.11] bg-black hover:border-white/[0.2] p-4 transition-colors cursor-pointer"
         aria-labelledby="weekly-rhythm-title"
       >
         <div className="flex items-center justify-between gap-2 mb-3">
@@ -261,7 +251,7 @@ export function RightRail({
             id="weekly-rhythm-title"
             className="flex items-center gap-1.5 text-[var(--text)] text-[15px] font-bold tracking-tight"
           >
-            <Flame size={16} className="text-[#FF5C00]" aria-hidden="true" />
+            <Flame size={16} className="text-[#ff5a1f]" aria-hidden="true" />
             <span>Ритм недели</span>
           </h2>
           <span className="text-[12px] font-semibold text-[var(--muted)]">
@@ -269,16 +259,16 @@ export function RightRail({
           </span>
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5 mb-3.5">
+        <div className="grid grid-cols-7 gap-1.5 mb-3">
           {weeklyRhythm.weekDays.map((d) => (
             <div key={d.key} className="flex flex-col items-center gap-1">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                   d.closed
-                    ? 'bg-[#FF5C00] text-white shadow-sm shadow-[#FF5C00]/30'
+                    ? 'bg-[#ff5a1f] text-white shadow-sm shadow-[#ff5a1f]/30'
                     : d.isToday
-                      ? 'bg-[var(--surface2)] border border-dashed border-[#FF5C00]/70 text-[var(--muted)]'
-                      : 'bg-[var(--surface2)] border border-[var(--line)] text-transparent'
+                      ? 'bg-white/[0.03] border border-dashed border-[#ff5a1f]/70 text-[var(--muted)]'
+                      : 'bg-white/[0.03] border border-white/[0.1] text-transparent'
                 }`}
                 title={`${d.label}: ${d.closed ? 'день закрыт' : 'нет записи'}`}
               >
@@ -302,44 +292,54 @@ export function RightRail({
         <div className="flex items-center justify-between text-[12px] text-[var(--muted)] mb-2">
           <span>Средний балл (7 дн.)</span>
           <span className="font-bold text-[var(--text)] inline-flex items-center gap-1">
-            <Sparkles size={12} className="text-[#FF5C00]" />
+            <Sparkles size={12} className="text-[#ff5a1f]" />
             {weeklyRhythm.avgScore ? `${weeklyRhythm.avgScore} / 10` : '—'}
           </span>
         </div>
 
-        <div className="pt-2 border-t border-[var(--line)]">
+        <div className="pt-2 border-t border-white/[0.08]">
           <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
             <span className="text-[var(--muted)]">До вехи</span>
             <span className="text-[var(--text)]">{weeklyRhythm.milestone.label}</span>
           </div>
-          <div className="w-full h-1.5 rounded-full bg-[var(--surface2)] overflow-hidden">
+          <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#FF5C00] to-[#ff9248] transition-all duration-300"
+              className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff9248] transition-all duration-300"
               style={{ width: `${weeklyRhythm.milestone.percent}%` }}
             />
           </div>
         </div>
       </section>
 
+      {/* Блок 4: Друзья */}
+      {onNotify && (
+        <ActiveFriendsWidget
+          onNavigate={onNavigate}
+          onNotify={onNotify}
+          onOpenFriends={onOpenFriends}
+          soundEnabled={soundEnabled}
+        />
+      )}
+
       {/* Блок 5: Фокус и намерения на сегодня */}
       <section
-        className="rounded-2xl border border-[var(--line)] bg-[var(--bg-elev)] p-4 transition-colors"
+        className="rounded-2xl border border-white/[0.11] bg-black p-4 transition-colors"
         aria-labelledby="focus-widget-title"
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
           <h2
             id="focus-widget-title"
-            className="flex items-center gap-1.5 text-[var(--text)] text-[15px] font-bold tracking-tight cursor-pointer hover:text-[var(--accent)] transition-colors"
+            className="flex items-center gap-1.5 text-[var(--text)] text-[15px] font-bold tracking-tight cursor-pointer hover:text-[#ff5a1f] transition-colors"
             onClick={() => onNavigate('intentions')}
           >
-            <Target size={16} className="text-[#FF5C00]" aria-hidden="true" />
+            <Target size={16} className="text-[#ff5a1f]" aria-hidden="true" />
             <span>Фокус и намерения</span>
           </h2>
           {todayFocusItems.items.length > 0 && (
             <button
               type="button"
               onClick={() => onNavigate('intentions')}
-              className="text-[12px] font-semibold text-[var(--muted)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+              className="text-[12px] font-semibold text-[var(--muted)] hover:text-[#ff5a1f] transition-colors cursor-pointer"
             >
               Изменить
             </button>
@@ -354,7 +354,7 @@ export function RightRail({
             <button
               type="button"
               onClick={() => onNavigate('intentions')}
-              className="w-full min-h-[38px] rounded-full bg-[#FF5C00] hover:opacity-90 text-white text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer shadow-sm"
+              className="w-full min-h-[38px] rounded-full bg-[#ff5a1f] hover:opacity-90 text-white text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] cursor-pointer"
             >
               <Target size={14} />
               <span>Задать фокус дня</span>
@@ -369,12 +369,12 @@ export function RightRail({
                   key={item.id}
                   type="button"
                   onClick={() => onNavigate('intentions')}
-                  className="w-full flex items-start gap-2.5 p-2.5 rounded-xl bg-[var(--surface2)]/70 hover:bg-[var(--bg-hover)] border border-[var(--line)] text-left transition-colors cursor-pointer"
+                  className="w-full flex items-start gap-2.5 p-2.5 rounded-xl bg-black hover:bg-white/[0.04] border border-white/[0.1] text-left transition-colors cursor-pointer"
                 >
                   {isDone ? (
                     <CheckCircle2 size={16} className="text-emerald-400 shrink-0 mt-0.5" />
                   ) : (
-                    <Circle size={16} className="text-[#FF5C00] shrink-0 mt-0.5" />
+                    <Circle size={16} className="text-[#ff5a1f] shrink-0 mt-0.5" />
                   )}
                   <span
                     className={`text-[13px] leading-snug break-words flex-1 ${
@@ -390,7 +390,7 @@ export function RightRail({
               <button
                 type="button"
                 onClick={() => onNavigate('intentions')}
-                className="text-[12px] font-semibold text-[var(--accent)] hover:underline px-1 cursor-pointer"
+                className="text-[12px] font-semibold text-[#ff5a1f] hover:underline px-1 cursor-pointer"
               >
                 + ещё {todayFocusItems.extraCount} шаг · Открыть намерения →
               </button>
