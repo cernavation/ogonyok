@@ -1564,7 +1564,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       />
       <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-clip" data-locked={locked ? 'true' : undefined}>
         <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
-          <div className="flex flex-row w-full max-w-[1265px] justify-start xl:justify-center">
+          <div className="flex flex-row w-full max-w-[1265px] justify-start">
             <Sidebar
               className="hidden md:flex shrink-0 sticky top-0 h-screen select-none border-r border-[var(--line)]"
               isCollapsed={view === 'messages'}
@@ -1644,7 +1644,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                 </section>
 
                 <RightRail
-                  className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block xl:mr-10"
+                  className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block xl:mr-auto"
                   onNavigate={navigate}
                   onCompose={() => setComposer(true)}
                   streak={streakState.streak}

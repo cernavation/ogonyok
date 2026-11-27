@@ -6426,34 +6426,73 @@ export function useOgonekStore() {
     [activateAccount]
   )
 
-  /** Выход из аккаунта: очищает сессию, ставит currentUser = null и переводит на лендинг */
-  const signOut = useCallback(() => {
+  /** Мгновенный выход из аккаунта с первого клика: очищает Supabase-токены, куки, локальный стор и переводит на лендинг */
+  const signOut = useCallback(async () => {
     const nowISO = new Date().toISOString()
-    try {
-      const client = getSupabase()
-      if (client) client.auth.signOut().catch(() => {})
-    } catch {}
-    updateStore(
-      (prev) => ({
-        ...prev,
-        profile: DEFAULT_PROFILE,
-        auth: {
-          ...prev.auth,
-          signedIn: false,
-          activeAccountId: null,
-          accounts: [],
-          updatedAtISO: nowISO,
-        },
-      }),
-      true
-    )
+
+    // 1. Синхронно очищаем все токены sb-*-auth-token и кэш в браузере ДО редиректа,
+    // чтобы /ru не подхватил старую сессию и не отбросил назад в /app.
     if (typeof window !== 'undefined') {
       try {
-        sessionStorage.removeItem('priday_preloaded')
+        const toRemove: string[] = []
+        for (let i = 0; i < window.localStorage.length; i++) {
+          const key = window.localStorage.key(i)
+          if (key && key.startsWith('sb-')) {
+            toRemove.push(key)
+          }
+        }
+        toRemove.forEach((k) => window.localStorage.removeItem(k))
       } catch {}
-      window.location.href = '/ru'
+
+      try {
+        if (typeof document !== 'undefined' && document.cookie) {
+          document.cookie.split(';').forEach((c) => {
+            const name = c.split('=')[0]?.trim()
+            if (name && name.startsWith('sb-')) {
+              document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+            }
+          })
+        }
+      } catch {}
+
+      try {
+        window.sessionStorage.removeItem('priday_preloaded')
+      } catch {}
     }
-  }, [updateStore])
+
+    // 2. Синхронно сбрасываем локальный стор без мигания LandingPage внутри AppShell
+    cachedState = {
+      ...cachedState,
+      profile: DEFAULT_PROFILE,
+      chatThreads: {},
+      chatActiveFriendId: null,
+      auth: {
+        ...cachedState.auth,
+        signedIn: false,
+        activeAccountId: null,
+        accounts: [],
+        updatedAtISO: nowISO,
+      },
+    }
+    saveStore(cachedState, undefined, true)
+
+    // 3. Ожидаем signOut в Supabase (с коротким таймаутом на случай плохой сети)
+    try {
+      const client = getSupabase()
+      if (client) {
+        await Promise.race([
+          client.auth.signOut({ scope: 'local' }),
+          new Promise((resolve) => setTimeout(resolve, 600)),
+        ])
+      }
+    } catch {}
+
+    emitChange()
+
+    if (typeof window !== 'undefined') {
+      window.location.replace('/ru')
+    }
+  }, [])
 
   /**
    * Удаляет аккаунт с устройства. Если удаляется активный — переключает на

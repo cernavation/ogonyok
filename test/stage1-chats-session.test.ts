@@ -43,16 +43,35 @@ test('Task 1: Session persistence, canonical storage key, and /app routing', asy
 
 test('Task 2.1: Sidebar smooth wall collapse keeps icon X-coordinates locked', () => {
   const sidebarCode = read('components/ogonek/sidebar.tsx')
-  assert.ok(sidebarCode.includes('transition-[width] duration-200'), 'Sidebar smoothly animates width')
-  assert.ok(sidebarCode.includes('overflow-x-hidden'), 'Sidebar clips text with overflow-x-hidden')
-  assert.ok(!sidebarCode.includes('justify-center mx-auto'), 'Nav buttons do not jump between justify-center and justify-start')
+  assert.ok(sidebarCode.includes('transition-[width] duration-[250ms]'), 'Sidebar smoothly animates width with 250ms curve')
+  assert.ok(sidebarCode.includes('w-[76px]') && sidebarCode.includes('xl:w-[252px]'), 'Sidebar uses locked 76px / 252px geometry')
+  assert.ok(sidebarCode.includes('w-11 h-11'), 'Sidebar uses uniform 44x44 icon cells across brand, nav, and profile')
+  assert.ok(sidebarCode.includes("onNavigate('home')"), 'Clicking Priday logo always navigates to home')
+  assert.ok(!sidebarCode.includes('view === \'messages\' ? undefined'), 'Priday logo click is never disabled in messages')
 
   const css = read('app/globals.css')
-  assert.ok(!css.includes('.sidebar {\n  border-right: 1px solid var(--line);\n  position: sticky !important;\n  top: 0 !important;\n  align-self: start !important;\n  height: 100vh !important;\n  max-height: 100vh !important;\n  padding: 20px'), 'Removed conflicting hardcoded sidebar padding')
+  assert.ok(css.includes('overflow-x: hidden !important'), 'Sidebar prevents horizontal bleed on animation')
+  assert.ok(!css.includes('justify-center;\n    padding: 13px;'), 'Removed conflicting @media nav-item overrides')
 
   const appShellCode = read('components/ogonek/app-shell.tsx')
   assert.ok(appShellCode.includes('isCollapsed={view === \'messages\'}'), 'AppShell keeps single persistent Sidebar and collapses it in messages')
   assert.ok(appShellCode.includes('embedded={true}'), 'AppShell renders embedded FullscreenMessenger alongside persistent Sidebar')
+  assert.ok(appShellCode.includes('max-w-[1265px] justify-start'), 'AppShell anchors Sidebar X-coordinate cleanly without jump')
+})
+
+test('Polish Stage 1: Chat card wrapper, empty home CTA, 1-click logout, out-of-box GIFs', () => {
+  const bubble = read('components/ogonek/messenger/chat-message-bubble.tsx')
+  assert.ok(bubble.includes('isStandaloneCard'), 'Standalone cards get dedicated thin wrapper')
+  assert.ok(bubble.includes('p-[3px]'), 'Card wrapper uses thin 3px border/padding')
+
+  const home = read('components/ogonek/views/home-view.tsx')
+  assert.ok(home.includes('whitespace-nowrap h-11 px-6 rounded-full'), 'Empty home CTA buttons stay crisp single-line pills')
+
+  const store = read('lib/ogonek/use-ogonek-store.ts')
+  assert.ok(store.includes("key.startsWith('sb-')") && store.includes('client.auth.signOut'), 'signOut clears Supabase tokens/cookies synchronously and awaits client signOut before redirect')
+
+  const gifRoute = read('app/api/giphy/route.ts')
+  assert.ok(gifRoute.includes('fetchPublicGifs'), 'GIF API supports out-of-the-box public trending and search without forcing API keys')
 })
 
 test('Task 2.2-2.7: Real Supabase chats, clean UI, unclipped emoji picker, GIF API, context menus', async (t) => {

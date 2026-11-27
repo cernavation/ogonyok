@@ -514,23 +514,24 @@ export function HomeView({
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md mx-auto my-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full px-4 mt-2">
               {onCompose && (
                 <button
                   type="button"
-                  className="x-primary-btn flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-11 px-6 rounded-full bg-[var(--accent)] text-[var(--accent-contrast,#000000)] text-[14px] font-bold shadow-[0_4px_14px_var(--accent-soft)] hover:opacity-95 active:scale-[0.98] transition-all shrink-0 cursor-pointer"
                   onClick={onCompose}
                 >
-                  <Plus size={16} /> Записать первый день
+                  <Plus size={16} className="shrink-0" />
+                  <span>Записать первый день</span>
                 </button>
               )}
               {onNavigate && (
                 <button
                   type="button"
-                  className="x-secondary-btn flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap h-11 px-6 rounded-full border border-[var(--line)] bg-transparent text-[var(--text)] text-[14px] font-semibold hover:bg-white/[0.06] active:scale-[0.98] transition-all shrink-0 cursor-pointer"
                   onClick={() => onNavigate('settings')}
                 >
-                  Импортировать архив
+                  <span>Импортировать архив</span>
                 </button>
               )}
             </div>

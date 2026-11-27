@@ -245,6 +245,16 @@ export function ChatMessageBubble({
     !message.forwardFrom &&
     checkOnlyEmojis(message.text)
 
+  const isStandaloneCard =
+    Boolean(message.attachment) &&
+    !message.text?.trim() &&
+    !isSticker &&
+    !message.media &&
+    !message.poll &&
+    !message.replyTo &&
+    !message.forwardFrom &&
+    (!message.labels || message.labels.length === 0)
+
   const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
   const hasMedia = Boolean(message.media?.type === 'image' || message.media?.type === 'video')
   const isVoiceOnlyPlaceholder =
@@ -503,6 +513,49 @@ export function ChatMessageBubble({
                   <span className="shrink-0">
                     {message.read || message.status === 'read' ? (
                       <CheckCheck size={14} className="text-[var(--accent)]" />
+                    ) : (
+                      <Check size={13} className="opacity-80" />
+                    )}
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : isStandaloneCard ? (
+            /* Прикреплённая карточка (Гордость / День / Сторис) с тонкой рамкой p-[3px] и временем ниже */
+            <div className={`flex flex-col my-1 select-text ${isMine ? 'items-end' : 'items-start'}`}>
+              {isGroup && !isMine && showAuthorHeader && (
+                <div className="mb-1 px-1 text-[12px] font-bold tracking-wide text-[var(--text)] dark:text-[var(--accent)]">
+                  {authorName}
+                </div>
+              )}
+              <div
+                onDoubleClick={() => onToggleReaction('fire')}
+                className={`w-[260px] sm:w-[310px] max-w-full rounded-[19px] p-[3px] shadow-sm transition-all ${
+                  isMine
+                    ? 'bg-[var(--accent)]/85 border border-[var(--accent)]/50'
+                    : 'bg-[var(--bg-elev)] border border-[var(--border)]'
+                }`}
+              >
+                <ChatAttachmentCard attachment={message.attachment!} />
+              </div>
+              <div className="mt-1 px-1 flex items-center justify-end gap-1.5 text-[12px] text-[var(--text-2)] [font-variant-numeric:tabular-nums] leading-none font-medium">
+                {message.silent && <span title="Отправлено без звука"><BellOff size={11} className="opacity-70" /></span>}
+                {message.pinned && <span title="Закреплено"><Pin size={11} className="rotate-45 text-[#ffd700]" /></span>}
+                {message.editedAtISO && <span className="text-[11px] italic">изм.</span>}
+                <span suppressHydrationWarning>{formatChatTime(message.createdAtISO)}</span>
+                {isMine && (
+                  <span className="shrink-0 inline-flex items-center gap-0.5">
+                    {message.status === 'sending' ? (
+                      <Clock size={12} className="opacity-70 animate-spin" />
+                    ) : message.read || message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
+                      <>
+                        <CheckCheck size={14} className="text-[var(--accent)]" />
+                        {isGroup && message.readBy && message.readBy.length > 0 && (
+                          <span className="text-[10px] font-bold text-[var(--accent)]">
+                            {message.readBy.length}
+                          </span>
+                        )}
+                      </>
                     ) : (
                       <Check size={13} className="opacity-80" />
                     )}

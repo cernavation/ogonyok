@@ -344,11 +344,14 @@ export function Sidebar({
     state.profile.avatarImage ||
     (isAuthor ? '/author-avatar.png' : null)
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setIsMenuOpen(false)
-    signOut()
-    onNotify('Вы вышли из аккаунта')
+    await signOut()
   }
+
+  const labelVisibilityClass = `min-w-0 whitespace-nowrap overflow-hidden transition-opacity duration-200 ease-out ${
+    isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-0 xl:opacity-100'
+  }`
 
   const renderNavItem = ({ id, label }: NavItemDef) => {
     const isActive = view === id
@@ -379,18 +382,18 @@ export function Sidebar({
         <button
           type="button"
           data-tour={tourAttr}
-          className={`nav-item group relative flex items-center justify-start w-full h-[48px] pl-3 pr-3 gap-3.5 hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 rounded-full overflow-hidden ${
+          className={`nav-item group relative flex items-center justify-start w-full h-11 p-0 pr-3 gap-1.5 hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 rounded-full overflow-hidden cursor-pointer ${
             isActive ? 'active text-[var(--text)] fill-[var(--text)] font-bold' : 'text-[var(--muted)] hover:text-[var(--text)] font-medium'
           }`}
           onClick={handleClick}
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
         >
-          <div className="w-6 h-6 flex items-center justify-center shrink-0 overflow-visible relative">
-            <NavIcon id={id} isActive={isActive} size={24} />
+          <div className="w-11 h-11 flex items-center justify-center shrink-0 relative">
+            <NavIcon id={id} isActive={isActive} size={23} />
             {id === 'messages' && unread > 0 && (
               <span
-                className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10"
+                className="absolute top-1.5 right-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10"
                 aria-label={`${unread} непрочитанных`}
               >
                 {unread > 99 ? '99+' : unread}
@@ -398,9 +401,7 @@ export function Sidebar({
             )}
           </div>
           <span
-            className={`hidden xl:inline whitespace-nowrap text-[16px] leading-tight transition-opacity duration-150 ${
-              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            } ${
+            className={`${labelVisibilityClass} text-[16px] leading-tight ${
               isActive ? 'font-bold text-[var(--text)]' : 'font-medium text-[var(--muted)] group-hover:text-[var(--text)]'
             }`}
           >
@@ -423,63 +424,51 @@ export function Sidebar({
   return (
     <aside
       className={`sidebar ${
-        isCollapsed ? 'w-[72px]' : 'w-[72px] xl:w-[275px]'
-      } px-3 items-stretch shrink-0 sticky top-0 h-screen border-r border-[var(--line)] hidden md:flex flex-col justify-between overflow-x-hidden overflow-y-auto scrollbar-none z-30 select-none py-3 xl:py-4 transition-[width] duration-200 ease-out ${className || ''}`}
+        isCollapsed ? 'w-[76px]' : 'w-[76px] xl:w-[252px]'
+      } pl-4 pr-[15px] py-3 xl:py-4 items-stretch shrink-0 sticky top-0 h-screen border-r border-[var(--line)] hidden md:flex flex-col justify-between overflow-hidden scrollbar-none z-30 select-none will-change-[width] transition-[width] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${className || ''}`}
       aria-label="Боковая панель"
     >
       <div className="flex flex-col gap-1 w-full items-stretch overflow-hidden">
-        {/* Brand mark — при сужении сайдбара X-координата иконки не сдвигается ни на пиксель */}
-        <div
-          className={`brand ${view === 'messages' ? 'select-none' : 'cursor-pointer group hover:bg-white/[0.08] active:scale-[0.98]'} w-full h-[48px] pl-1 pr-2 mb-2 flex items-center justify-start gap-2.5 transition-colors duration-150 rounded-full overflow-hidden shrink-0`}
-          onClick={
-            view === 'messages'
-              ? undefined
-              : () => {
-                  playClick(state.soundEnabled)
-                  onNavigate('home')
-                }
-          }
-          role={view === 'messages' ? undefined : 'button'}
-          tabIndex={view === 'messages' ? undefined : 0}
-          aria-hidden={view === 'messages' ? 'true' : undefined}
-          title={view === 'messages' ? undefined : 'Priday'}
+        {/* Brand mark — единая сетка (ячейка 44x44 строго на одной оси с иконками) и клик в любом разделе */}
+        <button
+          type="button"
+          className="brand group cursor-pointer w-full h-11 p-0 pr-3 mb-2 flex items-center justify-start gap-1.5 hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 rounded-full overflow-hidden shrink-0 border-0 bg-transparent text-left"
+          onClick={() => {
+            playClick(state.soundEnabled)
+            onNavigate('home')
+          }}
+          aria-label="На главную Priday"
+          title="На главную Priday"
         >
-          <span
-            className={`brand-flame flex items-center justify-center w-10 h-10 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] ${view === 'messages' ? '' : 'group-hover:scale-110'} transition-transform duration-200 shrink-0`}
-            aria-hidden="true"
-          >
-            <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
+          <span className="w-11 h-11 flex items-center justify-center shrink-0" aria-hidden="true">
+            <span className="brand-flame flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent)]/12 text-[var(--accent)] group-hover:scale-105 transition-transform duration-200">
+              <Flame size={21} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
+            </span>
           </span>
-          <span
-            className={`font-bold tracking-tight text-[19px] text-[var(--text)] whitespace-nowrap hidden xl:inline transition-opacity duration-150 ${
-              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}
-          >
+          <span className={`${labelVisibilityClass} font-bold tracking-tight text-[19px] text-[var(--text)]`}>
             Priday
           </span>
-        </div>
+        </button>
 
         {/* Navigation — единый список без искусственных групп */}
-        <nav className="nav-list flex-1 w-full overflow-hidden" aria-label="Разделы приложения">
-          <div className="flex flex-col gap-1 w-full">
-            {UNIFIED_NAV.map(renderNavItem)}
-          </div>
+        <nav className="nav-list flex-1 w-full flex flex-col gap-1 overflow-hidden" aria-label="Разделы приложения">
+          {UNIFIED_NAV.map(renderNavItem)}
         </nav>
 
-        {/* Primary CTA — Flame Pill / Round Icon Button */}
+        {/* Primary CTA — идеально на оси 44x44 в узком виде и пилюля на широком */}
         {view !== 'messages' && (
           <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
             <button
               type="button"
-              className="x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full w-full h-[48px] xl:h-auto p-0 xl:py-3.5 flex items-center justify-center my-2 min-h-[48px] overflow-hidden"
+              className="x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] rounded-full w-11 xl:w-full h-11 xl:h-12 p-0 xl:px-5 flex items-center justify-center my-2 overflow-hidden cursor-pointer shrink-0"
               onClick={() => {
                 playClick(state.soundEnabled)
                 onCompose()
               }}
               aria-label="Записать день"
             >
-              <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden shrink-0" />
-              <span className="compose-btn-label hidden xl:inline whitespace-nowrap">Записать</span>
+              <Plus size={22} strokeWidth={2.5} className="xl:hidden shrink-0" />
+              <span className="hidden xl:inline whitespace-nowrap">Записать</span>
             </button>
           </Tooltip>
         )}
@@ -497,7 +486,7 @@ export function Sidebar({
               style={
                 menuPos
                   ? { left: `${menuPos.left}px`, bottom: `${menuPos.bottom}px` }
-                  : { left: '12px', bottom: '76px' }
+                  : { left: '16px', bottom: '76px' }
               }
               role="menu"
               aria-label="Меню профиля"
@@ -544,10 +533,11 @@ export function Sidebar({
 
               <button
                 type="button"
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] font-semibold text-rose-500 rounded-full hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-150 text-left"
-                onClick={() => {
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-[14px] font-semibold text-rose-500 rounded-full hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-150 text-left cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation()
                   playClick(state.soundEnabled)
-                  handleSignOut()
+                  void handleSignOut()
                 }}
               >
                 <LogOut size={16} /> Выйти
@@ -558,7 +548,7 @@ export function Sidebar({
 
         <button
           type="button"
-          className="profile-mini cursor-pointer relative z-50 w-full h-[56px] pl-1 pr-2 gap-3 flex items-center justify-start rounded-full overflow-hidden hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 text-left border-0 bg-transparent"
+          className="profile-mini cursor-pointer relative z-50 w-full h-11 p-0 pr-2 gap-1.5 flex items-center justify-start rounded-full overflow-hidden hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 text-left border-0 bg-transparent"
           onClick={() => {
             playClick(state.soundEnabled)
             openMenuWithRect()
@@ -567,37 +557,33 @@ export function Sidebar({
           aria-expanded={isMenuOpen}
           title={displayName}
         >
-          {avatarImage ? (
-            <img
-              src={avatarImage}
-              alt={displayName}
-              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--line)]"
-            />
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none bg-[var(--surface2)] text-[var(--text)] shrink-0 border border-[var(--line)]"
-            >
-              {initials}
-            </div>
-          )}
+          <div className="w-11 h-11 flex items-center justify-center shrink-0">
+            {avatarImage ? (
+              <img
+                src={avatarImage}
+                alt={displayName}
+                className="w-9 h-9 rounded-full object-cover border border-[var(--line)]"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]">
+                {initials}
+              </div>
+            )}
+          </div>
 
-          <div
-            className={`flex-1 min-w-0 hidden xl:block transition-opacity duration-150 ${
-              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}
-          >
+          <div className={`flex-1 min-w-0 transition-opacity duration-200 ease-out ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-0 xl:opacity-100'}`}>
             <p className="text-[14px] font-bold text-[var(--text)] truncate whitespace-nowrap leading-tight">
               {displayName}
             </p>
-            <p className="text-[13px] text-[var(--muted)] font-normal truncate whitespace-nowrap font-mono">
+            <p className="text-[12px] text-[var(--muted)] font-normal truncate whitespace-nowrap font-mono">
               @{username}
             </p>
           </div>
 
           <MoreHorizontal
             size={18}
-            className={`text-[var(--text-3)] shrink-0 hidden xl:block transition-opacity duration-150 ${
-              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            className={`text-[var(--text-3)] shrink-0 transition-opacity duration-200 ease-out ${
+              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-0 xl:opacity-100'
             }`}
           />
         </button>
