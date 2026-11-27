@@ -27,6 +27,7 @@ import {
   getSocialGraphFromFollows,
   type ProfileRecord,
 } from '@/lib/supabase/api'
+import { useUserPresenceStatus } from '@/lib/supabase/presence'
 import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
@@ -53,7 +54,8 @@ function recordToFriendView(p: ProfileRecord): FriendProfile {
     mutual: 0,
     verified: Boolean(p.verified),
     lastActive: 'недавно',
-    presence: 'online',
+    lastSeenAt: p.last_seen_at || null,
+    presence: 'offline',
   }
 }
 
@@ -152,7 +154,11 @@ export function FriendDetailModal({
 
   const isFriend = friendIds.includes(friendId)
   const isFollowing = followingIds.includes(friendId) || isFriend
-  const isOnline = friend?.presence === 'online'
+  const presenceStatus = useUserPresenceStatus(
+    friendId,
+    liveRecord?.last_seen_at ?? fallbackFriend?.lastSeenAt ?? null
+  )
+  const isOnline = presenceStatus.isOnline
 
   const statusText = isFriend ? 'Друзья ✓' : isFollowing ? 'Вы подписаны' : 'Не в друзьях'
   const dmPerm = useMemo(() => {
@@ -341,7 +347,7 @@ export function FriendDetailModal({
                     aria-hidden="true"
                   />
                   <span className={isOnline ? 'text-[#00ba7c]' : 'text-[var(--muted,#71767b)]'}>
-                    {isOnline ? 'В сети' : 'Не в сети'}
+                    {isOnline ? 'В сети' : presenceStatus.label}
                   </span>
                 </div>
               </div>

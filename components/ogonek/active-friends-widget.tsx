@@ -5,9 +5,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
+  formatLastSeenStatus,
   getActiveFriends,
   pluralizeFriends,
   registerFriendProfile,
+  sortFriendsForWidget,
 } from '@/lib/ogonek/friends'
 import { getInitials } from '@/lib/ogonek/initials'
 import {
@@ -16,6 +18,10 @@ import {
   getMutualFriendProfiles,
   type ProfileRecord,
 } from '@/lib/supabase/api'
+import {
+  getEffectiveLastSeenSync,
+  usePresenceSnapshot,
+} from '@/lib/supabase/presence'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ViewId } from '@/lib/ogonek/types'
 import { FriendDetailModal } from './friend-detail-modal'
@@ -43,7 +49,8 @@ function profileToFriend(p: ProfileRecord): FriendProfile {
     mutual: 0,
     verified: Boolean(p.verified),
     lastActive: 'недавно',
-    presence: 'online',
+    lastSeenAt: p.last_seen_at || null,
+    presence: 'offline',
   }
 }
 
@@ -128,18 +135,26 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
     return getActiveFriends(friendIds, 20)
   }, [cloudFriends, syncCachedFriends, friendIds])
 
-  const active = useMemo(() => resolvedFriends.slice(0, 6), [resolvedFriends])
+  const presenceSnap = usePresenceSnapshot()
+
+  const active = useMemo(
+    () =>
+      sortFriendsForWidget(
+        resolvedFriends,
+        presenceSnap.onlineIds,
+        presenceSnap.lastSeenOverrides,
+        3
+      ),
+    [resolvedFriends, presenceSnap.onlineIds, presenceSnap.lastSeenOverrides]
+  )
   const isInitialLoading = loadingFriends && cloudFriends === null && active.length === 0
 
-  const totalFriendsCount = isInitialLoading ? friendIds.length : resolvedFriends.length
-  const onlineCount = active.filter((f) => f.presence === 'online').length
+  const onlineCount = resolvedFriends.filter((f) => presenceSnap.onlineIds.has(f.id)).length
   const badgeText = isInitialLoading
     ? friendIds.length > 0
       ? pluralizeFriends(friendIds.length)
       : 'Загрузка…'
-    : onlineCount > 0
-      ? `${onlineCount} в сети`
-      : pluralizeFriends(totalFriendsCount)
+    : `${onlineCount} в сети`
 
   const openFriend = (id: string) => {
     playClick(soundEnabled)
@@ -223,56 +238,66 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
         </div>
       ) : (
         <ul className="flex flex-col gap-0.5 list-none m-0 p-0" role="group">
-          {active.map((friend) => (
-            <li key={friend.id}>
-              <button
-                type="button"
-                className="w-full flex items-center gap-3 px-2 py-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
-                onClick={() => openFriend(friend.id)}
-                aria-label={`Открыть ${friend.name}`}
-              >
-                <UserAvatar
-                  avatarUrl={friend.avatarUrl}
-                  avatarColor={friend.avatarColor}
-                  displayName={friend.name}
-                  username={friend.username}
-                  initials={friend.initials}
-                  size={38}
-                  isOnline={friend.presence === 'online'}
-                  ringColor="#000000"
-                />
+          {active.map((friend) => {
+            const isFriendOnline = presenceSnap.onlineIds.has(friend.id)
+            const lastSeenAt = getEffectiveLastSeenSync(friend.id, friend.lastSeenAt)
+            const status = formatLastSeenStatus(lastSeenAt, isFriendOnline)
+            return (
+              <li key={friend.id}>
+                <button
+                  type="button"
+                  className="w-full flex items-center gap-3 px-2 py-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-colors text-left cursor-pointer group"
+                  onClick={() => openFriend(friend.id)}
+                  aria-label={`Открыть ${friend.name}`}
+                >
+                  <UserAvatar
+                    avatarUrl={friend.avatarUrl}
+                    avatarColor={friend.avatarColor}
+                    displayName={friend.name}
+                    username={friend.username}
+                    initials={friend.initials}
+                    size={38}
+                    isOnline={status.isOnline}
+                    ringColor="#000000"
+                  />
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="text-[14px] font-bold text-[var(--text)] truncate leading-tight">
-                      {friend.name.split(/\s+/)[0]}
-                    </span>
-                    {friend.verified && <VerifiedBadge size="xs" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1.5 min-w-0">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <span className="text-[14px] font-bold text-[var(--text)] truncate leading-tight">
+                          {friend.name.split(/\s+/)[0]}
+                        </span>
+                        {friend.verified && <VerifiedBadge size="xs" />}
+                      </div>
+                      <span className="inline-flex items-center gap-0.5 text-[11px] text-[#ff5a1f] font-semibold shrink-0">
+                        <Flame size={10} className="fill-[#ff5a1f]" aria-hidden="true" />
+                        {friend.streak}
+                      </span>
+                    </div>
+                    <div className="text-[12px] text-[var(--muted)] truncate mt-0.5 flex items-center gap-1">
+                      <span className={status.isOnline ? 'text-[#00ba7c] font-medium shrink-0' : 'truncate'}>
+                        {status.label}
+                      </span>
+                      <span className="shrink-0">·</span>
+                      <span className="truncate">@{friend.username}</span>
+                    </div>
                   </div>
-                  <div className="text-[12px] text-[var(--muted)] truncate mt-0.5 flex items-center gap-1">
-                    <span className="truncate">@{friend.username}</span>
-                    <span>·</span>
-                    <span className="inline-flex items-center gap-0.5 text-[#ff5a1f] font-semibold shrink-0">
-                      <Flame size={11} className="fill-[#ff5a1f]" aria-hidden="true" />
-                      {friend.streak}
-                    </span>
-                  </div>
-                </div>
 
-                <ChevronRight
-                  size={16}
-                  className="text-[var(--muted)] group-hover:text-[var(--text)] shrink-0 transition-colors"
-                  aria-hidden="true"
-                />
-              </button>
+                  <ChevronRight
+                    size={16}
+                    className="text-[var(--muted)] group-hover:text-[var(--text)] shrink-0 transition-colors"
+                    aria-hidden="true"
+                  />
+                </button>
 
-              {incoming.includes(friend.id) && (
-                <span className="inline-block ml-11 mb-1 text-[11px] font-bold uppercase tracking-wider text-pink-400">
-                  заявка в друзья
-                </span>
-              )}
-            </li>
-          ))}
+                {incoming.includes(friend.id) && (
+                  <span className="inline-block ml-11 mb-1 text-[11px] font-bold uppercase tracking-wider text-pink-400">
+                    заявка в друзья
+                  </span>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
 

@@ -19,6 +19,8 @@ import { StoriesBar } from '../stories-bar'
 import { Tooltip } from '../tooltip'
 import { LegacyMigrationBanner } from '../settings/legacy-migration-banner'
 import { getFriendFeedPosts } from '@/lib/ogonek/social'
+import { scopedDayCommentTarget } from '@/lib/ogonek/comments'
+import { subscribeToCommentsRealtime } from '@/lib/supabase/api'
 import { NotificationsPopover } from '../notifications'
 
 const FocusHistoryModal = dynamic(
@@ -82,7 +84,7 @@ export function HomeView({
   currentUsername,
   isLoading = false,
 }: Props) {
-  const { state, currentUser, loadDaysFromCloud, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
+  const { state, currentUser, loadDaysFromCloud, loadCommentsForTargets, markAllNotificationsRead, markNotificationRead } = useOgonekStore()
   const displayName = currentUser?.displayName || state.profile.displayName || 'Пользователь'
   const username = currentUsername || currentUser?.username || state.profile.username || 'user'
   const initials = getInitials(displayName, username)
@@ -128,9 +130,11 @@ export function HomeView({
         if (cancelled) return
         if (Array.isArray(posts) && posts.length > 0) {
           const mapped: Day[] = posts.map((p) => ({
-            id: Number(p.id) || 1,
+            id: Number(p.dayNumber || p.id) || 1,
+            cloudId: String(p.dayUuid || p.id),
             user_id: p.userId,
-            day_number: 1,
+            userId: p.userId,
+            day_number: Number(p.dayNumber || 1),
             dateISO: p.dayDate || new Date().toISOString(),
             title: p.title || `День пользователя @${p.username}`,
             visibility: p.visibility || 'friends',
@@ -258,6 +262,49 @@ export function HomeView({
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
   }, [filteredDays, visibleCount])
+
+  // Гидрация реальных комментариев и счётчиков 💬 для видимых дней + Realtime-обновление
+  const visibleCommentTargetHints = useMemo(() => {
+    const hints: Record<string, string | null> = {}
+    for (const d of visibleDays) {
+      const ownerId = d.user_id || d.userId || (d as any).author?.id || currentUserId || null
+      const targetKey = scopedDayCommentTarget(d.id, ownerId)
+      hints[targetKey] = ownerId
+    }
+    return hints
+  }, [visibleDays, currentUserId])
+
+  const visibleCommentTargetsKey = useMemo(
+    () => Object.keys(visibleCommentTargetHints).sort().join('|'),
+    [visibleCommentTargetHints]
+  )
+
+  useEffect(() => {
+    if (!currentUserId || currentUserId.startsWith('anon-') || currentUserId.startsWith('acct-guest')) {
+      return
+    }
+    const targets = Object.keys(visibleCommentTargetHints)
+    if (targets.length === 0) return
+
+    let cancelled = false
+    void loadCommentsForTargets(targets, visibleCommentTargetHints).catch(() => {})
+
+    let rtTimer: ReturnType<typeof setTimeout> | null = null
+    const unsubscribe = subscribeToCommentsRealtime(() => {
+      if (rtTimer) clearTimeout(rtTimer)
+      rtTimer = setTimeout(() => {
+        if (!cancelled) {
+          void loadCommentsForTargets(targets, visibleCommentTargetHints).catch(() => {})
+        }
+      }, 260)
+    })
+
+    return () => {
+      cancelled = true
+      if (rtTimer) clearTimeout(rtTimer)
+      unsubscribe()
+    }
+  }, [visibleCommentTargetsKey, currentUserId, loadCommentsForTargets, visibleCommentTargetHints])
 
   // Infinite scroll chunk loading sentinel
   useEffect(() => {

@@ -20,7 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
-import { getFriend } from '@/lib/ogonek/friends'
+import { formatLastSeenStatus, getFriend } from '@/lib/ogonek/friends'
 import { buildInviteUrl } from '@/lib/ogonek/profile-share'
 import {
   type SocialUser,
@@ -36,6 +36,7 @@ import type { ChatGroupMeta } from '@/lib/ogonek/types'
 import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getCachedProfileSync, subscribeToFollows, type ProfileRecord } from '@/lib/supabase/api'
+import { getEffectiveLastSeenSync, usePresenceSnapshot } from '@/lib/supabase/presence'
 import { UserAvatar, VerifiedBadge } from '../ui'
 
 export type FriendsTab = 'friends' | 'groups'
@@ -74,6 +75,7 @@ function profileRecordToSocialUser(p: ProfileRecord): SocialUser {
     isFollowing: true,
     allowMessagesFrom: resolveAllowMessagesFrom(p),
     allowGroupInvitesFrom: resolveAllowGroupInvitesFrom(p),
+    lastSeenAt: p?.last_seen_at || null,
   }
 }
 
@@ -149,6 +151,7 @@ export function FriendsModal({
   const [friends, setFriends] = useState<SocialUser[]>(syncSeededFriends)
   const [loading, setLoading] = useState<boolean>(() => Boolean(viewerId) && syncSeededFriends.length === 0)
   const [filterQuery, setFilterQuery] = useState('')
+  const presenceSnap = usePresenceSnapshot()
   const [activeMenuUserId, setActiveMenuUserId] = useState<string | null>(null)
   const [copiedLink, setCopiedLink] = useState(false)
   const [reportingUser, setReportingUser] = useState<SocialUser | null>(null)
@@ -610,7 +613,11 @@ export function FriendsModal({
                 </div>
               ) : (
                 <ul className="divide-y divide-white/[0.08]">
-                  {filteredFriends.map((friend) => (
+                  {filteredFriends.map((friend) => {
+                    const isFriendOnline = presenceSnap.onlineIds.has(friend.id)
+                    const friendLastSeen = getEffectiveLastSeenSync(friend.id, friend.lastSeenAt)
+                    const friendStatus = formatLastSeenStatus(friendLastSeen, isFriendOnline)
+                    return (
                     <li
                       key={friend.id}
                       className="py-2.5 px-2 -mx-2 rounded-xl hover:bg-white/[0.04] transition-colors flex items-center justify-between gap-3 relative"
@@ -629,6 +636,8 @@ export function FriendsModal({
                           displayName={friend.displayName}
                           username={friend.username}
                           size={40}
+                          isOnline={friendStatus.isOnline}
+                          ringColor="#060608"
                         />
 
                         <div className="min-w-0 flex-1">
@@ -639,6 +648,10 @@ export function FriendsModal({
                             {friend.verified && <VerifiedBadge size="xs" />}
                           </div>
                           <div className="flex items-center gap-1.5 text-[12px] text-[var(--muted,#71767b)] mt-0.5">
+                            <span className={friendStatus.isOnline ? 'text-[#00ba7c] font-medium shrink-0' : 'truncate'}>
+                              {friendStatus.label}
+                            </span>
+                            <span>·</span>
                             <span className="truncate">@{friend.username || 'user'}</span>
                             {Number(friend.streak) > 0 && (
                               <>
@@ -720,7 +733,7 @@ export function FriendsModal({
                         </div>
                       </div>
                     </li>
-                  ))}
+                  )})}
                 </ul>
               )}
             </div>

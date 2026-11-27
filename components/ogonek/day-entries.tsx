@@ -12,6 +12,7 @@ import {
   type VisibilityLevel,
 } from '@/lib/ogonek/types'
 import { gratitudeTarget, prideTarget } from '@/lib/ogonek/reactions'
+import { scopedPrideCommentTarget } from '@/lib/ogonek/comments'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { normalizeVisibility } from '@/lib/ogonek/visibility'
 import { canRequestAiEvaluation, normalizeTier } from '@/lib/ogonek/permissions'
@@ -35,6 +36,8 @@ type Props = {
   gratitudes: (string | GratitudeEntry)[]
   /** ID дня — включает живое оценивание и реакции под записями */
   dayId?: number
+  /** UUID автора дня (для корректных прав удаления и изоляции комментариев) */
+  postAuthorId?: string | null
   soundEnabled?: boolean
   onPinToVault?: (fact: string) => void
   onNotify?: (msg: string) => void
@@ -77,6 +80,7 @@ function DayEntriesComponent({
   prides,
   gratitudes,
   dayId,
+  postAuthorId = null,
   soundEnabled = true,
   onPinToVault,
   onNotify,
@@ -395,7 +399,12 @@ function DayEntriesComponent({
 
                     <div className="pt-1">
                       <CommentsThread
-                        target={prideTarget(dayId as number, index)}
+                        target={scopedPrideCommentTarget(
+                          dayId as number,
+                          index,
+                          postAuthorId || state.auth?.activeAccountId || null
+                        )}
+                        postAuthorId={postAuthorId || state.auth?.activeAccountId || null}
                         variant="pride"
                         compact
                         soundEnabled={soundEnabled}

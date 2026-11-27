@@ -24,6 +24,7 @@ import { createPortal } from 'react-dom'
 import { playClick } from '@/lib/ogonek/sound'
 import { resolvePhotoUrl } from '@/lib/ogonek/photos'
 import { dayTarget } from '@/lib/ogonek/reactions'
+import { filterRealComments, scopedDayCommentTarget } from '@/lib/ogonek/comments'
 import { buildGratitudeAttachment, buildPrideAttachment } from '@/lib/ogonek/messenger'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { formatPhotoAttachmentCaption } from '@/lib/ogonek/attached-targets'
@@ -96,6 +97,15 @@ function DayCardComponent({
   } = useOgonekStore()
 
   const target = dayTarget(day.id)
+  const postAuthorId =
+    day.user_id ||
+    day.userId ||
+    (day as any).author?.id ||
+    currentUser?.id ||
+    state.auth?.activeAccountId ||
+    null
+  const commentsTarget = scopedDayCommentTarget(day.id, postAuthorId)
+  const commentsCount = filterRealComments(state.comments?.[commentsTarget] ?? []).length
   const reactionCounts = state.dayReactions[target] ?? {}
   const myReactionIds = state.myReactions[target] ?? []
   const liked = myReactionIds.includes('fire')
@@ -651,8 +661,8 @@ function DayCardComponent({
               <IconButton
                 icon={<MessageCircle size={18} />}
                 label="Ответить"
-                tooltip="Ответить"
-                count={state.comments?.[target]?.length || ''}
+                tooltip="Комментарии"
+                count={commentsCount > 0 ? commentsCount : ''}
                 active={showComments}
                 variant="blue"
                 onClick={() => setShowComments((prev) => !prev)}
@@ -697,11 +707,12 @@ function DayCardComponent({
               />
             </div>
 
-            {/* Раскрывающийся блок комментариев */}
+            {/* Раскрывающийся в 1 клик блок комментариев */}
             {showComments && (
-              <div className="pt-3 mt-2 border-t border-zinc-100 dark:border-zinc-800/80">
+              <div className="mt-2.5">
                 <CommentsThread
-                  target={target}
+                  target={commentsTarget}
+                  postAuthorId={postAuthorId}
                   variant="day"
                   soundEnabled={soundEnabled}
                   onNotify={onNotify}

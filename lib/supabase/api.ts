@@ -10,7 +10,13 @@ import {
   buildPridayMutualText,
   mapPridayRecordToChatMessage,
 } from '../ogonek/priday-system-chat.ts'
-import type { ChatMessage } from '../ogonek/types.ts'
+import {
+  extractDayNumberFromTarget,
+  parsePostAuthorIdFromTarget,
+  legacyTargetFromScoped,
+} from '../ogonek/comments.ts'
+import { getInitials } from '../ogonek/initials.ts'
+import type { ChatMessage, Comment } from '../ogonek/types.ts'
 
 export interface ProfileRecord {
   id: string
@@ -52,6 +58,7 @@ export interface ProfileRecord {
   is_hidden_from_search?: boolean
   allow_messages_from?: 'everyone' | 'friends' | 'nobody'
   allow_group_invites_from?: 'friends' | 'nobody'
+  last_seen_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -93,6 +100,7 @@ export function mapProfileRecord(row: any): ProfileRecord {
     is_hidden_from_search: isProfileHiddenFromSearch(row),
     allow_messages_from: resolveAllowMessagesFrom(row),
     allow_group_invites_from: resolveAllowGroupInvitesFrom(row),
+    last_seen_at: row.last_seen_at || null,
     tour_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
     onboarding_completed: row.tour_completed === true || row.settings?.tour_completed === true || row.onboarding_completed === true,
   } as ProfileRecord
@@ -1111,8 +1119,370 @@ export async function toggleReaction(params: {
   }
 }
 
+const DEMO_COMMENT_AUTHORS = new Set(['Priday поддержки', 'Огонёк поддержки'])
+
+function isLegacyDemoCommentRow(row: any): boolean {
+  if (!row || typeof row !== 'object') return true
+  if (row.persona === 'support') return true
+  if (typeof row.template === 'string' && row.template.trim().length > 0) return true
+  if (typeof row.author === 'string' && DEMO_COMMENT_AUTHORS.has(row.author.trim())) return true
+  return false
+}
+
+function mapCommentRowToDomain(
+  row: any,
+  prof: ProfileRecord | null | undefined,
+  likeStats: { count: number; likedByMe: boolean } | null,
+  likesTableAvailable: boolean,
+  viewerId?: string | null,
+  fallbackPostAuthorId?: string | null
+): Comment {
+  const authorId: string | null = row.user_id || row.author_id || null
+  const displayName = prof?.display_name || prof?.username || row.author || 'Пользователь'
+  const username = prof?.username || null
+  const resolvedTarget = String(row.target_key || '')
+  const parsedOwner = parsePostAuthorIdFromTarget(resolvedTarget)
+
+  return {
+    id: String(row.id || row.client_id),
+    parentId: row.parent_id || row.parent_client_id || null,
+    authorId,
+    author: displayName,
+    username,
+    avatarUrl: prof?.avatar_image || prof?.avatar_url || null,
+    avatarColor: prof?.avatar_color || '#FF5C00',
+    verified: Boolean(prof?.verified),
+    postAuthorId: row.post_author_id || parsedOwner || fallbackPostAuthorId || null,
+    initials: row.initials || getInitials(displayName, username || 'user'),
+    text: String(row.text || ''),
+    createdAt: row.created_at || new Date().toISOString(),
+    likes: likesTableAvailable
+      ? (likeStats?.count ?? 0)
+      : Math.max(0, Number(row.likes ?? 0)),
+    likedByMe: likesTableAvailable
+      ? Boolean(likeStats?.likedByMe)
+      : Boolean(row.liked_by_me),
+    isMine: Boolean(viewerId && authorId && authorId === viewerId),
+  }
+}
+
 /**
- * Добавить комментарий
+ * Загрузить реальные комментарии и лайки комментариев из Supabase
+ * сразу для пачки целевых объектов (`u:<uid>:day:<n>`, `day:<n>`, `post:<id>` и т.д.).
+ */
+export async function fetchCommentsForTargets(
+  targets: string[],
+  viewerId?: string | null,
+  postAuthorHintByTarget?: Record<string, string | null>
+): Promise<{ ok: boolean; commentsByTarget: Record<string, Comment[]>; error?: string }> {
+  const cleanTargets = Array.from(new Set(targets.filter((t) => typeof t === 'string' && t.trim().length > 0)))
+  if (cleanTargets.length === 0) return { ok: true, commentsByTarget: {} }
+
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, commentsByTarget: {}, error: 'База данных не подключена' }
+
+  const queryKeys = new Set<string>()
+  const legacyToScoped = new Map<string, Array<{ canonical: string; ownerId: string | null }>>()
+
+  for (const canonical of cleanTargets) {
+    queryKeys.add(canonical)
+    const legacy = legacyTargetFromScoped(canonical)
+    if (legacy) {
+      queryKeys.add(legacy)
+      const ownerId = parsePostAuthorIdFromTarget(canonical)
+      const list = legacyToScoped.get(legacy) ?? []
+      list.push({ canonical, ownerId })
+      legacyToScoped.set(legacy, list)
+    }
+  }
+
+  const { data: rows, error } = await supabase
+    .from('comments')
+    .select('*')
+    .in('target_key', Array.from(queryKeys))
+    .order('created_at', { ascending: true })
+
+  if (error) {
+    return { ok: false, commentsByTarget: {}, error: error.message }
+  }
+
+  const validRows = (Array.isArray(rows) ? rows : []).filter((r) => !isLegacyDemoCommentRow(r))
+  const commentUuids = Array.from(
+    new Set(validRows.map((r) => String(r.id || '')).filter((id) => UUID_REGEX.test(id)))
+  )
+  const authorIds = Array.from(
+    new Set(
+      validRows
+        .map((r) => String(r.user_id || r.author_id || ''))
+        .filter((id) => UUID_REGEX.test(id))
+    )
+  )
+
+  let likesTableAvailable = false
+  const likesMap = new Map<string, { count: number; likedByMe: boolean }>()
+
+  const [profilesMap, likesRes] = await Promise.all([
+    authorIds.length > 0 ? getProfilesByIds(authorIds) : Promise.resolve({} as Record<string, ProfileRecord>),
+    commentUuids.length > 0
+      ? supabase
+          .from('comment_likes')
+          .select('comment_id, user_id')
+          .in('comment_id', commentUuids)
+      : Promise.resolve({ data: [], error: null } as any),
+  ])
+
+  if (!likesRes?.error && Array.isArray(likesRes?.data)) {
+    likesTableAvailable = true
+    for (const row of likesRes.data) {
+      const cid = String(row.comment_id || '')
+      if (!cid) continue
+      const entry = likesMap.get(cid) ?? { count: 0, likedByMe: false }
+      entry.count += 1
+      if (viewerId && row.user_id === viewerId) {
+        entry.likedByMe = true
+      }
+      likesMap.set(cid, entry)
+    }
+  }
+
+  const result: Record<string, Comment[]> = {}
+  for (const t of cleanTargets) {
+    result[t] = []
+  }
+
+  const canonicalSet = new Set(cleanTargets)
+
+  for (const row of validRows) {
+    const rawKey = String(row.target_key || '')
+    let destination: string | null = null
+
+    if (canonicalSet.has(rawKey)) {
+      destination = rawKey
+    } else {
+      const candidates = legacyToScoped.get(rawKey)
+      if (candidates && candidates.length > 0) {
+        const rowOwner = row.post_author_id || row.user_id || null
+        const matched = candidates.find((c) => c.ownerId && rowOwner && c.ownerId === rowOwner)
+        if (matched) destination = matched.canonical
+      }
+    }
+
+    if (!destination) continue
+
+    const authorUid = row.user_id || row.author_id || null
+    const prof = (authorUid && (profilesMap[authorUid] || getCachedProfileSync(authorUid))) || null
+    const likeStats = likesMap.get(String(row.id)) ?? null
+    const mapped = mapCommentRowToDomain(
+      row,
+      prof,
+      likeStats,
+      likesTableAvailable,
+      viewerId,
+      postAuthorHintByTarget?.[destination] ?? null
+    )
+    if (!result[destination]) result[destination] = []
+    if (!result[destination].some((c) => c.id === mapped.id)) {
+      result[destination].push(mapped)
+    }
+  }
+
+  return { ok: true, commentsByTarget: result }
+}
+
+/**
+ * Создать реальный комментарий или ответ в Supabase `public.comments`.
+ */
+export async function createCommentInDb(params: {
+  userId?: string | null
+  targetKey: string
+  text: string
+  parentId?: string | null
+  postAuthorId?: string | null
+  authorName?: string
+  initials?: string
+}): Promise<{ ok: boolean; comment?: Comment; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
+  const trimmed = (params.text || '').trim().slice(0, 600)
+  if (!trimmed) return { ok: false, error: 'Текст комментария пустой' }
+
+  let authUid = params.userId && UUID_REGEX.test(params.userId) ? params.userId : null
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (sessionData?.session?.user?.id) {
+      authUid = sessionData.session.user.id
+    }
+  } catch {}
+
+  if (!authUid || !UUID_REGEX.test(authUid)) {
+    return { ok: false, error: 'Войдите в аккаунт, чтобы оставлять комментарии' }
+  }
+
+  const parsedTargetOwner = parsePostAuthorIdFromTarget(params.targetKey)
+  const effectivePostAuthorId =
+    params.postAuthorId && UUID_REGEX.test(params.postAuthorId)
+      ? params.postAuthorId
+      : parsedTargetOwner && UUID_REGEX.test(parsedTargetOwner)
+        ? parsedTargetOwner
+        : null
+
+  const parentUuid = params.parentId && UUID_REGEX.test(params.parentId) ? params.parentId : null
+  const insertRow: Record<string, any> = {
+    user_id: authUid,
+    target_key: params.targetKey,
+    day_client_id: extractDayNumberFromTarget(params.targetKey),
+    parent_id: parentUuid,
+    parent_client_id: params.parentId || null,
+    post_author_id: effectivePostAuthorId,
+    author: (params.authorName || 'Пользователь').slice(0, 80),
+    initials: (params.initials || 'П').slice(0, 4),
+    text: trimmed,
+    likes: 0,
+    liked_by_me: false,
+    is_mine: true,
+  }
+
+  const { data, error } = await supabase
+    .from('comments')
+    .insert(insertRow)
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    return { ok: false, error: error?.message || 'Не удалось сохранить комментарий' }
+  }
+
+  const prof = getCachedProfileSync(authUid) || (await getProfile(authUid).catch(() => null))
+  const mapped = mapCommentRowToDomain(
+    data,
+    prof,
+    { count: 0, likedByMe: false },
+    true,
+    authUid,
+    effectivePostAuthorId
+  )
+  return { ok: true, comment: mapped }
+}
+
+/**
+ * Поставить или снять лайк комментария в `public.comment_likes`.
+ */
+export async function toggleCommentLikeInDb(params: {
+  userId?: string | null
+  commentId: string
+  willLike: boolean
+}): Promise<{ ok: boolean; liked?: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
+  if (!params.commentId || !UUID_REGEX.test(params.commentId)) {
+    return { ok: false, error: 'Некорректный ID комментария' }
+  }
+
+  let authUid = params.userId && UUID_REGEX.test(params.userId) ? params.userId : null
+  try {
+    const { data: sessionData } = await supabase.auth.getSession()
+    if (sessionData?.session?.user?.id) {
+      authUid = sessionData.session.user.id
+    }
+  } catch {}
+
+  if (!authUid || !UUID_REGEX.test(authUid)) {
+    return { ok: false, error: 'Войдите в аккаунт, чтобы ставить лайки' }
+  }
+
+  if (params.willLike) {
+    const { error } = await supabase
+      .from('comment_likes')
+      .insert({ comment_id: params.commentId, user_id: authUid })
+
+    if (error) {
+      if (error.code === '23505') return { ok: true, liked: true }
+      return { ok: false, error: error.message }
+    }
+    return { ok: true, liked: true }
+  }
+
+  const { error } = await supabase
+    .from('comment_likes')
+    .delete()
+    .eq('comment_id', params.commentId)
+    .eq('user_id', authUid)
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+  return { ok: true, liked: false }
+}
+
+/**
+ * Удалить комментарий из Supabase `public.comments`.
+ * RLS разрешает удаление автору комментария И владельцу поста (Day).
+ */
+export async function deleteCommentInDb(params: {
+  commentId: string
+}): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
+
+  if (!params.commentId || !UUID_REGEX.test(params.commentId)) {
+    return { ok: false, error: 'Некорректный ID комментария' }
+  }
+
+  const { data, error } = await supabase
+    .from('comments')
+    .delete()
+    .eq('id', params.commentId)
+    .select('id')
+
+  if (error) {
+    return { ok: false, error: error.message }
+  }
+  if (!Array.isArray(data) || data.length === 0) {
+    return { ok: false, error: 'Недостаточно прав или комментарий уже удалён' }
+  }
+  return { ok: true }
+}
+
+/**
+ * Подписка на Realtime-обновления комментариев и лайков к ним.
+ */
+export function subscribeToCommentsRealtime(
+  onEvent: (targetHint?: string | null) => void
+): () => void {
+  const supabase = getSupabase()
+  if (!supabase) return () => {}
+
+  const channelName = `comments_rt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`
+  const channel = supabase
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'comments' },
+      (payload: any) => {
+        const key = (payload.new as any)?.target_key || (payload.old as any)?.target_key || null
+        onEvent(key)
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'comment_likes' },
+      () => {
+        onEvent(null)
+      }
+    )
+    .subscribe()
+
+  return () => {
+    try {
+      void supabase.removeChannel(channel)
+    } catch {}
+  }
+}
+
+/**
+ * Добавить комментарий (совместимый алиас поверх createCommentInDb)
  */
 export async function addComment(params: {
   userId: string
@@ -1121,41 +1491,32 @@ export async function addComment(params: {
   text: string
   parentId?: string
 }): Promise<{ ok: boolean; comment?: any; error?: string }> {
-  const supabase = getSupabase()
-  if (!supabase) return { ok: false, error: 'База данных не подключена' }
-
-  const { data, error } = await supabase
-    .from('comments')
-    .insert({
-      user_id: params.userId,
-      target_type: params.targetType,
-      target_id: params.targetId,
-      text: params.text.trim(),
-      parent_id: params.parentId || null,
-    })
-    .select('*, author:profiles!comments_user_id_fkey(*)')
-    .single()
-
-  if (error || !data) return { ok: false, error: error?.message || 'Ошибка отправки комментария' }
-  return { ok: true, comment: data }
+  const targetKey =
+    params.targetType === 'day'
+      ? `day:${params.targetId}`
+      : params.targetType === 'post'
+        ? `post:${params.targetId}`
+        : params.targetId
+  return createCommentInDb({
+    userId: params.userId,
+    targetKey,
+    text: params.text,
+    parentId: params.parentId,
+  })
 }
 
 /**
  * Загрузить комментарии для объекта
  */
 export async function getComments(targetType: 'entry' | 'post' | 'day', targetId: string): Promise<any[]> {
-  const supabase = getSupabase()
-  if (!supabase) return []
-
-  const { data, error } = await supabase
-    .from('comments')
-    .select('*, author:profiles!comments_user_id_fkey(*)')
-    .eq('target_type', targetType)
-    .eq('target_id', targetId)
-    .order('created_at', { ascending: true })
-
-  if (error || !data) return []
-  return data
+  const targetKey =
+    targetType === 'day'
+      ? `day:${targetId}`
+      : targetType === 'post'
+        ? `post:${targetId}`
+        : targetId
+  const res = await fetchCommentsForTargets([targetKey])
+  return res.commentsByTarget[targetKey] ?? []
 }
 
 /**

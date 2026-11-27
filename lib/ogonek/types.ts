@@ -93,6 +93,8 @@ export type DayStatus = 'normal' | 'missed'
 
 export type Day = {
   id: number
+  /** UUID записи в таблице public.days Supabase (если синхронизирована) */
+  cloudId?: string
   title: string
   tags: string[]
   prides: PrideEntry[]
@@ -157,11 +159,23 @@ export type Comment = {
   id: string
   /** Родительский комментарий для дерева ответов; null — корневой */
   parentId: string | null
-  /** Имя автора: пользователь или «Priday поддержки» */
+  /** UUID автора комментария (profiles.id) */
+  authorId?: string | null
+  /** Имя автора (из профиля) */
   author: string
+  /** Username автора без @ */
+  username?: string | null
+  /** URL аватара автора */
+  avatarUrl?: string | null
+  /** Цвет аватара-заглушки */
+  avatarColor?: string | null
+  /** Синяя галочка верификации автора */
+  verified?: boolean
+  /** UUID владельца поста (Day), чтобы он мог удалять чужие комментарии под своим постом */
+  postAuthorId?: string | null
   /** Инициалы/глиф для аватара */
   initials: string
-  /** Текст поддержки */
+  /** Текст комментария */
   text: string
   /** ISO-время создания */
   createdAt: string
@@ -169,12 +183,11 @@ export type Comment = {
   likes: number
   /** Поставил ли лайк текущий пользователь */
   likedByMe: boolean
-  /** Комментарий создан пользователем (его можно удалить) */
+  /** Комментарий создан текущим пользователем */
   isMine: boolean
-  /** Быстрый шаблон, которым был создан комментарий (если был) */
+  /** Legacy-поля (опционально для совместимости старого локального кэша) */
   template?: string | null
-  /** Роль автора */
-  persona: CommentPersona
+  persona?: CommentPersona
 }
 
 /**

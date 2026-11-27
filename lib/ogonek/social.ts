@@ -41,6 +41,7 @@ export interface SocialUser {
   isHiddenFromSearch?: boolean
   allowMessagesFrom?: 'everyone' | 'friends' | 'nobody'
   allowGroupInvitesFrom?: 'friends' | 'nobody'
+  lastSeenAt?: string | null
 }
 
 export interface FriendRequestItem {
@@ -53,6 +54,8 @@ export interface FriendRequestItem {
 
 export interface FriendFeedPost {
   id: string
+  dayUuid?: string | null
+  dayNumber?: number | null
   userId: string
   username: string
   displayName: string
@@ -60,6 +63,7 @@ export interface FriendFeedPost {
   avatarColor?: string | null
   verified: boolean
   streak: number
+  lastSeenAt?: string | null
   dayDate: string
   title: string
   visibility: 'public' | 'friends'
@@ -537,6 +541,7 @@ export async function getFriendsListApi(
             isHiddenFromSearch: p ? isProfileHiddenFromSearch(p) : false,
             allowMessagesFrom: p ? resolveAllowMessagesFrom(p) : 'everyone',
             allowGroupInvitesFrom: p ? resolveAllowGroupInvitesFrom(p) : 'friends',
+            lastSeenAt: p?.last_seen_at || null,
           }
         })
       }

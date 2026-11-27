@@ -203,6 +203,8 @@ export function ExplorePostModal({
         <div className="xh-post__comments">
           <CommentsThread
             target={`post:${post.id}`}
+            postAuthorId={author?.id || post.authorId || null}
+            onOpenProfile={onOpenUser}
             variant="day"
             defaultOpen
             soundEnabled={soundEnabled}

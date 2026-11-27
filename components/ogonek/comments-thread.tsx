@@ -1,106 +1,93 @@
 'use client'
 
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import { ChevronDown, Heart, MessageCircle, Reply, Send, Sparkles, Trash2 } from 'lucide-react'
-import { useCallback, useId, useMemo, useState, type ReactNode } from 'react'
+import { ArrowUp, Heart, Loader2, Reply, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { ChatGifModal } from './messenger/chat-gif-modal'
 import {
   MAX_COMMENT_LENGTH,
-  SUPPORT_PERSONAS,
   buildCommentTree,
+  canDeleteComment,
   formatCommentStamp,
   formatRelativeTime,
-  templatesForScope,
+  parsePostAuthorIdFromTarget,
   type CommentNode,
-  type SupportTemplate,
 } from '@/lib/ogonek/comments'
-import type { CommentPersona } from '@/lib/ogonek/types'
+import { getInitials } from '@/lib/ogonek/initials'
+import { getCachedProfileSync, subscribeToCommentsRealtime } from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from './tooltip'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
-  /** Цель обсуждения: "day:12" | "day:12:pride:0" */
+  /** Цель обсуждения: "u:<ownerUuid>:day:12" | "day:12" | "post:<id>" */
   target: string
-  /** Контекст блока — влияет на подписи и набор быстрых шаблонов */
+  /** UUID владельца поста (Day), чтобы он видел кнопку удаления под любыми комментариями */
+  postAuthorId?: string | null
+  /** Переход в профиль автора комментария при клике по аватару или имени */
+  onOpenProfile?: (userId: string) => void
+  /** Контекст блока */
   variant?: 'day' | 'pride'
-  /** Открыт ли блок при первом рендере */
+  /** Оставлен для обратной совместимости пропов; лента открывается сразу в 1 клик */
   defaultOpen?: boolean
-  /** Компактный режим для строк внутри дня */
+  /** Компактный режим внутри карточки гордости */
   compact?: boolean
   soundEnabled?: boolean
   onNotify?: (msg: string) => void
 }
 
-const PERSONA_ORDER: CommentPersona[] = ['me', 'support']
-
-/** Аватар автора комментария: пользователь — синий, поддержка — тёплый градиент */
-function CommentAvatar({
-  persona,
-  initials,
-  size = 30,
-}: {
-  persona: CommentPersona
-  initials: string
-  size?: number
-}) {
-  const isSupport = persona === 'support'
-  return (
-    <div
-      className="flex-none grid place-items-center rounded-full font-bold select-none"
-      style={{
-        width: size,
-        height: size,
-        fontSize: size <= 28 ? 11 : 12,
-        color: '#fff',
-        background: isSupport
-          ? 'linear-gradient(145deg, #ff6b35 0%, #ff8f4d 55%, #ffad5a 100%)'
-          : 'linear-gradient(145deg, #1d9bf0 0%, #1a8cd8 60%, #29384b 100%)',
-        boxShadow: isSupport
-          ? '0 0 0 1px rgba(255,107,53,0.35)'
-          : '0 0 0 1px rgba(29,155,240,0.35)',
-      }}
-      aria-hidden="true"
-    >
-      {initials}
-    </div>
-  )
-}
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 /**
- * КОММЕНТАРИИ ПОДДЕРЖКИ
- * Разворачиваемый блок под днём или отдельной гордостью:
- *  • дерево ответов (threaded replies);
- *  • лайки на комментарии;
- *  • быстрые шаблоны поддержки («Горжусь тобой!», «Мощный шаг!»);
- *  • сохранение всего в use-ogonek-store.ts.
+ * КОММЕНТАРИИ В ЧИСТОМ СТИЛЕ X.COM / PRIDAY (PURE BLACK)
+ *  • Без промежуточных полосок-тогглеров (открывается сразу в 1 клик по 💬);
+ *  • Без быстрых шаблонов, переключателя «Я / Ты» и фейковых ботов;
+ *  • 100% синхронизация с Supabase (comments + comment_likes + Realtime);
+ *  • Удалять может автор комментария (свои) И владелец поста (любые под своим постом).
  */
 export function CommentsThread({
   target,
-  variant = 'day',
-  defaultOpen = false,
+  postAuthorId = null,
+  onOpenProfile,
   compact = false,
   soundEnabled = true,
   onNotify,
 }: Props) {
-  const { state, addComment, addReply, toggleCommentLike, deleteComment } = useOgonekStore()
+  const {
+    state,
+    currentUser,
+    loadCommentsForTargets,
+    addComment,
+    addReply,
+    toggleCommentLike,
+    deleteComment,
+  } = useOgonekStore()
   const uid = useId()
-  const reduce = useReducedMotion()
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const [open, setOpen] = useState(defaultOpen)
   const [draft, setDraft] = useState('')
-  const [persona, setPersona] = useState<CommentPersona>('me')
-  const [replyToId, setReplyToId] = useState<string | null>(null)
-  const [replyDraft, setReplyDraft] = useState('')
+  const [replyTo, setReplyTo] = useState<{
+    id: string
+    username: string | null
+    author: string
+  } | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({})
+  const [loadingInitial, setLoadingInitial] = useState(false)
   const [gifOpen, setGifOpen] = useState(false)
+
+  const viewerId = state.auth?.activeAccountId || currentUser?.id || null
+  const isSignedUuid = Boolean(viewerId && UUID_REGEX.test(viewerId))
+  const effectivePostAuthorId = postAuthorId || parsePostAuthorIdFromTarget(target) || null
 
   const comments = useMemo(
     () => state.comments?.[target] ?? [],
     [state.comments, target]
   )
   const tree = useMemo(() => buildCommentTree(comments), [comments])
-  const templates = useMemo(() => templatesForScope(variant), [variant])
-  const total = comments.length
+  const total = tree.length > 0 || comments.length > 0
+    ? buildCommentCount(tree)
+    : 0
 
   const notify = useCallback(
     (msg: string) => {
@@ -109,305 +96,302 @@ export function CommentsThread({
     [onNotify]
   )
 
-  const handleToggleOpen = useCallback(() => {
-    playClick(soundEnabled)
-    setOpen((prev) => {
-      const next = !prev
-      if (!next) {
-        setReplyToId(null)
-        setReplyDraft('')
-      }
-      return next
-    })
-  }, [soundEnabled])
+  // Подгружаем реальные комментарии из Supabase при открытии треда + слушаем Realtime
+  useEffect(() => {
+    if (!target || !isSignedUuid) return
+    let cancelled = false
 
-  /** Быстрый шаблон: один тап — тёплое слово уже под записью */
-  const postTemplate = useCallback(
-    (template: SupportTemplate, parentId: string | null = null) => {
-      const created = addComment(target, template.text, {
-        parentId,
-        persona: 'support',
-        template: template.text,
+    if ((state.comments?.[target]?.length ?? 0) === 0) {
+      setLoadingInitial(true)
+    }
+
+    const hints = { [target]: effectivePostAuthorId }
+    void loadCommentsForTargets([target], hints)
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoadingInitial(false)
       })
-      if (!created) return
-      playSuccess(soundEnabled)
-      notify(`${template.emoji} ${template.text}`)
-      if (parentId) {
-        setReplyToId(null)
-        setReplyDraft('')
+
+    let rtTimer: ReturnType<typeof setTimeout> | null = null
+    const unsubscribe = subscribeToCommentsRealtime(() => {
+      if (rtTimer) clearTimeout(rtTimer)
+      rtTimer = setTimeout(() => {
+        if (!cancelled) {
+          void loadCommentsForTargets([target], hints).catch(() => {})
+        }
+      }, 220)
+    })
+
+    return () => {
+      cancelled = true
+      if (rtTimer) clearTimeout(rtTimer)
+      unsubscribe()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [target, isSignedUuid, effectivePostAuthorId])
+
+  const handleNavigateProfile = useCallback(
+    (authorId?: string | null) => {
+      if (!authorId) return
+      playClick(soundEnabled)
+      if (onOpenProfile) {
+        onOpenProfile(authorId)
+        return
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('ogonek:navigate-view', {
+            detail: { view: 'profile', userId: authorId },
+          })
+        )
       }
     },
-    [addComment, target, soundEnabled, notify]
+    [onOpenProfile, soundEnabled]
   )
 
-  const submitMain = useCallback(() => {
-    const text = draft.trim()
-    if (!text) return
-    const created = addComment(target, text, { persona })
-    if (!created) return
-    playSuccess(soundEnabled)
-    setDraft('')
-    notify(persona === 'support' ? '✦ Поддержка добавлена!' : 'Комментарий добавлен!')
-  }, [draft, addComment, target, persona, soundEnabled, notify])
-
-  const submitReply = useCallback(
-    (parentId: string) => {
-      const text = replyDraft.trim()
-      if (!text) return
-      const created = addReply(target, parentId, text, persona)
-      if (!created) return
-      playSuccess(soundEnabled)
-      setReplyDraft('')
-      setReplyToId(null)
-      notify('Ответ отправлен!')
+  const handleReplyClick = useCallback(
+    (node: CommentNode) => {
+      playClick(soundEnabled)
+      const mention = node.username ? `@${node.username.replace(/^@/, '')} ` : ''
+      setReplyTo({
+        id: node.id,
+        username: node.username || null,
+        author: node.author,
+      })
+      setDraft((prev) => {
+        const clean = prev.trimStart()
+        if (mention && !clean.startsWith(mention.trim())) {
+          return clean ? `${mention}${clean}` : mention
+        }
+        return prev
+      })
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 20)
     },
-    [replyDraft, addReply, target, persona, soundEnabled, notify]
+    [soundEnabled]
   )
+
+  const handleSubmit = useCallback(async () => {
+    const trimmed = draft.trim()
+    if (!trimmed || submitting) return
+
+    setSubmitting(true)
+    try {
+      const res = replyTo
+        ? await addReply(target, replyTo.id, trimmed, effectivePostAuthorId)
+        : await addComment(target, trimmed, { postAuthorId: effectivePostAuthorId })
+
+      if (!res?.ok) {
+        notify(res?.error ? `Ошибка: ${res.error}` : 'Не удалось отправить комментарий')
+        return
+      }
+
+      playSuccess(soundEnabled)
+      setDraft('')
+      setReplyTo(null)
+      notify(replyTo ? 'Ответ опубликован' : 'Комментарий опубликован')
+    } finally {
+      setSubmitting(false)
+    }
+  }, [draft, submitting, replyTo, addReply, addComment, target, effectivePostAuthorId, notify, soundEnabled])
 
   const handleLike = useCallback(
-    (commentId: string) => {
-      const nowLiked = toggleCommentLike(target, commentId)
+    async (commentId: string) => {
       playClick(soundEnabled)
-      notify(nowLiked ? '❤️ Лайк поставлен' : 'Лайк снят')
+      const res = await toggleCommentLike(target, commentId)
+      if (!res?.ok) {
+        notify(res?.error ? `Ошибка лайка: ${res.error}` : 'Не удалось поставить лайк')
+      }
     },
     [toggleCommentLike, target, soundEnabled, notify]
   )
 
   const handleDelete = useCallback(
-    (commentId: string) => {
+    async (commentId: string) => {
+      if (deletingIds[commentId]) return
       playClick(soundEnabled)
-      deleteComment(target, commentId)
-      if (replyToId === commentId) {
-        setReplyToId(null)
-        setReplyDraft('')
+      setDeletingIds((prev) => ({ ...prev, [commentId]: true }))
+      try {
+        const res = await deleteComment(target, commentId)
+        if (!res?.ok) {
+          notify(res?.error ? `Ошибка удаления: ${res.error}` : 'Не удалось удалить комментарий')
+          return
+        }
+        if (replyTo?.id === commentId) {
+          setReplyTo(null)
+        }
+        notify('Комментарий удалён')
+      } finally {
+        setDeletingIds((prev) => {
+          const next = { ...prev }
+          delete next[commentId]
+          return next
+        })
       }
-      notify('Комментарий удалён')
     },
-    [deleteComment, target, soundEnabled, notify, replyToId]
+    [deletingIds, deleteComment, target, notify, replyTo, soundEnabled]
   )
 
-  const openReply = useCallback(
-    (commentId: string) => {
-      playClick(soundEnabled)
-      setReplyToId((prev) => (prev === commentId ? null : commentId))
-      setReplyDraft('')
-    },
-    [soundEnabled]
-  )
+  // Данные текущего пользователя для аватарки у поля ввода
+  const cachedMe = viewerId ? getCachedProfileSync(viewerId) : null
+  const myDisplayName =
+    currentUser?.displayName || cachedMe?.display_name || state.profile?.displayName || 'Ты'
+  const myUsername = currentUser?.username || cachedMe?.username || state.profile?.username || ''
+  const myAvatarUrl =
+    currentUser?.avatarImage ||
+    cachedMe?.avatar_image ||
+    cachedMe?.avatar_url ||
+    state.profile?.avatarImage ||
+    (state.profile as any)?.avatar_url ||
+    null
+  const myAvatarColor =
+    currentUser?.avatarColor || cachedMe?.avatar_color || state.profile?.avatarColor || '#FF5C00'
 
-  /** Persona-переключатель (используется в композерах) */
-  const renderPersonaSwitch = (size: 'sm' | 'xs') => (
-    <div className="flex items-center gap-1" role="group" aria-label="От чьего имени">
-      {PERSONA_ORDER.map((p) => {
-        const meta = SUPPORT_PERSONAS[p]
-        const active = persona === p
-        return (
-          <Tooltip key={p} content={meta.hint} side="top">
-            <button
-              type="button"
-              aria-pressed={active}
-              onClick={() => {
-                playClick(soundEnabled)
-                setPersona(p)
-              }}
-              className={`inline-flex items-center gap-1 rounded-full border transition-colors duration-150 ${
-                size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-1.5 py-0.5 text-[10px]'
-              } font-bold ${
-                active
-                  ? p === 'support'
-                    ? 'border-[#ff6b35] bg-[#ff6b35]/15 text-[#ffad5a]'
-                    : 'border-[#1d9bf0] bg-[#1d9bf0]/15 text-[#5cb8f5]'
-                  : 'border-[var(--line)] text-[var(--muted)] hover:text-[var(--text)] hover:border-[var(--line-strong,#4a4f54)]'
-              }`}
-            >
-              <span aria-hidden="true">{meta.initials}</span>
-              {meta.label}
-            </button>
-          </Tooltip>
-        )
-      })}
-    </div>
-  )
-
-  /** Рекурсивный рендер комментария с ответами */
   const renderComment = (node: CommentNode, depth: number): ReactNode => {
-    const isReplying = replyToId === node.id
-    const canIndent = depth < 2
+    const canIndent = depth < 1
+    const showDelete = canDeleteComment(node, viewerId, effectivePostAuthorId)
+    const isDeleting = Boolean(deletingIds[node.id])
+    const profileClickable = Boolean(node.authorId)
+    const cachedAuthor = node.authorId ? getCachedProfileSync(node.authorId) : null
+    const avatarUrl = node.avatarUrl || cachedAuthor?.avatar_image || cachedAuthor?.avatar_url || null
+    const avatarColor = node.avatarColor || cachedAuthor?.avatar_color || '#FF5C00'
+    const displayName = cachedAuthor?.display_name || node.author || 'Пользователь'
+    const username = cachedAuthor?.username || node.username || null
+    const verified = Boolean(node.verified ?? cachedAuthor?.verified)
 
     return (
-      <div key={node.id}>
-        <div className="flex gap-2 pt-2.5">
-          <CommentAvatar persona={node.persona} initials={node.initials} size={compact ? 26 : 30} />
+      <div
+        key={node.id}
+        data-comment-id={node.id}
+        className={depth === 0 ? 'py-3 first:pt-2 last:pb-1' : 'pt-2.5'}
+      >
+        <div className="flex items-start gap-2.5">
+          <UserAvatar
+            avatarUrl={avatarUrl}
+            avatarColor={avatarColor}
+            displayName={displayName}
+            username={username}
+            initials={node.initials || getInitials(displayName, username || 'u')}
+            size={compact || depth > 0 ? 26 : 30}
+            onClick={profileClickable ? () => handleNavigateProfile(node.authorId) : undefined}
+          />
+
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[13px] font-bold text-[var(--text)] tracking-[-0.01em]">
-                {node.author}
-              </span>
-              {node.persona === 'support' && (
-                <span className="text-[10px] px-1.5 py-[1px] rounded-full font-bold bg-[#ff6b35]/15 text-[#ffad5a]">
-                  поддержка
+            <div className="flex items-center gap-1.5 flex-wrap leading-tight">
+              {profileClickable ? (
+                <button
+                  type="button"
+                  onClick={() => handleNavigateProfile(node.authorId)}
+                  className="text-[13px] font-bold text-[#e7e9ea] hover:underline truncate cursor-pointer"
+                >
+                  {displayName}
+                </button>
+              ) : (
+                <span className="text-[13px] font-bold text-[#e7e9ea] truncate">
+                  {displayName}
                 </span>
               )}
+
+              {verified && <VerifiedBadge size="xs" />}
+
+              {username && (
+                <span className="text-[12px] text-[#71767b] truncate">
+                  @{username.replace(/^@/, '')}
+                </span>
+              )}
+
               <Tooltip content={formatCommentStamp(node.createdAt)} side="top">
-                <span className="text-[11px] text-[var(--muted)]">
+                <span className="text-[12px] text-[#71767b] shrink-0">
                   · {formatRelativeTime(node.createdAt)}
                 </span>
               </Tooltip>
             </div>
 
             {node.text.includes('![](') || (node.text.includes('http') && node.text.includes('.gif')) ? (
-              <div className="space-y-1.5 mt-0.5">
+              <div className="space-y-1.5 mt-1">
                 {node.text.replace(/!\[\]\([^)]+\)/g, '').trim() && (
-                  <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] whitespace-pre-wrap break-words">
+                  <p className="text-[14px] leading-[20px] text-[#e7e9ea] whitespace-pre-wrap break-words">
                     {node.text.replace(/!\[\]\([^)]+\)/g, '').trim()}
                   </p>
                 )}
                 {(() => {
-                  const match = node.text.match(/!\[\]\(([^)]+)\)/) || node.text.match(/(https?:\/\/[^\s]+(?:\.gif|\/giphy\.gif)[^\s]*)/i)
-                  const url = match ? match[1] : null
-                  if (!url) return null
+                  const match =
+                    node.text.match(/!\[\]\(([^)]+)\)/) ||
+                    node.text.match(/(https?:\/\/[^\s]+(?:\.gif|\/giphy\.gif)[^\s]*)/i)
+                  const gifUrl = match ? match[1] : null
+                  if (!gifUrl) return null
                   return (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={url}
+                      src={gifUrl}
                       alt="GIF"
-                      className="max-h-48 rounded-xl object-contain border border-white/10"
+                      className="max-h-48 rounded-xl object-contain border border-white/[0.1]"
                       loading="lazy"
                     />
                   )
                 })()}
               </div>
             ) : (
-              <p className="text-[14px] leading-[20px] text-[var(--text)] tracking-[-0.01em] mt-0.5 whitespace-pre-wrap break-words">
+              <p className="text-[14px] leading-[20px] text-[#e7e9ea] mt-0.5 whitespace-pre-wrap break-words">
                 {node.text}
               </p>
             )}
 
-            {node.template && (
-              <span className="inline-flex items-center gap-1 mt-1 text-[10px] text-[var(--muted)] border border-[var(--line)] rounded-full px-2 py-[1px]">
-                <Sparkles size={10} /> шаблон
-              </span>
-            )}
+            {/* Действия комментария: лайк, ответить, удалить */}
+            <div className="flex items-center gap-1 mt-1 -ml-2">
+              <button
+                type="button"
+                onClick={() => void handleLike(node.id)}
+                aria-pressed={node.likedByMe}
+                aria-label={node.likedByMe ? 'Убрать лайк' : 'Лайкнуть комментарий'}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-colors cursor-pointer ${
+                  node.likedByMe
+                    ? 'text-[#f91880]'
+                    : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
+                }`}
+              >
+                <Heart size={14} fill={node.likedByMe ? 'currentColor' : 'none'} />
+                {node.likes > 0 && <span className="tabular-nums font-semibold">{node.likes}</span>}
+              </button>
 
-            {/* Действия комментария */}
-            <div className="flex items-center gap-0.5 mt-1.5 -ml-1.5">
-              <Tooltip content={node.likedByMe ? 'Убрать лайк' : 'Лайкнуть'} side="top">
-                <button
-                  type="button"
-                  onClick={() => handleLike(node.id)}
-                  aria-pressed={node.likedByMe}
-                  aria-label={node.likedByMe ? 'Убрать лайк' : 'Лайкнуть комментарий'}
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-colors duration-150 ${
-                    node.likedByMe
-                      ? 'text-[#f91880]'
-                      : 'text-[#71767b] hover:text-[#f91880] hover:bg-[#f91880]/10'
-                  }`}
-                >
-                  <Heart size={14} fill={node.likedByMe ? 'currentColor' : 'none'} />
-                  {node.likes > 0 && <span className="tabular-nums font-bold">{node.likes}</span>}
-                </button>
-              </Tooltip>
+              <button
+                type="button"
+                onClick={() => handleReplyClick(node)}
+                aria-label="Ответить на комментарий"
+                className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors cursor-pointer"
+              >
+                <Reply size={13} />
+                <span>Ответить</span>
+              </button>
 
-              <Tooltip content={isReplying ? 'Отменить ответ' : 'Ответить'} side="top">
-                <button
-                  type="button"
-                  onClick={() => openReply(node.id)}
-                  aria-expanded={isReplying}
-                  aria-label="Ответить на комментарий"
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] transition-colors duration-150 ${
-                    isReplying
-                      ? 'text-[#1d9bf0] bg-[#1d9bf0]/10'
-                      : 'text-[#71767b] hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10'
-                  }`}
-                >
-                  <Reply size={14} />
-                  <span>Ответить</span>
-                </button>
-              </Tooltip>
-
-              {node.isMine && (
+              {showDelete && (
                 <Tooltip content="Удалить комментарий" side="top">
                   <button
                     type="button"
-                    onClick={() => handleDelete(node.id)}
+                    disabled={isDeleting}
+                    onClick={() => void handleDelete(node.id)}
                     aria-label="Удалить комментарий"
-                    className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] text-[#71767b] hover:text-[#ff5058] hover:bg-[#ff5058]/10 transition-colors duration-150"
+                    className="inline-flex items-center justify-center rounded-full px-2 py-1 text-[12px] text-[#71767b] hover:text-[#f4212e] hover:bg-[#f4212e]/10 transition-colors cursor-pointer disabled:opacity-50"
                   >
-                    <Trash2 size={14} />
+                    {isDeleting ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={13} />
+                    )}
                   </button>
                 </Tooltip>
               )}
             </div>
 
-            {/* Форма ответа */}
-            <AnimatePresence initial={false}>
-              {isReplying && (
-                <motion.div
-                  key="reply-box"
-                  initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
-                  animate={reduce ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
-                  exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
-                  transition={{ duration: reduce ? 0 : 0.18, ease: 'easeOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-2 rounded-xl border border-[#1d9bf0]/40 bg-[#0f1419] p-2">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      {renderPersonaSwitch('xs')}
-                      <span className="text-[10px] text-[#71767b]">
-                        {replyDraft.length}/{MAX_COMMENT_LENGTH}
-                      </span>
-                    </div>
-                    <textarea
-                      autoFocus
-                      value={replyDraft}
-                      maxLength={MAX_COMMENT_LENGTH}
-                      rows={2}
-                      onChange={(e) => setReplyDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault()
-                          submitReply(node.id)
-                        }
-                        if (e.key === 'Escape') {
-                          setReplyToId(null)
-                          setReplyDraft('')
-                        }
-                      }}
-                      placeholder="Ответь тёплым словом…"
-                      className="w-full resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#1d9bf0] transition-colors"
-                    />
-                    <div className="flex items-center justify-between gap-2 mt-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setReplyToId(null)
-                          setReplyDraft('')
-                        }}
-                        className="text-[12px] text-[var(--muted)] hover:text-[var(--text)] transition-colors"
-                      >
-                        Отмена
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => submitReply(node.id)}
-                        disabled={!replyDraft.trim()}
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-bold transition-colors duration-150 ${
-                          replyDraft.trim()
-                            ? 'bg-[#1d9bf0] text-white hover:bg-[#1a8cd8]'
-                            : 'bg-[#1c1e22] text-[#71767b] cursor-not-allowed'
-                        }`}
-                      >
-                        <Send size={13} /> Ответить
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Дерево ответов */}
             {node.replies.length > 0 && (
-              <div className={canIndent ? 'cmt-replies' : 'cmt-replies-flat'}>
+              <div
+                className={
+                  canIndent
+                    ? 'mt-1.5 pl-3 border-l border-white/[0.1] space-y-1'
+                    : 'mt-1.5 space-y-1'
+                }
+              >
                 {node.replies.map((child) => renderComment(child, depth + 1))}
               </div>
             )}
@@ -418,166 +402,129 @@ export function CommentsThread({
   }
 
   return (
-    <div className="comment-thread" data-open={open}>
-      {/* Триггер разворачивания */}
-      <button
-        type="button"
-        onClick={handleToggleOpen}
-        aria-expanded={open}
-        aria-controls={`${uid}-comments`}
-        className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1.5 text-[13px] font-semibold transition-colors duration-150 ${
-          open
-            ? 'text-[#ffad5a] bg-[#ff6b35]/10'
-            : 'text-[#71767b] hover:text-[#ffad5a] hover:bg-[#ff6b35]/10'
-        }`}
-      >
-        <MessageCircle size={compact ? 14 : 16} />
-        <span>{total > 0 ? 'Поддержка' : 'Поддержать'}</span>
-        {total > 0 && (
-          <span
-            className={`text-[11px] font-bold tabular-nums rounded-full px-1.5 min-w-[18px] text-center ${
-              open ? 'bg-[#ff6b35]/25 text-[#ffad5a]' : 'bg-white/[0.06] text-[#71767b]'
+    <div
+      id={`${uid}-comments`}
+      data-testid="comments-thread"
+      className="comment-thread bg-black border-t border-white/[0.08] pt-3"
+    >
+      {/* Индикатор ответа на конкретный комментарий */}
+      {replyTo && (
+        <div className="flex items-center justify-between gap-2 mb-2 px-1 text-[12px] text-[#71767b]">
+          <span className="truncate">
+            Ответ{' '}
+            <span className="text-[#ff5a1f] font-semibold">
+              {replyTo.username ? `@${replyTo.username.replace(/^@/, '')}` : replyTo.author}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setReplyTo(null)}
+            className="text-[#71767b] hover:text-[#e7e9ea] p-0.5 rounded-full transition-colors cursor-pointer"
+            aria-label="Отменить ответ"
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
+
+      {/* Компактный инпут в стиле X.com Pure Black */}
+      <div className="flex items-center gap-2.5">
+        <UserAvatar
+          avatarUrl={myAvatarUrl}
+          avatarColor={myAvatarColor}
+          displayName={myDisplayName}
+          username={myUsername}
+          initials={getInitials(myDisplayName, myUsername)}
+          size={compact ? 28 : 32}
+        />
+
+        <div className="flex-1 flex items-center gap-1.5 rounded-full bg-white/[0.04] border border-white/[0.1] focus-within:border-[#ff5a1f]/60 pl-3.5 pr-1.5 py-1 transition-colors">
+          <textarea
+            ref={inputRef}
+            value={draft}
+            maxLength={MAX_COMMENT_LENGTH}
+            rows={1}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                void handleSubmit()
+              }
+              if (e.key === 'Escape' && replyTo) {
+                setReplyTo(null)
+              }
+            }}
+            placeholder={replyTo ? 'Написать ответ...' : 'Написать комментарий...'}
+            aria-label="Написать комментарий"
+            className="flex-1 bg-transparent resize-none text-[14px] leading-[20px] text-[#e7e9ea] placeholder:text-[#71767b] outline-none max-h-24 py-1"
+          />
+
+          <Tooltip content="Выбрать GIF" side="top">
+            <button
+              type="button"
+              onClick={() => {
+                playClick(soundEnabled)
+                setGifOpen(true)
+              }}
+              aria-label="Выбрать GIF"
+              className="flex-none h-7 px-2 rounded-full text-[11px] font-bold text-[#71767b] hover:text-[#e7e9ea] hover:bg-white/[0.06] transition-colors cursor-pointer"
+            >
+              GIF
+            </button>
+          </Tooltip>
+
+          <button
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={!draft.trim() || submitting}
+            aria-label="Отправить комментарий"
+            className={`flex-none h-7 w-7 rounded-full inline-flex items-center justify-center transition-all ${
+              draft.trim() && !submitting
+                ? 'bg-[#ff5a1f] text-white hover:opacity-90 active:scale-95 cursor-pointer'
+                : 'bg-white/[0.06] text-[#71767b] cursor-not-allowed'
             }`}
           >
-            {total}
-          </span>
-        )}
-        <motion.span
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: reduce ? 0 : 0.2 }}
-          className="inline-flex"
-          aria-hidden="true"
-        >
-          <ChevronDown size={14} />
-        </motion.span>
-      </button>
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : <ArrowUp size={15} />}
+          </button>
+        </div>
+      </div>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            key="comments-body"
-            initial={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
-            animate={reduce ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
-            exit={reduce ? { opacity: 0 } : { opacity: 0, height: 0 }}
-            transition={{ duration: reduce ? 0 : 0.22, ease: 'easeOut' }}
-            className="overflow-hidden"
-          >
-            <div
-              id={`${uid}-comments`}
-              className="mt-2 rounded-2xl border border-[var(--line)] bg-[var(--surface-subtle,#0d0e0f)] p-3"
-            >
-              {/* Быстрые шаблоны поддержки */}
-              <div className="mb-2.5">
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] mb-1.5">
-                  Быстрая поддержка
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {templates.map((template) => (
-                    <motion.button
-                      key={template.id}
-                      type="button"
-                      whileTap={reduce ? undefined : { scale: 0.94 }}
-                      onClick={() => postTemplate(template)}
-                      title={`Отправить: ${template.text}`}
-                      className="cmt-chip inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-[var(--surface)] px-2.5 py-1 text-[12px] font-medium text-[var(--text)] hover:border-[#ff6b35]/60 hover:bg-[#ff6b35]/10 hover:text-[#ffad5a] transition-colors duration-150"
-                    >
-                      <span aria-hidden="true">{template.emoji}</span>
-                      <span>{template.text}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+      {/* Модалка выбора GIF */}
+      {gifOpen && (
+        <ChatGifModal
+          onSelectGif={(gifUrl) => {
+            setDraft((prev) => (prev ? `${prev}\n![](${gifUrl})` : `![](${gifUrl})`))
+            notify('GIF прикреплена к комментарию')
+          }}
+          onClose={() => setGifOpen(false)}
+          soundEnabled={soundEnabled}
+        />
+      )}
 
-              {/* Композер */}
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] p-2">
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  {renderPersonaSwitch('sm')}
-                  <span className="text-[10px] text-[var(--muted)]">
-                    {draft.length}/{MAX_COMMENT_LENGTH}
-                  </span>
-                </div>
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={draft}
-                    maxLength={MAX_COMMENT_LENGTH}
-                    rows={compact ? 1 : 2}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        submitMain()
-                      }
-                    }}
-                    placeholder={
-                      variant === 'pride'
-                        ? 'Скажи себе тёплое слово об этой гордости…'
-                        : 'Поддержи себя за этот день…'
-                    }
-                    className="flex-1 resize-none rounded-lg border border-[var(--line)] bg-[var(--bg)] px-2.5 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[#ff6b35] transition-colors"
-                  />
-                  <Tooltip content="Выбрать GIF-анимацию" side="top">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        playClick(soundEnabled)
-                        setGifOpen(true)
-                      }}
-                      aria-label="Выбрать GIF"
-                      className="flex-none inline-flex items-center justify-center rounded-full border border-[var(--line)] bg-[var(--surface)] text-[var(--muted)] hover:text-[#ffad5a] hover:border-[#ff6b35] transition-colors text-[11px] font-extrabold"
-                      style={{ width: 34, height: 34 }}
-                    >
-                      GIF
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Отправить (Enter)" side="top">
-                    <button
-                      type="button"
-                      onClick={submitMain}
-                      disabled={!draft.trim()}
-                      aria-label="Отправить комментарий поддержки"
-                      className={`flex-none inline-flex items-center justify-center rounded-full transition-colors duration-150 ${
-                        draft.trim()
-                          ? 'bg-[#ff6b35] text-white hover:bg-[#ff7f4f]'
-                          : 'bg-[#1c1e22] text-[#71767b] cursor-not-allowed'
-                      }`}
-                      style={{ width: 34, height: 34 }}
-                    >
-                      <Send size={15} />
-                    </button>
-                  </Tooltip>
-                </div>
-              </div>
-
-              {/* Модалка выбора GIF с официальным бейджем GIPHY */}
-              {gifOpen && (
-                <ChatGifModal
-                  onSelectGif={(gifUrl) => {
-                    setDraft((prev) => (prev ? `${prev}\n![](${gifUrl})` : `![](${gifUrl})`))
-                    notify('GIF-анимация прикреплена к комментарию')
-                  }}
-                  onClose={() => setGifOpen(false)}
-                  soundEnabled={soundEnabled}
-                />
-              )}
-
-              {/* Дерево комментариев / пустое состояние */}
-              {total === 0 ? (
-                <div className="flex items-start gap-2 mt-3 px-1 text-[13px] text-[#71767b]">
-                  <Sparkles size={15} className="mt-0.5 flex-none text-[#ffad5a]" />
-                  <p className="leading-[19px]">
-                    Пока тихо. Нажми шаблон выше или напиши первое тёплое слово — поддержка
-                    начинается с одного сообщения.
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-1">
-                  {tree.map((node) => renderComment(node, 0))}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Список комментариев */}
+      {loadingInitial && total === 0 ? (
+        <div className="py-3 text-[13px] text-[#71767b] flex items-center gap-2">
+          <Loader2 size={14} className="animate-spin" />
+          <span>Загрузка комментариев...</span>
+        </div>
+      ) : total > 0 ? (
+        <div className="mt-2 divide-y divide-white/[0.06]">
+          {tree.map((node) => renderComment(node, 0))}
+        </div>
+      ) : (
+        <p className="pt-2.5 text-[12px] text-[#71767b]">
+          Комментариев пока нет — напиши первым.
+        </p>
+      )}
     </div>
   )
+}
+
+function buildCommentCount(nodes: CommentNode[]): number {
+  let count = 0
+  for (const n of nodes) {
+    count += 1
+    if (n.replies.length > 0) count += buildCommentCount(n.replies)
+  }
+  return count
 }

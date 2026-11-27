@@ -61,12 +61,14 @@ export async function GET(request: Request) {
       .from('days')
       .select(`
         id,
+        client_id,
+        day_number,
         user_id,
         day_date,
         title,
         visibility,
         created_at,
-        profiles:user_id(id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, verified),
+        profiles:user_id(id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, verified, last_seen_at),
         prides(id, text, scale, category, visibility, order_index),
         gratitudes(id, text, category, visibility, order_index)
       `)
@@ -83,6 +85,8 @@ export async function GET(request: Request) {
       const p = d.profiles || {}
       return {
         id: String(d.id),
+        dayUuid: String(d.id),
+        dayNumber: Number(d.day_number || d.client_id) || null,
         userId: d.user_id,
         username: p.username || 'user',
         displayName: p.display_name || `@${p.username || 'user'}`,
@@ -90,6 +94,7 @@ export async function GET(request: Request) {
         avatarColor: p.avatar_color || '#FF5C00',
         verified: Boolean(p.verified),
         streak: Number(p.streak_count || 0),
+        lastSeenAt: p.last_seen_at || null,
         dayDate: d.day_date,
         title: d.title || '',
         visibility: d.visibility || 'friends',

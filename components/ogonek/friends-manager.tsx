@@ -27,6 +27,7 @@ import {
   presenceRank,
 } from '@/lib/ogonek/friends'
 import { getRecentProfiles } from '@/lib/supabase/api'
+import { useIsUserOnline } from '@/lib/supabase/presence'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { FriendDetailModal } from './friend-detail-modal'
@@ -56,6 +57,7 @@ function matches(friend: FriendProfile, query: string): boolean {
 /* ── Аватар с кружочком онлайн-статуса ──────────────────────────────────── */
 function FriendAvatar({ friend, size = 'md' }: { friend: FriendProfile; size?: 'md' | 'lg' }) {
   const px = size === 'lg' ? 56 : 42
+  const isOnline = useIsUserOnline(friend.id)
   return (
     <UserAvatar
       avatarUrl={friend.avatarUrl}
@@ -64,7 +66,7 @@ function FriendAvatar({ friend, size = 'md' }: { friend: FriendProfile; size?: '
       username={friend.username}
       initials={friend.initials}
       size={px}
-      isOnline={friend.presence === 'online'}
+      isOnline={isOnline}
       ringColor="#16181c"
     />
   )
@@ -196,7 +198,8 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
               mutual: 0,
               verified: Boolean(p.verified),
               lastActive: 'недавно',
-              presence: 'online',
+              lastSeenAt: p.last_seen_at || null,
+              presence: 'offline',
             }
             registerFriendProfile(fp)
             return fp

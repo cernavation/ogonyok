@@ -20,7 +20,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FriendDetailModal } from '../friend-detail-modal'
 
-import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { FRIEND_PROFILES, getFriend } from '@/lib/ogonek/friends'
+import { usePresenceSnapshot, useUserPresenceStatus } from '@/lib/supabase/presence'
 import {
   chatDayKey,
   formatChatDayLabel,
@@ -196,6 +197,15 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
 
   const resolveChar = (emojiId: string) => resolveEmojiChar(emojiId, state.customEmojis)
 
+  const presenceSnap = usePresenceSnapshot()
+  const peerStatus = useUserPresenceStatus(
+    !isGroup && !isPridayChat(friendId) ? friendId : null,
+    friend?.lastSeenAt ?? null
+  )
+  const groupMemberIds = thread?.groupMeta?.memberIds ?? []
+  const groupMemberCount = groupMemberIds.length > 0 ? groupMemberIds.length : 1
+  const groupOnlineCount = groupMemberIds.filter((id) => presenceSnap.onlineIds.has(id)).length
+
   if (!friend && !isGroup) {
     return (
       <div className="mcw">
@@ -205,8 +215,6 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
       </div>
     )
   }
-
-  const presence = friend ? presenceMeta(friend.presence) : null
 
   const handleSend = (
     text: string,
@@ -337,11 +345,11 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                 <span className="text-[var(--text-2)]">официальный аккаунт · @priday.life</span>
               ) : isGroup ? (
                 <span className="text-[var(--text-2)]">
-                  {thread.groupMeta?.memberIds.length ?? 3} участников · 2 в сети
+                  {groupMemberCount} участников{groupOnlineCount > 0 ? ` · ${groupOnlineCount} в сети` : ''}
                 </span>
               ) : (
-                <span style={{ color: presence?.color ?? 'var(--text-2)' }}>
-                  {presence?.short} · @{friend?.username}
+                <span style={{ color: peerStatus.color }}>
+                  {peerStatus.label} · @{friend?.username}
                 </span>
               )}
             </span>

@@ -208,7 +208,8 @@ export function StoriesBar({
           mutual: 0,
           verified,
           lastActive: 'недавно',
-          presence: 'online',
+          lastSeenAt: author?.last_seen_at || null,
+          presence: 'offline',
         }),
       })
     }

@@ -177,27 +177,35 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
       const text = typeof c.text === 'string' ? c.text.trim() : ''
       if (!text) continue
 
+      const persona: CommentPersona = c.persona === 'support' ? 'support' : 'me'
+      const rawAuthor = typeof c.author === 'string' ? c.author.trim() : ''
+      if (
+        persona === 'support' ||
+        (typeof c.template === 'string' && c.template.trim().length > 0) ||
+        rawAuthor === 'Priday поддержки' ||
+        rawAuthor === 'Огонёк поддержки'
+      ) {
+        continue
+      }
+
       const id = typeof c.id === 'string' && c.id ? c.id : `cm-${target}-${cleaned.length}`
       if (seen.has(id)) continue
       seen.add(id)
 
-      const persona: CommentPersona = c.persona === 'support' ? 'support' : 'me'
-
       cleaned.push({
         id,
         parentId: typeof c.parentId === 'string' && c.parentId ? c.parentId : null,
-        author:
-          typeof c.author === 'string' && c.author.trim()
-            ? c.author.trim().slice(0, 60)
-            : persona === 'support'
-              ? 'Priday поддержки'
-              : 'Пользователь',
+        authorId: typeof c.authorId === 'string' && c.authorId ? c.authorId : null,
+        author: rawAuthor ? rawAuthor.slice(0, 60) : 'Пользователь',
+        username: typeof c.username === 'string' ? c.username : null,
+        avatarUrl: typeof c.avatarUrl === 'string' ? c.avatarUrl : null,
+        avatarColor: typeof c.avatarColor === 'string' ? c.avatarColor : null,
+        verified: Boolean(c.verified),
+        postAuthorId: typeof c.postAuthorId === 'string' && c.postAuthorId ? c.postAuthorId : null,
         initials:
           typeof c.initials === 'string' && c.initials.trim()
             ? c.initials.trim().slice(0, 3)
-            : persona === 'support'
-              ? '✦'
-              : 'ОГ',
+            : 'П',
         text: text.slice(0, 600),
         createdAt:
           typeof c.createdAt === 'string' && c.createdAt
@@ -209,8 +217,6 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
             : 0,
         likedByMe: Boolean(c.likedByMe),
         isMine: Boolean(c.isMine),
-        template: typeof c.template === 'string' ? c.template : null,
-        persona,
       })
     }
 

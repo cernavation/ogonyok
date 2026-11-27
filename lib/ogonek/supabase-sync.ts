@@ -1050,7 +1050,7 @@ function commentRowsFrom(state: OgonekStoreState): CommentRow[] {
         liked_by_me: comment.likedByMe,
         is_mine: comment.isMine,
         template: comment.template ?? null,
-        persona: comment.persona,
+        persona: comment.persona ?? 'me',
         created_at: comment.createdAt,
       })
     }
@@ -1372,19 +1372,16 @@ function assembleStory(row: StoryRow): MyStory {
 }
 
 function assembleComment(row: CommentRow): Comment {
-  const persona: CommentPersona = row.persona === 'support' ? 'support' : 'me'
   return {
     id: row.client_id,
     parentId: row.parent_client_id ?? null,
-    author: row.author || (persona === 'support' ? 'Priday поддержки' : 'Алексей Церна'),
-    initials: row.initials || (persona === 'support' ? '✦' : 'ОГ'),
+    author: row.author || 'Пользователь',
+    initials: row.initials || 'П',
     text: row.text ?? '',
     createdAt: row.created_at ?? new Date().toISOString(),
     likes: Math.max(0, row.likes ?? 0),
     likedByMe: Boolean(row.liked_by_me),
     isMine: Boolean(row.is_mine),
-    template: row.template ?? null,
-    persona,
   }
 }
 

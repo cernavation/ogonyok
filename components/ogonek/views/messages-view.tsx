@@ -3,7 +3,8 @@
 import { ArrowLeft, MessageCircle, MessageSquarePlus, Search, Sparkles, Users } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 
-import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { FRIEND_PROFILES, getFriend } from '@/lib/ogonek/friends'
+import { usePresenceSnapshot } from '@/lib/supabase/presence'
 import { isGroupThread, isPridayChat, sortThreadIds, totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
@@ -63,9 +64,10 @@ export function MessagesView({
   const activeFolderId = state?.chatActiveFolderId ?? 'all'
 
   const unreadTotal = useMemo(() => totalUnread(threads), [threads])
+  const presenceSnap = usePresenceSnapshot()
   const onlineCount = useMemo(
-    () => FRIEND_PROFILES.filter((f) => presenceMeta(f.presence).short === 'онлайн').length,
-    []
+    () => (state.friendIds ?? []).filter((id) => presenceSnap.onlineIds.has(id)).length,
+    [state.friendIds, presenceSnap.onlineIds]
   )
 
   // Supabase Realtime подписка на входящие сообщения

@@ -59,6 +59,7 @@ import {
   type PostRecord,
 } from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useUserPresenceStatus } from '@/lib/supabase/presence'
 import { registerFriendProfile } from '@/lib/ogonek/friends'
 import { canMessageUser } from '@/lib/ogonek/privacy'
 import { EditProfileModal } from '../edit-profile-modal'
@@ -135,6 +136,10 @@ export function ProfileView({
   const [mutualFriendsCount, setMutualFriendsCount] = useState(0)
   const [loadingForeign, setLoadingForeign] = useState(false)
   const { ensureMutualFriendshipChat, syncSocialGraphFromCloud, startChatWithFriend } = useOgonekStore()
+  const foreignStatus = useUserPresenceStatus(
+    !isOwnProfile ? (foreignProfile?.id || targetUserId || null) : null,
+    foreignProfile?.last_seen_at || null
+  )
 
   // Свой профиль: всегда тянем честные счётчики подписок/читателей напрямую из Supabase `follows`
   useEffect(() => {
@@ -192,7 +197,8 @@ export function ProfileView({
             mutual: 0,
             verified: Boolean(prof.verified),
             lastActive: 'недавно',
-            presence: 'online',
+            lastSeenAt: prof.last_seen_at || null,
+            presence: 'offline',
           })
 
           const currentUid = storeState.auth.activeAccountId
@@ -1018,7 +1024,23 @@ export function ProfileView({
             )}
           </div>
           {displayProfile.username && (
-            <p className="text-[13px] text-[var(--muted)] font-normal">@{displayProfile.username}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[13px] text-[var(--muted)] font-normal">@{displayProfile.username}</p>
+              {!isOwnProfile && (foreignProfile?.id || targetUserId) && (
+                <span className="inline-flex items-center gap-1.5 text-[12px] text-[var(--muted)]">
+                  <span>·</span>
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      foreignStatus.isOnline ? 'bg-[#00ba7c]' : 'bg-zinc-500'
+                    }`}
+                    aria-hidden="true"
+                  />
+                  <span className={foreignStatus.isOnline ? 'text-[#00ba7c] font-medium' : ''}>
+                    {foreignStatus.label}
+                  </span>
+                </span>
+              )}
+            </div>
           )}
         </div>
 

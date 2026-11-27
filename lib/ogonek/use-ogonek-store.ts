@@ -39,6 +39,10 @@ import {
   markPridaySystemMessagesReadDb,
   savePridayMilestoneMessageDb,
   savePridaySupportExchangeDb,
+  fetchCommentsForTargets,
+  createCommentInDb,
+  toggleCommentLikeInDb,
+  deleteCommentInDb,
   type DirectMessageRecord,
 } from '../supabase/api.ts'
 import { enqueueOfflineMutation } from './offline-queue.ts'
@@ -87,7 +91,8 @@ import {
   sanitizeAuthState,
   takenUsernamesOf,
 } from './accounts'
-import { buildDemoComments, SUPPORT_PERSONAS } from './comments'
+import { filterRealComments, parsePostAuthorIdFromTarget } from './comments'
+import { getInitials } from './initials'
 import { computeAchievementProgress } from './achievement-regulation'
 import {
   MODERATION_STATUS_META,
@@ -637,6 +642,7 @@ export function getSnapshot(): OgonekStoreState {
     cachedState = loadStore()
     cachedState = migrateSplitDays(cachedState)
     cachedState = ensureSanitizedMessengerState(cachedState)
+    cachedState = stripLegacyDemoComments(cachedState)
     isInitialized = true
     initSupabaseSessionSync()
   }
@@ -729,20 +735,20 @@ function migrateSplitDays(state: OgonekStoreState): OgonekStoreState {
 }
 
 /**
- * ПЕРВИЧНАЯ ПОДДЕРЖКА:
- * В демо-режиме один раз наполняем свежий день тёплыми комментариями,
- * чтобы блок поддержки был наглядным (дерево ответов, лайки, шаблоны).
+ * Удаляем устаревшие демо-комментарии бота («Priday поддержки» / #шаблон) из кэша.
  */
-function ensureDemoComments(state: OgonekStoreState): OgonekStoreState {
-  if (!state.isDemo) return state
-  if (state.comments && Object.keys(state.comments).length > 0) return state
-  const firstDay = state.days[0]
-  if (!firstDay) return state
-
-  const nextState: OgonekStoreState = {
-    ...state,
-    comments: buildDemoComments(firstDay),
+function stripLegacyDemoComments(state: OgonekStoreState): OgonekStoreState {
+  if (!state.comments || typeof state.comments !== 'object') return state
+  let changed = false
+  const cleaned: Record<string, Comment[]> = {}
+  for (const [target, list] of Object.entries(state.comments)) {
+    if (!Array.isArray(list)) continue
+    const real = filterRealComments(list)
+    if (real.length !== list.length) changed = true
+    if (real.length > 0) cleaned[target] = real
   }
+  if (!changed) return state
+  const nextState: OgonekStoreState = { ...state, comments: cleaned }
   saveStore(nextState)
   return nextState
 }
@@ -781,6 +787,7 @@ export function mapCloudDayToDay(row: any): Day {
 
   return {
     id: isNaN(dayId) ? 1 : dayId,
+    cloudId: typeof row.id === 'string' ? row.id : undefined,
     title: row.title || `День #${dayId}`,
     tags: Array.isArray(row.tags) ? row.tags : [],
     photos: Array.isArray(row.photos) ? row.photos : [],
@@ -3706,77 +3713,164 @@ export function useOgonekStore() {
   }, [])
 
   /**
-   * КОММЕНТАРИИ ПОДДЕРЖКИ:
-   * Добавляет комментарий (или ответ) к дню/гордости.
-   * target: "day:12" | "day:12:pride:0"
+   * КОММЕНТАРИИ:
+   * 100% реальная загрузка из Supabase (`comments` + `comment_likes` + `profiles`).
+   */
+  const loadCommentsForTargets = useCallback(
+    async (
+      targets: string[],
+      postAuthorHintByTarget?: Record<string, string | null>
+    ): Promise<{ ok: boolean; error?: string }> => {
+      const snap = getSnapshot()
+      const uid = snap.auth?.activeAccountId || null
+      const res = await fetchCommentsForTargets(targets, uid, postAuthorHintByTarget)
+      if (!res.ok) {
+        return { ok: false, error: res.error }
+      }
+
+      updateStore((prev) => {
+        const nextComments = { ...(prev.comments ?? {}) }
+        let changed = false
+        for (const [targetKey, fetchedList] of Object.entries(res.commentsByTarget)) {
+          const prevList = nextComments[targetKey] ?? []
+          const prevSig = JSON.stringify(prevList.map((c) => [c.id, c.text, c.likes, c.likedByMe, c.avatarUrl]))
+          const nextSig = JSON.stringify(fetchedList.map((c) => [c.id, c.text, c.likes, c.likedByMe, c.avatarUrl]))
+          if (prevSig !== nextSig) {
+            nextComments[targetKey] = fetchedList
+            changed = true
+          }
+        }
+        if (!changed) return prev
+        return {
+          ...prev,
+          comments: nextComments,
+        }
+      })
+
+      return { ok: true }
+    },
+    [updateStore]
+  )
+
+  /**
+   * Добавляет комментарий (или ответ) с обязательным сохранением в Supabase.
+   * При ошибке базы данных НЕ делает фейковый локальный успех — возвращает error.
    */
   const addComment = useCallback(
-    (
+    async (
       target: string,
       text: string,
       options?: {
         parentId?: string | null
-        persona?: CommentPersona
-        template?: string | null
-        author?: string
+        postAuthorId?: string | null
       }
-    ): Comment | null => {
+    ): Promise<{ ok: boolean; comment?: Comment | null; error?: string }> => {
       const trimmed = (text ?? '').trim().slice(0, 600)
-      if (!target || !trimmed) return null
+      if (!target || !trimmed) {
+        return { ok: false, error: 'Введите текст комментария' }
+      }
 
-      const persona: CommentPersona = options?.persona === 'support' ? 'support' : 'me'
-      const meta = SUPPORT_PERSONAS[persona]
+      const snap = getSnapshot()
+      const uid = snap.auth?.activeAccountId || null
+      const isSignedCloudUser = Boolean(
+        uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)
+      )
 
-      const comment: Comment = {
+      const authorName = snap.profile?.displayName || snap.profile?.username || 'Пользователь'
+      const initials = getInitials(snap.profile?.displayName, snap.profile?.username || 'user')
+      const resolvedPostAuthor =
+        options?.postAuthorId ?? parsePostAuthorIdFromTarget(target) ?? null
+
+      if (isSignedCloudUser) {
+        const res = await createCommentInDb({
+          userId: uid,
+          targetKey: target,
+          text: trimmed,
+          parentId: options?.parentId ?? null,
+          postAuthorId: resolvedPostAuthor,
+          authorName,
+          initials,
+        })
+
+        if (!res.ok || !res.comment) {
+          return { ok: false, error: res.error || 'Не удалось сохранить комментарий' }
+        }
+
+        const savedComment = res.comment
+        updateStore((prev) => {
+          const list = prev.comments?.[target] ?? []
+          if (list.some((c) => c.id === savedComment.id)) return prev
+          return {
+            ...prev,
+            comments: { ...prev.comments, [target]: [...list, savedComment] },
+          }
+        })
+        return { ok: true, comment: savedComment }
+      }
+
+      // Офлайн / гостевой режим (без привязанной учётки Supabase)
+      const localComment: Comment = {
         id: `cm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
         parentId: options?.parentId ?? null,
-        author: options?.author?.trim() || meta.author,
-        initials: meta.initials,
+        authorId: uid,
+        author: authorName,
+        username: snap.profile?.username || null,
+        avatarUrl: snap.profile?.avatarImage || (snap.profile as any)?.avatar_url || null,
+        avatarColor: snap.profile?.avatarColor || '#FF5C00',
+        verified: Boolean(snap.profile?.verified),
+        postAuthorId: resolvedPostAuthor,
+        initials,
         text: trimmed,
         createdAt: new Date().toISOString(),
         likes: 0,
         likedByMe: false,
-        isMine: persona === 'me',
-        template: options?.template ?? null,
-        persona,
+        isMine: true,
       }
 
       updateStore((prev) => {
         const list = prev.comments?.[target] ?? []
         return {
           ...prev,
-          comments: { ...prev.comments, [target]: [...list, comment] },
+          comments: { ...prev.comments, [target]: [...list, localComment] },
         }
       })
 
-      return comment
+      return { ok: true, comment: localComment }
     },
     [updateStore]
   )
 
-  /** Ответ на конкретный комментарий — строит дерево поддержки */
+  /** Ответ на конкретный комментарий */
   const addReply = useCallback(
-    (
+    async (
       target: string,
       parentId: string,
       text: string,
-      persona: CommentPersona = 'me',
-      template?: string | null
-    ): Comment | null => {
-      if (!parentId) return null
-      return addComment(target, text, { parentId, persona, template })
+      postAuthorId?: string | null
+    ): Promise<{ ok: boolean; comment?: Comment | null; error?: string }> => {
+      if (!parentId) return { ok: false, error: 'Родительский комментарий не найден' }
+      return addComment(target, text, { parentId, postAuthorId })
     },
     [addComment]
   )
 
-  /** Переключает лайк на комментарии. Возвращает true, если теперь лайк стоит. */
+  /** Переключает лайк на комментарии и сохраняет в Supabase `comment_likes` (с откатом при ошибке). */
   const toggleCommentLike = useCallback(
-    (target: string, commentId: string): boolean => {
-      if (!target || !commentId) return false
+    async (
+      target: string,
+      commentId: string
+    ): Promise<{ ok: boolean; liked?: boolean; error?: string }> => {
+      if (!target || !commentId) return { ok: false, error: 'Некорректный комментарий' }
       const current = getSnapshot()
+      const uid = current.auth?.activeAccountId || null
       const found = (current.comments?.[target] ?? []).find((c) => c.id === commentId)
-      const willLike = !(found?.likedByMe ?? false)
+      if (!found) return { ok: false, error: 'Комментарий не найден' }
 
+      const prevLiked = Boolean(found.likedByMe)
+      const prevLikes = Math.max(0, found.likes ?? 0)
+      const willLike = !prevLiked
+
+      // Мгновенный отклик UI
       updateStore((prev) => {
         const list = prev.comments?.[target] ?? []
         return {
@@ -3787,8 +3881,8 @@ export function useOgonekStore() {
               c.id === commentId
                 ? {
                     ...c,
-                    likedByMe: !c.likedByMe,
-                    likes: Math.max(0, c.likes + (c.likedByMe ? -1 : 1)),
+                    likedByMe: willLike,
+                    likes: Math.max(0, c.likes + (willLike ? 1 : -1)),
                   }
                 : c
             ),
@@ -3796,15 +3890,65 @@ export function useOgonekStore() {
         }
       })
 
-      return willLike
+      const isSignedUuid = Boolean(
+        uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)
+      )
+      const isCommentUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        commentId
+      )
+
+      if (isSignedUuid && isCommentUuid) {
+        const res = await toggleCommentLikeInDb({
+          userId: uid,
+          commentId,
+          willLike,
+        })
+        if (!res.ok) {
+          // Честный откат при ошибке Supabase
+          updateStore((prev) => {
+            const list = prev.comments?.[target] ?? []
+            return {
+              ...prev,
+              comments: {
+                ...prev.comments,
+                [target]: list.map((c) =>
+                  c.id === commentId ? { ...c, likedByMe: prevLiked, likes: prevLikes } : c
+                ),
+              },
+            }
+          })
+          return { ok: false, liked: prevLiked, error: res.error || 'Не удалось обновить лайк' }
+        }
+      }
+
+      return { ok: true, liked: willLike }
     },
     [updateStore]
   )
 
-  /** Удаляет комментарий вместе со всеми его ответами */
+  /**
+   * Удаляет комментарий в Supabase (RLS разрешает автору комментария или владельцу поста)
+   * и убирает его из локального состояния только после подтверждения БД.
+   */
   const deleteComment = useCallback(
-    (target: string, commentId: string) => {
-      if (!target || !commentId) return
+    async (target: string, commentId: string): Promise<{ ok: boolean; error?: string }> => {
+      if (!target || !commentId) return { ok: false, error: 'Некорректный комментарий' }
+      const snap = getSnapshot()
+      const uid = snap.auth?.activeAccountId || null
+      const isSignedUuid = Boolean(
+        uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)
+      )
+      const isCommentUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        commentId
+      )
+
+      if (isSignedUuid && isCommentUuid) {
+        const res = await deleteCommentInDb({ commentId })
+        if (!res.ok) {
+          return { ok: false, error: res.error || 'Не удалось удалить комментарий' }
+        }
+      }
+
       updateStore((prev) => {
         const list = prev.comments?.[target] ?? []
         const toRemove = new Set<string>([commentId])
@@ -3826,6 +3970,8 @@ export function useOgonekStore() {
           },
         }
       })
+
+      return { ok: true }
     },
     [updateStore]
   )
@@ -7398,6 +7544,7 @@ export function useOgonekStore() {
     setDayAudience,
     setPrideVisibility,
     setAllPridesVisibility,
+    loadCommentsForTargets,
     addComment,
     addReply,
     toggleCommentLike,

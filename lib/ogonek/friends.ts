@@ -32,6 +32,8 @@ export type FriendProfile = {
   verified: boolean
   /** Как давно был активен (человекочитаемо) */
   lastActive: string
+  /** ISO-время последней активности в Supabase (`profiles.last_seen_at`) */
+  lastSeenAt?: string | null
   /** Онлайн-статус (кружок присутствия в виджете активных друзей) */
   presence: FriendPresence
 }
@@ -96,6 +98,172 @@ export function isFriendActive(presence: FriendPresence): boolean {
 /** Индекс присутствия для сортировки: онлайн → отошёл → офлайн */
 export function presenceRank(presence: FriendPresence): number {
   return presence === 'online' ? 0 : presence === 'away' ? 1 : 2
+}
+
+export type ResolvedUserStatus = {
+  isOnline: boolean
+  presence: FriendPresence
+  label: string
+  shortLabel: string
+  color: string
+}
+
+const RU_SHORT_MONTHS = [
+  'янв.',
+  'февр.',
+  'мар.',
+  'апр.',
+  'мая',
+  'июн.',
+  'июл.',
+  'авг.',
+  'сент.',
+  'окт.',
+  'нояб.',
+  'дек.',
+] as const
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
+}
+
+/**
+ * Честное форматирование онлайн-статуса пользователя по Realtime Presence + last_seen_at:
+ * - онлайн прямо сейчас -> «в сети» (кратко «онлайн»), зелёный #00ba7c
+ * - < 60 сек -> «был(а) только что»
+ * - сегодня -> «был(а) в HH:MM»
+ * - вчера -> «был(а) вчера в HH:MM»
+ * - раньше -> «был(а) D MMM.» (например, «был(а) 24 нояб.»)
+ */
+export function formatLastSeenStatus(
+  lastSeenAt?: string | null,
+  isOnline = false,
+  nowMs: number = Date.now()
+): ResolvedUserStatus {
+  if (isOnline) {
+    return {
+      isOnline: true,
+      presence: 'online',
+      label: 'в сети',
+      shortLabel: 'онлайн',
+      color: '#00ba7c',
+    }
+  }
+
+  if (!lastSeenAt) {
+    return {
+      isOnline: false,
+      presence: 'offline',
+      label: 'не в сети',
+      shortLabel: 'не в сети',
+      color: '#71767b',
+    }
+  }
+
+  const parsedMs = Date.parse(lastSeenAt)
+  if (!Number.isFinite(parsedMs)) {
+    return {
+      isOnline: false,
+      presence: 'offline',
+      label: 'не в сети',
+      shortLabel: 'не в сети',
+      color: '#71767b',
+    }
+  }
+
+  const diffMs = Math.max(0, nowMs - parsedMs)
+  if (diffMs < 60_000) {
+    return {
+      isOnline: false,
+      presence: 'offline',
+      label: 'был(а) только что',
+      shortLabel: 'был(а) только что',
+      color: '#71767b',
+    }
+  }
+
+  const seenDate = new Date(parsedMs)
+  const nowDate = new Date(nowMs)
+  const hhmm = `${pad2(seenDate.getHours())}:${pad2(seenDate.getMinutes())}`
+
+  const isSameDay =
+    seenDate.getFullYear() === nowDate.getFullYear() &&
+    seenDate.getMonth() === nowDate.getMonth() &&
+    seenDate.getDate() === nowDate.getDate()
+
+  if (isSameDay) {
+    const label = `был(а) в ${hhmm}`
+    return {
+      isOnline: false,
+      presence: 'offline',
+      label,
+      shortLabel: label,
+      color: '#71767b',
+    }
+  }
+
+  const yesterday = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() - 1)
+  const isYesterday =
+    seenDate.getFullYear() === yesterday.getFullYear() &&
+    seenDate.getMonth() === yesterday.getMonth() &&
+    seenDate.getDate() === yesterday.getDate()
+
+  if (isYesterday) {
+    const label = `был(а) вчера в ${hhmm}`
+    return {
+      isOnline: false,
+      presence: 'offline',
+      label,
+      shortLabel: label,
+      color: '#71767b',
+    }
+  }
+
+  const monthLabel = RU_SHORT_MONTHS[seenDate.getMonth()] ?? 'янв.'
+  const label = `был(а) ${seenDate.getDate()} ${monthLabel}`
+  return {
+    isOnline: false,
+    presence: 'offline',
+    label,
+    shortLabel: label,
+    color: '#71767b',
+  }
+}
+
+/**
+ * Сортировка друзей для виджета:
+ * 1) Кто сейчас онлайн в Presence
+ * 2) Самый свежий last_seen_at
+ * 3) Максимальный стрик
+ */
+export function sortFriendsForWidget<
+  T extends { id: string; streak?: number; lastSeenAt?: string | null; name?: string }
+>(
+  friends: readonly T[],
+  onlineIds: ReadonlySet<string>,
+  lastSeenOverrides?: ReadonlyMap<string, string>,
+  limit = 3
+): T[] {
+  return [...friends]
+    .sort((a, b) => {
+      const aOnline = onlineIds.has(a.id) ? 0 : 1
+      const bOnline = onlineIds.has(b.id) ? 0 : 1
+      if (aOnline !== bOnline) return aOnline - bOnline
+
+      const aRawSeen = lastSeenOverrides?.get(a.id) ?? a.lastSeenAt ?? ''
+      const bRawSeen = lastSeenOverrides?.get(b.id) ?? b.lastSeenAt ?? ''
+      const aSeenMs = aRawSeen ? Date.parse(aRawSeen) : 0
+      const bSeenMs = bRawSeen ? Date.parse(bRawSeen) : 0
+      const safeA = Number.isFinite(aSeenMs) ? aSeenMs : 0
+      const safeB = Number.isFinite(bSeenMs) ? bSeenMs : 0
+      if (safeA !== safeB) return safeB - safeA
+
+      const byStreak = (b.streak ?? 0) - (a.streak ?? 0)
+      if (byStreak !== 0) return byStreak
+
+      return (a.name || '').localeCompare(b.name || '', 'ru')
+    })
+    .slice(0, limit)
 }
 
 /* ────────────────────────────────────────────────────────────────────────

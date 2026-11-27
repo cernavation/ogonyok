@@ -30,7 +30,8 @@ import {
   Zap,
 } from 'lucide-react'
 import { useOgonekStore, usePridayTyping } from '@/lib/ogonek/use-ogonek-store'
-import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { getFriend } from '@/lib/ogonek/friends'
+import { usePresenceSnapshot, useUserPresenceStatus } from '@/lib/supabase/presence'
 import {
   chatDayKey,
   formatChatDayLabel,
@@ -224,6 +225,11 @@ export function MessengerChatPane({
   const cachedPeerProfile =
     targetPeerId && !friend && !isGroup && !isSaved && !isPriday ? getCachedProfileSync(targetPeerId) : null
   const activePeerProfile = peerProfile || cachedPeerProfile
+  const presenceSnap = usePresenceSnapshot()
+  const peerStatus = useUserPresenceStatus(
+    !isGroup && !isSaved && !isPriday ? targetPeerId : null,
+    activePeerProfile?.last_seen_at ?? friend?.lastSeenAt ?? null
+  )
 
   const isUuid = (s?: string | null) =>
     typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
@@ -248,7 +254,7 @@ export function MessengerChatPane({
   }
 
   useEffect(() => {
-    if (targetPeerId && !friend && !isGroup && !isSaved && !isPriday) {
+    if (targetPeerId && !isGroup && !isSaved && !isPriday && isUuid(targetPeerId)) {
       const cached = getCachedProfileSync(targetPeerId)
       if (cached) setPeerProfile(cached)
       getProfile(targetPeerId).then((p) => {
@@ -257,7 +263,7 @@ export function MessengerChatPane({
     } else {
       setPeerProfile(null)
     }
-  }, [targetPeerId, friend, isGroup, isSaved, isPriday])
+  }, [targetPeerId, isGroup, isSaved, isPriday])
 
   const dmPermission = useMemo(() => {
     if (isGroup || isSaved || isPriday || !targetPeerId || !activePeerProfile) {
@@ -777,7 +783,9 @@ export function MessengerChatPane({
     )
   }
 
-  const presence = friend ? presenceMeta(friend.presence) : null
+  const groupMemberIds = thread?.groupMeta?.memberIds ?? []
+  const groupMemberCount = groupMemberIds.length > 0 ? groupMemberIds.length : 1
+  const groupOnlineCount = groupMemberIds.filter((id) => presenceSnap.onlineIds.has(id)).length
 
   return (
     <div
@@ -871,9 +879,11 @@ export function MessengerChatPane({
               ) : isSaved ? (
                 'Личные заметки и сохранённое'
               ) : isGroup ? (
-                `${thread?.groupMeta?.memberIds.length ?? 3} участников, 2 в сети`
+                `${groupMemberCount} участников${groupOnlineCount > 0 ? `, ${groupOnlineCount} в сети` : ''}`
               ) : (
-                presence?.short || 'в сети'
+                <span className={peerStatus.isOnline ? 'text-[#00ba7c] font-medium' : ''}>
+                  {peerStatus.label}
+                </span>
               )}
             </span>
           </div>

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { Flame } from 'lucide-react'
-import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { getFriend } from '@/lib/ogonek/friends'
 import { isPridayChat } from '@/lib/ogonek/priday-system-chat'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getCachedProfileSync, getProfile, type ProfileRecord } from '@/lib/supabase/api'
+import { useIsUserOnline } from '@/lib/supabase/presence'
 import { getInitials } from '@/lib/ogonek/initials'
 import { UserAvatar } from '../ui'
 
@@ -53,6 +54,7 @@ export function ChatAvatar({
   const peerMeta = thread?.peerMeta
   const cachedSync = !isPriday && targetUserId ? getCachedProfileSync(targetUserId) : null
   const [liveProfile, setLiveProfile] = useState<ProfileRecord | null>(cachedSync)
+  const isPeerOnline = useIsUserOnline(!isPriday ? targetUserId : null)
 
   useEffect(() => {
     if (isPriday || !targetUserId || friend || !UUID_REGEX.test(targetUserId)) {
@@ -129,7 +131,7 @@ export function ChatAvatar({
     friend?.initials ||
     getInitials(displayName, username || 'user')
 
-  const isOnline = showPresence && Boolean(friend && presenceMeta(friend.presence).short === 'онлайн')
+  const isOnline = showPresence && !isPriday && isPeerOnline
 
   return (
     <UserAvatar

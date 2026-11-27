@@ -40,6 +40,7 @@ import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
 import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
+import { usePresenceTracker } from '@/lib/supabase/presence'
 import {
   getProfile,
   getUnreadDirectMessageCountFromDb,
@@ -188,6 +189,10 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
   const viewRef = useRef(view)
   viewRef.current = view
+
+  // Подключаем честный Supabase Realtime Presence и периодическое обновление last_seen_at
+  const presenceUserId = state.auth?.activeAccountId || currentUser?.id || null
+  usePresenceTracker(presenceUserId)
   const activeChatFriendRef = useRef(state.chatActiveFriendId)
   activeChatFriendRef.current = state.chatActiveFriendId
   const soundVolumeRef = useRef(state.soundVolume)

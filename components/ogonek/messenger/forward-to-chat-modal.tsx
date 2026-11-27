@@ -5,7 +5,8 @@ import { Check, Forward, Search, Send, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import { FRIEND_PROFILES, getFriend, presenceMeta } from '@/lib/ogonek/friends'
+import { FRIEND_PROFILES, formatLastSeenStatus, getFriend } from '@/lib/ogonek/friends'
+import { getEffectiveLastSeenSync, usePresenceSnapshot } from '@/lib/supabase/presence'
 import { lastActivityMs, threadOf } from '@/lib/ogonek/messenger'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ChatAttachment } from '@/lib/ogonek/types'
@@ -48,6 +49,7 @@ export function ForwardToChatModal({
   )
   const [note, setNote] = useState(initialNote)
   const [query, setQuery] = useState('')
+  const presenceSnap = usePresenceSnapshot()
 
   const friendIds = state.friendIds ?? []
   const friendSet = useMemo(() => new Set(friendIds), [friendIds])
@@ -173,7 +175,8 @@ export function ForwardToChatModal({
           )}
           {list.map((friend) => {
             const checked = selected.includes(friend.id)
-            const presence = presenceMeta(friend.presence)
+            const isFriendOnline = presenceSnap.onlineIds.has(friend.id)
+            const status = formatLastSeenStatus(getEffectiveLastSeenSync(friend.id, friend.lastSeenAt), isFriendOnline)
             const thread = threadOf(state.chatThreads ?? {}, friend.id)
             const hasThread = Boolean(state.chatThreads?.[friend.id])
             return (
@@ -192,8 +195,8 @@ export function ForwardToChatModal({
                     {friend.verified && <VerifiedBadge size="xs" />}
                     {friendSet.has(friend.id) && <em className="forward-row__tag">друг</em>}
                   </span>
-                  <span className="forward-row__sub" style={{ color: presence.color }}>
-                    {presence.short} · {hasThread ? `${thread.messages.length} сообщ.` : 'нет переписки'}
+                  <span className="forward-row__sub" style={{ color: status.color }}>
+                    {status.shortLabel} · {hasThread ? `${thread.messages.length} сообщ.` : 'нет переписки'}
                   </span>
                 </span>
                 <span className={`forward-check ${checked ? 'is-on' : ''}`} aria-hidden="true">

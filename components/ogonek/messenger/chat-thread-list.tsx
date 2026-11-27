@@ -17,6 +17,7 @@ import {
 } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import { getCachedProfileSync } from '@/lib/supabase/api'
+import { usePresenceSnapshot } from '@/lib/supabase/presence'
 import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
@@ -50,6 +51,7 @@ export function ChatThreadList({
   soundEnabled = true,
 }: Props) {
   const [query, setQuery] = useState('')
+  const presenceSnap = usePresenceSnapshot()
   const [showArchived, setShowArchived] = useState(false)
 
   const allIds = useMemo(() => Object.keys(threads || {}), [threads])
@@ -203,7 +205,7 @@ export function ChatThreadList({
           rows.map(({ id, isGroup, friend, thread, title, verified }) => {
             const last = lastMessage(thread)
             const unread = unreadCount(thread)
-            const presence = friend ? presenceMeta(friend.presence) : null
+            const isPeerOnline = !isGroup && presenceSnap.onlineIds.has(id)
             const preview = summarizeMessage(last)
             const isMine = last?.authorId === 'me'
             const isMuted = Boolean(thread?.muted)
@@ -238,10 +240,10 @@ export function ChatThreadList({
                   ) : (
                     <ChatAvatar friendId={id} size={48} ringColor="var(--bg)" />
                   )}
-                  {presence?.short === 'онлайн' && (
+                  {isPeerOnline && (
                     <span
                       className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[var(--bg)] bg-[#00ba7c]"
-                      title="Онлайн"
+                      title="В сети"
                     />
                   )}
                 </div>
