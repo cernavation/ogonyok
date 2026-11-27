@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { BarChart3, CheckCircle2, Circle, Flame, Search, Sparkles, Target } from 'lucide-react'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
-import { addDaysToLocalDay, getNextStreakMilestone, TZ, toLocalDay, type StreakStatus } from '@/lib/ogonek/streak'
+import { addDaysToLocalDay, computeWeeklyMilestoneProgress, TZ, toLocalDay, type StreakStatus } from '@/lib/ogonek/streak'
 import type { Day, ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { FlameIcon } from './flame-icon'
@@ -122,14 +122,14 @@ export function RightRail({
         : null
 
     const closedThisWeekCount = weekDays.filter((item) => item.closed).length
-    const milestone = getNextStreakMilestone(streak)
+    const progress = computeWeeklyMilestoneProgress(streak)
 
     return {
       todayKey,
       weekDays,
       avgScore,
       closedThisWeekCount,
-      milestone,
+      progress,
     }
   }, [state.days, streak, tz])
 
@@ -297,16 +297,51 @@ export function RightRail({
           </span>
         </div>
 
-        <div className="pt-2 border-t border-white/[0.08]">
-          <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
-            <span className="text-[var(--muted)]">До вехи</span>
-            <span className="text-[var(--text)]">{weeklyRhythm.milestone.label}</span>
-          </div>
-          <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+        <div className="pt-2.5 border-t border-white/[0.08] flex flex-col gap-2.5">
+          {weeklyRhythm.progress.bigMilestone && (
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff9248] transition-all duration-300"
-              style={{ width: `${weeklyRhythm.milestone.percent}%` }}
-            />
+              data-testid="rhythm-big-milestone"
+              title={weeklyRhythm.progress.bigMilestone.tooltip}
+            >
+              <div className="flex items-center justify-between text-[11px] mb-1.5">
+                <span className="text-[var(--muted)] font-medium">
+                  {weeklyRhythm.progress.bigMilestone.labelLeft}
+                </span>
+                <span className="text-white font-semibold tabular-nums">
+                  {weeklyRhythm.progress.bigMilestone.labelRight}
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#ff5a1f] to-[#ff9f1c] transition-all duration-300"
+                  style={{ width: `${weeklyRhythm.progress.bigMilestone.percent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div
+            data-testid="rhythm-hundred-progress"
+            title={weeklyRhythm.progress.hundredMilestone.tooltip}
+          >
+            <div className="flex items-center justify-between text-[11px] mb-1.5">
+              <span className="text-[var(--muted)] font-medium">
+                {weeklyRhythm.progress.hundredMilestone.labelLeft}
+              </span>
+              <span className="text-white font-semibold tabular-nums">
+                {weeklyRhythm.progress.hundredMilestone.labelRight}
+              </span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  weeklyRhythm.progress.hundredMilestone.isAccentGradient
+                    ? 'bg-gradient-to-r from-[#ff5a1f] to-[#ff9f1c]'
+                    : 'bg-white/90'
+                }`}
+                style={{ width: `${weeklyRhythm.progress.hundredMilestone.percent}%` }}
+              />
+            </div>
           </div>
         </div>
       </section>

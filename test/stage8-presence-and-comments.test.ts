@@ -298,7 +298,8 @@ describe('Этап 8 — Честный Presence/last_seen_at + Топ-3 дру�
     assert.ok(threadSrc.includes('Показать ответы'), 'Ветки сворачиваются кнопкой Показать ответы')
     assert.ok(threadSrc.includes('Ответ для '), 'Показывается понятная плашка режима ответа')
     assert.ok(threadSrc.includes('ForwardToChatModal'), 'Кнопка Поделиться интегрирована с модалкой пересылки')
-    assert.ok(threadSrc.includes('toggleCommentReaction'), 'Реакции на комментарии сохраняются в сторе и БД')
+    assert.ok(threadSrc.includes('toggleCommentLike'), 'Белое сердечко-лайк комментария сохраняется в сторе и БД')
+    assert.ok(!threadSrc.includes('SmilePlus'), 'Кнопка добавления эмодзи-реакций под комментарием убрана')
     assert.ok(!threadSrc.includes('Загрузка комментариев...'), 'Удалена мигающая заглушка загрузки комментариев')
 
     const dayCardSrc = readRepoFile('components/ogonek/day-card.tsx')

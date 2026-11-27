@@ -23,6 +23,93 @@ export function getNextStreakMilestone(streak: number): { target: number; label:
   }
 }
 
+export const BIG_STREAK_MILESTONES = [1000, 2000, 3000, 5000, 10000, 15000, 30000] as const
+
+export type WeeklyMilestoneProgress = {
+  streak: number
+  bigMilestone: {
+    target: number
+    remaining: number
+    percent: number
+    isLegend: boolean
+    labelLeft: string
+    labelRight: string
+    tooltip: string
+  } | null
+  hundredMilestone: {
+    nextHundred: number
+    inCurrentHundred: number
+    remaining: number
+    percent: number
+    isAccentGradient: boolean
+    labelLeft: string
+    labelRight: string
+    tooltip: string
+  }
+}
+
+function formatSpacedInt(value: number): string {
+  return Math.trunc(value)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+}
+
+/**
+ * Двухступенчатый прогресс для виджета «Ритм недели»:
+ * 1) Лестница больших вех (разблокируется строго при streak >= 100)
+ * 2) Честная линия внутри текущей сотни (0..99 / 100), показывается всегда
+ */
+export function computeWeeklyMilestoneProgress(streak: number): WeeklyMilestoneProgress {
+  const safe = Math.max(0, Math.floor(Number.isFinite(streak) ? streak : 0))
+
+  let bigMilestone: WeeklyMilestoneProgress['bigMilestone'] = null
+  if (safe >= 100) {
+    const nextBig = BIG_STREAK_MILESTONES.find((m) => m > safe)
+    if (nextBig === undefined) {
+      bigMilestone = {
+        target: 30000,
+        remaining: 0,
+        percent: 100,
+        isLegend: true,
+        labelLeft: 'Большая веха',
+        labelRight: '30 000+ · Легенда',
+        tooltip: 'Веха 30 000+ · Легенда достигнута',
+      }
+    } else {
+      const remaining = Math.max(0, nextBig - safe)
+      const percent = Math.min(100, Math.round((safe / nextBig) * 1000) / 10)
+      bigMilestone = {
+        target: nextBig,
+        remaining,
+        percent,
+        isLegend: false,
+        labelLeft: 'Большая веха',
+        labelRight: `${formatSpacedInt(safe)} / ${formatSpacedInt(nextBig)}`,
+        tooltip: `Осталось ${formatSpacedInt(remaining)} дн. до вехи ${formatSpacedInt(nextBig)}`,
+      }
+    }
+  }
+
+  const nextHundred = Math.floor(safe / 100) * 100 + 100
+  const inCurrentHundred = safe % 100
+  const remainingHundred = 100 - inCurrentHundred
+
+  return {
+    streak: safe,
+    bigMilestone,
+    hundredMilestone: {
+      nextHundred,
+      inCurrentHundred,
+      remaining: remainingHundred,
+      percent: inCurrentHundred,
+      isAccentGradient: safe < 100,
+      labelLeft: `До ${formatSpacedInt(nextHundred)} дн.`,
+      labelRight: `${inCurrentHundred} / 100`,
+      tooltip: `Осталось ${remainingHundred} дн. до ${formatSpacedInt(nextHundred)}`,
+    },
+  }
+}
+
 /** Минуты в сутках — верхняя граница времени дедлайна (23:59) */
 export const DEADLINE_MINUTES_MAX = 23 * 60 + 59
 export const DEADLINE_MINUTES_MIN = 0

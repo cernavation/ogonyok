@@ -11,7 +11,6 @@ import {
   MessageCircle,
   Share2,
   Smile,
-  SmilePlus,
   Trash2,
   X,
 } from 'lucide-react'
@@ -22,7 +21,6 @@ import { ChatEmojiPicker } from './messenger/chat-emoji-picker'
 import { ChatGifModal } from './messenger/chat-gif-modal'
 import { ForwardToChatModal } from './messenger/forward-to-chat-modal'
 import {
-  COMMENT_QUICK_REACTIONS,
   MAX_COMMENT_LENGTH,
   buildCommentTree,
   canDeleteComment,
@@ -124,7 +122,6 @@ export function CommentsThread({
     addComment,
     addReply,
     toggleCommentLike,
-    toggleCommentReaction,
     deleteComment,
   } = useOgonekStore()
   const uid = useId()
@@ -140,7 +137,6 @@ export function CommentsThread({
     author: string
   } | null>(null)
   const [expandedBranches, setExpandedBranches] = useState<Record<string, boolean>>({})
-  const [openReactionPickerId, setOpenReactionPickerId] = useState<string | null>(null)
   const [openShareMenuId, setOpenShareMenuId] = useState<string | null>(null)
   const [forwardModalState, setForwardModalState] = useState<{
     note: string
@@ -186,19 +182,17 @@ export function CommentsThread({
     syncTextareaHeight()
   }, [draft, syncTextareaHeight])
 
-  // Закрытие поповеров реакций/шеринга по клику вне и Escape
+  // Закрытие поповера шеринга по клику вне и Escape
   useEffect(() => {
-    if (!openReactionPickerId && !openShareMenuId) return
+    if (!openShareMenuId) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setOpenReactionPickerId(null)
         setOpenShareMenuId(null)
       }
     }
     const onDown = (e: MouseEvent) => {
       const targetEl = e.target as HTMLElement | null
       if (targetEl?.closest?.('[data-comment-popover]')) return
-      setOpenReactionPickerId(null)
       setOpenShareMenuId(null)
     }
     window.addEventListener('keydown', onKey)
@@ -207,7 +201,7 @@ export function CommentsThread({
       window.removeEventListener('keydown', onKey)
       document.removeEventListener('mousedown', onDown)
     }
-  }, [openReactionPickerId, openShareMenuId])
+  }, [openShareMenuId])
 
   // Подгружаем реальные комментарии + реакции из Supabase при открытии треда + слушаем Realtime
   useEffect(() => {
@@ -411,18 +405,6 @@ export function CommentsThread({
     [toggleCommentLike, target, soundEnabled, notify]
   )
 
-  const handleToggleReaction = useCallback(
-    async (commentId: string, emoji: string) => {
-      playClick(soundEnabled)
-      setOpenReactionPickerId(null)
-      const res = await toggleCommentReaction(target, commentId, emoji)
-      if (!res?.ok) {
-        notify(res?.error ? `Ошибка реакции: ${res.error}` : 'Не удалось сохранить реакцию')
-      }
-    },
-    [toggleCommentReaction, target, soundEnabled, notify]
-  )
-
   const handleDelete = useCallback(
     async (commentId: string) => {
       if (deletingIds[commentId]) return
@@ -538,8 +520,6 @@ export function CommentsThread({
     const childCount = countThreadReplies(node)
     const hasReplies = node.replies.length > 0 && depth < 1
     const isBranchExpanded = Boolean(expandedBranches[node.id])
-    const reactionList = node.reactions ?? []
-    const isReactionPickerOpen = openReactionPickerId === node.id
     const isShareOpen = openShareMenuId === node.id
 
     // Если старый комментарий содержал markdown GIF без gifUrl, отобразим картинку чисто
@@ -626,30 +606,7 @@ export function CommentsThread({
               </div>
             )}
 
-            {/* Пилюли эмодзи-реакций */}
-            {reactionList.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                {reactionList.map((r) => (
-                  <button
-                    key={r.emoji}
-                    type="button"
-                    onClick={() => void handleToggleReaction(node.id, r.emoji)}
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[12px] border transition-colors cursor-pointer ${
-                      r.reactedByMe
-                        ? 'border-[#ff5a1f]/60 bg-[#ff5a1f]/15 text-[#ffad5a] font-semibold'
-                        : 'border-white/[0.12] bg-white/[0.04] text-[#e7e9ea] hover:bg-white/[0.08]'
-                    }`}
-                    aria-pressed={r.reactedByMe}
-                    aria-label={`Реакция ${r.emoji}`}
-                  >
-                    <span>{r.emoji}</span>
-                    <span className="tabular-nums text-[11px]">{r.count}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Полная 5-иконочная панель действий в стиле X.com строго на одной линии */}
+            {/* Чистая 4-иконочная панель действий в стиле X.com строго на одной линии */}
             <div className="relative flex items-center gap-4 min-h-[28px] mt-1.5">
               {/* 1. Ответить (+ счётчик ответов в ветке) */}
               <button
@@ -689,60 +646,12 @@ export function CommentsThread({
                 )}
               </button>
 
-              {/* 3. Быстрые эмодзи-реакции (comment_reactions) */}
+              {/* 3. Поделиться */}
               <div className="relative inline-flex items-center" data-comment-popover>
                 <button
                   type="button"
                   onClick={() => {
                     playClick(soundEnabled)
-                    setOpenShareMenuId(null)
-                    setOpenReactionPickerId((prev) => (prev === node.id ? null : node.id))
-                  }}
-                  aria-expanded={isReactionPickerOpen}
-                  aria-label="Добавить реакцию на комментарий"
-                  title="Добавить реакцию"
-                  className={`h-7 inline-flex items-center gap-1.5 text-[12px] transition-colors cursor-pointer ${
-                    isReactionPickerOpen
-                      ? 'text-[#ffad5a]'
-                      : 'text-white/45 hover:text-[#ffad5a]'
-                  }`}
-                >
-                  <SmilePlus size={15} />
-                </button>
-
-                {isReactionPickerOpen && (
-                  <div
-                    role="dialog"
-                    aria-label="Быстрые реакции"
-                    className="absolute left-0 bottom-full mb-1.5 z-40 flex items-center gap-1 rounded-full border border-white/[0.16] bg-[#060608] px-2 py-1 shadow-[0_8px_28px_rgba(0,0,0,0.92)]"
-                  >
-                    {COMMENT_QUICK_REACTIONS.map((emoji) => {
-                      const active = Boolean(reactionList.find((r) => r.emoji === emoji)?.reactedByMe)
-                      return (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() => void handleToggleReaction(node.id, emoji)}
-                          className={`w-7 h-7 rounded-full flex items-center justify-center text-[15px] transition-transform hover:scale-125 cursor-pointer ${
-                            active ? 'bg-[#ff5a1f]/25 ring-1 ring-[#ff5a1f]/60' : 'hover:bg-white/[0.08]'
-                          }`}
-                          aria-label={`Реакция ${emoji}`}
-                        >
-                          {emoji}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Поделиться */}
-              <div className="relative inline-flex items-center" data-comment-popover>
-                <button
-                  type="button"
-                  onClick={() => {
-                    playClick(soundEnabled)
-                    setOpenReactionPickerId(null)
                     setOpenShareMenuId((prev) => (prev === node.id ? null : node.id))
                   }}
                   aria-expanded={isShareOpen}
