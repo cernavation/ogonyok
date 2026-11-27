@@ -8,17 +8,18 @@ import {
   formatDayAsText,
   generateDayCardSvg,
 } from '@/lib/ogonek/card-export'
-import { buildDayAttachment } from '@/lib/ogonek/messenger'
+import { buildDayAttachment, type AttachmentAuthorMeta } from '@/lib/ogonek/messenger'
 import type { Day } from '@/lib/ogonek/types'
 import { ForwardToChatModal } from './messenger'
 
 interface ShareCardModalProps {
   day: Day
+  authorMeta?: AttachmentAuthorMeta | null
   onClose: () => void
   onNotify: (msg: string) => void
 }
 
-export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) {
+export function ShareCardModal({ day, authorMeta, onClose, onNotify }: ShareCardModalProps) {
   const [copied, setCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [isExportingPng, setIsExportingPng] = useState(false)
@@ -178,7 +179,7 @@ export function ShareCardModal({ day, onClose, onNotify }: ShareCardModalProps) 
 
       {forwardOpen && (
         <ForwardToChatModal
-          attachment={buildDayAttachment(day)}
+          attachment={buildDayAttachment(day, authorMeta)}
           initialNote={`День #${day.id} — делюсь гордостью 🔥`}
           onClose={() => setForwardOpen(false)}
           onNotify={onNotify}

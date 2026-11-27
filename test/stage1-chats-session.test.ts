@@ -68,7 +68,14 @@ test('Polish Stage 1: Chat card wrapper, empty home CTA, 1-click logout, out-of-
   assert.ok(home.includes('whitespace-nowrap h-11 px-6 rounded-full'), 'Empty home CTA buttons stay crisp single-line pills')
 
   const store = read('lib/ogonek/use-ogonek-store.ts')
-  assert.ok(store.includes("key.startsWith('sb-')") && store.includes('client.auth.signOut'), 'signOut clears Supabase tokens/cookies synchronously and awaits client signOut before redirect')
+  const storage = read('lib/ogonek/storage.ts')
+  assert.ok(
+    (store.includes("key.startsWith('sb-')") ||
+      (store.includes('clearUserLocalCaches({ includeAuthTokens: true })') &&
+        storage.includes("key.startsWith('sb-')"))) &&
+      store.includes('client.auth.signOut'),
+    'signOut clears Supabase tokens/cookies synchronously and awaits client signOut before redirect'
+  )
 
   const gifRoute = read('app/api/giphy/route.ts')
   assert.ok(gifRoute.includes('fetchPublicGifs'), 'GIF API supports out-of-the-box public trending and search without forcing API keys')

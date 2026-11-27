@@ -161,6 +161,32 @@ export const FALLBACK_SEED_PROFILES: ProfileRecord[] = [
   },
 ]
 
+/** Внутрисессионный кэш загруженных профилей (чтобы списки/чаты не мигали на 'Собеседник') */
+const profileMemoryCache = new Map<string, ProfileRecord>()
+
+export function cacheProfileRecord(profile: ProfileRecord | null | undefined): ProfileRecord | null {
+  if (!profile || !profile.id) return profile ?? null
+  profileMemoryCache.set(profile.id, profile)
+  if (profile.username) {
+    profileMemoryCache.set(`@${profile.username.toLowerCase().replace(/^@/, '')}`, profile)
+  }
+  return profile
+}
+
+export function getCachedProfileSync(userIdOrUsername?: string | null): ProfileRecord | null {
+  if (!userIdOrUsername) return null
+  const clean = userIdOrUsername.trim()
+  return (
+    profileMemoryCache.get(clean) ||
+    profileMemoryCache.get(`@${clean.toLowerCase().replace(/^@/, '')}`) ||
+    null
+  )
+}
+
+export function clearProfileMemoryCache() {
+  profileMemoryCache.clear()
+}
+
 /**
  * Получить профиль пользователя по id или username
  */
@@ -175,8 +201,8 @@ export async function getProfile(userIdOrUsername: string): Promise<ProfileRecor
       q = q.eq('username', userIdOrUsername.replace(/^@/, ''))
     }
     const { data, error } = await q.maybeSingle()
-    if (!error && data) return mapProfileRecord(data)
-    return null
+    if (!error && data) return cacheProfileRecord(mapProfileRecord(data))
+    return getCachedProfileSync(userIdOrUsername)
   }
 
   const cleanUser = userIdOrUsername.replace(/^@/, '').toLowerCase()
@@ -207,8 +233,8 @@ export async function getProfilesByIds(userIds: string[]): Promise<Record<string
     if (error || !Array.isArray(data)) return {}
     const map: Record<string, ProfileRecord> = {}
     for (const row of data as any[]) {
-      const mapped = mapProfileRecord(row)
-      map[mapped.id] = mapped
+      const mapped = cacheProfileRecord(mapProfileRecord(row))
+      if (mapped) map[mapped.id] = mapped
     }
     return map
   } catch {
@@ -2126,9 +2152,11 @@ export interface EvidenceVaultRecord {
 /**
  * Получить факты силы пользователя из Supabase
  */
-export async function getEvidenceVault(userId: string): Promise<EvidenceVaultRecord[]> {
+export async function getEvidenceVaultStatus(
+  userId: string
+): Promise<{ ok: boolean; items: EvidenceVaultRecord[] }> {
   const supabase = getSupabase()
-  if (!supabase || !userId) return []
+  if (!supabase || !userId) return { ok: false, items: [] }
 
   try {
     const { data, error } = await supabase
@@ -2138,11 +2166,16 @@ export async function getEvidenceVault(userId: string): Promise<EvidenceVaultRec
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
 
-    if (error || !data) return []
-    return data as EvidenceVaultRecord[]
+    if (error) return { ok: false, items: [] }
+    return { ok: true, items: Array.isArray(data) ? (data as EvidenceVaultRecord[]) : [] }
   } catch {
-    return []
+    return { ok: false, items: [] }
   }
+}
+
+export async function getEvidenceVault(userId: string): Promise<EvidenceVaultRecord[]> {
+  const { items } = await getEvidenceVaultStatus(userId)
+  return items
 }
 
 /**

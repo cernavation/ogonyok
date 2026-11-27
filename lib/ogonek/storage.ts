@@ -1064,6 +1064,142 @@ let pendingSaveState: OgonekStoreState | null = null
 let pendingSaveTimer: ReturnType<typeof setTimeout> | null = null
 let pendingAdapter: StorageAdapter = defaultStorageAdapter
 
+const USER_LOCAL_CACHE_KEYS = [
+  STORAGE_KEY,
+  'ogonyok.v3.store',
+  'ogonyok.v1',
+  'pridegrat.v_final_v2',
+  'ogonek_messenger_state',
+  'priday_draft',
+  'ogonek.draft.composer',
+  'ogonek.offline_queue.v1',
+  'ogonek.tour.completed',
+  'ogonek:tour-completed',
+  'ogonek.security.hint.v1',
+]
+
+const USER_LOCAL_CACHE_PREFIXES = ['ogonek_upgrade_', 'ogonek_legacy_']
+
+/** Отменяет отложенную запись стора без сброса старых данных в storage */
+export function cancelPendingSave(): void {
+  if (pendingSaveTimer) {
+    clearTimeout(pendingSaveTimer)
+    pendingSaveTimer = null
+  }
+  pendingSaveState = null
+}
+
+/**
+ * Полностью очищает пользовательские локальные кэши (черновики, офлайн-очередь,
+ * снапшоты чатов и данных), НЕ трогая настройки темы и оформления (`ogonek.appearance.v1`).
+ */
+export function clearUserLocalCaches(options?: {
+  includeAuthTokens?: boolean
+  adapter?: StorageAdapter
+}): void {
+  const includeAuthTokens = Boolean(options?.includeAuthTokens)
+  cancelPendingSave()
+
+  const adapter = options?.adapter
+  if (adapter) {
+    for (const k of USER_LOCAL_CACHE_KEYS) {
+      adapter.removeItem(k)
+    }
+  }
+
+  if (typeof window === 'undefined') return
+
+  try {
+    for (const k of USER_LOCAL_CACHE_KEYS) {
+      window.localStorage.removeItem(k)
+    }
+    const prefixMatches: string[] = []
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i)
+      if (!key) continue
+      if (
+        USER_LOCAL_CACHE_PREFIXES.some((p) => key.startsWith(p)) ||
+        (includeAuthTokens && key.startsWith('sb-'))
+      ) {
+        prefixMatches.push(key)
+      }
+    }
+    prefixMatches.forEach((k) => window.localStorage.removeItem(k))
+  } catch {}
+
+  try {
+    window.sessionStorage.removeItem('priday_preloaded')
+  } catch {}
+
+  if (includeAuthTokens && typeof document !== 'undefined' && document.cookie) {
+    try {
+      document.cookie.split(';').forEach((c) => {
+        const name = c.split('=')[0]?.trim()
+        if (name && name.startsWith('sb-')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+        }
+      })
+    } catch {}
+  }
+}
+
+/**
+ * Возвращает чистый пользовательский стейт при выходе или смене аккаунта,
+ * сохраняя только локальные настройки темы/акцента/шрифта/звука.
+ */
+export function clearUserSessionData(state: OgonekStoreState): OgonekStoreState {
+  return {
+    ...DEFAULT_STORE_STATE,
+    days: [],
+    verifiedAchievements: [],
+    morningIntentions: {},
+    morningFocusHistory: {},
+    composerDraft: null,
+    evidenceItems: [],
+    evidenceFavorites: [],
+    unreadChatCount: 0,
+    unreadNotificationsCount: 0,
+    notifications: [],
+    pinEnabled: false,
+    dayReactions: {},
+    myReactions: {},
+    comments: {},
+    profile: { ...DEFAULT_PROFILE },
+    followingIds: [],
+    viewedStoryIds: [],
+    myStories: [],
+    friendIds: [],
+    incomingFriendRequests: [],
+    outgoingFriendRequests: [],
+    dismissedSuggestions: [],
+    blockedUserIds: [],
+    activeCall: null,
+    exploreFollowingIds: [],
+    exploreLikedPosts: [],
+    exploreSavedPosts: [],
+    exploreRecentSearches: [],
+    chatThreads: {},
+    chatActiveFriendId: null,
+    chatTags: [],
+    security: DEFAULT_SECURITY_STATE,
+    privacy: DEFAULT_PRIVACY,
+    streak: DEFAULT_STREAK_SETTINGS,
+    monthlyKpis: [],
+    auth: {
+      ...DEFAULT_AUTH_STATE,
+      accounts: [],
+      activeAccountId: null,
+      signedIn: false,
+    },
+    soundEnabled: state.soundEnabled ?? DEFAULT_STORE_STATE.soundEnabled,
+    soundVolume: state.soundVolume ?? DEFAULT_STORE_STATE.soundVolume,
+    theme: state.theme ?? DEFAULT_STORE_STATE.theme,
+    accent: state.accent ?? DEFAULT_STORE_STATE.accent,
+    fontScale: state.fontScale ?? DEFAULT_STORE_STATE.fontScale,
+    feedDensity: state.feedDensity ?? DEFAULT_STORE_STATE.feedDensity,
+  }
+}
+
 /** Принудительный сброс отложенного сохранения стора в localStorage */
 export function flushPendingSave(): void {
   if (pendingSaveTimer) {
@@ -1090,17 +1226,26 @@ export function saveStoreImmediate(
       serialized = JSON.stringify(state)
       adapter.setItem(STORAGE_KEY, serialized)
     } catch {
-      // Фолбэк при нехватке места в localStorage: сохраняем последние 100 дней
+      // Фолбэк при нехватке места в localStorage: сначала обрезаем старые дни, СОХРАНЯЯ peerMeta и диалоги чатов
       try {
+        const compactThreads = Object.fromEntries(
+          Object.entries(state.chatThreads || {}).map(([k, t]) => [
+            k,
+            {
+              ...t,
+              messages: Array.isArray(t.messages) ? t.messages.slice(-25) : [],
+            },
+          ])
+        )
         const compactState = {
           ...state,
-          days: state.days.slice(0, 100),
-          chatThreads: {},
+          days: state.days.slice(0, 60),
+          chatThreads: compactThreads,
         }
         serialized = JSON.stringify(compactState)
         adapter.setItem(STORAGE_KEY, serialized)
       } catch {
-        // Если совсем нет места, сохраняем настройки без дней
+        // Если совсем нет места, сохраняем настройки и метаданные чатов без истории дней
         const { days: _unused, ...noDays } = state
         serialized = JSON.stringify(noDays)
         adapter.setItem(STORAGE_KEY, serialized)

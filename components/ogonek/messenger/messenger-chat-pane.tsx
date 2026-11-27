@@ -51,6 +51,7 @@ import type {
   ChatPoll,
 } from '@/lib/ogonek/types'
 import {
+  getCachedProfileSync,
   getProfile,
   getDirectMessages,
   markDirectMessagesAsRead,
@@ -214,6 +215,9 @@ export function MessengerChatPane({
   const isGroup = friendId ? isGroupThread(thread ?? undefined, friendId) : false
   const isSaved = friendId === 'saved-messages'
   const friend = targetPeerId && !isGroup && !isSaved ? getFriend(targetPeerId) : null
+  const cachedPeerProfile =
+    targetPeerId && !friend && !isGroup && !isSaved ? getCachedProfileSync(targetPeerId) : null
+  const activePeerProfile = peerProfile || cachedPeerProfile
 
   const isUuid = (s?: string | null) =>
     typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
@@ -222,14 +226,23 @@ export function MessengerChatPane({
     ? 'Избранное'
     : friend
     ? friend.name
-    : thread?.peerMeta?.name || peerProfile?.display_name || (peerProfile?.username ? `@${peerProfile.username}` : (friendId ? threadTitle(friendId, thread ?? undefined) : ''))
+    : activePeerProfile?.display_name ||
+      thread?.peerMeta?.name ||
+      (activePeerProfile?.username
+        ? `@${activePeerProfile.username}`
+        : friendId
+          ? threadTitle(friendId, thread ?? undefined)
+          : '')
 
-  if (isUuid(title)) {
-    title = peerProfile?.username ? `@${peerProfile.username}` : 'Собеседник'
+  if (isUuid(title) || (title === 'Собеседник' && (activePeerProfile?.username || thread?.peerMeta?.username))) {
+    const uname = activePeerProfile?.username || thread?.peerMeta?.username
+    title = uname ? `@${uname}` : 'Собеседник'
   }
 
   useEffect(() => {
     if (targetPeerId && !friend && !isGroup && !isSaved) {
+      const cached = getCachedProfileSync(targetPeerId)
+      if (cached) setPeerProfile(cached)
       getProfile(targetPeerId).then((p) => {
         if (p) setPeerProfile(p)
       })
@@ -792,7 +805,7 @@ export function MessengerChatPane({
               <span className="text-[16px] sm:text-[20px] font-[800] text-[var(--text)] truncate leading-tight">
                 {title}
               </span>
-              {(friend?.verified || thread?.peerMeta?.verified || peerProfile?.verified) && (
+              {(friend?.verified || activePeerProfile?.verified || thread?.peerMeta?.verified) && (
                 <VerifiedBadge size="sm" />
               )}
             </div>

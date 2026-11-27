@@ -6,22 +6,52 @@ import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 
 type Props = {
   attachment: ChatAttachment
-  /** Компактный режим — только заголовок, без подписи */
+  /** Компактный режим — только заголовок, без подписи и подсказки раскрытия */
   compact?: boolean
+  /** Клик открывает карточку целиком в модальном окне просмотра */
+  onClick?: () => void
 }
 
 /**
  * ЭТАП 13 — Карточка-вложение в чате.
- * Один и тот же вид для пересланной гордости, целого дня, кадра сторис и
- * ачивки: градиент, эмодзи, заголовок и подпись. Фото-фон подтягивается из
- * IndexedDB через `usePhotoUrl`, если он есть.
+ * Кликабельна: нажатие раскрывает гордость/благодарность целиком без обрезания.
  */
-export function ChatAttachmentCard({ attachment, compact = false }: Props) {
+export function ChatAttachmentCard({ attachment, compact = false, onClick }: Props) {
   const photoSrc = usePhotoUrl(attachment.photo ?? null)
+  const showExpandHint =
+    Boolean(onClick) &&
+    !compact &&
+    (attachment.title.length > 85 || Boolean(photoSrc) || attachment.kind === 'pride')
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border"
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={
+        onClick
+          ? (e) => {
+              e.stopPropagation()
+              onClick()
+            }
+          : undefined
+      }
+      onKeyDown={
+        onClick
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.stopPropagation()
+                onClick()
+              }
+            }
+          : undefined
+      }
+      aria-label={onClick ? `Открыть полностью: ${attachment.title}` : undefined}
+      className={`relative overflow-hidden rounded-2xl border text-left ${
+        onClick
+          ? 'cursor-pointer transition-all hover:brightness-110 active:scale-[0.99]'
+          : ''
+      }`}
       style={{
         borderColor: `${attachment.accent}55`,
         background: `linear-gradient(145deg, ${attachment.from}, ${attachment.to})`,
@@ -41,17 +71,24 @@ export function ChatAttachmentCard({ attachment, compact = false }: Props) {
         aria-hidden="true"
       />
       <div className="relative p-3">
-        <span
-          className="text-[10px] font-black uppercase tracking-[0.14em]"
-          style={{ color: attachment.accent }}
-        >
-          {attachmentKindLabel(attachment.kind)}
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className="text-[10px] font-black uppercase tracking-[0.14em]"
+            style={{ color: attachment.accent }}
+          >
+            {attachmentKindLabel(attachment.kind)}
+          </span>
+          {showExpandHint && (
+            <span className="text-[10px] font-semibold text-white/65">
+              Открыть →
+            </span>
+          )}
+        </div>
         <div className="mt-1 flex items-start gap-2">
           <span className="text-[20px] leading-none" aria-hidden="true">
             {attachment.emoji}
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="line-clamp-3 text-[14px] font-semibold leading-snug text-white">
               {attachment.title}
             </p>

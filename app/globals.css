@@ -4398,13 +4398,16 @@ kbd {
 
 .story-ring__ring {
   position: relative;
+  box-sizing: border-box;
   width: 64px;
   height: 64px;
   border-radius: 50%;
   padding: 2px;
   background: linear-gradient(135deg, #ff6b35, #ffa600, #f91880);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   transition: transform 0.15s ease;
 }
 .story-ring:hover .story-ring__ring {
@@ -4412,21 +4415,25 @@ kbd {
 }
 
 .story-ring__inner {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   border-radius: 50%;
   background: var(--bg);
   padding: 2px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .story-ring__avatar {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
   font-weight: 800;
   color: #fff;
@@ -4437,6 +4444,7 @@ kbd {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .story-ring__name {

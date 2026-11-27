@@ -12,6 +12,55 @@ type GifItem = {
   previewUrl: string
 }
 
+type GifTileStage = 'preview' | 'full' | 'proxy' | 'broken'
+
+function GifTile({
+  gif,
+  onSelect,
+}: {
+  gif: GifItem
+  onSelect: () => void
+}) {
+  const [stage, setStage] = useState<GifTileStage>('preview')
+  const [loaded, setLoaded] = useState(false)
+
+  if (stage === 'broken') return null
+
+  const primary = gif.previewUrl || gif.url
+  const src =
+    stage === 'preview'
+      ? primary
+      : stage === 'full'
+        ? gif.url || primary
+        : `/api/giphy?img=${encodeURIComponent(primary)}`
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="relative aspect-square rounded-xl overflow-hidden bg-white/5 hover:opacity-90 hover:scale-[1.02] transition-all group border border-white/5 cursor-pointer"
+    >
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-white/[0.06]" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={gif.title}
+        referrerPolicy="no-referrer"
+        className={`w-full h-full object-cover transition-opacity duration-200 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setLoaded(false)
+          setStage((prev) => {
+            if (prev === 'preview' && gif.url && gif.url !== primary) return 'full'
+            if (prev === 'preview' || prev === 'full') return 'proxy'
+            return 'broken'
+          })
+        }}
+      />
+    </button>
+  )
+}
+
 type Props = {
   onSelectGif: (gifUrl: string) => void
   onClose: () => void
@@ -111,24 +160,15 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-1">
               {gifs.map((g) => (
-                <button
+                <GifTile
                   key={g.id}
-                  type="button"
-                  onClick={() => {
+                  gif={g}
+                  onSelect={() => {
                     playClick(soundEnabled)
                     onSelectGif(g.url)
                     onClose()
                   }}
-                  className="relative aspect-square rounded-xl overflow-hidden bg-white/5 hover:opacity-85 hover:scale-[1.02] transition-all group border border-white/5"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={g.previewUrl || g.url}
-                    alt={g.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                </button>
+                />
               ))}
             </div>
           )}

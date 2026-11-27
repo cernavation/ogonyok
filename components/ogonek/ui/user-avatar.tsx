@@ -31,6 +31,8 @@ export type UserAvatarProps = {
   verified?: boolean
   /** Border toggle around the circle itself */
   bordered?: boolean
+  /** Fill parent box dimensions (100% width & height) instead of fixed inline px */
+  fillContainer?: boolean
   /** Optional custom overlay content when image is replaced (e.g. Lock for anonymous) */
   fallbackContent?: ReactNode
   className?: string
@@ -63,6 +65,7 @@ export function UserAvatar({
   showVerified = false,
   verified = false,
   bordered = true,
+  fillContainer = false,
   fallbackContent,
   className = '',
   onClick,
@@ -103,12 +106,28 @@ export function UserAvatar({
   const showImg = Boolean(effectiveSrc && !imgFailed && !fallbackContent)
   const badgeSizePx = Math.max(13, Math.round(size * 0.34))
 
+  const outerStyle = fillContainer ? { width: '100%', height: '100%' } : { width: size, height: size }
+  const resolvedInnerPx = ring && !hasStory ? Math.max(16, size - 4) : innerSize
+  const innerStyle = fillContainer
+    ? {
+        width: '100%',
+        height: '100%',
+        background: showImg ? 'var(--surface2, #202327)' : bg,
+        fontSize,
+      }
+    : {
+        width: resolvedInnerPx,
+        height: resolvedInnerPx,
+        background: showImg ? 'var(--surface2, #202327)' : bg,
+        fontSize,
+      }
+
   return (
     <span
       className={`relative inline-flex shrink-0 items-center justify-center rounded-full select-none ${outerRingClass} ${
         onClick ? 'cursor-pointer' : ''
       } ${className}`}
-      style={{ width: size, height: size }}
+      style={outerStyle}
       onClick={onClick}
       aria-hidden={alt ? undefined : 'true'}
     >
@@ -116,12 +135,7 @@ export function UserAvatar({
         className={`relative flex items-center justify-center overflow-hidden rounded-full font-bold text-white ${
           bordered ? 'border border-[var(--line)]' : ''
         }`}
-        style={{
-          width: ring && !hasStory ? Math.max(16, size - 4) : innerSize,
-          height: ring && !hasStory ? Math.max(16, size - 4) : innerSize,
-          background: showImg ? 'var(--surface2, #202327)' : bg,
-          fontSize,
-        }}
+        style={innerStyle}
       >
         {fallbackContent ? (
           fallbackContent

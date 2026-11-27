@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { getProfile, type ProfileRecord } from '@/lib/supabase/api'
+import { getCachedProfileSync, getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 import { UserAvatar } from '../ui'
 
@@ -22,8 +22,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 /**
  * Аватар собеседника в мессенджере на базе единого <UserAvatar />.
- * Подтягивает свежий avatar_url / avatar_image / avatar_color / verified
- * напрямую из public.profiles Supabase по userId собеседника.
+ * Использует синхронный кэш профиля + разовую подгрузку из public.profiles без зацикливания.
  */
 export function ChatAvatar({
   friendId,
@@ -48,13 +47,17 @@ export function ChatAvatar({
   const friend = targetUserId ? getFriend(targetUserId) : undefined
   const thread = friendId ? state?.chatThreads?.[friendId] : undefined
   const peerMeta = thread?.peerMeta
-  const [liveProfile, setLiveProfile] = useState<ProfileRecord | null>(null)
+  const cachedSync = targetUserId ? getCachedProfileSync(targetUserId) : null
+  const [liveProfile, setLiveProfile] = useState<ProfileRecord | null>(cachedSync)
 
   useEffect(() => {
     if (!targetUserId || friend || !UUID_REGEX.test(targetUserId)) {
       setLiveProfile(null)
       return
     }
+
+    const cached = getCachedProfileSync(targetUserId)
+    if (cached) setLiveProfile(cached)
 
     let cancelled = false
     getProfile(targetUserId)
@@ -65,13 +68,8 @@ export function ChatAvatar({
         const nextColor = p.avatar_color || undefined
         const nextVerified = Boolean(p.verified)
         const nextName = p.display_name || p.username || undefined
-        if (
-          peerMeta?.avatarUrl !== nextUrl ||
-          peerMeta?.avatarColor !== nextColor ||
-          peerMeta?.verified !== nextVerified ||
-          peerMeta?.name !== nextName
-        ) {
-          updateThreadPeerMeta(friendId!, {
+        if (friendId) {
+          updateThreadPeerMeta(friendId, {
             name: nextName,
             username: p.username || undefined,
             avatarUrl: nextUrl,
@@ -86,26 +84,27 @@ export function ChatAvatar({
     return () => {
       cancelled = true
     }
-  }, [targetUserId, friend, friendId, updateThreadPeerMeta, peerMeta?.avatarUrl, peerMeta?.avatarColor, peerMeta?.verified, peerMeta?.name])
+  }, [targetUserId, friend, friendId, updateThreadPeerMeta])
 
+  const effectiveProfile = liveProfile || cachedSync
   const displayName =
-    liveProfile?.display_name ||
-    friend?.name ||
+    effectiveProfile?.display_name ||
     peerMeta?.name ||
+    friend?.name ||
     fallbackName ||
-    liveProfile?.username ||
+    effectiveProfile?.username ||
     peerMeta?.username ||
     'Собеседник'
 
-  const username = liveProfile?.username || friend?.username || peerMeta?.username || undefined
+  const username = effectiveProfile?.username || peerMeta?.username || friend?.username || undefined
   const avatarUrl =
-    liveProfile?.avatar_image ||
-    liveProfile?.avatar_url ||
+    effectiveProfile?.avatar_image ||
+    effectiveProfile?.avatar_url ||
     peerMeta?.avatarUrl ||
     fallbackAvatar ||
     null
   const avatarColor =
-    liveProfile?.avatar_color ||
+    effectiveProfile?.avatar_color ||
     peerMeta?.avatarColor ||
     friend?.avatarColor ||
     '#FF5C00'

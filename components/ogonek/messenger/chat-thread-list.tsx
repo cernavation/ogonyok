@@ -16,6 +16,7 @@ import {
   unreadCount,
 } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
+import { getCachedProfileSync } from '@/lib/supabase/api'
 import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
@@ -85,11 +86,25 @@ export function ChatThreadList({
         const thread = safeThreads[id] ?? emptyThread()
         const isGroup = isGroupThread(thread, id)
         const friend = !isGroup ? getFriend(id) : null
-        let title = threadTitle(id, thread)
-        let username = friend?.username || thread?.peerMeta?.username || null
+        const cachedPeer = !isGroup ? getCachedProfileSync(id) : null
+        let title =
+          (friend?.name && !isUuid(friend.name) ? friend.name : null) ||
+          (thread?.peerMeta?.name &&
+          thread.peerMeta.name !== 'Собеседник' &&
+          !isUuid(thread.peerMeta.name)
+            ? thread.peerMeta.name
+            : null) ||
+          cachedPeer?.display_name ||
+          (cachedPeer?.username ? `@${cachedPeer.username}` : null) ||
+          threadTitle(id, thread)
+        let username =
+          friend?.username || thread?.peerMeta?.username || cachedPeer?.username || null
         if (username && isUuid(username)) username = null
         if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
-        return { id, isGroup, friend, thread, title, username }
+        const verified = Boolean(
+          friend?.verified || thread?.peerMeta?.verified || cachedPeer?.verified
+        )
+        return { id, isGroup, friend, thread, title, username, verified }
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item))
       .filter(({ friend, thread, title, username }) => {
@@ -180,7 +195,7 @@ export function ChatThreadList({
             </p>
           </div>
         ) : (
-          rows.map(({ id, isGroup, friend, thread, title }) => {
+          rows.map(({ id, isGroup, friend, thread, title, verified }) => {
             const last = lastMessage(thread)
             const unread = unreadCount(thread)
             const presence = friend ? presenceMeta(friend.presence) : null
@@ -231,9 +246,7 @@ export function ChatThreadList({
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <span className="truncate text-[14px] font-semibold text-[var(--text)] flex items-center gap-1">
                       <span className="truncate">{title}</span>
-                      {(friend?.verified || thread?.peerMeta?.verified) && (
-                        <VerifiedBadge size="xs" />
-                      )}
+                      {verified && <VerifiedBadge size="xs" />}
                     </span>
                     <span className="shrink-0 text-[11px] font-mono text-[var(--text-2)]">
                       {last?.createdAtISO

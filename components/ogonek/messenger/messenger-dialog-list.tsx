@@ -43,7 +43,7 @@ import type { ChatFolder, ChatTag, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
 import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
-import { getProfile } from '@/lib/supabase/api'
+import { getCachedProfileSync, getProfile } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 
 type Props = {
@@ -158,12 +158,21 @@ export function MessengerDialogList({
         const isGroup = isGroupThread(thread, id)
         const isSaved = id === 'saved-messages'
         const friend = !isGroup && !isSaved ? getFriend(id) : null
-        const isVerified = Boolean(friend?.verified ?? thread?.peerMeta?.verified)
+        const targetUid = !isGroup && !isSaved ? getTargetUserId(id, currentUserId) : ''
+        const liveProfile = targetUid && !friend ? getCachedProfileSync(targetUid) : null
+        const isVerified = Boolean(
+          liveProfile?.verified ?? friend?.verified ?? thread?.peerMeta?.verified
+        )
 
-        let title = isSaved ? 'Избранное' : threadTitle(id, thread)
-        let username = friend?.username || thread?.peerMeta?.username || null
+        let title = isSaved
+          ? 'Избранное'
+          : liveProfile?.display_name || threadTitle(id, thread)
+        let username =
+          liveProfile?.username || friend?.username || thread?.peerMeta?.username || null
         if (username && isUuid(username)) username = null
-        if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
+        if ((title && isUuid(title)) || (title === 'Собеседник' && username)) {
+          title = username ? `@${username}` : title
+        }
 
         return { id, isGroup, isSaved, friend, isVerified, thread, title, username }
       })

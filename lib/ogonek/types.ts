@@ -688,8 +688,14 @@ export type ChatAttachment = {
   prideIndex: number | null
   /** id сторис/ачивки-источника */
   storyId?: string | null
-  /** Имя автора (для пересланной чужой сторис) */
+  /** Имя автора (для пересланной гордости/сторис) */
   author: string | null
+  authorUsername?: string | null
+  authorAvatar?: string | null
+  authorAvatarColor?: string | null
+  authorVerified?: boolean
+  rating?: number | null
+  dayDateISO?: string | null
   /** Фото-фон: id из IndexedDB, data URL или blob */
   photo: string | null
   visibility: VisibilityLevel

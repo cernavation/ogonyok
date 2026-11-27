@@ -375,15 +375,18 @@ export function StoriesBar({
               style={myStories.length > 0 ? undefined : { background: 'transparent' }}
             >
               <span className="story-ring__inner">
-                <span className="story-ring__avatar" style={{ background: profile.avatarColor }}>
+                <span
+                  className="story-ring__avatar"
+                  style={{ background: myAvatarSrc ? 'transparent' : profile.avatarColor }}
+                >
                   <UserAvatar
                     avatarUrl={myAvatarSrc}
                     avatarColor={profile.avatarColor}
                     displayName={profile.displayName}
                     username={profile.username}
-                    size={56}
+                    size={52}
+                    fillContainer
                     bordered={false}
-                    className="!w-full !h-full"
                   />
                 </span>
               </span>
@@ -411,7 +414,10 @@ export function StoriesBar({
                   style={{ background: viewed ? '#3a3f45' : viewable.avatarColor }}
                 >
                   <span className="story-ring__inner">
-                    <span className="story-ring__avatar" style={{ background: viewable.avatarColor }}>
+                    <span
+                      className="story-ring__avatar"
+                      style={{ background: viewable.avatarUrl ? 'transparent' : viewable.avatarColor }}
+                    >
                       <UserAvatar
                         avatarUrl={viewable.avatarUrl}
                         avatarColor={viewable.avatarColor}
@@ -419,8 +425,8 @@ export function StoriesBar({
                         username={viewable.username}
                         initials={viewable.initials}
                         size={56}
+                        fillContainer
                         bordered={false}
-                        className="!w-full !h-full"
                       />
                     </span>
                   </span>

@@ -5,6 +5,9 @@ import { getSupabase } from './supabase-client'
 import {
   updateProfileInDb,
   updateProfileLevel,
+  getCachedProfileSync,
+  clearProfileMemoryCache,
+  getEvidenceVaultStatus,
   publishStoryToDb,
   deleteStoryFromDb,
   sendDirectMessageToDb,
@@ -22,7 +25,6 @@ import {
   addEvidenceVaultItem,
   toggleEvidenceVaultPin,
   deleteEvidenceVaultItem,
-  getEvidenceVault,
   toggleFriendshipFollow,
   checkFriendshipFollow,
   getFollowing,
@@ -115,8 +117,12 @@ import {
 import {
   DEFAULT_PROFILE,
   DEFAULT_STORE_STATE,
+  cancelPendingSave,
+  clearUserLocalCaches,
+  clearUserSessionData,
   loadStore,
   saveStore,
+  saveStoreImmediate,
   STORAGE_KEY,
   sanitizeAccent,
   sanitizeChatActiveFriendId,
@@ -222,6 +228,33 @@ let isInitialized = false
 let hasInitializedSupabaseSync = false
 let inFlightSessionSync: Promise<boolean> | null = null
 
+async function syncEvidenceVaultForUser(userId: string): Promise<void> {
+  if (!userId || userId.startsWith('anon-') || userId.startsWith('acct-guest')) return
+  try {
+    const res = await getEvidenceVaultStatus(userId)
+    if (!res.ok) return
+    const activeId = cachedState.auth?.activeAccountId
+    if (activeId && activeId !== userId) return
+
+    const mapped = res.items.map((v) => ({
+      id: v.client_id || v.id,
+      title: v.title,
+      description: v.description,
+      date: v.date,
+      category: v.category,
+      pinned: Boolean(v.pinned),
+    }))
+    const favs = mapped.filter((x) => x.pinned).map((x) => x.id)
+    cachedState = {
+      ...cachedState,
+      evidenceItems: mapped,
+      evidenceFavorites: favs,
+    }
+    saveStoreImmediate(cachedState)
+    emitChange()
+  } catch {}
+}
+
 async function hydrateStateFromSupabaseSession(
   client: NonNullable<ReturnType<typeof getSupabase>>,
   session: { user: any }
@@ -232,14 +265,33 @@ async function hydrateStateFromSupabaseSession(
   const username = userMeta.username || session.user.email?.split('@')[0] || 'user'
   const displayName = userMeta.display_name || username
 
-  let avatarImage = cachedState.profile.avatarImage
-  let bannerImage = cachedState.profile.bannerImage
+  const prevUserId = cachedState.auth?.activeAccountId
+  const prevUsername = cachedState.profile?.username?.toLowerCase()
+  const isAccountSwitch = Boolean(
+    (prevUserId && prevUserId !== userId) ||
+      (prevUsername &&
+        prevUsername !== 'guest' &&
+        prevUsername !== 'user' &&
+        prevUsername !== username.toLowerCase())
+  )
+
+  if (isAccountSwitch) {
+    cancelPendingSave()
+    clearUserLocalCaches({ includeAuthTokens: false })
+    clearProfileMemoryCache()
+    cachedState = clearUserSessionData(cachedState)
+  }
+
+  let avatarImage = isAccountSwitch ? null : cachedState.profile.avatarImage
+  let bannerImage = isAccountSwitch ? null : cachedState.profile.bannerImage
   let dbProfile: any = null
-  let userLevel = cachedState.profile.difficultyLevel || cachedState.profile.level || 1
+  let userLevel = isAccountSwitch
+    ? 1
+    : cachedState.profile.difficultyLevel || cachedState.profile.level || 1
   const isCerna = username.toLowerCase() === 'cernavation'
   let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' = isCerna ? 'ultra' : 'free'
   let dbSubscriptionExpiresAt: string | null = null
-  let avatarColor = cachedState.profile.avatarColor || '#FF5C00'
+  let avatarColor = isAccountSwitch ? '#FF5C00' : cachedState.profile.avatarColor || '#FF5C00'
 
   try {
     const res = await client
@@ -340,6 +392,7 @@ async function hydrateStateFromSupabaseSession(
   }
   saveStore(cachedState, undefined, true)
   emitChange()
+  void syncEvidenceVaultForUser(userId)
   return true
 }
 
@@ -363,17 +416,8 @@ export async function syncSupabaseAuthNow(): Promise<boolean> {
         return await hydrateStateFromSupabaseSession(client, session)
       }
       if (!error && (!cachedState.auth.signedIn || cachedState.auth.accounts.length === 0)) {
-        cachedState = {
-          ...cachedState,
-          profile: DEFAULT_PROFILE,
-          auth: {
-            ...cachedState.auth,
-            signedIn: false,
-            activeAccountId: null,
-            accounts: [],
-          },
-        }
-        saveStore(cachedState, undefined, true)
+        cachedState = clearUserSessionData(cachedState)
+        saveStoreImmediate(cachedState)
         emitChange()
         return false
       }
@@ -400,17 +444,11 @@ function initSupabaseSessionSync() {
 
     client.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
-        cachedState = {
-          ...cachedState,
-          profile: DEFAULT_PROFILE,
-          auth: {
-            ...cachedState.auth,
-            signedIn: false,
-            activeAccountId: null,
-            accounts: [],
-          },
-        }
-        saveStore(cachedState, undefined, true)
+        cancelPendingSave()
+        clearProfileMemoryCache()
+        clearUserLocalCaches({ includeAuthTokens: true })
+        cachedState = clearUserSessionData(cachedState)
+        saveStoreImmediate(cachedState)
         emitChange()
       } else if (
         session?.user &&
@@ -973,12 +1011,15 @@ export function subscribe(callback: () => void): () => void {
 
   const handleCustom = (e: Event) => {
     const customEvent = e as CustomEvent<OgonekStoreState>
-    if (customEvent.detail && Array.isArray((customEvent.detail as any).days) && (customEvent.detail as any).days.length > 0) {
+    if (customEvent.detail && typeof customEvent.detail === 'object') {
       cachedState = customEvent.detail
     } else {
       const fresh = loadStore()
-      // FIX BUG #2: Никогда не затираем уже загруженные дни пустым массивом!
-      if ((!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
+      // Никогда не затираем дни при событии без detail, только если это тот же пользователь
+      const sameAccount =
+        Boolean(fresh.auth?.activeAccountId) &&
+        fresh.auth.activeAccountId === cachedState.auth?.activeAccountId
+      if (sameAccount && (!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
         fresh.days = cachedState.days
       }
       cachedState = fresh
@@ -989,8 +1030,10 @@ export function subscribe(callback: () => void): () => void {
   const handleStorage = (e: StorageEvent) => {
     if (e.key === STORAGE_KEY || e.key === 'ogonyok.v3.store') {
       const fresh = loadStore()
-      // FIX BUG #2: Никогда не затираем уже загруженные дни пустым массивом при storage-событиях!
-      if ((!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
+      const sameAccount =
+        Boolean(fresh.auth?.activeAccountId) &&
+        fresh.auth.activeAccountId === cachedState.auth?.activeAccountId
+      if (sameAccount && (!fresh.days || fresh.days.length === 0) && cachedState.days && cachedState.days.length > 0) {
         fresh.days = cachedState.days
       }
       cachedState = fresh
@@ -5632,12 +5675,18 @@ export function useOgonekStore() {
         // 1. Все актуальные переписки из Supabase
         for (const [peerId, rows] of Object.entries(byPeer)) {
           const prevThread = currentThreads[peerId] ?? emptyThread()
-          const profile = profilesMap[peerId]
+          const profile = profilesMap[peerId] || getCachedProfileSync(peerId)
           const peerMeta = profile
             ? {
-                name: profile.display_name || `@${profile.username}`,
-                username: profile.username,
-                avatarUrl: profile.avatar_image || profile.avatar_url || undefined,
+                ...prevThread.peerMeta,
+                name: profile.display_name || (profile.username ? `@${profile.username}` : prevThread.peerMeta?.name),
+                username: profile.username || prevThread.peerMeta?.username,
+                avatarUrl: profile.avatar_image || profile.avatar_url || prevThread.peerMeta?.avatarUrl,
+                avatarColor: profile.avatar_color || prevThread.peerMeta?.avatarColor,
+                verified:
+                  typeof profile.verified === 'boolean'
+                    ? profile.verified
+                    : prevThread.peerMeta?.verified,
               }
             : prevThread.peerMeta
           const mappedMessages = rows.map((r) => mapRecordToChatMessage(r, uid))
@@ -5658,15 +5707,21 @@ export function useOgonekStore() {
             nextThreads[fId] = prevThread
             continue
           }
-          // Если у 1-на-1 чата в Supabase больше нет сообщений, очищаем локальный кэш сообщений!
-          const profile = profilesMap[fId]
+          // Если у 1-на-1 чата в Supabase больше нет сообщений, очищаем локальный кэш сообщений, сохраняя peerMeta!
+          const profile = profilesMap[fId] || getCachedProfileSync(fId)
           nextThreads[fId] = {
             ...prevThread,
             peerMeta: profile
               ? {
-                  name: profile.display_name || `@${profile.username}`,
-                  username: profile.username,
-                  avatarUrl: profile.avatar_image || profile.avatar_url || undefined,
+                  ...prevThread.peerMeta,
+                  name: profile.display_name || (profile.username ? `@${profile.username}` : prevThread.peerMeta?.name),
+                  username: profile.username || prevThread.peerMeta?.username,
+                  avatarUrl: profile.avatar_image || profile.avatar_url || prevThread.peerMeta?.avatarUrl,
+                  avatarColor: profile.avatar_color || prevThread.peerMeta?.avatarColor,
+                  verified:
+                    typeof profile.verified === 'boolean'
+                      ? profile.verified
+                      : prevThread.peerMeta?.verified,
                 }
               : prevThread.peerMeta,
             messages: [],
@@ -5779,16 +5834,28 @@ export function useOgonekStore() {
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
+        const curMeta = thread.peerMeta || {}
+        const nextMeta = {
+          ...curMeta,
+          ...meta,
+        }
+        if (
+          curMeta.name === nextMeta.name &&
+          curMeta.username === nextMeta.username &&
+          curMeta.avatarUrl === nextMeta.avatarUrl &&
+          curMeta.avatarColor === nextMeta.avatarColor &&
+          curMeta.verified === nextMeta.verified &&
+          curMeta.initials === nextMeta.initials
+        ) {
+          return prev
+        }
         return {
           ...prev,
           chatThreads: {
             ...threads,
             [friendId]: {
               ...thread,
-              peerMeta: {
-                ...thread.peerMeta,
-                ...meta,
-              },
+              peerMeta: nextMeta,
             },
           },
         }
@@ -5843,6 +5910,13 @@ export function useOgonekStore() {
   const activateAccount = useCallback(
     (accountId: string, isSwitch = false): boolean => {
       let activated = false
+      const prevActiveId = getSnapshot().auth.activeAccountId
+      const isChangingAccount = Boolean(isSwitch || (prevActiveId && prevActiveId !== accountId))
+      if (isChangingAccount) {
+        cancelPendingSave()
+        clearProfileMemoryCache()
+        clearUserLocalCaches({ includeAuthTokens: false })
+      }
       updateStore((prev) => {
         const account = prev.auth.accounts.find((a) => a.id === accountId)
         if (!account) return prev
@@ -5854,11 +5928,12 @@ export function useOgonekStore() {
             : a
         )
         const activeAccount = accounts.find((a) => a.id === accountId) ?? account
+        const baseState = isChangingAccount ? clearUserSessionData(prev) : prev
         return {
-          ...prev,
-          profile: sanitizeProfile({ ...prev.profile, ...profilePatchFromAccount(activeAccount) }),
+          ...baseState,
+          profile: sanitizeProfile({ ...baseState.profile, ...profilePatchFromAccount(activeAccount) }),
           auth: {
-            ...prev.auth,
+            ...baseState.auth,
             accounts,
             activeAccountId: accountId,
             signedIn: true,
@@ -5870,7 +5945,10 @@ export function useOgonekStore() {
             updatedAtISO: nowISO,
           },
         }
-      })
+      }, true)
+      if (activated && isChangingAccount) {
+        void syncEvidenceVaultForUser(accountId)
+      }
       return activated
     },
     [updateStore]
@@ -6131,6 +6209,19 @@ export function useOgonekStore() {
       const nowISO = new Date().toISOString()
       const accountId = params.userId || `acct-${cleanNick}`
 
+      const prevSnapshot = getSnapshot()
+      const prevAccountId = prevSnapshot.auth?.activeAccountId
+      const prevUsername = prevSnapshot.profile?.username?.toLowerCase()
+      const isSwitchingAccount = Boolean(
+        (prevAccountId && prevAccountId !== accountId) ||
+          (prevUsername && prevUsername !== 'guest' && prevUsername !== cleanNick)
+      )
+      if (isSwitchingAccount) {
+        cancelPendingSave()
+        clearProfileMemoryCache()
+        clearUserLocalCaches({ includeAuthTokens: false })
+      }
+
       // Загружаем актуальные данные профиля (включая реальный level, аватар, цвет) из базы данных Supabase
       let avatarImage = params.avatarUrl ?? null
       let avatarColor: string | null = null
@@ -6212,12 +6303,13 @@ export function useOgonekStore() {
       }
 
       updateStore((prev) => {
+        const baseState = isSwitchingAccount ? clearUserSessionData(prev) : prev
         const existing = prev.auth.accounts.find(
           (a) => a.id === accountId || a.snapshot.username?.toLowerCase() === cleanNick
         )
 
         const isOwner = cleanNick === 'cernavation'
-        const baseProfile = existing ? prev.profile : DEFAULT_PROFILE
+        const baseProfile = existing && !isSwitchingAccount ? baseState.profile : DEFAULT_PROFILE
         const effectiveTier: 'free' | 'pro' | 'premium' | 'ultra' = isOwner
           ? 'ultra'
           : (dbSubscriptionTier || (existing?.snapshot as any)?.subscription_tier || baseProfile.subscription_tier || 'free')
@@ -6235,8 +6327,8 @@ export function useOgonekStore() {
               ...existing.snapshot,
               username: cleanNick,
               displayName,
-              avatarImage: avatarImage || existing.snapshot.avatarImage,
-              bannerImage: bannerImage || existing.snapshot.bannerImage,
+              avatarImage: avatarImage || (isSwitchingAccount ? null : existing.snapshot.avatarImage),
+              bannerImage: bannerImage || (isSwitchingAccount ? null : existing.snapshot.bannerImage),
               subscription_tier: effectiveTier,
               subscription_expires_at: effectiveExpiresAt,
               subscription_valid_until: effectiveExpiresAt,
@@ -6262,10 +6354,10 @@ export function useOgonekStore() {
           account.snapshot.subscription_valid_until = effectiveExpiresAt
         }
 
-        const effectiveLevel = isOwner ? 5 : (dbLevel ?? (existing ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1))
+        const effectiveLevel = isOwner ? 5 : (dbLevel ?? (existing && !isSwitchingAccount ? (baseProfile.difficultyLevel || baseProfile.level || 1) : 1))
 
         return {
-          ...prev,
+          ...baseState,
           profile: sanitizeProfile({
             ...baseProfile,
             ...profilePatchFromAccount(account),
@@ -6281,28 +6373,29 @@ export function useOgonekStore() {
             subscription_tier: effectiveTier,
             subscription_expires_at: effectiveExpiresAt,
             subscription_valid_until: effectiveExpiresAt,
-            monthlyGoal: existing ? baseProfile.monthlyGoal : '',
+            monthlyGoal: existing && !isSwitchingAccount ? baseProfile.monthlyGoal : '',
             bio: dbBio !== null ? dbBio : (account.snapshot.bio || ''),
             city: dbCity !== null ? dbCity : (account.snapshot.city || ''),
-            website: dbWebsite !== null ? dbWebsite : (existing ? baseProfile.website : ''),
-            age: dbAge !== null ? dbAge : (existing ? baseProfile.age : null),
-            isAnonymous: dbIsAnon !== null ? dbIsAnon : (existing ? baseProfile.isAnonymous : false),
-            tour_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.tour_completed) : false),
-            onboarding_completed: dbTourCompleted !== null ? dbTourCompleted : (existing ? Boolean(baseProfile.onboarding_completed) : false),
+            website: dbWebsite !== null ? dbWebsite : (existing && !isSwitchingAccount ? baseProfile.website : ''),
+            age: dbAge !== null ? dbAge : (existing && !isSwitchingAccount ? baseProfile.age : null),
+            isAnonymous: dbIsAnon !== null ? dbIsAnon : (existing && !isSwitchingAccount ? baseProfile.isAnonymous : false),
+            tour_completed: dbTourCompleted !== null ? dbTourCompleted : (existing && !isSwitchingAccount ? Boolean(baseProfile.tour_completed) : false),
+            onboarding_completed: dbTourCompleted !== null ? dbTourCompleted : (existing && !isSwitchingAccount ? Boolean(baseProfile.onboarding_completed) : false),
           }),
-          privacy: dbPrivacy ? sanitizePrivacySettings(dbPrivacy) : prev.privacy,
-          // Для нового пользователя (не cernavation) лента чистая и готова к первому дню
-          days: isOwner
-            ? prev.days
-            : prev.days.length > 0 && prev.auth.accounts.some((a) => a.id === accountId)
-              ? prev.days
-              : [],
+          privacy: dbPrivacy ? sanitizePrivacySettings(dbPrivacy) : baseState.privacy,
+          days: isSwitchingAccount
+            ? []
+            : isOwner
+              ? baseState.days
+              : baseState.days.length > 0 && prev.auth.accounts.some((a) => a.id === accountId)
+                ? baseState.days
+                : [],
           followingIds: remoteGraph.followingIds,
           exploreFollowingIds: remoteGraph.followingIds,
           followerIds: remoteGraph.followerIds,
           friendIds: remoteGraph.friendIds,
           auth: {
-            ...prev.auth,
+            ...baseState.auth,
             accounts: [
               ...prev.auth.accounts.filter(
                 (a) => a.id !== account.id && a.snapshot.username?.toLowerCase() !== cleanNick
@@ -6320,29 +6413,35 @@ export function useOgonekStore() {
         }
       }, true)
 
-      // Подгрузка Evidence Vault из Supabase
+      // Подгрузка Evidence Vault строго для активного params.userId (включая очистку до [], если фактов 0)
       if (params.userId) {
         try {
-          const vaultItems = await getEvidenceVault(params.userId)
-          if (vaultItems && vaultItems.length > 0) {
-            updateStore((prev) => ({
-              ...prev,
-              evidenceItems: vaultItems.map((v) => ({
+          const vaultRes = await getEvidenceVaultStatus(params.userId)
+          if (vaultRes.ok) {
+            updateStore((prev) => {
+              if (prev.auth.activeAccountId && prev.auth.activeAccountId !== accountId) {
+                return prev
+              }
+              const mapped = vaultRes.items.map((v) => ({
                 id: v.client_id || v.id,
                 title: v.title,
                 description: v.description,
                 date: v.date,
                 category: v.category,
                 pinned: Boolean(v.pinned),
-              })),
-              evidenceFavorites: vaultItems.filter((v) => v.pinned).map((v) => v.client_id || v.id),
-            }))
+              }))
+              return {
+                ...prev,
+                evidenceItems: mapped,
+                evidenceFavorites: mapped.filter((v) => v.pinned).map((v) => v.id),
+              }
+            }, true)
           }
         } catch {}
       }
 
-      // Автозагрузка всех дней из облака Supabase для cernavation, если локальный стейт пуст (на новом устройстве или после очистки)
-      if (cleanNick === 'cernavation') {
+      // Автозагрузка дней из облака Supabase для активного аккаунта, если локальный стейт пуст
+      if (params.userId) {
         const uid = params.userId || accountId
         const supabase = getSupabase()
         if (supabase && uid) {
@@ -6358,11 +6457,14 @@ export function useOgonekStore() {
               if (!daysErr && Array.isArray(cloudDays) && cloudDays.length > 0) {
                 const mappedDays = cloudDays.map(mapCloudDayToDay)
                 updateStore((prev) => {
+                  if (prev.auth.activeAccountId && prev.auth.activeAccountId !== accountId) {
+                    return prev
+                  }
                   if (!prev.days || prev.days.length === 0) {
                     return { ...prev, days: mappedDays }
                   }
                   return prev
-                })
+                }, true)
               }
             } catch (err) {
               console.warn('[Ogonek] Auto-load cloud days error:', err)
@@ -6510,6 +6612,9 @@ export function useOgonekStore() {
             },
           }
         })
+        if (uid) {
+          void syncEvidenceVaultForUser(uid)
+        }
         return { ok: true, profile: dbProfile }
       } catch (err: any) {
         return { ok: false, error: err?.message }
@@ -6549,53 +6654,15 @@ export function useOgonekStore() {
 
   /** Мгновенный выход из аккаунта с первого клика: очищает Supabase-токены, куки, локальный стор и переводит на лендинг */
   const signOut = useCallback(async () => {
-    const nowISO = new Date().toISOString()
+    // 1. Отменяем отложенный debounce-таймер, сбрасываем профильный кэш и удаляем пользовательские кэши
+    // (токены sb-*, ogonek.v2, priday_draft, черновики), оставляя только настройки темы/акцента.
+    cancelPendingSave()
+    clearProfileMemoryCache()
+    clearUserLocalCaches({ includeAuthTokens: true })
 
-    // 1. Синхронно очищаем все токены sb-*-auth-token и кэш в браузере ДО редиректа,
-    // чтобы /ru не подхватил старую сессию и не отбросил назад в /app.
-    if (typeof window !== 'undefined') {
-      try {
-        const toRemove: string[] = []
-        for (let i = 0; i < window.localStorage.length; i++) {
-          const key = window.localStorage.key(i)
-          if (key && key.startsWith('sb-')) {
-            toRemove.push(key)
-          }
-        }
-        toRemove.forEach((k) => window.localStorage.removeItem(k))
-      } catch {}
-
-      try {
-        if (typeof document !== 'undefined' && document.cookie) {
-          document.cookie.split(';').forEach((c) => {
-            const name = c.split('=')[0]?.trim()
-            if (name && name.startsWith('sb-')) {
-              document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-            }
-          })
-        }
-      } catch {}
-
-      try {
-        window.sessionStorage.removeItem('priday_preloaded')
-      } catch {}
-    }
-
-    // 2. Синхронно сбрасываем локальный стор без мигания LandingPage внутри AppShell
-    cachedState = {
-      ...cachedState,
-      profile: DEFAULT_PROFILE,
-      chatThreads: {},
-      chatActiveFriendId: null,
-      auth: {
-        ...cachedState.auth,
-        signedIn: false,
-        activeAccountId: null,
-        accounts: [],
-        updatedAtISO: nowISO,
-      },
-    }
-    saveStore(cachedState, undefined, true)
+    // 2. Синхронно сбрасываем весь пользовательский стор без утечки дней, сейфа и чатов
+    cachedState = clearUserSessionData(cachedState)
+    saveStoreImmediate(cachedState)
 
     // 3. Ожидаем signOut в Supabase (с коротким таймаутом на случай плохой сети)
     try {

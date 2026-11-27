@@ -355,8 +355,20 @@ function dayLabelOf(day: Day): string {
   return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
 }
 
-/** Карточка конкретной гордости дня — её и пересылают другу */
-export function buildPrideAttachment(day: Day, index: number): ChatAttachment {
+export type AttachmentAuthorMeta = {
+  name?: string | null
+  username?: string | null
+  avatarUrl?: string | null
+  avatarColor?: string | null
+  verified?: boolean
+}
+
+/** Карточка конкретной гордости дня — её и пересылают другу (сохраняет ПОЛНЫЙ текст без обрезания) */
+export function buildPrideAttachment(
+  day: Day,
+  index: number,
+  authorMeta?: AttachmentAuthorMeta | null
+): ChatAttachment {
   const pride = day.prides[index]
   const theme = themeFor(index)
   const text = (pride?.text ?? day.title ?? 'Гордость дня').trim()
@@ -372,14 +384,24 @@ export function buildPrideAttachment(day: Day, index: number): ChatAttachment {
     accent: theme.accent,
     dayId: day.id,
     prideIndex: index,
-    author: null,
+    author: authorMeta?.name ?? null,
+    authorUsername: authorMeta?.username ?? null,
+    authorAvatar: authorMeta?.avatarUrl ?? null,
+    authorAvatarColor: authorMeta?.avatarColor ?? null,
+    authorVerified: Boolean(authorMeta?.verified),
+    rating: scale,
+    dayDateISO: day.dateISO ?? null,
     photo: day.photos?.[0] ?? null,
     visibility: normalizeVisibility(pride?.visibility ?? day.visibility),
   }
 }
 
 /** Карточка конкретной благодарности дня — её и пересылают в чат */
-export function buildGratitudeAttachment(day: Day, index: number): ChatAttachment {
+export function buildGratitudeAttachment(
+  day: Day,
+  index: number,
+  authorMeta?: AttachmentAuthorMeta | null
+): ChatAttachment {
   const g = day.gratitudes[index]
   const text = (getGratitudeText(g) || 'Благодарность дня').trim()
   const theme = {
@@ -399,25 +421,33 @@ export function buildGratitudeAttachment(day: Day, index: number): ChatAttachmen
     accent: theme.accent,
     dayId: day.id,
     prideIndex: null,
-    author: null,
-    photo: null,
+    author: authorMeta?.name ?? null,
+    authorUsername: authorMeta?.username ?? null,
+    authorAvatar: authorMeta?.avatarUrl ?? null,
+    authorAvatarColor: authorMeta?.avatarColor ?? null,
+    authorVerified: Boolean(authorMeta?.verified),
+    dayDateISO: day.dateISO ?? null,
+    photo: day.photos?.[0] ?? null,
     visibility: normalizeVisibility(day.visibility),
   }
 }
 
 /** Карточка всего дня летописи */
-export function buildDayAttachment(day: Day): ChatAttachment {
+export function buildDayAttachment(
+  day: Day,
+  authorMeta?: AttachmentAuthorMeta | null
+): ChatAttachment {
   const theme = themeFor(day.id)
   const gratitudes = (day.gratitudes || []).map(getGratitudeText).filter(Boolean)
   const prides = day.prides || []
-  const summary =
-    prides.map((p) => p.text).filter(Boolean).slice(0, 2).join(' · ') ||
-    day.title ||
-    'Запись дня'
+  const fullPrides = prides
+    .map((p, idx) => `${idx + 1}. ${(p.text || '').trim()}${p.scale ? ` (${p.scale}/10)` : ''}`)
+    .filter(Boolean)
+    .join('\n')
 
   return {
     kind: 'day',
-    title: day.title || 'Запись дня',
+    title: fullPrides || day.title || 'Запись дня',
     subtitle: `День #${day.id} · ${prides.length} гордостей${
       gratitudes.length ? ` · ${gratitudes.length} благодарностей` : ''
     }`,
@@ -427,7 +457,12 @@ export function buildDayAttachment(day: Day): ChatAttachment {
     accent: theme.accent,
     dayId: day.id,
     prideIndex: null,
-    author: null,
+    author: authorMeta?.name ?? null,
+    authorUsername: authorMeta?.username ?? null,
+    authorAvatar: authorMeta?.avatarUrl ?? null,
+    authorAvatarColor: authorMeta?.avatarColor ?? null,
+    authorVerified: Boolean(authorMeta?.verified),
+    dayDateISO: day.dateISO ?? null,
     photo: day.photos?.[0] ?? null,
     visibility: normalizeVisibility(day.visibility),
   }

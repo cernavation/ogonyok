@@ -1,7 +1,7 @@
 'use client'
 
 import { ArrowLeft, Check, Crown, Lock, Pin, Plus, Search, Trash2, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EVIDENCE_CATEGORIES } from '@/lib/ogonek/data'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { EvidenceItem, ViewId } from '@/lib/ogonek/types'
@@ -32,6 +32,17 @@ export function VaultView({
   const [isAdding, setIsAdding] = useState(false)
 
   const { state } = useOgonekStore()
+  const activeAccountId = state.auth?.activeAccountId
+
+  useEffect(() => {
+    setSearch('')
+    setSelectedCategory('Все')
+    setIsAdding(false)
+    setNewTitle('')
+    setNewDescription('')
+    setNewCategory('Сомнения')
+  }, [activeAccountId])
+
   const username = state.profile?.username
   const isCerna = (username || '').toLowerCase() === 'cernavation'
   const effectiveTier = normalizeTier(

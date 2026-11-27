@@ -727,6 +727,13 @@ function DayCardComponent({
       {shareModalOpen && (
         <ShareCardModal
           day={day}
+          authorMeta={{
+            name: displayName,
+            username,
+            avatarUrl: effectiveAvatarSrc,
+            avatarColor: authorColor,
+            verified: isAuthorVerified,
+          }}
           onClose={() => setShareModalOpen(false)}
           onNotify={(msg) => onNotify?.(msg)}
         />

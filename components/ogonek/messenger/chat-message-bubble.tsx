@@ -35,7 +35,10 @@ import { formatChatTime, STICKER_PACK } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessage, CustomEmoji } from '@/lib/ogonek/types'
 import { isSafeUrl, safeHref, safeImageSrc } from '@/lib/ogonek/safe-url'
+import { getCachedProfileSync } from '@/lib/supabase/api'
+import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ChatAttachmentCard } from './chat-attachment-card'
+import { ChatAttachmentModal } from './chat-attachment-modal'
 import { ChatMediaLightbox } from './chat-media-lightbox'
 import { ChatVoicePlayer } from './chat-voice-player'
 import { MessageReactionPicker } from './message-reaction-picker'
@@ -122,6 +125,8 @@ export function ChatMessageBubble({
 }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [attachmentModalOpen, setAttachmentModalOpen] = useState(false)
+  const [gifProxyFallback, setGifProxyFallback] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showTranslated, setShowTranslated] = useState(false)
   const [transcriptOpen, setTranscriptOpen] = useState(false)
@@ -129,8 +134,24 @@ export function ChatMessageBubble({
   const [translating, setTranslating] = useState(false)
   const reduce = useReducedMotion()
 
+  const { state: storeState } = useOgonekStore()
   const friend = !isMine ? getFriend(message.authorId) : null
-  const authorName = isMine ? 'Ты' : friend?.name || 'Участник'
+  const liveAuthor = !isMine ? getCachedProfileSync(message.authorId) : null
+  const authorName = isMine
+    ? storeState.profile.displayName || 'Ты'
+    : liveAuthor?.display_name || friend?.name || 'Собеседник'
+  const authorUsername = isMine
+    ? storeState.profile.username
+    : liveAuthor?.username || friend?.username || null
+  const authorAvatar = isMine
+    ? storeState.profile.avatarImage
+    : liveAuthor?.avatar_image || liveAuthor?.avatar_url || friend?.avatarUrl || null
+  const authorAvatarColor = isMine
+    ? storeState.profile.avatarColor
+    : liveAuthor?.avatar_color || friend?.avatarColor || '#FF5C00'
+  const authorVerified = isMine
+    ? Boolean(storeState.profile.verified)
+    : Boolean(liveAuthor?.verified ?? friend?.verified)
 
   const reactions = useMemo(() => {
     const map = new Map<string, { count: number; mine: boolean }>()
@@ -536,7 +557,13 @@ export function ChatMessageBubble({
                     : 'bg-[var(--bg-elev)] border border-[var(--border)]'
                 }`}
               >
-                <ChatAttachmentCard attachment={message.attachment!} />
+                <ChatAttachmentCard
+                  attachment={message.attachment!}
+                  onClick={() => {
+                    playClick(soundEnabled)
+                    setAttachmentModalOpen(true)
+                  }}
+                />
               </div>
               <div className="mt-1 px-1 flex items-center justify-end gap-1.5 text-[12px] text-[var(--text-2)] [font-variant-numeric:tabular-nums] leading-none font-medium">
                 {message.silent && <span title="Отправлено без звука"><BellOff size={11} className="opacity-70" /></span>}
@@ -613,19 +640,41 @@ export function ChatMessageBubble({
               {/* Карточка-вложение Priday (гордость, благодарность, день) */}
               {message.attachment && (
                 <div className="mb-2 w-full min-w-[220px]">
-                  <ChatAttachmentCard attachment={message.attachment} />
+                  <ChatAttachmentCard
+                    attachment={message.attachment}
+                    onClick={() => {
+                      playClick(soundEnabled)
+                      setAttachmentModalOpen(true)
+                    }}
+                  />
                 </div>
               )}
 
-              {/* Фотография */}
+              {/* Фотография / GIF */}
               {message.media?.type === 'image' && (
                 <div className="mb-2 overflow-hidden rounded-xl">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={safeImageSrc(message.media.url)}
+                    src={
+                      gifProxyFallback
+                        ? `/api/giphy?img=${encodeURIComponent(message.media.url)}`
+                        : safeImageSrc(message.media.url)
+                    }
                     alt={message.media.name || 'Фотография'}
+                    referrerPolicy="no-referrer"
                     className="max-h-80 w-full object-cover rounded-xl cursor-pointer hover:opacity-95 transition-opacity"
-                    onClick={() => setLightboxUrl(message.media!.url)}
+                    onError={() => {
+                      if (!gifProxyFallback && /giphy\.com|tenor\.com|klipy\.com/i.test(message.media?.url || '')) {
+                        setGifProxyFallback(true)
+                      }
+                    }}
+                    onClick={() =>
+                      setLightboxUrl(
+                        gifProxyFallback
+                          ? `/api/giphy?img=${encodeURIComponent(message.media!.url)}`
+                          : message.media!.url
+                      )
+                    }
                   />
                 </div>
               )}
@@ -914,6 +963,21 @@ export function ChatMessageBubble({
           onClose={() => setLightboxUrl(null)}
         />
       )}
+
+      {/* Полный просмотр карточки гордости / благодарности / дня */}
+      <AnimatePresence>
+        {attachmentModalOpen && message.attachment && (
+          <ChatAttachmentModal
+            attachment={message.attachment}
+            fallbackAuthorName={authorName}
+            fallbackAuthorUsername={authorUsername}
+            fallbackAuthorAvatar={authorAvatar}
+            fallbackAuthorColor={authorAvatarColor}
+            fallbackAuthorVerified={authorVerified}
+            onClose={() => setAttachmentModalOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </>
   )
 }

@@ -7,12 +7,18 @@ import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
   getActiveFriends,
+  pluralizeFriends,
   presenceMeta,
   registerFriendProfile,
 } from '@/lib/ogonek/friends'
 import { buildFriendSlides } from '@/lib/ogonek/stories'
 import { getInitials } from '@/lib/ogonek/initials'
-import { getProfilesByIds, getMutualFriendProfiles } from '@/lib/supabase/api'
+import {
+  getCachedProfileSync,
+  getProfilesByIds,
+  getMutualFriendProfiles,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ViewId } from '@/lib/ogonek/types'
 import { FriendDetailModal } from './friend-detail-modal'
@@ -25,67 +31,119 @@ type Props = {
   soundEnabled?: boolean
 }
 
+function profileToFriend(p: ProfileRecord): FriendProfile {
+  return {
+    id: p.id,
+    name: p.display_name || `@${p.username}`,
+    username: p.username,
+    initials: getInitials(p.display_name, p.username),
+    avatarUrl: p.avatar_image || p.avatar_url || null,
+    avatarColor: p.avatar_color || '#FF5C00',
+    bio: p.bio || '',
+    city: p.city || '',
+    streak: p.streak_count ?? p.streak ?? 0,
+    together: 0,
+    mutual: 0,
+    verified: Boolean(p.verified),
+    lastActive: 'недавно',
+    presence: 'online',
+  }
+}
+
 export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, soundEnabled = true }: Props) {
   const { state } = useOgonekStore()
   const [openFriendId, setOpenFriendId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const [cloudFriends, setCloudFriends] = useState<FriendProfile[]>([])
+  const [cloudFriends, setCloudFriends] = useState<FriendProfile[] | null>(null)
+  const [loadingFriends, setLoadingFriends] = useState(false)
 
-  const friendIds = state.friendIds ?? []
+  const friendIds = useMemo(() => state.friendIds ?? [], [state.friendIds])
   const viewedStoryIds = state.viewedStoryIds ?? []
   const incoming = state.incomingFriendRequests ?? []
   const currentUserId = state.auth?.activeAccountId
 
+  const canFetchCloud = Boolean(
+    friendIds.length > 0 ||
+      (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest'))
+  )
+
+  useEffect(() => {
+    setCloudFriends(null)
+  }, [currentUserId])
+
   useEffect(() => {
     let cancelled = false
+    if (!canFetchCloud) {
+      setCloudFriends([])
+      setLoadingFriends(false)
+      return () => {
+        cancelled = true
+      }
+    }
+
     const loadMutuals = async () => {
+      setLoadingFriends(true)
       try {
-        let records =
+        const records =
           friendIds.length > 0
             ? Object.values(await getProfilesByIds(friendIds))
-            : currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')
+            : currentUserId
               ? await getMutualFriendProfiles(currentUserId)
               : []
 
         if (cancelled) return
         const mapped: FriendProfile[] = records.map((p) => {
-          const fp: FriendProfile = {
-            id: p.id,
-            name: p.display_name || `@${p.username}`,
-            username: p.username,
-            initials: getInitials(p.display_name, p.username),
-            avatarUrl: p.avatar_image || p.avatar_url || null,
-            avatarColor: p.avatar_color || '#FF5C00',
-            bio: p.bio || '',
-            city: p.city || '',
-            streak: p.streak_count ?? p.streak ?? 0,
-            together: 0,
-            mutual: 0,
-            verified: Boolean(p.verified),
-            lastActive: 'недавно',
-            presence: 'online',
-          }
+          const fp = profileToFriend(p)
           registerFriendProfile(fp)
           return fp
         })
         setCloudFriends(mapped)
       } catch {
         if (!cancelled) setCloudFriends([])
+      } finally {
+        if (!cancelled) setLoadingFriends(false)
       }
     }
     void loadMutuals()
     return () => {
       cancelled = true
     }
-  }, [currentUserId, friendIds])
+  }, [canFetchCloud, currentUserId, friendIds])
 
-  const active = useMemo(() => {
-    if (cloudFriends.length > 0) return cloudFriends.slice(0, 6)
-    return getActiveFriends(friendIds, 6)
-  }, [cloudFriends, friendIds])
+  const syncCachedFriends = useMemo(() => {
+    if (friendIds.length === 0) return []
+    const out: FriendProfile[] = []
+    for (const id of friendIds) {
+      const cached = getCachedProfileSync(id)
+      if (!cached) continue
+      const fp = profileToFriend(cached)
+      registerFriendProfile(fp)
+      out.push(fp)
+    }
+    return out
+  }, [friendIds])
 
-  const totalFriendsCount = Math.max(friendIds.length, active.length)
+  const resolvedFriends = useMemo(() => {
+    if (cloudFriends !== null) {
+      if (cloudFriends.length > 0) return cloudFriends
+      return getActiveFriends(friendIds, 20)
+    }
+    if (syncCachedFriends.length > 0) return syncCachedFriends
+    return getActiveFriends(friendIds, 20)
+  }, [cloudFriends, syncCachedFriends, friendIds])
+
+  const active = useMemo(() => resolvedFriends.slice(0, 6), [resolvedFriends])
+  const isInitialLoading = loadingFriends && cloudFriends === null && active.length === 0
+
+  const totalFriendsCount = isInitialLoading ? friendIds.length : resolvedFriends.length
   const onlineCount = active.filter((f) => f.presence === 'online').length
+  const badgeText = isInitialLoading
+    ? friendIds.length > 0
+      ? pluralizeFriends(friendIds.length)
+      : 'Загрузка…'
+    : onlineCount > 0
+      ? `${onlineCount} в сети`
+      : pluralizeFriends(totalFriendsCount)
 
   const storyChip = (friend: FriendProfile) => {
     const index = Math.max(0, friendIds.indexOf(friend.id))
@@ -127,13 +185,26 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
               Открыть
             </button>
           )}
-          <span className="af-widget__badge">
-            {onlineCount > 0 ? `${onlineCount} в сети` : `${totalFriendsCount} друзей`}
-          </span>
+          <span className="af-widget__badge">{badgeText}</span>
         </div>
       </header>
 
-      {active.length === 0 ? (
+      {isInitialLoading ? (
+        <div className="flex flex-col gap-2 my-2" aria-busy="true" aria-label="Загрузка друзей">
+          {[0, 1].map((row) => (
+            <div
+              key={row}
+              className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--surface2)] border border-[var(--line)] animate-pulse"
+            >
+              <div className="w-9 h-9 rounded-full bg-white/10 shrink-0" />
+              <div className="flex-1 space-y-1.5 min-w-0">
+                <div className="h-3 w-24 rounded bg-white/10" />
+                <div className="h-2.5 w-16 rounded bg-white/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : active.length === 0 ? (
         <div className="p-4 rounded-xl bg-[var(--surface2)] border border-[var(--line)] text-center my-2">
           <div className="w-8 h-8 rounded-full bg-[#ff5722]/15 text-[#ff5722] flex items-center justify-center mx-auto mb-2">
             <Flame size={16} />
