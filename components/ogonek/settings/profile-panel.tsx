@@ -13,6 +13,7 @@ import {
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { OgonekProfile } from '@/lib/ogonek/types'
 import { DifficultyLevelPanel } from './difficulty-level-panel'
+import { UserAvatar } from '../ui'
 
 const AVATAR_COLORS = [
   { id: '#ff5722', label: 'Огненный' },
@@ -131,12 +132,15 @@ export function ProfilePanel({
       <form onSubmit={handleSave} className="flex flex-col gap-5">
         {/* Аватар и палитра */}
         <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)]">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md flex-none transition-colors"
-            style={{ backgroundColor: avatarColor }}
-          >
-            {initial}
-          </div>
+          <UserAvatar
+            avatarUrl={profile.avatarImage}
+            avatarColor={avatarColor}
+            displayName={displayName}
+            username={username}
+            initials={initial}
+            size={64}
+            bordered={false}
+          />
           <div className="flex flex-col gap-1.5 flex-1 w-full text-center sm:text-left">
             <span className="text-sm font-bold text-[var(--text)]">Цвет аватара</span>
             <p className="text-xs text-[var(--text-2)]">

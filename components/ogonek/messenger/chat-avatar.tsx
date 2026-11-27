@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { getFriend, presenceMeta } from '@/lib/ogonek/friends'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
-import { getProfile } from '@/lib/supabase/api'
+import { UserAvatar } from '../ui'
 
 type Props = {
   friendId?: string
@@ -17,10 +18,12 @@ type Props = {
   fallbackName?: string | null
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 /**
- * Аватар собеседника в мессенджере.
- * Поддерживает как друзей из социальной карты, так и реальных пользователей Supabase.
- * Никогда не отображает сырой UUID пользователю.
+ * Аватар собеседника в мессенджере на базе единого <UserAvatar />.
+ * Подтягивает свежий avatar_url / avatar_image / avatar_color / verified
+ * напрямую из public.profiles Supabase по userId собеседника.
  */
 export function ChatAvatar({
   friendId,
@@ -30,81 +33,99 @@ export function ChatAvatar({
   fallbackAvatar,
   fallbackName,
 }: Props) {
-  const { state } = useOgonekStore()
-  const friend = friendId ? getFriend(friendId) : undefined
+  const { state, updateThreadPeerMeta } = useOgonekStore()
+  const currentUserId = state.auth?.activeAccountId || null
+
+  const targetUserId = (() => {
+    if (!friendId) return undefined
+    if (friendId.includes('_')) {
+      const parts = friendId.split('_').filter(Boolean)
+      return (currentUserId && parts.find((p) => p !== currentUserId)) || parts[0]
+    }
+    return friendId
+  })()
+
+  const friend = targetUserId ? getFriend(targetUserId) : undefined
   const thread = friendId ? state?.chatThreads?.[friendId] : undefined
   const peerMeta = thread?.peerMeta
-
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(friendId || '')
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null)
-  const [profileInitials, setProfileInitials] = useState<string | null>(null)
+  const [liveProfile, setLiveProfile] = useState<ProfileRecord | null>(null)
 
   useEffect(() => {
-    if (!fallbackAvatar && !friend && !peerMeta?.avatarUrl && friendId && isUuid) {
-      getProfile(friendId)
-        .then((p) => {
-          if (p?.avatar_image) setProfileAvatar(p.avatar_image)
-          if (p?.display_name || p?.username) {
-            setProfileInitials(getInitials(p.display_name, p.username))
-          }
-        })
-        .catch(() => {})
+    if (!targetUserId || friend || !UUID_REGEX.test(targetUserId)) {
+      setLiveProfile(null)
+      return
     }
-  }, [fallbackAvatar, friend, peerMeta, friendId, isUuid])
 
-  if (!friend && !peerMeta && !friendId && !fallbackAvatar && !fallbackName) return null
+    let cancelled = false
+    getProfile(targetUserId)
+      .then((p) => {
+        if (cancelled || !p) return
+        setLiveProfile(p)
+        const nextUrl = p.avatar_image || p.avatar_url || undefined
+        const nextColor = p.avatar_color || undefined
+        const nextVerified = Boolean(p.verified)
+        const nextName = p.display_name || p.username || undefined
+        if (
+          peerMeta?.avatarUrl !== nextUrl ||
+          peerMeta?.avatarColor !== nextColor ||
+          peerMeta?.verified !== nextVerified ||
+          peerMeta?.name !== nextName
+        ) {
+          updateThreadPeerMeta(friendId!, {
+            name: nextName,
+            username: p.username || undefined,
+            avatarUrl: nextUrl,
+            avatarColor: nextColor,
+            verified: nextVerified,
+            initials: getInitials(p.display_name, p.username),
+          })
+        }
+      })
+      .catch(() => {})
 
-  const presence = friend ? presenceMeta(friend.presence) : { label: 'Офлайн', color: '#71767b' }
-  const name =
-    fallbackName ||
+    return () => {
+      cancelled = true
+    }
+  }, [targetUserId, friend, friendId, updateThreadPeerMeta, peerMeta?.avatarUrl, peerMeta?.avatarColor, peerMeta?.verified, peerMeta?.name])
+
+  const displayName =
+    liveProfile?.display_name ||
     friend?.name ||
     peerMeta?.name ||
-    (peerMeta?.username ? `@${peerMeta.username}` : (isUuid ? 'Собеседник' : (friendId || 'Собеседник')))
+    fallbackName ||
+    liveProfile?.username ||
+    peerMeta?.username ||
+    'Собеседник'
 
+  const username = liveProfile?.username || friend?.username || peerMeta?.username || undefined
+  const avatarUrl =
+    liveProfile?.avatar_image ||
+    liveProfile?.avatar_url ||
+    peerMeta?.avatarUrl ||
+    fallbackAvatar ||
+    null
+  const avatarColor =
+    liveProfile?.avatar_color ||
+    peerMeta?.avatarColor ||
+    friend?.avatarColor ||
+    '#FF5C00'
   const initials =
-    (fallbackName ? getInitials(fallbackName) : '') ||
-    friend?.initials ||
     peerMeta?.initials ||
-    profileInitials ||
-    (peerMeta?.name || peerMeta?.username ? getInitials(peerMeta?.name || '', peerMeta?.username) : 'ОГ')
+    friend?.initials ||
+    getInitials(displayName, username || 'user')
 
-  const avatarUrl = fallbackAvatar || peerMeta?.avatarUrl || profileAvatar
+  const isOnline = showPresence && Boolean(friend && presenceMeta(friend.presence).short === 'онлайн')
 
   return (
-    <span className="relative inline-flex flex-none" style={{ width: size, height: size }}>
-      {avatarUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={avatarUrl}
-          alt={name}
-          className="rounded-full object-cover shrink-0 border border-[var(--line)]"
-          style={{ width: size, height: size }}
-        />
-      ) : (
-        <span
-          className="grid h-full w-full place-items-center rounded-full font-bold select-none shrink-0 border border-[var(--line)] bg-[var(--surface2)] text-[var(--text)]"
-          style={{
-            background: friend?.avatarColor || undefined,
-            fontSize: Math.round(size * 0.36),
-          }}
-          aria-hidden="true"
-        >
-          {initials}
-        </span>
-      )}
-      {showPresence && friend && (
-        <span
-          className="absolute bottom-0 right-0 rounded-full"
-          style={{
-            width: Math.max(10, size * 0.28),
-            height: Math.max(10, size * 0.28),
-            background: presence.color,
-            border: `2px solid ${ringColor}`,
-          }}
-          title={presence.label}
-          aria-hidden="true"
-        />
-      )}
-    </span>
+    <UserAvatar
+      avatarUrl={avatarUrl}
+      avatarColor={avatarColor}
+      displayName={displayName}
+      username={username}
+      initials={initials}
+      size={size}
+      isOnline={isOnline}
+      ringColor={ringColor}
+    />
   )
 }

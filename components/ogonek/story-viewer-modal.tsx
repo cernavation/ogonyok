@@ -37,6 +37,7 @@ import {
 } from '@/lib/ogonek/story-share'
 import { usePhotoUrl } from '@/lib/ogonek/use-photo-url'
 import { ForwardToChatModal } from './messenger'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
   stories: ViewableStory[]
@@ -44,6 +45,8 @@ type Props = {
   /** Уже разрешённый src аватара пользователя (для «Моей истории») */
   myAvatarSrc: string | null
   onClose: () => void
+  /** Переход к профилю автора сторис */
+  onOpenUserProfile?: (userId?: string | null) => void
   /** Помечает сторис друга просмотренной (кружок гаснет) */
   onStoryViewed?: (friendId: string) => void
   /** Удаляет кадр личной истории */
@@ -106,6 +109,7 @@ export function StoryViewerModal({
   startIndex,
   myAvatarSrc,
   onClose,
+  onOpenUserProfile,
   onStoryViewed,
   onDeleteStory,
   onToggleReaction,
@@ -462,37 +466,47 @@ export function StoryViewerModal({
 
         {/* Шапка */}
         <header className="story-viewer__head">
-          <span
-            className="story-viewer__avatar"
-            style={{ background: story.avatarColor }}
-            aria-hidden="true"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              playClick(soundEnabled)
+              const targetProfileId =
+                story.kind === 'mine' ? null : (story.friendId || story.username || null)
+              onClose()
+              onOpenUserProfile?.(targetProfileId)
+            }}
+            className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer hover:opacity-85 transition-opacity bg-transparent border-0 p-0 focus:outline-none"
+            title={`Открыть профиль ${story.name}`}
+            aria-label={`Открыть профиль ${story.name}`}
           >
-            {story.kind === 'mine' && myAvatarSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={myAvatarSrc} alt="" />
-            ) : (
-              story.initials
-            )}
-          </span>
-          <span className="story-viewer__ident">
-            <span className="story-viewer__name">
-              {story.name}
-              {story.verified && (
-                <span className="story-viewer__verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
-                  <Check size={8} strokeWidth={3} />
-                </span>
-              )}
+            <span className="story-viewer__avatar shrink-0" aria-hidden="true">
+              <UserAvatar
+                avatarUrl={story.kind === 'mine' ? (myAvatarSrc || story.avatarUrl) : story.avatarUrl}
+                avatarColor={story.avatarColor}
+                displayName={story.name}
+                username={story.username}
+                initials={story.initials}
+                size={36}
+                bordered={false}
+              />
             </span>
-            <span className="story-viewer__meta flex items-center gap-1.5">
-              <span>@{story.username}</span>
-              <span>·</span>
-              <span>{story.postedLabel}</span>
-              <span>·</span>
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/15 text-[11px] font-mono font-medium text-white/90">
-                {Math.max(1, Math.ceil((1 - progress / 100) * (SLIDE_DURATION_MS / 1000)))}с
+            <span className="story-viewer__ident min-w-0">
+              <span className="story-viewer__name flex items-center gap-1.5">
+                <span className="truncate">{story.name}</span>
+                {story.verified && <VerifiedBadge size="xs" />}
+              </span>
+              <span className="story-viewer__meta flex items-center gap-1.5">
+                <span>@{story.username}</span>
+                <span>·</span>
+                <span>{story.postedLabel}</span>
+                <span>·</span>
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/15 text-[11px] font-mono font-medium text-white/90">
+                  {Math.max(1, Math.ceil((1 - progress / 100) * (SLIDE_DURATION_MS / 1000)))}с
+                </span>
               </span>
             </span>
-          </span>
+          </button>
           <button
             type="button"
             className="story-viewer__pause"

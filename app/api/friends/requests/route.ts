@@ -17,29 +17,45 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data: rows, error } = await supabase
-      .from('friendships')
-      .select('id, user_id, friend_id, status, created_at')
-      .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+    // 1. Загружаем реальные подписки из таблицы `follows` (Single Source of Truth)
+    const [followingRes, followersRes, legacyRes] = await Promise.all([
+      supabase.from('follows').select('following_id').eq('follower_id', userId),
+      supabase.from('follows').select('follower_id').eq('following_id', userId),
+      supabase
+        .from('friendships')
+        .select('id, user_id, friend_id, requester_id, status, created_at')
+        .or(`user_id.eq.${userId},friend_id.eq.${userId}`),
+    ])
 
-    if (error || !Array.isArray(rows)) {
-      return NextResponse.json({ friends: [], incoming: [], outgoing: [] })
-    }
+    const followingSet = new Set(
+      (followingRes.data || [])
+        .map((r: any) => r.following_id)
+        .filter((id: any): id is string => typeof id === 'string' && id.length > 0 && id !== userId)
+    )
+    const followersSet = new Set(
+      (followersRes.data || [])
+        .map((r: any) => r.follower_id)
+        .filter((id: any): id is string => typeof id === 'string' && id.length > 0 && id !== userId)
+    )
 
-    // Собираем идентификаторы собеседников для быстрого единого запроса профилей
+    // Взаимные подписки в `follows` автоматически считаются друзьями
+    const mutualFollowIds = Array.from(followingSet).filter((id) => followersSet.has(id))
+    const legacyRows = Array.isArray(legacyRes.data) ? legacyRes.data : []
+
     const otherUserIds = Array.from(
-      new Set(
-        rows
-          .map((r: any) => (r.user_id === userId ? r.friend_id : r.user_id))
-          .filter(Boolean)
-      )
+      new Set([
+        ...mutualFollowIds,
+        ...Array.from(followingSet),
+        ...Array.from(followersSet),
+        ...legacyRows.map((r: any) => (r.user_id === userId ? r.friend_id : r.user_id)).filter(Boolean),
+      ])
     )
 
     const profilesMap = new Map<string, any>()
     if (otherUserIds.length > 0) {
       const { data: pRows } = await supabase
         .from('profiles')
-        .select('id, username, display_name, avatar_url, streak_count, verified, level')
+        .select('id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, streak, verified, level')
         .in('id', otherUserIds)
 
       if (Array.isArray(pRows)) {
@@ -49,46 +65,51 @@ export async function GET(request: Request) {
       }
     }
 
-    const friends: SocialUser[] = []
-    const incoming: SocialUser[] = []
-    const outgoing: SocialUser[] = []
-
-    for (const r of rows as any[]) {
-      const isRequester = r.user_id === userId
-      const otherId = isRequester ? r.friend_id : r.user_id
+    const toSocialUser = (otherId: string, friendshipStatus: FriendshipStatus, isRequester = false): SocialUser => {
       const otherProfile = profilesMap.get(otherId)
-
-      const userObj: SocialUser = {
+      return {
         id: otherId,
         username: otherProfile?.username || 'user',
-        displayName: otherProfile?.display_name || (otherProfile?.username ? `@${otherProfile.username}` : 'Пользователь'),
-        avatarUrl: otherProfile?.avatar_url,
-        streak: Number(otherProfile?.streak_count || 0),
+        displayName:
+          otherProfile?.display_name ||
+          (otherProfile?.username ? `@${otherProfile.username}` : 'Пользователь'),
+        avatarUrl: otherProfile?.avatar_image || otherProfile?.avatar_url || null,
+        avatarColor: otherProfile?.avatar_color || '#FF5C00',
+        streak: Number(otherProfile?.streak_count ?? otherProfile?.streak ?? 0),
         verified: Boolean(otherProfile?.verified),
         difficultyLevel: Number(otherProfile?.level || 1),
-        friendshipStatus: (r.status as FriendshipStatus) || 'none',
+        friendshipStatus,
         isRequester,
+        isFollowing: followingSet.has(otherId),
       }
+    }
+
+    const friends: SocialUser[] = mutualFollowIds.map((id) => toSocialUser(id, 'accepted'))
+    const mutualSet = new Set(mutualFollowIds)
+    const incoming: SocialUser[] = []
+    const outgoing: SocialUser[] = []
+    const seenIncoming = new Set<string>()
+    const seenOutgoing = new Set<string>()
+
+    for (const r of legacyRows as any[]) {
+      const isRequester = r.user_id === userId
+      const otherId = isRequester ? r.friend_id : r.user_id
+      if (!otherId || mutualSet.has(otherId)) continue
 
       const statusStr = String(r.status || '').toLowerCase()
-      const isAccepted = statusStr === 'accepted' || statusStr === 'friend'
       const isPending =
         statusStr === 'pending' ||
         statusStr === 'outgoing-request' ||
         statusStr === 'incoming-request'
 
       const amIRequester = r.requester_id ? r.requester_id === userId : isRequester
-
-      if (isAccepted) {
-        userObj.friendshipStatus = 'accepted'
-        friends.push(userObj)
-      } else if (isPending) {
-        if (amIRequester) {
-          userObj.friendshipStatus = 'outgoing_pending'
-          outgoing.push(userObj)
-        } else {
-          userObj.friendshipStatus = 'incoming_pending'
-          incoming.push(userObj)
+      if (isPending) {
+        if (amIRequester && !seenOutgoing.has(otherId)) {
+          seenOutgoing.add(otherId)
+          outgoing.push(toSocialUser(otherId, 'outgoing_pending', true))
+        } else if (!amIRequester && !seenIncoming.has(otherId)) {
+          seenIncoming.add(otherId)
+          incoming.push(toSocialUser(otherId, 'incoming_pending', false))
         }
       }
     }

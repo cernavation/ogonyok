@@ -20,9 +20,6 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import {
   searchProfiles,
   getRecentProfiles,
-  followUser,
-  unfollowUser,
-  getProfileFollowing,
   type ProfileRecord,
 } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
@@ -32,6 +29,7 @@ import {
   CommunityAvatar,
   ExploreSearchBar,
 } from '../explore'
+import { VerifiedBadge } from '../ui'
 
 type Props = {
   days: Day[]
@@ -64,6 +62,7 @@ export function ExploreView({
   const {
     state,
     toggleExploreFollow,
+    syncSocialGraphFromCloud,
     addExploreSearch,
     removeExploreSearch,
     clearExploreSearches,
@@ -75,64 +74,22 @@ export function ExploreView({
   const [loading, setLoading] = useState(false)
 
   const recentSearches = state.exploreRecentSearches ?? []
-  const followingIds = state.exploreFollowingIds ?? []
+  const followingIds = useMemo(
+    () => Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])])),
+    [state.followingIds, state.exploreFollowingIds]
+  )
 
-  // Синхронизация подписок из Supabase при монтировании (чтобы F5 не сбрасывал статус)
+  // Синхронизация графа подписок из Supabase при монтировании (SSOT: таблица `follows`)
   useEffect(() => {
     const currentUid = state.auth?.activeAccountId
-    if (!currentUid) return
-    let cancelled = false
+    if (!currentUid || currentUid.startsWith('anon-') || currentUid.startsWith('acct-guest')) return
+    void syncSocialGraphFromCloud?.(currentUid)
+  }, [state.auth?.activeAccountId, syncSocialGraphFromCloud])
 
-    getProfileFollowing(currentUid)
-      .then((remoteFollowing) => {
-        if (cancelled || !Array.isArray(remoteFollowing)) return
-        for (const u of remoteFollowing) {
-          if (!followingIds.includes(u.id)) {
-            toggleExploreFollow(u.id)
-          }
-        }
-      })
-      .catch(() => {})
-
-    return () => {
-      cancelled = true
-    }
-  }, [state.auth?.activeAccountId])
-
-  const handleToggleFollow = async (targetUser: { id: string; username: string }) => {
+  const handleToggleFollow = (targetUser: { id: string; username: string }) => {
     playClick(soundEnabled)
-    const isCurrentlyFollowing = followingIds.includes(targetUser.id)
-    // Немедленно переключаем локальное состояние (кнопка мгновенно становится "Читаю")
-    toggleExploreFollow(targetUser.id)
-
-    const currentUid = state.auth?.activeAccountId
-    if (currentUid && targetUser.id) {
-      try {
-        if (!isCurrentlyFollowing) {
-          // Немедленно отправляем upsert в таблицу friendships
-          const res = await followUser(currentUid, targetUser.id)
-          if (res.ok) {
-            onNotify(`Вы читаете @${targetUser.username} ✓`)
-          } else {
-            toggleExploreFollow(targetUser.id)
-            onNotify(res.error || 'Не удалось сохранить подписку')
-          }
-        } else {
-          const res = await unfollowUser(currentUid, targetUser.id)
-          if (res.ok) {
-            onNotify(`Отписка от @${targetUser.username}`)
-          } else {
-            toggleExploreFollow(targetUser.id)
-            onNotify(res.error || 'Не удалось отписаться')
-          }
-        }
-      } catch {
-        toggleExploreFollow(targetUser.id)
-        onNotify('Ошибка соединения с базой')
-      }
-    } else {
-      onNotify(isCurrentlyFollowing ? `Отписка от @${targetUser.username}` : `Вы читаете @${targetUser.username} ✓`)
-    }
+    const nowFollowing = toggleExploreFollow(targetUser.id)
+    onNotify(nowFollowing ? `Вы читаете @${targetUser.username} ✓` : `Отписка от @${targetUser.username}`)
   }
 
   // Извлечение РЕАЛЬНЫХ тегов из опубликованных дней
@@ -229,11 +186,11 @@ export function ExploreView({
       name: p.display_name || `@${p.username}`,
       username: p.username,
       initials: getInitials(p.display_name, p.username),
-      avatarUrl: p.avatar_url || p.avatar_image || '',
-      avatarColor: '#FF5C00',
+      avatarUrl: p.avatar_image || p.avatar_url || '',
+      avatarColor: p.avatar_color || '#FF5C00',
       city: p.city || '',
       streak: p.streak_count ?? p.streak ?? 0,
-      verified: false,
+      verified: Boolean(p.verified),
       bio: p.bio || '',
       followers: 0,
       tags: [],
@@ -449,12 +406,13 @@ export function ExploreView({
                             }
                           }}
                         >
-                          <CommunityAvatar user={user} size={42} ring={isFollowing} />
+                          <CommunityAvatar user={user} size={42} ring={isFollowing} showVerified={false} />
                           <div className="min-w-0">
-                            <p className="font-bold text-[14px] text-[var(--text)] truncate">
-                              {user.name}
+                            <p className="font-bold text-[14px] text-[var(--text)] flex items-center gap-1.5 min-w-0">
+                              <span className="truncate">{user.name}</span>
+                              {user.verified && <VerifiedBadge size="xs" />}
                               {user.isMe && (
-                                <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold shrink-0">
                                   ты
                                 </span>
                               )}
@@ -582,12 +540,13 @@ export function ExploreView({
                             }
                           }}
                         >
-                          <CommunityAvatar user={user} size={44} ring={isFollowing} />
+                          <CommunityAvatar user={user} size={44} ring={isFollowing} showVerified={false} />
                           <div className="min-w-0">
-                            <p className="font-bold text-[15px] text-[var(--text)] truncate">
-                              {user.name}
+                            <p className="font-bold text-[15px] text-[var(--text)] flex items-center gap-1.5 min-w-0">
+                              <span className="truncate">{user.name}</span>
+                              {user.verified && <VerifiedBadge size="sm" />}
                               {user.isMe && (
-                                <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-[var(--accent-soft)] text-[var(--accent)] font-semibold shrink-0">
                                   ты
                                 </span>
                               )}

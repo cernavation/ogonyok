@@ -41,6 +41,7 @@ import {
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatTag, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
+import { VerifiedBadge } from '../ui'
 import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
 import { getProfile } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
@@ -108,7 +109,10 @@ export function MessengerDialogList({
   const allThreadIds = useMemo(() => Object.keys(threads || {}), [threads])
   const currentUserId = state.auth?.activeAccountId || currentUser?.id || null
 
-  // Подтягивание имени и аватара собеседника из public.profiles Supabase для всех неизвестных ID (вместо сырых UUID)
+  // Единожды за сеанс (или при смене списка чатов) подтягиваем свежие данные профилей из `public.profiles`
+  // (чтобы смена фото, avatar_color или verified другим пользователем сразу обновлялась без устаревшего peerMeta)
+  const fetchedPeersRef = useMemo(() => new Set<string>(), [currentUserId])
+
   useEffect(() => {
     const isUuid = (s: string) =>
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
@@ -116,23 +120,23 @@ export function MessengerDialogList({
     for (const id of allThreadIds) {
       if (id === 'saved-messages' || id.startsWith('group-') || getFriend(id)) continue
       const targetUserId = getTargetUserId(id, currentUserId)
-      const thread = threads[id]
-      if (thread?.peerMeta?.name && !isUuid(thread.peerMeta.name)) continue
+      if (!isUuid(targetUserId) || fetchedPeersRef.has(targetUserId)) continue
+      fetchedPeersRef.add(targetUserId)
 
-      if (isUuid(targetUserId)) {
-        getProfile(targetUserId).then((p) => {
-          if (p) {
-            updateThreadPeerMeta(id, {
-              name: p.display_name || p.username || 'Собеседник',
-              username: p.username || undefined,
-              avatarUrl: p.avatar_image || undefined,
-              initials: getInitials(p.display_name, p.username),
-            })
-          }
-        }).catch(() => {})
-      }
+      getProfile(targetUserId).then((p) => {
+        if (p) {
+          updateThreadPeerMeta(id, {
+            name: p.display_name || p.username || 'Собеседник',
+            username: p.username || undefined,
+            avatarUrl: p.avatar_image || p.avatar_url || undefined,
+            avatarColor: p.avatar_color || undefined,
+            verified: Boolean(p.verified),
+            initials: getInitials(p.display_name, p.username),
+          })
+        }
+      }).catch(() => {})
     }
-  }, [allThreadIds, currentUserId, threads, updateThreadPeerMeta])
+  }, [allThreadIds, currentUserId, fetchedPeersRef, updateThreadPeerMeta])
 
   // Фильтрация по выбранной папке/тегу
   const folderFilteredIds = useMemo(() => {
@@ -154,13 +158,14 @@ export function MessengerDialogList({
         const isGroup = isGroupThread(thread, id)
         const isSaved = id === 'saved-messages'
         const friend = !isGroup && !isSaved ? getFriend(id) : null
+        const isVerified = Boolean(friend?.verified ?? thread?.peerMeta?.verified)
 
         let title = isSaved ? 'Избранное' : threadTitle(id, thread)
         let username = friend?.username || thread?.peerMeta?.username || null
         if (username && isUuid(username)) username = null
         if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'
 
-        return { id, isGroup, isSaved, friend, thread, title, username }
+        return { id, isGroup, isSaved, friend, isVerified, thread, title, username }
       })
       .filter((item): item is NonNullable<typeof item> => Boolean(item))
       .filter(({ friend, thread, title, username }) => {
@@ -398,7 +403,7 @@ export function MessengerDialogList({
         ) : (
           (filteredThreads || []).map((item) => {
             if (!item) return null
-            const { id, isGroup, isSaved, friend, thread, title } = item
+            const { id, isGroup, isSaved, friend, isVerified, thread, title } = item
             const last = lastMessage(thread)
             const unread = unreadCount(thread)
             const hasDraft = Boolean(thread?.draft && thread.draft.trim().length > 0)
@@ -465,11 +470,7 @@ export function MessengerDialogList({
                       <span className="text-[15px] sm:text-[16px] font-[700] text-[var(--text)] truncate leading-tight">
                         {title}
                       </span>
-                      {friend?.verified && (
-                        <span className="w-4 h-4 rounded-full bg-[var(--accent)] text-white inline-flex items-center justify-center shrink-0">
-                          <Check size={10} strokeWidth={3} />
-                        </span>
-                      )}
+                      {isVerified && <VerifiedBadge size="sm" />}
                     </div>
 
                     {timeStamp && (

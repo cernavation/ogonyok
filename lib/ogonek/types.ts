@@ -895,6 +895,8 @@ export type ChatThreadState = {
     name?: string
     username?: string
     avatarUrl?: string
+    avatarColor?: string
+    verified?: boolean
     initials?: string
   } | null
 }
@@ -1015,8 +1017,10 @@ export type OgonekStoreState = {
   comments: CommentsByTarget
   /** Публичный профиль пользователя (имя, обложка, аватар, соцсети, цель) */
   profile: OgonekProfile
-  /** ID друзей, на которых подписан пользователь (вкладка «Друзья» профиля) */
+  /** ID пользователей, на которых подписан текущий пользователь */
   followingIds: string[]
+  /** ID пользователей, которые подписаны на текущего пользователя (из follows) */
+  followerIds?: string[]
   /** ID друзей, чьи сторис уже просмотрены (кружок гаснет → серый) */
   viewedStoryIds: string[]
   /** Личные сторис пользователя («Моя история») */

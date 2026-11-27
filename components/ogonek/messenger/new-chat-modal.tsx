@@ -21,6 +21,7 @@ import { getInitials } from '@/lib/ogonek/initials'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { uploadChatMedia } from '@/lib/ogonek/chat-media-service'
+import { UserAvatar, VerifiedBadge } from '../ui'
 
 type Props = {
   onClose: () => void
@@ -40,32 +41,17 @@ const GROUP_GRADIENTS = [
 
 const GROUP_EMOJIS = ['🔥', '👥', '⚡️', '🏃', '🎯', '🚀', '🏆', '❤️', '🌱', '💪']
 
-/** Simple initials-based avatar for Supabase users */
+/** Unified avatar wrapper for NewChatModal using Supabase profile fields */
 function ProfileAvatar({ profile, size = 44 }: { profile: ProfileRecord; size?: number }) {
-  const initials = getInitials(profile.display_name, profile.username)
-  const colors = ['#ff7a18', '#1d9bf0', '#00ba7c', '#7856ff', '#f4212e', '#f59e0b']
-  const color = colors[profile.username.charCodeAt(0) % colors.length]
-  const avatar = profile.avatar_url || profile.avatar_image
-  if (avatar) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={avatar}
-        alt={profile.display_name || profile.username}
-        width={size}
-        height={size}
-        className="rounded-full object-cover shrink-0"
-        style={{ width: size, height: size }}
-      />
-    )
-  }
   return (
-    <div
-      className="rounded-full flex items-center justify-center shrink-0 text-white font-bold"
-      style={{ width: size, height: size, background: color, fontSize: size * 0.38 }}
-    >
-      {initials}
-    </div>
+    <UserAvatar
+      avatarUrl={profile.avatar_image || profile.avatar_url}
+      avatarColor={profile.avatar_color}
+      displayName={profile.display_name}
+      username={profile.username}
+      size={size}
+      bordered={false}
+    />
   )
 }
 
@@ -132,6 +118,8 @@ export function NewChatModal({
       name: displayName,
       username: profile.username,
       avatarUrl,
+      avatarColor: profile.avatar_color || undefined,
+      verified: Boolean(profile.verified),
     })
     onClose()
     onOpenThread?.(profile.id)
@@ -345,6 +333,7 @@ export function NewChatModal({
                         <span className="text-sm font-bold text-[var(--text)] truncate">
                           {profile.display_name || profile.username}
                         </span>
+                        {profile.verified && <VerifiedBadge size="xs" />}
                       </div>
                       <p className="text-xs text-[var(--text-2)] truncate mt-0.5">
                         @{profile.username}{profile.city ? ` · ${profile.city}` : ''}

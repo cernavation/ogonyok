@@ -5,11 +5,11 @@ import { ArrowLeft, Check, Copy, Crown, Flame, Heart, Lock, Medal, Plus, ShieldA
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { Button, Card, Badge } from '../ui'
+import { Button, Card, Badge, UserAvatar, VerifiedBadge } from '../ui'
 import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 
 type Props = {
-  onNavigate: (view: ViewId) => void
+  onNavigate: (view: ViewId, targetUserId?: string | null) => void
   onNotify: (msg: string) => void
   soundEnabled?: boolean
 }
@@ -22,6 +22,8 @@ interface LeaderboardUser {
   username: string
   display_name: string
   avatar_url?: string
+  avatar_color?: string
+  verified?: boolean
   city?: string
   streak: number
   total_prides: number
@@ -41,7 +43,11 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  const following = state.exploreFollowingIds ?? []
+  const following = useMemo(
+    () => Array.from(new Set([...(state.followingIds ?? []), ...(state.exploreFollowingIds ?? [])])),
+    [state.followingIds, state.exploreFollowingIds]
+  )
+  const friendIds = state.friendIds ?? []
   const isMyProfileAnonymous = Boolean(
     state.profile.isAnonymous ||
     state.profile.privacy?.is_anonymous
@@ -99,9 +105,12 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
   const currentList = useMemo(() => {
     let list = [...serverUsers]
 
-    // Фильтр друзей: оставляем тех, на кого подписан, или себя
+    // Фильтр друзей: взаимные друзья + fallback для тестовых подписок
     if (tab === 'friends') {
-      list = list.filter((u) => u.is_me || u.is_following || following.includes(u.user_id))
+      list = list.filter((u) =>
+        u.is_me ||
+        (friendIds.length > 0 ? friendIds.includes(u.user_id) : (u.is_following || following.includes(u.user_id)))
+      )
     }
 
     const isOwner = (state.profile.username || '').toLowerCase() === 'cernavation'
@@ -148,6 +157,9 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
         user_id: currentUid,
         username: state.profile.username,
         display_name: state.profile.displayName,
+        avatar_url: state.profile.avatarImage || undefined,
+        avatar_color: state.profile.avatarColor || '#FF5C00',
+        verified: Boolean(state.profile.verified),
         city: state.profile.city || 'Москва',
         streak: period === 'week' ? Math.min(7, meStreak) : period === 'month' ? Math.min(30, meStreak) : meStreak,
         total_prides: period === 'week' ? 35 : period === 'month' ? 150 : myPridesCount,
@@ -306,30 +318,33 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
                 className="flex items-center justify-between py-3.5 px-2 border-b border-[var(--line)] hover:bg-[var(--bg-hover)] transition-colors gap-2 sm:gap-3"
               >
                 {/* Left: Rank + Avatar + Name + @Handle */}
-                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div
+                  className={`flex items-center gap-2 sm:gap-3 min-w-0 flex-1 ${!isAnonForOther ? 'cursor-pointer' : ''}`}
+                  onClick={() => {
+                    if (isAnonForOther) return
+                    playClick(soundEnabled)
+                    onNavigate('profile', isMe ? null : user.user_id)
+                  }}
+                >
                   <span className="text-[13px] font-mono font-normal text-[var(--muted)] w-6 sm:w-7 text-center flex-none">
                     {rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`}
                   </span>
 
-                  <div
-                    className="avatar w-9 h-9 sm:w-10 sm:h-10 rounded-full flex-none flex items-center justify-center font-bold text-[13px] sm:text-[14px] border border-[var(--line)] overflow-hidden"
-                    style={{
-                      background: isMe ? 'var(--accent)' : isAnonForOther ? '#27272a' : 'var(--surface2)',
-                      color: isMe ? 'var(--accent-text)' : isAnonForOther ? '#a1a1aa' : 'var(--text)',
-                    }}
-                  >
-                    {isAnonForOther ? (
-                      <Lock size={16} />
-                    ) : (
-                      displayName.slice(0, 2).toUpperCase()
-                    )}
-                  </div>
+                  <UserAvatar
+                    avatarUrl={isAnonForOther ? null : user.avatar_url}
+                    avatarColor={isAnonForOther ? '#27272a' : (user.avatar_color || (isMe ? state.profile.avatarColor : '#FF5C00'))}
+                    displayName={displayName}
+                    username={handle}
+                    size={40}
+                    fallbackContent={isAnonForOther ? <Lock size={16} className="text-zinc-400" /> : undefined}
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[14px] sm:text-[15px] font-bold text-[var(--text)] truncate max-w-[140px] sm:max-w-none">
+                      <span className="text-[14px] sm:text-[15px] font-bold text-[var(--text)] truncate max-w-[140px] sm:max-w-none hover:underline">
                         {displayName}
                       </span>
+                      {!isAnonForOther && user.verified && <VerifiedBadge size="xs" />}
                       {isAnonForOther && (
                         <Lock size={13} className="text-zinc-500 flex-none" />
                       )}
@@ -436,16 +451,19 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
               <span className="text-[15px] font-mono font-bold text-[var(--accent)] flex-none">
                 {myRank === 1 ? '🥇 #1' : myRank === 2 ? '🥈 #2' : myRank === 3 ? '🥉 #3' : `#${myRank}`}
               </span>
-              <div
-                className="avatar w-9 h-9 rounded-full flex-none flex items-center justify-center font-bold text-[13px] bg-[var(--accent)] text-[var(--accent-text)]"
-              >
-                {state.profile.displayName.slice(0, 2).toUpperCase()}
-              </div>
+              <UserAvatar
+                avatarUrl={state.profile.avatarImage}
+                avatarColor={state.profile.avatarColor}
+                displayName={state.profile.displayName}
+                username={state.profile.username}
+                size={36}
+              />
               <div className="truncate">
                 <div className="flex items-center gap-1.5 truncate">
                   <p className="text-[14px] font-bold text-[var(--text)] truncate">
                     {state.profile.displayName} (Твоё место)
                   </p>
+                  {state.profile.verified && <VerifiedBadge size="xs" />}
                   {isMyProfileAnonymous && (
                     <span className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20 flex-none">
                       <Lock size={9} /> Скрыт от других

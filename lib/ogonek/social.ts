@@ -23,6 +23,7 @@ export interface SocialUser {
   username: string
   displayName: string
   avatarUrl?: string | null
+  avatarColor?: string | null
   bio?: string
   city?: string
   streak: number
@@ -48,6 +49,7 @@ export interface FriendFeedPost {
   username: string
   displayName: string
   avatarUrl?: string | null
+  avatarColor?: string | null
   verified: boolean
   streak: number
   dayDate: string
@@ -464,30 +466,38 @@ export async function getFriendsListApi(
   const supabase = getSupabase()
   if (supabase) {
     try {
-      const { data, error } = await supabase
-        .from('friendships')
-        .select('id, user_id, friend_id, status')
-        .eq('status', 'accepted')
-        .or(`user_id.eq.${userId},friend_id.eq.${userId}`)
+      const [followingRes, followersRes] = await Promise.all([
+        supabase.from('follows').select('following_id').eq('follower_id', userId),
+        supabase.from('follows').select('follower_id').eq('following_id', userId),
+      ])
 
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const otherIds = data.map((row: any) => (row.user_id === userId ? row.friend_id : row.user_id))
+      const followingSet = new Set(
+        (followingRes.data || []).map((r: any) => r.following_id).filter(Boolean)
+      )
+      const mutualIds = Array.from(
+        new Set(
+          (followersRes.data || [])
+            .map((r: any) => r.follower_id)
+            .filter((id: string) => Boolean(id) && id !== userId && followingSet.has(id))
+        )
+      )
+
+      if (mutualIds.length > 0) {
         const { data: pRows } = await supabase
           .from('profiles')
-          .select('id, username, display_name, avatar_url, streak_count, verified, level')
-          .in('id', otherIds)
+          .select('id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, streak, verified, level')
+          .in('id', mutualIds)
 
         const pMap = new Map((pRows || []).map((p: any) => [p.id, p]))
-        return data.map((row: any) => {
-          const isUser = row.user_id === userId
-          const otherId = isUser ? row.friend_id : row.user_id
+        return mutualIds.map((otherId) => {
           const p = pMap.get(otherId)
           return {
             id: p?.id || otherId,
             username: p?.username || 'user',
             displayName: p?.display_name || `@${p?.username || 'user'}`,
-            avatarUrl: p?.avatar_url,
-            streak: Number(p?.streak_count || 0),
+            avatarUrl: p?.avatar_image || p?.avatar_url || null,
+            avatarColor: p?.avatar_color || '#FF5C00',
+            streak: Number(p?.streak_count ?? p?.streak ?? 0),
             verified: Boolean(p?.verified),
             difficultyLevel: Number(p?.level || 1),
             friendshipStatus: 'accepted' as FriendshipStatus,

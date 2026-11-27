@@ -69,19 +69,32 @@ export async function GET(request: Request) {
         .range(offset, offset + limit - 1)
 
       if (!error && Array.isArray(profiles)) {
-        // Подгружаем статусы дружбы, если передан viewerId
+        // Подгружаем реальные подписки из `follows` и заявки из `friendships`
         const targetIds = profiles.map((p) => p.id)
         let friendshipsMap: Record<string, { status: string; isRequester: boolean }> = {}
+        const myFollowingSet = new Set<string>()
+        const myFollowersSet = new Set<string>()
 
         if (viewerId && targetIds.length > 0) {
           try {
-            const { data: fRows } = await supabase
-              .from('friendships')
-              .select('id, user_id, friend_id, status')
-              .or(`user_id.eq.${viewerId},friend_id.eq.${viewerId}`)
+            const [followingRes, followersRes, fRes] = await Promise.all([
+              supabase.from('follows').select('following_id').eq('follower_id', viewerId),
+              supabase.from('follows').select('follower_id').eq('following_id', viewerId),
+              supabase
+                .from('friendships')
+                .select('id, user_id, friend_id, status')
+                .or(`user_id.eq.${viewerId},friend_id.eq.${viewerId}`),
+            ])
 
-            if (Array.isArray(fRows)) {
-              for (const f of fRows) {
+            for (const row of followingRes.data || []) {
+              if (row.following_id) myFollowingSet.add(row.following_id)
+            }
+            for (const row of followersRes.data || []) {
+              if (row.follower_id) myFollowersSet.add(row.follower_id)
+            }
+
+            if (Array.isArray(fRes.data)) {
+              for (const f of fRes.data) {
                 const otherId = f.user_id === viewerId ? f.friend_id : f.user_id
                 friendshipsMap[otherId] = {
                   status: f.status,
@@ -93,13 +106,14 @@ export async function GET(request: Request) {
         }
 
         const users: SocialUser[] = profiles.map((p) => {
+          const isFollowing = myFollowingSet.has(p.id)
+          const isFollower = myFollowersSet.has(p.id)
+          const isMutual = isFollowing && isFollower
           const fInfo = friendshipsMap[p.id]
-          let friendshipStatus: FriendshipStatus = 'none'
-          if (fInfo) {
+          let friendshipStatus: FriendshipStatus = isMutual ? 'accepted' : 'none'
+          if (!isMutual && fInfo) {
             const fStatus = String(fInfo.status || '').toLowerCase()
-            if (fStatus === 'accepted' || fStatus === 'friend') {
-              friendshipStatus = 'accepted'
-            } else if (
+            if (
               fStatus === 'pending' ||
               fStatus === 'outgoing-request' ||
               fStatus === 'incoming-request'
@@ -112,7 +126,8 @@ export async function GET(request: Request) {
             id: p.id,
             username: p.username,
             displayName: p.display_name || `@${p.username}`,
-            avatarUrl: p.avatar_url || p.avatar_image,
+            avatarUrl: p.avatar_image || p.avatar_url || null,
+            avatarColor: p.avatar_color || '#FF5C00',
             bio: p.bio || '',
             city: p.city || '',
             streak: Number(p.streak_count ?? p.streak ?? 0),
@@ -121,7 +136,7 @@ export async function GET(request: Request) {
             difficultyLevel: Number(p.level ?? p.difficulty_level ?? 1),
             friendshipStatus,
             isRequester: fInfo?.isRequester ?? false,
-            isFollowing: false,
+            isFollowing,
           }
         })
 

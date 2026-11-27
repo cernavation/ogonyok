@@ -26,10 +26,11 @@ import {
   presenceMeta,
   presenceRank,
 } from '@/lib/ogonek/friends'
-import { getRecentProfiles, toggleFriendshipFollow } from '@/lib/supabase/api'
+import { getRecentProfiles } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { FriendDetailModal } from './friend-detail-modal'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
   onNotify: (message: string) => void
@@ -54,21 +55,18 @@ function matches(friend: FriendProfile, query: string): boolean {
 
 /* ── Аватар с кружочком онлайн-статуса ──────────────────────────────────── */
 function FriendAvatar({ friend, size = 'md' }: { friend: FriendProfile; size?: 'md' | 'lg' }) {
-  const presence = presenceMeta(friend.presence)
+  const px = size === 'lg' ? 56 : 42
   return (
-    <span className={`friend-avatar friend-avatar--${size}`} aria-hidden="true">
-      <span
-        className="friend-avatar__img"
-        style={{ background: friend.avatarColor, textShadow: '0 1px 3px #000' }}
-      >
-        {friend.initials}
-      </span>
-      <span
-        className="friend-avatar__dot"
-        style={{ background: presence.color, borderColor: '#16181c' }}
-        title={presence.label}
-      />
-    </span>
+    <UserAvatar
+      avatarUrl={friend.avatarUrl}
+      avatarColor={friend.avatarColor}
+      displayName={friend.name}
+      username={friend.username}
+      initials={friend.initials}
+      size={px}
+      isOnline={friend.presence === 'online'}
+      ringColor="#16181c"
+    />
   )
 }
 
@@ -91,11 +89,7 @@ function PersonRow({
         <span className="fm-row__text">
           <span className="fm-row__name">
             {friend.name}
-            {friend.verified && (
-              <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован" aria-label="Верифицирован">
-                <Check size={8} strokeWidth={3} />
-              </span>
-            )}
+            {friend.verified && <VerifiedBadge size="xs" />}
           </span>
           <span className="fm-row__sub">{subtitle}</span>
         </span>
@@ -193,6 +187,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
               name: p.display_name || `@${p.username}`,
               username: p.username,
               initials: getInitials(p.display_name, p.username),
+              avatarUrl: p.avatar_image || p.avatar_url || null,
               avatarColor: p.avatar_color || '#FF5C00',
               bio: p.bio || '',
               city: p.city || '',
@@ -264,21 +259,14 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
   const handleFollow = (friend: FriendProfile) => {
     playClick(soundEnabled)
     const now = toggleFollow(friend.id)
-    const currentUid = state.auth.activeAccountId
-    if (currentUid && friend.id) {
-      void toggleFriendshipFollow(currentUid, friend.id)
-    }
     onNotify(now ? `Ты подписался на @${friend.username} ✓` : `Ты отписался от @${friend.username}`)
   }
 
   const handleAddFriend = (friend: FriendProfile) => {
     playClick(soundEnabled)
     addFriend(friend.id)
+    toggleFollow(friend.id)
     playSuccess(soundEnabled)
-    const currentUid = state.auth.activeAccountId
-    if (currentUid && friend.id) {
-      void toggleFriendshipFollow(currentUid, friend.id)
-    }
     onNotify(`@${friend.username} теперь в друзьях ✓`)
   }
 
@@ -489,11 +477,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
                         <span className="fm-row__text">
                           <span className="fm-row__name">
                             {friend.name}
-                            {friend.verified && (
-                              <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
-                                <Check size={8} strokeWidth={3} />
-                              </span>
-                            )}
+                            {friend.verified && <VerifiedBadge size="xs" />}
                           </span>
                           <span className="fm-row__sub">
                             @{friend.username} · {meta?.mutual ?? friend.mutual} общих ·{' '}
@@ -586,11 +570,7 @@ export function FriendsManager({ onNotify, soundEnabled = true }: Props) {
                       <span className="fm-row__text">
                         <span className="fm-row__name">
                           {friend.name}
-                          {friend.verified && (
-                            <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-label="Верифицирован">
-                              <Check size={8} strokeWidth={3} />
-                            </span>
-                          )}
+                          {friend.verified && <VerifiedBadge size="xs" />}
                           <span className="fm-match">{matchPercent}%</span>
                         </span>
                         <span className="fm-row__sub">

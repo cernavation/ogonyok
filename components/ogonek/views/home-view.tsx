@@ -11,7 +11,7 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { StreakStatus } from '@/lib/ogonek/streak'
 import type { ChatGroupMeta, Day, MorningFocusRecord, ViewId } from '@/lib/ogonek/types'
 import dynamic from 'next/dynamic'
-import { Button } from '../ui'
+import { Button, UserAvatar } from '../ui'
 import { DayCard } from '../day-card'
 import { EveningReview } from '../evening-review'
 import { QuickFocus } from '../quick-focus'
@@ -48,7 +48,7 @@ type Props = {
   streak?: number
   streakStatus?: StreakStatus
   hoursLeft?: number | null
-  onOpenProfile?: () => void
+  onOpenProfile?: (userId?: string | null) => void
   onOpenFriends?: () => void
   soundEnabled?: boolean
   userId?: string
@@ -154,6 +154,7 @@ export function HomeView({
               username: p.username,
               displayName: p.displayName,
               avatarImage: p.avatarUrl || undefined,
+              avatarColor: p.avatarColor || undefined,
               verified: p.verified,
               streak: p.streak,
             } as any,
@@ -225,7 +226,7 @@ export function HomeView({
           (currentUser?.id && uid === currentUser.id) ||
           (state.auth.activeAccountId && uid === state.auth.activeAccountId)
         if (isMine) return false
-        return (state.friendIds ?? []).includes(uid) || followingIds.includes(uid)
+        return (state.friendIds ?? []).includes(uid)
       })
 
       if (selectedGroupFilter) {
@@ -404,21 +405,15 @@ export function HomeView({
           role="region"
           aria-label="Создать запись дня"
         >
-          {avatarImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarImage}
-              alt={displayName}
-              className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--line)] mt-0.5"
-            />
-          ) : (
-            <div
-              className="avatar w-10 h-10 rounded-full flex-none flex items-center justify-center font-bold text-sm select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)] mt-0.5"
-              aria-hidden="true"
-            >
-              {initials}
-            </div>
-          )}
+          <UserAvatar
+            avatarUrl={avatarImage}
+            avatarColor={state.profile.avatarColor}
+            displayName={displayName}
+            username={username}
+            initials={initials}
+            size={40}
+            className="mt-0.5"
+          />
           <div className="flex-1 min-w-0">
             <div className="py-2 text-[var(--text-2)] text-[18px] font-normal select-none">
               Чем гордишься сегодня?

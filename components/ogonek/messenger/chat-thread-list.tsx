@@ -18,6 +18,7 @@ import {
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
+import { VerifiedBadge } from '../ui'
 import { ChatFoldersBar } from './chat-folders-bar'
 
 type Props = {
@@ -229,9 +230,9 @@ export function ChatThreadList({
                 <div className="flex flex-1 flex-col min-w-0">
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <span className="truncate text-[14px] font-semibold text-[var(--text)] flex items-center gap-1">
-                      {title}
-                      {friend?.verified && (
-                        <Check size={11} className="text-[var(--accent)] inline-block" />
+                      <span className="truncate">{title}</span>
+                      {(friend?.verified || thread?.peerMeta?.verified) && (
+                        <VerifiedBadge size="xs" />
                       )}
                     </span>
                     <span className="shrink-0 text-[11px] font-mono text-[var(--text-2)]">

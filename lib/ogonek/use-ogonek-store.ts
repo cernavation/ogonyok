@@ -26,6 +26,9 @@ import {
   toggleFriendshipFollow,
   checkFriendshipFollow,
   getFollowing,
+  getSocialGraphFromFollows,
+  followUser,
+  unfollowUser,
   createChatGroupInDb,
   updateChatGroupInDb,
   saveDayBundleRpc,
@@ -236,6 +239,7 @@ async function hydrateStateFromSupabaseSession(
   const isCerna = username.toLowerCase() === 'cernavation'
   let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' = isCerna ? 'ultra' : 'free'
   let dbSubscriptionExpiresAt: string | null = null
+  let avatarColor = cachedState.profile.avatarColor || '#FF5C00'
 
   try {
     const res = await client
@@ -245,8 +249,13 @@ async function hydrateStateFromSupabaseSession(
       .single()
     dbProfile = res.data
     if (dbProfile) {
-      if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
-      if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+      if (dbProfile.avatar_image || dbProfile.avatar_url) {
+        avatarImage = dbProfile.avatar_image || dbProfile.avatar_url
+      }
+      if (dbProfile.avatar_color) avatarColor = dbProfile.avatar_color
+      if (dbProfile.banner_image || dbProfile.cover_url) {
+        bannerImage = dbProfile.banner_image || dbProfile.cover_url
+      }
       userLevel = dbProfile.level || dbProfile.settings?.level || dbProfile.difficulty_level || userLevel
       if (dbProfile.subscription_tier) {
         dbSubscriptionTier = dbProfile.subscription_tier
@@ -306,6 +315,7 @@ async function hydrateStateFromSupabaseSession(
       username,
       displayName: account.snapshot.displayName,
       avatarImage,
+      avatarColor,
       bannerImage,
       coverUrl: bannerImage,
       level: userLevel,
@@ -2940,6 +2950,7 @@ export function useOgonekStore() {
               difficulty_level: userLevel,
               avatar_image: nextProfile.avatarImage,
               avatar_url: nextProfile.avatarImage,
+              avatar_color: nextProfile.avatarColor,
               banner_image: nextProfile.bannerImage,
               cover_url: nextProfile.coverUrl || nextProfile.bannerImage,
               banner_preset: nextProfile.bannerPreset,
@@ -2995,21 +3006,46 @@ export function useOgonekStore() {
   const toggleFollow = useCallback(
     (friendId: string): boolean => {
       if (!friendId) return false
-      const current = getSnapshot().followingIds ?? []
+      const snap = getSnapshot()
+      const current = snap.followingIds ?? []
       const willFollow = !current.includes(friendId)
       updateStore((prev) => {
         const list = prev.followingIds ?? []
-        const next = willFollow
+        const followerSet = new Set(prev.followerIds ?? [])
+        const nextFollowing = willFollow
           ? Array.from(new Set([...list, friendId]))
           : list.filter((id) => id !== friendId)
-        return { ...prev, followingIds: next }
+        const nextFriends = willFollow
+          ? followerSet.has(friendId)
+            ? Array.from(new Set([...(prev.friendIds ?? []), friendId]))
+            : (prev.friendIds ?? [])
+          : (prev.friendIds ?? []).filter((id) => id !== friendId)
+        return {
+          ...prev,
+          followingIds: nextFollowing,
+          exploreFollowingIds: nextFollowing,
+          friendIds: nextFriends,
+        }
       })
 
-      // Синхронизация подписки с Supabase (friendships и follows)
-      const currentUserId = getSnapshot().auth?.activeAccountId
+      // Синхронизация подписки с Supabase (SSOT: таблица `follows`)
+      const currentUserId = snap.auth?.activeAccountId
       if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
-        toggleFriendshipFollow(currentUserId, friendId).catch((err) => {
-          console.warn('[Ogonek] toggleFriendshipFollow notice:', err)
+        const op = willFollow
+          ? followUser(currentUserId, friendId)
+          : unfollowUser(currentUserId, friendId)
+
+        op.then((res: any) => {
+          if (willFollow && res?.isMutual) {
+            updateStore((prev) => ({
+              ...prev,
+              followerIds: Array.from(new Set([...(prev.followerIds ?? []), friendId])),
+              friendIds: Array.from(new Set([...(prev.friendIds ?? []), friendId])),
+            }))
+            ensureMutualFriendshipChat(friendId)
+          }
+        }).catch((err) => {
+          console.warn('[Ogonek] toggleFollow DB sync notice:', err)
         })
       }
 
@@ -3024,38 +3060,69 @@ export function useOgonekStore() {
 
   /**
    * ПОДПИСКА НА УЧАСТНИКА СООБЩЕСТВА:
-   * Переключает чтение человека из глобального хаба исследования.
-   * Возвращает true, если теперь пользователь читает этого человека.
+   * Единая логика подписки/отписки поверх таблицы `follows`.
    */
   const toggleExploreFollow = useCallback(
     (userId: string): boolean => {
       if (!userId) return false
-      const current = getSnapshot().exploreFollowingIds ?? []
+      const snap = getSnapshot()
+      const current = Array.from(
+        new Set([...(snap.followingIds ?? []), ...(snap.exploreFollowingIds ?? [])])
+      )
       const willFollow = !current.includes(userId)
       updateStore((prev) => {
-        const list = prev.exploreFollowingIds ?? []
-        const next = willFollow
+        const list = prev.followingIds ?? []
+        const followerSet = new Set(prev.followerIds ?? [])
+        const nextFollowing = willFollow
           ? Array.from(new Set([...list, userId]))
           : list.filter((id) => id !== userId)
-        return { ...prev, exploreFollowingIds: next }
+        const nextFriends = willFollow
+          ? followerSet.has(userId)
+            ? Array.from(new Set([...(prev.friendIds ?? []), userId]))
+            : (prev.friendIds ?? [])
+          : (prev.friendIds ?? []).filter((id) => id !== userId)
+        return {
+          ...prev,
+          followingIds: nextFollowing,
+          exploreFollowingIds: nextFollowing,
+          friendIds: nextFriends,
+        }
       })
 
-      // Синхронизация подписки с Supabase (friendships и follows)
-      const currentUserId = getSnapshot().auth?.activeAccountId
+      // Синхронизация подписки с Supabase (SSOT: таблица `follows`)
+      const currentUserId = snap.auth?.activeAccountId
       if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
-        toggleFriendshipFollow(currentUserId, userId).catch((err) => {
-          console.warn('[Ogonek] toggleFriendshipFollow notice:', err)
-        })
+        const op = willFollow
+          ? followUser(currentUserId, userId)
+          : unfollowUser(currentUserId, userId)
 
-        if (willFollow) {
-          checkFriendshipFollow(userId, currentUserId)
-            .then((theyFollowMe: boolean) => {
-              if (theyFollowMe) {
-                ensureMutualFriendshipChat(userId)
-              }
-            })
-            .catch(() => {})
-        }
+        op.then((res: any) => {
+          if (willFollow) {
+            if (res?.isMutual) {
+              updateStore((prev) => ({
+                ...prev,
+                followerIds: Array.from(new Set([...(prev.followerIds ?? []), userId])),
+                friendIds: Array.from(new Set([...(prev.friendIds ?? []), userId])),
+              }))
+              ensureMutualFriendshipChat(userId)
+            } else {
+              checkFriendshipFollow(userId, currentUserId)
+                .then((theyFollowMe: boolean) => {
+                  if (theyFollowMe) {
+                    updateStore((prev) => ({
+                      ...prev,
+                      followerIds: Array.from(new Set([...(prev.followerIds ?? []), userId])),
+                      friendIds: Array.from(new Set([...(prev.friendIds ?? []), userId])),
+                    }))
+                    ensureMutualFriendshipChat(userId)
+                  }
+                })
+                .catch(() => {})
+            }
+          }
+        }).catch((err) => {
+          console.warn('[Ogonek] toggleExploreFollow DB sync notice:', err)
+        })
       }
 
       return willFollow
@@ -4031,7 +4098,14 @@ export function useOgonekStore() {
   const startChatWithFriend = useCallback(
     (
       friendId: string,
-      peerMeta?: { name?: string; username?: string; avatarUrl?: string; initials?: string }
+      peerMeta?: {
+        name?: string
+        username?: string
+        avatarUrl?: string
+        avatarColor?: string
+        verified?: boolean
+        initials?: string
+      }
     ): boolean => {
       if (!friendId) return false
       updateStore((prev) => {
@@ -5690,7 +5764,17 @@ export function useOgonekStore() {
 
   /** Обновить метаданные собеседника (имя, никнейм, аватар) для отображения без сырых UUID */
   const updateThreadPeerMeta = useCallback(
-    (friendId: string, meta: { name?: string; username?: string; avatarUrl?: string; initials?: string }) => {
+    (
+      friendId: string,
+      meta: {
+        name?: string
+        username?: string
+        avatarUrl?: string
+        avatarColor?: string
+        verified?: boolean
+        initials?: string
+      }
+    ) => {
       if (!friendId || !meta) return
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
@@ -6047,8 +6131,9 @@ export function useOgonekStore() {
       const nowISO = new Date().toISOString()
       const accountId = params.userId || `acct-${cleanNick}`
 
-      // Загружаем актуальные данные профиля (включая реальный level!) из базы данных Supabase
+      // Загружаем актуальные данные профиля (включая реальный level, аватар, цвет) из базы данных Supabase
       let avatarImage = params.avatarUrl ?? null
+      let avatarColor: string | null = null
       let bannerImage = params.bannerUrl ?? null
       let dbLevel: number | null = null
       let dbCity: string | null = null
@@ -6072,8 +6157,13 @@ export function useOgonekStore() {
             .single()
           if (dbProfile) {
             if (dbProfile.privacy) dbPrivacy = dbProfile.privacy
-            if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
-            if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+            if (dbProfile.avatar_image || dbProfile.avatar_url) {
+              avatarImage = dbProfile.avatar_image || dbProfile.avatar_url
+            }
+            if (dbProfile.avatar_color) avatarColor = dbProfile.avatar_color
+            if (dbProfile.banner_image || dbProfile.cover_url) {
+              bannerImage = dbProfile.banner_image || dbProfile.cover_url
+            }
             if (dbProfile.subscription_tier) dbSubscriptionTier = dbProfile.subscription_tier
             if (dbProfile.subscription_expires_at) {
               dbSubscriptionExpiresAt = dbProfile.subscription_expires_at
@@ -6107,17 +6197,18 @@ export function useOgonekStore() {
         console.warn('Could not fetch remote profile on applyUserSession:', err)
       }
 
-      // Загружаем актуальные подписки из базы Supabase (friendships и follows)
-      let remoteFollowingIds: string[] = []
+      // Загружаем актуальный социальный граф из таблицы `follows` (SSOT)
+      let remoteGraph = {
+        followingIds: [] as string[],
+        followerIds: [] as string[],
+        friendIds: [] as string[],
+      }
       try {
         if (params.userId) {
-          const followings = await getFollowing(params.userId)
-          if (Array.isArray(followings) && followings.length > 0) {
-            remoteFollowingIds = followings.map((f) => f.id).filter(Boolean)
-          }
+          remoteGraph = await getSocialGraphFromFollows(params.userId)
         }
       } catch (err) {
-        console.warn('Could not fetch following on applyUserSession:', err)
+        console.warn('Could not fetch social graph on applyUserSession:', err)
       }
 
       updateStore((prev) => {
@@ -6181,6 +6272,7 @@ export function useOgonekStore() {
             username: cleanNick,
             displayName,
             avatarImage: account.snapshot.avatarImage,
+            avatarColor: avatarColor || baseProfile.avatarColor || '#FF5C00',
             bannerImage: account.snapshot.bannerImage,
             coverUrl: account.snapshot.bannerImage,
             verified: isOwner ? true : (dbVerified !== null ? dbVerified : (existing ? baseProfile.verified : false)),
@@ -6205,12 +6297,10 @@ export function useOgonekStore() {
             : prev.days.length > 0 && prev.auth.accounts.some((a) => a.id === accountId)
               ? prev.days
               : [],
-          followingIds: remoteFollowingIds.length > 0
-            ? Array.from(new Set([...(prev.followingIds ?? []), ...remoteFollowingIds]))
-            : prev.followingIds,
-          exploreFollowingIds: remoteFollowingIds.length > 0
-            ? Array.from(new Set([...(prev.exploreFollowingIds ?? []), ...remoteFollowingIds]))
-            : prev.exploreFollowingIds,
+          followingIds: remoteGraph.followingIds,
+          exploreFollowingIds: remoteGraph.followingIds,
+          followerIds: remoteGraph.followerIds,
+          friendIds: remoteGraph.friendIds,
           auth: {
             ...prev.auth,
             accounts: [
@@ -6360,17 +6450,25 @@ export function useOgonekStore() {
         const isOwner = (dbProfile.username || username).toLowerCase() === 'cernavation'
         const effectiveTier: 'free' | 'pro' | 'premium' | 'ultra' = isOwner ? 'ultra' : (dbProfile.subscription_tier || 'free')
         const effectiveValidUntil = dbProfile.subscription_expires_at || dbProfile.subscription_valid_until || null
-        const effectiveLevel = isOwner ? 5 : (dbProfile.level || 1)
-        const effectiveStreak = isOwner ? Math.max(dbProfile.streak_count || 0, 740) : (dbProfile.streak_count || 0)
+        const effectiveLevel = isOwner ? 5 : (dbProfile.level || dbProfile.difficulty_level || 1)
+        const resolvedAvatar = dbProfile.avatar_image || dbProfile.avatar_url || null
+        const resolvedBanner = dbProfile.banner_image || dbProfile.cover_url || null
 
         updateStore((prev) => {
+          const effectiveStreak = isOwner
+            ? Math.max(dbProfile.streak_count || 0, prev.days.length, 720)
+            : Math.max(dbProfile.streak_count || 0, prev.days.length)
+
           const updatedProfile = sanitizeProfile({
             ...prev.profile,
             displayName: dbProfile.display_name || prev.profile.displayName,
             username: dbProfile.username || prev.profile.username,
-            avatarImage: dbProfile.avatar_image || prev.profile.avatarImage,
-            bannerImage: dbProfile.banner_image || prev.profile.bannerImage,
-            coverUrl: dbProfile.banner_image || prev.profile.coverUrl,
+            avatarImage:
+              resolvedAvatar ??
+              (prev.profile.avatarImage?.startsWith('idb:') ? prev.profile.avatarImage : null),
+            avatarColor: dbProfile.avatar_color || prev.profile.avatarColor || '#FF5C00',
+            bannerImage: resolvedBanner ?? prev.profile.bannerImage,
+            coverUrl: resolvedBanner ?? prev.profile.coverUrl,
             bio: dbProfile.bio ?? prev.profile.bio,
             city: dbProfile.city ?? prev.profile.city,
             website: dbProfile.website ?? prev.profile.website,
@@ -6416,6 +6514,29 @@ export function useOgonekStore() {
       } catch (err: any) {
         return { ok: false, error: err?.message }
       }
+    },
+    [updateStore]
+  )
+
+  /**
+   * Синхронизация подписок, подписчиков и взаимных друзей напрямую из Supabase `follows` (SSOT).
+   */
+  const syncSocialGraphFromCloud = useCallback(
+    async (overrideUserId?: string) => {
+      const snap = getSnapshot()
+      const uid = overrideUserId || snap.auth?.activeAccountId || (snap.profile as any)?.id
+      if (!uid || uid.startsWith('anon-') || uid.startsWith('acct-guest')) {
+        return { followingIds: [], followerIds: [], friendIds: [] }
+      }
+      const graph = await getSocialGraphFromFollows(uid)
+      updateStore((prev) => ({
+        ...prev,
+        followingIds: graph.followingIds,
+        exploreFollowingIds: graph.followingIds,
+        followerIds: graph.followerIds,
+        friendIds: graph.friendIds,
+      }))
+      return graph
     },
     [updateStore]
   )
@@ -6762,6 +6883,7 @@ export function useOgonekStore() {
     removeAccount,
     loadDaysFromCloud,
     loadProfileFromCloud,
+    syncSocialGraphFromCloud,
     saveDayDirectlyToSupabase,
     provisionDemoAccountSecrets,
   }

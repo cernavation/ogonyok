@@ -17,6 +17,8 @@ export type FriendProfile = {
   /** @username без ведущего символа @ */
   username: string
   initials: string
+  /** Ссылка на фото профиля */
+  avatarUrl?: string | null
   /** CSS-градиент аватара-заглушки */
   avatarColor: string
   bio: string

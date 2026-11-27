@@ -20,6 +20,7 @@ import { calculateStreak } from '@/lib/ogonek/streak'
 import { getInitials } from '@/lib/ogonek/initials'
 import dynamic from 'next/dynamic'
 import { getActiveStories, subscribeToStories, type StoryRecord } from '@/lib/supabase/api'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 // Динамические импорты модалок историй (Zero Lag)
 const StoryComposerModal = dynamic(
@@ -36,7 +37,7 @@ type Props = {
   variant?: 'feed' | 'rail'
   onNotify: (message: string) => void
   soundEnabled?: boolean
-  onOpenProfile?: () => void
+  onOpenProfile?: (userId?: string | null) => void
 }
 
 function firstName(name: string): string {
@@ -163,6 +164,7 @@ export function StoriesBar({
       const name = author?.display_name || author?.username || 'Друг'
       const username = author?.username || 'user'
       const initials = getInitials(name, username)
+      const avatarUrl = author?.avatar_image || author?.avatar_url || null
       const avatarColor = author?.avatar_color || '#FF5C00'
       const verified = Boolean(author?.verified)
 
@@ -178,6 +180,7 @@ export function StoriesBar({
         name,
         username,
         initials,
+        avatarUrl,
         avatarColor,
         verified,
         postedLabel: formatStoryAge(sorted[sorted.length - 1].created_at),
@@ -373,12 +376,15 @@ export function StoriesBar({
             >
               <span className="story-ring__inner">
                 <span className="story-ring__avatar" style={{ background: profile.avatarColor }}>
-                  {myAvatarSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={myAvatarSrc} alt="" />
-                  ) : (
-                    getInitials(profile.displayName, profile.username)
-                  )}
+                  <UserAvatar
+                    avatarUrl={myAvatarSrc}
+                    avatarColor={profile.avatarColor}
+                    displayName={profile.displayName}
+                    username={profile.username}
+                    size={56}
+                    bordered={false}
+                    className="!w-full !h-full"
+                  />
                 </span>
               </span>
             </span>
@@ -391,7 +397,6 @@ export function StoriesBar({
 
         {/* Кружочки друзей */}
         {friendViewables.map((viewable) => {
-          const friend = viewable.friendId ? getFriend(viewable.friendId) : undefined
           const viewed = viewable.friendId ? viewedStoryIds.includes(viewable.friendId) : false
           return (
             <div className="stories-item" role="listitem" key={viewable.id}>
@@ -407,13 +412,22 @@ export function StoriesBar({
                 >
                   <span className="story-ring__inner">
                     <span className="story-ring__avatar" style={{ background: viewable.avatarColor }}>
-                      {viewable.initials}
+                      <UserAvatar
+                        avatarUrl={viewable.avatarUrl}
+                        avatarColor={viewable.avatarColor}
+                        displayName={viewable.name}
+                        username={viewable.username}
+                        initials={viewable.initials}
+                        size={56}
+                        bordered={false}
+                        className="!w-full !h-full"
+                      />
                     </span>
                   </span>
                 </span>
                 {viewable.verified && (
-                  <span className="story-ring__verified flex items-center justify-center" aria-hidden="true">
-                    <Check size={8} strokeWidth={3} />
+                  <span className="absolute top-[44px] left-[6px] z-10 inline-flex" aria-hidden="true">
+                    <VerifiedBadge px={18} bordered />
                   </span>
                 )}
                 <span className="story-ring__name w-20 text-[11px] leading-tight text-center whitespace-nowrap">{firstName(viewable.name)}</span>
@@ -480,6 +494,7 @@ export function StoriesBar({
             startIndex={viewerIndex}
             myAvatarSrc={myAvatarSrc}
             onClose={() => setViewerIndex(null)}
+            onOpenUserProfile={onOpenProfile}
             onStoryViewed={markStoryViewed}
             onDeleteStory={removeMyStory}
             onToggleReaction={toggleReaction}

@@ -38,7 +38,13 @@ import { ChatAvatar } from './messenger/chat-avatar'
 import { playIncomingRingtone, playEndCallSound, stopCallSounds } from '@/lib/ogonek/call-sound'
 import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
-import { getProfile, updateCallSessionStatus, type CallSessionRecord, type ProfileRecord } from '@/lib/supabase/api'
+import {
+  getProfile,
+  subscribeToFollows,
+  updateCallSessionStatus,
+  type CallSessionRecord,
+  type ProfileRecord,
+} from '@/lib/supabase/api'
 import { AlertTriangle, Phone, PhoneOff, Video } from 'lucide-react'
 import { DesktopToastStack, type DesktopToast } from './notifications'
 import { checkSubscriptionStatus, TIER_NAMES } from '@/lib/ogonek/permissions'
@@ -167,6 +173,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     saveDayDirectlyToSupabase,
     loadDaysFromCloud,
     loadProfileFromCloud,
+    syncSocialGraphFromCloud,
   } = useOgonekStore()
 
   const pendingScrollRef = useRef(false)
@@ -1228,17 +1235,30 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
   const [isInitialLoadingDays, setIsInitialLoadingDays] = useState(() => state.days.length === 0)
 
-  // Всегда загружаем актуальные дни и профиль напрямую из Supabase (единственный источник правды)
+  // Всегда загружаем актуальные дни, профиль и граф подписок/друзей напрямую из Supabase
   useEffect(() => {
     let active = true
     loadDaysFromCloud().finally(() => {
       if (active) setIsInitialLoadingDays(false)
     })
     loadProfileFromCloud()
+    syncSocialGraphFromCloud()
     return () => {
       active = false
     }
-  }, [loadDaysFromCloud, loadProfileFromCloud])
+  }, [loadDaysFromCloud, loadProfileFromCloud, syncSocialGraphFromCloud])
+
+  // Realtime-синхронизация таблицы `follows` для текущего пользователя
+  useEffect(() => {
+    const uid = state.auth?.activeAccountId
+    if (!uid || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return
+    const unsubscribe = subscribeToFollows(uid, () => {
+      void syncSocialGraphFromCloud(uid)
+    })
+    return () => {
+      unsubscribe()
+    }
+  }, [state.auth?.activeAccountId, syncSocialGraphFromCloud])
 
   const handleSaveComposer = useCallback(
     async (payload: ComposerPayload, editingDayId?: number, dateISO?: string): Promise<{ ok: boolean; error?: string }> => {
@@ -1385,7 +1405,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           streak={streakState.streak}
           streakStatus={streakState.status}
           hoursLeft={streakState.hoursLeft}
-          onOpenProfile={() => navigate('profile')}
+          onOpenProfile={(targetUid) => navigate('profile', targetUid ?? null)}
           onOpenFriends={openFriendsModal}
           onCompose={() => {
             setEditingDay(null)

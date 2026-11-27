@@ -32,7 +32,7 @@ import { normalizeVisibility, visibilityMeta } from '@/lib/ogonek/visibility'
 import type { ChatAttachment, Day } from '@/lib/ogonek/types'
 import { useOgonekStore, syncDayToSupabase } from '@/lib/ogonek/use-ogonek-store'
 import dynamic from 'next/dynamic'
-import { IconButton } from './ui'
+import { IconButton, UserAvatar, VerifiedBadge } from './ui'
 import { DayEntries } from './day-entries'
 import { CommentsThread } from './comments-thread'
 import { ReactionBar } from './reaction-bar'
@@ -112,8 +112,31 @@ function DayCardComponent({
 
   const dayVisibility = normalizeVisibility(day.visibility)
 
-  const displayName = state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
-  const username = state.profile?.username || currentUser?.username || 'cernavation'
+  const dayAuthor = (day as any).author as
+    | {
+        id?: string
+        username?: string
+        displayName?: string
+        avatarImage?: string | null
+        avatarColor?: string | null
+        verified?: boolean
+      }
+    | undefined
+
+  const isForeignDayAuthor = Boolean(
+    dayAuthor &&
+      ((dayAuthor.id && currentUser?.id && dayAuthor.id !== currentUser.id) ||
+        (dayAuthor.username &&
+          state.profile?.username &&
+          dayAuthor.username.toLowerCase() !== state.profile.username.toLowerCase()))
+  )
+
+  const displayName = isForeignDayAuthor
+    ? dayAuthor?.displayName || `@${dayAuthor?.username || 'user'}`
+    : state.profile?.displayName || currentUser?.displayName || 'Alexei Cerna'
+  const username = isForeignDayAuthor
+    ? dayAuthor?.username || 'user'
+    : state.profile?.username || currentUser?.username || 'cernavation'
   const initials = getInitials(displayName, username)
 
   const isAuthor =
@@ -124,14 +147,22 @@ function DayCardComponent({
     displayName.toLowerCase().includes('церна') ||
     displayName.toLowerCase().includes('черняк')
 
-  const rawAvatar =
-    currentUser?.avatarImage ||
-    (currentUser as any)?.avatar_image ||
-    (currentUser as any)?.avatar_url ||
-    state.profile.avatarImage ||
-    (state.profile as any)?.avatar ||
-    (state.profile as any)?.avatar_url ||
-    (isAuthor ? '/author-avatar.png' : null)
+  const rawAvatar = isForeignDayAuthor
+    ? dayAuthor?.avatarImage || (isAuthor ? '/author-avatar.png' : null)
+    : currentUser?.avatarImage ||
+      (currentUser as any)?.avatar_image ||
+      (currentUser as any)?.avatar_url ||
+      state.profile.avatarImage ||
+      (state.profile as any)?.avatar ||
+      (state.profile as any)?.avatar_url ||
+      (isAuthor ? '/author-avatar.png' : null)
+
+  const authorColor = isForeignDayAuthor
+    ? dayAuthor?.avatarColor || '#FF5C00'
+    : state.profile.avatarColor || '#FF5C00'
+  const isAuthorVerified = isForeignDayAuthor
+    ? Boolean(dayAuthor?.verified)
+    : Boolean(state.profile?.verified || isAuthor)
 
   const myAvatarSrc = usePhotoUrl(rawAvatar)
   const effectiveAvatarSrc =
@@ -349,22 +380,16 @@ function DayCardComponent({
         id={`day-card-${day.id}`}
       >
         <div className="flex gap-3">
-          {/* Avatar with unified line border */}
+          {/* Avatar with unified component */}
           <div className="flex-none pt-0.5">
-            {effectiveAvatarSrc ? (
-              <img
-                src={effectiveAvatarSrc}
-                alt={displayName}
-                className="w-10 h-10 rounded-full object-cover border border-[var(--line)]"
-              />
-            ) : (
-              <div
-                className="avatar w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]"
-                aria-hidden="true"
-              >
-                {initials}
-              </div>
-            )}
+            <UserAvatar
+              avatarUrl={effectiveAvatarSrc}
+              avatarColor={authorColor}
+              displayName={displayName}
+              username={username}
+              initials={initials}
+              size={40}
+            />
           </div>
 
           {/* Content */}
@@ -375,14 +400,7 @@ function DayCardComponent({
                 <span className="font-bold text-[15px] text-[var(--text)] tracking-tight">
                   {displayName}
                 </span>
-                <span
-                  className="inline-flex items-center justify-center rounded-full text-white flex-none"
-                  style={{ background: '#1d9bf0', width: 16, height: 16 }}
-                  title="Верифицирован"
-                  aria-label="Верифицирован"
-                >
-                  <Check size={10} strokeWidth={3} />
-                </span>
+                {isAuthorVerified && <VerifiedBadge size="sm" />}
                 {dayVisibility !== 'public' && (
                   <span title={dayVisibility === 'private' ? 'Личный день' : 'Только для друзей'} className="text-[var(--muted)] flex-none" aria-label="Приватность">
                     <Lock size={13} />

@@ -1,37 +1,90 @@
 'use client'
 
-import { ChevronRight, Copy, Check, Search, Share2, Users, Flame } from 'lucide-react'
+import { ChevronRight, Copy, Check, Search, Users, Flame } from 'lucide-react'
 import { AnimatePresence } from 'framer-motion'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
 import {
   type FriendProfile,
   getActiveFriends,
-  getFriend,
   presenceMeta,
+  registerFriendProfile,
 } from '@/lib/ogonek/friends'
 import { buildFriendSlides } from '@/lib/ogonek/stories'
+import { getInitials } from '@/lib/ogonek/initials'
+import { getProfilesByIds, getMutualFriendProfiles } from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import type { ViewId } from '@/lib/ogonek/types'
 import { FriendDetailModal } from './friend-detail-modal'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
-  onNavigate: (view: ViewId) => void
+  onNavigate: (view: ViewId, targetUserId?: string | null) => void
   onNotify: (message: string) => void
   onOpenFriends?: () => void
   soundEnabled?: boolean
 }
 
 export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, soundEnabled = true }: Props) {
-  const { state, toggleFollow, addFriend } = useOgonekStore()
+  const { state } = useOgonekStore()
   const [openFriendId, setOpenFriendId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [cloudFriends, setCloudFriends] = useState<FriendProfile[]>([])
 
   const friendIds = state.friendIds ?? []
   const viewedStoryIds = state.viewedStoryIds ?? []
   const incoming = state.incomingFriendRequests ?? []
+  const currentUserId = state.auth?.activeAccountId
 
-  const active = useMemo(() => getActiveFriends(friendIds, 6), [friendIds])
+  useEffect(() => {
+    let cancelled = false
+    const loadMutuals = async () => {
+      try {
+        let records =
+          friendIds.length > 0
+            ? Object.values(await getProfilesByIds(friendIds))
+            : currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')
+              ? await getMutualFriendProfiles(currentUserId)
+              : []
+
+        if (cancelled) return
+        const mapped: FriendProfile[] = records.map((p) => {
+          const fp: FriendProfile = {
+            id: p.id,
+            name: p.display_name || `@${p.username}`,
+            username: p.username,
+            initials: getInitials(p.display_name, p.username),
+            avatarUrl: p.avatar_image || p.avatar_url || null,
+            avatarColor: p.avatar_color || '#FF5C00',
+            bio: p.bio || '',
+            city: p.city || '',
+            streak: p.streak_count ?? p.streak ?? 0,
+            together: 0,
+            mutual: 0,
+            verified: Boolean(p.verified),
+            lastActive: 'недавно',
+            presence: 'online',
+          }
+          registerFriendProfile(fp)
+          return fp
+        })
+        setCloudFriends(mapped)
+      } catch {
+        if (!cancelled) setCloudFriends([])
+      }
+    }
+    void loadMutuals()
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, friendIds])
+
+  const active = useMemo(() => {
+    if (cloudFriends.length > 0) return cloudFriends.slice(0, 6)
+    return getActiveFriends(friendIds, 6)
+  }, [cloudFriends, friendIds])
+
+  const totalFriendsCount = Math.max(friendIds.length, active.length)
   const onlineCount = active.filter((f) => f.presence === 'online').length
 
   const storyChip = (friend: FriendProfile) => {
@@ -75,7 +128,7 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
             </button>
           )}
           <span className="af-widget__badge">
-            {onlineCount > 0 ? `${onlineCount} в сети` : `${active.length} друзей`}
+            {onlineCount > 0 ? `${onlineCount} в сети` : `${totalFriendsCount} друзей`}
           </span>
         </div>
       </header>
@@ -123,28 +176,21 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
                   onClick={() => openFriend(friend.id)}
                   aria-label={`Открыть ${friend.name}`}
                 >
-                  <span className="friend-avatar friend-avatar--sm" aria-hidden="true">
-                    <span
-                      className="friend-avatar__img"
-                      style={{ background: friend.avatarColor, textShadow: '0 1px 2px #000' }}
-                    >
-                      {friend.initials}
-                    </span>
-                    <span
-                      className="friend-avatar__dot"
-                      style={{ background: presence.color, borderColor: '#16181c' }}
-                      title={presence.label}
-                    />
-                  </span>
+                  <UserAvatar
+                    avatarUrl={friend.avatarUrl}
+                    avatarColor={friend.avatarColor}
+                    displayName={friend.name}
+                    username={friend.username}
+                    initials={friend.initials}
+                    size={36}
+                    isOnline={friend.presence === 'online'}
+                    ringColor="#16181c"
+                  />
 
                   <span className="af-row__text">
                     <span className="af-row__name flex items-center gap-1">
-                      {friend.name.split(/\s+/)[0]}
-                      {friend.verified && (
-                        <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-hidden="true">
-                          <Check size={9} strokeWidth={3} />
-                        </span>
-                      )}
+                      <span className="truncate">{friend.name.split(/\s+/)[0]}</span>
+                      {friend.verified && <VerifiedBadge size="xs" />}
                     </span>
                     <span className="af-row__sub" style={{ color: friend.presence === 'online' ? 'var(--success)' : 'var(--text-2)' }}>
                       {presence.short} · 🔥 {friend.streak}

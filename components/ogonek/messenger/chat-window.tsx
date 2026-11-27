@@ -38,6 +38,7 @@ import type {
 } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ChatAvatar } from './chat-avatar'
+import { VerifiedBadge } from '../ui'
 import { ChatComposer } from './chat-composer'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
@@ -319,7 +320,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
           <div className="mcw__ident min-w-0 flex-1">
             <span className="mcw__name text-sm sm:text-base font-bold text-[var(--text)] whitespace-nowrap overflow-visible flex items-center gap-1.5">
               <span>{title}</span>
-              {friend?.verified && <Check size={13} className="text-[#1d9bf0] inline-block shrink-0" />}
+              {(friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
             </span>
 
             <span className="mcw__status text-xs text-[var(--text-2)] whitespace-nowrap block">

@@ -18,47 +18,26 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Попытка вызвать RPC get_friend_feed_v1
-    try {
-      const { data, error } = await supabase.rpc('get_friend_feed_v1', {
-        p_limit: limit,
-        p_offset: offset,
-        p_viewer_id: viewerId,
-      })
+    // Взаимные подписки в `follows` (A -> B и B -> A) — единственный источник правды для друзей
+    const [followingRes, followersRes] = await Promise.all([
+      supabase.from('follows').select('following_id').eq('follower_id', viewerId),
+      supabase.from('follows').select('follower_id').eq('following_id', viewerId),
+    ])
 
-      if (!error && Array.isArray(data)) {
-        const posts: FriendFeedPost[] = data.map((r: any) => ({
-          id: String(r.day_id || r.day_uuid),
-          userId: r.user_id,
-          username: r.username,
-          displayName: r.display_name || `@${r.username}`,
-          avatarUrl: r.avatar_url,
-          verified: Boolean(r.verified),
-          streak: Number(r.streak || 0),
-          dayDate: r.day_date,
-          title: r.title || '',
-          visibility: r.visibility || 'friends',
-          createdAt: r.created_at,
-          prides: Array.isArray(r.prides) ? r.prides : [],
-          gratitudes: Array.isArray(r.gratitudes) ? r.gratitudes : [],
-        }))
+    const followingSet = new Set(
+      (followingRes.data || []).map((r: any) => r.following_id).filter(Boolean)
+    )
+    const friendIds = Array.from(
+      new Set(
+        (followersRes.data || [])
+          .map((r: any) => r.follower_id)
+          .filter((id: string) => Boolean(id) && id !== viewerId && followingSet.has(id))
+      )
+    )
 
-        return NextResponse.json({ posts })
-      }
-    } catch {}
-
-    // 2. Fallback: загрузка через Supabase SQL / PostgREST с фильтрацией друзей
-    const { data: friendRows } = await supabase
-      .from('friendships')
-      .select('user_id, friend_id')
-      .eq('status', 'accepted')
-      .or(`user_id.eq.${viewerId},friend_id.eq.${viewerId}`)
-
-    if (!Array.isArray(friendRows) || friendRows.length === 0) {
+    if (friendIds.length === 0) {
       return NextResponse.json({ posts: [] })
     }
-
-    const friendIds = friendRows.map((r) => (r.user_id === viewerId ? r.friend_id : r.user_id))
 
     // Исключаем заблокированных
     const { data: blockRows } = await supabase
@@ -87,7 +66,7 @@ export async function GET(request: Request) {
         title,
         visibility,
         created_at,
-        profiles:user_id(id, username, display_name, avatar_url, streak_count, verified),
+        profiles:user_id(id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, verified),
         prides(id, text, scale, category, visibility, order_index),
         gratitudes(id, text, category, visibility, order_index)
       `)
@@ -107,7 +86,8 @@ export async function GET(request: Request) {
         userId: d.user_id,
         username: p.username || 'user',
         displayName: p.display_name || `@${p.username || 'user'}`,
-        avatarUrl: p.avatar_url,
+        avatarUrl: p.avatar_image || p.avatar_url || null,
+        avatarColor: p.avatar_color || '#FF5C00',
         verified: Boolean(p.verified),
         streak: Number(p.streak_count || 0),
         dayDate: d.day_date,

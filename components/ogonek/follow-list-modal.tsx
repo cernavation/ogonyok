@@ -10,10 +10,10 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import {
   getProfileFollowers,
   getProfileFollowing,
-  toggleFriendshipFollow,
   checkFriendshipFollow,
   type ProfileRecord,
 } from '@/lib/supabase/api'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 export type FollowTabId = 'following' | 'followers'
 
@@ -73,9 +73,13 @@ export function FollowListModal({
             new Set([...followersList.map((u) => u.id), ...followingList.map((u) => u.id)])
           ).filter((id) => id !== currentUserId)
 
+          const followingUnion = new Set([
+            ...(state.followingIds ?? []),
+            ...(state.exploreFollowingIds ?? []),
+          ])
           const statusEntries = await Promise.all(
             allUserIds.map(async (targetId) => {
-              const inStore = state.exploreFollowingIds?.includes(targetId)
+              const inStore = followingUnion.has(targetId)
               const isFollowed = inStore || (await checkFriendshipFollow(currentUserId, targetId))
               return [targetId, isFollowed] as const
             })
@@ -128,33 +132,13 @@ export function FollowListModal({
     const currentlyFollowed = Boolean(myFollowingMap[user.id])
     const nextStatus = !currentlyFollowed
 
-    // Оптимистичное обновление локального состояния модалки и глобального хранилища
     setMyFollowingMap((prev) => ({ ...prev, [user.id]: nextStatus }))
-    setPendingFollowIds((prev) => ({ ...prev, [user.id]: true }))
-    toggleExploreFollow(user.id)
-
-    try {
-      const res = await toggleFriendshipFollow(currentUserId, user.id)
-      if (res.ok) {
-        setMyFollowingMap((prev) => ({ ...prev, [user.id]: res.following }))
-        onNotify(
-          res.following
-            ? `Вы читаете @${user.username} ✓`
-            : `Отписка от @${user.username}`
-        )
-      } else {
-        // Откат в случае ошибки
-        setMyFollowingMap((prev) => ({ ...prev, [user.id]: currentlyFollowed }))
-        toggleExploreFollow(user.id)
-        onNotify(res.error || 'Не удалось обновить подписку')
-      }
-    } catch {
-      setMyFollowingMap((prev) => ({ ...prev, [user.id]: currentlyFollowed }))
-      toggleExploreFollow(user.id)
-      onNotify('Ошибка соединения')
-    } finally {
-      setPendingFollowIds((prev) => ({ ...prev, [user.id]: false }))
-    }
+    const nowFollowing = toggleExploreFollow(user.id)
+    onNotify(
+      nowFollowing
+        ? `Вы читаете @${user.username} ✓`
+        : `Отписка от @${user.username}`
+    )
   }
 
   const activeList = tab === 'following' ? following : followers
@@ -284,37 +268,21 @@ export function FollowListModal({
                   >
                     {/* Аватар + Имя + @username + Стрик */}
                     <div className="flex items-center gap-3 min-w-0 flex-1">
-                      {avatarSrc ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={avatarSrc}
-                          alt={user.display_name || user.username}
-                          className="w-11 h-11 rounded-full object-cover shrink-0 border border-[var(--line)]"
-                        />
-                      ) : (
-                        <div
-                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 border border-[var(--line)]"
-                          style={{
-                            background: user.avatar_color || '#ff5c00',
-                          }}
-                        >
-                          {initials}
-                        </div>
-                      )}
+                      <UserAvatar
+                        avatarUrl={avatarSrc}
+                        avatarColor={user.avatar_color}
+                        displayName={user.display_name}
+                        username={user.username}
+                        initials={initials}
+                        size={44}
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-[15px] text-[var(--text)] hover:underline truncate">
                             {user.display_name || `@${user.username}`}
                           </span>
-                          {user.verified && (
-                            <span
-                              className="w-3.5 h-3.5 rounded-full bg-[var(--accent,#ff5c00)] text-white inline-flex items-center justify-center shrink-0"
-                              title="Верифицирован"
-                            >
-                              <Check size={9} strokeWidth={3} />
-                            </span>
-                          )}
+                          {user.verified && <VerifiedBadge size="xs" />}
                         </div>
 
                         <div className="flex items-center gap-2 text-[13px] text-[var(--muted)] flex-wrap">

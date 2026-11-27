@@ -6,6 +6,7 @@ import { COMMUNITY_USERS, getCommunityUser } from '@/lib/ogonek/explore-content'
 import { getFriend } from '@/lib/ogonek/friends'
 import { playClick } from '@/lib/ogonek/sound'
 import { ModalShell } from './modal-shell'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 export type ConnectionsMode = 'following' | 'followers'
 
@@ -164,21 +165,17 @@ export function ConnectionsModal({
             const isFollowing = followingSet.has(person.id)
             return (
               <li key={person.id} className="connections-row">
-                <span
-                  className="connections-row__avatar"
-                  style={{ background: person.avatarColor }}
-                  aria-hidden="true"
-                >
-                  {person.initials}
-                </span>
+                <UserAvatar
+                  avatarColor={person.avatarColor}
+                  displayName={person.name}
+                  username={person.username}
+                  initials={person.initials}
+                  size={38}
+                />
                 <span className="connections-row__meta">
-                  <span className="connections-row__name">
-                    {person.name}
-                    {person.verified && (
-                      <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован">
-                        <Check size={8} strokeWidth={3} />
-                      </span>
-                    )}
+                  <span className="connections-row__name flex items-center gap-1">
+                    <span>{person.name}</span>
+                    {person.verified && <VerifiedBadge size="xs" />}
                   </span>
                   <span className="connections-row__sub">
                     @{person.username} · {person.city} · 🔥 {person.streak}

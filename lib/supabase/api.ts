@@ -333,63 +333,32 @@ export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: st
  * Получить список читателей (Followers) пользователя из Supabase friendships
  * Условие: friend_id = profileUserId (или addressee_id = profileUserId)
  */
+/**
+ * Получить список читателей (Followers) пользователя строго из Supabase `follows` + актуальные `profiles`
+ */
 export async function getProfileFollowers(profileUserId: string): Promise<ProfileRecord[]> {
   const supabase = getSupabase()
   if (!supabase || !profileUserId) return []
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileUserId)
     let targetId = profileUserId
-    if (!isUuid) {
+    if (!UUID_REGEX.test(profileUserId)) {
       const prof = await getProfile(profileUserId)
       if (!prof) return []
       targetId = prof.id
     }
 
-    let followerIds: string[] = []
+    const { data: byFollows, error: followErr } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('following_id', targetId)
 
-    // 1. Попытка запроса по friend_id (если колонка friend_id создана в схеме)
-    try {
-      const { data: byFriend, error: errFriend } = await supabase
-        .from('friendships')
-        .select('user_id')
-        .eq('friend_id', targetId)
-        .in('status', ['accepted', 'following', 'friend'])
+    if (followErr || !Array.isArray(byFollows) || byFollows.length === 0) return []
 
-      if (!errFriend && Array.isArray(byFriend) && byFriend.length > 0) {
-        followerIds = byFriend.map((r: any) => r.user_id).filter(Boolean)
-      }
-    } catch {}
-
-    // 2. Если по friend_id пусто или нет такой колонки — запрос по addressee_id
-    if (followerIds.length === 0) {
-      const { data: byAddressee, error: errAddressee } = await supabase
-        .from('friendships')
-        .select('user_id')
-        .eq('addressee_id', targetId)
-        .in('status', ['accepted', 'following', 'friend'])
-
-      if (!errAddressee && Array.isArray(byAddressee)) {
-        followerIds = byAddressee.map((r: any) => r.user_id).filter(Boolean)
-      }
-    }
-
-    // 3. Fallback: проверка таблицы follows если friendships пуст
-    if (followerIds.length === 0) {
-      try {
-        const { data: byFollows } = await supabase
-          .from('follows')
-          .select('follower_id')
-          .eq('following_id', targetId)
-
-        if (Array.isArray(byFollows) && byFollows.length > 0) {
-          followerIds = byFollows.map((r: any) => r.follower_id).filter(Boolean)
-        }
-      } catch {}
-    }
-
+    const followerIds = Array.from(
+      new Set(byFollows.map((r: any) => r.follower_id).filter((id: any): id is string => Boolean(id)))
+    )
     if (followerIds.length === 0) return []
 
-    // Загрузка реальных профилей подписчиков
     const { data: profiles, error: profErr } = await supabase
       .from('profiles')
       .select('*')
@@ -404,52 +373,31 @@ export async function getProfileFollowers(profileUserId: string): Promise<Profil
 }
 
 /**
- * Получить список читаемых (Following) пользователя из Supabase friendships
- * Условие: user_id = profileUserId
+ * Получить список читаемых (Following) пользователя строго из Supabase `follows` + актуальные `profiles`
  */
 export async function getProfileFollowing(profileUserId: string): Promise<ProfileRecord[]> {
   const supabase = getSupabase()
   if (!supabase || !profileUserId) return []
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(profileUserId)
     let targetId = profileUserId
-    if (!isUuid) {
+    if (!UUID_REGEX.test(profileUserId)) {
       const prof = await getProfile(profileUserId)
       if (!prof) return []
       targetId = prof.id
     }
 
-    // Запрос подписок: user_id = targetId
-    const { data, error } = await supabase
-      .from('friendships')
-      .select('*')
-      .eq('user_id', targetId)
-      .in('status', ['accepted', 'following', 'friend'])
+    const { data: byFollows, error: followErr } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', targetId)
 
-    let followingIds: string[] = []
-    if (!error && Array.isArray(data) && data.length > 0) {
-      followingIds = data
-        .map((r: any) => r.friend_id || r.addressee_id)
-        .filter(Boolean)
-    }
+    if (followErr || !Array.isArray(byFollows) || byFollows.length === 0) return []
 
-    // Fallback: проверка таблицы follows
-    if (followingIds.length === 0) {
-      try {
-        const { data: byFollows } = await supabase
-          .from('follows')
-          .select('following_id')
-          .eq('follower_id', targetId)
-
-        if (Array.isArray(byFollows) && byFollows.length > 0) {
-          followingIds = byFollows.map((r: any) => r.following_id).filter(Boolean)
-        }
-      } catch {}
-    }
-
+    const followingIds = Array.from(
+      new Set(byFollows.map((r: any) => r.following_id).filter((id: any): id is string => Boolean(id)))
+    )
     if (followingIds.length === 0) return []
 
-    // Загрузка реальных профилей тех, на кого подписан
     const { data: profiles, error: profErr } = await supabase
       .from('profiles')
       .select('*')
@@ -470,6 +418,101 @@ export async function getFollowing(userId: string): Promise<ProfileRecord[]> {
   return getProfileFollowing(userId)
 }
 
+export type SocialGraphIds = {
+  followingIds: string[]
+  followerIds: string[]
+  /** Взаимные подписки в follows: A читает B и B читает A */
+  friendIds: string[]
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Единый источник правды (SSOT) для социального графа пользователя из таблицы `follows`.
+ * Взаимные подписки (A -> B и B -> A) автоматически образуют список друзей (`friendIds`).
+ */
+export async function getSocialGraphFromFollows(userId: string): Promise<SocialGraphIds> {
+  if (!userId || !UUID_REGEX.test(userId)) {
+    return { followingIds: [], followerIds: [], friendIds: [] }
+  }
+  const supabase = getSupabase()
+  if (!supabase) return { followingIds: [], followerIds: [], friendIds: [] }
+
+  try {
+    const [followingRes, followersRes] = await Promise.all([
+      supabase.from('follows').select('following_id').eq('follower_id', userId),
+      supabase.from('follows').select('follower_id').eq('following_id', userId),
+    ])
+
+    const followingIds = Array.from(
+      new Set(
+        (followingRes.data || [])
+          .map((r: any) => r.following_id)
+          .filter((id: any): id is string => typeof id === 'string' && id.length > 0 && id !== userId)
+      )
+    )
+    const followerIds = Array.from(
+      new Set(
+        (followersRes.data || [])
+          .map((r: any) => r.follower_id)
+          .filter((id: any): id is string => typeof id === 'string' && id.length > 0 && id !== userId)
+      )
+    )
+
+    const followerSet = new Set(followerIds)
+    const friendIds = followingIds.filter((id) => followerSet.has(id))
+
+    return { followingIds, followerIds, friendIds }
+  } catch {
+    return { followingIds: [], followerIds: [], friendIds: [] }
+  }
+}
+
+/**
+ * Загружает живые профили взаимных друзей из `follows` + `profiles`.
+ */
+export async function getMutualFriendProfiles(userId: string): Promise<ProfileRecord[]> {
+  const { friendIds } = await getSocialGraphFromFollows(userId)
+  if (friendIds.length === 0) return []
+  const map = await getProfilesByIds(friendIds)
+  return friendIds.map((id) => map[id]).filter((p): p is ProfileRecord => Boolean(p))
+}
+
+/**
+ * Подписка Realtime на таблицу `follows` для автоматической синхронизации подписок и дружбы.
+ */
+export function subscribeToFollows(userId: string, onChange: () => void) {
+  const supabase = getSupabase()
+  if (!supabase || !userId || !UUID_REGEX.test(userId)) {
+    return () => {}
+  }
+
+  const channel = supabase
+    .channel(`follows-sync-${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'follows' },
+      (payload: any) => {
+        const nextRow = payload?.new || {}
+        const oldRow = payload?.old || {}
+        if (
+          nextRow.follower_id === userId ||
+          nextRow.following_id === userId ||
+          oldRow.follower_id === userId ||
+          oldRow.following_id === userId ||
+          payload?.eventType === 'DELETE'
+        ) {
+          onChange()
+        }
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}
+
 /**
  * Единая детерминированная функция получения ключа диалога между двумя пользователями.
  * Сортирует ID участников по алфавиту, гарантируя, что оба участника
@@ -483,78 +526,102 @@ export function getDirectThreadKey(userId1: string, userId2: string): string {
 }
 
 /**
- * Подписаться на пользователя (сохранение в friendships и follows)
- * Условие: user_id = currentUserId, friend_id = targetUserId, status = 'accepted'
+ * Подписаться на пользователя (SSOT: таблица `follows` без несуществующей колонки status).
+ * При взаимной подписке (B уже читает A) автоматически синхронизируем статус `accepted` в `friendships`.
  */
-export async function followUser(followerId: string, followingId: string): Promise<{ ok: boolean; error?: string }> {
+export async function followUser(followerId: string, followingId: string): Promise<{ ok: boolean; error?: string; isMutual?: boolean }> {
+  if (!followerId || !followingId || followerId === followingId) {
+    return { ok: false, error: 'Некорректные идентификаторы пользователей' }
+  }
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'База данных не подключена' }
   try {
-    const now = new Date().toISOString()
-    const { error: insErr } = await supabase.from('friendships').upsert(
+    const { error: followErr } = await supabase.from('follows').upsert(
       {
-        user_id: followerId,
-        friend_id: followingId,
-        addressee_id: followingId,
-        status: 'accepted',
-        updated_at: now,
-        client_updated_at: now,
+        follower_id: followerId,
+        following_id: followingId,
       },
-      { onConflict: 'user_id,friend_id' }
+      { onConflict: 'follower_id,following_id' }
     )
 
-    if (insErr) {
-      try {
-        await supabase.from('friendships').upsert(
-          {
-            user_id: followerId,
-            friend_id: followingId,
-            addressee_id: followingId,
-            status: 'accepted',
-            updated_at: now,
-            client_updated_at: now,
-          },
-          { onConflict: 'user_id,addressee_id' }
-        )
-      } catch {}
+    if (followErr) {
+      return { ok: false, error: followErr.message || 'Ошибка подписки' }
     }
 
+    // Проверяем встречную подписку: если B уже читает A — они автоматически друзья
+    let isMutual = false
     try {
-      await supabase.from('follows').upsert(
-        {
-          follower_id: followerId,
-          following_id: followingId,
-          status: 'accepted',
-        },
-        { onConflict: 'follower_id,following_id' }
-      )
+      const { data: reverseRow } = await supabase
+        .from('follows')
+        .select('id')
+        .eq('follower_id', followingId)
+        .eq('following_id', followerId)
+        .maybeSingle()
+
+      isMutual = Boolean(reverseRow)
+      if (isMutual) {
+        const now = new Date().toISOString()
+        await Promise.allSettled([
+          supabase.from('friendships').upsert(
+            {
+              user_id: followerId,
+              friend_id: followingId,
+              addressee_id: followingId,
+              status: 'accepted',
+              updated_at: now,
+              client_updated_at: now,
+            },
+            { onConflict: 'user_id,friend_id' }
+          ),
+          supabase.from('friendships').upsert(
+            {
+              user_id: followingId,
+              friend_id: followerId,
+              addressee_id: followerId,
+              status: 'accepted',
+              updated_at: now,
+              client_updated_at: now,
+            },
+            { onConflict: 'user_id,friend_id' }
+          ),
+        ])
+      }
     } catch {}
 
-    return { ok: true }
+    return { ok: true, isMutual }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка подписки' }
   }
 }
 
 /**
- * Отписаться от пользователя (удаление из friendships и follows)
+ * Отписаться от пользователя (SSOT: удаление из `follows`; при отписке взаимная дружба сразу прекращается).
  */
 export async function unfollowUser(followerId: string, followingId: string): Promise<{ ok: boolean; error?: string }> {
+  if (!followerId || !followingId) {
+    return { ok: false, error: 'Некорректные идентификаторы пользователей' }
+  }
   const supabase = getSupabase()
   if (!supabase) return { ok: false, error: 'База данных не подключена' }
   try {
-    await supabase
-      .from('friendships')
+    const { error: delErr } = await supabase
+      .from('follows')
       .delete()
-      .eq('user_id', followerId)
-      .or(`friend_id.eq.${followingId},addressee_id.eq.${followingId}`)
+      .eq('follower_id', followerId)
+      .eq('following_id', followingId)
 
+    if (delErr) {
+      return { ok: false, error: delErr.message || 'Ошибка отписки' }
+    }
+
+    // Если кто-то отписывается — взаимная дружба прекращается
     try {
       await supabase
-        .from('follows')
+        .from('friendships')
         .delete()
-        .eq('follower_id', followerId)
-        .eq('following_id', followingId)
+        .or(
+          `and(user_id.eq.${followerId},friend_id.eq.${followingId}),and(user_id.eq.${followingId},friend_id.eq.${followerId}),and(user_id.eq.${followerId},addressee_id.eq.${followingId}),and(user_id.eq.${followingId},addressee_id.eq.${followerId})`
+        )
     } catch {}
 
     return { ok: true }
@@ -600,35 +667,13 @@ export async function toggleFriendshipFollow(
 }
 
 /**
- * Проверить статус подписки в таблице friendships
+ * Проверить статус подписки строго в таблице `follows` (SSOT)
  */
 export async function checkFriendshipFollow(currentUserId: string, targetUserId: string): Promise<boolean> {
+  if (!currentUserId || !targetUserId || currentUserId === targetUserId) return false
   const supabase = getSupabase()
-  if (!supabase || !currentUserId || !targetUserId) return false
+  if (!supabase) return false
   try {
-    const { data: byFriend } = await supabase
-      .from('friendships')
-      .select('status')
-      .eq('user_id', currentUserId)
-      .eq('friend_id', targetUserId)
-      .maybeSingle()
-
-    if (byFriend && (byFriend.status === 'accepted' || byFriend.status === 'following' || byFriend.status === 'friend')) {
-      return true
-    }
-
-    const { data: byAddressee } = await supabase
-      .from('friendships')
-      .select('status')
-      .eq('user_id', currentUserId)
-      .eq('addressee_id', targetUserId)
-      .maybeSingle()
-
-    if (byAddressee && (byAddressee.status === 'accepted' || byAddressee.status === 'following' || byAddressee.status === 'friend')) {
-      return true
-    }
-
-    // fallback к таблице follows
     const { data: followRow } = await supabase
       .from('follows')
       .select('id')
@@ -644,7 +689,7 @@ export async function checkFriendshipFollow(currentUserId: string, targetUserId:
 
 /**
  * Проверить статус взаимной дружбы:
- * User A подписан на User B И User B подписан на User A
+ * User A подписан на User B И User B подписан на User A (SSOT: таблица `follows`)
  */
 export async function checkMutualFriendship(userIdA: string, userIdB: string): Promise<boolean> {
   if (!userIdA || !userIdB || userIdA === userIdB) return false
@@ -660,20 +705,21 @@ export async function checkMutualFriendship(userIdA: string, userIdB: string): P
 }
 
 /**
- * Получить количество общих друзей (общих подписок) между двумя пользователями
+ * Получить количество общих друзей (общих взаимных друзей или общих подписок) между двумя пользователями
  */
 export async function getMutualFriendsCount(userIdA: string, userIdB: string): Promise<number> {
-  const supabase = getSupabase()
-  if (!supabase || !userIdA || !userIdB || userIdA === userIdB) return 0
+  if (!userIdA || !userIdB || userIdA === userIdB) return 0
   try {
-    const [followingA, followingB] = await Promise.all([
-      getFollowing(userIdA),
-      getFollowing(userIdB),
+    const [graphA, graphB] = await Promise.all([
+      getSocialGraphFromFollows(userIdA),
+      getSocialGraphFromFollows(userIdB),
     ])
-    const setA = new Set(followingA.map((u: ProfileRecord) => u.id))
+    const friendsA = graphA.friendIds.length > 0 ? graphA.friendIds : graphA.followingIds
+    const friendsB = graphB.friendIds.length > 0 ? graphB.friendIds : graphB.followingIds
+    const setA = new Set(friendsA)
     let count = 0
-    for (const u of followingB) {
-      if (setA.has(u.id)) count++
+    for (const id of friendsB) {
+      if (setA.has(id)) count++
     }
     return count
   } catch {
@@ -682,7 +728,7 @@ export async function getMutualFriendsCount(userIdA: string, userIdB: string): P
 }
 
 /**
- * Получить счётчики подписчиков и подписок из friendships
+ * Получить счётчики подписок («В читаемых») и подписчиков («Читателей») строго из таблицы `follows`
  */
 export async function getFriendshipCounts(userId: string): Promise<{ followingCount: number; followersCount: number }> {
   const supabase = getSupabase()
@@ -690,37 +736,19 @@ export async function getFriendshipCounts(userId: string): Promise<{ followingCo
   try {
     const [followingRes, followersRes] = await Promise.all([
       supabase
-        .from('friendships')
+        .from('follows')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .in('status', ['following', 'friend']),
+        .eq('follower_id', userId),
       supabase
-        .from('friendships')
+        .from('follows')
         .select('*', { count: 'exact', head: true })
-        .eq('addressee_id', userId)
-        .in('status', ['following', 'friend']),
+        .eq('following_id', userId),
     ])
 
-    let followingCount = followingRes.count ?? 0
-    let followersCount = followersRes.count ?? 0
-
-    // Если в friendships 0, проверяем fallback таблицу follows
-    if (followingCount === 0) {
-      const { count } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('follower_id', userId)
-      if (typeof count === 'number') followingCount = count
+    return {
+      followingCount: followingRes.count ?? 0,
+      followersCount: followersRes.count ?? 0,
     }
-    if (followersCount === 0) {
-      const { count } = await supabase
-        .from('follows')
-        .select('*', { count: 'exact', head: true })
-        .eq('following_id', userId)
-      if (typeof count === 'number') followersCount = count
-    }
-
-    return { followingCount, followersCount }
   } catch {
     return { followingCount: 0, followersCount: 0 }
   }
@@ -1274,9 +1302,16 @@ export async function updateProfileInDb(
     if (patch.bio !== undefined) updates.bio = patch.bio
     if (patch.city !== undefined) updates.city = patch.city
     if (patch.website !== undefined) updates.website = patch.website
-    if (patch.avatar_image !== undefined) {
-      updates.avatar_image = patch.avatar_image
-      updates.avatar_url = patch.avatar_image
+    if (patch.avatar_image !== undefined || patch.avatar_url !== undefined) {
+      const nextAvatar = patch.avatar_image !== undefined ? patch.avatar_image : patch.avatar_url
+      updates.avatar_image = nextAvatar
+      updates.avatar_url = nextAvatar
+    }
+    if (patch.avatar_color !== undefined) {
+      updates.avatar_color = patch.avatar_color
+    }
+    if (patch.verified !== undefined) {
+      updates.verified = Boolean(patch.verified)
     }
     if (patch.banner_image !== undefined) {
       updates.banner_image = patch.banner_image

@@ -20,6 +20,7 @@ import {
 import { buildFriendSlides } from '@/lib/ogonek/stories'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { ModalShell } from './modal-shell'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
   friendId: string
@@ -131,27 +132,20 @@ export function FriendDetailModal({ friendId, onClose, onNotify, soundEnabled = 
       <div className="friend-detail">
         {/* ── Визитка ─────────────────────────────────────────────────── */}
         <div className="friend-detail__head">
-          <span className="friend-avatar friend-avatar--lg" aria-hidden="true">
-            <span
-              className="friend-avatar__img"
-              style={{ background: friend.avatarColor, textShadow: '0 1px 3px #000' }}
-            >
-              {friend.initials}
-            </span>
-            <span
-              className="friend-avatar__dot"
-              style={{ background: presence.color, borderColor: '#16181c' }}
-              title={presence.label}
-            />
-          </span>
+          <UserAvatar
+            avatarUrl={friend.avatarUrl}
+            avatarColor={friend.avatarColor}
+            displayName={friend.name}
+            username={friend.username}
+            initials={friend.initials}
+            size={64}
+            isOnline={friend.presence === 'online'}
+            ringColor="#16181c"
+          />
           <div className="friend-detail__identity">
-            <p className="friend-detail__name">
-              {friend.name}
-              {friend.verified && (
-                <span className="friend-verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" title="Верифицирован" aria-label="Верифицирован">
-                  <Check size={8} strokeWidth={3} />
-                </span>
-              )}
+            <p className="friend-detail__name flex items-center gap-1.5">
+              <span>{friend.name}</span>
+              {friend.verified && <VerifiedBadge size="sm" />}
             </p>
             <p className="friend-detail__handle">@{friend.username}</p>
             <p className="friend-detail__status">

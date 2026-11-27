@@ -58,6 +58,7 @@ import {
 } from '@/lib/supabase/api'
 import { getSupabase } from '@/lib/supabase/client'
 import { ChatAvatar } from './chat-avatar'
+import { VerifiedBadge } from '../ui'
 import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
@@ -787,14 +788,12 @@ export function MessengerChatPane({
 
           {/* Имя и статус: обрезается через ... и НИКОГДА не наезжает на кнопки */}
           <div className="flex flex-col min-w-0 flex-1 justify-center">
-            <div className="flex items-center gap-1 min-w-0">
+            <div className="flex items-center gap-1.5 min-w-0">
               <span className="text-[16px] sm:text-[20px] font-[800] text-[var(--text)] truncate leading-tight">
                 {title}
               </span>
-              {friend?.verified && (
-                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-[var(--accent)] text-white inline-flex items-center justify-center shrink-0">
-                  <Check size={9} strokeWidth={3} />
-                </span>
+              {(friend?.verified || thread?.peerMeta?.verified || peerProfile?.verified) && (
+                <VerifiedBadge size="sm" />
               )}
             </div>
 

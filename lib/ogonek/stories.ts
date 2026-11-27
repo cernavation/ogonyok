@@ -345,6 +345,7 @@ export type ViewableStory = {
   name: string
   username: string
   initials: string
+  avatarUrl?: string | null
   avatarColor: string
   verified: boolean
   postedLabel: string
@@ -355,7 +356,7 @@ export type ViewableStory = {
   digest: StoryDayDigest
 }
 
-export function friendStoryToViewable(friend: FriendProfile, story: FriendStory): ViewableStory {
+export function friendStoryToViewable(friend: FriendProfile & { avatarUrl?: string | null }, story: FriendStory): ViewableStory {
   return {
     id: `story-${friend.id}`,
     kind: 'friend',
@@ -363,6 +364,7 @@ export function friendStoryToViewable(friend: FriendProfile, story: FriendStory)
     name: friend.name,
     username: friend.username,
     initials: friend.initials,
+    avatarUrl: friend.avatarUrl ?? null,
     avatarColor: friend.avatarColor,
     verified: friend.verified,
     postedLabel: story.postedLabel,
@@ -376,6 +378,7 @@ export function myStoriesToViewable(
   owner: {
     displayName: string
     username: string
+    avatarUrl?: string | null
     avatarColor: string
     verified: boolean
     /** Город профиля — для дайджеста дня */
@@ -396,6 +399,7 @@ export function myStoriesToViewable(
     name: owner.displayName,
     username: owner.username,
     initials: getInitials(owner.displayName, owner.username),
+    avatarUrl: owner.avatarUrl ?? null,
     avatarColor: owner.avatarColor,
     verified: owner.verified,
     postedLabel: formatStoryAge(ordered[ordered.length - 1]?.createdAtISO ?? ''),

@@ -25,6 +25,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { Tooltip } from './tooltip'
+import { UserAvatar } from './ui'
 
 type Props = {
   view: ViewId
@@ -558,17 +559,14 @@ export function Sidebar({
           title={displayName}
         >
           <div className="w-11 h-11 flex items-center justify-center shrink-0">
-            {avatarImage ? (
-              <img
-                src={avatarImage}
-                alt={displayName}
-                className="w-9 h-9 rounded-full object-cover border border-[var(--line)]"
-              />
-            ) : (
-              <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs select-none bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]">
-                {initials}
-              </div>
-            )}
+            <UserAvatar
+              avatarUrl={avatarImage}
+              avatarColor={state.profile.avatarColor}
+              displayName={displayName}
+              username={username}
+              initials={initials}
+              size={36}
+            />
           </div>
 
           <div className={`flex-1 min-w-0 transition-opacity duration-200 ease-out ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-0 xl:opacity-100'}`}>

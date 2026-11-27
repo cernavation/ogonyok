@@ -6,6 +6,7 @@ import { totalUnread } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ViewId } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { UserAvatar } from './ui'
 
 const ITEMS = [
   { id: 'home' as ViewId, icon: Home, label: 'Главная' },
@@ -106,27 +107,15 @@ export function BottomNav({ view, onNavigate, onCompose }: Props) {
             onNavigate('profile')
           }}
         >
-          {avatarImage ? (
-            <img
-              src={avatarImage}
-              alt={displayName}
-              className="w-[28px] h-[28px] rounded-full object-cover border border-[var(--line)]"
-              style={{
-                outline: activeId === 'profile' ? '2px solid var(--accent)' : 'none',
-                outlineOffset: '1px',
-              }}
-            />
-          ) : (
-            <div
-              className="w-[28px] h-[28px] rounded-full flex items-center justify-center text-[11px] font-bold bg-[var(--surface2)] text-[var(--text)] border border-[var(--line)]"
-              style={{
-                outline: activeId === 'profile' ? '2px solid var(--accent)' : 'none',
-                outlineOffset: '1px',
-              }}
-            >
-              {initials.charAt(0)}
-            </div>
-          )}
+          <UserAvatar
+            avatarUrl={avatarImage}
+            avatarColor={state.profile.avatarColor}
+            displayName={displayName}
+            username={username}
+            initials={initials}
+            size={28}
+            ring={activeId === 'profile'}
+          />
         </button>
       </nav>
 

@@ -66,7 +66,7 @@ import { AchievementsPanel } from '../achievements/achievements-panel'
 import { ProfileImageCropperModal } from '../profile/profile-image-cropper-modal'
 import { DifficultyLevelBadge } from '../profile/difficulty-level-badge'
 import { FollowListModal, type FollowTabId } from '../follow-list-modal'
-import { Button, Card, Badge } from '../ui'
+import { Button, Card, Badge, UserAvatar, VerifiedBadge } from '../ui'
 
 interface Props {
   storeState: OgonekStoreState
@@ -123,20 +123,52 @@ export function ProfileView({
 
   const [foreignProfile, setForeignProfile] = useState<ProfileRecord | null>(null)
   const [foreignDays, setForeignDays] = useState<Day[]>([])
+  const [foreignDaysCount, setForeignDaysCount] = useState<number | null>(null)
+  const [foreignDaysLoaded, setForeignDaysLoaded] = useState(false)
   const [foreignPosts, setForeignPosts] = useState<PostRecord[]>([])
   const [foreignCounts, setForeignCounts] = useState<{ followingCount: number; followersCount: number }>({ followingCount: 0, followersCount: 0 })
+  const [ownCounts, setOwnCounts] = useState<{ followingCount: number; followersCount: number } | null>(null)
   const [isFollowingUser, setIsFollowingUser] = useState(false)
   const [targetFollowsMe, setTargetFollowsMe] = useState(false)
   const [mutualFriendsCount, setMutualFriendsCount] = useState(0)
   const [loadingForeign, setLoadingForeign] = useState(false)
-  const { ensureMutualFriendshipChat } = useOgonekStore()
+  const { ensureMutualFriendshipChat, syncSocialGraphFromCloud } = useOgonekStore()
+
+  // Свой профиль: всегда тянем честные счётчики подписок/читателей напрямую из Supabase `follows`
+  useEffect(() => {
+    if (!isOwnProfile) return
+    const ownUid = storeState.auth?.activeAccountId
+    if (!ownUid || ownUid.startsWith('anon-') || ownUid.startsWith('acct-guest')) return
+    let cancelled = false
+
+    getFriendshipCounts(ownUid)
+      .then((counts) => {
+        if (!cancelled) setOwnCounts(counts)
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [
+    isOwnProfile,
+    storeState.auth?.activeAccountId,
+    storeState.followingIds,
+    storeState.followerIds,
+  ])
 
   // Загрузка чужого профиля из базы Supabase (Требование 2)
   useEffect(() => {
-    if (isOwnProfile || !targetUserId) return
+    if (isOwnProfile || !targetUserId) {
+      setForeignDaysLoaded(true)
+      return
+    }
 
     let cancelled = false
     setLoadingForeign(true)
+    setForeignDaysLoaded(false)
+    setForeignDays([])
+    setForeignDaysCount(null)
 
     const loadForeign = async () => {
       try {
@@ -149,6 +181,7 @@ export function ProfileView({
             name: prof.display_name || `@${prof.username}`,
             username: prof.username,
             initials: getInitials(prof.display_name, prof.username),
+            avatarUrl: prof.avatar_image || prof.avatar_url || null,
             avatarColor: prof.avatar_color || '#FF5C00',
             bio: prof.bio || '',
             city: prof.city || '',
@@ -161,12 +194,49 @@ export function ProfileView({
           })
 
           const currentUid = storeState.auth.activeAccountId
-          const [counts, followingStatus, targetFollowsMeStatus, mutualCount, posts] = await Promise.all([
+          const supabase = getSupabase()
+          const fetchAllRows = async (table: 'days' | 'prides' | 'gratitudes', orderCol: string, ascending: boolean) => {
+            if (!supabase) return []
+            const allRows: any[] = []
+            const pageSize = 1000
+            let from = 0
+            while (true) {
+              const { data, error } = await supabase
+                .from(table)
+                .select('*')
+                .eq('user_id', prof.id)
+                .order(orderCol, { ascending })
+                .range(from, from + pageSize - 1)
+              if (error || !data || data.length === 0) break
+              allRows.push(...data)
+              if (data.length < pageSize) break
+              from += pageSize
+            }
+            return allRows
+          }
+
+          const [
+            counts,
+            followingStatus,
+            targetFollowsMeStatus,
+            mutualCount,
+            posts,
+            daysCountRes,
+            daysData,
+            allPrides,
+            allGratitudes,
+          ] = await Promise.all([
             getFriendshipCounts(prof.id),
             currentUid ? checkFriendshipFollow(currentUid, prof.id) : Promise.resolve(false),
             currentUid ? checkFriendshipFollow(prof.id, currentUid) : Promise.resolve(false),
             currentUid ? getMutualFriendsCount(currentUid, prof.id) : Promise.resolve(0),
             getUserPosts(prof.id),
+            supabase
+              ? supabase.from('days').select('*', { count: 'exact', head: true }).eq('user_id', prof.id)
+              : Promise.resolve({ count: null }),
+            fetchAllRows('days', 'day_number', false),
+            fetchAllRows('prides', 'position', true),
+            fetchAllRows('gratitudes', 'position', true),
           ])
 
           if (cancelled) return
@@ -179,109 +249,89 @@ export function ProfileView({
           setTargetFollowsMe(targetFollowsMeStatus)
           setMutualFriendsCount(mutualCount)
           setForeignPosts(posts)
+          const dbExactDaysCount =
+            typeof (daysCountRes as any)?.count === 'number'
+              ? (daysCountRes as any).count
+              : daysData.length > 0
+              ? daysData.length
+              : null
+          setForeignDaysCount(dbExactDaysCount)
 
-          // Загрузка реальных дней из Supabase (с постраничной выборкой в обход лимита 1000 строк PostgREST)
-          const supabase = getSupabase()
-          if (supabase) {
-            const fetchAllRows = async (table: 'days' | 'prides' | 'gratitudes', orderCol: string, ascending: boolean) => {
-              const allRows: any[] = []
-              const pageSize = 1000
-              let from = 0
-              while (true) {
-                const { data, error } = await supabase
-                  .from(table)
-                  .select('*')
-                  .eq('user_id', prof.id)
-                  .order(orderCol, { ascending })
-                  .range(from, from + pageSize - 1)
-                if (error || !data || data.length === 0) break
-                allRows.push(...data)
-                if (data.length < pageSize) break
-                from += pageSize
-              }
-              return allRows
+          if (daysData && daysData.length > 0) {
+            const pridesByDay = new Map<string, any[]>()
+            for (const p of allPrides) {
+              const list = pridesByDay.get(p.day_client_id) || []
+              list.push(p)
+              pridesByDay.set(p.day_client_id, list)
+            }
+            const gratsByDay = new Map<string, any[]>()
+            for (const g of allGratitudes) {
+              const list = gratsByDay.get(g.day_client_id) || []
+              list.push(g)
+              gratsByDay.set(g.day_client_id, list)
             }
 
-            const [daysData, allPrides, allGratitudes] = await Promise.all([
-              fetchAllRows('days', 'day_number', false),
-              fetchAllRows('prides', 'position', true),
-              fetchAllRows('gratitudes', 'position', true),
-            ])
-
-            if (cancelled) return
-            if (daysData && daysData.length > 0) {
-              const pridesByDay = new Map<string, any[]>()
-              for (const p of allPrides) {
-                const list = pridesByDay.get(p.day_client_id) || []
-                list.push(p)
-                pridesByDay.set(p.day_client_id, list)
+            const mapped: Day[] = daysData.map((d: any) => {
+              const dayVis = d.visibility || 'public'
+              const rawPrides = pridesByDay.get(d.client_id) || []
+              return {
+                id: d.day_number || parseInt(d.client_id, 10) || 1,
+                dateISO: d.date_iso || d.created_at,
+                title: d.title || `День #${d.day_number || 1}`,
+                tags: Array.isArray(d.tags) ? d.tags : [],
+                photos: Array.isArray(d.photos) ? d.photos : [],
+                visibility: dayVis,
+                prides: rawPrides.map((p: any) => ({
+                  num: p.num || '01',
+                  text: p.text || '',
+                  scale: typeof p.scale === 'number' ? p.scale : 8,
+                  overcome: p.overcome ?? 1,
+                  visibility: p.visibility || dayVis,
+                })),
+                gratitudes: (gratsByDay.get(d.client_id) || []).map((g: any) => ({
+                  text: g.text || '',
+                  rating: g.rating ?? 9,
+                })),
               }
-              const gratsByDay = new Map<string, any[]>()
-              for (const g of allGratitudes) {
-                const list = gratsByDay.get(g.day_client_id) || []
-                list.push(g)
-                gratsByDay.set(g.day_client_id, list)
+            })
+
+            setForeignDays(mapped)
+          } else {
+            const streakTotal = prof.streak_count ?? prof.streak ?? 0
+            if (streakTotal > 0) {
+              const count = streakTotal
+              const synthesized: Day[] = []
+              const now = new Date()
+              for (let i = 0; i < count; i++) {
+                const dayNum = streakTotal - i
+                const d = new Date(now)
+                d.setDate(d.getDate() - i)
+                synthesized.push({
+                  id: dayNum,
+                  dateISO: d.toISOString(),
+                  title: `День #${dayNum}`,
+                  tags: [],
+                  visibility: 'private',
+                  prides: [
+                    { num: '01', text: 'Скрытая гордость', scale: 8, overcome: 1, visibility: 'private' },
+                  ],
+                  gratitudes: [],
+                })
               }
-
-              const mapped: Day[] = daysData.map((d: any) => {
-                const dayVis = d.visibility || 'public'
-                const rawPrides = pridesByDay.get(d.client_id) || []
-                return {
-                  id: d.day_number || parseInt(d.client_id, 10) || 1,
-                  dateISO: d.date_iso || d.created_at,
-                  title: d.title || `День #${d.day_number || 1}`,
-                  tags: Array.isArray(d.tags) ? d.tags : [],
-                  photos: Array.isArray(d.photos) ? d.photos : [],
-                  visibility: dayVis,
-                  prides: rawPrides.map((p: any) => ({
-                    num: p.num || '01',
-                    text: p.text || '',
-                    scale: typeof p.scale === 'number' ? p.scale : 8,
-                    overcome: p.overcome ?? 1,
-                    visibility: p.visibility || dayVis,
-                  })),
-                  gratitudes: (gratsByDay.get(d.client_id) || []).map((g: any) => ({
-                    text: g.text || '',
-                    rating: g.rating ?? 9,
-                  })),
-                }
-              })
-
-              setForeignDays(mapped)
+              setForeignDays(synthesized)
             } else {
-              // Если в базе нет записей, но у пользователя есть стрик (доказательство работы / Proof of Work)
-              const streakTotal = prof.streak_count ?? prof.streak ?? 0
-              if (streakTotal > 0) {
-                const count = streakTotal
-                const synthesized: Day[] = []
-                const now = new Date()
-                for (let i = 0; i < count; i++) {
-                  const dayNum = streakTotal - i
-                  const d = new Date(now)
-                  d.setDate(d.getDate() - i)
-                  synthesized.push({
-                    id: dayNum,
-                    dateISO: d.toISOString(),
-                    title: `День #${dayNum}`,
-                    tags: [],
-                    visibility: 'private',
-                    prides: [
-                      { num: '01', text: 'Скрытая гордость', scale: 8, overcome: 1, visibility: 'private' },
-                    ],
-                    gratitudes: [],
-                  })
-                }
-                setForeignDays(synthesized)
-              } else {
-                setForeignDays([])
-              }
+              setForeignDays([])
             }
           }
+          setForeignDaysLoaded(true)
         }
       } catch (e) {
         console.error('Failed to load foreign profile:', e)
       } finally {
-        if (!cancelled) setLoadingForeign(false)
+        if (!cancelled) {
+          setForeignDaysLoaded(true)
+          setLoadingForeign(false)
+        }
       }
     }
 
@@ -291,7 +341,7 @@ export function ProfileView({
     }
   }, [targetUserId, isOwnProfile, storeState.auth.activeAccountId, storeState.followingIds, storeState.exploreFollowingIds])
 
-  // Кнопка "Читать / Читаю" меняет статус подписки в реальной таблице friendships Supabase (Требование 2)
+  // Кнопка "Читать / Читаю" меняет статус подписки строго один раз (SSOT: `follows`)
   const handleToggleFollowUser = async () => {
     playClick(soundEnabled)
     const targetId = foreignProfile?.id || targetUserId
@@ -303,9 +353,16 @@ export function ProfileView({
       ...prev,
       followersCount: Math.max(0, prev.followersCount + (nowFollowing ? 1 : -1)),
     }))
-    onToggleFollow?.(targetId)
-    if (currentUid) {
+    if (onToggleFollow) {
+      onToggleFollow(targetId)
+    } else if (currentUid) {
       await toggleFriendshipFollow(currentUid, targetId)
+    }
+    if (currentUid) {
+      setTimeout(() => {
+        void syncSocialGraphFromCloud(currentUid)
+        void getFriendshipCounts(targetId).then((c) => setForeignCounts(c)).catch(() => {})
+      }, 250)
     }
 
     if (nowFollowing && targetFollowsMe) {
@@ -331,9 +388,17 @@ export function ProfileView({
 
   const displayProfile: OgonekProfile = useMemo(() => {
     const rawStreak = isOwnProfile
-      ? (storeState.profile as any)?.streak_count ?? (storeState.profile as any)?.streak ?? storeState.days.length
-      : foreignProfile?.streak_count ?? foreignProfile?.streak ?? 0
-    const finalStreak = isAuthorUser ? Math.max(rawStreak, 740) : rawStreak
+      ? Math.max(
+          (storeState.profile as any)?.streak_count ?? 0,
+          (storeState.profile as any)?.streak ?? 0,
+          storeState.days.length
+        )
+      : Math.max(
+          foreignDaysCount ?? 0,
+          foreignDays.length,
+          foreignProfile?.streak_count ?? foreignProfile?.streak ?? 0
+        )
+    const finalStreak = isAuthorUser ? Math.max(rawStreak, 720) : rawStreak
 
     if (isOwnProfile) {
       return {
@@ -373,7 +438,7 @@ export function ProfileView({
   const effectiveDays: Day[] = useMemo(() => {
     const rawDays = isOwnProfile ? (Array.isArray(storeState?.days) ? storeState.days : []) : foreignDays
     const streakTotal = isAuthorUser
-      ? Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, 740)
+      ? Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, rawDays.length, 720)
       : Math.max(displayProfile.streak_count || 0, displayProfile.streak || 0, rawDays.length)
 
     if (rawDays.length >= streakTotal || streakTotal === 0) {
@@ -411,10 +476,17 @@ export function ProfileView({
   const bannerPreset = getBannerPreset(displayProfile.bannerPreset)
   const avatarSrc = usePhotoUrl(displayProfile.avatarImage || (isAuthorUser ? '/author-avatar.png' : null))
   const coverSrc = usePhotoUrl(displayProfile.coverUrl || displayProfile.bannerImage)
-  const followingIds = storeState.followingIds ?? []
+  const followingIds = useMemo(
+    () => Array.from(new Set([...(storeState.followingIds ?? []), ...(storeState.exploreFollowingIds ?? [])])),
+    [storeState.followingIds, storeState.exploreFollowingIds]
+  )
 
-  const followingCount = isOwnProfile ? followingIds.length : foreignCounts.followingCount
-  const followersCount = isOwnProfile ? (storeState.friendIds?.length ?? 0) : foreignCounts.followersCount
+  const followingCount = isOwnProfile
+    ? (ownCounts ? ownCounts.followingCount : followingIds.length)
+    : foreignCounts.followingCount
+  const followersCount = isOwnProfile
+    ? (ownCounts ? ownCounts.followersCount : (storeState.followerIds?.length ?? 0))
+    : foreignCounts.followersCount
 
   const [coverFailed, setCoverFailed] = useState(false)
   const hasCover = Boolean(
@@ -474,11 +546,11 @@ export function ProfileView({
     [days, followingCount, displayProfile]
   )
 
-  // Число дней дневника ВСЕГДА брать из profile.streak_count || days.length (честные 705 дней!)
+  // Число дней дневника (из реального DB count / days.length без скачков 740 <-> 752)
   const profileDaysCount = useMemo(() => {
     const fromProfile = displayProfile.streak_count || displayProfile.streak || 0
-    return Math.max(fromProfile, days.length, stats.totalDays || 0)
-  }, [displayProfile.streak_count, displayProfile.streak, days.length, stats.totalDays])
+    return Math.max(foreignDaysCount ?? 0, fromProfile, days.length, stats.totalDays || 0)
+  }, [foreignDaysCount, displayProfile.streak_count, displayProfile.streak, days.length, stats.totalDays])
 
   // Число записей выводить как (profile.streak_count || days.length) * 10 (или точный count из базы)
   const profileEntriesCount = useMemo(() => {
@@ -801,15 +873,16 @@ export function ProfileView({
             onDrop={handleDropAvatar}
             onClick={() => isOwnProfile && avatarInputRef.current?.click()}
           >
-            <div
-              className="w-[134px] h-[134px] rounded-full border-4 border-[var(--bg)] bg-[var(--bg-elev)] shadow-xl overflow-hidden flex items-center justify-center font-black text-3xl text-white select-none relative"
-              style={{ background: avatarSrc ? undefined : displayProfile.avatarColor || 'var(--accent)' }}
-            >
-              {avatarSrc ? (
-                <img src={avatarSrc} alt={displayProfile.displayName} className="w-full h-full object-cover" />
-              ) : (
-                getInitials(displayProfile.displayName, displayProfile.username)
-              )}
+            <div className="w-[134px] h-[134px] rounded-full border-4 border-[var(--bg)] bg-[var(--bg-elev)] shadow-xl overflow-hidden flex items-center justify-center select-none relative">
+              <UserAvatar
+                avatarUrl={avatarSrc}
+                avatarColor={displayProfile.avatarColor}
+                displayName={displayProfile.displayName}
+                username={displayProfile.username}
+                size={126}
+                bordered={false}
+                className="!w-full !h-full"
+              />
             </div>
             {/* Кнопка смены аватара */}
             {isOwnProfile && (
@@ -888,11 +961,7 @@ export function ProfileView({
             <h2 className="text-[20px] font-[800] text-[var(--text)] tracking-tight">
               {displayProfile.displayName || (displayProfile.username ? `@${displayProfile.username}` : 'Пользователь')}
             </h2>
-            {displayProfile.verified && (
-              <span className="w-4 h-4 rounded-full bg-[#1d9bf0] text-white inline-flex items-center justify-center flex-none" title="Верифицированный профиль">
-                <Check size={10} strokeWidth={3} />
-              </span>
-            )}
+            {displayProfile.verified && <VerifiedBadge size="sm" />}
             {isMutualFriend && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-bold bg-[#10b981]/15 text-[#10b981] border border-[#10b981]/30 flex-none shadow-sm">
                 🤝 Друзья
@@ -964,9 +1033,19 @@ export function ProfileView({
         {/* Ряд статистики (возраст убран по Требованию):
             «N дней дневника · N записей · 🔥 Уровень N» */}
         <div className="flex items-center gap-3 text-[14px] text-[var(--text-2)] mb-4 flex-wrap">
-          <span><strong className="font-bold text-[var(--text)]">{profileDaysCount}</strong> дней дневника</span>
+          <span>
+            <strong className="font-bold text-[var(--text)]">
+              {!isOwnProfile && !foreignDaysLoaded ? '...' : profileDaysCount}
+            </strong>{' '}
+            дней дневника
+          </span>
           <span>·</span>
-          <span><strong className="font-bold text-[var(--text)]">{profileEntriesCount}</strong> записей</span>
+          <span>
+            <strong className="font-bold text-[var(--text)]">
+              {!isOwnProfile && !foreignDaysLoaded ? '...' : profileEntriesCount}
+            </strong>{' '}
+            записей
+          </span>
           {displayProfile.isAnonymous && (
             <>
               <span>·</span>
@@ -1625,7 +1704,16 @@ export function ProfileView({
           profileDisplayName={displayProfile.displayName}
           initialTab={followModalTab}
           currentUserId={storeState.auth.activeAccountId}
-          onClose={() => setFollowModalOpen(false)}
+          onClose={() => {
+            setFollowModalOpen(false)
+            const uid = foreignProfile?.id || (isOwnProfile ? storeState.auth.activeAccountId : targetUserId)
+            if (uid && !uid.startsWith('anon-') && !uid.startsWith('acct-guest')) {
+              void getFriendshipCounts(uid).then((counts) => {
+                if (isOwnProfile) setOwnCounts(counts)
+                else setForeignCounts(counts)
+              }).catch(() => {})
+            }
+          }}
           onOpenProfile={(uid) => {
             setFollowModalOpen(false)
             onNavigate('profile', uid)

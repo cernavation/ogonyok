@@ -45,17 +45,9 @@ export async function GET(req: NextRequest) {
     try {
       const supabase = getServerSupabase()
       if (supabase) {
-        // Чистка и синхронизация эталонных профилей в public.profiles
-        try {
-          await Promise.allSettled([
-            supabase.from('profiles').update({ streak_count: 720, streak: 720, level: 5 }).eq('username', 'cernavation'),
-            supabase.from('profiles').update({ streak_count: 0, streak: 0, level: 1 }).eq('username', 'ilonmusk'),
-          ])
-        } catch {}
-
         const { data: profilesData, error } = await supabase
           .from('profiles')
-          .select('id, username, display_name, avatar_image, avatar_url, city, streak_count, streak, is_anonymous, settings, level, difficulty_level')
+          .select('id, username, display_name, avatar_image, avatar_url, avatar_color, verified, city, streak_count, streak, is_anonymous, settings, level, difficulty_level')
           .order('streak_count', { ascending: false, nullsFirst: false })
           .limit(limit)
 
@@ -65,42 +57,37 @@ export async function GET(req: NextRequest) {
             const isCerna = rawUsername === 'cernavation'
             const isElon = rawUsername === 'ilonmusk'
 
-            const streak = isCerna
-              ? Math.max(720, p.streak_count ?? p.streak ?? 720)
-              : isElon
-              ? 0
-              : (p.streak_count ?? p.streak ?? 0)
-
-            const level = isCerna ? 5 : isElon ? 1 : (p.level || p.difficulty_level || p.settings?.level || 1)
+            const streak = Number(p.streak_count ?? p.streak ?? 0)
+            const level = isCerna ? 5 : (p.level || p.difficulty_level || p.settings?.level || (isElon ? 1 : 1))
             const isAnon = Boolean(p.is_anonymous || p.settings?.is_anonymous || p.settings?.privacy?.is_anonymous)
 
             return {
               user_id: p.id,
               username: p.username || 'user',
-              display_name: isCerna ? (p.display_name || 'Alexei Cerna') : isElon ? (p.display_name || 'Илон Маск') : (p.display_name || 'Друг'),
+              display_name: p.display_name || (isCerna ? 'Alexei Cerna' : isElon ? 'Илон Маск' : 'Друг'),
               avatar_url: p.avatar_image || p.avatar_url || null,
+              avatar_color: p.avatar_color || '#FF5C00',
+              verified: isCerna ? true : Boolean(p.verified),
               city: p.city || 'Москва',
-              streak,
-              total_prides: isElon ? 0 : streak * 5,
-              total_gratitudes: isElon ? 0 : streak * 5,
-              avg_score: isCerna ? 9.8 : isElon ? 0 : 9.2,
+              streak: isCerna ? Math.max(720, streak) : streak,
+              total_prides: isElon && streak === 0 ? 0 : streak * 5,
+              total_gratitudes: isElon && streak === 0 ? 0 : streak * 5,
+              avg_score: isCerna ? 9.8 : isElon && streak === 0 ? 0 : 9.2,
               level,
               is_anonymous: isCerna ? false : isAnon,
               is_me: false,
             }
           })
 
-          // Ensure seed users are present
+          // Ensure seed users are present without overwriting existing DB values down
           for (const seed of SEED_USERS) {
             const existingIdx = mapped.findIndex((u) => u.username.toLowerCase() === seed.username.toLowerCase())
             if (existingIdx === -1) {
-              mapped.push(seed)
-            } else {
-              mapped[existingIdx] = {
-                ...mapped[existingIdx],
-                streak: seed.username === 'cernavation' ? Math.max(720, mapped[existingIdx].streak) : seed.streak,
-                level: seed.level,
-              }
+              mapped.push({
+                ...seed,
+                avatar_color: '#FF5C00',
+                verified: seed.username === 'cernavation',
+              })
             }
           }
 

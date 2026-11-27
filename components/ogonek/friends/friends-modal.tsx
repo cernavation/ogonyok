@@ -33,6 +33,7 @@ import { useBodyScrollLock } from '@/lib/ogonek/use-body-scroll-lock'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { canCreateGroup, canAddGroupMember } from '@/lib/ogonek/permissions'
 import type { ChatGroupMeta } from '@/lib/ogonek/types'
+import { UserAvatar, VerifiedBadge } from '../ui'
 import {
   type SocialUser,
   type FriendshipStatus,
@@ -1680,32 +1681,21 @@ function UserRow({
         className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer"
         onClick={onNavigate}
       >
-        {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={user.avatarUrl}
-            alt={user.displayName}
-            className="w-10 h-10 rounded-full object-cover shrink-0 border border-[var(--line,#2f3336)]"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-[var(--surface2,#202327)] text-[var(--text,#fff)] font-bold text-sm flex items-center justify-center shrink-0 border border-[var(--line,#2f3336)]">
-            {initials}
-          </div>
-        )}
+        <UserAvatar
+          avatarUrl={user.avatarUrl}
+          avatarColor={user.avatarColor}
+          displayName={user.displayName}
+          username={user.username}
+          initials={initials}
+          size={40}
+        />
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-sm text-[var(--text,#fff)] truncate hover:underline">
               {user.displayName}
             </span>
-            {user.verified && (
-              <span
-                className="w-3.5 h-3.5 rounded-full bg-[var(--accent,#ff5722)] text-white flex items-center justify-center text-[8px] shrink-0"
-                title="Верифицирован"
-              >
-                ✓
-              </span>
-            )}
+            {user.verified && <VerifiedBadge size="xs" />}
           </div>
           <div className="flex items-center gap-2 text-xs text-[var(--muted,#71767b)] mt-0.5">
             <span className="truncate">@{user.username}</span>

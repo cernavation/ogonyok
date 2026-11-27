@@ -14,6 +14,7 @@ import {
 import type { MyStory } from '@/lib/ogonek/types'
 import { ModalShell } from './modal-shell'
 import { getInitials } from '@/lib/ogonek/initials'
+import { UserAvatar, VerifiedBadge } from './ui'
 
 type Props = {
   context: StoryTemplateContext
@@ -111,19 +112,22 @@ export function StoryComposerModal({
             />
             <div className="story-composer__head">
               <span className="story-composer__ring">
-                <span className="story-composer__ava" style={{ background: '#1d4ed8', color: '#ffffff' }}>
-                  {myAvatarSrc ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={myAvatarSrc} alt="" />
-                  ) : (
-                    getInitials(displayName)
-                  )}
+                <span className="story-composer__ava">
+                  <UserAvatar
+                    avatarUrl={myAvatarSrc}
+                    displayName={displayName}
+                    username={username}
+                    initials={getInitials(displayName, username)}
+                    size={34}
+                    bordered={false}
+                    className="!w-full !h-full"
+                  />
                 </span>
               </span>
               <span className="story-composer__head-text">
-                <span className="story-composer__head-name">
-                  {displayName}
-                  <span className="story-composer__verified flex items-center justify-center w-3.5 h-3.5 rounded-full bg-[var(--primary)] text-white" aria-hidden="true"><Check size={8} strokeWidth={3} /></span>
+                <span className="story-composer__head-name flex items-center gap-1">
+                  <span>{displayName}</span>
+                  <VerifiedBadge size="xs" />
                 </span>
                 <span className="story-composer__head-meta">@{username} · твоя история</span>
               </span>
