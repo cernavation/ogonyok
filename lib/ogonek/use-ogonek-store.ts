@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useSyncExternalStore } from 'react'
 import { getSupabase } from './supabase-client'
 import {
+  getProfile,
   updateProfileInDb,
   updateProfileLevel,
   getCachedProfileSync,
@@ -99,6 +100,7 @@ import {
   pickAutoReply,
   sanitizeChatThreads,
   threadOf,
+  totalUnread,
   unreadCount,
 } from './messenger'
 import type {
@@ -4988,25 +4990,40 @@ export function useOgonekStore() {
       if (!friendId) return
       const nowISO = new Date().toISOString()
       const currentUserId = getSnapshot().auth?.activeAccountId
+      let shouldSyncDb = false
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threads[friendId]
         if (!thread) return prev
-        const hasUnread = unreadCount(thread) > 0
-        if (!hasUnread && thread.readAtISO) return prev
-        const updatedMessages = thread.messages.map((m) =>
+        const hasUnreadMsgs = (thread.messages ?? []).some(
+          (m) => m && m.authorId !== MY_CHAT_ID && !m.read
+        )
+        const hasUnread = unreadCount(thread) > 0 || hasUnreadMsgs
+        const nextMessages = thread.messages.map((m) =>
           m.authorId !== MY_CHAT_ID && !m.read ? { ...m, read: true } : m
         )
+        const nextThreads: ChatThreads = {
+          ...threads,
+          [friendId]: { ...thread, readAtISO: nowISO, messages: nextMessages },
+        }
+        const nextUnreadTotal = totalUnread(nextThreads)
+        if (!hasUnread && thread.readAtISO && prev.unreadChatCount === nextUnreadTotal) {
+          return prev
+        }
+        shouldSyncDb = true
         return {
           ...prev,
-          chatThreads: {
-            ...threads,
-            [friendId]: { ...thread, readAtISO: nowISO, messages: updatedMessages },
-          },
+          unreadChatCount: nextUnreadTotal,
+          chatThreads: nextThreads,
         }
       }, true)
 
-      if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+      if (
+        shouldSyncDb &&
+        currentUserId &&
+        !currentUserId.startsWith('anon-') &&
+        !currentUserId.startsWith('acct-guest')
+      ) {
         markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
       }
     },
@@ -5022,13 +5039,21 @@ export function useOgonekStore() {
       const next: ChatThreads = {}
       for (const [id, thread] of Object.entries(threads)) {
         if (unreadCount(thread) > 0) {
-          next[id] = { ...thread, readAtISO: nowISO }
+          next[id] = {
+            ...thread,
+            readAtISO: nowISO,
+            messages: (thread.messages ?? []).map((m) =>
+              m.authorId !== MY_CHAT_ID && !m.read ? { ...m, read: true } : m
+            ),
+          }
           changed = true
         } else {
           next[id] = thread
         }
       }
-      return changed ? { ...prev, chatThreads: next } : prev
+      const nextUnreadTotal = totalUnread(next)
+      if (!changed && prev.unreadChatCount === nextUnreadTotal) return prev
+      return { ...prev, unreadChatCount: nextUnreadTotal, chatThreads: next }
     }, true)
   }, [updateStore])
 
@@ -5535,6 +5560,7 @@ export function useOgonekStore() {
         )
         const mapped = mapRecordToChatMessage(msg, currentUserId)
 
+        let nextThreads: ChatThreads
         if (idx >= 0) {
           const existing = messages[idx]
           if (existing.dbId === msg.id && existing.read === mapped.read && existing.text === mapped.text) {
@@ -5542,26 +5568,55 @@ export function useOgonekStore() {
           }
           const updated = [...messages]
           updated[idx] = { ...existing, ...mapped, id: existing.id }
-          return {
-            ...prev,
-            chatThreads: {
-              ...threads,
-              [peerId]: { ...thread, messages: updated },
+          nextThreads = {
+            ...threads,
+            [peerId]: { ...thread, messages: updated },
+          }
+        } else {
+          nextThreads = {
+            ...threads,
+            [peerId]: {
+              ...thread,
+              messages: [...messages, mapped],
             },
           }
         }
 
         return {
           ...prev,
-          chatThreads: {
-            ...threads,
-            [peerId]: {
-              ...thread,
-              messages: [...messages, mapped],
-            },
-          },
+          unreadChatCount: totalUnread(nextThreads),
+          chatThreads: nextThreads,
         }
       }, true)
+
+      if (peerId !== 'saved-messages' && !peerId.startsWith('group-') && !getCachedProfileSync(peerId)) {
+        void getProfile(peerId)
+          .then((p) => {
+            if (!p) return
+            updateStore((prev) => {
+              const t = prev.chatThreads?.[peerId]
+              if (!t) return prev
+              return {
+                ...prev,
+                chatThreads: {
+                  ...prev.chatThreads,
+                  [peerId]: {
+                    ...t,
+                    peerMeta: {
+                      ...t.peerMeta,
+                      name: p.display_name || (p.username ? `@${p.username}` : t.peerMeta?.name),
+                      username: p.username || t.peerMeta?.username,
+                      avatarUrl: p.avatar_image || p.avatar_url || t.peerMeta?.avatarUrl,
+                      avatarColor: p.avatar_color || t.peerMeta?.avatarColor,
+                      verified: Boolean(p.verified),
+                    },
+                  },
+                },
+              }
+            })
+          })
+          .catch(() => {})
+      }
     },
     [updateStore, resolvePeerIdFromRecord, mapRecordToChatMessage]
   )
@@ -5631,7 +5686,9 @@ export function useOgonekStore() {
             nextThreads[fId] = t
           }
         }
-        return changed ? { ...prev, chatThreads: nextThreads } : prev
+        return changed
+          ? { ...prev, unreadChatCount: totalUnread(nextThreads), chatThreads: nextThreads }
+          : prev
       }, true)
     },
     [updateStore]
@@ -5690,8 +5747,11 @@ export function useOgonekStore() {
               }
             : prevThread.peerMeta
           const mappedMessages = rows.map((r) => mapRecordToChatMessage(r, uid))
+          const prevReadMs = prevThread.readAtISO ? new Date(prevThread.readAtISO).getTime() : 0
+          const hasRecentOptimisticRead = prevReadMs > 0 && Date.now() - prevReadMs < 15000
           nextThreads[peerId] = {
             ...prevThread,
+            readAtISO: hasRecentOptimisticRead ? prevThread.readAtISO : null,
             peerMeta,
             pinnedMessageId: mappedMessages.find((m) => m.pinned)?.id ?? null,
             messages: mappedMessages,
@@ -5736,6 +5796,7 @@ export function useOgonekStore() {
 
         return {
           ...prev,
+          unreadChatCount: totalUnread(nextThreads),
           chatThreads: nextThreads,
           chatActiveFriendId: nextActive,
         }
@@ -5801,16 +5862,18 @@ export function useOgonekStore() {
           newPinnedId = null
         }
 
+        const nextThreads: ChatThreads = {
+          ...threads,
+          [matchedFriendId]: {
+            ...targetThread,
+            pinnedMessageId: newPinnedId,
+            messages: newMessages,
+          },
+        }
         return {
           ...prev,
-          chatThreads: {
-            ...threads,
-            [matchedFriendId]: {
-              ...targetThread,
-              pinnedMessageId: newPinnedId,
-              messages: newMessages,
-            },
-          },
+          unreadChatCount: totalUnread(nextThreads),
+          chatThreads: nextThreads,
         }
       }, true)
     },

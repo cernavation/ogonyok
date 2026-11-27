@@ -1977,6 +1977,27 @@ export async function markDirectMessagesAsRead(
 }
 
 /**
+ * Подсчёт непрочитанных входящих личных сообщений напрямую через браузерный Supabase (RLS)
+ */
+export async function getUnreadDirectMessageCountFromDb(myUserId: string): Promise<number> {
+  const supabase = getSupabase()
+  if (!supabase || !myUserId) return 0
+
+  try {
+    const { count, error } = await supabase
+      .from('direct_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('recipient_id', myUserId)
+      .eq('is_read', false)
+
+    if (error || typeof count !== 'number') return 0
+    return Math.max(0, count)
+  } catch {
+    return 0
+  }
+}
+
+/**
  * Обновить реакции к сообщению в Supabase
  */
 export async function updateDirectMessageReactions(

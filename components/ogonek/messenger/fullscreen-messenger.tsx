@@ -83,12 +83,14 @@ export function FullscreenMessenger({
     }
   }, [embedded])
 
-  // Load real Supabase chat threads on mount & subscribe globally for dialog list updates
+  // Load real Supabase chat threads & subscribe globally only on standalone /chats routes (AppShell already handles embedded /app)
   useEffect(() => {
     if (!standaloneAuthed && !embedded) return
     const uid = resolvedUserId
     if (!uid || uid === 'local-user' || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return
     void loadChatThreadsFromCloud?.(uid)
+
+    if (embedded) return
 
     const unsubscribe = subscribeToDirectMessages(
       (incoming) => {

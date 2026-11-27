@@ -455,14 +455,6 @@ export async function getFriendsListApi(
 ): Promise<SocialUser[]> {
   if (!userId) return []
 
-  try {
-    const res = await fetch(`/api/friends/requests?userId=${encodeURIComponent(userId)}&type=friends`)
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data.friends)) return data.friends
-    }
-  } catch {}
-
   const supabase = getSupabase()
   if (supabase) {
     try {
@@ -471,21 +463,25 @@ export async function getFriendsListApi(
         supabase.from('follows').select('follower_id').eq('following_id', userId),
       ])
 
-      const followingSet = new Set(
-        (followingRes.data || []).map((r: any) => r.following_id).filter(Boolean)
-      )
-      const mutualIds = Array.from(
-        new Set(
-          (followersRes.data || [])
-            .map((r: any) => r.follower_id)
-            .filter((id: string) => Boolean(id) && id !== userId && followingSet.has(id))
+      if (!followingRes.error && !followersRes.error) {
+        const followingSet = new Set(
+          (followingRes.data || []).map((r: any) => r.following_id).filter(Boolean)
         )
-      )
+        const mutualIds = Array.from(
+          new Set(
+            (followersRes.data || [])
+              .map((r: any) => r.follower_id)
+              .filter((id: string) => Boolean(id) && id !== userId && followingSet.has(id))
+          )
+        )
 
-      if (mutualIds.length > 0) {
+        if (mutualIds.length === 0) {
+          return []
+        }
+
         const { data: pRows } = await supabase
           .from('profiles')
-          .select('id, username, display_name, avatar_url, avatar_image, avatar_color, streak_count, streak, verified, level')
+          .select('id, username, display_name, avatar_url, avatar_image, avatar_color, bio, city, streak_count, streak, verified, level')
           .in('id', mutualIds)
 
         const pMap = new Map((pRows || []).map((p: any) => [p.id, p]))
@@ -497,15 +493,26 @@ export async function getFriendsListApi(
             displayName: p?.display_name || `@${p?.username || 'user'}`,
             avatarUrl: p?.avatar_image || p?.avatar_url || null,
             avatarColor: p?.avatar_color || '#FF5C00',
+            bio: p?.bio || '',
+            city: p?.city || '',
             streak: Number(p?.streak_count ?? p?.streak ?? 0),
             verified: Boolean(p?.verified),
             difficultyLevel: Number(p?.level || 1),
             friendshipStatus: 'accepted' as FriendshipStatus,
+            isFollowing: true,
           }
         })
       }
     } catch {}
   }
+
+  try {
+    const res = await fetch(`/api/friends/requests?userId=${encodeURIComponent(userId)}&type=friends`)
+    if (res.ok) {
+      const data = await res.json()
+      if (Array.isArray(data.friends)) return data.friends
+    }
+  } catch {}
 
   return []
 }

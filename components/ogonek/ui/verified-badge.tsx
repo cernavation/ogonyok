@@ -41,7 +41,12 @@ export function VerifiedBadge({
       className={`inline-flex items-center justify-center rounded-full bg-[#1d9bf0] text-white shrink-0 select-none ${
         bordered ? 'ring-2 ring-[var(--bg)]' : ''
       } ${className}`}
-      style={{ width: boxPx, height: boxPx }}
+      style={{
+        width: boxPx,
+        height: boxPx,
+        backgroundColor: '#1d9bf0',
+        color: '#ffffff',
+      }}
       title={title}
       aria-label={title}
     >

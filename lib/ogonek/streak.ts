@@ -4,6 +4,25 @@ export { calculateStreak } from './diary-engine.ts'
 export const GRACE_DAYS = 3
 export const TZ = 'Europe/Chisinau'
 
+const STREAK_MILESTONES = [7, 14, 30, 50, 100, 200, 300, 365, 500, 700, 800, 900, 1000]
+
+export function getNextStreakMilestone(streak: number): { target: number; label: string; percent: number } {
+  const safe = Math.max(0, Math.floor(streak))
+  if (safe === 0) {
+    return { target: 7, label: '0 / 7 · Первая неделя', percent: 0 }
+  }
+  let target = STREAK_MILESTONES.find((m) => m > safe)
+  if (!target) {
+    target = (Math.floor(safe / 100) + 1) * 100
+  }
+  const percent = Math.max(4, Math.min(100, Math.round((safe / target) * 100)))
+  return {
+    target,
+    label: `${safe} / ${target} дней`,
+    percent,
+  }
+}
+
 /** Минуты в сутках — верхняя граница времени дедлайна (23:59) */
 export const DEADLINE_MINUTES_MAX = 23 * 60 + 59
 export const DEADLINE_MINUTES_MIN = 0

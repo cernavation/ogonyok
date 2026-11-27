@@ -553,9 +553,9 @@ export function MessengerDialogList({
                       )}
                     </div>
 
-                    {/* Счётчик непрочитанных: акцентный круг справа */}
+                    {/* Счётчик непрочитанных: оранжевый круг справа */}
                     {unread > 0 && (
-                      <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--accent)] text-[var(--accent-text)] text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-sm animate-pulse">
+                      <span className="min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#FF5C00] text-white text-[11px] font-bold flex items-center justify-center shrink-0 shadow-sm">
                         {unread > 99 ? '99+' : unread}
                       </span>
                     )}

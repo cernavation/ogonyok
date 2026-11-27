@@ -1024,16 +1024,11 @@ main.main-content {
 }
 
 .right-rail {
-  padding: 10px 16px;
-  position: sticky !important;
-  top: 0 !important;
-  align-self: start !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  overflow-y: auto !important;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  z-index: 30;
+  padding: 12px 16px 24px 24px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  z-index: 20;
 }
 
 .right-rail::-webkit-scrollbar {
@@ -6284,11 +6279,11 @@ kbd {
 
 /* ── Виджет активных друзей (правый рейл) ───────────────────────────────── */
 .af-widget {
-  background: var(--surface);
+  background: var(--bg-elev);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 14px 12px 12px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 0;
 }
 .af-widget__head {
   display: flex;
@@ -13514,7 +13509,7 @@ html[data-theme='apple-light'] .dynamics-bar {
 
 .account-menu__verified {
   flex: none;
-  color: var(--accent, #1d9bf0);
+  color: #1d9bf0;
 }
 
 .account-menu__meta small {

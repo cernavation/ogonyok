@@ -191,9 +191,12 @@ export function unreadCount(thread: ChatThreadState | undefined | null): number 
   if (!thread) return 0
   const since = thread.readAtISO ? new Date(thread.readAtISO).getTime() : 0
   const list = Array.isArray(thread.messages) ? thread.messages : []
-  return list.filter(
-    (m) => m && m.authorId !== MY_CHAT_ID && new Date(m.createdAtISO).getTime() > since
-  ).length
+  return list.filter((m) => {
+    if (!m || m.authorId === MY_CHAT_ID) return false
+    if (m.read === true) return false
+    const ts = m.createdAtISO ? new Date(m.createdAtISO).getTime() : 0
+    return ts > since
+  }).length
 }
 
 /** Суммарное число непрочитанных по всем перепискам */

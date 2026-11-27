@@ -40,6 +40,8 @@ import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
 import {
   getProfile,
+  getUnreadDirectMessageCountFromDb,
+  subscribeToDirectMessages,
   subscribeToFollows,
   updateCallSessionStatus,
   type CallSessionRecord,
@@ -83,7 +85,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
   const [hotkeysModal, setHotkeysModal] = useState(false)
   const [profileModal, setProfileModal] = useState(false)
   const [friendsModalOpen, setFriendsModalOpen] = useState(false)
-  const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'requests' | 'search' | 'following'>('friends')
+  const [friendsModalTab, setFriendsModalTab] = useState<'friends' | 'groups'>('friends')
   const [onboardingOpen, setOnboardingOpen] = useState(false)
   const [tourOpen, setTourOpen] = useState(false)
   const [premiumModalOpen, setPremiumModalOpen] = useState(false)
@@ -174,7 +176,22 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     loadDaysFromCloud,
     loadProfileFromCloud,
     syncSocialGraphFromCloud,
+    loadChatThreadsFromCloud,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    removeDeletedChatMessage,
   } = useOgonekStore()
+
+  const viewRef = useRef(view)
+  viewRef.current = view
+  const activeChatFriendRef = useRef(state.chatActiveFriendId)
+  activeChatFriendRef.current = state.chatActiveFriendId
+  const soundVolumeRef = useRef(state.soundVolume)
+  soundVolumeRef.current = state.soundVolume
+  const soundEnabledRef = useRef(state.soundEnabled)
+  soundEnabledRef.current = state.soundEnabled
+  const unreadNotifRef = useRef(state.unreadNotificationsCount || 0)
+  unreadNotifRef.current = state.unreadNotificationsCount || 0
 
   const pendingScrollRef = useRef(false)
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -196,8 +213,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     )
   )
 
-  const openFriendsModal = useCallback((tab?: 'friends' | 'requests' | 'search' | 'following') => {
-    setFriendsModalTab(tab || 'friends')
+  const openFriendsModal = useCallback((tab?: 'friends' | 'groups' | string) => {
+    setFriendsModalTab(tab === 'groups' ? 'groups' : 'friends')
     setFriendsModalOpen(true)
   }, [])
 
@@ -300,7 +317,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     (toast: DesktopToast) => {
       dismissDesktopToast(toast.id)
       if (toast.type === 'friend_request') {
-        openFriendsModal('requests')
+        openFriendsModal('friends')
       } else if (toast.peerId) {
         setView('messages')
         updateStore((prev: OgonekStoreState) => ({
@@ -342,142 +359,161 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     }
   }, [state.unreadChatCount, state.chatThreads])
 
-  // Загрузка начальных счетчиков с сервера при монтировании и авторизации
+  // Загрузка начальных счетчиков и диалогов с сервера сразу при монтировании / F5 (на любой вкладке)
   useEffect(() => {
     const myId = currentUser?.id || state.auth?.activeAccountId
-    if (!myId) return
+    if (!myId || myId.startsWith('anon-') || myId.startsWith('acct-guest')) return
 
-    fetch('/api/messages/unread')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && typeof data.chat_unread === 'number') {
-          setUnreadChatCount(data.chat_unread)
-          if (typeof data.notifications_unread === 'number') {
-            setUnreadNotificationsCount(data.notifications_unread)
+    let active = true
+
+    // 1. Синхронизируем все диалоги и точный счётчик непрочитанных напрямую через браузерный Supabase (RLS)
+    void loadChatThreadsFromCloud(myId)
+    void getUnreadDirectMessageCountFromDb(myId).then((dbUnread) => {
+      if (!active) return
+      if (dbUnread > 0) {
+        updateStore((prev: OgonekStoreState) => ({
+          ...prev,
+          unreadChatCount: Math.max(dbUnread, totalUnread(prev.chatThreads ?? {})),
+        }))
+      }
+    })
+
+    // 2. Дублируем проверку unread & notifications через API с Bearer-токеном (если есть сессия)
+    ;(async () => {
+      try {
+        const supabase = getSupabase()
+        const sessionRes = supabase ? await supabase.auth.getSession() : null
+        const token = sessionRes?.data?.session?.access_token
+        const headers: Record<string, string> = token
+          ? { Authorization: `Bearer ${token}` }
+          : {}
+
+        const [unreadRes, notifRes] = await Promise.all([
+          fetch('/api/messages/unread', { headers }).catch(() => null),
+          fetch('/api/notifications', { headers }).catch(() => null),
+        ])
+
+        if (!active) return
+
+        if (unreadRes?.ok) {
+          const data = await unreadRes.json()
+          if (data && typeof data.chat_unread === 'number') {
+            updateStore((prev: OgonekStoreState) => ({
+              ...prev,
+              unreadChatCount: Math.max(data.chat_unread, totalUnread(prev.chatThreads ?? {})),
+              unreadNotificationsCount:
+                typeof data.notifications_unread === 'number'
+                  ? data.notifications_unread
+                  : prev.unreadNotificationsCount || 0,
+            }))
           }
         }
-      })
-      .catch(() => {})
 
-    fetch('/api/notifications')
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.notifications && Array.isArray(data.notifications)) {
-          updateStore((prev: OgonekStoreState) => ({
-            ...prev,
-            notifications: data.notifications,
-            unreadNotificationsCount:
-              typeof data.unread_count === 'number'
-                ? data.unread_count
-                : prev.unreadNotificationsCount || 0,
-          }))
+        if (notifRes?.ok) {
+          const data = await notifRes.json()
+          if (data?.notifications && Array.isArray(data.notifications)) {
+            updateStore((prev: OgonekStoreState) => ({
+              ...prev,
+              notifications: data.notifications,
+              unreadNotificationsCount:
+                typeof data.unread_count === 'number'
+                  ? data.unread_count
+                  : prev.unreadNotificationsCount || 0,
+            }))
+          }
         }
-      })
-      .catch(() => {})
+      } catch {}
+    })()
+
+    return () => {
+      active = false
+    }
   }, [
     currentUser?.id,
     state.auth?.activeAccountId,
-    setUnreadChatCount,
-    setUnreadNotificationsCount,
+    loadChatThreadsFromCloud,
     updateStore,
   ])
 
-  // Realtime подписка на личные сообщения и уведомления
+  // Глобальная Realtime подписка на сообщения (INSERT/UPDATE/DELETE) и уведомления на всех вкладках
   useEffect(() => {
     const supabase = getSupabase()
     const myId = currentUser?.id || state.auth?.activeAccountId
-    if (!supabase || !myId) return
+    if (!supabase || !myId || myId.startsWith('anon-') || myId.startsWith('acct-guest')) return
 
-    const channelName = `global_activity_${myId}_${Math.random().toString(36).slice(2, 7)}`
-    const channel = supabase.channel(channelName)
+    const unsubscribeDm = subscribeToDirectMessages(
+      async (newMsg) => {
+        if (!newMsg || (newMsg.author_id !== myId && newMsg.recipient_id !== myId)) return
 
-    channel
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `recipient_id=eq.${myId}`,
-        },
-        async (payload) => {
-          const newMsg = payload.new as any
-          if (!newMsg || newMsg.author_id === myId) return
+        // Мгновенно добавляем сообщение в стор и пересчитываем unreadChatCount даже на Главной
+        receiveIncomingChatMessage(newMsg)
 
-          // Проверяем: открыт ли чат с этим автором прямо сейчас?
-          const isCurrentChatOpen =
-            view === 'messages' && state.chatActiveFriendId === newMsg.author_id
+        if (newMsg.author_id === myId) return
 
-          if (isCurrentChatOpen) {
-            return
-          }
+        const isCurrentChatOpen =
+          viewRef.current === 'messages' && activeChatFriendRef.current === newMsg.author_id
 
-          // Увеличиваем счетчик непрочитанных
-          setUnreadChatCount((state.unreadChatCount || 0) + 1)
-
-          let authorName = 'Друг'
-          let authorAvatar: string | undefined = undefined
-          try {
-            const profile = await getProfile(newMsg.author_id)
-            if (profile) {
-              authorName = profile.display_name || profile.username || 'Друг'
-              authorAvatar = profile.avatar_url || profile.avatar_image || undefined
-            }
-          } catch {}
-
-          const isVoice = newMsg.type === 'voice' || (newMsg.media && newMsg.media.type === 'audio')
-          const isPhoto = newMsg.type === 'image' || (newMsg.media && newMsg.media.type === 'image')
-          const isMissed = newMsg.is_system && newMsg.body?.includes('Пропущенный звонок')
-
-          let previewText = newMsg.body || ''
-          let mediaType: 'voice' | 'photo' | 'text' | 'call' = 'text'
-
-          if (isMissed) {
-            mediaType = 'call'
-            previewText = 'Пропущенный звонок'
-            playMissedCallSound(state.soundVolume, state.soundEnabled)
-          } else if (isVoice) {
-            mediaType = 'voice'
-            previewText = '🎤 Голосовое сообщение'
-            playChatMessageSound(state.soundVolume, state.soundEnabled)
-          } else if (isPhoto) {
-            mediaType = 'photo'
-            previewText = '📷 Фото'
-            playChatMessageSound(state.soundVolume, state.soundEnabled)
-          } else {
-            playChatMessageSound(state.soundVolume, state.soundEnabled)
-          }
-
-          showDesktopToast({
-            type: isMissed ? 'missed_call' : 'chat',
-            title: authorName,
-            body: previewText,
-            avatarUrl: authorAvatar,
-            mediaType,
-            peerId: newMsg.author_id,
-            threadKey: newMsg.thread_key,
-          })
+        if (isCurrentChatOpen) {
+          return
         }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'direct_messages',
-          filter: `recipient_id=eq.${myId}`,
-        },
-        () => {
-          fetch('/api/messages/unread')
-            .then((r) => (r.ok ? r.json() : null))
-            .then((data) => {
-              if (data && typeof data.chat_unread === 'number') {
-                setUnreadChatCount(data.chat_unread)
-              }
-            })
-            .catch(() => {})
+
+        let authorName = 'Друг'
+        let authorAvatar: string | undefined = undefined
+        try {
+          const profile = await getProfile(newMsg.author_id)
+          if (profile) {
+            authorName = profile.display_name || profile.username || 'Друг'
+            authorAvatar = profile.avatar_url || profile.avatar_image || undefined
+          }
+        } catch {}
+
+        const isVoice = newMsg.type === 'voice' || (newMsg.media && newMsg.media.type === 'audio')
+        const isPhoto = newMsg.type === 'image' || (newMsg.media && newMsg.media.type === 'image')
+        const isMissed = newMsg.is_system && newMsg.body?.includes('Пропущенный звонок')
+
+        let previewText = newMsg.body || ''
+        let mediaType: 'voice' | 'photo' | 'text' | 'call' = 'text'
+
+        if (isMissed) {
+          mediaType = 'call'
+          previewText = 'Пропущенный звонок'
+          playMissedCallSound(soundVolumeRef.current, soundEnabledRef.current)
+        } else if (isVoice) {
+          mediaType = 'voice'
+          previewText = '🎤 Голосовое сообщение'
+          playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+        } else if (isPhoto) {
+          mediaType = 'photo'
+          previewText = '📷 Фото'
+          playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+        } else {
+          playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
         }
-      )
+
+        showDesktopToast({
+          type: isMissed ? 'missed_call' : 'chat',
+          title: authorName,
+          body: previewText,
+          avatarUrl: authorAvatar,
+          mediaType,
+          peerId: newMsg.author_id,
+          threadKey: newMsg.thread_key,
+        })
+      },
+      (updatedMsg) => {
+        if (!updatedMsg || (updatedMsg.author_id !== myId && updatedMsg.recipient_id !== myId)) return
+        updateIncomingChatMessage(updatedMsg)
+      },
+      (oldRecord) => {
+        if (oldRecord?.id) {
+          removeDeletedChatMessage(oldRecord.id)
+        }
+      }
+    )
+
+    const channelName = `global_notif_${myId}_${Math.random().toString(36).slice(2, 7)}`
+    const channel = supabase
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -489,9 +525,11 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         (payload) => {
           const notif = payload.new as any
           if (!notif) return
-          setUnreadNotificationsCount((state.unreadNotificationsCount || 0) + 1)
+          const nextNotifCount = unreadNotifRef.current + 1
+          unreadNotifRef.current = nextNotifCount
+          setUnreadNotificationsCount(nextNotifCount)
           if (notif.type === 'friend_request') {
-            playFriendRequestSound(state.soundVolume, state.soundEnabled)
+            playFriendRequestSound(soundVolumeRef.current, soundEnabledRef.current)
             showDesktopToast({
               type: 'friend_request',
               title: notif.title || 'Новая заявка в друзья',
@@ -501,7 +539,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
               peerId: notif.data?.fromUserId,
             })
           } else if (notif.type === 'missed_call') {
-            playMissedCallSound(state.soundVolume, state.soundEnabled)
+            playMissedCallSound(soundVolumeRef.current, soundEnabledRef.current)
             showDesktopToast({
               type: 'missed_call',
               title: notif.title || 'Пропущенный звонок',
@@ -516,19 +554,16 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       .subscribe()
 
     return () => {
+      unsubscribeDm()
       supabase.removeChannel(channel)
     }
   }, [
     currentUser?.id,
     state.auth?.activeAccountId,
-    view,
-    state.chatActiveFriendId,
-    state.unreadChatCount,
-    state.unreadNotificationsCount,
-    state.soundVolume,
-    state.soundEnabled,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    removeDeletedChatMessage,
     showDesktopToast,
-    setUnreadChatCount,
     setUnreadNotificationsCount,
   ])
 
@@ -924,9 +959,6 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         return
       }
       setView(next)
-      if (next === 'messages') {
-        setUnreadChatCount(0)
-      }
       setViewProfileUserId(next === 'profile' ? targetUserId || null : null)
       if (typeof window !== 'undefined') {
         let url = next === 'home' ? '/app' : `/app?view=${next}`
@@ -937,17 +969,24 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       }
       window.scrollTo(0, 0)
     },
-    [state.soundEnabled, setUnreadChatCount]
+    [state.soundEnabled]
   )
 
-  // При открытии чатов счетчик непрочитанных сбрасывается в 0
   useEffect(() => {
-    if (view === 'messages') {
-      setUnreadChatCount(0)
+    const handler = (e: any) => {
+      const detail = e?.detail || {}
+      const targetView = detail.view as ViewId | undefined
+      if (!targetView) return
+      if (detail.chatId) {
+        setActiveChatFriend(detail.chatId)
+      }
+      navigate(targetView, detail.userId ?? null)
     }
-  }, [view, setUnreadChatCount])
+    window.addEventListener('ogonek:navigate-view', handler)
+    return () => window.removeEventListener('ogonek:navigate-view', handler)
+  }, [navigate, setActiveChatFriend])
 
-  // Синхронизация view с URL (query param ?view=...) и поддержка кнопки «Назад»
+  // Инициализация view из URL (query param ?view=...) и поддержка кнопки «Назад»
   useEffect(() => {
     if (typeof window === 'undefined') return
     const readViewFromUrl = () => {
@@ -1664,7 +1703,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                 </section>
 
                 <RightRail
-                  className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block xl:mr-auto"
+                  className="right-rail w-[350px] shrink-0 select-none pl-6 hidden lg:flex xl:mr-auto"
                   onNavigate={navigate}
                   onCompose={() => setComposer(true)}
                   streak={streakState.streak}
@@ -1734,7 +1773,12 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
               }}
               onStartChatWithUser={(uid) => {
                 setFriendsModalOpen(false)
+                setActiveChatFriend(uid)
                 navigate('messages')
+              }}
+              onOpenExplore={() => {
+                setFriendsModalOpen(false)
+                navigate('explore')
               }}
               onNotify={notify}
               soundEnabled={state.soundEnabled}

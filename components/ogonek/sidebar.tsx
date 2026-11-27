@@ -378,6 +378,8 @@ export function Sidebar({
         ? 'nav-settings'
         : undefined
 
+    const unreadBadgeLabel = unread > 9 ? '9+' : String(unread)
+
     return (
       <Tooltip key={id} content={label} side="right">
         <button
@@ -394,10 +396,12 @@ export function Sidebar({
             <NavIcon id={id} isActive={isActive} size={23} />
             {id === 'messages' && unread > 0 && (
               <span
-                className="absolute top-1.5 right-1.5 min-w-[17px] h-[17px] px-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white text-[10px] font-bold flex items-center justify-center leading-none shadow-sm pointer-events-none z-10"
+                className={`${
+                  isCollapsed ? 'flex' : 'flex xl:hidden'
+                } absolute top-1 right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#FF5C00] text-white text-[10px] font-bold items-center justify-center leading-none shadow-sm pointer-events-none z-10 ring-2 ring-[var(--bg)]`}
                 aria-label={`${unread} непрочитанных`}
               >
-                {unread > 99 ? '99+' : unread}
+                {unreadBadgeLabel}
               </span>
             )}
           </div>
@@ -408,6 +412,14 @@ export function Sidebar({
           >
             {label}
           </span>
+          {id === 'messages' && unread > 0 && !isCollapsed && (
+            <span
+              className="hidden xl:inline-flex items-center justify-center ml-auto min-w-[20px] h-[20px] px-1.5 rounded-full bg-[#FF5C00] text-white text-[11px] font-bold leading-none shadow-sm shrink-0"
+              aria-label={`${unread} непрочитанных`}
+            >
+              {unreadBadgeLabel}
+            </span>
+          )}
         </button>
       </Tooltip>
     )

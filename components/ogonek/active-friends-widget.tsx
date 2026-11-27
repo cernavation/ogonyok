@@ -51,7 +51,7 @@ function profileToFriend(p: ProfileRecord): FriendProfile {
 }
 
 export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, soundEnabled = true }: Props) {
-  const { state } = useOgonekStore()
+  const { state, setActiveChatFriend } = useOgonekStore()
   const [openFriendId, setOpenFriendId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [cloudFriends, setCloudFriends] = useState<FriendProfile[] | null>(null)
@@ -308,6 +308,11 @@ export function ActiveFriendsWidget({ onNavigate, onNotify, onOpenFriends, sound
             friendId={openFriendId}
             onClose={() => setOpenFriendId(null)}
             onNotify={onNotify}
+            onStartChat={(id) => {
+              setActiveChatFriend(id)
+              onNavigate('messages')
+            }}
+            onOpenProfile={(id) => onNavigate('profile', id)}
             soundEnabled={soundEnabled}
           />
         )}
