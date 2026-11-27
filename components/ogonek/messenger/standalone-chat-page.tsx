@@ -21,7 +21,7 @@ export function StandaloneChatPage({ friendId }: { friendId: string }) {
     if (typeof window !== 'undefined' && window.history.length > 1) {
       window.history.back()
     } else {
-      router.push('/?view=messages')
+      router.push('/app?view=messages')
     }
   }
 

@@ -95,7 +95,9 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
               <Sparkles size={36} className="text-[var(--accent)] mb-2" />
               <p className="text-sm font-bold text-[var(--text)] mb-1">Поиск GIF не подключён</p>
               <p className="text-xs text-[var(--text-2)] max-w-xs leading-relaxed">
-                Добавьте бесплатный ключ провайдера GIF в файл <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">.env.local</code> для поиска сотен тысяч GIF-анимаций.
+                Добавьте ключ <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">GIPHY_API_KEY</code> или{' '}
+                <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">KLIPY_API_KEY</code> в переменные окружения Vercel /{' '}
+                <code className="bg-white/10 px-1.5 py-0.5 rounded text-white">.env.local</code>.
               </p>
             </div>
           ) : loading ? (
@@ -132,17 +134,15 @@ export function ChatGifModal({ onSelectGif, onClose, soundEnabled = true }: Prop
           )}
         </div>
 
-        {/* Официальный бейдж GIPHY per developer terms */}
+        {/* Нижняя строка */}
         <div className="pt-2.5 pb-0.5 border-t border-[var(--border)] flex items-center justify-between text-[11px] text-[var(--text-2)] shrink-0">
           <span className="flex items-center gap-1.5 font-medium">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#00ff99]" />
-            Поиск анимаций
+            <span className="inline-block w-2 h-2 rounded-full bg-[var(--accent)]" />
+            {query.trim() ? `Результаты: «${query.trim()}»` : 'Популярные GIF'}
           </span>
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-black/40 border border-white/10 select-none">
-            <span className="font-extrabold tracking-wider text-[10px] text-white">
-              Powered by <span className="text-[#00ff99]">GIPHY</span>
-            </span>
-          </div>
+          {gifs.length > 0 && (
+            <span className="text-[11px] text-[var(--text-2)]">Найдено: {gifs.length}</span>
+          )}
         </div>
       </motion.div>
     </div>

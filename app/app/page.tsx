@@ -2,40 +2,34 @@
 
 import React, { useEffect, useState } from 'react'
 import { AppShell } from '@/components/ogonek/app-shell'
+import { resolveBrowserSession } from '@/lib/ogonek/client-session'
+import { syncSupabaseAuthNow } from '@/lib/ogonek/use-ogonek-store'
 
 export default function AppPage() {
   const [checking, setChecking] = useState(true)
   const [hasAuth, setHasAuth] = useState(false)
 
   useEffect(() => {
-    let authed = false
-    try {
-      const raw = localStorage.getItem('ogonek.store.v1')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
-          authed = true
-        }
-      }
-      if (!authed) {
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i)
-          if (key && (key.startsWith('sb-') && key.endsWith('-auth-token'))) {
-            const val = localStorage.getItem(key)
-            if (val && val !== 'null') authed = true
-          }
-        }
-      }
-    } catch {}
+    let active = true
 
-    if (!authed) {
-      // Неавторизованного пользователя со страницы /app переводим на лендинг /ru
-      window.location.replace('/ru')
-      return
+    ;(async () => {
+      const synced = await syncSupabaseAuthNow()
+      const session = synced ? { authenticated: true } : await resolveBrowserSession()
+      if (!active) return
+
+      if (!session.authenticated) {
+        // Неавторизованного пользователя со страницы /app переводим на лендинг /ru
+        window.location.replace('/ru')
+        return
+      }
+
+      setHasAuth(true)
+      setChecking(false)
+    })()
+
+    return () => {
+      active = false
     }
-
-    setHasAuth(true)
-    setChecking(false)
   }, [])
 
   if (checking || !hasAuth) {

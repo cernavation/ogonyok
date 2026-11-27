@@ -3,9 +3,7 @@
 import { AnimatePresence } from 'framer-motion'
 import {
   FileText,
-  Image as ImageIcon,
   Loader2,
-  Mic,
   Paperclip,
   Pencil,
   RefreshCw,
@@ -35,7 +33,6 @@ import {
 import dynamic from 'next/dynamic'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
-import { ChatVoiceRecorder } from './chat-voice-recorder'
 
 const ChatEmojiPicker = dynamic(() => import('./chat-emoji-picker').then((m) => m.ChatEmojiPicker), { ssr: false })
 
@@ -89,7 +86,6 @@ export function ChatComposer({
   const [attachOpen, setAttachOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [voiceRecording, setVoiceRecording] = useState(false)
   const [colonQuery, setColonQuery] = useState<string | null>(null)
 
   const textRef = useRef<HTMLTextAreaElement>(null)
@@ -576,141 +572,114 @@ export function ChatComposer({
         </div>
       )}
 
-      {/* Строка ввода или панель записи голоса */}
-      {voiceRecording ? (
-        <ChatVoiceRecorder
-          userId={userId}
-          threadId={threadId}
-          onSendVoice={(voiceMedia) => {
-            setVoiceRecording(false)
-            onSend('', null, { media: voiceMedia })
-          }}
-          onCancel={() => setVoiceRecording(false)}
-          soundEnabled={soundEnabled}
-        />
-      ) : (
-        <div className="mcw-compose-row flex items-end gap-2 p-1.5 bg-[var(--bg-elev)] border border-[var(--border)] rounded-2xl">
-          {/* Кнопка скрепки (меню вложений) */}
-          <div className="relative shrink-0">
-            <button
-              type="button"
-              className="mcw-compose-icon min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
-              onClick={() => {
-                playClick(soundEnabled)
-                setMenuOpen((v) => !v)
-              }}
-              aria-label="Прикрепить файл или карточку"
-              title="Прикрепить"
-            >
-              <Paperclip size={19} />
-            </button>
+      {/* Строка ввода */}
+      <div className="mcw-compose-row flex items-end gap-2 p-1.5 bg-[var(--bg-elev)] border border-[var(--border)] rounded-2xl">
+        {/* Кнопка скрепки (меню вложений) */}
+        <div className="relative shrink-0">
+          <button
+            type="button"
+            className="mcw-compose-icon min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
+            onClick={() => {
+              playClick(soundEnabled)
+              setMenuOpen((v) => !v)
+            }}
+            aria-label="Прикрепить файл или карточку"
+            title="Прикрепить"
+          >
+            <Paperclip size={19} />
+          </button>
 
-            {menuOpen && (
-              <div className="absolute bottom-full left-0 mb-2 z-40 w-52 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95">
-                <button
-                  type="button"
-                  onClick={() => imageInputRef.current?.click()}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <ImageIcon size={16} className="text-[#1d9bf0]" />
-                  <span>Фотография</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <FileText size={16} className="text-[#00ba7c]" />
-                  <span>Документ / Файл</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false)
-                    setAttachOpen(true)
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <Sparkles size={16} className="text-[#ffad5a]" />
-                  <span>Карточка Priday</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          <textarea
-            ref={textRef}
-            className="mcw-compose-input flex-1 min-w-0 resize-none max-h-[140px] py-2 px-3 bg-transparent text-[var(--text)] placeholder:text-[var(--text-2)] text-[15px] leading-relaxed outline-none"
-            placeholder={
-              editingMessage
-                ? 'Редактировать сообщение…'
-                : `Написать ${friendName}… (Enter — отправить, : для эмодзи)`
-            }
-            value={draft}
-            onChange={(e) => onChangeDraft(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            rows={1}
-            aria-label="Текст сообщения"
-          />
-
-          {/* Кнопка эмодзи */}
-          <div className="mcw-emoji-wrap relative shrink-0">
-            <button
-              type="button"
-              className="mcw-compose-icon min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
-              onClick={() => {
-                playClick(soundEnabled)
-                setEmojiOpen((v) => !v)
-              }}
-              aria-label="Эмодзи и стикеры"
-              aria-expanded={emojiOpen}
-            >
-              <Smile size={19} />
-            </button>
-
-            {emojiOpen && (
-              <ChatEmojiPicker
-                onPickEmoji={(emoji) => {
-                  onChangeDraft(`${draft}${emoji}`)
-                  textRef.current?.focus()
-                }}
-                onPickSticker={handlePickSticker}
-                onClose={() => setEmojiOpen(false)}
-                soundEnabled={soundEnabled}
-              />
-            )}
-          </div>
-
-          {/* Кнопка отправки или записи голоса (как в Telegram) */}
-          <div className="shrink-0">
-            {canSend || editingMessage ? (
+          {menuOpen && (
+            <div className="absolute bottom-full left-0 mb-2 z-40 w-52 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95">
               <button
                 type="button"
-                className="mcw-send-btn min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-text)] hover:opacity-90 transition-all shadow-sm active:scale-95"
-                onClick={submit}
-                aria-label="Отправить сообщение"
-                title="Отправить (Enter)"
-              >
-                <Send size={16} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="mcw-compose-icon min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--accent)] transition-colors"
                 onClick={() => {
-                  playClick(soundEnabled)
-                  setVoiceRecording(true)
+                  setMenuOpen(false)
+                  fileInputRef.current?.click()
                 }}
-                title="Записать голосовое сообщение"
-                aria-label="Записать голосовое сообщение"
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
               >
-                <Mic size={19} />
+                <FileText size={16} className="text-[#1d9bf0]" />
+                <span>Файл / Медиа</span>
               </button>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  setAttachOpen(true)
+                }}
+                className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
+              >
+                <Sparkles size={16} className="text-[#ffad5a]" />
+                <span>Карточка Priday</span>
+              </button>
+            </div>
+          )}
         </div>
-      )}
+
+        <textarea
+          ref={textRef}
+          className="mcw-compose-input flex-1 min-w-0 resize-none max-h-[140px] py-2 px-3 bg-transparent text-[var(--text)] placeholder:text-[var(--text-2)] text-[15px] leading-relaxed outline-none"
+          placeholder={
+            editingMessage
+              ? 'Редактировать сообщение…'
+              : `Написать ${friendName}… (Enter — отправить, : для эмодзи)`
+          }
+          value={draft}
+          onChange={(e) => onChangeDraft(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          rows={1}
+          aria-label="Текст сообщения"
+        />
+
+        {/* Кнопка эмодзи */}
+        <div className="mcw-emoji-wrap relative shrink-0 overflow-visible">
+          <button
+            type="button"
+            className="mcw-compose-icon min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
+            onClick={() => {
+              playClick(soundEnabled)
+              setEmojiOpen((v) => !v)
+            }}
+            aria-label="Эмодзи и стикеры"
+            aria-expanded={emojiOpen}
+          >
+            <Smile size={19} />
+          </button>
+
+          {emojiOpen && (
+            <ChatEmojiPicker
+              align="right"
+              onPickEmoji={(emoji) => {
+                onChangeDraft(`${draft}${emoji}`)
+                textRef.current?.focus()
+              }}
+              onPickSticker={handlePickSticker}
+              onClose={() => setEmojiOpen(false)}
+              soundEnabled={soundEnabled}
+            />
+          )}
+        </div>
+
+        {/* Кнопка отправки */}
+        <div className="shrink-0">
+          <button
+            type="button"
+            disabled={!canSend && !editingMessage}
+            className={`mcw-send-btn min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full transition-all shadow-sm ${
+              canSend || editingMessage
+                ? 'bg-[var(--accent)] text-[var(--accent-text)] hover:opacity-90 active:scale-95'
+                : 'bg-white/10 text-[var(--text-2)] opacity-50 cursor-not-allowed'
+            }`}
+            onClick={submit}
+            aria-label="Отправить сообщение"
+            title="Отправить (Enter)"
+          >
+            <Send size={16} />
+          </button>
+        </div>
+      </div>
 
       {/* Модалка выбора карточки Priday (гордость, благодарность, сторис) */}
       {attachOpen && (

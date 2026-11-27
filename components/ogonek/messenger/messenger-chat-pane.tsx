@@ -4,30 +4,26 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowDown,
   ArrowLeft,
+  BarChart3,
   Check,
   CheckSquare,
   Clock,
+  Copy,
   FileText,
   Flame,
   Home,
   Image as ImageIcon,
-  Info,
-  Mic,
   MoreVertical,
   Paperclip,
   Pencil,
-  Phone,
-  Pin,
   Plus,
   Reply,
   Search,
   Send,
   Smile,
   Sparkles,
-  Tag,
   Trash2,
   Users,
-  Video,
   Volume2,
   VolumeX,
   X,
@@ -58,24 +54,19 @@ import {
   getProfile,
   getDirectMessages,
   markDirectMessagesAsRead,
-  subscribeToDirectMessages,
-  createCallSession,
   type ProfileRecord,
 } from '@/lib/supabase/api'
 import { getSupabase } from '@/lib/supabase/client'
 import { ChatAvatar } from './chat-avatar'
+import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
 import { ChatMessageBubble } from './chat-message-bubble'
 import { ChatPinnedBanner } from './chat-pinned-banner'
 import { ChatSearchBar } from './chat-search-bar'
 import { ChatSelectionToolbar } from './chat-selection-toolbar'
 import { ForwardToChatModal } from './forward-to-chat-modal'
-import { ChatVoiceRecorder } from './chat-voice-recorder'
-import { ChatCallModal } from './chat-call-modal'
-import { CallErrorBoundary } from './call-error-boundary'
 import { ChatGifModal } from './chat-gif-modal'
 import { ChatPollCreatorModal } from './chat-poll-creator-modal'
 import { ChatScheduleModal } from './chat-schedule-modal'
-import { ChatTagsModal } from './chat-tags-modal'
 import { AttachCardPicker } from './attach-card-picker'
 import { ChatAttachmentCard } from './chat-attachment-card'
 import { FriendDetailModal } from '../friend-detail-modal'
@@ -89,7 +80,7 @@ import {
   detectChatMediaType,
   type ChatMediaType,
 } from '@/lib/ogonek/chat-media-service'
-import { canScheduleMessage, canMakeVideoCall } from '@/lib/ogonek/permissions'
+import { canScheduleMessage } from '@/lib/ogonek/permissions'
 import type { ChatLinkPreview } from '@/lib/ogonek/types'
 import { Loader2, RefreshCw } from 'lucide-react'
 import dynamic from 'next/dynamic'
@@ -122,12 +113,14 @@ export function MessengerChatPane({
   const {
     state,
     currentUser,
-    setActiveCall,
     sendChatMessage,
     receiveIncomingChatMessage,
     updateIncomingChatMessage,
+    removeDeletedChatMessage,
+    reconcileThreadMessages,
     editChatMessage,
     deleteChatMessage,
+    deleteChatThread,
     deleteChatMessages,
     togglePinChatMessage,
     toggleChatReaction,
@@ -135,8 +128,6 @@ export function MessengerChatPane({
     markThreadRead,
     clearThreadMessages,
     toggleThreadMute,
-    toggleThreadPin,
-    toggleThreadArchive,
     updateGroupMeta,
     addGroupMembers,
     removeGroupMember,
@@ -163,22 +154,23 @@ export function MessengerChatPane({
   const [friendDetailOpen, setFriendDetailOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
+  const [messageContextMenu, setMessageContextMenu] = useState<{
+    x: number
+    y: number
+    message: ChatMessage
+    isMine: boolean
+  } | null>(null)
 
   // Модальные окна
   const [groupModalOpen, setGroupModalOpen] = useState(false)
   const [muteModalOpen, setMuteModalOpen] = useState(false)
   const [scheduledModalOpen, setScheduledModalOpen] = useState(false)
-  const [callModalOpen, setCallModalOpen] = useState(false)
-  const [callIsVideo, setCallIsVideo] = useState(false)
-  const [activeCallSessionId, setActiveCallSessionId] = useState<string | null>(null)
   const [gifModalOpen, setGifModalOpen] = useState(false)
   const [pollModalOpen, setPollModalOpen] = useState(false)
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
-  const [tagsModalOpen, setTagsModalOpen] = useState(false)
   const [attachOpen, setAttachOpen] = useState(false)
   const [attachMenuOpen, setAttachMenuOpen] = useState(false)
   const [emojiOpen, setEmojiOpen] = useState(false)
-  const [voiceRecording, setVoiceRecording] = useState(false)
   const [showQuickChips, setShowQuickChips] = useState(false)
   const [forwardModalData, setForwardModalData] = useState<{
     attachment: ChatAttachment | null
@@ -197,9 +189,7 @@ export function MessengerChatPane({
 
   const bodyRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const outgoingCallChannelRef = useRef<any>(null)
+  const mediaInputRef = useRef<HTMLInputElement>(null)
   const threadChannelRef = useRef<any>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
   const lastFileRef = useRef<File | null>(null)
@@ -430,31 +420,26 @@ export function MessengerChatPane({
     setIsDraggingOver(false)
     const files = e.dataTransfer.files
     if (files && files.length > 0) {
-      const file = files[0]
-      if (file.type.startsWith('image/')) {
-        handleImageFile(file)
-      } else {
-        handleDocumentFile(file)
-      }
+      handleUnifiedFile(files[0])
     }
   }
 
-  // Загрузка сообщений из базы Supabase при открытии диалога
+  // Загрузка и сверка сообщений из базы Supabase при открытии диалога (источник истины)
   useEffect(() => {
     if (!friendId || !currentUserId || isGroup || isSaved) return
     let cancelled = false
 
-    getDirectMessages(currentUserId, friendId).then((dbMessages) => {
-      if (cancelled || !dbMessages || !Array.isArray(dbMessages)) return
-      for (const m of dbMessages) {
-        if (m) receiveIncomingChatMessage(m)
-      }
-    }).catch(() => {})
+    getDirectMessages(currentUserId, friendId)
+      .then((dbMessages) => {
+        if (cancelled || !Array.isArray(dbMessages)) return
+        reconcileThreadMessages(friendId, dbMessages)
+      })
+      .catch(() => {})
 
     return () => {
       cancelled = true
     }
-  }, [friendId, currentUserId, isGroup, isSaved, receiveIncomingChatMessage, updateIncomingChatMessage])
+  }, [friendId, currentUserId, isGroup, isSaved, reconcileThreadMessages])
 
   // Пометка прочитанным при открытии (в локальном сторе и в Supabase)
   useEffect(() => {
@@ -466,7 +451,7 @@ export function MessengerChatPane({
     }
   }, [friendId, allMessages.length, markThreadRead, currentUserId, isGroup, isSaved])
 
-  // 1. Жизненный цикл Supabase Realtime подписки на сообщения диалога (СТРОГИЙ ПАТТЕРН)
+  // 1. Жизненный цикл Supabase Realtime подписки на сообщения диалога (INSERT / UPDATE / DELETE)
   useEffect(() => {
     if (!friendId || !currentUserId || isGroup || isSaved) return
 
@@ -474,14 +459,11 @@ export function MessengerChatPane({
     if (!supabase) return
 
     const threadKey = getDirectThreadKey(currentUserId, friendId)
-    // Уникальный суффикс предотвращает коллизию при React StrictMode / fast remount
     const channelName = `chat_${threadKey}_${Math.random().toString(36).slice(2, 8)}`
 
-    // 1. Создаем НОВЫЙ канал
     const channel = supabase.channel(channelName)
     threadChannelRef.current = channel
 
-    // 2. СНАЧАЛА вешаем обработчик
     channel.on(
       'postgres_changes',
       {
@@ -491,7 +473,6 @@ export function MessengerChatPane({
         filter: `thread_key=eq.${threadKey}`,
       },
       (payload) => {
-        // безопасно добавляем новое входящее сообщение
         if (payload?.new) {
           receiveIncomingChatMessage(payload.new as any)
           markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
@@ -508,9 +489,23 @@ export function MessengerChatPane({
         filter: `thread_key=eq.${threadKey}`,
       },
       (payload) => {
-        // безопасно обновляем реакции, статус закрепа или текст сообщения
         if (payload?.new) {
           updateIncomingChatMessage(payload.new as any)
+        }
+      }
+    )
+
+    channel.on(
+      'postgres_changes',
+      {
+        event: 'DELETE',
+        schema: 'public',
+        table: 'direct_messages',
+      },
+      (payload) => {
+        const oldId = (payload?.old as any)?.id
+        if (oldId) {
+          removeDeletedChatMessage(oldId)
         }
       }
     )
@@ -525,20 +520,22 @@ export function MessengerChatPane({
       }
     })
 
-    // 3. И ТОЛЬКО ПОТОМ вызываем subscribe()!
-    channel.subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        // подписка активна
-      }
-    })
+    channel.subscribe()
 
-    // 4. ОБЯЗАТЕЛЬНЫЙ CLEANUP ПРИ СМЕНЕ ЧАТА ИЛИ РАЗМОНТИРОВАНИИ:
     return () => {
       threadChannelRef.current = null
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current)
       supabase.removeChannel(channel)
     }
-  }, [friendId, currentUserId, isGroup, isSaved, receiveIncomingChatMessage, updateIncomingChatMessage])
+  }, [
+    friendId,
+    currentUserId,
+    isGroup,
+    isSaved,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    removeDeletedChatMessage,
+  ])
 
   // Автопрокрутка вниз при новом сообщении
   useEffect(() => {
@@ -629,6 +626,7 @@ export function MessengerChatPane({
       sendChatMessage(friendId, draft.trim(), attachment, {
         replyTo: replyPayload,
         media: mediaAttachment,
+        linkPreview: linkPreview,
         silent: options?.silent,
         scheduledForISO: options?.scheduledForISO,
       })
@@ -677,148 +675,8 @@ export function MessengerChatPane({
     }
   }
 
-  const handleStartCall = async (video: boolean) => {
-    playClick(soundEnabled)
-
-    const peerId = targetPeerId || friendId
-    if (!peerId) {
-      setCallModalOpen(true)
-      return
-    }
-
-    // CONTRACT Шаг 10: Блок пользователя — не дозванивается
-    if (state.blockedUserIds?.includes(peerId)) {
-      onNotify('Невозможно совершить вызов: пользователь заблокирован')
-      return
-    }
-
-    // CONTRACT Шаг 10: Видеозвонок по тарифу (free - только аудио, pro/ultra - видео)
-    let effectiveVideo = video
-    if (video) {
-      const userTier = state?.profile?.subscription_tier || 'free'
-      const userTierValidUntil = state?.profile?.subscription_valid_until
-      if (!canMakeVideoCall(userTier, userTierValidUntil)) {
-        window.dispatchEvent(
-          new CustomEvent('ogonek:open-upgrade', {
-            detail: { feature: 'video_call', force: true },
-          })
-        )
-        onNotify('Видеозвонки доступны на тарифах Pro и Ultra. Запущен качественный аудиозвонок 📞')
-        effectiveVideo = false
-      }
-    }
-    setCallIsVideo(effectiveVideo)
-
-    const newSessionId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-    setActiveCallSessionId(newSessionId)
-
-    // 1. Создаем подключение к персональному broadcast каналу получателя: user_calls_${receiverId}
-    const supabase = getSupabase()
-    if (supabase) {
-      const receiverChannel = supabase.channel(`user_calls_${peerId}`)
-      outgoingCallChannelRef.current = receiverChannel
-
-      const callerName =
-        currentUser?.displayName ||
-        state.profile.displayName ||
-        state.profile.username ||
-        'Друг'
-      const callerAvatar = currentUser?.avatarImage || state.profile.avatarImage || null
-
-      receiverChannel.subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          receiverChannel.send({
-            type: 'broadcast',
-            event: 'incoming_call',
-            payload: {
-              sessionId: newSessionId,
-              callerId: currentUserId,
-              callerName,
-              callerAvatar,
-              isVideo: effectiveVideo,
-            },
-          })
-        }
-      })
-    }
-
-    // 2. Параллельно создаем запись в таблице call_sessions в Supabase для истории
-    createCallSession({
-      caller_id: currentUserId,
-      receiver_id: peerId,
-      is_video: effectiveVideo,
-    }).then((res) => {
-      if (res.session?.id) {
-        setActiveCallSessionId(res.session.id)
-      }
-    }).catch(() => {})
-
-    setActiveCall({
-      sessionId: newSessionId,
-      callerId: currentUserId,
-      receiverId: peerId,
-      friendId: peerId,
-      friendName: title,
-      friendUsername: peerProfile?.username || friend?.username,
-      friendAvatar: peerProfile?.avatar_url || friend?.avatarColor,
-      isVideo: effectiveVideo,
-      isIncoming: false,
-    })
-  }
-
-  const handleCallFinished = (sec: number, type: 'audio' | 'video', finalStatus?: any) => {
-    setActiveCall(null)
-    setCallModalOpen(false)
-
-    // Отправляем broadcast 'call_ended' на канал получателя если вызов был сброшен
-    if (outgoingCallChannelRef.current) {
-      try {
-        outgoingCallChannelRef.current.send({
-          type: 'broadcast',
-          event: 'call_ended',
-          payload: { sessionId: activeCallSessionId, reason: finalStatus || 'ended' },
-        })
-      } catch {}
-      const supabase = getSupabase()
-      if (supabase) {
-        supabase.removeChannel(outgoingCallChannelRef.current)
-      }
-      outgoingCallChannelRef.current = null
-    }
-
-    if (!friendId) return
-    const callLabel = type === 'video' ? 'Видеозвонок' : 'Аудиозвонок'
-    let systemText = ''
-    if (finalStatus === 'missed') {
-      systemText = `❌ Пропущенный ${callLabel.toLowerCase()}`
-    } else if (finalStatus === 'rejected') {
-      systemText = '🚫 Отклонённый вызов'
-    } else if (finalStatus === 'busy') {
-      systemText = '⏳ Вызов не удался (занято)'
-    } else {
-      const m = Math.floor(sec / 60)
-      const s = sec % 60
-      const timeStr = `${m}:${s < 10 ? '0' : ''}${s}`
-      systemText = `📞 ${callLabel} · ${timeStr}`
-    }
-
-    sendChatMessage(
-      friendId,
-      systemText,
-      null,
-      {
-        type: 'system',
-        call_meta: {
-          durationSeconds: sec,
-          isVideo: type === 'video',
-          status: finalStatus || (sec > 0 ? 'ended' : 'missed'),
-        },
-      }
-    )
-  }
-
-  // Загрузка фото или видео (в бакет chat-media, без Base64)
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement> | File) => {
+  // Единая загрузка фото, видео или документа (в бакет chat-media Supabase Storage)
+  const handleUnifiedFile = (e: React.ChangeEvent<HTMLInputElement> | File) => {
     const file = e instanceof File ? e : e.target.files?.[0]
     if (!(e instanceof File) && e.target) e.target.value = ''
     if (!file) return
@@ -828,21 +686,8 @@ export function MessengerChatPane({
       return
     }
 
-    processAndUploadMedia(file, file.type.startsWith('video/') ? 'video' : 'image')
-  }
-
-  // Загрузка документа или файла (в бакет chat-media, без Base64)
-  const handleDocumentFile = (e: React.ChangeEvent<HTMLInputElement> | File) => {
-    const file = e instanceof File ? e : e.target.files?.[0]
-    if (!(e instanceof File) && e.target) e.target.value = ''
-    if (!file) return
-
-    if (file.size > 50 * 1024 * 1024) {
-      onNotify('Файл слишком велик (максимум 50 МБ)')
-      return
-    }
-
-    processAndUploadMedia(file, file.type.startsWith('video/') ? 'video' : 'file')
+    const mediaType = detectChatMediaType(file)
+    processAndUploadMedia(file, mediaType)
   }
 
   // Если диалог не выбран — красивое пустое состояние на весь экран
@@ -869,7 +714,7 @@ export function MessengerChatPane({
           Выберите диалог или начните новый чат
         </h2>
         <p className="text-sm text-[var(--text-2)] max-w-sm mb-6 leading-relaxed">
-          Общайтесь с друзьями, делитесь карточками гордости, отправляйте голосовые и ставьте реакции к победам.
+          Общайтесь с друзьями, делитесь карточками гордости, файлами, GIF и ставьте реакции к победам.
         </p>
       </div>
     )
@@ -879,7 +724,7 @@ export function MessengerChatPane({
 
   return (
     <div
-      className="flex-1 h-full flex flex-col bg-[var(--bg)] relative overflow-hidden select-text min-w-0"
+      className="flex-1 h-full flex flex-col bg-[var(--bg)] relative select-text min-w-0"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -895,19 +740,13 @@ export function MessengerChatPane({
         </div>
       )}
 
-      {/* Скрытые файловые инпуты */}
+      {/* Единый скрытый файловый инпут для фото, видео и документов */}
       <input
-        ref={imageInputRef}
+        ref={mediaInputRef}
         type="file"
-        accept="image/*"
+        accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,application/*"
         className="hidden"
-        onChange={handleImageFile}
-      />
-      <input
-        ref={fileInputRef}
-        type="file"
-        className="hidden"
-        onChange={handleDocumentFile}
+        onChange={handleUnifiedFile}
       />
 
       {/* 1. ШАПКА 72px: прозрачная с backdrop-blur-md, аватар 44px, имя 20px/800 + галочка, 3 кнопки 44px с рамкой 1px */}
@@ -976,38 +815,15 @@ export function MessengerChatPane({
           </div>
         </div>
 
-        {/* Правая часть: Три круглые кнопки 44px с рамкой 1px (Аудиозвонок, Видеозвонок, ⋯) */}
+        {/* Правая часть: только кнопка меню «⋯» */}
         <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-          {/* 1. Аудиозвонок */}
-          <button
-            type="button"
-            onClick={() => handleStartCall(false)}
-            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
-            aria-label="Аудиозвонок"
-            title="Аудиозвонок"
-          >
-            <Phone size={16} />
-          </button>
-
-          {/* 2. Видеозвонок */}
-          <button
-            type="button"
-            onClick={() => handleStartCall(true)}
-            className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
-            aria-label="Видеозвонок"
-            title="Видеозвонок"
-          >
-            <Video size={16} />
-          </button>
-
-          {/* 3. Меню «⋯» */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               className="w-[36px] h-[36px] sm:w-[44px] sm:h-[44px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
               aria-label="Меню чата"
-              title="Дополнительно"
+              title="Меню чата"
             >
               <MoreVertical size={16} />
             </button>
@@ -1029,92 +845,42 @@ export function MessengerChatPane({
                   <button
                     type="button"
                     onClick={() => {
-                      toggleThreadPin(friendId)
+                      const nowMuted = toggleThreadMute(friendId)
                       setMenuOpen(false)
-                      onNotify(thread?.pinned ? 'Чат откреплён' : 'Чат закреплён сверху')
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <Pin size={15} /> {thread?.pinned ? 'Открепить чат' : 'Закрепить чат'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMuteModalOpen(true)
-                      setMenuOpen(false)
+                      onNotify(nowMuted ? 'Уведомления отключены' : 'Уведомления включены')
                     }}
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                   >
                     {thread?.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
-                    {thread?.muted ? 'Настройки звука (выкл)' : 'Отключить звук…'}
+                    {thread?.muted ? 'Включить уведомления' : 'Отключить уведомления'}
                   </button>
-                  {isGroup && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGroupModalOpen(true)
-                        setMenuOpen(false)
-                      }}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                    >
-                      <Users size={15} /> Управление группой
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setScheduledModalOpen(true)
-                      setMenuOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <Clock size={15} /> Запланированные {((thread?.scheduledMessages ?? []).length > 0) ? `(${thread?.scheduledMessages?.length})` : ''}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTagsModalOpen(true)
-                      setMenuOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <Tag size={15} /> Теги диалога
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSelectionMode(true)
-                      setMenuOpen(false)
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                  >
-                    <CheckSquare size={15} /> Выбрать сообщения
-                  </button>
-                  {friend && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFriendDetailOpen(true)
-                        setMenuOpen(false)
-                      }}
-                      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                    >
-                      <Info size={15} /> Информация о друге
-                    </button>
-                  )}
                   <div className="h-[1px] bg-[var(--border)] my-1" />
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      setMenuOpen(false)
                       if (window.confirm('Очистить всю историю этого чата?')) {
-                        clearThreadMessages(friendId)
+                        await clearThreadMessages(friendId)
                         onNotify('История переписки очищена')
                       }
-                      setMenuOpen(false)
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-red-400 hover:bg-red-500/10"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                   >
                     <Trash2 size={15} /> Очистить историю
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setMenuOpen(false)
+                      if (window.confirm(`Удалить чат «${title}» навсегда?`)) {
+                        await deleteChatThread(friendId)
+                        onNotify('Чат удалён')
+                        onBack?.()
+                      }
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-rose-400 hover:bg-rose-500/10"
+                  >
+                    <Trash2 size={15} /> Удалить чат
                   </button>
                 </div>
               </>
@@ -1273,6 +1039,14 @@ export function MessengerChatPane({
                             searchQuery={searchQuery}
                             soundEnabled={soundEnabled}
                             onNotify={onNotify}
+                            onContextMenu={(e, targetMsg) => {
+                              setMessageContextMenu({
+                                x: e.clientX,
+                                y: e.clientY,
+                                message: targetMsg,
+                                isMine: isMineMsg,
+                              })
+                            }}
                           />
                         </React.Fragment>
                       )
@@ -1488,27 +1262,15 @@ export function MessengerChatPane({
             </div>
           )}
 
-          {/* Строка ввода или запись голоса */}
+          {/* Строка ввода */}
           {isGroup && thread?.groupMeta?.adminsOnly && !isMeAdmin ? (
             <div className="w-full py-3 px-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] text-center text-xs text-[var(--text-2)] font-medium flex items-center justify-center gap-2 select-none shadow-sm">
               <span>🔒</span>
               <span>В этой группе только администраторы могут отправлять сообщения</span>
             </div>
-          ) : voiceRecording ? (
-            <ChatVoiceRecorder
-              userId={currentUserId}
-              threadId={friendId}
-              onSendVoice={(voiceMedia) => {
-                setVoiceRecording(false)
-                sendChatMessage(friendId, '', null, { media: voiceMedia })
-                playSuccess(soundEnabled)
-              }}
-              onCancel={() => setVoiceRecording(false)}
-              soundEnabled={soundEnabled}
-            />
           ) : (
             <div className="flex items-end gap-2 w-full">
-              {/* Три круглые кнопки 44px с рамкой 1px слева: «+», «GIF», «😊» */}
+              {/* Кнопки слева: «+», «GIF», «😊», «⚡» */}
               <div className="flex items-center gap-1.5 shrink-0">
                 {/* 1. Кнопка «+» (вложения) */}
                 <div className="relative">
@@ -1520,7 +1282,7 @@ export function MessengerChatPane({
                     }}
                     className="w-[44px] h-[44px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] hover:bg-[var(--bg-hover)] text-[var(--text)] flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-sm"
                     aria-label="Вложения"
-                    title="Прикрепить фото, файл, опрос или карточку"
+                    title="Прикрепить файл, медиа или опрос"
                   >
                     <Plus size={20} strokeWidth={2.2} />
                   </button>
@@ -1533,21 +1295,11 @@ export function MessengerChatPane({
                           type="button"
                           onClick={() => {
                             setAttachMenuOpen(false)
-                            imageInputRef.current?.click()
+                            mediaInputRef.current?.click()
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                         >
-                          <ImageIcon size={16} className="text-[#1d9bf0]" /> Фото или видео
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAttachMenuOpen(false)
-                            fileInputRef.current?.click()
-                          }}
-                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                        >
-                          <FileText size={16} className="text-[#00ba7c]" /> Документ / Файл
+                          <Paperclip size={16} className="text-[#1d9bf0]" /> Файл / Медиа
                         </button>
                         <button
                           type="button"
@@ -1557,7 +1309,7 @@ export function MessengerChatPane({
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                         >
-                          <span className="text-base">📊</span> Опрос
+                          <BarChart3 size={16} className="text-[#00ba7c]" /> Опрос
                         </button>
                         <button
                           type="button"
@@ -1589,7 +1341,7 @@ export function MessengerChatPane({
                 </button>
 
                 {/* 3. Кнопка «😊» (эмодзи) */}
-                <div className="relative">
+                <div className="relative overflow-visible">
                   <button
                     type="button"
                     onClick={() => {
@@ -1605,6 +1357,7 @@ export function MessengerChatPane({
 
                   {emojiOpen && (
                     <ChatEmojiPicker
+                      align="left"
                       onPickEmoji={(emoji) => {
                         setChatDraft(friendId, `${draft}${emoji}`)
                         textareaRef.current?.focus()
@@ -1638,8 +1391,8 @@ export function MessengerChatPane({
                 </button>
               </div>
 
-              {/* Поле-пилюля flex:1 (мин 48px), плейсхолдер короткий «Написать сообщение» */}
-              <div className="flex-1 min-w-[280px] min-h-[48px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-4 py-2 flex items-center gap-2 focus-within:border-[var(--accent)] transition-colors relative shadow-inner">
+              {/* Поле-пилюля flex:1 */}
+              <div className="flex-1 min-w-[200px] min-h-[48px] rounded-full border border-[var(--border)] bg-[var(--bg-elev)] px-4 py-2 flex items-center gap-2 focus-within:border-[var(--accent)] transition-colors relative shadow-inner">
                 <textarea
                   ref={textareaRef}
                   value={draft}
@@ -1655,51 +1408,38 @@ export function MessengerChatPane({
                   aria-label="Текст сообщения"
                 />
 
-                {/* Справа внутри поля: микрофон (голосовое) или стрелка отправки */}
+                {/* Справа внутри поля: отложенная отправка и кнопка отправки */}
                 <div className="flex items-center gap-1.5 shrink-0">
-                  {canSend || editingMessage ? (
-                    <div className="flex items-center gap-1">
-                      {/* Меню отложенной отправки / без звука */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playClick(soundEnabled)
-                          setScheduleModalOpen(true)
-                        }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                        title="Отправить позже или без звука"
-                        aria-label="Опции отправки"
-                      >
-                        <Clock size={16} />
-                      </button>
-
-                      {/* Стрелка отправки */}
-                      <Tooltip content="Отправить (Enter)" side="top">
-                        <button
-                          type="button"
-                          onClick={() => handleSend()}
-                          className="w-[36px] h-[36px] rounded-full bg-[var(--accent)] text-[var(--accent-text)] flex items-center justify-center shadow-md hover:opacity-90 active:scale-95 transition-all"
-                          aria-label="Отправить сообщение"
-                        >
-                          <Send size={16} className="-ml-0.5" />
-                        </button>
-                      </Tooltip>
-                    </div>
-                  ) : (
-                    <Tooltip content="Записать голосовое (нажмите для записи)" side="top">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playClick(soundEnabled)
-                          setVoiceRecording(true)
-                        }}
-                        className="w-[36px] h-[36px] rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] flex items-center justify-center transition-colors"
-                        aria-label="Записать голосовое сообщение"
-                      >
-                        <Mic size={19} />
-                      </button>
-                    </Tooltip>
+                  {(canSend || editingMessage) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playClick(soundEnabled)
+                        setScheduleModalOpen(true)
+                      }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                      title="Отправить позже или без звука"
+                      aria-label="Опции отправки"
+                    >
+                      <Clock size={16} />
+                    </button>
                   )}
+
+                  <Tooltip content="Отправить (Enter)" side="top">
+                    <button
+                      type="button"
+                      disabled={!canSend && !editingMessage}
+                      onClick={() => handleSend()}
+                      className={`w-[36px] h-[36px] rounded-full flex items-center justify-center transition-all ${
+                        canSend || editingMessage
+                          ? 'bg-[var(--accent)] text-[var(--accent-text)] shadow-md hover:opacity-90 active:scale-95'
+                          : 'bg-white/10 text-[var(--text-2)] opacity-50 cursor-not-allowed'
+                      }`}
+                      aria-label="Отправить сообщение"
+                    >
+                      <Send size={16} className="-ml-0.5" />
+                    </button>
+                  </Tooltip>
                 </div>
               </div>
             </div>
@@ -1707,25 +1447,55 @@ export function MessengerChatPane({
         </div>
       </div>
 
-      {/* Модальное окно аудио/видео звонка (локальный фоллбэк если нет глобального activeCall) */}
-      {callModalOpen && !state.activeCall && (
-        <CallErrorBoundary onReset={() => setCallModalOpen(false)}>
-          <ChatCallModal
-            isOpen={true}
-            sessionId={activeCallSessionId || undefined}
-            callerId={currentUserId}
-            receiverId={targetPeerId || friendId}
-            friendId={targetPeerId || friendId}
-            friendName={title}
-            friendUsername={peerProfile?.username || friend?.username}
-            friendAvatar={peerProfile?.avatar_url || friend?.avatarColor}
-            isVideo={callIsVideo}
-            isIncoming={false}
-            onClose={() => setCallModalOpen(false)}
-            onEndCall={handleCallFinished}
-            soundEnabled={soundEnabled}
-          />
-        </CallErrorBoundary>
+      {/* Контекстное меню по правому клику на сообщение */}
+      {messageContextMenu && (
+        <ChatContextMenu
+          x={messageContextMenu.x}
+          y={messageContextMenu.y}
+          onClose={() => setMessageContextMenu(null)}
+          items={
+            [
+              {
+                id: 'reply',
+                label: 'Ответить',
+                icon: <Reply size={15} />,
+                onSelect: () => {
+                  playClick(soundEnabled)
+                  setReplyingTo(messageContextMenu.message)
+                  textareaRef.current?.focus()
+                },
+              },
+              {
+                id: 'copy',
+                label: 'Скопировать текст',
+                icon: <Copy size={15} />,
+                disabled: !messageContextMenu.message.text?.trim(),
+                onSelect: () => {
+                  const textToCopy = messageContextMenu.message.text?.trim()
+                  if (textToCopy && typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(textToCopy).catch(() => {})
+                    onNotify('Текст скопирован')
+                  }
+                },
+              },
+              ...(messageContextMenu.isMine
+                ? [
+                    {
+                      id: 'delete',
+                      label: 'Удалить сообщение',
+                      icon: <Trash2 size={15} />,
+                      danger: true,
+                      dividerBefore: true,
+                      onSelect: async () => {
+                        await deleteChatMessage(friendId, messageContextMenu.message.id, false)
+                        onNotify('Сообщение удалено')
+                      },
+                    } satisfies ContextMenuItem,
+                  ]
+                : []),
+            ] satisfies ContextMenuItem[]
+          }
+        />
       )}
 
       {/* Модальное окно поиска GIF */}
@@ -1758,15 +1528,6 @@ export function MessengerChatPane({
           onSchedule={(iso, silent) => handleSend({ scheduledForISO: iso, silent })}
           onSendSilent={() => handleSend({ silent: true })}
           onClose={() => setScheduleModalOpen(false)}
-          soundEnabled={soundEnabled}
-        />
-      )}
-
-      {/* Модальное окно тегов диалога */}
-      {tagsModalOpen && (
-        <ChatTagsModal
-          friendId={friendId}
-          onClose={() => setTagsModalOpen(false)}
           soundEnabled={soundEnabled}
         />
       )}

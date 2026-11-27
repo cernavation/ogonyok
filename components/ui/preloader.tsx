@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from "react"
 import dynamic from "next/dynamic"
+import { getFastAuthHint } from "@/lib/ogonek/client-session"
 
 // Dynamic import with ssr: false ensures WebGL canvas initializes strictly on client
 const GlassRevealPriday = dynamic(
@@ -85,16 +86,7 @@ export function Preloader() {
     const alreadyPreloaded = sessionStorage.getItem('priday_preloaded') === '1'
 
     // Check if user is signed in
-    let isUserLoggedIn = false
-    try {
-      const raw = localStorage.getItem('ogonek.store.v1')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
-          isUserLoggedIn = true
-        }
-      }
-    } catch {}
+    const isUserLoggedIn = getFastAuthHint().signedIn
 
     if (
       isAppRoute ||

@@ -379,11 +379,9 @@ export function Sidebar({
         <button
           type="button"
           data-tour={tourAttr}
-          className={`nav-item group relative flex items-center hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
-            isCollapsed
-              ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
-              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3.5 xl:pl-3 xl:pr-4 py-0 xl:py-2.5 justify-center xl:justify-start mx-auto xl:mx-0'
-          } ${isActive ? 'active text-[var(--text)] fill-[var(--text)] font-bold' : 'text-[var(--muted)] hover:text-[var(--text)] font-medium'}`}
+          className={`nav-item group relative flex items-center justify-start w-full h-[48px] pl-3 pr-3 gap-3.5 hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 rounded-full overflow-hidden ${
+            isActive ? 'active text-[var(--text)] fill-[var(--text)] font-bold' : 'text-[var(--muted)] hover:text-[var(--text)] font-medium'
+          }`}
           onClick={handleClick}
           aria-label={label}
           aria-current={isActive ? 'page' : undefined}
@@ -400,13 +398,11 @@ export function Sidebar({
             )}
           </div>
           <span
-            className={
-              isCollapsed
-                ? 'hidden'
-                : `hidden xl:inline text-[16px] leading-tight ${
-                    isActive ? 'font-bold text-[var(--text)]' : 'font-medium text-[var(--muted)] group-hover:text-[var(--text)]'
-                  }`
-            }
+            className={`hidden xl:inline whitespace-nowrap text-[16px] leading-tight transition-opacity duration-150 ${
+              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            } ${
+              isActive ? 'font-bold text-[var(--text)]' : 'font-medium text-[var(--muted)] group-hover:text-[var(--text)]'
+            }`}
           >
             {label}
           </span>
@@ -415,23 +411,26 @@ export function Sidebar({
     )
   }
 
+  const [menuPos, setMenuPos] = useState<{ left: number; bottom: number } | null>(null)
+  const openMenuWithRect = () => {
+    if (menuRef.current && typeof window !== 'undefined') {
+      const r = menuRef.current.getBoundingClientRect()
+      setMenuPos({ left: r.left, bottom: Math.max(12, window.innerHeight - r.top + 8) })
+    }
+    setIsMenuOpen((v) => !v)
+  }
+
   return (
     <aside
       className={`sidebar ${
-        isCollapsed
-          ? 'w-[72px] px-[11px] items-center'
-          : 'w-[72px] xl:w-[275px] px-[11px] xl:px-3 items-center xl:items-stretch'
-      } shrink-0 sticky top-0 h-screen border-r border-[var(--line)] hidden md:flex flex-col justify-between overflow-y-auto scrollbar-none z-30 select-none py-2.5 xl:py-4 ${className || ''}`}
+        isCollapsed ? 'w-[72px]' : 'w-[72px] xl:w-[275px]'
+      } px-3 items-stretch shrink-0 sticky top-0 h-screen border-r border-[var(--line)] hidden md:flex flex-col justify-between overflow-x-hidden overflow-y-auto scrollbar-none z-30 select-none py-3 xl:py-4 transition-[width] duration-200 ease-out ${className || ''}`}
       aria-label="Боковая панель"
     >
-      <div className="flex flex-col gap-1 w-full items-center xl:items-stretch">
-        {/* Brand mark — в чатах логотип статичен (навигация в ленту вынесена в пункт «Главная»); в остальных разделах остаётся каноничным */}
+      <div className="flex flex-col gap-1 w-full items-stretch overflow-hidden">
+        {/* Brand mark — при сужении сайдбара X-координата иконки не сдвигается ни на пиксель */}
         <div
-          className={`brand ${view === 'messages' ? 'select-none' : 'cursor-pointer group hover:bg-white/[0.08] active:scale-[0.98]'} min-h-[40px] flex items-center transition-all duration-150 rounded-full ${
-            isCollapsed
-              ? 'justify-center w-[50px] h-[50px] px-0 mb-2 mx-auto'
-              : 'justify-center xl:justify-start w-[50px] xl:w-full h-[50px] xl:h-auto px-0 xl:pl-1 xl:pr-3 py-1 mb-1 gap-2.5 mx-auto xl:mx-0'
-          }`}
+          className={`brand ${view === 'messages' ? 'select-none' : 'cursor-pointer group hover:bg-white/[0.08] active:scale-[0.98]'} w-full h-[48px] pl-1 pr-2 mb-2 flex items-center justify-start gap-2.5 transition-colors duration-150 rounded-full overflow-hidden shrink-0`}
           onClick={
             view === 'messages'
               ? undefined
@@ -451,36 +450,36 @@ export function Sidebar({
           >
             <Flame size={22} className="fill-[var(--accent)]/20 text-[var(--accent)]" />
           </span>
-          {!isCollapsed && (
-            <span className="font-bold tracking-tight text-[19px] text-[var(--text)] hidden xl:inline">Priday</span>
-          )}
+          <span
+            className={`font-bold tracking-tight text-[19px] text-[var(--text)] whitespace-nowrap hidden xl:inline transition-opacity duration-150 ${
+              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            Priday
+          </span>
         </div>
 
         {/* Navigation — единый список без искусственных групп */}
-        <nav className="nav-list flex-1 w-full" aria-label="Разделы приложения">
+        <nav className="nav-list flex-1 w-full overflow-hidden" aria-label="Разделы приложения">
           <div className="flex flex-col gap-1 w-full">
             {UNIFIED_NAV.map(renderNavItem)}
           </div>
         </nav>
 
-        {/* Primary CTA — Flame Pill / Round Icon Button (скрыт в чатах во избежание дублирования кнопки «✎ Написать» и появления пустой кнопки в узком рейле) */}
+        {/* Primary CTA — Flame Pill / Round Icon Button */}
         {view !== 'messages' && (
           <Tooltip content="Записать день" side={isCollapsed ? 'right' : 'top'} hotkey="N">
             <button
               type="button"
-              className={`x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full ${
-                isCollapsed
-                  ? 'w-[50px] h-[50px] p-0 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
-                  : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:py-3.5 rounded-full flex items-center justify-center mx-auto my-2 min-h-[50px] min-w-[50px]'
-              }`}
+              className="x-compose-btn hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 rounded-full w-full h-[48px] xl:h-auto p-0 xl:py-3.5 flex items-center justify-center my-2 min-h-[48px] overflow-hidden"
               onClick={() => {
                 playClick(state.soundEnabled)
                 onCompose()
               }}
               aria-label="Записать день"
             >
-              <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden" />
-              {!isCollapsed && <span className="compose-btn-label hidden xl:inline">Записать</span>}
+              <Plus size={22} strokeWidth={2.5} className="compose-btn-icon-only xl:hidden shrink-0" />
+              <span className="compose-btn-label hidden xl:inline whitespace-nowrap">Записать</span>
             </button>
           </Tooltip>
         )}
@@ -489,18 +488,17 @@ export function Sidebar({
       {/* Profile block — карточка пользователя и меню выхода */}
       <div
         ref={menuRef}
-        className={`cursor-pointer relative z-50 overflow-visible mt-auto pt-2 shrink-0 ${
-          isCollapsed ? 'w-full flex justify-center' : 'w-full max-w-full'
-        }`}
+        className="cursor-pointer relative z-50 mt-auto pt-2 shrink-0 w-full"
       >
         <AnimatePresence>
           {isMenuOpen && (
             <motion.div
-              className={`absolute bottom-[calc(100%+8px)] z-50 p-2 bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl backdrop-blur-md ${
-                isCollapsed
-                  ? 'left-0 min-w-[240px]'
-                  : 'left-0 w-full min-w-[240px] max-w-[280px]'
-              }`}
+              className="fixed z-[120] p-2 bg-[var(--surface)] border border-[var(--line)] rounded-2xl shadow-2xl backdrop-blur-md min-w-[240px] max-w-[280px]"
+              style={
+                menuPos
+                  ? { left: `${menuPos.left}px`, bottom: `${menuPos.bottom}px` }
+                  : { left: '12px', bottom: '76px' }
+              }
               role="menu"
               aria-label="Меню профиля"
               initial={{ opacity: 0, y: 10, scale: 0.96 }}
@@ -560,14 +558,10 @@ export function Sidebar({
 
         <button
           type="button"
-          className={`profile-mini cursor-pointer relative z-50 flex items-center rounded-full hover:bg-white/[0.08] active:scale-[0.98] transition-all duration-150 text-left border-0 bg-transparent ${
-            isCollapsed
-              ? 'w-[50px] h-[50px] p-0 justify-center mx-auto'
-              : 'w-[50px] xl:w-full h-[50px] xl:h-auto p-0 xl:gap-3 xl:pl-1 xl:pr-3 xl:py-2 justify-center xl:justify-start rounded-full mx-auto xl:mx-0'
-          }`}
+          className="profile-mini cursor-pointer relative z-50 w-full h-[56px] pl-1 pr-2 gap-3 flex items-center justify-start rounded-full overflow-hidden hover:bg-white/[0.08] active:scale-[0.98] transition-colors duration-150 text-left border-0 bg-transparent"
           onClick={() => {
             playClick(state.soundEnabled)
-            setIsMenuOpen(!isMenuOpen)
+            openMenuWithRect()
           }}
           aria-haspopup="menu"
           aria-expanded={isMenuOpen}
@@ -587,20 +581,25 @@ export function Sidebar({
             </div>
           )}
 
-          {!isCollapsed && (
-            <>
-              <div className="flex-1 min-w-0 hidden xl:block">
-                <p className="text-[14px] font-bold text-[var(--text)] truncate leading-tight">
-                  {displayName}
-                </p>
-                <p className="text-[13px] text-[var(--muted)] font-normal truncate font-mono">
-                  @{username}
-                </p>
-              </div>
+          <div
+            className={`flex-1 min-w-0 hidden xl:block transition-opacity duration-150 ${
+              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <p className="text-[14px] font-bold text-[var(--text)] truncate whitespace-nowrap leading-tight">
+              {displayName}
+            </p>
+            <p className="text-[13px] text-[var(--muted)] font-normal truncate whitespace-nowrap font-mono">
+              @{username}
+            </p>
+          </div>
 
-              <MoreHorizontal size={18} className="text-[var(--text-3)] shrink-0 hidden xl:block" />
-            </>
-          )}
+          <MoreHorizontal
+            size={18}
+            className={`text-[var(--text-3)] shrink-0 hidden xl:block transition-opacity duration-150 ${
+              isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          />
         </button>
       </div>
     </aside>

@@ -922,7 +922,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
       }
       setViewProfileUserId(next === 'profile' ? targetUserId || null : null)
       if (typeof window !== 'undefined') {
-        let url = next === 'home' ? '/' : `/?view=${next}`
+        let url = next === 'home' ? '/app' : `/app?view=${next}`
         if (next === 'profile' && targetUserId) {
           url += `&userId=${encodeURIComponent(targetUserId)}`
         }
@@ -1005,6 +1005,12 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           setViewProfileUserId(u || null)
         } else {
           setViewProfileUserId(null)
+        }
+        if (v === 'messages') {
+          const chatId = params.get('chat') || params.get('thread')
+          if (chatId) {
+            setActiveChatFriend(chatId)
+          }
         }
       }
     }
@@ -1557,104 +1563,112 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         feedDensity={state.feedDensity}
       />
       <main className="w-full min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-x-clip" data-locked={locked ? 'true' : undefined}>
-        {view === 'messages' ? (
-          <FullscreenMessenger
-            initialThreadId={state.chatActiveFriendId || undefined}
-            currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
-            onNavigate={navigate}
-            onCompose={() => setComposer(true)}
-            onOpenProfile={() => navigate('profile')}
-            onOpenAuth={openAuth}
-            onFocusIntentions={handleFocusIntentions}
-          />
-        ) : (
-          <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
-            <div className="flex flex-row w-full max-w-[1265px] justify-center">
-              <Sidebar
-                className="hidden md:flex w-[72px] xl:w-[275px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none border-r border-[var(--line)]"
-                view={view}
-                onNavigate={navigate}
-                onFocusIntentions={handleFocusIntentions}
-                onCompose={() => setComposer(true)}
-                onOpenProfile={() => navigate('profile')}
-                onOpenAuth={openAuth}
-                onNotify={notify}
-                streak={streakState.streak}
-              />
+        <div className="flex justify-center min-h-screen bg-[var(--bg)] text-[var(--text)] w-full">
+          <div className="flex flex-row w-full max-w-[1265px] justify-start xl:justify-center">
+            <Sidebar
+              className="hidden md:flex shrink-0 sticky top-0 h-screen select-none border-r border-[var(--line)]"
+              isCollapsed={view === 'messages'}
+              view={view}
+              onNavigate={navigate}
+              onFocusIntentions={handleFocusIntentions}
+              onCompose={() => setComposer(true)}
+              onOpenProfile={() => navigate('profile')}
+              onOpenAuth={openAuth}
+              onNotify={notify}
+              streak={streakState.streak}
+            />
 
-              {/* Центральная колонка */}
-              <section
-                className="w-full max-w-[600px] md:w-[600px] shrink-0 min-h-screen border-r border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
-                aria-label="Основное содержимое"
-              >
-                {view === 'home' && (
-                  <MobileTopBar
-                    onNavigate={navigate}
-                    onNotify={notify}
-                    onOpenFriends={openFriendsModal}
-                    streak={streakState.streak}
-                    streakStatus={streakState.status}
-                    hoursLeft={streakState.hoursLeft}
-                  />
-                )}
-
-                {/* Предупреждение об истечении подписки за 3 дня (CONTRACT Шаг 12) */}
-                {view === 'home' && subStatus.isExpiringSoon && (
-                  <div
-                    id="subscription-expiring-soon-banner"
-                    className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex items-center gap-2 text-amber-300 min-w-0">
-                      <AlertTriangle size={16} className="shrink-0 text-amber-400" />
-                      <span className="truncate">
-                        Подписка <b>{TIER_NAMES[subStatus.effectiveTier]}</b> истекает через{' '}
-                        <b>{subStatus.daysRemaining} {subStatus.daysRemaining === 1 ? 'день' : 'дня'}</b>
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      id="renew-expiring-subscription-btn"
-                      onClick={() => setPremiumModalOpen(true)}
-                      className="px-3 py-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white font-bold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
-                    >
-                      Продлить
-                    </button>
-                  </div>
-                )}
-                <motion.div
-                  key={view}
-                  className="view w-full"
-                  initial={{ opacity: 0.95 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.04 }}
+            {view === 'messages' ? (
+              <div className="flex-1 min-w-0 h-[100dvh] overflow-hidden border-r border-[var(--line)]">
+                <FullscreenMessenger
+                  embedded={true}
+                  initialThreadId={state.chatActiveFriendId || undefined}
+                  currentUserId={currentUser?.id || state.auth?.activeAccountId || 'local-user'}
+                  onNavigate={navigate}
+                  onCompose={() => setComposer(true)}
+                  onOpenProfile={() => navigate('profile')}
+                  onOpenAuth={openAuth}
+                  onFocusIntentions={handleFocusIntentions}
+                />
+              </div>
+            ) : (
+              <>
+                {/* Центральная колонка */}
+                <section
+                  className="w-full max-w-[600px] md:w-[600px] shrink-0 min-h-screen border-r border-[var(--line)] pb-[calc(53px+env(safe-area-inset-bottom)+70px)] md:pb-0"
+                  aria-label="Основное содержимое"
                 >
-                  {content[view]}
-                </motion.div>
-              </section>
+                  {view === 'home' && (
+                    <MobileTopBar
+                      onNavigate={navigate}
+                      onNotify={notify}
+                      onOpenFriends={openFriendsModal}
+                      streak={streakState.streak}
+                      streakStatus={streakState.status}
+                      hoursLeft={streakState.hoursLeft}
+                    />
+                  )}
 
-              <RightRail
-                className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block"
-                onNavigate={navigate}
-                onCompose={() => setComposer(true)}
-                streak={streakState.streak}
-                streakStatus={streakState.status}
-                hoursLeft={streakState.hoursLeft}
-                isDemo={state.isDemo}
-                onNotify={notify}
-                onOpenFriends={openFriendsModal}
-                soundEnabled={state.soundEnabled}
-              />
-            </div>
+                  {/* Предупреждение об истечении подписки за 3 дня (CONTRACT Шаг 12) */}
+                  {view === 'home' && subStatus.isExpiringSoon && (
+                    <div
+                      id="subscription-expiring-soon-banner"
+                      className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3 text-xs"
+                    >
+                      <div className="flex items-center gap-2 text-amber-300 min-w-0">
+                        <AlertTriangle size={16} className="shrink-0 text-amber-400" />
+                        <span className="truncate">
+                          Подписка <b>{TIER_NAMES[subStatus.effectiveTier]}</b> истекает через{' '}
+                          <b>{subStatus.daysRemaining} {subStatus.daysRemaining === 1 ? 'день' : 'дня'}</b>
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        id="renew-expiring-subscription-btn"
+                        onClick={() => setPremiumModalOpen(true)}
+                        className="px-3 py-1 rounded-full bg-[var(--accent,#FF6A1A)] text-white font-bold hover:opacity-90 transition-opacity shrink-0 shadow-sm"
+                      >
+                        Продлить
+                      </button>
+                    </div>
+                  )}
+                  <motion.div
+                    key={view}
+                    className="view w-full"
+                    initial={{ opacity: 0.95 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.04 }}
+                  >
+                    {content[view]}
+                  </motion.div>
+                </section>
 
-            <ScrollPill onScrollBottom={handleScrollBottom} />
+                <RightRail
+                  className="right-rail w-[350px] shrink-0 sticky top-0 h-screen overflow-y-auto select-none pl-6 hidden lg:block xl:mr-10"
+                  onNavigate={navigate}
+                  onCompose={() => setComposer(true)}
+                  streak={streakState.streak}
+                  streakStatus={streakState.status}
+                  hoursLeft={streakState.hoursLeft}
+                  isDemo={state.isDemo}
+                  onNotify={notify}
+                  onOpenFriends={openFriendsModal}
+                  soundEnabled={state.soundEnabled}
+                />
+              </>
+            )}
+          </div>
 
+          {view !== 'messages' && <ScrollPill onScrollBottom={handleScrollBottom} />}
+
+          {view !== 'messages' && (
             <BottomNav
               view={view}
               onNavigate={navigate}
               onCompose={() => setComposer(true)}
             />
-          </div>
-        )}
+          )}
+        </div>
 
         <AnimatePresence>
           {composer && (

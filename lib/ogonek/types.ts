@@ -755,6 +755,7 @@ export type ChatPollOption = {
   text: string
   votes: number
   votedByMe?: boolean
+  voterIds?: string[]
 }
 
 /** Опрос внутри сообщения */
@@ -778,6 +779,8 @@ export type ChatTag = {
 /** Одно сообщение переписки */
 export type ChatMessage = {
   id: string
+  /** UUID записи в Supabase direct_messages (для точного удаления/обновления по Realtime DELETE) */
+  dbId?: string | null
   /** 'me' — пользователь, иначе id друга-собеседника */
   authorId: string
   text: string

@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { resolveBrowserSession } from '@/lib/ogonek/client-session'
+import { syncSupabaseAuthNow } from '@/lib/ogonek/use-ogonek-store'
 import { AppleNavbar } from './apple-navbar'
 import { AppleFooter } from './apple-footer'
 import { MediaSlot } from './media-slot'
@@ -42,16 +44,19 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
       window.location.search.includes('view=landing')
     if (isExplicitLandingView) return
 
-    try {
-      const raw = localStorage.getItem('ogonek.store.v1')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
-          window.location.replace('/app')
-          return
-        }
+    let active = true
+    ;(async () => {
+      const synced = await syncSupabaseAuthNow()
+      const session = synced ? { authenticated: true } : await resolveBrowserSession()
+      if (active && session.authenticated) {
+        const search = window.location.search || ''
+        window.location.replace(search.includes('view=') ? `/app${search}` : '/app')
       }
-    } catch {}
+    })()
+
+    return () => {
+      active = false
+    }
   }, [])
 
   const openAuth = (mode: AuthMode) => setAuthModal(mode)

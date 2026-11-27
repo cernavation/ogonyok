@@ -8,9 +8,16 @@ import {
   publishStoryToDb,
   deleteStoryFromDb,
   sendDirectMessageToDb,
+  getAllUserDirectMessages,
+  getProfilesByIds,
+  deleteDirectMessageFromDb,
+  deleteDirectMessagesBulkFromDb,
+  deleteThreadMessagesFromDb,
+  markDirectMessagesAsRead,
   updateDirectMessageReactions,
   updateDirectMessagePin,
   updateDirectMessageBody,
+  updateDirectMessagePoll,
   updateDirectMessageTranscript,
   addEvidenceVaultItem,
   toggleEvidenceVaultPin,
@@ -210,6 +217,166 @@ import { DEFAULT_VISIBILITY, normalizeVisibility } from './visibility'
 let cachedState: OgonekStoreState = DEFAULT_STORE_STATE
 let isInitialized = false
 let hasInitializedSupabaseSync = false
+let inFlightSessionSync: Promise<boolean> | null = null
+
+async function hydrateStateFromSupabaseSession(
+  client: NonNullable<ReturnType<typeof getSupabase>>,
+  session: { user: any }
+): Promise<boolean> {
+  if (!session?.user) return false
+  const userId = session.user.id
+  const userMeta = session.user.user_metadata || {}
+  const username = userMeta.username || session.user.email?.split('@')[0] || 'user'
+  const displayName = userMeta.display_name || username
+
+  let avatarImage = cachedState.profile.avatarImage
+  let bannerImage = cachedState.profile.bannerImage
+  let dbProfile: any = null
+  let userLevel = cachedState.profile.difficultyLevel || cachedState.profile.level || 1
+  const isCerna = username.toLowerCase() === 'cernavation'
+  let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' = isCerna ? 'ultra' : 'free'
+  let dbSubscriptionExpiresAt: string | null = null
+
+  try {
+    const res = await client
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+    dbProfile = res.data
+    if (dbProfile) {
+      if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
+      if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
+      userLevel = dbProfile.level || dbProfile.settings?.level || dbProfile.difficulty_level || userLevel
+      if (dbProfile.subscription_tier) {
+        dbSubscriptionTier = dbProfile.subscription_tier
+      }
+      if (dbProfile.subscription_expires_at) {
+        dbSubscriptionExpiresAt = dbProfile.subscription_expires_at
+      } else if (dbProfile.subscription_valid_until) {
+        dbSubscriptionExpiresAt = dbProfile.subscription_valid_until
+      }
+    }
+  } catch {}
+
+  if (isCerna) {
+    dbSubscriptionTier = 'ultra'
+  }
+
+  const nowISO = new Date().toISOString()
+  const existing = cachedState.auth.accounts.find((a) => a.id === userId)
+  let account: AuthAccount
+  if (existing) {
+    account = {
+      ...existing,
+      lastActiveISO: nowISO,
+      snapshot: {
+        ...existing.snapshot,
+        username,
+        displayName: dbProfile?.display_name || displayName,
+        avatarImage,
+        bannerImage,
+        subscription_tier: dbSubscriptionTier,
+        subscription_expires_at: dbSubscriptionExpiresAt,
+        subscription_valid_until: dbSubscriptionExpiresAt,
+        verified: dbProfile?.verified ?? (isCerna ? true : existing.snapshot.verified),
+      },
+    }
+  } else {
+    account = createAccount({
+      provider: 'email',
+      displayName,
+      username,
+      email: session.user.email,
+      verified: isCerna ? true : (dbProfile?.verified ?? true),
+      now: new Date(nowISO),
+    })
+    account.id = userId
+    account.snapshot.avatarImage = avatarImage
+    account.snapshot.bannerImage = bannerImage
+    account.snapshot.subscription_tier = dbSubscriptionTier
+    account.snapshot.subscription_expires_at = dbSubscriptionExpiresAt
+    account.snapshot.subscription_valid_until = dbSubscriptionExpiresAt
+  }
+
+  cachedState = {
+    ...cachedState,
+    profile: sanitizeProfile({
+      ...cachedState.profile,
+      username,
+      displayName: account.snapshot.displayName,
+      avatarImage,
+      bannerImage,
+      coverUrl: bannerImage,
+      level: userLevel,
+      difficultyLevel: userLevel,
+      verified: isCerna ? true : (dbProfile?.verified ?? cachedState.profile.verified),
+      subscription_tier: dbSubscriptionTier,
+      subscription_expires_at: dbSubscriptionExpiresAt,
+      subscription_valid_until: dbSubscriptionExpiresAt,
+    }),
+    auth: {
+      ...cachedState.auth,
+      accounts: [
+        ...cachedState.auth.accounts.filter(
+          (a) => a.id !== userId && a.snapshot.username?.toLowerCase() !== username.toLowerCase()
+        ),
+        account,
+      ],
+      activeAccountId: userId,
+      signedIn: true,
+      updatedAtISO: nowISO,
+    },
+  }
+  saveStore(cachedState, undefined, true)
+  emitChange()
+  return true
+}
+
+/**
+ * Awaits active Supabase session verification & hydrates local auth store
+ * so page reloads on any tab stay inside the authenticated account.
+ */
+export async function syncSupabaseAuthNow(): Promise<boolean> {
+  if (typeof window === 'undefined') return false
+  getSnapshot()
+  if (inFlightSessionSync) return inFlightSessionSync
+
+  inFlightSessionSync = (async () => {
+    try {
+      const client = getSupabase()
+      if (!client) {
+        return Boolean(cachedState.auth?.signedIn && cachedState.auth?.activeAccountId)
+      }
+      const { data: { session }, error } = await client.auth.getSession()
+      if (session?.user) {
+        return await hydrateStateFromSupabaseSession(client, session)
+      }
+      if (!error && (!cachedState.auth.signedIn || cachedState.auth.accounts.length === 0)) {
+        cachedState = {
+          ...cachedState,
+          profile: DEFAULT_PROFILE,
+          auth: {
+            ...cachedState.auth,
+            signedIn: false,
+            activeAccountId: null,
+            accounts: [],
+          },
+        }
+        saveStore(cachedState, undefined, true)
+        emitChange()
+        return false
+      }
+      return Boolean(cachedState.auth?.signedIn && cachedState.auth?.activeAccountId)
+    } catch {
+      return Boolean(cachedState.auth?.signedIn && cachedState.auth?.activeAccountId)
+    } finally {
+      inFlightSessionSync = null
+    }
+  })()
+
+  return inFlightSessionSync
+}
 
 function initSupabaseSessionSync() {
   if (hasInitializedSupabaseSync || typeof window === 'undefined') return
@@ -219,131 +386,7 @@ function initSupabaseSessionSync() {
     const client = getSupabase()
     if (!client) return
 
-    client.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const userId = session.user.id
-        const userMeta = session.user.user_metadata || {}
-        const username = userMeta.username || session.user.email?.split('@')[0] || 'user'
-        const displayName = userMeta.display_name || username
-
-        let avatarImage = cachedState.profile.avatarImage
-        let bannerImage = cachedState.profile.bannerImage
-        let dbProfile: any = null
-        let userLevel = cachedState.profile.difficultyLevel || cachedState.profile.level || 1
-        const isCerna = username.toLowerCase() === 'cernavation'
-        let dbSubscriptionTier: 'free' | 'pro' | 'premium' | 'ultra' = isCerna ? 'ultra' : 'free'
-        let dbSubscriptionExpiresAt: string | null = null
-
-        try {
-          const res = await client
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single()
-          dbProfile = res.data
-          if (dbProfile) {
-            if (dbProfile.avatar_image) avatarImage = dbProfile.avatar_image
-            if (dbProfile.banner_image) bannerImage = dbProfile.banner_image
-            userLevel = dbProfile.level || dbProfile.settings?.level || dbProfile.difficulty_level || userLevel
-            if (dbProfile.subscription_tier) {
-              dbSubscriptionTier = dbProfile.subscription_tier
-            }
-            if (dbProfile.subscription_expires_at) {
-              dbSubscriptionExpiresAt = dbProfile.subscription_expires_at
-            } else if (dbProfile.subscription_valid_until) {
-              dbSubscriptionExpiresAt = dbProfile.subscription_valid_until
-            }
-          }
-        } catch {}
-
-        if (isCerna) {
-          dbSubscriptionTier = 'ultra'
-        }
-
-        const nowISO = new Date().toISOString()
-        const existing = cachedState.auth.accounts.find((a) => a.id === userId)
-        let account: AuthAccount
-        if (existing) {
-          account = {
-            ...existing,
-            snapshot: {
-              ...existing.snapshot,
-              username,
-              displayName: dbProfile?.display_name || displayName,
-              avatarImage,
-              bannerImage,
-              subscription_tier: dbSubscriptionTier,
-              subscription_expires_at: dbSubscriptionExpiresAt,
-              subscription_valid_until: dbSubscriptionExpiresAt,
-              verified: dbProfile?.verified ?? (isCerna ? true : existing.snapshot.verified),
-            },
-          }
-        } else {
-          account = createAccount({
-            provider: 'email',
-            displayName,
-            username,
-            email: session.user.email,
-            verified: isCerna ? true : (dbProfile?.verified ?? true),
-            now: new Date(nowISO),
-          })
-          account.id = userId
-          account.snapshot.avatarImage = avatarImage
-          account.snapshot.bannerImage = bannerImage
-          account.snapshot.subscription_tier = dbSubscriptionTier
-          account.snapshot.subscription_expires_at = dbSubscriptionExpiresAt
-          account.snapshot.subscription_valid_until = dbSubscriptionExpiresAt
-        }
-
-        cachedState = {
-          ...cachedState,
-          profile: sanitizeProfile({
-            ...cachedState.profile,
-            username,
-            displayName: account.snapshot.displayName,
-            avatarImage,
-            bannerImage,
-            coverUrl: bannerImage,
-            level: userLevel,
-            difficultyLevel: userLevel,
-            verified: isCerna ? true : (dbProfile?.verified ?? cachedState.profile.verified),
-            subscription_tier: dbSubscriptionTier,
-            subscription_expires_at: dbSubscriptionExpiresAt,
-            subscription_valid_until: dbSubscriptionExpiresAt,
-          }),
-          auth: {
-            ...cachedState.auth,
-            accounts: [
-              ...cachedState.auth.accounts.filter(
-                (a) => a.id !== userId && a.snapshot.username?.toLowerCase() !== username.toLowerCase()
-              ),
-              account,
-            ],
-            activeAccountId: userId,
-            signedIn: true,
-            updatedAtISO: nowISO,
-          },
-        }
-        saveStore(cachedState)
-        emitChange()
-      } else {
-        // Если в Supabase сессия отсутствует, а пользователь не залогинен локально
-        if (!cachedState.auth.signedIn || cachedState.auth.accounts.length === 0) {
-          cachedState = {
-            ...cachedState,
-            profile: DEFAULT_PROFILE,
-            auth: {
-              ...cachedState.auth,
-              signedIn: false,
-              activeAccountId: null,
-              accounts: [],
-            },
-          }
-          saveStore(cachedState)
-          emitChange()
-        }
-      }
-    }).catch(() => {})
+    void syncSupabaseAuthNow()
 
     client.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT') {
@@ -357,8 +400,13 @@ function initSupabaseSessionSync() {
             accounts: [],
           },
         }
-        saveStore(cachedState)
+        saveStore(cachedState, undefined, true)
         emitChange()
+      } else if (
+        session?.user &&
+        (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION')
+      ) {
+        await hydrateStateFromSupabaseSession(client, session)
       }
     })
 
@@ -393,12 +441,21 @@ function ensureSanitizedMessengerState(state: OgonekStoreState): OgonekStoreStat
     } else {
       const cleanThreads: ChatThreads = {}
       for (const [key, t] of Object.entries(threads)) {
-        if (!key || key === 'undefined' || key === 'null' || !key.trim() || !t || typeof t !== 'object') {
+        const cleanKey = typeof key === 'string' ? key.trim() : ''
+        if (
+          !cleanKey ||
+          cleanKey === 'undefined' ||
+          cleanKey === 'null' ||
+          cleanKey === 'ilonmusk-seed' ||
+          cleanKey === 'cernavation-seed' ||
+          !t ||
+          typeof t !== 'object'
+        ) {
           needsUpdate = true
           continue
         }
         const threadObj = t as any
-        cleanThreads[key.trim()] = {
+        cleanThreads[cleanKey] = {
           ...threadObj,
           messages: Array.isArray(threadObj.messages) ? threadObj.messages : [],
           draft: typeof threadObj.draft === 'string' ? threadObj.draft : '',
@@ -410,7 +467,13 @@ function ensureSanitizedMessengerState(state: OgonekStoreState): OgonekStoreStat
     }
 
     let activeId = state.chatActiveFriendId
-    if (activeId === 'undefined' || activeId === 'null' || (typeof activeId === 'string' && !activeId.trim())) {
+    if (
+      activeId === 'undefined' ||
+      activeId === 'null' ||
+      activeId === 'ilonmusk-seed' ||
+      activeId === 'cernavation-seed' ||
+      (typeof activeId === 'string' && !activeId.trim())
+    ) {
       activeId = null
       needsUpdate = true
     }
@@ -1077,13 +1140,16 @@ export function useOgonekStore() {
     return getMemoizedCurrentUser(state)
   }, [state.auth.signedIn, state.auth.activeAccountId, state.auth.accounts, state.profile])
 
-  const updateStore = useCallback((updater: (prev: OgonekStoreState) => OgonekStoreState) => {
-    const current = getSnapshot()
-    const next = updater(current)
-    cachedState = next
-    saveStore(next)
-    emitChange()
-  }, [])
+  const updateStore = useCallback(
+    (updater: (prev: OgonekStoreState) => OgonekStoreState, immediate = false) => {
+      const current = getSnapshot()
+      const next = updater(current)
+      cachedState = next
+      saveStore(next, undefined, immediate)
+      emitChange()
+    },
+    []
+  )
 
   const addDay = useCallback(
     (day: Day) => {
@@ -4083,6 +4149,7 @@ export function useOgonekStore() {
         silent?: boolean
         scheduledForISO?: string | null
         poll?: ChatPoll | null
+        linkPreview?: any
         type?: ChatMessageType
         call_meta?: {
           durationSeconds?: number
@@ -4119,6 +4186,7 @@ export function useOgonekStore() {
         silent: extra?.silent ?? false,
         scheduledForISO: extra?.scheduledForISO ?? null,
         poll: extra?.poll ?? null,
+        linkPreview: extra?.linkPreview ?? null,
         type: extra?.type,
         call_meta: extra?.call_meta ?? null,
         status: isScheduled ? 'sending' : 'sent',
@@ -4144,7 +4212,7 @@ export function useOgonekStore() {
             [friendId]: { ...thread, messages: [...thread.messages, message], draft: '' },
           },
         }
-      })
+      }, true)
 
       // Запись строки в таблицу public.direct_messages Supabase
       if (!isScheduled) {
@@ -4164,8 +4232,31 @@ export function useOgonekStore() {
               replyTo: extra?.replyTo ?? null,
               forwardFrom: extra?.forwardFrom ?? null,
               poll: extra?.poll ?? null,
+              linkPreview: extra?.linkPreview ?? null,
               type: extra?.type ?? 'text',
-            }).catch((err) => console.warn('[Ogonek] Direct message insert error:', err))
+            })
+              .then((res) => {
+                if (res?.ok && res.message?.id) {
+                  updateStore((prev) => {
+                    const threads = prev.chatThreads ?? {}
+                    const thread = threads[friendId]
+                    if (!thread) return prev
+                    return {
+                      ...prev,
+                      chatThreads: {
+                        ...threads,
+                        [friendId]: {
+                          ...thread,
+                          messages: thread.messages.map((m) =>
+                            m.id === message.id ? { ...m, dbId: res.message!.id, status: 'sent' } : m
+                          ),
+                        },
+                      },
+                    }
+                  }, true)
+                }
+              })
+              .catch((err) => console.warn('[Ogonek] Direct message insert error:', err))
           }
         } catch (e) {
           console.warn('[Ogonek] Direct message insert error:', e)
@@ -4188,12 +4279,14 @@ export function useOgonekStore() {
       if (!clean) return false
 
       let success = false
+      let targetDbId = messageId
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
         const messages = thread.messages.map((m) => {
           if (m.id === messageId && m.authorId === MY_CHAT_ID) {
             success = true
+            targetDbId = m.dbId || m.id
             return {
               ...m,
               text: clean,
@@ -4210,10 +4303,10 @@ export function useOgonekStore() {
             [friendId]: { ...thread, messages },
           },
         }
-      })
+      }, true)
 
       if (success) {
-        updateDirectMessageBody(messageId, clean).catch((err) =>
+        updateDirectMessageBody(targetDbId, clean).catch((err) =>
           console.warn('[Ogonek] Edit message DB error:', err)
         )
       }
@@ -4222,11 +4315,16 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Удаление нескольких сообщений из переписки */
+  /** Удаление нескольких сообщений из переписки + Supabase */
   const deleteChatMessages = useCallback(
-    (friendId: string, messageIds: string[]) => {
+    async (friendId: string, messageIds: string[]) => {
       if (!friendId || !Array.isArray(messageIds) || messageIds.length === 0) return
       const idsSet = new Set(messageIds)
+      const currentThread = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+      const dbTargets = currentThread.messages
+        .filter((m) => idsSet.has(m.id) || (m.dbId && idsSet.has(m.dbId)))
+        .map((m) => m.dbId || m.id)
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
@@ -4240,7 +4338,12 @@ export function useOgonekStore() {
             },
           },
         }
-      })
+      }, true)
+
+      const targetIds = dbTargets.length > 0 ? dbTargets : messageIds
+      await deleteDirectMessagesBulkFromDb(targetIds).catch((err) =>
+        console.warn('[Ogonek] Bulk delete DB error:', err)
+      )
     },
     [updateStore]
   )
@@ -4250,6 +4353,7 @@ export function useOgonekStore() {
     (friendId: string, messageId: string): boolean => {
       if (!friendId || !messageId) return false
       let isPinned = false
+      let targetDbId = messageId
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
@@ -4258,7 +4362,10 @@ export function useOgonekStore() {
         isPinned = !currentlyPinned
 
         const messages = thread.messages.map((m) => {
-          if (m.id === messageId) return { ...m, pinned: isPinned }
+          if (m.id === messageId) {
+            targetDbId = m.dbId || m.id
+            return { ...m, pinned: isPinned }
+          }
           if (currentlyPinned && m.pinned) return { ...m, pinned: false }
           return m
         })
@@ -4274,9 +4381,9 @@ export function useOgonekStore() {
             },
           },
         }
-      })
+      }, true)
 
-      updateDirectMessagePin(messageId, isPinned).catch((err) =>
+      updateDirectMessagePin(targetDbId, isPinned).catch((err) =>
         console.warn('[Ogonek] Update pin DB error:', err)
       )
       return isPinned
@@ -4711,11 +4818,13 @@ export function useOgonekStore() {
       )
 
       let nextReactions: any[] = []
+      let targetDbId = messageId
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const t = threadOf(threads, friendId)
         const messages = t.messages.map((m) => {
           if (m.id !== messageId) return m
+          targetDbId = m.dbId || m.id
           const mine = m.reactions.some((r) => r.by === MY_CHAT_ID && r.emojiId === emojiId)
           const updated = mine
             ? m.reactions.filter((r) => !(r.by === MY_CHAT_ID && r.emojiId === emojiId))
@@ -4727,9 +4836,9 @@ export function useOgonekStore() {
           }
         })
         return { ...prev, chatThreads: { ...threads, [friendId]: { ...t, messages } } }
-      })
+      }, true)
 
-      updateDirectMessageReactions(messageId, nextReactions).catch((err) =>
+      updateDirectMessageReactions(targetDbId, nextReactions).catch((err) =>
         console.warn('[Ogonek] Update reactions DB error:', err)
       )
 
@@ -4756,20 +4865,33 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Помечает переписку прочитанной (сбрасывает счётчик непрочитанных) */
+  /** Помечает переписку прочитанной (сбрасывает счётчик непрочитанных и пишет в Supabase) */
   const markThreadRead = useCallback(
     (friendId: string) => {
       if (!friendId) return
       const nowISO = new Date().toISOString()
+      const currentUserId = getSnapshot().auth?.activeAccountId
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threads[friendId]
-        if (!thread || unreadCount(thread) === 0) return prev
+        if (!thread) return prev
+        const hasUnread = unreadCount(thread) > 0
+        if (!hasUnread && thread.readAtISO) return prev
+        const updatedMessages = thread.messages.map((m) =>
+          m.authorId !== MY_CHAT_ID && !m.read ? { ...m, read: true } : m
+        )
         return {
           ...prev,
-          chatThreads: { ...threads, [friendId]: { ...thread, readAtISO: nowISO } },
+          chatThreads: {
+            ...threads,
+            [friendId]: { ...thread, readAtISO: nowISO, messages: updatedMessages },
+          },
         }
-      })
+      }, true)
+
+      if (currentUserId && !currentUserId.startsWith('anon-') && !currentUserId.startsWith('acct-guest')) {
+        markDirectMessagesAsRead(currentUserId, friendId).catch(() => {})
+      }
     },
     [updateStore]
   )
@@ -4790,13 +4912,23 @@ export function useOgonekStore() {
         }
       }
       return changed ? { ...prev, chatThreads: next } : prev
-    })
+    }, true)
   }, [updateStore])
 
-  /** Очищает историю переписки, оставляя сам диалог */
+  /** Очищает историю переписки (реально удаляет сообщения в Supabase + локально) */
   const clearThreadMessages = useCallback(
-    (friendId: string) => {
-      if (!friendId) return
+    async (friendId: string): Promise<boolean> => {
+      if (!friendId) return false
+      const snap = getSnapshot()
+      let uid = snap.auth?.activeAccountId || null
+      if (!uid) {
+        try {
+          const client = getSupabase()
+          const s = await client?.auth.getSession()
+          uid = s?.data?.session?.user?.id || null
+        } catch {}
+      }
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
@@ -4804,37 +4936,83 @@ export function useOgonekStore() {
           ...prev,
           chatThreads: {
             ...threads,
-            [friendId]: { ...thread, messages: [], readAtISO: new Date().toISOString() },
+            [friendId]: {
+              ...thread,
+              messages: [],
+              scheduledMessages: [],
+              pinnedMessageId: null,
+              readAtISO: new Date().toISOString(),
+            },
           },
         }
-      })
+      }, true)
+
+      if (uid && !uid.startsWith('anon-') && !uid.startsWith('acct-guest')) {
+        const res = await deleteThreadMessagesFromDb(uid, friendId)
+        if (!res.ok) {
+          console.warn('[Ogonek] Clear thread history DB error:', res.error)
+          return false
+        }
+      }
+      return true
     },
     [updateStore]
   )
 
-  /** Удаляет одно сообщение из переписки (у себя или для всех) */
+  /** Полностью удаляет чат из списка диалогов и удаляет переписку в Supabase */
+  const deleteChatThread = useCallback(
+    async (friendId: string): Promise<boolean> => {
+      if (!friendId) return false
+      const snap = getSnapshot()
+      let uid = snap.auth?.activeAccountId || null
+      if (!uid) {
+        try {
+          const client = getSupabase()
+          const s = await client?.auth.getSession()
+          uid = s?.data?.session?.user?.id || null
+        } catch {}
+      }
+
+      updateStore((prev) => {
+        const threads = { ...(prev.chatThreads ?? {}) }
+        delete threads[friendId]
+        const remainingIds = Object.keys(threads)
+        return {
+          ...prev,
+          chatThreads: threads,
+          chatActiveFriendId:
+            prev.chatActiveFriendId === friendId ? remainingIds[0] ?? null : prev.chatActiveFriendId,
+        }
+      }, true)
+
+      if (uid && !uid.startsWith('anon-') && !uid.startsWith('acct-guest')) {
+        const res = await deleteThreadMessagesFromDb(uid, friendId)
+        if (!res.ok) {
+          console.warn('[Ogonek] Delete chat thread DB error:', res.error)
+          return false
+        }
+      }
+      return true
+    },
+    [updateStore]
+  )
+
+  /** Удаляет одно сообщение из переписки (реально удаляется в Supabase) */
   const deleteChatMessage = useCallback(
-    (friendId: string, messageId: string, forEveryone = false) => {
-      if (!friendId || !messageId) return
+    async (friendId: string, messageId: string, forEveryone = false): Promise<boolean> => {
+      if (!friendId || !messageId) return false
+      const currentThread = threadOf(getSnapshot().chatThreads ?? {}, friendId)
+      const targetMsg = currentThread.messages.find((m) => m.id === messageId || m.dbId === messageId)
+      const dbTargetId = targetMsg?.dbId || messageId
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
         let messages = thread.messages
         if (forEveryone) {
-          messages = messages.map((m) =>
-            m.id === messageId
-              ? {
-                  ...m,
-                  deletedForAll: true,
-                  text: 'Сообщение удалено',
-                  media: null,
-                  attachment: null,
-                  poll: null,
-                }
-              : m
-          )
+          messages = messages.filter((m) => m.id !== messageId && m.dbId !== messageId)
         } else {
-          messages = messages.filter((m) => m.id !== messageId)
+          messages = messages.filter((m) => m.id !== messageId && m.dbId !== messageId)
         }
         const scheduled = (thread.scheduledMessages ?? []).filter((m) => m.id !== messageId)
         return {
@@ -4843,12 +5021,20 @@ export function useOgonekStore() {
             ...threads,
             [friendId]: {
               ...thread,
+              pinnedMessageId: thread.pinnedMessageId === messageId ? null : thread.pinnedMessageId,
               messages,
               scheduledMessages: scheduled,
             },
           },
         }
-      })
+      }, true)
+
+      const res = await deleteDirectMessageFromDb(dbTargetId)
+      if (!res.ok) {
+        console.warn('[Ogonek] Delete message DB error:', res.error)
+        return false
+      }
+      return true
     },
     [updateStore]
   )
@@ -4912,33 +5098,59 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Голосование в опросе */
+  /** Голосование в опросе с сохранением голоса в Supabase */
   const voteInPoll = useCallback(
     (friendId: string, messageId: string, optionIndex: number) => {
+      const snap = getSnapshot()
+      const voterId = snap.auth?.activeAccountId || MY_CHAT_ID
+      let nextPoll: ChatPoll | null = null
+      let targetDbId = messageId
+
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, friendId)
         const messages = thread.messages.map((m) => {
           if (m.id === messageId && m.poll) {
+            targetDbId = m.dbId || m.id
             const poll = m.poll
-            const alreadyVoted = Boolean(poll.options[optionIndex]?.votedByMe)
+            const targetOpt = poll.options[optionIndex]
+            const alreadyVoted = Boolean(
+              targetOpt?.voterIds ? targetOpt.voterIds.includes(voterId) : targetOpt?.votedByMe
+            )
             const newOptions = poll.options.map((opt, idx) => {
+              const existingVoters = Array.isArray(opt.voterIds) ? opt.voterIds : []
               if (idx === optionIndex) {
+                const updatedVoters = alreadyVoted
+                  ? existingVoters.filter((id) => id !== voterId)
+                  : Array.from(new Set([...existingVoters, voterId]))
+                const nextVotes =
+                  existingVoters.length > 0 || !alreadyVoted
+                    ? Math.max(updatedVoters.length, alreadyVoted ? Math.max(0, opt.votes - 1) : opt.votes + 1)
+                    : Math.max(0, opt.votes - 1)
                 return {
                   ...opt,
-                  votes: alreadyVoted ? Math.max(0, opt.votes - 1) : opt.votes + 1,
+                  voterIds: updatedVoters,
+                  votes: updatedVoters.length > 0 || existingVoters.length > 0 ? updatedVoters.length : nextVotes,
                   votedByMe: !alreadyVoted,
                 }
               }
-              if (!poll.isMulti && !alreadyVoted && opt.votedByMe) {
-                return { ...opt, votes: Math.max(0, opt.votes - 1), votedByMe: false }
+              const wasOptVoted = existingVoters.includes(voterId) || Boolean(opt.votedByMe)
+              if (!poll.isMulti && !alreadyVoted && wasOptVoted) {
+                const updatedVoters = existingVoters.filter((id) => id !== voterId)
+                return {
+                  ...opt,
+                  voterIds: updatedVoters,
+                  votes: existingVoters.length > 0 ? updatedVoters.length : Math.max(0, opt.votes - 1),
+                  votedByMe: false,
+                }
               }
               return opt
             })
             const totalVotes = newOptions.reduce((s, o) => s + o.votes, 0)
+            nextPoll = { ...poll, options: newOptions, totalVotes }
             return {
               ...m,
-              poll: { ...poll, options: newOptions, totalVotes },
+              poll: nextPoll,
             }
           }
           return m
@@ -4950,7 +5162,13 @@ export function useOgonekStore() {
             [friendId]: { ...thread, messages },
           },
         }
-      })
+      }, true)
+
+      if (nextPoll) {
+        updateDirectMessagePoll(targetDbId, nextPoll).catch((err) =>
+          console.warn('[Ogonek] Update poll DB error:', err)
+        )
+      }
     },
     [updateStore]
   )
@@ -5114,49 +5332,106 @@ export function useOgonekStore() {
     [updateStore]
   )
 
+  const normalizePollForViewer = useCallback(
+    (rawPoll: ChatPoll | null | undefined, viewerId?: string | null): ChatPoll | null => {
+      if (!rawPoll || typeof rawPoll !== 'object') return null
+      const uid = viewerId || MY_CHAT_ID
+      const options = Array.isArray(rawPoll.options)
+        ? rawPoll.options.map((opt) => {
+            const voters = Array.isArray(opt.voterIds) ? opt.voterIds : null
+            return {
+              ...opt,
+              votes: voters ? voters.length : Number(opt.votes || 0),
+              votedByMe: voters ? voters.includes(uid) : Boolean(opt.votedByMe),
+            }
+          })
+        : []
+      const totalVotes = options.reduce((s, o) => s + o.votes, 0)
+      return { ...rawPoll, options, totalVotes }
+    },
+    []
+  )
+
+  const resolvePeerIdFromRecord = useCallback(
+    (msg: DirectMessageRecord, currentUserId?: string | null): string | null => {
+      if (!msg) return null
+      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
+      if (isMine && msg.recipient_id === currentUserId) {
+        return 'saved-messages'
+      }
+      let peerId = isMine ? msg.recipient_id || null : msg.author_id || null
+      if (!peerId && msg.thread_key && currentUserId) {
+        if (msg.thread_key.startsWith('group:')) {
+          peerId = msg.thread_key.slice('group:'.length)
+        } else {
+          const parts = msg.thread_key.split('_')
+          peerId = parts.find((p) => p !== currentUserId) || parts[0] || null
+        }
+      }
+      if (!peerId || peerId === 'ilonmusk-seed' || peerId === 'cernavation-seed') return null
+      return peerId
+    },
+    []
+  )
+
+  const mapRecordToChatMessage = useCallback(
+    (msg: DirectMessageRecord, currentUserId?: string | null): ChatMessage => {
+      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
+      return {
+        id: msg.client_id || msg.id,
+        dbId: msg.id,
+        authorId: isMine ? MY_CHAT_ID : msg.author_id,
+        text: msg.body || '',
+        createdAtISO: msg.sent_at || msg.created_at || new Date().toISOString(),
+        attachment: msg.attachment ?? null,
+        reactions: Array.isArray(msg.reactions) ? msg.reactions : [],
+        read: Boolean(msg.is_read),
+        system: Boolean(msg.is_system),
+        type: (msg.type as any) || 'text',
+        media: msg.media ?? null,
+        replyTo: msg.reply_to ?? null,
+        forwardFrom: msg.forward_from ?? null,
+        poll: normalizePollForViewer(msg.poll ?? null, currentUserId),
+        linkPreview: msg.link_preview ?? null,
+        pinned: Boolean(msg.is_pinned),
+        editedAtISO: (msg as any).edited_at || (msg.is_edited ? msg.updated_at || new Date().toISOString() : null),
+        status: msg.is_read ? 'read' : 'sent',
+      }
+    },
+    [normalizePollForViewer]
+  )
+
   /** Получение сообщения из Realtime канала Supabase или загрузки диалога */
   const receiveIncomingChatMessage = useCallback(
     (msg: DirectMessageRecord) => {
       if (!msg) return
       const currentUserId = getSnapshot().auth?.activeAccountId
-
-      // Определяем автора и получателя
-      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
-      let peerId = isMine ? msg.recipient_id : msg.author_id
-
-      if (!peerId && msg.thread_key && currentUserId) {
-        // Если recipient_id пуст, извлекаем ID собеседника из симметричного thread_key
-        const parts = msg.thread_key.split('_')
-        peerId = parts.find((p) => p !== currentUserId) || parts[0]
-      }
-
+      const peerId = resolvePeerIdFromRecord(msg, currentUserId)
       if (!peerId) return
 
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
         const thread = threadOf(threads, peerId)
         const messages = Array.isArray(thread.messages) ? thread.messages : []
-        const exists = messages.some(
-          (m) => m && (m.id === msg.id || (msg.client_id && m.id === msg.client_id))
+        const idx = messages.findIndex(
+          (m) => m && (m.id === msg.id || m.dbId === msg.id || (msg.client_id && (m.id === msg.client_id || m.dbId === msg.client_id)))
         )
-        if (exists) return prev
+        const mapped = mapRecordToChatMessage(msg, currentUserId)
 
-        const newMsg: ChatMessage = {
-          id: msg.client_id || msg.id,
-          authorId: isMine ? MY_CHAT_ID : msg.author_id,
-          text: msg.body,
-          createdAtISO: msg.sent_at || msg.created_at || new Date().toISOString(),
-          attachment: msg.attachment ?? null,
-          reactions: Array.isArray(msg.reactions) ? msg.reactions : [],
-          read: Boolean(msg.is_read),
-          system: Boolean(msg.is_system),
-          type: (msg.type as any) || 'text',
-          media: msg.media ?? null,
-          replyTo: msg.reply_to ?? null,
-          forwardFrom: msg.forward_from ?? null,
-          poll: msg.poll ?? null,
-          linkPreview: msg.link_preview ?? null,
-          status: 'sent',
+        if (idx >= 0) {
+          const existing = messages[idx]
+          if (existing.dbId === msg.id && existing.read === mapped.read && existing.text === mapped.text) {
+            return prev
+          }
+          const updated = [...messages]
+          updated[idx] = { ...existing, ...mapped, id: existing.id }
+          return {
+            ...prev,
+            chatThreads: {
+              ...threads,
+              [peerId]: { ...thread, messages: updated },
+            },
+          }
         }
 
         return {
@@ -5165,32 +5440,192 @@ export function useOgonekStore() {
             ...threads,
             [peerId]: {
               ...thread,
-              messages: [...messages, newMsg],
+              messages: [...messages, mapped],
             },
           },
         }
-      })
+      }, true)
     },
-    [updateStore]
+    [updateStore, resolvePeerIdFromRecord, mapRecordToChatMessage]
   )
 
-  /** Обновление существующего сообщения из Realtime канала Supabase (UPDATE: реакции, текст, закреп) */
-  const updateIncomingChatMessage = useCallback(
-    (msg: DirectMessageRecord) => {
-      if (!msg) return
+  /** Сверить сообщения конкретного диалога с Supabase как источником истины (убивает удалённые фантомы) */
+  const reconcileThreadMessages = useCallback(
+    (friendId: string, dbMessages: DirectMessageRecord[]) => {
+      if (!friendId || !Array.isArray(dbMessages)) return
       const currentUserId = getSnapshot().auth?.activeAccountId
-
-      // Определяем собеседника
-      const isMine = Boolean(currentUserId && msg.author_id === currentUserId)
-      let peerId = isMine ? msg.recipient_id : msg.author_id
-      if (!peerId && msg.thread_key && currentUserId) {
-        const parts = msg.thread_key.split('_')
-        peerId = parts.find((p) => p !== currentUserId) || parts[0]
+      const mapped = dbMessages.map((r) => mapRecordToChatMessage(r, currentUserId))
+      const dbKeySet = new Set<string>()
+      for (const m of mapped) {
+        dbKeySet.add(m.id)
+        if (m.dbId) dbKeySet.add(m.dbId)
       }
 
       updateStore((prev) => {
         const threads = prev.chatThreads ?? {}
-        // Ищем тред: сначала по peerId, если нет — перебираем все треды
+        const thread = threads[friendId]
+        if (!thread && mapped.length === 0) return prev
+        const target = thread ?? emptyThread()
+        const pendingOptimistic = (target.messages ?? []).filter(
+          (m) =>
+            m.status === 'sending' &&
+            !dbKeySet.has(m.id) &&
+            (!m.dbId || !dbKeySet.has(m.dbId)) &&
+            Date.now() - new Date(m.createdAtISO).getTime() < 15000
+        )
+        const nextMessages = [...mapped, ...pendingOptimistic]
+        const nextPinned = nextMessages.find((m) => m.pinned)?.id ?? null
+
+        return {
+          ...prev,
+          chatThreads: {
+            ...threads,
+            [friendId]: {
+              ...target,
+              pinnedMessageId: nextPinned,
+              messages: nextMessages,
+            },
+          },
+        }
+      }, true)
+    },
+    [updateStore, mapRecordToChatMessage]
+  )
+
+  /** Удалить сообщение в локальном сторе по Supabase Realtime DELETE (id или client_id) */
+  const removeDeletedChatMessage = useCallback(
+    (deletedId: string) => {
+      if (!deletedId) return
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
+        let changed = false
+        const nextThreads: ChatThreads = {}
+        for (const [fId, t] of Object.entries(threads)) {
+          const beforeLen = t.messages?.length ?? 0
+          const filtered = (t.messages ?? []).filter((m) => m.id !== deletedId && m.dbId !== deletedId)
+          if (filtered.length !== beforeLen) {
+            changed = true
+            nextThreads[fId] = {
+              ...t,
+              pinnedMessageId: t.pinnedMessageId === deletedId ? null : t.pinnedMessageId,
+              messages: filtered,
+            }
+          } else {
+            nextThreads[fId] = t
+          }
+        }
+        return changed ? { ...prev, chatThreads: nextThreads } : prev
+      }, true)
+    },
+    [updateStore]
+  )
+
+  /** Массовая загрузка и синхронизация всех диалогов и профилей собеседников из Supabase */
+  const loadChatThreadsFromCloud = useCallback(
+    async (overrideUserId?: string): Promise<boolean> => {
+      const snap = getSnapshot()
+      let uid = overrideUserId || snap.auth?.activeAccountId || null
+      if (!uid) {
+        try {
+          const s = await getSupabase()?.auth.getSession()
+          uid = s?.data?.session?.user?.id || null
+        } catch {}
+      }
+      if (!uid || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return false
+
+      const res = await getAllUserDirectMessages(uid)
+      if (!res.ok) return false
+
+      const byPeer: Record<string, DirectMessageRecord[]> = {}
+      for (const row of res.messages) {
+        const peerId = resolvePeerIdFromRecord(row, uid)
+        if (!peerId) continue
+        if (!byPeer[peerId]) byPeer[peerId] = []
+        byPeer[peerId].push(row)
+      }
+
+      const peerIds = Object.keys(byPeer).filter((id) => id !== 'saved-messages' && !id.startsWith('group-'))
+      const existingIds = Object.keys(snap.chatThreads ?? {}).filter(
+        (id) => id !== 'saved-messages' && !id.startsWith('group-') && id !== 'ilonmusk-seed' && id !== 'cernavation-seed'
+      )
+      const allProfileIds = Array.from(new Set([...peerIds, ...existingIds]))
+      const profilesMap = await getProfilesByIds(allProfileIds)
+
+      updateStore((prev) => {
+        const currentThreads = prev.chatThreads ?? {}
+        const nextThreads: ChatThreads = {}
+
+        // 1. Все актуальные переписки из Supabase
+        for (const [peerId, rows] of Object.entries(byPeer)) {
+          const prevThread = currentThreads[peerId] ?? emptyThread()
+          const profile = profilesMap[peerId]
+          const peerMeta = profile
+            ? {
+                name: profile.display_name || `@${profile.username}`,
+                username: profile.username,
+                avatarUrl: profile.avatar_image || profile.avatar_url || undefined,
+              }
+            : prevThread.peerMeta
+          const mappedMessages = rows.map((r) => mapRecordToChatMessage(r, uid))
+          nextThreads[peerId] = {
+            ...prevThread,
+            peerMeta,
+            pinnedMessageId: mappedMessages.find((m) => m.pinned)?.id ?? null,
+            messages: mappedMessages,
+          }
+        }
+
+        // 2. Пустые локально открытые диалоги / группы / Избранное (убивая старые фантомы)
+        for (const [fId, prevThread] of Object.entries(currentThreads)) {
+          if (nextThreads[fId]) continue
+          if (fId === 'ilonmusk-seed' || fId === 'cernavation-seed') continue
+          const isGroup = fId.startsWith('group-') || Boolean(prevThread.groupMeta)
+          if (isGroup) {
+            nextThreads[fId] = prevThread
+            continue
+          }
+          // Если у 1-на-1 чата в Supabase больше нет сообщений, очищаем локальный кэш сообщений!
+          const profile = profilesMap[fId]
+          nextThreads[fId] = {
+            ...prevThread,
+            peerMeta: profile
+              ? {
+                  name: profile.display_name || `@${profile.username}`,
+                  username: profile.username,
+                  avatarUrl: profile.avatar_image || profile.avatar_url || undefined,
+                }
+              : prevThread.peerMeta,
+            messages: [],
+            pinnedMessageId: null,
+          }
+        }
+
+        const nextActive =
+          prev.chatActiveFriendId && nextThreads[prev.chatActiveFriendId]
+            ? prev.chatActiveFriendId
+            : Object.keys(nextThreads)[0] ?? null
+
+        return {
+          ...prev,
+          chatThreads: nextThreads,
+          chatActiveFriendId: nextActive,
+        }
+      }, true)
+
+      return true
+    },
+    [updateStore, resolvePeerIdFromRecord, mapRecordToChatMessage]
+  )
+
+  /** Обновление существующего сообщения из Realtime канала Supabase (UPDATE: реакции, текст, закреп, опрос, прочтение) */
+  const updateIncomingChatMessage = useCallback(
+    (msg: DirectMessageRecord) => {
+      if (!msg) return
+      const currentUserId = getSnapshot().auth?.activeAccountId
+      const peerId = resolvePeerIdFromRecord(msg, currentUserId)
+
+      updateStore((prev) => {
+        const threads = prev.chatThreads ?? {}
         const targetThreadIds = peerId && threads[peerId] ? [peerId] : Object.keys(threads)
         let matchedFriendId: string | null = null
         let matchedMsgIndex = -1
@@ -5199,7 +5634,7 @@ export function useOgonekStore() {
           const t = threads[fId]
           if (!t || !Array.isArray(t.messages)) continue
           const idx = t.messages.findIndex(
-            (m) => m && (m.id === msg.id || (msg.client_id && m.id === msg.client_id))
+            (m) => m && (m.id === msg.id || m.dbId === msg.id || (msg.client_id && (m.id === msg.client_id || m.dbId === msg.client_id)))
           )
           if (idx >= 0) {
             matchedFriendId = fId
@@ -5215,9 +5650,15 @@ export function useOgonekStore() {
 
         const updatedMsg: ChatMessage = {
           ...existingMsg,
+          dbId: msg.id || existingMsg.dbId,
           text: typeof msg.body === 'string' ? msg.body : existingMsg.text,
           reactions: Array.isArray(msg.reactions) ? msg.reactions : existingMsg.reactions,
-          editedAtISO: msg.is_edited ? (msg.updated_at || new Date().toISOString()) : existingMsg.editedAtISO,
+          poll: msg.poll ? normalizePollForViewer(msg.poll, currentUserId) : existingMsg.poll,
+          read: typeof msg.is_read === 'boolean' ? msg.is_read : existingMsg.read,
+          status: msg.is_read ? 'read' : existingMsg.status,
+          editedAtISO:
+            (msg as any).edited_at ||
+            (msg.is_edited ? (msg.updated_at || new Date().toISOString()) : existingMsg.editedAtISO),
           pinned: typeof msg.is_pinned === 'boolean' ? msg.is_pinned : existingMsg.pinned,
         }
 
@@ -5242,9 +5683,9 @@ export function useOgonekStore() {
             },
           },
         }
-      })
+      }, true)
     },
-    [updateStore]
+    [updateStore, resolvePeerIdFromRecord, normalizePollForViewer]
   )
 
   /** Обновить метаданные собеседника (имя, никнейм, аватар) для отображения без сырых UUID */
@@ -5405,7 +5846,7 @@ export function useOgonekStore() {
             updatedAtISO: nowISO,
           },
         }
-      })
+      }, true)
 
       return createdId
         ? { ok: true, accountId: createdId }
@@ -5530,7 +5971,7 @@ export function useOgonekStore() {
             updatedAtISO: nowISO,
           },
         }
-      })
+      }, true)
 
       return createdId
         ? { ok: true, accountId: createdId }
@@ -5787,7 +6228,7 @@ export function useOgonekStore() {
             updatedAtISO: nowISO,
           },
         }
-      })
+      }, true)
 
       // Подгрузка Evidence Vault из Supabase
       if (params.userId) {
@@ -5992,17 +6433,20 @@ export function useOgonekStore() {
       const client = getSupabase()
       if (client) client.auth.signOut().catch(() => {})
     } catch {}
-    updateStore((prev) => ({
-      ...prev,
-      profile: DEFAULT_PROFILE,
-      auth: {
-        ...prev.auth,
-        signedIn: false,
-        activeAccountId: null,
-        accounts: [],
-        updatedAtISO: nowISO,
-      },
-    }))
+    updateStore(
+      (prev) => ({
+        ...prev,
+        profile: DEFAULT_PROFILE,
+        auth: {
+          ...prev.auth,
+          signedIn: false,
+          activeAccountId: null,
+          accounts: [],
+          updatedAtISO: nowISO,
+        },
+      }),
+      true
+    )
     if (typeof window !== 'undefined') {
       try {
         sessionStorage.removeItem('priday_preloaded')
@@ -6210,6 +6654,9 @@ export function useOgonekStore() {
     sendChatMessage,
     receiveIncomingChatMessage,
     updateIncomingChatMessage,
+    removeDeletedChatMessage,
+    reconcileThreadMessages,
+    loadChatThreadsFromCloud,
     updateThreadPeerMeta,
     forwardToChat,
     toggleChatReaction,
@@ -6217,6 +6664,7 @@ export function useOgonekStore() {
     markThreadRead,
     markAllThreadsRead,
     clearThreadMessages,
+    deleteChatThread,
     deleteChatMessage,
     toggleThreadMute,
     toggleThreadPin,

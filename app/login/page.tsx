@@ -6,20 +6,24 @@ import { useRouter } from 'next/navigation'
 import { AppleNavbar } from '@/components/ogonek/landing/apple-navbar'
 import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
 import { AuthForm } from '@/components/ogonek/auth/auth-form'
+import { resolveBrowserSession } from '@/lib/ogonek/client-session'
+import { syncSupabaseAuthNow } from '@/lib/ogonek/use-ogonek-store'
 
 export default function LoginPage() {
   const router = useRouter()
 
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem('ogonek.store.v1')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        if (parsed?.auth?.signedIn && parsed?.auth?.activeAccountId) {
-          window.location.replace('/app')
-        }
+    let active = true
+    ;(async () => {
+      const synced = await syncSupabaseAuthNow()
+      const session = synced ? { authenticated: true } : await resolveBrowserSession()
+      if (active && session.authenticated) {
+        window.location.replace('/app')
       }
-    } catch {}
+    })()
+    return () => {
+      active = false
+    }
   }, [])
 
   const handleAuthenticated = (accountId: string) => {

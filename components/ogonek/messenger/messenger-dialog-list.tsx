@@ -12,6 +12,7 @@ import {
   Flame,
   Home,
   Image as ImageIcon,
+  MessageSquare,
   Mic,
   PenSquare,
   Pin,
@@ -19,6 +20,8 @@ import {
   Search,
   Sparkles,
   Tag,
+  Trash2,
+  Volume2,
   VolumeX,
   X,
 } from 'lucide-react'
@@ -38,6 +41,7 @@ import {
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatTag, ChatThreads } from '@/lib/ogonek/types'
 import { ChatAvatar } from './chat-avatar'
+import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
 import { getProfile } from '@/lib/supabase/api'
 import { getInitials } from '@/lib/ogonek/initials'
 
@@ -46,6 +50,7 @@ type Props = {
   onSelectThread: (threadId: string) => void
   onNewChat: () => void
   onNavigateHome?: () => void
+  onNotify?: (message: string) => void
   soundEnabled?: boolean
   className?: string
 }
@@ -72,10 +77,19 @@ export function MessengerDialogList({
   onSelectThread,
   onNewChat,
   onNavigateHome,
+  onNotify,
   soundEnabled = true,
   className = '',
 }: Props) {
-  const { state, currentUser, setChatActiveFolderId, updateThreadPeerMeta } = useOgonekStore()
+  const {
+    state,
+    currentUser,
+    setChatActiveFolderId,
+    updateThreadPeerMeta,
+    toggleThreadMute,
+    clearThreadMessages,
+    deleteChatThread,
+  } = useOgonekStore()
   const threads = state.chatThreads ?? {}
   const folders = state.chatFolders ?? []
   const activeFolderId = state.chatActiveFolderId ?? 'all'
@@ -83,6 +97,13 @@ export function MessengerDialogList({
 
   const [searchQuery, setSearchQuery] = useState('')
   const [filterMenuOpen, setFilterMenuOpen] = useState(false)
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    threadId: string
+    isMuted: boolean
+    title: string
+  } | null>(null)
 
   const allThreadIds = useMemo(() => Object.keys(threads || {}), [threads])
   const currentUserId = state.auth?.activeAccountId || currentUser?.id || null
@@ -396,6 +417,17 @@ export function MessengerDialogList({
                   playClick(soundEnabled)
                   onSelectThread(id)
                 }}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setContextMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    threadId: id,
+                    isMuted,
+                    title,
+                  })
+                }}
                 className={`w-full h-[84px] px-4 flex items-center gap-3.5 transition-colors text-left relative ${
                   isActive
                     ? 'bg-[var(--bg-elev)] hover:bg-[var(--bg-elev)]'
@@ -524,6 +556,60 @@ export function MessengerDialogList({
           })
         )}
       </div>
+
+      {contextMenu && (
+        <ChatContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+          items={
+            [
+              {
+                id: 'open',
+                label: 'Открыть',
+                icon: <MessageSquare size={15} />,
+                onSelect: () => {
+                  playClick(soundEnabled)
+                  onSelectThread(contextMenu.threadId)
+                },
+              },
+              {
+                id: 'mute',
+                label: contextMenu.isMuted ? 'Включить уведомления' : 'Отключить уведомления',
+                icon: contextMenu.isMuted ? <Volume2 size={15} /> : <VolumeX size={15} />,
+                onSelect: () => {
+                  const nowMuted = toggleThreadMute(contextMenu.threadId)
+                  onNotify?.(nowMuted ? 'Уведомления отключены' : 'Уведомления включены')
+                },
+              },
+              {
+                id: 'clear',
+                label: 'Очистить историю',
+                icon: <Trash2 size={15} />,
+                dividerBefore: true,
+                onSelect: async () => {
+                  if (window.confirm(`Очистить всю историю переписки с «${contextMenu.title}»?`)) {
+                    await clearThreadMessages(contextMenu.threadId)
+                    onNotify?.('История переписки очищена')
+                  }
+                },
+              },
+              {
+                id: 'delete',
+                label: 'Удалить чат',
+                icon: <Trash2 size={15} />,
+                danger: true,
+                onSelect: async () => {
+                  if (window.confirm(`Удалить чат с «${contextMenu.title}» навсегда?`)) {
+                    await deleteChatThread(contextMenu.threadId)
+                    onNotify?.('Чат удалён')
+                  }
+                },
+              },
+            ] satisfies ContextMenuItem[]
+          }
+        />
+      )}
     </div>
   )
 }

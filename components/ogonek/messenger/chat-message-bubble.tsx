@@ -89,6 +89,7 @@ type Props = {
   searchQuery?: string
   soundEnabled?: boolean
   onNotify?: (message: string) => void
+  onContextMenu?: (e: React.MouseEvent, message: ChatMessage) => void
 }
 
 export function ChatMessageBubble({
@@ -117,6 +118,7 @@ export function ChatMessageBubble({
   searchQuery = '',
   soundEnabled = true,
   onNotify,
+  onContextMenu,
 }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
@@ -282,6 +284,12 @@ export function ChatMessageBubble({
     <>
       <motion.div
         id={`msg-${message.id}`}
+        onContextMenu={(e) => {
+          if (!onContextMenu) return
+          e.preventDefault()
+          e.stopPropagation()
+          onContextMenu(e, message)
+        }}
         className={`group relative flex items-end gap-2 my-1 ${
           isMine ? 'justify-end' : 'justify-start'
         } ${isSelected ? 'bg-white/[0.04] -mx-4 px-4 py-1.5 rounded-xl' : ''}`}
@@ -708,6 +716,8 @@ export function ChatMessageBubble({
                   <a
                     href={safeHref(message.media.url) || '#'}
                     download={message.media.name || 'file'}
+                    target="_blank"
+                    rel="noreferrer"
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                   >
                     <Download size={14} />

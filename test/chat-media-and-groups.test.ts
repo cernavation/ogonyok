@@ -150,10 +150,10 @@ test('Step 08: Group chat controls and permissions', async (t) => {
   })
 })
 
-test('Step 08: GIPHY attribution and integration', async (t) => {
-  await t.test('chat-gif-modal.tsx contains official GIPHY badge per API requirements', () => {
+test('Step 08: GIF search modal and server API integration', async (t) => {
+  await t.test('chat-gif-modal.tsx removes Powered by GIPHY badge cleanly', () => {
     const modalCode = fs.readFileSync(path.resolve(process.cwd(), 'components/ogonek/messenger/chat-gif-modal.tsx'), 'utf8')
-    assert.ok(modalCode.includes('Powered by') && modalCode.includes('GIPHY'), 'Содержит обязательный бейдж «Powered by GIPHY»')
+    assert.ok(!modalCode.includes('Powered by GIPHY'), 'Надпись «Powered by GIPHY» полностью удалена')
   })
 
   await t.test('comments-thread.tsx includes GIF picker for feed comments', () => {

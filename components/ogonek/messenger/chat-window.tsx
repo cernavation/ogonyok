@@ -397,47 +397,13 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                 <button
                   type="button"
                   onClick={() => {
-                    playClick(soundEnabled)
-                    onNotify(`Аудиовызов: соединение с ${title}... (демо-звонок)`)
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <Phone size={15} className="text-[#00ba7c]" />
-                  <span>Позвонить</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handlePin()
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <Pin size={15} />
-                  <span>{thread.pinned ? 'Открепить диалог' : 'Закрепить сверху'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
                     handleMute()
                     setMenuOpen(false)
                   }}
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
                 >
                   {thread.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
-                  <span>{thread.muted ? 'Включить звук' : 'Без звука'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSelectionMode(true)
-                    setMenuOpen(false)
-                  }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                >
-                  <CheckSquare size={15} />
-                  <span>Выбрать сообщения</span>
+                  <span>{thread.muted ? 'Включить уведомления' : 'Отключить уведомления'}</span>
                 </button>
                 <button
                   type="button"
@@ -445,7 +411,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                   className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10"
                 >
                   <Trash2 size={15} />
-                  <span>Очистить переписку</span>
+                  <span>Очистить историю</span>
                 </button>
               </div>
             )}

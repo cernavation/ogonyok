@@ -1,7 +1,7 @@
 'use client'
 
 import { Search, Sparkles, Smile, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { EMOJI_CATEGORIES, STICKER_PACK, type ChatSticker } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
@@ -11,6 +11,7 @@ type Props = {
   onPickSticker?: (sticker: ChatSticker) => void
   onClose: () => void
   soundEnabled?: boolean
+  align?: 'left' | 'right'
 }
 
 const SKIN_TONES = ['', '🏻', '🏼', '🏽', '🏾', '🏿']
@@ -72,7 +73,9 @@ export function ChatEmojiPicker({
   onPickSticker,
   onClose,
   soundEnabled = true,
+  align = 'left',
 }: Props) {
+  const pickerRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState<'emoji' | 'stickers'>('emoji')
   const [category, setCategory] = useState<string>('smileys')
   const [search, setSearch] = useState('')
@@ -80,6 +83,23 @@ export function ChatEmojiPicker({
   const [recents, setRecents] = useState<string[]>([
     '🔥', '❤️', '💪', '👏', '🚀', '✨', '🙏', '🤝', '⚡️', '🎉', '🏆', '🎯'
   ])
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('mousedown', handleOutside)
+    window.addEventListener('keydown', handleEsc)
+    return () => {
+      document.removeEventListener('mousedown', handleOutside)
+      window.removeEventListener('keydown', handleEsc)
+    }
+  }, [onClose])
 
   const applyTone = (emoji: string): string => {
     if (!skinTone) return emoji
@@ -116,7 +136,10 @@ export function ChatEmojiPicker({
 
   return (
     <div
-      className="absolute bottom-full right-0 mb-2 z-50 flex h-[380px] w-[340px] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#16181c] shadow-2xl text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-150"
+      ref={pickerRef}
+      className={`absolute bottom-full ${
+        align === 'right' ? 'right-0' : '-left-[96px] sm:left-0'
+      } mb-2 z-[70] flex h-[380px] w-[310px] sm:w-[340px] max-w-[calc(100vw-24px)] flex-col overflow-hidden rounded-2xl border border-white/15 bg-[#16181c]/95 backdrop-blur-xl shadow-2xl text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-150`}
       role="dialog"
       aria-label="Панель эмодзи и стикеров"
     >

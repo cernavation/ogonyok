@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Home, Menu, PenSquare, X } from 'lucide-react'
-import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
+import { useOgonekStore, syncSupabaseAuthNow } from '@/lib/ogonek/use-ogonek-store'
+import { resolveBrowserSession } from '@/lib/ogonek/client-session'
+import { subscribeToDirectMessages } from '@/lib/supabase/api'
 import { Sidebar } from '../sidebar'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import type { ViewId } from '@/lib/ogonek/types'
@@ -17,6 +18,7 @@ import { Toast } from '../toast'
 import { BottomNav } from '../bottom-nav'
 
 type Props = {
+  embedded?: boolean
   initialThreadId?: string
   currentUserId?: string
   onNavigate?: (view: ViewId) => void
@@ -34,6 +36,7 @@ function sanitizeThreadId(id: unknown): string | null {
 }
 
 export function FullscreenMessenger({
+  embedded = false,
   initialThreadId,
   currentUserId,
   onNavigate,
@@ -43,30 +46,106 @@ export function FullscreenMessenger({
   onFocusIntentions,
 }: Props) {
   const router = useRouter()
-  const { state, currentUser, setActiveChatFriend } = useOgonekStore()
+  const {
+    state,
+    currentUser,
+    setActiveChatFriend,
+    loadChatThreadsFromCloud,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    removeDeletedChatMessage,
+  } = useOgonekStore()
+
+  const [standaloneChecking, setStandaloneChecking] = useState(!embedded)
+  const [standaloneAuthed, setStandaloneAuthed] = useState(embedded)
 
   const cleanInitial = sanitizeThreadId(initialThreadId)
   const cleanStore = sanitizeThreadId(state?.chatActiveFriendId)
   const resolvedUserId = currentUserId || currentUser?.id || state.auth?.activeAccountId || 'local-user'
+
+  // Auth gate for standalone /chats and /chats/[id] routes so reloads preserve session
+  useEffect(() => {
+    if (embedded) return
+    let active = true
+    ;(async () => {
+      const synced = await syncSupabaseAuthNow()
+      const session = synced ? { authenticated: true } : await resolveBrowserSession()
+      if (!active) return
+      if (!session.authenticated) {
+        window.location.replace('/ru')
+        return
+      }
+      setStandaloneAuthed(true)
+      setStandaloneChecking(false)
+    })()
+    return () => {
+      active = false
+    }
+  }, [embedded])
+
+  // Load real Supabase chat threads on mount & subscribe globally for dialog list updates
+  useEffect(() => {
+    if (!standaloneAuthed && !embedded) return
+    const uid = resolvedUserId
+    if (!uid || uid === 'local-user' || uid.startsWith('anon-') || uid.startsWith('acct-guest')) return
+    void loadChatThreadsFromCloud?.(uid)
+
+    const unsubscribe = subscribeToDirectMessages(
+      (incoming) => {
+        if (incoming.author_id === uid || incoming.recipient_id === uid) {
+          receiveIncomingChatMessage(incoming)
+        }
+      },
+      (updated) => {
+        if (updated.author_id === uid || updated.recipient_id === uid) {
+          updateIncomingChatMessage(updated)
+        }
+      },
+      (oldRecord) => {
+        if (oldRecord?.id) {
+          removeDeletedChatMessage(oldRecord.id)
+        }
+      }
+    )
+
+    return () => {
+      unsubscribe()
+    }
+  }, [
+    embedded,
+    standaloneAuthed,
+    resolvedUserId,
+    loadChatThreadsFromCloud,
+    receiveIncomingChatMessage,
+    updateIncomingChatMessage,
+    removeDeletedChatMessage,
+  ])
 
   // Track active thread id
   const [activeThreadId, setActiveId] = useState<string | null>(
     cleanInitial || cleanStore || null
   )
 
-  // На десктопе (>= 1024px) по умолчанию открываем первый диалог, чтобы сразу отображалось окно переписки и поле ввода
+  // Keep activeThreadId valid if store deletes the active thread
+  useEffect(() => {
+    if (cleanStore !== activeThreadId && cleanStore !== null) {
+      setActiveId(cleanStore)
+    }
+  }, [cleanStore, activeThreadId])
+
+  // On desktop (>= 1024px) auto-select first available dialog when none is selected
   useEffect(() => {
     if (!cleanInitial && !cleanStore && typeof window !== 'undefined' && window.innerWidth >= 1024) {
       const defaultId = Object.keys(state.chatThreads || {})[0] || null
-      setActiveId((curr) => curr || defaultId)
+      if (defaultId) {
+        setActiveId((curr) => (curr && state.chatThreads?.[curr] ? curr : defaultId))
+      }
     }
   }, [cleanInitial, cleanStore, state.chatThreads])
 
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState<string | null>(null)
 
-  // Notify helper
   const notify = useCallback((message: string) => {
     setToastMsg(message)
     setTimeout(() => {
@@ -74,7 +153,6 @@ export function FullscreenMessenger({
     }, 2500)
   }, [])
 
-  // Sync initialThreadId
   useEffect(() => {
     if (initialThreadId) {
       setActiveId(initialThreadId)
@@ -82,19 +160,26 @@ export function FullscreenMessenger({
     }
   }, [initialThreadId, setActiveChatFriend])
 
-  // Browser popstate handler
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window === 'undefined') return
       const path = window.location.pathname
       const match = path.match(/^\/chats\/([^/?#]+)/)
       if (match && match[1]) {
-        setActiveId(match[1])
-        setActiveChatFriend(match[1])
-      } else if (path === '/chats') {
+        const decoded = decodeURIComponent(match[1])
+        setActiveId(decoded)
+        setActiveChatFriend(decoded)
+        return
+      }
+      if (path === '/chats') {
         setActiveId(null)
         setActiveChatFriend(null)
+        return
       }
+      const params = new URLSearchParams(window.location.search)
+      const chatParam = sanitizeThreadId(params.get('chat') || params.get('thread'))
+      setActiveId(chatParam)
+      setActiveChatFriend(chatParam)
     }
 
     window.addEventListener('popstate', handlePopState)
@@ -102,32 +187,53 @@ export function FullscreenMessenger({
   }, [setActiveChatFriend])
 
   // Select a thread
-  const handleSelectThread = useCallback((threadId: string) => {
-    setActiveId(threadId)
-    setActiveChatFriend(threadId)
-    if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', `/chats/${threadId}`)
-    }
-  }, [setActiveChatFriend])
+  const handleSelectThread = useCallback(
+    (threadId: string) => {
+      setActiveId(threadId)
+      setActiveChatFriend(threadId)
+      if (typeof window !== 'undefined') {
+        if (embedded) {
+          window.history.pushState(null, '', `/app?view=messages&chat=${encodeURIComponent(threadId)}`)
+        } else {
+          window.history.pushState(null, '', `/chats/${encodeURIComponent(threadId)}`)
+        }
+      }
+    },
+    [embedded, setActiveChatFriend]
+  )
 
   // Back to dialog list
   const handleBackToList = useCallback(() => {
     setActiveId(null)
     setActiveChatFriend(null)
     if (typeof window !== 'undefined') {
-      window.history.pushState(null, '', '/chats')
+      if (embedded) {
+        window.history.pushState(null, '', '/app?view=messages')
+      } else {
+        window.history.pushState(null, '', '/chats')
+      }
     }
-  }, [setActiveChatFriend])
+  }, [embedded, setActiveChatFriend])
 
-  // Navigate home
+  // Navigate home or other app view (always inside /app)
+  const navigateToView = useCallback(
+    (v: ViewId) => {
+      if (onNavigate) {
+        onNavigate(v)
+        return
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: v }))
+      }
+      router.push(v === 'home' ? '/app' : `/app?view=${v}`)
+    },
+    [onNavigate, router]
+  )
+
   const handleNavigateHome = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'home' }))
-    }
-    router.push('/')
-  }, [router])
+    navigateToView('home')
+  }, [navigateToView])
 
-  // Keyboard navigation (Escape key returns back or home)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -135,167 +241,163 @@ export function FullscreenMessenger({
           setIsNewChatOpen(false)
           return
         }
-        if (activeThreadId) {
+        if (activeThreadId && typeof window !== 'undefined' && window.innerWidth < 1024) {
           handleBackToList()
           return
         }
-        handleNavigateHome()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isNewChatOpen, activeThreadId, handleBackToList, handleNavigateHome])
+  }, [isNewChatOpen, activeThreadId, handleBackToList])
 
-  return (
-    <MessengerErrorBoundary onNavigateHome={handleNavigateHome}>
-      <TooltipProvider>
-        <AppearanceProvider
-          theme={state.theme}
-          accent={state.accent}
-          fontScale={state.fontScale}
-          feedDensity={state.feedDensity}
-        />
-        <div
-          className="fixed inset-0 w-[100vw] h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--text)] flex flex-row select-text z-40"
-          style={{
-            fontFamily: 'var(--font-sans, system-ui, sans-serif)',
-          }}
-        >
-          {/* DESKTOP (>= 1024px): 3 columns via CSS responsive display */}
-          <div className="hidden lg:flex w-full h-full flex-row">
-            {/* Column 1: Unified Collapsible Sidebar (68px) */}
-            <Sidebar
-              view="messages"
-              onNavigate={(v) => {
-                if (onNavigate) {
-                  onNavigate(v)
-                } else {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: v }))
-                  }
-                  router.push(v === 'home' ? '/' : `/?view=${v}`)
-                }
-              }}
-              onFocusIntentions={() => {
-                if (onFocusIntentions) {
-                  onFocusIntentions()
-                } else {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'intentions' }))
-                  }
-                  router.push('/?view=intentions')
-                }
-              }}
-              onCompose={() => {
-                if (onCompose) {
-                  onCompose()
-                } else {
-                  window.dispatchEvent(new CustomEvent('ogonek:compose'))
-                }
-              }}
-              onOpenProfile={() => {
-                if (onOpenProfile) {
-                  onOpenProfile()
-                } else {
-                  if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: 'profile' }))
-                  }
-                  router.push('/?view=profile')
-                }
-              }}
-              onOpenAuth={onOpenAuth || (() => {})}
-              onNotify={notify}
-              streak={CURRENT_DAY}
-              className="w-[72px] pl-3 pr-2 shrink-0 border-r border-[var(--line)]"
-              isCollapsed={true}
-            />
+  if (!embedded && (standaloneChecking || !standaloneAuthed)) {
+    return (
+      <div className="w-full min-h-screen bg-black flex items-center justify-center select-none">
+        <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-[#ff6b35] animate-spin" />
+      </div>
+    )
+  }
 
-            {/* Column 2: Dialog List (360-420px) */}
-            <aside className="w-[360px] lg:w-[380px] xl:w-[420px] shrink-0 h-full border-r border-[var(--border)] overflow-hidden flex flex-col min-w-0">
+  const rootClass = embedded
+    ? 'w-full h-full overflow-hidden bg-[var(--bg)] text-[var(--text)] flex flex-row select-text'
+    : 'fixed inset-0 w-[100vw] h-[100dvh] overflow-hidden bg-[var(--bg)] text-[var(--text)] flex flex-row select-text z-40'
+
+  const messengerBody = (
+    <div
+      className={rootClass}
+      style={{
+        fontFamily: 'var(--font-sans, system-ui, sans-serif)',
+      }}
+    >
+      {/* DESKTOP (>= 1024px) */}
+      <div className="hidden lg:flex w-full h-full flex-row min-w-0">
+        {!embedded && (
+          <Sidebar
+            view="messages"
+            onNavigate={navigateToView}
+            onFocusIntentions={() => {
+              if (onFocusIntentions) {
+                onFocusIntentions()
+              } else {
+                navigateToView('intentions')
+              }
+            }}
+            onCompose={() => {
+              if (onCompose) {
+                onCompose()
+              } else if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('ogonek:compose'))
+              }
+            }}
+            onOpenProfile={() => {
+              if (onOpenProfile) {
+                onOpenProfile()
+              } else {
+                navigateToView('profile')
+              }
+            }}
+            onOpenAuth={onOpenAuth || (() => {})}
+            onNotify={notify}
+            streak={CURRENT_DAY}
+            isCollapsed={true}
+          />
+        )}
+
+        {/* Column 2: Dialog List */}
+        <aside className="w-[340px] xl:w-[380px] shrink-0 h-full border-r border-[var(--border)] overflow-hidden flex flex-col min-w-0">
+          <MessengerDialogList
+            activeThreadId={activeThreadId || null}
+            onSelectThread={handleSelectThread}
+            onNewChat={() => setIsNewChatOpen(true)}
+            onNotify={notify}
+            soundEnabled={state?.soundEnabled ?? true}
+            className="w-full h-full"
+          />
+        </aside>
+
+        {/* Column 3: Chat Stream & Composer */}
+        <main className="flex-1 h-full min-w-0 bg-[var(--bg)]">
+          <MessengerChatPane
+            friendId={activeThreadId || null}
+            currentUserId={resolvedUserId}
+            onBack={undefined}
+            onNotify={notify}
+            soundEnabled={state?.soundEnabled ?? true}
+          />
+        </main>
+      </div>
+
+      {/* TABLET & MOBILE (< 1024px): Master-Detail */}
+      <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
+        {!activeThreadId ? (
+          <div className="w-full h-full flex flex-col relative min-w-0">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <MessengerDialogList
-                activeThreadId={activeThreadId || null}
+                activeThreadId={null}
                 onSelectThread={handleSelectThread}
                 onNewChat={() => setIsNewChatOpen(true)}
-                soundEnabled={state?.soundEnabled ?? true}
-                className="w-full h-full"
-              />
-            </aside>
-
-            {/* Column 3: Chat Stream & Composer (Remaining space) */}
-            <main className="flex-1 h-full min-w-0 overflow-hidden bg-[var(--bg)]">
-              <MessengerChatPane
-                friendId={activeThreadId || null}
-                currentUserId={resolvedUserId}
-                onBack={undefined}
                 onNotify={notify}
                 soundEnabled={state?.soundEnabled ?? true}
+                className="w-full h-full pb-14 md:pb-0"
               />
-            </main>
+            </div>
+            <div className="md:hidden">
+              <BottomNav
+                view="messages"
+                onNavigate={navigateToView}
+                onCompose={() => {
+                  if (onCompose) {
+                    onCompose()
+                  } else if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('ogonek:compose'))
+                  }
+                }}
+              />
+            </div>
           </div>
-
-          {/* TABLET & MOBILE (< 1024px): Master-Detail views via CSS responsive display */}
-          <div className="flex lg:hidden w-full h-full flex-col relative overflow-hidden">
-            {!activeThreadId ? (
-              // View 1: Dialog List with BottomNav for mobile navigation to feed
-              <div className="w-full h-full flex flex-col relative min-w-0">
-                <div className="flex-1 min-h-0 overflow-hidden">
-                  <MessengerDialogList
-                    activeThreadId={null}
-                    onSelectThread={handleSelectThread}
-                    onNewChat={() => setIsNewChatOpen(true)}
-                    soundEnabled={state?.soundEnabled ?? true}
-                    className="w-full h-full pb-14"
-                  />
-                </div>
-                <BottomNav
-                  view="messages"
-                  onNavigate={(v) => {
-                    if (onNavigate) {
-                      onNavigate(v)
-                    } else {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('ogonek:navigate', { detail: v }))
-                      }
-                      router.push(v === 'home' ? '/' : `/?view=${v}`)
-                    }
-                  }}
-                  onCompose={() => {
-                    if (onCompose) {
-                      onCompose()
-                    } else {
-                      window.dispatchEvent(new CustomEvent('ogonek:compose'))
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              // View 2: Chat Pane
-              <div className="w-full h-full flex flex-col min-w-0">
-                <MessengerChatPane
-                  friendId={activeThreadId}
-                  currentUserId={resolvedUserId}
-                  onBack={handleBackToList}
-                  onNotify={notify}
-                  soundEnabled={state?.soundEnabled ?? true}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Modal: New Chat / Group Wizard */}
-          {isNewChatOpen && (
-            <NewChatModal
-              onClose={() => setIsNewChatOpen(false)}
-              onOpenThread={handleSelectThread}
+        ) : (
+          <div className="w-full h-full flex flex-col min-w-0">
+            <MessengerChatPane
+              friendId={activeThreadId}
+              currentUserId={resolvedUserId}
+              onBack={handleBackToList}
               onNotify={notify}
               soundEnabled={state?.soundEnabled ?? true}
             />
-          )}
+          </div>
+        )}
+      </div>
 
-          {/* Global Toast */}
-          {toastMsg && <Toast message={toastMsg} />}
-        </div>
-      </TooltipProvider>
+      {/* Modal: New Chat / Group Wizard */}
+      {isNewChatOpen && (
+        <NewChatModal
+          onClose={() => setIsNewChatOpen(false)}
+          onOpenThread={handleSelectThread}
+          onNotify={notify}
+          soundEnabled={state?.soundEnabled ?? true}
+        />
+      )}
+
+      {toastMsg && <Toast message={toastMsg} />}
+    </div>
+  )
+
+  return (
+    <MessengerErrorBoundary onNavigateHome={handleNavigateHome}>
+      {embedded ? (
+        messengerBody
+      ) : (
+        <TooltipProvider>
+          <AppearanceProvider
+            theme={state.theme}
+            accent={state.accent}
+            fontScale={state.fontScale}
+            feedDensity={state.feedDensity}
+          />
+          {messengerBody}
+        </TooltipProvider>
+      )}
     </MessengerErrorBoundary>
   )
 }

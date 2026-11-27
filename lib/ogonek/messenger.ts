@@ -803,7 +803,8 @@ function sanitizeChatMessages(value: unknown, _validFriendIds?: Set<string>): Ch
     const text = typeof m.text === 'string' ? m.text.trim().slice(0, CHAT_MESSAGE_LIMIT) : ''
     const attachment = sanitizeChatAttachment(m.attachment)
     const media = m.media && typeof m.media === 'object' ? (m.media as any) : null
-    if (!text && !attachment && !media) continue
+    const poll = m.poll && typeof m.poll === 'object' ? (m.poll as any) : null
+    if (!text && !attachment && !media && !poll) continue
 
     const id = typeof m.id === 'string' && m.id ? m.id.slice(0, 80) : `msg-${result.length}`
     if (seen.has(id)) continue
@@ -824,6 +825,7 @@ function sanitizeChatMessages(value: unknown, _validFriendIds?: Set<string>): Ch
 
     result.push({
       id,
+      dbId: typeof (m as any).dbId === 'string' ? (m as any).dbId : null,
       authorId,
       text,
       createdAtISO:
@@ -832,9 +834,13 @@ function sanitizeChatMessages(value: unknown, _validFriendIds?: Set<string>): Ch
       reactions,
       read: Boolean(m.read),
       system: Boolean(m.system),
+      type: typeof m.type === 'string' ? (m.type as any) : undefined,
       replyTo: m.replyTo && typeof m.replyTo === 'object' ? (m.replyTo as any) : null,
       forwardFrom: m.forwardFrom && typeof m.forwardFrom === 'object' ? (m.forwardFrom as any) : null,
       editedAtISO: typeof m.editedAtISO === 'string' ? m.editedAtISO : null,
+      deletedForAll: Boolean(m.deletedForAll),
+      poll,
+      labels: Array.isArray(m.labels) ? m.labels : undefined,
       status: m.status === 'sending' || m.status === 'sent' || m.status === 'read' ? m.status : 'read',
       pinned: Boolean(m.pinned),
       media,
@@ -900,6 +906,7 @@ export function sanitizeChatThreads(value: unknown, fallback: ChatThreads = {}):
     }
 
     const cleanId = friendId.trim()
+    if (cleanId === 'ilonmusk-seed' || cleanId === 'cernavation-seed') continue
     if (!rawThread || typeof rawThread !== 'object' || Array.isArray(rawThread)) continue
     const t = rawThread as Partial<ChatThreadState>
     const isGroup = cleanId.startsWith('group-') || Boolean((t as any)?.groupMeta)

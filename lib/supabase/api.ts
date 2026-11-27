@@ -176,6 +176,7 @@ export async function getProfile(userIdOrUsername: string): Promise<ProfileRecor
     }
     const { data, error } = await q.maybeSingle()
     if (!error && data) return mapProfileRecord(data)
+    return null
   }
 
   const cleanUser = userIdOrUsername.replace(/^@/, '').toLowerCase()
@@ -183,6 +184,36 @@ export async function getProfile(userIdOrUsername: string): Promise<ProfileRecor
     (p) => p.id === userIdOrUsername || p.username.toLowerCase() === cleanUser
   )
   return fallback ?? null
+}
+
+export async function getProfilesByIds(userIds: string[]): Promise<Record<string, ProfileRecord>> {
+  const supabase = getSupabase()
+  const cleanUuids = Array.from(
+    new Set(
+      userIds.filter((id) =>
+        typeof id === 'string' &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+      )
+    )
+  )
+  if (!supabase || cleanUuids.length === 0) return {}
+
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .in('id', cleanUuids)
+
+    if (error || !Array.isArray(data)) return {}
+    const map: Record<string, ProfileRecord> = {}
+    for (const row of data as any[]) {
+      const mapped = mapProfileRecord(row)
+      map[mapped.id] = mapped
+    }
+    return map
+  } catch {
+    return {}
+  }
 }
 
 export const getProfileById = getProfile
@@ -236,7 +267,7 @@ export async function searchProfiles(query: string, currentUserIdOrUsername?: st
     } catch {}
   }
 
-  if (results.length === 0 && searchQuery) {
+  if (!supabase && results.length === 0 && searchQuery) {
     for (const seed of FALLBACK_SEED_PROFILES) {
       const uName = seed.username.toLowerCase()
       const dName = seed.display_name.toLowerCase()
@@ -293,16 +324,6 @@ export async function getRecentProfiles(limit = 30, currentUserIdOrUsername?: st
         }
       }
     } catch {}
-  }
-
-  if (results.length === 0) {
-    return FALLBACK_SEED_PROFILES.filter((seed) => {
-      if (currentUserIdOrUsername) {
-        if (isUuid && seed.id === currentUserIdOrUsername) return false
-        if (!isUuid && seed.username?.toLowerCase() === currentUserIdOrUsername.toLowerCase()) return false
-      }
-      return true
-    })
   }
 
   return results
@@ -1604,23 +1625,22 @@ export interface DirectMessageRecord {
 export async function getDirectMessages(
   myUserId: string,
   peerId: string,
-  limit = 100
+  limit = 200
 ): Promise<DirectMessageRecord[]> {
   const supabase = getSupabase()
   if (!supabase || !myUserId || !peerId) return []
 
   try {
     const symmetricKey = getDirectThreadKey(myUserId, peerId)
-    // Сообщения принадлежат диалогу, если:
-    // 1. thread_key равен симметричному ключу (getDirectThreadKey)
-    // 2. thread_key равен peerId или myUserId (обратная совместимость)
-    // 3. Либо author=myUserId AND recipient=peerId (или наоборот)
+    const orClause =
+      peerId === 'saved-messages'
+        ? `thread_key.eq.${symmetricKey},and(author_id.eq.${myUserId},recipient_id.is.null)`
+        : `thread_key.eq.${symmetricKey},thread_key.eq.${peerId},and(author_id.eq.${myUserId},recipient_id.eq.${peerId}),and(author_id.eq.${peerId},recipient_id.eq.${myUserId})`
+
     const { data, error } = await supabase
       .from('direct_messages')
       .select('*')
-      .or(
-        `thread_key.eq.${symmetricKey},thread_key.eq.${peerId},thread_key.eq.${myUserId},and(author_id.eq.${myUserId},recipient_id.eq.${peerId}),and(author_id.eq.${peerId},recipient_id.eq.${myUserId})`
-      )
+      .or(orClause)
       .order('sent_at', { ascending: true })
       .limit(limit)
 
@@ -1629,6 +1649,34 @@ export async function getDirectMessages(
   } catch (err) {
     console.error('getDirectMessages error:', err)
     return []
+  }
+}
+
+/**
+ * Загрузить все диалоги/сообщения текущего пользователя из Supabase (SSOT при загрузке / F5)
+ */
+export async function getAllUserDirectMessages(
+  myUserId: string,
+  limit = 600
+): Promise<{ ok: boolean; messages: DirectMessageRecord[]; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !myUserId) return { ok: false, messages: [], error: 'Supabase client unavailable' }
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(myUserId)
+  if (!isUuid) return { ok: false, messages: [], error: 'Invalid user ID' }
+
+  try {
+    const { data, error } = await supabase
+      .from('direct_messages')
+      .select('*')
+      .or(`author_id.eq.${myUserId},recipient_id.eq.${myUserId}`)
+      .order('sent_at', { ascending: true })
+      .limit(limit)
+
+    if (error) return { ok: false, messages: [], error: error.message }
+    return { ok: true, messages: (data || []) as DirectMessageRecord[] }
+  } catch (err: any) {
+    return { ok: false, messages: [], error: err?.message || 'Fetch error' }
   }
 }
 
@@ -1647,6 +1695,7 @@ export async function sendDirectMessageToDb(params: {
   replyTo?: any
   forwardFrom?: any
   poll?: any
+  linkPreview?: any
   type?: string
 }): Promise<{ ok: boolean; message?: DirectMessageRecord; error?: string }> {
   try {
@@ -1666,12 +1715,17 @@ export async function sendDirectMessageToDb(params: {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
 
     const isGroup = params.recipientId.startsWith('group-') || Boolean(params.threadKey?.startsWith('group'))
+    const isSaved = params.recipientId === 'saved-messages'
     const symmetricKey = getDirectThreadKey(params.authorId || params.userId, params.recipientId)
     const finalThreadKey = params.threadKey || (isGroup ? `group:${params.recipientId}` : symmetricKey)
-    const finalRecipientId = isGroup ? null : (isUuid(params.recipientId) ? params.recipientId : null)
+    const finalRecipientId = isGroup
+      ? null
+      : isSaved
+        ? (isUuid(params.authorId) ? params.authorId : null)
+        : (isUuid(params.recipientId) ? params.recipientId : null)
     const nowISO = new Date().toISOString()
 
-    const payload = {
+    const payload: Record<string, any> = {
       client_id: params.clientId || `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       user_id: isUuid(params.userId) ? params.userId : null,
       author_id: params.authorId,
@@ -1683,6 +1737,7 @@ export async function sendDirectMessageToDb(params: {
       reply_to: params.replyTo || null,
       forward_from: params.forwardFrom || null,
       poll: params.poll || null,
+      link_preview: params.linkPreview || null,
       type: params.type || 'text',
       reactions: [],
       is_read: false,
@@ -1692,20 +1747,151 @@ export async function sendDirectMessageToDb(params: {
 
     // Проверка размера строки (лимит 2 КБ по контракту)
     const rowSizeBytes = new TextEncoder().encode(JSON.stringify(payload)).length
-    if (rowSizeBytes > 2048) {
-      return { ok: false, error: `Размер строки сообщения (${rowSizeBytes} байт) превышает лимит 2 КБ` }
+    if (rowSizeBytes > 4096) {
+      return { ok: false, error: `Размер строки сообщения (${rowSizeBytes} байт) превышает допустимый лимит` }
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('direct_messages')
       .insert(payload)
       .select()
       .single()
 
+    // Fallback если в конкретной миграции нет колонки user_id
+    if (error && error.message?.includes('user_id')) {
+      const { user_id: _omitted, ...withoutUserId } = payload
+      const retry = await supabase
+        .from('direct_messages')
+        .insert(withoutUserId)
+        .select()
+        .single()
+      data = retry.data
+      error = retry.error
+    }
+
     if (error) return { ok: false, error: error.message }
     return { ok: true, message: data as DirectMessageRecord }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка отправки сообщения' }
+  }
+}
+
+/**
+ * Удалить одно сообщение из Supabase direct_messages (по UUID id или client_id)
+ */
+export async function deleteDirectMessageFromDb(
+  messageId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !messageId) return { ok: false, error: 'Invalid args' }
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)
+    let q = supabase.from('direct_messages').delete()
+    if (isUuid) {
+      q = q.or(`id.eq.${messageId},client_id.eq.${messageId}`)
+    } else {
+      q = q.eq('client_id', messageId)
+    }
+    const { error } = await q
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Delete failed' }
+  }
+}
+
+/**
+ * Массовое удаление сообщений из Supabase direct_messages
+ */
+export async function deleteDirectMessagesBulkFromDb(
+  messageIds: string[]
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !Array.isArray(messageIds) || messageIds.length === 0) return { ok: false }
+
+  try {
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    const uuids = messageIds.filter((id) => uuidRe.test(id))
+    const clientIds = messageIds.filter((id) => !uuidRe.test(id))
+
+    const tasks: PromiseLike<any>[] = []
+    if (uuids.length > 0) {
+      tasks.push(supabase.from('direct_messages').delete().in('id', uuids))
+      tasks.push(supabase.from('direct_messages').delete().in('client_id', uuids))
+    }
+    if (clientIds.length > 0) {
+      tasks.push(supabase.from('direct_messages').delete().in('client_id', clientIds))
+    }
+    await Promise.all(tasks)
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
+}
+
+/**
+ * Полностью очистить / удалить историю переписки с конкретным пользователем в Supabase direct_messages
+ */
+export async function deleteThreadMessagesFromDb(
+  myUserId: string,
+  peerId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !myUserId || !peerId) return { ok: false, error: 'Missing ids' }
+
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(myUserId)
+  if (!isUuid) return { ok: false, error: 'Not authenticated with Supabase UUID' }
+
+  try {
+    const symmetricKey = getDirectThreadKey(myUserId, peerId)
+    const isPeerUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(peerId)
+    let orClause = `thread_key.eq.${symmetricKey},thread_key.eq.${peerId}`
+    if (peerId === 'saved-messages') {
+      orClause += `,and(author_id.eq.${myUserId},recipient_id.eq.${myUserId}),and(author_id.eq.${myUserId},recipient_id.is.null)`
+    } else if (isPeerUuid) {
+      orClause += `,and(author_id.eq.${myUserId},recipient_id.eq.${peerId}),and(author_id.eq.${peerId},recipient_id.eq.${myUserId})`
+    }
+
+    const { error } = await supabase
+      .from('direct_messages')
+      .delete()
+      .or(orClause)
+
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Failed to delete thread messages' }
+  }
+}
+
+/**
+ * Обновить данные опроса сообщения в Supabase
+ */
+export async function updateDirectMessagePoll(
+  messageId: string,
+  poll: any
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  if (!supabase || !messageId) return { ok: false }
+
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)
+    const matchCol = isUuid ? 'id' : 'client_id'
+    let { error } = await supabase
+      .from('direct_messages')
+      .update({ poll })
+      .eq(matchCol, messageId)
+
+    if (error && isUuid) {
+      const retry = await supabase.from('direct_messages').update({ poll }).eq('client_id', messageId)
+      error = retry.error
+    }
+
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
   }
 }
 
@@ -1722,7 +1908,7 @@ export async function markDirectMessagesAsRead(
   try {
     await supabase
       .from('direct_messages')
-      .update({ is_read: true, updated_at: new Date().toISOString() })
+      .update({ is_read: true })
       .eq('recipient_id', myUserId)
       .eq('author_id', peerId)
       .eq('is_read', false)
@@ -1744,12 +1930,12 @@ export async function updateDirectMessageReactions(
     if (isUuid) {
       await supabase
         .from('direct_messages')
-        .update({ reactions, updated_at: new Date().toISOString() })
+        .update({ reactions })
         .eq('id', messageId)
     } else {
       await supabase
         .from('direct_messages')
-        .update({ reactions, updated_at: new Date().toISOString() })
+        .update({ reactions })
         .eq('client_id', messageId)
     }
   } catch (e) {
@@ -1772,12 +1958,12 @@ export async function updateDirectMessagePin(
     if (isUuid) {
       await supabase
         .from('direct_messages')
-        .update({ is_pinned: isPinned, updated_at: new Date().toISOString() })
+        .update({ is_pinned: isPinned })
         .eq('id', messageId)
     } else {
       await supabase
         .from('direct_messages')
-        .update({ is_pinned: isPinned, updated_at: new Date().toISOString() })
+        .update({ is_pinned: isPinned })
         .eq('client_id', messageId)
     }
   } catch (e) {
@@ -1797,16 +1983,11 @@ export async function updateDirectMessageBody(
 
   try {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)
+    const patch = { body: newText, edited_at: new Date().toISOString() }
     if (isUuid) {
-      await supabase
-        .from('direct_messages')
-        .update({ body: newText, is_edited: true, updated_at: new Date().toISOString() })
-        .eq('id', messageId)
+      await supabase.from('direct_messages').update(patch).eq('id', messageId)
     } else {
-      await supabase
-        .from('direct_messages')
-        .update({ body: newText, is_edited: true, updated_at: new Date().toISOString() })
-        .eq('client_id', messageId)
+      await supabase.from('direct_messages').update(patch).eq('client_id', messageId)
     }
   } catch (e) {
     console.warn('[Ogonek] Update message body error:', e)
@@ -1828,12 +2009,12 @@ export async function updateDirectMessageTranscript(
     if (isUuid) {
       await supabase
         .from('direct_messages')
-        .update({ transcript, updated_at: new Date().toISOString() })
+        .update({ transcript })
         .eq('id', messageId)
     } else {
       await supabase
         .from('direct_messages')
-        .update({ transcript, updated_at: new Date().toISOString() })
+        .update({ transcript })
         .eq('client_id', messageId)
     }
   } catch (e) {
@@ -1842,11 +2023,12 @@ export async function updateDirectMessageTranscript(
 }
 
 /**
- * Realtime подписка на входящие и обновленные сообщения
+ * Realtime подписка на входящие, обновленные и удаленные сообщения
  */
 export function subscribeToDirectMessages(
   onMessage: (message: DirectMessageRecord) => void,
-  onUpdate?: (message: DirectMessageRecord) => void
+  onUpdate?: (message: DirectMessageRecord) => void,
+  onDelete?: (oldRecord: Partial<DirectMessageRecord>) => void
 ) {
   const supabase = getSupabase()
   if (!supabase) return () => {}
@@ -1869,6 +2051,15 @@ export function subscribeToDirectMessages(
       (payload) => {
         if (payload.new && onUpdate) {
           onUpdate(payload.new as DirectMessageRecord)
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'direct_messages' },
+      (payload) => {
+        if (payload.old && onDelete) {
+          onDelete(payload.old as Partial<DirectMessageRecord>)
         }
       }
     )
