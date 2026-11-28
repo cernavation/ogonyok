@@ -170,8 +170,8 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     )
   })
 
-  it('подвал содержит аккуратную иконку Telegram со ссылкой на канал/поддержку', () => {
-    assert.ok(footerContent.includes('t.me/ogonek_support'), 'Telegram ссылка должна присутствовать')
+  it('подвал содержит аккуратную иконку Telegram со ссылкой на Telegram', () => {
+    assert.ok(footerContent.includes('t.me/cernavation'), 'Telegram ссылка должна присутствовать')
     assert.ok(footerContent.includes('aria-label="Telegram"'), 'Иконка Telegram должна быть доступной для скринридеров')
   })
 

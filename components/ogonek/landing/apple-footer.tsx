@@ -100,11 +100,11 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
 
             {/* Small Telegram Icon Link */}
             <a
-              href="https://t.me/ogonek_support"
+              href="https://t.me/cernavation"
               target="_blank"
               rel="noreferrer"
               className="text-[#86868b] hover:text-[#d76737] transition-colors p-1"
-              title="Telegram поддержка"
+              title="Telegram (@cernavation)"
               aria-label="Telegram"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">

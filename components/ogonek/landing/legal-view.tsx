@@ -401,8 +401,8 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
             </h3>
             <p>
               {content.termsPoint5Text}{' '}
-              <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#d76737] hover:underline font-medium">
-                @ogonek_support
+              <a href="https://t.me/cernavation" target="_blank" rel="noreferrer" className="text-[#d76737] hover:underline font-medium">
+                @cernavation
               </a>.
             </p>
           </div>
@@ -471,8 +471,8 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
               <p className="text-[#86868b] mb-4">{content.privacyPoint3Text}</p>
               <div className="p-5 rounded-2xl bg-[#060608] border border-white/[0.1] text-xs text-[#86868b]">
                 {content.contactSupport}{' '}
-                <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#d76737] underline">
-                  @ogonek_support
+                <a href="https://t.me/cernavation" target="_blank" rel="noreferrer" className="text-[#d76737] underline">
+                  @cernavation
                 </a>
               </div>
             </div>
