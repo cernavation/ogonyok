@@ -49,11 +49,11 @@ export interface TestimonialGlobeLabels {
   pin: string;
   storiesCountLabel?: string;
   citiesLabel?: string;
+  exampleBadge?: string;
 }
 
 export interface TestimonialGlobeProps extends React.ComponentProps<"section"> {
   items: GlobeTestimonial[];
-  extraItems?: ExtraStoryItem[];
   eyebrow?: string;
   heading?: string;
   caption?: string;
@@ -88,6 +88,7 @@ const DEFAULT_LABELS: TestimonialGlobeLabels = {
   pin: "Запись из г.",
   storiesCountLabel: "записей на карте",
   citiesLabel: "городов мира",
+  exampleBadge: "Пример записи",
 };
 
 /* ── Apple-calibrated ring & ping color classes matching Ogonek Design System ── */
@@ -224,10 +225,11 @@ interface QuoteCardProps {
   tone: Tone;
   roomy: boolean;
   mode: "current" | "leaving" | "sizer";
+  exampleBadge?: string;
   ref?: React.ComponentProps<"figure">["ref"];
 }
 
-const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode, ref }: QuoteCardProps) {
+const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode, exampleBadge = "Пример записи", ref }: QuoteCardProps) {
   const hidden = mode !== "current";
   const isExample = item.type !== "real";
 
@@ -255,10 +257,10 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
             </span>
           )}
         </div>
-        {/* Only show 'Пример записи' when type === 'example', kept clear of top-right pagination */}
+        {/* Only show example badge when type === 'example', kept clear of top-right pagination */}
         {isExample && (
           <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#86868b] border border-white/10">
-            Пример записи
+            {exampleBadge}
           </span>
         )}
       </div>
@@ -408,7 +410,6 @@ const Pin = React.memo(function Pin({
 
 export function TestimonialGlobe({
   items,
-  extraItems,
   eyebrow = "Примеры записей в Winlog",
   heading = "Примеры записей",
   caption = "Люди по всему миру записывают победы. Вот как это выглядит в разных странах.",
@@ -1096,7 +1097,7 @@ export function TestimonialGlobe({
             }}
           >
             {items.map((item, i) => (
-              <QuoteCard key={`sizer-${item.id}`} item={item} index={i} tone={toneOf(item, i)} roomy={roomy} mode="sizer" />
+              <QuoteCard key={`sizer-${item.id}`} item={item} index={i} tone={toneOf(item, i)} roomy={roomy} mode="sizer" exampleBadge={text.exampleBadge} />
             ))}
             {leavingItem && cards.leaving !== null && (
               <QuoteCard
@@ -1107,6 +1108,7 @@ export function TestimonialGlobe({
                 tone={toneOf(leavingItem, cards.leaving)}
                 roomy={roomy}
                 mode="leaving"
+                exampleBadge={text.exampleBadge}
               />
             )}
             {shownItem && cards.shown !== null && (
@@ -1118,6 +1120,7 @@ export function TestimonialGlobe({
                 tone={toneOf(shownItem, cards.shown)}
                 roomy={roomy}
                 mode="current"
+                exampleBadge={text.exampleBadge}
               />
             )}
           </div>
@@ -1167,47 +1170,6 @@ export function TestimonialGlobe({
           </svg>
         )}
       </div>
-
-      {/* ── Horizontal Ribbon: «Ещё примеры записей» ─────────────────── */}
-      {extraItems && extraItems.length > 0 && (
-        <div className="relative max-w-[1200px] mx-auto px-5 sm:px-8 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-white/[0.08]">
-          <div className="flex items-center justify-between mb-5 sm:mb-6">
-            <div className="flex items-center gap-2.5">
-              <span className="size-2 rounded-full bg-[#d76737] shadow-[0_0_8px_#d76737]" />
-              <h3 className="text-xs sm:text-sm font-semibold text-white tracking-wider uppercase">
-                Ещё примеры записей
-              </h3>
-            </div>
-            <span className="text-xs text-[#86868b]">
-              Листай вправо →
-            </span>
-          </div>
-
-          <div className="relative overflow-x-auto pb-4 no-scrollbar -mx-5 px-5 sm:mx-0 sm:px-0">
-            <div className="flex gap-4 sm:gap-5 w-max">
-              {extraItems.map((story) => (
-                <div
-                  key={story.id}
-                  className="w-[280px] sm:w-[320px] shrink-0 p-5 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between"
-                >
-                  <p className="text-white text-[14px] sm:text-[15px] leading-relaxed mb-4">
-                    «{story.quote}»
-                  </p>
-                  <div className="flex items-center justify-between border-t border-white/[0.06] pt-3 text-xs">
-                    <span className="font-semibold text-white/90">
-                      {story.city}
-                      {story.country ? `, ${story.country}` : ""}
-                    </span>
-                    <span className="text-[#d76737] font-medium">
-                      {story.topic}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }

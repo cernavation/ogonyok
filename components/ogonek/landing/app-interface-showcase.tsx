@@ -39,6 +39,9 @@ interface ShowcaseCopy {
   mobileLabel: string
   navItems: string[]
   writeBtn: string
+  demoName: string
+  demoHandle: string
+  demoInitials: string
   streakDaysLabel: string
   streakNote: string
   rhythmTitle: string
@@ -57,6 +60,7 @@ interface ShowcaseCopy {
   mentorLabel: string
   mentorText: string
   leadersTitle: string
+  leadersBadge: string
   officialStatus: string
   onlineStatus: string
   chatIncoming: string
@@ -77,15 +81,18 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
       mobileLabel: 'iPhone',
       navItems: ['Acasă', 'Căutare', 'Focus', 'Analiză', 'Chaturi'],
       writeBtn: 'Notează ziua',
-      streakDaysLabel: '752 zile la rând',
+      demoName: 'Maxim Orlov',
+      demoHandle: '@max_orlov',
+      demoInitials: 'MO',
+      streakDaysLabel: '48 zile la rând',
       streakNote: 'Winlog nu se arde la o pauză',
       rhythmTitle: 'Ritmul săptămânii',
-      milestoneLeft: 'Obiectiv 1 000',
-      milestoneRight: '752 / 1 000',
-      nextHundredLeft: 'Până la 800 zile',
-      nextHundredRight: '52 / 100',
+      milestoneLeft: 'Până la 100 zile',
+      milestoneRight: '48 / 100',
+      nextHundredLeft: 'Obiectiv 1 000',
+      nextHundredRight: '48 / 1 000',
       postDate: 'Astăzi · 21:40',
-      postBadge: 'Ziua #752 · 11/10',
+      postBadge: 'Ziua #48',
       prideLabel: '1. Mândria zilei',
       prideText: 'Am închis lansarea noului modul la timp și mi-am ținut antrenamentul de seară fără scuze.',
       gratitudeLabel: '1. Recunoștință',
@@ -95,14 +102,15 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
       mentorLabel: 'Notă Winlog AI',
       mentorText: 'Ritmul tău în muncă și disciplină a crescut cu +18% luna aceasta. Continuitatea devine caracter.',
       leadersTitle: 'Top participanți activi',
+      leadersBadge: 'TOP ACTIVI',
       officialStatus: 'cont oficial · @winlog.life',
       onlineStatus: 'online',
-      chatIncoming: 'Bună! Felicitări pentru ziua #752. Ce victorie ai notat azi?',
+      chatIncoming: 'Bună! Felicitări pentru ziua #48. Ce victorie ai notat azi?',
       chatOutgoing: 'Am terminat proiectul și am alergat 7 km pe ploaie.',
       highlights: [
         { id: 'feed', step: '01', title: 'Mândria zilei', subtitle: '1–5 victorii reale și recunoștințe în 2 minute seara.', tab: 'feed' },
         { id: 'streak', step: '02', title: 'Serie de nestins', subtitle: 'Winlog păstrează zilele acumulate fără resetări toxice.', tab: 'feed' },
-        { id: 'rhythm', step: '03', title: 'Ritmul săptămânii', subtitle: 'Progres clar spre pragul de 1 000 și următoarea sută.', tab: 'analytics' },
+        { id: 'rhythm', step: '03', title: 'Ritmul săptămânii', subtitle: 'Progres clar spre pragul de 100 și 1 000 de zile.', tab: 'analytics' },
         { id: 'friends', step: '04', title: 'Prieteni și chaturi', subtitle: 'Susținere autentică și schimb de carduri cu apropiații.', tab: 'chats' },
       ],
     }
@@ -120,15 +128,18 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
       mobileLabel: 'iPhone',
       navItems: ['Home', 'Explore', 'Focus', 'Analytics', 'Chats'],
       writeBtn: 'Log day',
-      streakDaysLabel: '752 days strong',
+      demoName: 'Max Orlov',
+      demoHandle: '@max_orlov',
+      demoInitials: 'MO',
+      streakDaysLabel: '48 days strong',
       streakNote: 'Winlog never resets on a missed day',
       rhythmTitle: 'Weekly Rhythm',
-      milestoneLeft: 'Milestone 1,000',
-      milestoneRight: '752 / 1,000',
-      nextHundredLeft: 'Next hundred',
-      nextHundredRight: '52 / 100',
+      milestoneLeft: 'To 100 days',
+      milestoneRight: '48 / 100',
+      nextHundredLeft: 'Milestone 1,000',
+      nextHundredRight: '48 / 1,000',
       postDate: 'Today · 9:40 PM',
-      postBadge: 'Day #752 · 11/10',
+      postBadge: 'Day #48',
       prideLabel: '1. Pride of the day',
       prideText: 'Shipped the core release on schedule and still showed up for evening strength training.',
       gratitudeLabel: '1. Gratitude',
@@ -138,14 +149,15 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
       mentorLabel: 'Winlog AI Insight',
       mentorText: 'Consistency across work and health rose +18% over last month. Quiet execution compounds.',
       leadersTitle: 'Top active chronicles',
+      leadersBadge: 'TOP ACTIVE',
       officialStatus: 'official account · @winlog.life',
       onlineStatus: 'online',
-      chatIncoming: 'Huge props on Day #752! What was your toughest win tonight?',
+      chatIncoming: 'Huge props on Day #48! What was your toughest win tonight?',
       chatOutgoing: 'Wrapped the launch milestone and ran 7 km in the rain.',
       highlights: [
         { id: 'feed', step: '01', title: 'Pride of the day', subtitle: 'Capture 1–5 genuine wins and gratitudes before sleep.', tab: 'feed' },
         { id: 'streak', step: '02', title: 'Unbreakable streak', subtitle: 'Every closed day stays yours forever without toxic resets.', tab: 'feed' },
-        { id: 'rhythm', step: '03', title: 'Weekly rhythm', subtitle: 'Dual progress bars toward 1,000 days and the next 100.', tab: 'analytics' },
+        { id: 'rhythm', step: '03', title: 'Weekly rhythm', subtitle: 'Dual progress bars toward 100 and 1,000 days.', tab: 'analytics' },
         { id: 'friends', step: '04', title: 'Friends & Chats', subtitle: 'Share pride cards and back each other up privately.', tab: 'chats' },
       ],
     }
@@ -162,15 +174,18 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
     mobileLabel: 'iPhone',
     navItems: ['Лента', 'Поиск', 'Фокус', 'Аналитика', 'Чаты'],
     writeBtn: 'Записать день',
-    streakDaysLabel: '752 дня подряд',
+    demoName: 'Максим Орлов',
+    demoHandle: '@max_orlov',
+    demoInitials: 'МО',
+    streakDaysLabel: '48 дней подряд',
     streakNote: 'Winlog не сгорает при пропуске',
     rhythmTitle: 'Ритм недели',
-    milestoneLeft: 'Рубеж 1 000',
-    milestoneRight: '752 / 1 000',
-    nextHundredLeft: 'До 800 дней',
-    nextHundredRight: '52 / 100',
+    milestoneLeft: 'До 100 дней',
+    milestoneRight: '48 / 100',
+    nextHundredLeft: 'Рубеж 1 000',
+    nextHundredRight: '48 / 1 000',
     postDate: 'Сегодня · 21:40',
-    postBadge: 'День #752 · 11/10',
+    postBadge: 'День #48',
     prideLabel: '1. Гордость дня',
     prideText: 'Довёл ключевой релиз до продакшена и всё равно пошёл на вечернюю тренировку без отговорок.',
     gratitudeLabel: '1. Благодарность',
@@ -180,14 +195,15 @@ function getShowcaseCopy(locale: Locale): ShowcaseCopy {
     mentorLabel: 'Вывод Winlog AI',
     mentorText: 'Ритм в работе и дисциплине вырос на +18% за месяц. Спокойная регулярность даёт главный рычаг.',
     leadersTitle: 'Лидеры летописи',
+    leadersBadge: 'ТОП УЧАСТНИКОВ',
     officialStatus: 'официальный аккаунт · @winlog.life',
     onlineStatus: 'в сети',
-    chatIncoming: 'Привет! Поздравляю с днём #752. Какая победа сегодня далась сложнее всего?',
+    chatIncoming: 'Привет! Поздравляю с днём #48. Какая победа сегодня далась сложнее всего?',
     chatOutgoing: 'Закрыл релиз вовремя и пробежал 7 км под дождём.',
     highlights: [
       { id: 'feed', step: '01', title: 'Гордость дня', subtitle: '1–5 честных побед и благодарностей за две минуты вечером.', tab: 'feed' },
       { id: 'streak', step: '02', title: 'Несгораемый стрик', subtitle: 'Winlog бережёт прожитые дни и не обнуляет путь при пропуске.', tab: 'feed' },
-      { id: 'rhythm', step: '03', title: 'Ритм недели', subtitle: 'Две шкалы прогресса: к большой вехе 1 000 и ближайшей сотне.', tab: 'analytics' },
+      { id: 'rhythm', step: '03', title: 'Ритм недели', subtitle: 'Две шкалы прогресса: к ближайшей сотне и большой вехе 1 000.', tab: 'analytics' },
       { id: 'friends', step: '04', title: 'Друзья и чаты', subtitle: 'Круг доверия, реакции и обмен карточками без лишнего шума.', tab: 'chats' },
     ],
   }
@@ -259,7 +275,7 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
                   <span>{copy.milestoneRight}</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                  <div className="h-full w-[75.2%] rounded-full bg-[#d76737]" />
+                  <div className="h-full w-[48%] rounded-full bg-[#d76737]" />
                 </div>
               </div>
               <div>
@@ -268,7 +284,7 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
                   <span>{copy.nextHundredRight}</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                  <div className="h-full w-[52%] rounded-full bg-white" />
+                  <div className="h-full w-[5%] rounded-full bg-white" />
                 </div>
               </div>
             </div>
@@ -279,10 +295,10 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
 
     if (activeTab === 'leaderboard') {
       const leaders = [
-        { rank: 1, name: 'Alexei Cerna', handle: '@alex_cerna', days: 752, verified: true, score: '9.4' },
-        { rank: 2, name: 'Elena Moraru', handle: '@elena_fit', days: 418, verified: true, score: '9.1' },
-        { rank: 3, name: 'Mark Savin', handle: '@mark_dev', days: 295, verified: false, score: '8.9' },
-        { rank: 4, name: 'Anna Kim', handle: '@anna_k', days: 184, verified: true, score: '8.8' },
+        { rank: 1, name: 'Elena Moraru', handle: '@elena_fit', days: 418, verified: true, score: '9.1' },
+        { rank: 2, name: 'Mark Savin', handle: '@mark_dev', days: 295, verified: false, score: '8.9' },
+        { rank: 3, name: 'Anna Kim', handle: '@anna_k', days: 184, verified: true, score: '8.8' },
+        { rank: 4, name: copy.demoName, handle: copy.demoHandle, days: 48, verified: true, score: '9.2' },
       ]
       return (
         <div className="rounded-xl bg-black border border-white/[0.11] overflow-hidden">
@@ -291,7 +307,7 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
               <Trophy size={14} className="text-[#d76737]" />
               {copy.leadersTitle}
             </span>
-            <span className="text-[11px] font-mono text-white/50">750+ MAX</span>
+            <span className="text-[11px] font-mono text-white/50">{copy.leadersBadge}</span>
           </div>
           <div className="divide-y divide-white/[0.07]">
             {leaders.map((u) => (
@@ -378,14 +394,14 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-full bg-white/[0.08] border border-white/[0.14] flex items-center justify-center text-[12px] font-bold text-white shrink-0">
-              AC
+              {copy.demoInitials}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[14px] font-semibold text-white">
-                <span className="truncate">Alexei Cerna</span>
+                <span className="truncate">{copy.demoName}</span>
                 <WinlogVerifiedBadge />
               </div>
-              <div className="text-[11px] font-mono text-white/45">@alex_cerna · {copy.postDate}</div>
+              <div className="text-[11px] font-mono text-white/45">{copy.demoHandle} · {copy.postDate}</div>
             </div>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-white/[0.06] border border-white/[0.12] text-[11px] font-mono text-white/85 shrink-0">
@@ -590,7 +606,7 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
                       <span>{copy.milestoneRight}</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                      <div className="h-full w-[75.2%] rounded-full bg-[#d76737]" />
+                      <div className="h-full w-[48%] rounded-full bg-[#d76737]" />
                     </div>
                   </div>
                   <div>
@@ -599,7 +615,7 @@ export function AppInterfaceShowcase({ locale = 'ru' }: { locale?: Locale }) {
                       <span>{copy.nextHundredRight}</span>
                     </div>
                     <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                      <div className="h-full w-[52%] rounded-full bg-white" />
+                      <div className="h-full w-[5%] rounded-full bg-white" />
                     </div>
                   </div>
                 </div>

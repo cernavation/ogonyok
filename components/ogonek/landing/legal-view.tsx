@@ -82,7 +82,7 @@ const LEGAL_CONTENT: Record<
       'Вы имеете право в любой момент бесплатно экспортировать весь архив своих записей в стандартном формате JSON через меню «Настройки → Данные». Также вы можете в 1 клик удалить свой профиль и все связанные записи навсегда.',
     termsPoint5Title: '5. Обратная связь',
     termsPoint5Text:
-      'По любым вопросам относительно настоящих Условий и работы сервиса вы можете связаться с командой проекта через Telegram-поддержку',
+      'По любым вопросам относительно настоящих Условий и работы сервиса вы можете связаться с командой проекта по адресу',
     privacyEyebrow: 'Раздел 2',
     privacyTitle: 'Политика конфиденциальности и защиты данных',
     privacySubtitle:
@@ -119,14 +119,14 @@ const LEGAL_CONTENT: Record<
     ],
     privacyPoint1Title: '1. Свобода выбора: публичность или секретный режим',
     privacyPoint1Text:
-      'Ты сам решаешь, какой уровень открытости тебе нужен. Ты можешь сделать свой профиль полностью публичным — делиться победами со всем миром, вдохновлять других и участвовать в общих рейтингах. А можешь включить секретный режим: в этом случае тебя никто не сможет найти на платформе через поиск, а твои записи не увидит никто на свете, кроме тех избранных людей, кому ты лично откроешь закрытый доступ.',
+      'Ты сам решаешь, какой уровень открытости тебе нужен. Ты можешь сделать свой профиль полностью публичным - делиться победами со всем миром, вдохновлять других и участвовать в общих рейтингах. А можешь включить секретный режим: в этом случае тебя никто не сможет найти на платформе через поиск, а твои записи не увидит никто на свете, кроме тех избранных людей, кому ты лично откроешь закрытый доступ.',
     privacyPoint2Title: '2. Защищённое разграничение доступа',
     privacyPoint2Text:
       'Доступ к закрытым записям защищается протоколом Row Level Security (RLS). Это означает, что правила проверяются на уровне базы данных: ни один другой пользователь физически не может получить доступ к твоим секретным записям без выданного тобой разрешения.',
     privacyPoint3Title: '3. Право на забвение и полный контроль',
     privacyPoint3Text:
       'В любой момент в разделе «Настройки → Данные» вы можете нажать одну кнопку, чтобы выгрузить полный архив всех дней в открытом формате JSON, либо нажать «Удалить аккаунт», что моментально и безвозвратно сотрёт весь профиль и все записи.',
-    contactSupport: 'Вопросы по безопасности и аудиту кода можно направлять в Telegram-поддержку',
+    contactSupport: 'Вопросы по безопасности и аудиту кода можно направлять на почту поддержки',
   },
   ro: {
     eyebrow: 'Standarde juridice și protecția datelor',
@@ -157,7 +157,7 @@ const LEGAL_CONTENT: Record<
       'Aveți dreptul de a exporta oricând și gratuit întregul istoric în format standard JSON prin meniul «Setări → Date». De asemenea, puteți șterge dintr-un singur clic contul și toate însemnările asociate definitiv.',
     termsPoint5Title: '5. Asistență și contact',
     termsPoint5Text:
-      'Pentru orice întrebări referitoare la acești Termeni și funcționarea serviciului, puteți contacta echipa proiectului prin Telegram:',
+      'Pentru orice întrebări referitoare la acești Termeni și funcționarea serviciului, puteți contacta echipa proiectului la',
     privacyEyebrow: 'Secțiunea 2',
     privacyTitle: 'Politica de confidențialitate și securitate a datelor',
     privacySubtitle:
@@ -201,7 +201,7 @@ const LEGAL_CONTENT: Record<
     privacyPoint3Title: '3. Dreptul de a fi uitat și control complet',
     privacyPoint3Text:
       'În orice clipă, din secțiunea «Setări → Date», poți descărca arhiva completă a tuturor zilelor în format JSON sau poți alege «Șterge contul», acțiune ce elimină instantaneu și definitiv toate datele tale.',
-    contactSupport: 'Întrebările legate de securitate pot fi transmise echipei prin asistența Telegram',
+    contactSupport: 'Întrebările legate de securitate pot fi transmise echipei la adresa de suport',
   },
   en: {
     eyebrow: 'Legal standards & data protection',
@@ -232,7 +232,7 @@ const LEGAL_CONTENT: Record<
       'You have the right at any time to export your entire journal history for free in JSON format under "Settings → Data". You can also delete your account with one click, wiping all profile data and entries forever.',
     termsPoint5Title: '5. Feedback & Support',
     termsPoint5Text:
-      'If you have questions regarding these Terms or platform operations, reach out to our team on Telegram:',
+      'If you have questions regarding these Terms or platform operations, reach out to our team at',
     privacyEyebrow: 'Section 2',
     privacyTitle: 'Privacy Policy & Data Security',
     privacySubtitle:
@@ -276,7 +276,7 @@ const LEGAL_CONTENT: Record<
     privacyPoint3Title: '3. Right to be forgotten and total ownership',
     privacyPoint3Text:
       'At any time under "Settings → Data", you can export a full JSON archive of all your days or press "Delete Account" to immediately and irrevocably delete your profile and reflections.',
-    contactSupport: 'Security and code audit questions may be directed to our Telegram support:',
+    contactSupport: 'Security and code audit questions may be directed to our support email:',
   },
 }
 
@@ -401,8 +401,8 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
             </h3>
             <p>
               {content.termsPoint5Text}{' '}
-              <a href="https://t.me/cernavation" target="_blank" rel="noreferrer" className="text-[#d76737] hover:underline font-medium">
-                @cernavation
+              <a href="mailto:support@winlog.life" className="text-[#d76737] hover:underline font-medium">
+                support@winlog.life
               </a>.
             </p>
           </div>
@@ -471,8 +471,8 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
               <p className="text-[#86868b] mb-4">{content.privacyPoint3Text}</p>
               <div className="p-5 rounded-2xl bg-[#060608] border border-white/[0.1] text-xs text-[#86868b]">
                 {content.contactSupport}{' '}
-                <a href="https://t.me/cernavation" target="_blank" rel="noreferrer" className="text-[#d76737] underline">
-                  @cernavation
+                <a href="mailto:support@winlog.life" className="text-[#d76737] underline">
+                  support@winlog.life
                 </a>
               </div>
             </div>

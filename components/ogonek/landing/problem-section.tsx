@@ -108,48 +108,48 @@ const PROBLEM_TEXTS: Record<
 > = {
   ru: {
     head: {
-      title: 'Засыпаешь час, потому что мысли кипят.',
-      desc: 'Всё, что осталось незаконченным, крутится в голове ночью. Если записать день, мысли перестают держаться за ночь.',
+      title: 'Мысли кипят, уснуть невозможно.',
+      desc: 'Всё незаконченное крутится в голове до ночи. Выгрузи день за 2 минуты и спокойно выключи голову.',
     },
     calendar: {
-      title: 'Что ты делал 2 недели назад? Не помнишь.',
-      desc: 'Сотни дней сливаются в серый шум. Остаются два-три ярких. Остальные как будто не жили.',
+      title: 'Что ты сделал 2 недели назад? Не помнишь.',
+      desc: 'Сотни дней сливаются в серый шум. Остаются пара вспышек, а реальный прогресс забывается.',
     },
     treadmill: {
-      title: 'Сто дней в движении. Результата не видно.',
-      desc: 'Занят всё время, но непонятно, куда идёшь. Нужен не ещё один план, а честный взгляд на то, что ты на самом деле делал.',
+      title: 'Вечно в делах, а чувства результата нет.',
+      desc: 'Тебе не нужен ещё один список задач. Нужен честный лог того, чем ты реально гордишься.',
     },
-    finalLine: 'Проблема не в тебе. А в твоем подходе.',
+    finalLine: 'Проблема не в тебе. А в отсутствии фиксации.',
   },
   ro: {
     head: {
-      title: 'Adormi greu pentru că gândurile nu se opresc.',
-      desc: 'Tot ce a rămas neterminat îți revine în minte noaptea. Când îți așterni ziua pe hârtie, gândurile se liniștesc.',
+      title: 'Gândurile fierb, e imposibil să adormi.',
+      desc: 'Tot ce a rămas neterminat se învârte în minte până noaptea târziu. Descarcă ziua în 2 minute și oprește liniștit gândurile.',
     },
     calendar: {
       title: 'Ce ai făcut acum 2 săptămâni? Nu-ți amintești.',
-      desc: 'Sute de zile se pierd într-un zgomot cenușiu. Rămân doar două-trei memorabile. Celelalte parcă nici n-au fost trăite.',
+      desc: 'Sute de zile se topesc într-un zgomot cenușiu. Rămân doar câteva sclipiri, iar progresul real se uită.',
     },
     treadmill: {
-      title: 'O sută de zile în mișcare. Niciun rezultat vizibil.',
-      desc: 'Mereu ocupat, dar fără să știi încotro te îndrepți. Nu ai nevoie de încă un plan, ci de o privire sinceră asupra a ceea ce ai făcut cu adevărat.',
+      title: 'Mereu ocupat, dar fără sentimentul unui rezultat.',
+      desc: 'Nu ai nevoie de încă o listă de sarcini. Ai nevoie de un jurnal sincer cu lucrurile de care ești cu adevărat mândru.',
     },
-    finalLine: 'Problema nu ești tu. Ci abordarea ta.',
+    finalLine: 'Problema nu ești tu. Ci lipsa consemnării.',
   },
   en: {
     head: {
-      title: 'Tossing and turning because your mind is racing.',
-      desc: 'Everything left undone keeps spinning in your head at night. Once you write down your day, the thoughts stop keeping you awake.',
+      title: 'Your mind is racing, sleep feels impossible.',
+      desc: 'Unfinished tasks keep spinning in your head late into the night. Offload your day in 2 minutes and switch off with peace of mind.',
     },
     calendar: {
       title: "What did you do 2 weeks ago? You don't remember.",
-      desc: 'Hundreds of days blur into gray noise. Only two or three stand out. The rest are as if you never lived them.',
+      desc: 'Hundreds of days blur into gray noise. Only a few flashes remain, while your real progress gets forgotten.',
     },
     treadmill: {
-      title: 'A hundred days of motion. No visible result.',
-      desc: "Constantly busy, yet unsure where you're headed. You don't need another plan—you need an honest look at what you actually accomplished.",
+      title: 'Always busy, yet no real sense of achievement.',
+      desc: "You don't need another to-do list. You need an honest log of what you are genuinely proud of.",
     },
-    finalLine: "The problem isn't you. It's your approach.",
+    finalLine: "The problem isn't you. It's not logging your wins.",
   },
 }
 
@@ -159,18 +159,15 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
   return (
     <section
       id="problem"
-      className="relative w-full bg-[#000000] text-white overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+      className="relative z-20 w-full bg-[#000000] text-white overflow-x-clip scroll-mt-16 sm:scroll-mt-20"
       style={{ backgroundColor: '#000000' }}
       aria-label="Проблема"
     >
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
-        {/* ═══════════════════════════════════════════════════════════
-            Блок 2.1 «Голова» (Видео слева, текст справа на десктопе)
-            ═══════════════════════════════════════════════════════════ */}
-        <div className="py-16 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
-          {/* Медиа: ширина 380-440px на десктопе, min(78vw, 340px) по центру на мобильных */}
+        {/* Блок 2.1 «Голова» */}
+        <div className="py-8 sm:py-12 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-6 flex justify-center lg:justify-start order-1">
-            <div className="w-[min(78vw,340px)] sm:w-[380px] lg:w-[420px] max-w-[440px] shrink-0">
+            <div className="w-[min(70vw,260px)] sm:w-[320px] lg:w-[370px] max-w-[390px] shrink-0">
               <SafeVideo
                 mp4={PROBLEM_MEDIA.headThreads.mp4!}
                 poster={PROBLEM_MEDIA.headThreads.poster}
@@ -182,34 +179,29 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
             </div>
           </div>
 
-          {/* Текст */}
           <div className="lg:col-span-6 flex flex-col justify-center order-2 text-center lg:text-left">
-            <h2 className="text-[26px] sm:text-[34px] md:text-[40px] lg:text-[44px] font-bold tracking-tight text-white leading-[1.14] text-balance">
+            <h2 className="text-[24px] sm:text-[32px] md:text-[38px] lg:text-[42px] font-bold tracking-tight text-white leading-[1.12] text-balance">
               {t.head.title}
             </h2>
-            <p className="mt-4 sm:mt-6 text-[16px] sm:text-[18px] md:text-[19px] text-[#86868b] leading-relaxed max-w-[540px] mx-auto lg:mx-0">
+            <p className="mt-2.5 sm:mt-4 text-[15px] sm:text-[17px] md:text-[18px] text-[#86868b] leading-relaxed max-w-[520px] mx-auto lg:mx-0">
               {t.head.desc}
             </p>
           </div>
         </div>
 
-        {/* ═══════════════════════════════════════════════════════════
-            Блок 2.2 «Календарь» (Текст слева, видео справа на десктопе)
-            ═══════════════════════════════════════════════════════════ */}
-        <div className="py-16 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-12 gap-8 sm:gap-12 lg:gap-16 items-center">
-          {/* Текст: на мобильных order-2 (после медиа), на десктопе order-1 (слева) */}
+        {/* Блок 2.2 «Календарь» */}
+        <div className="py-8 sm:py-12 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-6 flex flex-col justify-center order-2 lg:order-1 text-center lg:text-left">
-            <h2 className="text-[26px] sm:text-[34px] md:text-[40px] lg:text-[44px] font-bold tracking-tight text-white leading-[1.14] text-balance">
+            <h2 className="text-[24px] sm:text-[32px] md:text-[38px] lg:text-[42px] font-bold tracking-tight text-white leading-[1.12] text-balance">
               {t.calendar.title}
             </h2>
-            <p className="mt-4 sm:mt-6 text-[16px] sm:text-[18px] md:text-[19px] text-[#86868b] leading-relaxed max-w-[540px] mx-auto lg:mx-0">
+            <p className="mt-2.5 sm:mt-4 text-[15px] sm:text-[17px] md:text-[18px] text-[#86868b] leading-relaxed max-w-[520px] mx-auto lg:mx-0">
               {t.calendar.desc}
             </p>
           </div>
 
-          {/* Медиа: на мобильных order-1 (сверху), на десктопе order-2 (справа, 380-440px) */}
           <div className="lg:col-span-6 flex justify-center lg:justify-end order-1 lg:order-2">
-            <div className="w-[min(78vw,340px)] sm:w-[380px] lg:w-[420px] max-w-[440px] shrink-0">
+            <div className="w-[min(70vw,260px)] sm:w-[320px] lg:w-[370px] max-w-[390px] shrink-0">
               <SafeVideo
                 mp4={PROBLEM_MEDIA.fadedDays.mp4!}
                 poster={PROBLEM_MEDIA.fadedDays.poster}
@@ -223,16 +215,11 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-          Блок 2.3 «Дорожка»
-          Десктоп: min-height 85vh, фото слева растворяется вправо в чёрный, текст в правом верхнем углу (max-width 520px).
-          Мобильные: фото сверху 60vh (градиент снизу к чёрному), текст под ним.
-          ═══════════════════════════════════════════════════════════ */}
+      {/* Блок 2.3 «Дорожка» (сжатый по вертикали) */}
       <div className="relative w-full bg-[#000000] overflow-hidden">
-        {/* Десктоп-версия (hidden на мобильных, flex на lg) */}
-        <div className="hidden lg:flex relative w-full min-h-[85vh] items-start justify-end px-8 md:px-12 lg:px-16 py-20 lg:py-28">
-          {/* Фото на всю высоту, прижато к левому краю */}
-          <div className="absolute inset-y-0 left-0 w-[68%] pointer-events-none select-none z-0 overflow-hidden">
+        {/* Десктоп-версия */}
+        <div className="hidden lg:flex relative w-full min-h-[440px] xl:min-h-[500px] items-center justify-end px-8 md:px-12 lg:px-16 py-12 lg:py-16">
+          <div className="absolute inset-y-0 left-0 w-[64%] pointer-events-none select-none z-0 overflow-hidden">
             <picture className="w-full h-full block">
               {PROBLEM_MEDIA.treadmill.posterWebp && (
                 <source srcSet={PROBLEM_MEDIA.treadmill.posterWebp} type="image/webp" />
@@ -242,19 +229,17 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
                 alt={t.treadmill.title}
                 fill
                 loading="lazy"
-                sizes="68vw"
+                sizes="64vw"
                 className="object-cover object-left"
               />
             </picture>
-            {/* Градиент растворения правого края фото в чистый чёрный (#000000) */}
             <div
               className="absolute inset-0 z-10"
               style={{
-                background: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0.7) 70%, #000000 100%)',
+                background: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.18) 35%, rgba(0,0,0,0.75) 72%, #000000 100%)',
               }}
               aria-hidden="true"
             />
-            {/* Затемнение: rgba(0,0,0,0.18) + радиальный градиент */}
             <div
               className="pointer-events-none absolute inset-0 z-10"
               style={{
@@ -265,21 +250,19 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
             />
           </div>
 
-          {/* Текст в правом верхнем углу, max-width 520px */}
           <div className="relative z-20 max-w-[520px] text-left">
-            <h2 className="text-[34px] md:text-[40px] lg:text-[44px] font-bold tracking-tight text-white leading-[1.14] text-balance">
+            <h2 className="text-[32px] md:text-[38px] lg:text-[42px] font-bold tracking-tight text-white leading-[1.12] text-balance">
               {t.treadmill.title}
             </h2>
-            <p className="mt-6 text-[18px] md:text-[19px] text-[#86868b] leading-relaxed">
+            <p className="mt-4 text-[17px] md:text-[18px] text-[#86868b] leading-relaxed">
               {t.treadmill.desc}
             </p>
           </div>
         </div>
 
-        {/* Мобильная версия (блок на мобильных, hidden на lg) */}
+        {/* Мобильная версия */}
         <div className="block lg:hidden relative w-full">
-          {/* Фото сверху: высота 60vh, object-position: left center, градиент снизу к чёрному */}
-          <div className="relative w-full h-[60vh] overflow-hidden select-none">
+          <div className="relative w-full h-[220px] sm:h-[300px] overflow-hidden select-none">
             <picture className="w-full h-full block">
               {PROBLEM_MEDIA.treadmill.posterWebp && (
                 <source srcSet={PROBLEM_MEDIA.treadmill.posterWebp} type="image/webp" />
@@ -293,15 +276,13 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
                 className="object-cover object-left"
               />
             </picture>
-            {/* Градиент снизу к чёрному */}
             <div
               className="absolute inset-0 z-10"
               style={{
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.8) 80%, #000000 100%)',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.22) 40%, rgba(0,0,0,0.82) 82%, #000000 100%)',
               }}
               aria-hidden="true"
             />
-            {/* Затемнение поверх медиа */}
             <div
               className="pointer-events-none absolute inset-0 z-10"
               style={{
@@ -312,23 +293,20 @@ export function ProblemSection({ locale = 'ru' }: ProblemSectionProps) {
             />
           </div>
 
-          {/* Текст под фото */}
-          <div className="px-5 sm:px-8 pt-4 pb-16 text-center">
-            <h2 className="text-[26px] sm:text-[32px] font-bold tracking-tight text-white leading-[1.16] text-balance">
+          <div className="px-4 sm:px-8 pt-2 pb-8 text-center">
+            <h2 className="text-[24px] sm:text-[30px] font-bold tracking-tight text-white leading-[1.14] text-balance">
               {t.treadmill.title}
             </h2>
-            <p className="mt-4 text-[16px] sm:text-[17px] text-[#86868b] leading-relaxed max-w-[500px] mx-auto">
+            <p className="mt-2.5 text-[15px] sm:text-[17px] text-[#86868b] leading-relaxed max-w-[500px] mx-auto">
               {t.treadmill.desc}
             </p>
           </div>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════
-          Финальная строка секции по центру, крупнее
-          ═══════════════════════════════════════════════════════════ */}
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 md:px-8 py-24 sm:py-32 md:py-40 text-center">
-        <p className="text-[24px] sm:text-[32px] md:text-[40px] lg:text-[48px] font-semibold text-white tracking-tight leading-[1.22] text-balance">
+      {/* Финальная строка секции по центру */}
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 md:px-8 py-10 sm:py-14 md:py-18 text-center">
+        <p className="text-[22px] sm:text-[30px] md:text-[38px] font-semibold text-white tracking-tight leading-[1.2] text-balance">
           {t.finalLine}
         </p>
       </div>

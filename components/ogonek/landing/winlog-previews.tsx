@@ -19,7 +19,7 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
   const copy =
     locale === 'ro'
       ? {
-          headerTag: 'Evaluare zi · #752',
+          headerTag: 'Evaluare zi · #48',
           scoreCaption: 'Analiză sinceră, fără clișee',
           scoreDelta: '+18% față de luna trecută',
           chartTitle: 'Dinamica ultimelor 7 zile',
@@ -34,12 +34,12 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
           mentorQuote:
             'Disciplina a rămas stabilă chiar și într-o zi încărcată: 3 din 3 promisiuni îndeplinite, sportul de seară a consolidat rezultatul.',
           rhythmTitle: 'Ritmul săptămânii',
-          goal1: 'Prag 1 000',
-          goal2: 'Următoarea sută',
+          goal1: 'Până la 100 zile',
+          goal2: 'Prag 1 000',
         }
       : locale === 'en'
         ? {
-            headerTag: 'Day Evaluation · #752',
+            headerTag: 'Day Evaluation · #48',
             scoreCaption: 'Objective review, zero flattery',
             scoreDelta: '+18% vs. previous month',
             chartTitle: 'Last 7 days strength score',
@@ -54,11 +54,11 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
             mentorQuote:
               'Execution held steady even under peak load: 3 of 3 morning commitments delivered, and evening training sealed the day.',
             rhythmTitle: 'Weekly Rhythm',
-            goal1: 'Milestone 1,000',
-            goal2: 'Next hundred',
+            goal1: 'To 100 days',
+            goal2: 'Milestone 1,000',
           }
         : {
-            headerTag: 'Оценка дня · #752',
+            headerTag: 'Оценка дня · #48',
             scoreCaption: 'Объективный разбор без лести',
             scoreDelta: '+18% к прошлому месяцу',
             chartTitle: 'Динамика последних 7 дней',
@@ -73,8 +73,8 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
             mentorQuote:
               'Фокус удержан даже в плотный день: 3 из 3 утренних обещаний закрыты, вечерняя пробежка закрепила темп.',
             rhythmTitle: 'Ритм недели',
-            goal1: 'Рубеж 1 000',
-            goal2: 'До 800 дней',
+            goal1: 'До 100 дней',
+            goal2: 'Рубеж 1 000',
           }
 
   const bars = [
@@ -112,7 +112,7 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
 
           <div className="mt-4 pt-3 border-t border-white/[0.07] flex items-center justify-between">
             <span className="text-[12px] text-[#86868b]">{copy.scoreCaption}</span>
-            <span className="text-[12px] font-mono text-white/75">752 d</span>
+            <span className="text-[12px] font-mono text-white/75">48 d</span>
           </div>
         </div>
 
@@ -173,19 +173,19 @@ export function WinlogAiPreview({ locale = 'ru' }: { locale?: Locale }) {
               <div>
                 <div className="flex justify-between text-[11px] font-mono text-white/70 mb-1">
                   <span>{copy.goal1}</span>
-                  <span>752 / 1 000</span>
+                  <span>48 / 100</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                  <div className="h-full w-[75.2%] rounded-full bg-[#d76737]" />
+                  <div className="h-full w-[48%] rounded-full bg-[#d76737]" />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-[11px] font-mono text-white/70 mb-1">
                   <span>{copy.goal2}</span>
-                  <span>52 / 100</span>
+                  <span>48 / 1 000</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-white/[0.08] overflow-hidden">
-                  <div className="h-full w-[52%] rounded-full bg-white" />
+                  <div className="h-full w-[5%] rounded-full bg-white" />
                 </div>
               </div>
             </div>
@@ -226,7 +226,7 @@ export function WinlogFriendsPreview({ locale = 'ru' }: { locale?: Locale }) {
           officialSub: 'cont oficial · @winlog.life',
           friendSub1: 'Ziua #184 închisă acum 5 min',
           friendSub2: 'Alergare de dimineață 10 km',
-          sharedLabel: 'Card trimis · Ziua #752',
+          sharedLabel: 'Card trimis · Ziua #48',
           sharedText: 'Am lansat actualizarea la timp și am alergat 7 km seara.',
           msg1: 'Super disciplină! 7 km pe ploaie după muncă chiar impune respect.',
           msg2: 'Mulțumesc! Aștept și raportul tău de seară azi.',
@@ -240,7 +240,7 @@ export function WinlogFriendsPreview({ locale = 'ru' }: { locale?: Locale }) {
             officialSub: 'official account · @winlog.life',
             friendSub1: 'Closed Day #184 · 5m ago',
             friendSub2: 'Morning 10 km tempo run',
-            sharedLabel: 'Shared card · Day #752',
+            sharedLabel: 'Shared card · Day #48',
             sharedText: 'Shipped the core release on schedule and ran 7 km in the evening.',
             msg1: 'Serious consistency. Showing up for 7 km right after a launch is huge.',
             msg2: 'Thanks! Looking forward to seeing your evening log tonight.',
@@ -253,7 +253,7 @@ export function WinlogFriendsPreview({ locale = 'ru' }: { locale?: Locale }) {
             officialSub: 'официальный аккаунт · @winlog.life',
             friendSub1: 'Закрыла день #184 · 5 мин назад',
             friendSub2: 'Утренний кросс 10 км',
-            sharedLabel: 'Карточка дня · День #752',
+            sharedLabel: 'Карточка дня · День #48',
             sharedText: 'Довёл релиз в срок и вечером пробежал 7 км без отговорок.',
             msg1: 'Мощный ритм! Выйти на 7 км после такого рабочего дня - топ.',
             msg2: 'Спасибо! Жду твою запись вечером перед сном.',

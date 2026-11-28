@@ -97,9 +97,19 @@ export function WorksWheel({
   const cardRefs = React.useRef<(HTMLElement | null)[]>([]);
   const labelRef = React.useRef<HTMLDivElement>(null);
   const titleRef = React.useRef<HTMLDivElement>(null);
+  const hudRef = React.useRef<HTMLDivElement>(null);
 
   const turn = React.useRef(0);
   const target = React.useRef(0);
+  const endFadeRef = React.useRef(0);
+  const endFadeTargetRef = React.useRef(0);
+  const kickRef = React.useRef<() => void>(() => {});
+  const lastWrittenRef = React.useRef<{ z: string[]; op: string[]; vis: string[]; subOp: string[] }>({
+    z: [],
+    op: [],
+    vis: [],
+    subOp: [],
+  });
   const [active, setActive] = React.useState(0);
 
   // Card hover & select states for smooth enlargement and dimming of other cards
@@ -110,10 +120,12 @@ export function WorksWheel({
 
   React.useEffect(() => {
     hoveredRef.current = hovered;
+    kickRef.current();
   }, [hovered]);
 
   React.useEffect(() => {
     selectedRef.current = selected;
+    kickRef.current();
   }, [selected]);
   
   // Initialize with window dimensions so cards are NEVER 0px/collapsed from first render
@@ -167,16 +179,16 @@ export function WorksWheel({
     const cardH = cardW / CARD_RATIO;
     const drumR = cardH * DRUM;
 
-    // Grand resting ring radius
+    // Calibrated resting ring radius so outer cards stay comfortably inside h-screen
     const maxRingR = isNarrow
-      ? Math.min(h * 0.32, w * 0.38, 240)
-      : Math.min(h * 0.38, w * 0.28, 350);
-    const ringR = Math.max(maxRingR, 145);
+      ? Math.min(h * 0.30, w * 0.385, 215)
+      : Math.min(h * 0.33, w * 0.27, 315);
+    const ringR = Math.max(maxRingR, 130);
 
-    // Card scale inside the ring (~210-220px wide cards on desktop)
+    // Card scale inside the ring
     const ringScale = count
-      ? clamp((((2 * Math.PI * ringR) / count) * 0.86) / (cardW || 1), 0.28, 0.46)
-      : 0.35;
+      ? clamp((((2 * Math.PI * ringR) / count) * 0.84) / (cardW || 1), 0.24, 0.44)
+      : 0.34;
 
     return {
       cardW,
@@ -209,28 +221,37 @@ export function WorksWheel({
     }
 
     const draw = () => {
-      frame = requestAnimationFrame(draw);
+      frame = 0;
       const gap = target.current - turn.current;
+      const ease = reduced ? 1 : Math.abs(gap) > 1.2 ? 0.36 : EASE;
       if (Math.abs(gap) < 0.0005) turn.current = target.current;
-      else turn.current += gap * (reduced ? 1 : EASE);
+      else turn.current += gap * ease;
+
+      const fadeGap = endFadeTargetRef.current - endFadeRef.current;
+      if (Math.abs(fadeGap) < 0.001) endFadeRef.current = endFadeTargetRef.current;
+      else endFadeRef.current += fadeGap * (reduced ? 1 : 0.22);
 
       const t = turn.current;
       const m = clamp(t, 0, 1);
       const pos = Math.max(0, t - 1);
       const near = clamp(Math.round(pos), 0, last);
+      const stageAlpha = clamp(1 - endFadeRef.current, 0, 1);
 
-      // On desktop (>=1024px), smoothly shift drum to the RIGHT (+190px) into the freed space!
+      // On desktop (>=1024px), smoothly shift drum to the RIGHT into freed space
       const drumShiftX = isNarrow ? 0 : Math.min(stage.w * 0.14, 190) * m;
-      // Lift slightly vertically in drum mode to provide generous clearance above Dynamic Island
-      const drumShiftY = isNarrow ? -m * 20 : -(1 - m) * 15 - m * 35;
+      // Keep resting ring vertically centered; lift slightly in drum mode above HUD
+      const drumShiftY = isNarrow ? -m * 18 : -m * 28;
 
       if (wheelRef.current) {
-        wheelRef.current.style.transform = `translateX(${drumShiftX}px) translateY(${drumShiftY}px) translateZ(${-m * drumR}px)`;
+        wheelRef.current.style.transform = `translate3d(${drumShiftX.toFixed(2)}px, ${drumShiftY.toFixed(2)}px, ${(-m * drumR).toFixed(2)}px)`;
+        wheelRef.current.style.opacity = stageAlpha.toFixed(3);
+        wheelRef.current.style.visibility = stageAlpha <= 0.005 ? "hidden" : "visible";
       }
 
       const hoveredIdx = hoveredRef.current;
       const selectedIdx = selectedRef.current;
       const anyFocus = hoveredIdx !== null || selectedIdx !== null;
+      let stillAnimating = Math.abs(gap) >= 0.0005 || Math.abs(fadeGap) >= 0.001;
 
       for (let i = 0; i < count; i++) {
         const d = i - pos;
@@ -274,28 +295,40 @@ export function WorksWheel({
           }
 
           const curOp = currentOpacities.current[i] ?? targetOp;
-          const nextOp = curOp + (targetOp - curOp) * (reduced ? 1 : 0.18);
+          const opDiff = targetOp - curOp;
+          if (Math.abs(opDiff) >= 0.001) stillAnimating = true;
+          const nextOp = Math.abs(opDiff) < 0.001 ? targetOp : curOp + opDiff * (reduced ? 1 : 0.18);
           currentOpacities.current[i] = nextOp;
-          card.style.opacity = Math.abs(nextOp) < 0.005 ? "0" : nextOp.toFixed(3);
 
-          // Z-index: focused card stays on top
-          if (hasFocus) {
-            card.style.zIndex = "450";
-          } else {
-            card.style.zIndex = String(Math.round(100 - Math.abs(d) * 2));
+          const opStr = nextOp < 0.005 ? "0" : nextOp.toFixed(3);
+          const visStr = nextOp < 0.005 ? "hidden" : "visible";
+          if (lastWrittenRef.current.op[i] !== opStr) {
+            card.style.opacity = opStr;
+            lastWrittenRef.current.op[i] = opStr;
+          }
+          if (lastWrittenRef.current.vis[i] !== visStr) {
+            card.style.visibility = visStr;
+            card.style.pointerEvents = nextOp < 0.05 ? "none" : "auto";
+            lastWrittenRef.current.vis[i] = visStr;
+          }
+
+          // Z-index: only write when integer rank actually changes
+          const zStr = hasFocus ? "450" : String(Math.round(100 - Math.abs(d) * 2));
+          if (lastWrittenRef.current.z[i] !== zStr) {
+            card.style.zIndex = zStr;
+            lastWrittenRef.current.z[i] = zStr;
           }
         }
 
         const face = card?.firstElementChild as HTMLElement | null;
         if (face) {
-          const baseScale = lerp(ringScale, 1, m);
-          // Pure scroll-driven scale: strictly no hover enlargement
-          const targetScale = baseScale;
-
+          const targetScale = lerp(ringScale, 1, m);
           const curScale = currentScales.current[i] ?? targetScale;
-          const nextScale = curScale + (targetScale - curScale) * (reduced ? 1 : 0.18);
+          const scaleDiff = targetScale - curScale;
+          if (Math.abs(scaleDiff) >= 0.0005) stillAnimating = true;
+          const nextScale = Math.abs(scaleDiff) < 0.0005 ? targetScale : curScale + scaleDiff * (reduced ? 1 : 0.18);
           currentScales.current[i] = nextScale;
-          face.style.transform = `scale(${nextScale.toFixed(4)})`;
+          face.style.transform = `translateZ(0) scale(${nextScale.toFixed(4)})`;
 
           // Subtitle / Full phrase overlay opacity:
           // Shows in drum mode when front or focused
@@ -307,30 +340,44 @@ export function WorksWheel({
               targetSubOp =
                 clamp((m - 0.25) / 0.5, 0, 1) * Math.max(0, 1 - Math.abs(d) * 0.75);
             }
-          } else {
-            targetSubOp = 0;
           }
 
           const curSubOp = currentSubOpacities.current[i] ?? targetSubOp;
-          const nextSubOp = curSubOp + (targetSubOp - curSubOp) * (reduced ? 1 : 0.22);
+          const subDiff = targetSubOp - curSubOp;
+          if (Math.abs(subDiff) >= 0.001) stillAnimating = true;
+          const nextSubOp = Math.abs(subDiff) < 0.001 ? targetSubOp : curSubOp + subDiff * (reduced ? 1 : 0.22);
           currentSubOpacities.current[i] = nextSubOp;
 
-          const sub = face.querySelector(".card-subtitle-overlay") as HTMLElement | null;
-          if (sub) {
-            sub.style.opacity = Math.abs(nextSubOp) < 0.005 ? "0" : nextSubOp.toFixed(3);
+          const subOpStr = nextSubOp < 0.005 ? "0" : nextSubOp.toFixed(3);
+          if (lastWrittenRef.current.subOp[i] !== subOpStr) {
+            const sub = face.querySelector(".card-subtitle-overlay") as HTMLElement | null;
+            if (sub) {
+              sub.style.opacity = subOpStr;
+            }
+            lastWrittenRef.current.subOp[i] = subOpStr;
           }
         }
       }
 
-      // Center ring label opacity: fades out smoothly as user scrolls into drum
+      // Center ring label opacity: fades completely to 0 BEFORE first slide card arrives (m <= 0.25)
       if (labelRef.current) {
-        const ringLabelBase = 1 - m;
-        labelRef.current.style.opacity = Math.max(0, ringLabelBase).toFixed(3);
+        const ringLabelOp = clamp(1 - m / 0.25, 0, 1) * stageAlpha;
+        labelRef.current.style.opacity = ringLabelOp < 0.005 ? "0" : ringLabelOp.toFixed(3);
+        labelRef.current.style.pointerEvents = "none";
+        labelRef.current.style.visibility = ringLabelOp < 0.005 ? "hidden" : "visible";
       }
 
-      // Left title overlay opacity in drum mode
+      // Left title overlay opacity in drum mode: fades in cleanly AFTER center label disappears
       if (titleRef.current) {
-        titleRef.current.style.opacity = m.toFixed(3);
+        const titleOp = clamp((m - 0.35) / 0.4, 0, 1) * stageAlpha;
+        titleRef.current.style.opacity = titleOp < 0.005 ? "0" : titleOp.toFixed(3);
+        titleRef.current.style.visibility = titleOp < 0.005 ? "hidden" : "visible";
+      }
+
+      if (hudRef.current) {
+        hudRef.current.style.opacity = stageAlpha < 0.005 ? "0" : stageAlpha.toFixed(3);
+        hudRef.current.style.pointerEvents = stageAlpha < 0.1 ? "none" : "auto";
+        hudRef.current.style.visibility = stageAlpha < 0.005 ? "hidden" : "visible";
       }
 
       setActive((prev) => (prev === near ? prev : near));
@@ -338,15 +385,30 @@ export function WorksWheel({
       if (onTurnChangeRef.current) {
         onTurnChangeRef.current(t, m, near);
       }
+
+      if (stillAnimating) {
+        frame = requestAnimationFrame(draw);
+      }
     };
 
-    draw();
-    return () => cancelAnimationFrame(frame);
+    const kick = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(draw);
+      }
+    };
+    kickRef.current = kick;
+
+    kick();
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      kickRef.current = () => {};
+    };
   }, [metrics, stage.w, count, last, reduced]);
 
   const to = React.useCallback(
     (next: number) => {
       target.current = clamp(next, 0, last + 1);
+      kickRef.current();
     },
     [last],
   );
@@ -368,7 +430,7 @@ export function WorksWheel({
 
         // Measure header block above the sticky stage
         const header = track.querySelector(".modes-header-block");
-        const headerH = header ? (header as HTMLElement).offsetHeight : 280;
+        const headerH = header ? (header as HTMLElement).offsetHeight : 220;
 
         const rect = track.getBoundingClientRect();
         const totalAnimScroll = track.offsetHeight - headerH - window.innerHeight;
@@ -378,25 +440,30 @@ export function WorksWheel({
 
         if (currentAnimScroll <= 0) {
           target.current = 0;
+          endFadeTargetRef.current = 0;
+          kickRef.current();
           return;
         }
 
         const progress = clamp(currentAnimScroll / totalAnimScroll, 0, 1);
 
         let nextTarget = 0;
-        if (progress <= 0.06) {
+        if (progress <= 0.05) {
           nextTarget = 0;
-        } else if (progress <= 0.16) {
-          const p = (progress - 0.06) / (0.16 - 0.06);
+        } else if (progress <= 0.15) {
+          const p = (progress - 0.05) / (0.15 - 0.05);
           nextTarget = p * 1;
-        } else if (progress <= 0.92) {
-          const p = (progress - 0.16) / (0.92 - 0.16);
+        } else if (progress <= 0.89) {
+          const p = (progress - 0.15) / (0.89 - 0.15);
           nextTarget = 1 + p * (count - 1);
         } else {
           nextTarget = count;
         }
 
+        // Smoothly hide sticky gallery in the final stretch so the last card never bleeds behind #how
+        endFadeTargetRef.current = progress > 0.9 ? clamp((progress - 0.9) / 0.08, 0, 1) : 0;
         target.current = clamp(nextTarget, 0, count);
+        kickRef.current();
       });
     };
 
@@ -416,7 +483,7 @@ export function WorksWheel({
         return;
       }
       const header = track.querySelector(".modes-header-block");
-      const headerH = header ? (header as HTMLElement).offsetHeight : 280;
+      const headerH = header ? (header as HTMLElement).offsetHeight : 220;
       const totalAnimScroll = track.offsetHeight - headerH - window.innerHeight;
       if (totalAnimScroll <= 0) {
         to(itemIndex + 1);
@@ -424,8 +491,8 @@ export function WorksWheel({
       }
       const targetProgress =
         itemIndex === 0
-          ? 0.16
-          : 0.16 + (itemIndex / (count - 1)) * (0.92 - 0.16);
+          ? 0.15
+          : 0.15 + (itemIndex / (count - 1)) * (0.89 - 0.15);
       const trackTop = track.getBoundingClientRect().top + window.scrollY;
       const targetY = trackTop + headerH + targetProgress * totalAnimScroll;
       window.scrollTo({ top: targetY, behavior: "smooth" });
@@ -443,13 +510,13 @@ export function WorksWheel({
     <div
       aria-label={label}
       className={cn(
-        "relative h-full min-h-[580px] sm:min-h-[660px] md:min-h-[760px] w-full overflow-visible select-none bg-transparent",
+        "relative h-full w-full overflow-hidden select-none bg-transparent",
         className,
       )}
       {...props}
     >
-      {/* Soft atmospheric ambient glow */}
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(0,113,227,0.12),transparent_75%)]" />
+      {/* Subtle monochrome/terracotta stage glow */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(215,103,55,0.08),transparent_72%)]" />
 
       {/* Interactive stage */}
       <div
@@ -457,7 +524,7 @@ export function WorksWheel({
         tabIndex={0}
         role="region"
         aria-label={label}
-        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing overflow-visible z-10"
+        className="focus-visible:outline-foreground absolute inset-0 cursor-grab touch-pan-x outline-none focus-visible:outline-2 focus-visible:-outline-offset-4 active:cursor-grabbing overflow-hidden z-10"
         style={{ perspective: `${metrics.depth}px` }}
         onPointerDown={(event) => {
           if (event.target === stageRef.current) {
@@ -498,7 +565,7 @@ export function WorksWheel({
       >
         <div
           ref={wheelRef}
-          className="absolute top-1/2 left-1/2 [transform-style:preserve-3d]"
+          className="absolute top-1/2 left-1/2 [transform-style:preserve-3d] will-change-[transform,opacity]"
         >
           {items.map((item, i) => {
             const isCurrent = i === active;
@@ -547,7 +614,7 @@ export function WorksWheel({
                     cardRefs.current[i] = node;
                   }}
                   className={cn(
-                    "group absolute [backface-visibility:hidden] cursor-pointer outline-none transition-shadow duration-300",
+                    "group absolute [backface-visibility:hidden] cursor-pointer outline-none will-change-[transform,opacity]",
                     hasFocus && "z-50",
                   )}
                   style={{
@@ -559,34 +626,36 @@ export function WorksWheel({
                 >
                   <span
                     className={cn(
-                      "relative block size-full overflow-hidden rounded-2xl bg-[#060608] border transition-all duration-300",
+                      "relative block size-full overflow-hidden rounded-2xl bg-[#060608] border will-change-transform",
                       isSelected
-                        ? "border-white/35 shadow-[0_24px_80px_rgba(0,0,0,0.95)] ring-1 ring-white/25"
-                        : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)]",
+                        ? "border-white/35 shadow-[0_20px_56px_rgba(0,0,0,0.9)] ring-1 ring-white/25"
+                        : "border-white/[0.12] shadow-[0_20px_50px_rgba(0,0,0,0.8)]",
                     )}
                   >
                     <img
                       src={item.image}
                       alt={item.title}
+                      loading="eager"
+                      decoding="async"
                       draggable={false}
-                      className="size-full object-cover select-none"
+                      className="size-full object-cover select-none [transform:translateZ(0)]"
                     />
 
-                    {/* Category tag pill in top-left corner of each card */}
+                    {/* Category tag pill in top-left corner of each card (no backdrop-blur inside 3D card for 60fps GPU) */}
                     {item.tag && (
                       <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 pointer-events-none">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-300 backdrop-blur-md",
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide",
                             hasFocus
-                              ? "bg-white/[0.14] text-white border border-white/[0.22]"
-                              : "bg-white/[0.08] text-white/80 border border-white/[0.12]",
+                              ? "bg-black/80 text-white border border-white/25"
+                              : "bg-black/70 text-white/90 border border-white/15",
                           )}
                         >
                           <span
                             className={cn(
                               "size-1.5 rounded-full",
-                              hasFocus ? "bg-white" : "bg-white/60",
+                              hasFocus ? "bg-[#d76737]" : "bg-white/65",
                             )}
                           />
                           {item.tag}
@@ -594,19 +663,17 @@ export function WorksWheel({
                       </div>
                     )}
 
-                    {/* Full phrase overlay with gradient at bottom (strictly >= 16px font, no cut-off words) */}
+                    {/* Full phrase overlay with gradient at bottom (no CSS opacity transition fighting rAF) */}
                     <div
-                      className={cn(
-                        "card-subtitle-overlay absolute bottom-0 inset-x-0 p-4 sm:p-5 md:p-6 bg-gradient-to-t from-black/95 via-black/80 to-transparent pointer-events-none transition-opacity duration-300 z-20 flex flex-col justify-end",
-                      )}
+                      className="card-subtitle-overlay absolute bottom-0 inset-x-0 p-4 sm:p-5 md:p-6 bg-gradient-to-t from-black/95 via-black/80 to-transparent pointer-events-none z-20 flex flex-col justify-end will-change-opacity"
                     >
-                      <p className="text-white text-[16px] sm:text-[17px] md:text-[18px] font-medium leading-snug drop-shadow-md break-words">
+                      <p className="text-white text-[15px] sm:text-[17px] md:text-[18px] font-medium leading-snug drop-shadow-md break-words">
                         {item.title}
                       </p>
                     </div>
 
                     {action && item.href ? (
-                      <span className="bg-black/70 text-white border border-white/20 pointer-events-none absolute right-3.5 top-3.5 flex translate-y-1 items-center gap-1.5 rounded-full px-3 py-1 text-xs backdrop-blur-md opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
+                      <span className="bg-black/80 text-white border border-white/20 pointer-events-none absolute right-3.5 top-3.5 flex translate-y-1 items-center gap-1.5 rounded-full px-3 py-1 text-xs opacity-0 transition group-hover:translate-y-0 group-hover:opacity-100">
                         <svg
                           viewBox="0 0 12 12"
                           className="size-3"
@@ -632,47 +699,47 @@ export function WorksWheel({
         </div>
       </div>
 
-      {/* Ring center label (visible when at rest before scroll) */}
+      {/* Ring center label (fades out cleanly before first card enters center) */}
       <div
         ref={labelRef}
-        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 transition-opacity duration-300"
+        className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 will-change-[opacity]"
       >
-        <span className="text-white/60 text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
+        <span className="text-white/60 text-[9.5px] sm:text-xs md:text-sm uppercase tracking-[0.14em] sm:tracking-widest font-semibold mb-1 sm:mb-2 max-w-[175px] sm:max-w-none leading-tight drop-shadow">
           {galleryLabel}
         </span>
-        <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-white max-w-[240px] sm:max-w-[340px] md:max-w-[420px] leading-tight drop-shadow-lg">
+        <h3 className="text-[17px] sm:text-3xl md:text-4xl font-bold text-white max-w-[168px] sm:max-w-[340px] md:max-w-[420px] leading-tight drop-shadow-lg">
           {label}
         </h3>
-        <p className="text-[#86868b] text-[11px] sm:text-xs md:text-sm mt-1.5 sm:mt-2.5 max-w-[220px] sm:max-w-[320px] drop-shadow">
+        <p className="text-[#86868b] text-[10px] sm:text-xs md:text-sm mt-1 sm:mt-2.5 max-w-[162px] sm:max-w-[320px] leading-snug drop-shadow">
           {hintLabel}
         </p>
-        <div className="mt-3 sm:mt-4 flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[11px] sm:text-xs text-[#a1a1a6]">
-          <span className="inline-block size-1.5 sm:size-2 rounded-full bg-white/75 animate-pulse" />
+        <div className="mt-2 sm:mt-4 flex items-center gap-1.5 sm:gap-2 px-2.5 py-0.5 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[10px] sm:text-xs text-[#a1a1a6]">
+          <span className="inline-block size-1.5 sm:size-2 rounded-full bg-[#d76737] animate-pulse" />
           {scrollDownLabel}
         </div>
       </div>
 
-      {/* Front-card headline on the left side of the stage on desktop (>=1024px), or top glass card on mobile & tablet */}
+      {/* Front-card headline on the left side of the stage on desktop (>=1024px), or top card on mobile & tablet */}
       <div
         ref={titleRef}
-        className="pointer-events-none absolute top-[68px] sm:top-20 lg:top-1/2 left-4 sm:left-6 lg:left-[5%] xl:left-[8%] right-4 sm:right-6 lg:right-auto lg:-translate-y-1/2 flex flex-col items-center lg:items-start text-center lg:text-left max-w-full lg:max-w-[340px] xl:max-w-[420px] tracking-tight opacity-0 z-30 transition-opacity duration-300"
+        className="pointer-events-none absolute top-[62px] sm:top-20 lg:top-1/2 left-4 sm:left-6 lg:left-[5%] xl:left-[8%] right-4 sm:right-6 lg:right-auto lg:-translate-y-1/2 flex flex-col items-center lg:items-start text-center lg:text-left max-w-full lg:max-w-[340px] xl:max-w-[420px] tracking-tight opacity-0 z-30 will-change-[opacity]"
       >
-        <div className="inline-flex flex-col items-center lg:items-start px-4 py-2.5 sm:px-5 sm:py-3 lg:p-0 rounded-2xl lg:rounded-none bg-black/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/12 lg:border-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] lg:shadow-none">
+        <div className="inline-flex flex-col items-center lg:items-start px-4 py-2 sm:px-5 sm:py-3 lg:p-0 rounded-2xl lg:rounded-none bg-black/85 lg:bg-transparent border border-white/12 lg:border-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] lg:shadow-none">
           {currentItem?.tag && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] lg:text-xs font-semibold tracking-wider uppercase mb-1.5 lg:mb-2 bg-white/[0.08] border border-white/[0.12] text-white/80 backdrop-blur-md">
-              <span className="size-1.5 rounded-full bg-white/80" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] lg:text-xs font-semibold tracking-wider uppercase mb-1.5 lg:mb-2 bg-white/[0.08] border border-white/[0.12] text-white/85">
+              <span className="size-1.5 rounded-full bg-[#d76737]" />
               {currentItem.tag}
             </span>
           )}
-          <h3 className="text-xl sm:text-2xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-snug drop-shadow-md">
+          <h3 className="text-lg sm:text-2xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight leading-snug drop-shadow-md">
             {currentItem?.title}
           </h3>
         </div>
       </div>
 
-      {/* Dynamic Island Floating Control Bar (Fixed to bottom with offset) */}
-      <div className="absolute bottom-6 sm:bottom-8 md:bottom-10 inset-x-0 flex justify-center items-center pointer-events-auto z-40">
-        <div className="flex items-center gap-2 sm:gap-2.5 p-1.5 sm:p-2 rounded-full bg-[#121215]/85 backdrop-blur-2xl border border-white/[0.12] shadow-[0_16px_48px_rgba(0,0,0,0.85)]">
+      {/* Dynamic Island Floating Control Bar */}
+      <div ref={hudRef} className="absolute bottom-5 sm:bottom-8 md:bottom-10 inset-x-0 flex justify-center items-center pointer-events-auto z-40 will-change-[opacity]">
+        <div className="flex items-center gap-2 sm:gap-2.5 p-1.5 sm:p-2 rounded-full bg-[#121215]/90 backdrop-blur-xl border border-white/[0.12] shadow-[0_16px_48px_rgba(0,0,0,0.85)]">
           {/* Previous Arrow Button */}
           <button
             type="button"

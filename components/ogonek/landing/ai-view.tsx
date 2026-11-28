@@ -120,7 +120,6 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'ПРЕМИУМ',
         name: 'Поддержка Pro',
-        oldPrice: '30 MDL',
         price: '20 MDL',
         period: '/ мес',
         desc: 'Ежедневный персональный разбор дня нейросетью.',
@@ -134,7 +133,7 @@ const AI_PAGE_CONTENT: Record<
         popularBadge: '★ Выбор практиков',
       },
       {
-        badge: 'КЛУБ ОСНОВАТЕЛЕЙ',
+        badge: 'WINLOG ULTRA',
         name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ мес',
@@ -217,7 +216,6 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'PREMIUM',
         name: 'Suport Pro',
-        oldPrice: '30 MDL',
         price: '20 MDL',
         period: '/ lună',
         desc: 'Analiză zilnică personalizată oferită de inteligența artificială.',
@@ -231,7 +229,7 @@ const AI_PAGE_CONTENT: Record<
         popularBadge: '★ Alegerea utilizatorilor',
       },
       {
-        badge: 'CLUBUL FONDATORILOR',
+        badge: 'WINLOG ULTRA',
         name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ lună',
@@ -314,7 +312,6 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'PRO',
         name: 'Pro Support',
-        oldPrice: '30 MDL',
         price: '20 MDL',
         period: '/ month',
         desc: 'Daily personalized AI evaluation of every recorded day.',
@@ -328,7 +325,7 @@ const AI_PAGE_CONTENT: Record<
         popularBadge: '★ Most Popular',
       },
       {
-        badge: 'FOUNDERS CLUB',
+        badge: 'WINLOG ULTRA',
         name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ month',
@@ -517,13 +514,8 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
                       </span>
                       <h3 className="text-[22px] sm:text-[24px] font-bold text-white mb-1">{tier.name}</h3>
                       <div className="text-[32px] font-bold text-white font-sans mb-3 flex items-baseline flex-wrap gap-x-2">
-                        {tier.oldPrice && (
-                          <span className="text-[18px] font-medium text-[#86868b] line-through tabular-nums">
-                            {tier.oldPrice}
-                          </span>
-                        )}
-                        <span>{tier.price}</span>
-                        <span className="text-xs text-[#86868b] font-normal">{tier.period}</span>
+                        <span className="whitespace-nowrap">{tier.price}</span>
+                        <span className="text-xs text-[#86868b] font-normal whitespace-nowrap">{tier.period}</span>
                       </div>
                       <p className="text-[14px] text-[#86868b] mb-6 leading-relaxed min-h-[42px]">
                         {tier.desc}

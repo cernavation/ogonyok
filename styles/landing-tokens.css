@@ -321,7 +321,7 @@
   justify-content: center;
   gap: 8px;
   background-color: #d76737;
-  color: #000000;
+  color: #000000 !important;
   border-radius: var(--radius-buttons);
   font-family: var(--font-sf-pro-text);
   font-size: var(--text-body);

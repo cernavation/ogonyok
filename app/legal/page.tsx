@@ -3,7 +3,7 @@ import { LegalPageView } from '@/components/ogonek/landing/legal-view'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Winlog — Условия и конфиденциальность',
+  title: 'Winlog - Условия и конфиденциальность',
   description: 'Честные, прозрачные правила сервиса Winlog. Твой контент остаётся твоей собственностью, а данные защищены.',
 }
 

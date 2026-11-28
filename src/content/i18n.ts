@@ -38,7 +38,7 @@ export interface PricingTier {
   id: string
   name: string
   desc: string
-  oldPriceMonthly?: string
+  oldPriceYearly?: string
   priceMonthly: string
   priceYearly: string
   period?: string
@@ -56,9 +56,11 @@ export interface LandingContent {
     description: string
   }
   nav: {
+    modes: string
     how: string
     ai: string
     quotes: string
+    privacy: string
     pricing: string
     signin: string
     signup: string
@@ -161,6 +163,14 @@ export interface LandingContent {
     globeHeadline: string
     globeCaption: string
     carouselHeading: string
+    labels: {
+      previous: string
+      next: string
+      pin: string
+      storiesCountLabel: string
+      citiesLabel: string
+      exampleBadge: string
+    }
   }
   privacy: {
     eyebrow: string
@@ -179,6 +189,7 @@ export interface LandingContent {
     eyebrow: string
     title: string
     subtitle: string
+    freeForeverBanner: string
     monthlyToggle: string
     yearlyToggle: string
     saveBadge: string
@@ -215,9 +226,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       description: 'Winlog - личная летопись гордости и благодарности. Две минуты в день, бесплатно.',
     },
     nav: {
+      modes: 'Галерея',
       how: 'Как это работает',
       ai: 'ИИ-наставник',
       quotes: 'Примеры',
+      privacy: 'Приватность',
       pricing: 'Тарифы',
       signin: 'Войти',
       signup: 'Начать',
@@ -255,9 +268,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           tag: 'Спорт',
-          title: 'Горжусь тем, что вышел на пробежку под дождём, когда не хотелось.',
-          subtitle: 'Горжусь тем, что вышел на пробежку под дождём, когда не хотелось.',
-          image: '/media/landing/mode-sport-5.jpg',
+          title: 'Горжусь тем, что выехал на тренировку на рассвете, хотя хотелось остаться в кровати.',
+          subtitle: 'Горжусь тем, что выехал на тренировку на рассвете, хотя хотелось остаться в кровати.',
+          image: '/media/landing/mode-sport-3.jpg',
         },
         {
           tag: 'Семья',
@@ -278,16 +291,16 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           image: '/media/landing/mode-creative-2.jpg',
         },
         {
-          tag: 'Дело',
-          title: 'Горжусь тем, что довёл проект до конца.',
-          subtitle: 'Горжусь тем, что довёл проект до конца.',
-          image: '/media/landing/mode-sport-3.jpg',
+          tag: 'Дисциплина',
+          title: 'Горжусь тем, что доплыл дистанцию до конца и не сбавил темп на последнем круге.',
+          subtitle: 'Горжусь тем, что доплыл дистанцию до конца и не сбавил темп на последнем круге.',
+          image: '/media/landing/mode-sport-2.jpg',
         },
         {
           tag: 'Характер',
-          title: 'Горжусь тем, что сказал «нет» лишнему и «да» важному.',
-          subtitle: 'Горжусь тем, что сказал «нет» лишнему и «да» важному.',
-          image: '/media/landing/mode-sport-2.jpg',
+          title: 'Горжусь тем, что не свернул на крутом подъёме и прошёл весь маршрут до конца.',
+          subtitle: 'Горжусь тем, что не свернул на крутом подъёме и прошёл весь маршрут до конца.',
+          image: '/media/landing/mode-sport-5.jpg',
         },
         {
           tag: 'Трудный период',
@@ -348,7 +361,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     tempo: {
       eyebrow: 'Договор с собой',
       title: 'Выбери темп, который удержишь',
-      subtitle: 'От одной гордости в день до пяти. Поменять можно в любой момент.',
+      subtitle: 'От одной гордости в день до пяти. Первые 3 смены темпа доступны сразу после регистрации, далее - раз в 30 дней.',
       cta: 'Выбрать свой темп и начать летопись →',
       levels: [
         {
@@ -459,32 +472,30 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       globeHeadline: 'Горжусь тем, что…',
       globeCaption: 'Короткие примеры ежедневных преодолений из разных городов мира.',
       carouselHeading: 'Ещё примеры записей',
+      labels: {
+        previous: 'Предыдущая запись',
+        next: 'Следующая запись',
+        pin: 'Запись из г.',
+        storiesCountLabel: 'записей на карте',
+        citiesLabel: 'городов мира',
+        exampleBadge: 'Пример записи',
+      },
     },
     privacy: {
       eyebrow: 'Полный контроль',
       title: 'Делись или храни в тайне',
-      subtitle: 'Каждая запись: личная, для друзей или открытая. Решаешь только ты.',
+      subtitle: 'Каждая запись: личная, для друзей, группы или открытая. Решаешь только ты.',
       readMoreText: 'Подробнее об условиях и конфиденциальности →',
       cards: [
         {
-          badge: 'ЛИЧНАЯ ЗАПИСЬ',
-          title: 'Секретный режим',
-          desc: 'Запись видишь только ты. Никакие поисковые системы и участники платформы не имеют к ней доступа.',
+          badge: 'ПО УМОЛЧАНИЮ',
+          title: 'Лично (только для тебя)',
+          desc: 'По умолчанию твои записи закрыты. Их видишь только ты - никакой рекламы и никакого обучения ИИ на твоих текстах.',
         },
         {
-          badge: 'ДЛЯ ДРУЗЕЙ',
-          title: 'Круг доверия',
-          desc: 'Делись победами только с семьёй и близкими напарниками, которых ты добавил лично.',
-        },
-        {
-          badge: 'ОТКРЫТАЯ ЗАПИСЬ',
-          title: 'Вдохновение мира',
-          desc: 'Публикуй в общую ленту, вдохновляй единомышленников и подтверждай свой путь преодоления.',
-        },
-        {
-          badge: 'ZERO-TRAINING ИИ',
-          title: 'Изоляция данных',
-          desc: '0% рекламы. ИИ анализирует день изолированно и никогда не обучается на твоих личных текстах.',
+          badge: 'ГИБКИЙ ДОСТУП',
+          title: 'Друзьям, группе или всему миру',
+          desc: 'Сам решаешь для каждого дня или даже отдельной гордости: оставить себе, показать взаимным друзьям, отправить в закрытую группу или открыть публично.',
         },
       ],
     },
@@ -494,14 +505,14 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Только проверяемые параметры системы без накрученных цифр.',
       facts: [
         {
-          val: '750+',
-          label: 'дней подряд',
-          desc: 'Рекорд непрерывной летописи основателя сервиса, доказавший силу ритуала на практике.',
+          val: '100%',
+          label: 'твои данные',
+          desc: 'Записи принадлежат только тебе и выгружаются в один клик без ограничений.',
         },
         {
-          val: '5 + 5',
-          label: 'записей в день',
-          desc: 'Максимальный фокус высшего уровня: 5 фактов гордости и 5 искренних благодарностей.',
+          val: '1–5',
+          label: 'побед в день',
+          desc: 'Гибкий темп фиксации без выгорания и навязанных гонок.',
         },
         {
           val: '0 MDL',
@@ -518,7 +529,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     pricing: {
       eyebrow: 'Тарифы',
       title: 'Начни бесплатно. Расти дальше, когда захочешь',
-      subtitle: 'Базовый тариф бесплатен навсегда.',
+      subtitle: 'Прозрачные условия без скрытых подписок.',
+      freeForeverBanner: 'Базовый Winlog бесплатен навсегда - 0 MDL, без рекламы и скрытых списаний. Оплачиваются только расширенные функции.',
       monthlyToggle: 'Ежемесячно',
       yearlyToggle: 'На год',
       saveBadge: '-20%',
@@ -549,7 +561,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Премиум',
           desc: 'Официальная верификация и умный ИИ-анализ каждого дня.',
-          oldPriceMonthly: '30 MDL',
+          oldPriceYearly: '240 MDL',
           priceMonthly: '20 MDL',
           priceYearly: '192 MDL',
           periodMonthly: '/ месяц',
@@ -558,7 +570,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'Все возможности Базового тарифа',
             'ИИ-аналитика дня и оценка преодоления',
-            'Глубокие инсайты за 100 и 750+ дней',
+            'Глубокие инсайты за 100 и 365+ дней',
             'До 3 фото в записи каждый день',
             'Экспорт красивых карточек и сторис',
             'Приоритетные обновления и группы до 25 человек',
@@ -569,12 +581,13 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         {
           id: 'ultra',
           name: 'Winlog Ultra',
-          desc: 'Максимальная глубина, персональный ментор и статус клуба.',
+          desc: 'Максимальная глубина, персональный ментор и полный доступ.',
+          oldPriceYearly: '600 MDL',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ месяц',
           periodYearly: '/ год (~40 MDL/мес)',
-          badge: 'КЛУБ ОСНОВАТЕЛЕЙ',
+          badge: 'WINLOG ULTRA',
           features: [
             'Все возможности тарифа Премиум',
             'Глубокий разбор от персонального ИИ-ментора',
@@ -614,9 +627,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       description: 'Winlog — cronica personală a mândriei și recunoștinței. Două minute pe zi, gratuit.',
     },
     nav: {
+      modes: 'Galerie',
       how: 'Cum funcționează',
       ai: 'Mentor AI',
       quotes: 'Exemple',
+      privacy: 'Confidențialitate',
       pricing: 'Tarife',
       signin: 'Intră',
       signup: 'Începe',
@@ -654,9 +669,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           tag: 'Sport',
-          title: 'Sunt mândru că am alergat prin ploaie chiar când nu aveam chef.',
-          subtitle: 'Sunt mândru că am alergat prin ploaie chiar când nu aveam chef.',
-          image: '/media/landing/mode-sport-5.jpg',
+          title: 'Sunt mândru că am ieșit la antrenament în zori, deși voiam să rămân în pat.',
+          subtitle: 'Sunt mândru că am ieșit la antrenament în zori, deși voiam să rămân în pat.',
+          image: '/media/landing/mode-sport-3.jpg',
         },
         {
           tag: 'Familie',
@@ -677,16 +692,16 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           image: '/media/landing/mode-creative-2.jpg',
         },
         {
-          tag: 'Proiect',
-          title: 'Sunt mândru că am dus proiectul până la bun sfârșit cu succes.',
-          subtitle: 'Sunt mândru că am dus proiectul până la bun sfârșit cu succes.',
-          image: '/media/landing/mode-sport-3.jpg',
+          tag: 'Disciplină',
+          title: 'Sunt mândru că am înotat distanța până la capăt și nu am încetinit pe ultima tură.',
+          subtitle: 'Sunt mândru că am înotat distanța până la capăt și nu am încetinit pe ultima tură.',
+          image: '/media/landing/mode-sport-2.jpg',
         },
         {
           tag: 'Caracter',
-          title: 'Sunt mândru că am spus «nu» lucrurilor inutile și «da» priorităților mele.',
-          subtitle: 'Sunt mândru că am spus «nu» lucrurilor inutile și «da» priorităților mele.',
-          image: '/media/landing/mode-sport-2.jpg',
+          title: 'Sunt mândru că nu am renunțat pe urcarea grea și am parcurs tot traseul până la capăt.',
+          subtitle: 'Sunt mândru că nu am renunțat pe urcarea grea și am parcurs tot traseul până la capăt.',
+          image: '/media/landing/mode-sport-5.jpg',
         },
         {
           tag: 'Perioadă grea',
@@ -747,7 +762,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     tempo: {
       eyebrow: 'Acordul cu tine însuți',
       title: 'Alege ritmul pe care îl poți susține',
-      subtitle: 'De la o mândrie pe zi până la cinci. Poți schimba oricând dorești.',
+      subtitle: 'De la o mândrie pe zi până la cinci. Primele 3 schimbări ale ritmului sunt disponibile imediat după înregistrare, apoi o dată la 30 de zile.',
       cta: 'Alege ritmul tău și începe cronica →',
       levels: [
         {
@@ -858,32 +873,30 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       globeHeadline: 'Sunt mândru că…',
       globeCaption: 'Exemple scurte de depășiri zilnice din diferite orașe ale lumii.',
       carouselHeading: 'Mai multe exemple de însemnări',
+      labels: {
+        previous: 'Însemnarea anterioară',
+        next: 'Însemnarea următoare',
+        pin: 'Însemnare din',
+        storiesCountLabel: 'însemnări pe hartă',
+        citiesLabel: 'orașe din lume',
+        exampleBadge: 'Exemplu',
+      },
     },
     privacy: {
       eyebrow: 'Control total',
       title: 'Împărtășește sau păstrează secretul',
-      subtitle: 'Fiecare însemnare: privată, pentru prieteni sau publică. Tu decizi în totalitate.',
+      subtitle: 'Fiecare însemnare: privată, pentru prieteni, grup sau publică. Tu decizi în totalitate.',
       readMoreText: 'Află mai multe despre termeni și confidențialitate →',
       cards: [
         {
-          badge: 'ÎNSEMNARE PRIVATĂ',
-          title: 'Mod secret',
-          desc: 'Doar tu poți vedea însemnarea. Niciun motor de căutare sau utilizator nu are acces la ea.',
+          badge: 'IMPLICIT PRIVAT',
+          title: 'Personal (doar pentru tine)',
+          desc: 'Implicit, însemnările tale sunt închise. Doar tu le poți vedea - fără reclame și fără antrenarea AI-ului pe textele tale.',
         },
         {
-          badge: 'PENTRU PRIETENI',
-          title: 'Cerc de încredere',
-          desc: 'Împărtășește victoriile doar cu familia și prietenii apropiați pe care i-ai adăugat personal.',
-        },
-        {
-          badge: 'ÎNSEMNARE PUBLICĂ',
-          title: 'Inspirația lumii',
-          desc: 'Publică în fluxul comun, inspiră oameni cu aceleași valori și confirmă-ți drumul perseverenței.',
-        },
-        {
-          badge: 'AI ZERO-TRAINING',
-          title: 'Izolarea datelor',
-          desc: '0% reclame. Inteligența artificială analizează ziua izolat și nu se antrenează niciodată pe textele tale.',
+          badge: 'ACCES FLEXIBIL',
+          title: 'Prietenilor, grupului sau întregii lumi',
+          desc: 'Decizi singur pentru fiecare zi sau chiar pentru fiecare mândrie în parte: să o păstrezi pentru tine, să o arăți prietenilor reciproci, unui grup închis sau public.',
         },
       ],
     },
@@ -893,14 +906,14 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Doar indicatori verificabili ai sistemului, fără numere exagerate.',
       facts: [
         {
-          val: '750+',
-          label: 'zile la rând',
-          desc: 'Recordul cronicii continue a fondatorului, demonstrând puterea ritualului în practică.',
+          val: '100%',
+          label: 'datele tale',
+          desc: 'Însemnările îți aparțin doar ție și se exportă într-un clic fără restricții.',
         },
         {
-          val: '5 + 5',
-          label: 'însemnări pe zi',
-          desc: 'Focalizarea maximă a nivelului suprem: 5 fapte de mândrie și 5 mulțumiri sincere.',
+          val: '1–5',
+          label: 'victorii pe zi',
+          desc: 'Ritm flexibil de consemnare fără epuizare sau competiții artificiale.',
         },
         {
           val: '0 MDL',
@@ -917,7 +930,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     pricing: {
       eyebrow: 'Tarife',
       title: 'Începe gratuit. Crește mai departe când dorești',
-      subtitle: 'Planul de bază este gratuit pentru totdeauna.',
+      subtitle: 'Condiții transparente fără abonamente ascunse.',
+      freeForeverBanner: 'Winlog de bază este gratuit pentru totdeauna - 0 MDL, fără reclame și fără plăți ascunse. Se plătesc doar funcțiile avansate.',
       monthlyToggle: 'Lunar',
       yearlyToggle: 'Anual',
       saveBadge: '-20%',
@@ -948,7 +962,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Premium',
           desc: 'Verificare oficială și analiză inteligentă AI pentru fiecare zi.',
-          oldPriceMonthly: '30 MDL',
+          oldPriceYearly: '240 MDL',
           priceMonthly: '20 MDL',
           priceYearly: '192 MDL',
           periodMonthly: '/ lună',
@@ -957,7 +971,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'Toate beneficiile planului De bază',
             'Analiză AI zilnică și evaluare pe scară 1–10★',
-            'Analize aprofundate pentru 100 și 750+ zile',
+            'Analize aprofundate pentru 100 și 365+ zile',
             'Până la 3 fotografii la însemnări zilnic',
             'Export elegant de carduri și stories',
             'Actualizări prioritare și grupuri de până la 25 persoane',
@@ -968,12 +982,13 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         {
           id: 'ultra',
           name: 'Winlog Ultra',
-          desc: 'Profunzime maximă, mentor personal și statut de club.',
+          desc: 'Profunzime maximă, mentor personal și acces complet.',
+          oldPriceYearly: '600 MDL',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ lună',
           periodYearly: '/ an (~40 MDL/lună)',
-          badge: 'CLUBUL FONDATORILOR',
+          badge: 'WINLOG ULTRA',
           features: [
             'Toate facilitățile planului Premium',
             'Analiză aprofundată de la mentorul AI personal',
@@ -1013,9 +1028,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       description: 'Winlog is a personal journal of pride and gratitude. Two minutes a day, free.',
     },
     nav: {
+      modes: 'Gallery',
       how: 'How it works',
       ai: 'AI Mentor',
       quotes: 'Stories',
+      privacy: 'Privacy',
       pricing: 'Pricing',
       signin: 'Sign in',
       signup: 'Get started',
@@ -1053,9 +1070,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           tag: 'Sport',
-          title: 'Proud that I went for a run in the rain even when I did not feel like it.',
-          subtitle: 'Proud that I went for a run in the rain even when I did not feel like it.',
-          image: '/media/landing/mode-sport-5.jpg',
+          title: 'Proud that I rode out for a sunrise workout even when I wanted to stay in bed.',
+          subtitle: 'Proud that I rode out for a sunrise workout even when I wanted to stay in bed.',
+          image: '/media/landing/mode-sport-3.jpg',
         },
         {
           tag: 'Family',
@@ -1076,16 +1093,16 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           image: '/media/landing/mode-creative-2.jpg',
         },
         {
-          tag: 'Craft',
-          title: 'Proud that I brought my project all the way across the finish line.',
-          subtitle: 'Proud that I brought my project all the way across the finish line.',
-          image: '/media/landing/mode-sport-3.jpg',
+          tag: 'Discipline',
+          title: 'Proud that I swam the full distance without slowing down on the final lap.',
+          subtitle: 'Proud that I swam the full distance without slowing down on the final lap.',
+          image: '/media/landing/mode-sport-2.jpg',
         },
         {
           tag: 'Character',
-          title: 'Proud that I said "no" to distractions and "yes" to what truly matters.',
-          subtitle: 'Proud that I said "no" to distractions and "yes" to what truly matters.',
-          image: '/media/landing/mode-sport-2.jpg',
+          title: 'Proud that I did not turn back on the steep climb and finished the entire trail.',
+          subtitle: 'Proud that I did not turn back on the steep climb and finished the entire trail.',
+          image: '/media/landing/mode-sport-5.jpg',
         },
         {
           tag: 'Tough Times',
@@ -1146,7 +1163,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     tempo: {
       eyebrow: 'A promise to yourself',
       title: 'Choose a pace you can sustain',
-      subtitle: 'From one pride entry a day up to five. Change anytime you want.',
+      subtitle: 'From one pride entry a day up to five. Your first 3 pace changes are available right after registration, then once every 30 days.',
       cta: 'Choose your pace and begin your journal →',
       levels: [
         {
@@ -1257,32 +1274,30 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       globeHeadline: 'Proud that I…',
       globeCaption: 'Short glimpses of daily courage from cities around the world.',
       carouselHeading: 'More journal examples',
+      labels: {
+        previous: 'Previous story',
+        next: 'Next story',
+        pin: 'Story from',
+        storiesCountLabel: 'stories on map',
+        citiesLabel: 'cities worldwide',
+        exampleBadge: 'Example',
+      },
     },
     privacy: {
       eyebrow: 'Full control',
       title: 'Share or keep it private',
-      subtitle: 'Every entry: private, for friends, or public. You are in full control.',
+      subtitle: 'Every entry: private, for friends, a group, or public. You are in full control.',
       readMoreText: 'Learn more about terms and privacy →',
       cards: [
         {
-          badge: 'PRIVATE ENTRY',
-          title: 'Secret mode',
-          desc: 'Only you can view this entry. No search engines or other users have access to it.',
+          badge: 'PRIVATE BY DEFAULT',
+          title: 'Private (just for you)',
+          desc: 'Your entries are private by default. Only you can see them - zero ads and zero AI training on your writing.',
         },
         {
-          badge: 'FOR FRIENDS',
-          title: 'Circle of trust',
-          desc: 'Share wins only with family and close companions you personally invited.',
-        },
-        {
-          badge: 'PUBLIC ENTRY',
-          title: 'World inspiration',
-          desc: 'Publish to the public feed, inspire like-minded people, and validate your journey.',
-        },
-        {
-          badge: 'ZERO-TRAINING AI',
-          title: 'Data isolation',
-          desc: '0% ads. The AI analyzes your day in isolation and is never trained on your personal text.',
+          badge: 'FLEXIBLE SHARING',
+          title: 'Friends, a group, or the world',
+          desc: 'You decide for every day or even each individual win: keep it private, share with mutual friends, post to a closed group, or make it public.',
         },
       ],
     },
@@ -1292,14 +1307,14 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Only verifiable platform metrics without inflated numbers.',
       facts: [
         {
-          val: '750+',
-          label: 'days in a row',
-          desc: "Founder's continuous journaling record, proving the power of the daily ritual.",
+          val: '100%',
+          label: 'your data',
+          desc: 'Your entries belong strictly to you and can be exported in one click anytime.',
         },
         {
-          val: '5 + 5',
-          label: 'entries per day',
-          desc: 'Ultimate focus at the highest level: 5 pride facts and 5 genuine gratitudes.',
+          val: '1–5',
+          label: 'wins per day',
+          desc: 'Flexible journaling pace without burnout or artificial pressure.',
         },
         {
           val: '0 MDL',
@@ -1316,7 +1331,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     pricing: {
       eyebrow: 'Pricing',
       title: 'Start for free. Scale up when you are ready',
-      subtitle: 'The basic plan is free forever.',
+      subtitle: 'Transparent terms without hidden subscriptions.',
+      freeForeverBanner: 'Basic Winlog is free forever - 0 MDL, with zero ads and no hidden fees. Only advanced features are paid.',
       monthlyToggle: 'Monthly',
       yearlyToggle: 'Yearly',
       saveBadge: '-20%',
@@ -1347,7 +1363,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Pro',
           desc: 'Official verification and smart daily AI analysis.',
-          oldPriceMonthly: '30 MDL',
+          oldPriceYearly: '240 MDL',
           priceMonthly: '20 MDL',
           priceYearly: '192 MDL',
           periodMonthly: '/ month',
@@ -1356,7 +1372,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'All Basic plan features included',
             'Daily AI analytics and 1–10★ strength score',
-            'Deep insights for 100 and 750+ days',
+            'Deep insights for 100 and 365+ days',
             'Up to 3 photos per entry every day',
             'Clean card and story exports',
             'Priority updates and groups up to 25 members',
@@ -1367,12 +1383,13 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         {
           id: 'ultra',
           name: 'Winlog Ultra',
-          desc: 'Maximum depth, personal mentor, and club status.',
+          desc: 'Maximum depth, personal mentor, and full access.',
+          oldPriceYearly: '600 MDL',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ month',
           periodYearly: '/ year (~40 MDL/mo)',
-          badge: 'FOUNDERS CLUB',
+          badge: 'WINLOG ULTRA',
           features: [
             'All Premium plan features included',
             'Deep breakdown from personal AI mentor',

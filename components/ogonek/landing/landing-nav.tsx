@@ -49,7 +49,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85"
-          aria-label="Winlog — главная страница"
+          aria-label="Winlog - главная страница"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
             <path

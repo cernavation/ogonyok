@@ -92,16 +92,14 @@ describe('1. Навигация, страницы и маршрутизация 
     })
   })
 
-  // Проверка ключевых якорных секций на главной странице
+  // Проверка ключевых якорных секций на главной странице (8 компактных секций)
   const anchors = [
-    '#how',
     '#modes',
-    '#levels',
-    '#numbers',
-    '#quotes',
+    '#how',
     '#showcase',
+    '#levels',
+    '#quotes',
     '#privacy',
-    '#open',
     '#pricing',
     '#together',
   ]
@@ -121,6 +119,12 @@ describe('1. Навигация, страницы и маршрутизация 
         `Секция ${targetId} должна иметь scroll-mt для компенсации высоты шапки`
       )
     })
+  })
+
+  it('секция проблемы #problem имеет scroll-mt защиту от перекрытия навбаром', () => {
+    const problemPath = path.resolve(process.cwd(), 'components/ogonek/landing/problem-section.tsx')
+    const content = fs.readFileSync(problemPath, 'utf-8')
+    assert.ok(content.includes('id="problem"') && content.includes('scroll-mt'))
   })
 
   // Целостность навигационной структуры
@@ -170,9 +174,10 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     )
   })
 
-  it('подвал содержит аккуратную иконку Telegram со ссылкой на Telegram', () => {
-    assert.ok(footerContent.includes('t.me/cernavation'), 'Telegram ссылка должна присутствовать')
-    assert.ok(footerContent.includes('aria-label="Telegram"'), 'Иконка Telegram должна быть доступной для скринридеров')
+  it('подвал содержит аккуратную ссылку поддержки support@winlog.life без личных контактов основателя', () => {
+    assert.ok(footerContent.includes('mailto:support@winlog.life'), 'Ссылка поддержки support@winlog.life должна присутствовать')
+    assert.ok(!footerContent.includes('cernavation'), 'Личные ссылки основателя удалены из подвала')
+    assert.ok(footerContent.includes('aria-label="Support"'), 'Иконка поддержки должна быть доступной для скринридеров')
   })
 
   it('подвал содержит стилизованную кнопку «Начать летопись» с градиентом Priday', () => {
@@ -203,8 +208,9 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     assert.ok(!footerContent.includes('apple-ambient-orb'), 'Фоновые цветные ореолы удалены из подвала')
   })
 
-  it('ссылки на внешние ресурсы открываются с безопасными rel=noreferrer', () => {
-    assert.ok(footerContent.includes('rel="noreferrer"'), 'Защита от утечки opener')
+  it('внешние ссылки с target=_blank защищены rel=noreferrer (или отсутствуют)', () => {
+    const hasBlankWithoutRel = footerContent.includes('target="_blank"') && !footerContent.includes('rel="noreferrer"')
+    assert.strictEqual(hasBlankWithoutRel, false, 'Защита от утечки opener')
   })
 
   it('все элементы подвала имеют семантические теги и aria-label', () => {
@@ -988,14 +994,15 @@ describe('8. Тарифные лимиты, разрешения и мягкая
     assert.strictEqual(TIER_PRICES.pro.yearly, 20 * 12 * 0.8)
   })
 
-  it('лендинг по умолчанию показывает ежемесячный период оплаты и зачёркнутые 30 MDL для Премиума', () => {
+  it('лендинг по умолчанию показывает ежемесячный период оплаты без зачёркнутой цены и зачёркивает 240 MDL в годовом режиме (-20%)', () => {
     const landingCode = fs.readFileSync(
       path.resolve(process.cwd(), 'components/ogonek/landing/landing-page.tsx'),
       'utf-8'
     )
     const i18nCode = fs.readFileSync(path.resolve(process.cwd(), 'src/content/i18n.ts'), 'utf-8')
     assert.ok(landingCode.includes("useState<'monthly' | 'yearly'>('monthly')"))
-    assert.ok(i18nCode.includes("oldPriceMonthly: '30 MDL'"))
+    assert.ok(!i18nCode.includes('oldPriceMonthly'))
+    assert.ok(i18nCode.includes("oldPriceYearly: '240 MDL'"))
     assert.ok(i18nCode.includes("priceMonthly: '20 MDL'"))
     assert.ok(i18nCode.includes("priceYearly: '192 MDL'"))
   })

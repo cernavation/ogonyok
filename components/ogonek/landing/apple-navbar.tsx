@@ -54,20 +54,29 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
     }
   }
 
-  // Locale-aware direct navigation links
+  // Locale-aware direct navigation links (every item points to a real section on landing)
   const homeHref = activeLocale === 'ru' ? '/ru' : `/${activeLocale}`
-  const howHref = `${homeHref}#how`
-  const quotesHref = `${homeHref}#quotes`
-  const pricingHref = `${homeHref}#pricing`
-  const aiHref = `/ai/${activeLocale}`
-  const legalHref = `/legal/${activeLocale}`
+  const legalHref = activeLocale === 'ru' ? '/legal' : `/legal/${activeLocale}`
+  const isLandingRoute = pathname === '/' || pathname === '/ru' || pathname === '/ro' || pathname === '/en'
 
   const navLinks = [
-    { label: content.nav.how, href: howHref },
-    { label: content.nav.ai, href: aiHref },
-    { label: content.nav.quotes, href: quotesHref },
-    { label: content.nav.pricing, href: pricingHref },
+    { id: 'modes', label: content.nav.modes, href: `${homeHref}#modes` },
+    { id: 'how', label: content.nav.how, href: `${homeHref}#how` },
+    { id: 'quotes', label: content.nav.quotes, href: `${homeHref}#quotes` },
+    { id: 'privacy', label: content.nav.privacy, href: `${homeHref}#privacy` },
+    { id: 'pricing', label: content.nav.pricing, href: `${homeHref}#pricing` },
   ]
+
+  const handleSectionLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    setMobileOpen(false)
+    if (!isLandingRoute) return
+    const target = document.getElementById(sectionId)
+    if (target) {
+      e.preventDefault()
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      window.history.replaceState(null, '', `#${sectionId}`)
+    }
+  }
 
   return (
     <header
@@ -84,7 +93,7 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
         <Link
           href={homeHref}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none shrink-0"
-          aria-label={`Winlog — ${content.nav.home}`}
+          aria-label={`Winlog - ${content.nav.home}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
             <path
@@ -98,23 +107,17 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
         </Link>
 
         {/* Center Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-5 lg:gap-7 shrink-0" aria-label="Разделы сайта">
-          {navLinks.map((item) => {
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`whitespace-nowrap text-[13px] tracking-tight transition-all duration-200 shrink-0 ${
-                  isActive
-                    ? 'text-[#f5f5f7] font-semibold opacity-100'
-                    : 'text-[#d2d2d7] opacity-80 hover:opacity-100 hover:text-white'
-                }`}
-              >
-                {item.label}
-              </Link>
-            )
-          })}
+        <nav className="hidden md:flex items-center gap-4 lg:gap-6 shrink-0" aria-label="Разделы сайта">
+          {navLinks.map((item) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              onClick={(e) => handleSectionLinkClick(e, item.id)}
+              className="whitespace-nowrap text-[12px] lg:text-[13px] tracking-tight transition-all duration-200 shrink-0 text-[#d2d2d7] opacity-80 hover:opacity-100 hover:text-white"
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Right Section: Desktop Language Switcher + Signin + Register */}
@@ -203,9 +206,9 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
               </Link>
               {navLinks.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.id}
                   href={item.href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => handleSectionLinkClick(e, item.id)}
                   className="text-[18px] font-medium text-[#d2d2d7] px-2 py-1.5 hover:text-white transition-colors"
                 >
                   {item.label}
