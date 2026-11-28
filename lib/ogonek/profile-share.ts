@@ -511,7 +511,7 @@ export function buildProfileStories(
     {
       id: 'joined',
       emoji: '🌅',
-      kicker: `В ОГОНЬКЕ С ${profile.joinedLabel.toUpperCase()}`,
+      kicker: `В WINLOG С ${profile.joinedLabel.toUpperCase()}`,
       value: '∞',
       title: 'день за днём',
       subtitle: 'Строю жизнь осознанно, без пропусков',
