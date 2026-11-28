@@ -9,6 +9,7 @@ const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), 'utf8')
 describe('ЭТАП 2: Редизайн тостов, спокойная палитра чатов, умное меню и Google Translate', () => {
   it('1. Все нижние/системные тосты переведены на тёмное стекло с ховер-паузой, × и 2px полосой (никаких белых плашек)', () => {
     const toastSrc = read('components/ogonek/toast.tsx')
+    const desktopToastSrc = read('components/ogonek/notifications/desktop-toast-stack.tsx')
     const globalsSrc = read('app/globals.css')
     const appShellSrc = read('components/ogonek/app-shell.tsx')
     const fsMessengerSrc = read('components/ogonek/messenger/fullscreen-messenger.tsx')
@@ -17,10 +18,17 @@ describe('ЭТАП 2: Редизайн тостов, спокойная пали
 
     assert.ok(toastSrc.includes('bg-[#0a0a0c]/95') && toastSrc.includes('backdrop-blur-xl'))
     assert.ok(toastSrc.includes('border-white/[0.14]') && toastSrc.includes('border-red-500/40'))
+    assert.ok(toastSrc.includes('flex-col-reverse') && toastSrc.includes('bottom-6'))
+    assert.ok(toastSrc.includes('whitespace-pre-wrap break-words') && !toastSrc.includes('line-clamp-'))
+    assert.ok(toastSrc.includes('rounded-xl object-cover max-h-44 w-full'))
     assert.ok(toastSrc.includes('4500') && toastSrc.includes('6000'))
     assert.ok(toastSrc.includes('onMouseEnter') && toastSrc.includes('onMouseLeave'))
     assert.ok(toastSrc.includes('Закрыть уведомление'))
     assert.ok(toastSrc.includes('h-[2px]') && toastSrc.includes('bg-[#d76737]') && toastSrc.includes('bg-red-500'))
+
+    assert.ok(desktopToastSrc.includes('rounded-xl object-cover max-h-44 w-full'))
+    assert.ok(!desktopToastSrc.includes('line-clamp-2') && desktopToastSrc.includes('whitespace-pre-wrap break-words'))
+    assert.ok(appShellSrc.includes('imageUrl: broadcast.media_url'))
 
     assert.ok(!globalsSrc.includes('background: #e7e9ea;'), '.toast в globals.css больше не белый')
     assert.ok(!composerSrc.includes('bg-[#e7e9ea] text-[#090a0b]'), 'composer-smart-toast больше не белый')
@@ -74,8 +82,9 @@ describe('ЭТАП 2: Редизайн тостов, спокойная пали
     assert.ok(apiSrc.includes('detectedSourceLang') && apiSrc.includes('translatedText') && apiSrc.includes('targetLang'))
 
     assert.ok(bubbleSrc.includes('Перевод...'))
-    assert.ok(bubbleSrc.includes('Google Translate'))
-    assert.ok(bubbleSrc.includes('Показать оригинал'))
+    assert.ok(bubbleSrc.includes('Перевод') && bubbleSrc.includes('Оригинал'))
+    assert.ok(bubbleSrc.includes('border-t border-white/[0.08]') && bubbleSrc.includes('text-[11px] text-white/45'))
+    assert.ok(bubbleSrc.includes('min-w-[200px]') && bubbleSrc.includes('text-white/55') && bubbleSrc.includes('В важное'))
     assert.ok(!bubbleSrc.includes('Переведено через ИИ'))
     assert.ok(paneSrc.includes('translateChatMessage(friendId, id, lang || \'ru\', text)'))
     assert.ok(winSrc.includes('translateChatMessage(friendId, id, lang || \'ru\', text)'))

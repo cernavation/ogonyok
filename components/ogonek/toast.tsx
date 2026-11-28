@@ -1,5 +1,6 @@
 'use client'
 
+import { safeImageSrc } from '@/lib/ogonek/safe-url'
 import { AlertCircle, Check, Flame, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -10,6 +11,8 @@ type Props = {
   variant?: ToastVariant
   durationMs?: number
   toastKey?: string | number
+  imageUrl?: string | null
+  mediaUrl?: string | null
   onClose?: () => void
   actionLabel?: string
   onAction?: () => void
@@ -31,6 +34,8 @@ export function Toast({
   variant,
   durationMs,
   toastKey,
+  imageUrl,
+  mediaUrl,
   onClose,
   actionLabel,
   onAction,
@@ -44,6 +49,7 @@ export function Toast({
   const isError = resolvedVariant === 'error'
   const minDuration = isError ? 6000 : 4500
   const totalDurationMs = Math.max(minDuration, durationMs ?? minDuration)
+  const resolvedImageUrl = safeImageSrc(imageUrl || mediaUrl)
 
   const remainingRef = useRef<number>(totalDurationMs)
   const lastTickRef = useRef<number>(0)
@@ -108,68 +114,83 @@ export function Toast({
 
   return (
     <div
-      id={id}
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? 'assertive' : 'polite'}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      className={`toast-winlog fixed bottom-6 max-sm:bottom-[calc(56px+env(safe-area-inset-bottom)+14px)] left-1/2 -translate-x-1/2 z-[90] w-max max-w-[min(92vw,440px)] overflow-hidden rounded-2xl bg-[#0a0a0c]/95 backdrop-blur-xl text-white shadow-[0_20px_60px_rgba(0,0,0,0.9)] select-none transition-colors ${
-        isError ? 'border border-red-500/40' : 'border border-white/[0.14]'
-      }`}
+      className="fixed bottom-6 max-sm:bottom-[calc(56px+env(safe-area-inset-bottom)+14px)] left-1/2 -translate-x-1/2 z-[90] flex flex-col-reverse items-end pointer-events-none w-auto max-w-[min(92vw,440px)]"
     >
-      <div className="flex items-center gap-3 px-3.5 py-3 pr-2.5">
-        <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border ${
-            isError
-              ? 'border-red-500/30 bg-red-500/15 text-red-400'
-              : 'border-[#d76737]/30 bg-[#d76737]/15 text-[#d76737]'
-          }`}
-          aria-hidden="true"
-        >
-          {isError ? (
-            <AlertCircle size={15} strokeWidth={2.2} />
-          ) : useFlameIcon ? (
-            <Flame size={15} strokeWidth={2.2} />
-          ) : (
-            <Check size={15} strokeWidth={2.4} />
-          )}
-        </span>
-
-        <span className="text-[13px] font-medium leading-snug text-white/95 break-words">
-          {message}
-        </span>
-
-        {actionLabel && onAction && (
-          <button
-            type="button"
-            id={actionId}
-            onClick={() => {
-              onAction()
-              handleDismiss()
-            }}
-            className="shrink-0 rounded-lg border border-white/[0.12] bg-white/[0.06] px-2.5 py-1 text-[12px] font-semibold text-[#d76737] hover:bg-white/[0.12] transition-colors cursor-pointer"
-          >
-            {actionLabel}
-          </button>
+      <div
+        id={id}
+        role={isError ? 'alert' : 'status'}
+        aria-live={isError ? 'assertive' : 'polite'}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        className={`toast-winlog pointer-events-auto w-full overflow-hidden rounded-2xl bg-[#0a0a0c]/95 backdrop-blur-xl text-white shadow-[0_20px_60px_rgba(0,0,0,0.9)] select-none transition-all ${
+          isError ? 'border border-red-500/40' : 'border border-white/[0.14]'
+        }`}
+      >
+        {resolvedImageUrl && (
+          <div className="px-3.5 pt-3.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolvedImageUrl}
+              alt=""
+              className="rounded-xl object-cover max-h-44 w-full border border-white/[0.08]"
+            />
+          </div>
         )}
 
-        <button
-          type="button"
-          onClick={handleDismiss}
-          aria-label="Закрыть уведомление"
-          className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.08] hover:text-white transition-colors cursor-pointer"
-        >
-          <X size={14} />
-        </button>
-      </div>
+        <div className="flex items-start gap-3 px-3.5 py-3 pr-2.5">
+          <span
+            className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border ${
+              isError
+                ? 'border-red-500/30 bg-red-500/15 text-red-400'
+                : 'border-[#d76737]/30 bg-[#d76737]/15 text-[#d76737]'
+            }`}
+            aria-hidden="true"
+          >
+            {isError ? (
+              <AlertCircle size={15} strokeWidth={2.2} />
+            ) : useFlameIcon ? (
+              <Flame size={15} strokeWidth={2.2} />
+            ) : (
+              <Check size={15} strokeWidth={2.4} />
+            )}
+          </span>
 
-      {/* Живая 2px полоса таймера снизу (замирает при наведении курсора) */}
-      <div className="h-[2px] w-full bg-white/[0.06]">
-        <div
-          ref={barRef}
-          className={`h-full w-full origin-left ${isError ? 'bg-red-500' : 'bg-[#d76737]'}`}
-          style={{ transform: 'scaleX(1)' }}
-        />
+          <span className="flex-1 min-w-0 text-[13px] font-medium leading-snug text-white/95 whitespace-pre-wrap break-words">
+            {message}
+          </span>
+
+          {actionLabel && onAction && (
+            <button
+              type="button"
+              id={actionId}
+              onClick={() => {
+                onAction()
+                handleDismiss()
+              }}
+              className="shrink-0 rounded-lg border border-white/[0.12] bg-white/[0.06] px-2.5 py-1 text-[12px] font-semibold text-[#d76737] hover:bg-white/[0.12] transition-colors cursor-pointer"
+            >
+              {actionLabel}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Закрыть уведомление"
+            className="ml-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white/50 hover:bg-white/[0.08] hover:text-white transition-colors cursor-pointer"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Живая 2px полоса таймера снизу (замирает при наведении курсора) */}
+        <div className="h-[2px] w-full bg-white/[0.06]">
+          <div
+            ref={barRef}
+            className={`h-full w-full origin-left ${isError ? 'bg-red-500' : 'bg-[#d76737]'}`}
+            style={{ transform: 'scaleX(1)' }}
+          />
+        </div>
       </div>
     </div>
   )

@@ -299,6 +299,100 @@ let isInitialized = false
 let hasInitializedSupabaseSync = false
 let inFlightSessionSync: Promise<boolean> | null = null
 
+type PendingVisibilityEntry = {
+  seq: number
+  updatedAtMs: number
+  inFlight: boolean
+}
+let visibilityMutationSeq = 0
+let cloudDaysLoadSeq = 0
+const pendingVisibilityUpdates = new Map<number, PendingVisibilityEntry>()
+const VISIBILITY_GUARD_WINDOW_MS = 15_000
+
+function markPendingVisibilityMutation(dayId: number): number {
+  const seq = ++visibilityMutationSeq
+  pendingVisibilityUpdates.set(dayId, {
+    seq,
+    updatedAtMs: Date.now(),
+    inFlight: true,
+  })
+  return seq
+}
+
+function finishPendingVisibilityMutation(dayId: number, seq: number): void {
+  const curr = pendingVisibilityUpdates.get(dayId)
+  if (!curr || curr.seq !== seq) return
+  pendingVisibilityUpdates.set(dayId, {
+    seq,
+    updatedAtMs: Date.now(),
+    inFlight: false,
+  })
+}
+
+function mergePreservingPendingVisibility(
+  prevDays: Day[],
+  cloudDays: Day[],
+  mutSeqAtLoadStart: number
+): Day[] {
+  const prevById = new Map<number, Day>()
+  for (const d of prevDays) prevById.set(d.id, d)
+  const now = Date.now()
+
+  return cloudDays.map((cloudDay) => {
+    const pending = pendingVisibilityUpdates.get(cloudDay.id)
+    if (!pending) return cloudDay
+    const stillActive =
+      pending.inFlight ||
+      pending.seq > mutSeqAtLoadStart ||
+      now - pending.updatedAtMs < VISIBILITY_GUARD_WINDOW_MS
+    if (!stillActive) {
+      pendingVisibilityUpdates.delete(cloudDay.id)
+      return cloudDay
+    }
+    const localDay = prevById.get(cloudDay.id)
+    if (!localDay) return cloudDay
+
+    const mergedPrides = (cloudDay.prides || []).map((cp, idx) => {
+      const lp =
+        (localDay.prides || []).find((p) => p.num && cp.num && p.num === cp.num) ||
+        localDay.prides?.[idx]
+      if (!lp) return cp
+      return {
+        ...cp,
+        visibility: lp.visibility,
+        groupId: lp.groupId,
+        groupName: lp.groupName,
+        targetGroupIds: lp.targetGroupIds,
+      }
+    })
+
+    const mergedGratitudes = (cloudDay.gratitudes || []).map((cg, idx) => {
+      const lg = localDay.gratitudes?.[idx]
+      if (!lg) return cg
+      const lgObj = typeof lg === 'string' ? null : lg
+      const cgObj = typeof cg === 'string' ? { text: cg } : cg
+      if (!lgObj) return cg
+      return {
+        ...cgObj,
+        visibility: lgObj.visibility,
+        groupId: lgObj.groupId,
+        groupName: lgObj.groupName,
+        targetGroupIds: lgObj.targetGroupIds,
+      }
+    })
+
+    return {
+      ...cloudDay,
+      visibility: localDay.visibility,
+      groupId: localDay.groupId,
+      groupName: localDay.groupName,
+      targetGroupIds: localDay.targetGroupIds,
+      prides: mergedPrides,
+      gratitudes: mergedGratitudes,
+    }
+  })
+}
+
 async function syncEvidenceVaultForUser(userId: string): Promise<void> {
   if (!userId || userId.startsWith('anon-') || userId.startsWith('acct-guest')) return
   try {
@@ -347,6 +441,7 @@ async function hydrateStateFromSupabaseSession(
   )
 
   if (isAccountSwitch) {
+    pendingVisibilityUpdates.clear()
     cancelPendingSave()
     clearUserLocalCaches({ includeAuthTokens: false })
     clearProfileMemoryCache()
@@ -4568,6 +4663,7 @@ export function useOgonekStore() {
     async (dayId: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
       const clearGroup = next !== 'group'
+      const mutSeq = markPendingVisibilityMutation(dayId)
       let updatedDaySnapshot: Day | null = null
 
       updateStore((prev) => ({
@@ -4630,6 +4726,8 @@ export function useOgonekStore() {
         }
       } catch (err) {
         console.error('[Ogonek] Error updating day and prides visibility in Supabase:', err)
+      } finally {
+        finishPendingVisibilityMutation(dayId, mutSeq)
       }
     },
     [updateStore]
@@ -4639,6 +4737,7 @@ export function useOgonekStore() {
   const setDayAudience = useCallback(
     async (dayId: number, level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
       const next = normalizeVisibility(level)
+      const mutSeq = markPendingVisibilityMutation(dayId)
       const snap = getSnapshot()
       const cleanThreadOrGroupId = next === 'group' ? (groupId || null) : null
       const dbGroupUuid =
@@ -4726,6 +4825,8 @@ export function useOgonekStore() {
         }
       } catch (err) {
         console.error('[Ogonek] Error updating day audience in Supabase:', err)
+      } finally {
+        finishPendingVisibilityMutation(dayId, mutSeq)
       }
 
       if (next === 'group' && updatedDaySnapshot && cleanThreadOrGroupId) {
@@ -4742,6 +4843,7 @@ export function useOgonekStore() {
   const setPrideVisibility = useCallback(
     async (dayId: number, index: number, level: VisibilityLevel) => {
       const next = normalizeVisibility(level)
+      const mutSeq = markPendingVisibilityMutation(dayId)
       let updatedDaySnapshot = null as Day | null
       let materializedDayVisibility = null as VisibilityLevel | null
 
@@ -4859,6 +4961,8 @@ export function useOgonekStore() {
         }
       } catch (err) {
         console.error('[Ogonek] Error updating pride visibility in Supabase:', err)
+      } finally {
+        finishPendingVisibilityMutation(dayId, mutSeq)
       }
     },
     [updateStore]
@@ -4871,6 +4975,7 @@ export function useOgonekStore() {
   const setAllPridesVisibility = useCallback(
     async (dayId: number, level: VisibilityLevel, groupId?: string | null, groupName?: string) => {
       const next = normalizeVisibility(level)
+      const mutSeq = markPendingVisibilityMutation(dayId)
       const snap = getSnapshot()
       const currentDay = snap.days.find((d) => d.id === dayId)
       const effectiveGroupId = next === 'group' ? (groupId ?? currentDay?.groupId ?? null) : null
@@ -4957,6 +5062,8 @@ export function useOgonekStore() {
         }
       } catch (err) {
         console.error('[Ogonek] Error updating all prides visibility in Supabase:', err)
+      } finally {
+        finishPendingVisibilityMutation(dayId, mutSeq)
       }
     },
     [updateStore]
@@ -8036,6 +8143,8 @@ export function useOgonekStore() {
   /** Ручная или фоновая загрузка всех дней пользователя напрямую из Supabase в стор */
   const loadDaysFromCloud = useCallback(
     async (overrideUserId?: string) => {
+      const loadSeq = ++cloudDaysLoadSeq
+      const mutSeqAtLoadStart = visibilityMutationSeq
       const snap = getSnapshot()
       const supabase = getSupabase()
       if (!supabase) return { ok: false, count: 0, error: 'Supabase client unavailable' }
@@ -8089,17 +8198,30 @@ export function useOgonekStore() {
             })
             .sort((a, b) => b.id - a.id)
 
-          const newStreak = calculateStreak(mapped)
-          updateStore((prev) => ({
-            ...prev,
-            days: mapped,
-            profile: {
-              ...prev.profile,
-              streak: newStreak,
-              streak_count: newStreak,
-            },
-          }))
-          return { ok: true, count: mapped.length }
+          if (loadSeq < cloudDaysLoadSeq) {
+            return { ok: true, count: getSnapshot().days.length }
+          }
+
+          let finalCount = mapped.length
+          updateStore((prev) => {
+            const safeDays = mergePreservingPendingVisibility(
+              prev.days,
+              mapped,
+              mutSeqAtLoadStart
+            )
+            finalCount = safeDays.length
+            const nextStreak = calculateStreak(safeDays)
+            return {
+              ...prev,
+              days: safeDays,
+              profile: {
+                ...prev.profile,
+                streak: nextStreak,
+                streak_count: nextStreak,
+              },
+            }
+          }, true)
+          return { ok: true, count: finalCount }
         }
         return { ok: false, count: 0, error: daysRes.error }
       } catch (err: any) {

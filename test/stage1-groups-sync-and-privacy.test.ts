@@ -51,6 +51,8 @@ describe('ЭТАП 1: Полноценные группы в Supabase, Realtime,
     assert.ok(newChatSrc.includes('bg-[#d76737]') && newChatSrc.includes('text-black'))
     assert.ok(newChatSrc.includes('setGroupStep(1)'), 'на шаге 2 должна быть кнопка возврата к выбору участников (+ Добавить)')
     assert.ok(newChatSrc.includes('await createGroupChat('))
+    assert.ok(newChatSrc.includes('Например: Друзья или Семья'))
+    assert.ok(!newChatSrc.includes('Например: Бегуны!'))
     assert.ok(!newChatSrc.includes("customPhotoUrl ? '🖼'"), 'customPhotoUrl должен передаваться в avatarImage, а не как эмодзи')
   })
 
@@ -102,5 +104,6 @@ describe('ЭТАП 1: Полноценные группы в Supabase, Realtime,
     assert.ok(storeSrc.includes('ai_score: day.aiScore'), 'syncDayToSupabase должен сохранять ai_score в таблицу days')
     assert.ok(optsSrc.includes('typeof p.scale === \'number\' && p.scale > 0'), 'hasExistingEvaluation должен учитывать любую оценку дня, включая scale')
     assert.ok(optsSrc.includes('handleSaveAndClose') && optsSrc.includes('bg-[#d76737]') && optsSrc.includes('Сохранить'))
+    assert.ok(storeSrc.includes('pendingVisibilityUpdates') && storeSrc.includes('mergePreservingPendingVisibility') && storeSrc.includes('cloudDaysLoadSeq'), 'loadDaysFromCloud не должен перетирать свежие локальные изменения приватности после F5')
   })
 })
