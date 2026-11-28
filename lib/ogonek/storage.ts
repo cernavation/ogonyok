@@ -184,7 +184,8 @@ export function sanitizeComments(value: unknown): CommentsByTarget {
         persona === 'support' ||
         (typeof c.template === 'string' && c.template.trim().length > 0) ||
         rawAuthor === 'Priday поддержки' ||
-        rawAuthor === 'Огонёк поддержки'
+        rawAuthor === 'Огонёк поддержки' ||
+        rawAuthor === 'Winlog поддержки'
       ) {
         continue
       }
@@ -585,7 +586,7 @@ function sanitizeRegulationValue(
         : topic.slice(0, 200),
     summary: typeof v.summary === 'string' ? v.summary.slice(0, 600) : '',
     requirements,
-    verifier: typeof v.verifier === 'string' ? v.verifier.slice(0, 200) : 'Команда верификации Priday',
+    verifier: typeof v.verifier === 'string' ? v.verifier.slice(0, 200) : 'Команда верификации Winlog',
     freshnessRule: typeof v.freshnessRule === 'string' ? v.freshnessRule.slice(0, 300) : '',
     rejectionCriteria: Array.isArray(v.rejectionCriteria)
       ? v.rejectionCriteria.filter((x): x is string => typeof x === 'string').slice(0, 8)
@@ -694,7 +695,7 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
         moderatorNote: 'Протокол и видео совпадают: дистанция полная, обуви нет. Золотой бейдж выдан.',
         channel: 'email',
         delivery: 'sent',
-        recipient: 'moderation@ogonyok.app',
+        recipient: 'moderation@winlog.life',
         evidenceCount: 2,
         history: [
           {
@@ -702,21 +703,21 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
             atISO: daysAgo(138),
             status: 'on-moderation',
             note: 'Пакет доказательств отправлен модератору (Email (Resend)).',
-            actor: 'Priday · автоотправка',
+            actor: 'Winlog · автоотправка',
           },
           {
             id: 'rev-mar-1',
             atISO: daysAgo(136),
             status: 'on-moderation',
             note: 'Первичная сверка протокола с базой результатов организатора.',
-            actor: 'Модератор Priday',
+            actor: 'Модератор Winlog',
           },
           {
             id: 'rev-mar-2',
             atISO: daysAgo(135),
             status: 'officially-verified',
             note: 'Протокол и видео совпадают: дистанция полная, обуви нет.',
-            actor: 'Модератор Priday',
+            actor: 'Модератор Winlog',
           },
         ],
       },
@@ -756,7 +757,7 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
         moderatorNote: null,
         channel: 'webhook',
         delivery: 'sent',
-        recipient: 'moderation@ogonyok.app',
+        recipient: 'moderation@winlog.life',
         evidenceCount: 1,
         history: [
           {
@@ -764,7 +765,7 @@ function buildDemoAchievements(now: Date = new Date()): VerifiedAchievement[] {
             atISO: daysAgo(1),
             status: 'on-moderation',
             note: 'Пакет доказательств отправлен модератору (Webhook).',
-            actor: 'Priday · автоотправка',
+            actor: 'Winlog · автоотправка',
           },
         ],
       },

@@ -92,18 +92,18 @@ const DEFAULT_LABELS: TestimonialGlobeLabels = {
 
 /* ── Apple-calibrated ring & ping color classes matching Ogonek Design System ── */
 const RING = {
-  1: "ring-[#FF4D00]",
-  2: "ring-[#0071e3]",
-  3: "ring-[#2997ff]",
-  4: "ring-[#ff9500]",
+  1: "ring-[#d76737]",
+  2: "ring-white/35",
+  3: "ring-white/25",
+  4: "ring-[#d76737]/75",
   5: "ring-[#f5f5f7]",
 } as const;
 
 const PING = {
-  1: "border-[#FF4D00]",
-  2: "border-[#0071e3]",
-  3: "border-[#2997ff]",
-  4: "border-[#ff9500]",
+  1: "border-[#d76737]",
+  2: "border-white/35",
+  3: "border-white/25",
+  4: "border-[#d76737]/75",
   5: "border-[#f5f5f7]",
 } as const;
 
@@ -246,16 +246,16 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
         mode === "leaving" && "pointer-events-none",
       )}
     >
-      <div className={cx("relative flex items-center justify-between gap-3", roomy ? "h-7" : "h-6")}>
+      <div className={cx("relative flex items-center flex-wrap gap-2.5 pr-28", roomy ? "min-h-7" : "min-h-6")}>
         <div className="flex items-center gap-2.5">
-          <QuoteMark className={cx("shrink-0 text-[#FF4D00]", roomy ? "w-6 h-6" : "w-5 h-5")} />
+          <QuoteMark className={cx("shrink-0 text-[#d76737]", roomy ? "w-6 h-6" : "w-5 h-5")} />
           {item.topic && (
-            <span className="text-[12px] font-semibold text-[#FF4D00] tracking-wider uppercase">
+            <span className="text-[12px] font-semibold text-[#d76737] tracking-wider uppercase">
               {item.topic}
             </span>
           )}
         </div>
-        {/* Only show 'Пример записи' when type === 'example' */}
+        {/* Only show 'Пример записи' when type === 'example', kept clear of top-right pagination */}
         {isExample && (
           <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white/[0.06] text-[#86868b] border border-white/10">
             Пример записи
@@ -289,7 +289,7 @@ const QuoteCard = React.memo(function QuoteCard({ item, index, tone, roomy, mode
           ) : (
             <span
               className={cx(
-                "relative flex items-center justify-center shrink-0 rounded-full bg-[#FF4D00]/15 text-[#FF4D00] border border-[#FF4D00]/40 font-mono font-bold text-xs",
+                "relative flex items-center justify-center shrink-0 rounded-full bg-[#d76737]/15 text-[#d76737] border border-[#d76737]/40 font-mono font-bold text-xs",
                 roomy ? "size-9" : "size-8",
               )}
             >
@@ -373,7 +373,7 @@ const Pin = React.memo(function Pin({
           "relative flex items-center justify-center w-full h-full rounded-full bg-[#16161a] border overflow-hidden shadow-lg transition-[transform,box-shadow,border-color] duration-200 ease-out",
           RING[tone],
           featured
-            ? "scale-[1.35] ring-[3px] border-[#FF4D00] shadow-[0_0_24px_rgba(255,77,0,0.65)]"
+            ? "scale-[1.35] ring-[3px] border-[#d76737] shadow-[0_0_20px_rgba(215,103,55,0.45)]"
             : "ring-1 border-white/30 hover:scale-115 hover:border-white/60",
         )}
       >
@@ -390,7 +390,7 @@ const Pin = React.memo(function Pin({
             className={cx(
               "rounded-full transition-all duration-200",
               featured
-                ? "size-2.5 bg-[#FF4D00] shadow-[0_0_10px_#FF4D00]"
+                ? "size-2.5 bg-[#d76737] shadow-[0_0_10px_#d76737]"
                 : "size-2 bg-white/80 group-hover/pin:bg-white",
             )}
           />
@@ -398,7 +398,7 @@ const Pin = React.memo(function Pin({
       </span>
       {featured && (
         <span
-          className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-[#FF4D00] border-2 border-[#16161a] shadow-[0_0_6px_#FF4D00] pointer-events-none z-10"
+          className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-[#d76737] border-2 border-black shadow-[0_0_6px_#d76737] pointer-events-none z-10"
           aria-hidden="true"
         />
       )}
@@ -409,7 +409,7 @@ const Pin = React.memo(function Pin({
 export function TestimonialGlobe({
   items,
   extraItems,
-  eyebrow = "Примеры записей из Огонька",
+  eyebrow = "Примеры записей в Winlog",
   heading = "Примеры записей",
   caption = "Люди по всему миру записывают победы. Вот как это выглядит в разных странах.",
   action,
@@ -717,9 +717,9 @@ export function TestimonialGlobe({
         diffuse: 1.2,
         mapSamples: 16000,
         mapBrightness: 5.5,
-        baseColor: [0.06, 0.08, 0.12], // Deep space sapphire-black base
-        markerColor: [1.0, 0.3, 0.0], // Signal Orange #FF4D00
-        glowColor: [0.0, 0.28, 0.58], // Apple Blue atmosphere
+        baseColor: [0.06, 0.06, 0.08], // Pure charcoal black base
+        markerColor: [0.843, 0.404, 0.216], // Winlog Terracotta #d76737
+        glowColor: [0.12, 0.12, 0.14], // Subtle monochrome atmosphere
         markers: [],
         markerElevation: 0,
       });
@@ -934,7 +934,7 @@ export function TestimonialGlobe({
           )}
         >
           {eyebrow && (
-            <p className="m-0 text-xs font-semibold uppercase tracking-wider text-[#FF4D00] mb-2">{eyebrow}</p>
+            <p className="m-0 text-xs font-semibold uppercase tracking-wider text-[#d76737] mb-2">{eyebrow}</p>
           )}
           {heading && (
             <h2 id={headingId} className="apple-section-title m-0 text-balance font-bold tracking-tight text-white">
@@ -1127,7 +1127,7 @@ export function TestimonialGlobe({
               <button
                 type="button"
                 aria-label={text.previous}
-                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D00] cursor-pointer"
+                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d76737] cursor-pointer"
                 onClick={() => step(-1)}
               >
                 <Chevron direction="left" />
@@ -1138,7 +1138,7 @@ export function TestimonialGlobe({
               <button
                 type="button"
                 aria-label={text.next}
-                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FF4D00] cursor-pointer"
+                className="grid size-8 place-items-center rounded-full text-[#86868b] transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d76737] cursor-pointer"
                 onClick={() => step(1)}
               >
                 <Chevron direction="right" />
@@ -1148,7 +1148,7 @@ export function TestimonialGlobe({
         </div>
 
         {wide && (
-          <svg aria-hidden="true" data-leader className="pointer-events-none absolute left-0 top-0 z-[95] w-px h-px overflow-visible text-[#FF4D00]">
+          <svg aria-hidden="true" data-leader className="pointer-events-none absolute left-0 top-0 z-[95] w-px h-px overflow-visible text-[#d76737]">
             <g ref={leaderRef} className="opacity-0 transition-opacity duration-200 motion-reduce:transition-none">
               <line
                 ref={lineRef}
@@ -1161,8 +1161,8 @@ export function TestimonialGlobe({
                 strokeWidth="1.2"
                 vectorEffect="non-scaling-stroke"
               />
-              <circle ref={startDotRef} r="2.5" className="fill-[#FF4D00]" />
-              <circle ref={endDotRef} r="3.5" className="fill-black stroke-[#FF4D00]" strokeWidth="1.5" />
+              <circle ref={startDotRef} r="2.5" className="fill-[#d76737]" />
+              <circle ref={endDotRef} r="3.5" className="fill-black stroke-[#d76737]" strokeWidth="1.5" />
             </g>
           </svg>
         )}
@@ -1173,7 +1173,7 @@ export function TestimonialGlobe({
         <div className="relative max-w-[1200px] mx-auto px-5 sm:px-8 mt-10 sm:mt-14 pt-8 sm:pt-10 border-t border-white/[0.08]">
           <div className="flex items-center justify-between mb-5 sm:mb-6">
             <div className="flex items-center gap-2.5">
-              <span className="size-2 rounded-full bg-[#FF4D00] shadow-[0_0_8px_#FF4D00]" />
+              <span className="size-2 rounded-full bg-[#d76737] shadow-[0_0_8px_#d76737]" />
               <h3 className="text-xs sm:text-sm font-semibold text-white tracking-wider uppercase">
                 Ещё примеры записей
               </h3>
@@ -1198,7 +1198,7 @@ export function TestimonialGlobe({
                       {story.city}
                       {story.country ? `, ${story.country}` : ""}
                     </span>
-                    <span className="text-[#FF4D00] font-medium">
+                    <span className="text-[#d76737] font-medium">
                       {story.topic}
                     </span>
                   </div>

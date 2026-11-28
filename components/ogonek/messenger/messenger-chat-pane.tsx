@@ -235,7 +235,7 @@ export function MessengerChatPane({
     typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 
   let title = isPriday
-    ? 'Priday'
+    ? 'Winlog'
     : isSaved
     ? 'Избранное'
     : friend
@@ -870,12 +870,12 @@ export function MessengerChatPane({
               ) : isPriday && isPridayTyping ? (
                 <span
                   data-testid="priday-header-typing"
-                  className="text-[#ff5a1f] font-semibold inline-flex items-center gap-1 animate-pulse"
+                  className="text-[#d76737] font-semibold inline-flex items-center gap-1 animate-pulse"
                 >
                   <span>печатает...</span>
                 </span>
               ) : isPriday ? (
-                'официальный аккаунт · @priday.life'
+                'официальный аккаунт · @winlog.life'
               ) : isSaved ? (
                 'Личные заметки и сохранённое'
               ) : isGroup ? (
@@ -1041,7 +1041,7 @@ export function MessengerChatPane({
               <ChatAvatar friendId={friendId} size={72} ringColor="var(--border)" />
               <p className="text-lg font-bold text-[var(--text)] mt-3">{title || 'Чат'}</p>
               <p className="text-xs text-[var(--text-2)] max-w-sm mt-1">
-                {isGroup ? thread?.groupMeta?.description : friend?.bio || 'Начало переписки в Priday.'}
+                {isGroup ? thread?.groupMeta?.description : friend?.bio || 'Начало переписки в Winlog.'}
               </p>
               <p className="text-xs text-[var(--accent)] font-semibold mt-4">
                 Это начало вашей истории. Отправьте «Держим огонь 🔥» или поделитесь победой!
@@ -1141,7 +1141,7 @@ export function MessengerChatPane({
               data-testid={isPriday ? 'priday-typing-indicator' : 'peer-typing-indicator'}
               className="flex items-end gap-2 mt-2 mb-1 animate-in fade-in slide-in-from-bottom-1 duration-200"
               aria-live="polite"
-              aria-label={isPriday ? 'Priday печатает...' : `${typingName} печатает...`}
+              aria-label={isPriday ? 'Winlog печатает...' : `${typingName} печатает...`}
             >
               <div className="shrink-0 mb-0.5">
                 <ChatAvatar friendId={friendId} size={28} showPresence={false} ringColor="var(--bg)" />
@@ -1359,7 +1359,7 @@ export function MessengerChatPane({
                     playClick(soundEnabled)
                     sendChatMessage(friendId, action.label)
                     if (action.isSupport) {
-                      onNotify('Заявка передана в поддержку Priday')
+                      onNotify('Заявка передана в поддержку Winlog')
                     }
                   }}
                   className="h-[34px] px-3.5 rounded-full border border-[var(--accent)]/40 bg-[var(--accent-soft)] hover:bg-[var(--accent)] hover:text-white text-[var(--text)] text-xs font-semibold whitespace-nowrap transition-colors"
@@ -1452,7 +1452,7 @@ export function MessengerChatPane({
                           }}
                           className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[var(--text)] hover:bg-[var(--bg-hover)]"
                         >
-                          <Sparkles size={16} className="text-[var(--accent)]" /> Карточка Priday
+                          <Sparkles size={16} className="text-[var(--accent)]" /> Карточка Winlog
                         </button>
                       </div>
                     </>
@@ -1518,7 +1518,7 @@ export function MessengerChatPane({
                     showQuickChips ? 'text-[var(--accent)] border-[var(--accent)]' : 'text-[var(--text)]'
                   }`}
                   aria-label="Быстрые ответы"
-                  title="Быстрые ответы Priday"
+                  title="Быстрые ответы Winlog"
                 >
                   <Zap size={18} fill={showQuickChips ? 'currentColor' : 'none'} />
                 </button>

@@ -1,6 +1,6 @@
 /**
  * src/content/landing.ts
- * Multi-language content source for Priday Landing.
+ * Multi-language content source for Winlog Landing.
  * Backwards-compatible default exports (RU) + full i18n access.
  */
 

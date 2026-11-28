@@ -159,7 +159,7 @@ export function AnalyticsView({
             <span className="text-xl font-bold text-[var(--accent)]">дней подряд</span>
           </div>
           <p className="text-[14px] text-[var(--text-2)] mt-1">
-            Priday не сгорает при пропуске · Рекорд: <strong className="text-[var(--text)]">{streakInfo.best} дн.</strong> · Средний балл <strong className="text-[var(--text)]">★ {avgRating}</strong>
+            Winlog не сгорает при пропуске · Рекорд: <strong className="text-[var(--text)]">{streakInfo.best} дн.</strong> · Средний балл <strong className="text-[var(--text)]">★ {avgRating}</strong>
           </p>
         </div>
 

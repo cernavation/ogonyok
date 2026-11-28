@@ -36,7 +36,7 @@ export function AuthModal({ onClose, onNotify, initialMode = 'signin', onAuthent
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-8 bg-black/80 backdrop-blur-2xl overflow-y-auto"
       role="dialog"
       aria-modal="true"
-      aria-label={isRegister ? 'Регистрация в Priday' : 'Вход в Priday'}
+      aria-label={isRegister ? 'Регистрация в Winlog' : 'Вход в Winlog'}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -125,7 +125,7 @@ export function AuthModal({ onClose, onNotify, initialMode = 'signin', onAuthent
                 />
               </svg>
               <span className="text-[13px] font-semibold tracking-wide uppercase text-white/90">
-                Priday · 2026
+                Winlog · 2026
               </span>
             </div>
 

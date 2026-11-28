@@ -115,7 +115,7 @@ export function AiCeremonyShowcase() {
               </div>
               <div>
                 <div className="text-[14px] font-semibold text-white flex items-center gap-2">
-                  <span>Priday AI Mentor</span>
+                  <span>Winlog AI Mentor</span>
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                     Live Demo
                   </span>
@@ -154,7 +154,7 @@ export function AiCeremonyShowcase() {
               </div>
               <div className="text-[18px] sm:text-[20px] font-bold text-white tracking-tight">
                 <TextBlink minOpacity={0.3} className="text-[#2997ff]">
-                  Нейросеть Priday AI калибрует факты...
+                  Нейросеть Winlog AI калибрует факты...
                 </TextBlink>
               </div>
               <p className="text-[14px] text-[#86868b] max-w-[480px]">
@@ -368,7 +368,7 @@ export function AiCeremonyShowcase() {
                 </h4>
                 <p className="text-[13px] text-[#a1a1a6] mt-1">
                   {milestone === 'milestone-100'
-                    ? 'Твой стрик превышает 97% участников сообщества Priday. Время подвести глубокие итоги.'
+                    ? 'Твой стрик превышает 97% участников сообщества Winlog. Время подвести глубокие итоги.'
                     : 'Критический барьер первого отказа пройден. Ты доказал себе, что можешь держать слово.'}
                 </p>
               </div>

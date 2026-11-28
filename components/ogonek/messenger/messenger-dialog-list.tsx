@@ -170,12 +170,12 @@ export function MessengerDialogList({
             )
 
         let title = isPriday
-          ? 'Priday'
+          ? 'Winlog'
           : isSaved
           ? 'Избранное'
           : liveProfile?.display_name || threadTitle(id, thread)
         let username = isPriday
-          ? 'priday.life'
+          ? 'winlog.life'
           : liveProfile?.username || friend?.username || thread?.peerMeta?.username || null
         if (username && isUuid(username)) username = null
         if ((title && isUuid(title)) || (title === 'Собеседник' && username)) {

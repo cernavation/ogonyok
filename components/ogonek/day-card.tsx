@@ -377,7 +377,7 @@ function DayCardComponent({
     playClick(soundEnabled)
     setLikeAnim('pressed')
     setTimeout(() => setLikeAnim('idle'), 400)
-    if (becameActive) onNotify?.('🔥 Priday зажжён!')
+    if (becameActive) onNotify?.('🔥 Лайк Winlog поставлен!')
   }
 
   const handlePinTopFact = () => {
@@ -411,7 +411,7 @@ function DayCardComponent({
               <ShieldAlert size={12} /> Grace Period
             </span>
             <p className="text-[14px] text-zinc-500 dark:text-zinc-400 italic mt-1.5 leading-relaxed">
-              В этот день записей не было, но стрик пути в Priday сохранён.
+              В этот день записей не было, но стрик пути в Winlog сохранён.
             </p>
           </div>
         </div>
@@ -757,7 +757,7 @@ function DayCardComponent({
                 />
               )}
 
-              {/* 3. 🔥 Огонёк */}
+              {/* 3. 🔥 Реакция Winlog */}
               <IconButton
                 icon={<Flame size={18} className={liked ? 'fill-[var(--accent)] text-[var(--accent)]' : ''} />}
                 label={liked ? 'Убрать огонь' : 'Огонь'}

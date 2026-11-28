@@ -48,7 +48,7 @@ export function LocaleLandingView({ locale }: LocaleLandingViewProps) {
   if (checking) {
     return (
       <div className="w-full min-h-screen bg-black flex items-center justify-center select-none">
-        <div className="w-6 h-6 rounded-full border-2 border-white/15 border-t-[#ff6b35] animate-spin" />
+        <div className="w-6 h-6 rounded-full border-2 border-white/15 border-t-[#d76737] animate-spin" />
       </div>
     )
   }

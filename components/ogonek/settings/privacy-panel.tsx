@@ -86,7 +86,7 @@ const TOGGLES: {
     key: 'searchableByUsername',
     icon: Search,
     onLabel: 'Можно найти по @username',
-    onHint: 'Профиль находится через поиск в хабе Priday',
+    onHint: 'Профиль находится через поиск в хабе Winlog',
     offLabel: 'Невидим для поиска',
     offHint: 'Тебя нельзя найти по имени пользователя',
     privateWhen: false,
@@ -423,7 +423,7 @@ export function PrivacyPanel({ onNotify }: Props) {
             <Users size={15} className="text-[var(--accent)]" /> Кто может добавлять меня в группы
           </h3>
           <p className="text-[12px] text-[var(--text-2)] mt-0.5">
-            В группы Priday могут добавлять только взаимные друзья, или вы можете полностью отключить приглашения
+            В группы Winlog могут добавлять только взаимные друзья, или вы можете полностью отключить приглашения
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Кто может добавлять меня в группы">

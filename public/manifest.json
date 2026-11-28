@@ -1,7 +1,7 @@
 {
-  "name": "Priday — Дневник силы и благодарности",
-  "short_name": "Priday",
-  "description": "719 дней осознанности, преодоления и фиксации внутренней опоры.",
+  "name": "Winlog — Дневник силы и благодарности",
+  "short_name": "Winlog",
+  "description": "750+ дней осознанности, преодоления и фиксации внутренней опоры.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

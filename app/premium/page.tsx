@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Премиум — Priday',
-  description: 'Подписка и тарифы Priday',
+  title: 'Премиум — Winlog',
+  description: 'Подписка и тарифы Winlog',
 }
 
 export default function PremiumRedirectPage() {

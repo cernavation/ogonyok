@@ -43,7 +43,7 @@ export function ShareCardModal({ day, authorMeta, onClose, onNotify }: ShareCard
     try {
       const url = typeof window !== 'undefined'
         ? `${window.location.origin}#day-${day.id}`
-        : `https://ogonek.cernavation.com/#day-${day.id}`
+        : `https://winlog.life/#day-${day.id}`
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(url)
         setLinkCopied(true)

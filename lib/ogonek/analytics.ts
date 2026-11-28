@@ -783,7 +783,7 @@ export function buildRecommendations(input: RecommendationInput): Recommendation
       tone: 'focus',
       emoji: '☀️',
       title: 'Утренний фокус пока пуст',
-      body: 'Зафиксируй три обещания утром — к вечеру Priday сверит, что реально сделано, а что нет.',
+      body: 'Зафиксируй три обещания утром — к вечеру Winlog сверит, что реально сделано, а что нет.',
       navigateTo: 'intentions',
     })
   }
@@ -1167,7 +1167,7 @@ export function buildThreeTakeaways(
         id: 't-1',
         category: 'Дисциплина',
         title: `${streakDays > 0 ? `${streakDays} дн. непрерывного стрика` : 'Стабильный ритм записей'}`,
-        description: `Твой Priday защищён от сгорания при пропусках. Средний балл ★ ${avgRating} удерживается на высокой планке.`,
+        description: `Твой Winlog защищён от сгорания при пропусках. Средний балл ★ ${avgRating} удерживается на высокой планке.`,
         tone: 'primary' as const,
       },
       {

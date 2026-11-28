@@ -21,7 +21,7 @@ export function AboutPanel() {
           <Flame size={32} />
         </div>
 
-        <h3 className="text-xl font-black text-[var(--text)] tracking-tight">Priday</h3>
+        <h3 className="text-xl font-black text-[var(--text)] tracking-tight">Winlog</h3>
         <p className="text-xs font-mono font-bold text-[var(--accent)] mt-0.5">
           Версия 2.0.0 (Step 16)
         </p>
@@ -30,7 +30,7 @@ export function AboutPanel() {
         </p>
       </div>
 
-      {/* ── 2. Манифест Priday ─────────────────────────────────────────── */}
+      {/* ── 2. Манифест Winlog ─────────────────────────────────────────── */}
       <div className="p-4 rounded-2xl bg-[var(--bg-elev)] border border-[var(--border)] flex flex-col gap-3">
         <h4 className="text-[14px] font-bold text-[var(--text)] flex items-center gap-2">
           <Sparkles size={16} className="text-[var(--accent)]" /> Манифест ценностей
@@ -42,7 +42,7 @@ export function AboutPanel() {
             <div>
               <b className="text-[var(--text)] block text-[13px]">Стрик никогда не сгорает</b>
               <p className="mt-0.5 leading-relaxed">
-                В Priday стрик равен общему количеству закрытых дней. Пропущенный день — это просто день отдыха,
+                В Winlog стрик равен общему количеству закрытых дней. Пропущенный день — это просто день отдыха,
                 а не повод начинать всё с нуля.
               </p>
             </div>

@@ -189,8 +189,8 @@ export default function RegisterPage() {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                       <defs>
                         <linearGradient id="registerFlameArt" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#ffa600" />
-                          <stop offset="100%" stopColor="#ff6b35" />
+                          <stop offset="0%" stopColor="#e0784b" />
+                          <stop offset="100%" stopColor="#d76737" />
                         </linearGradient>
                       </defs>
                       <path
@@ -199,7 +199,7 @@ export default function RegisterPage() {
                       />
                     </svg>
                     <span className="text-[13px] font-semibold tracking-wide uppercase text-white/90">
-                      Priday · 2026
+                      Winlog · 2026
                     </span>
                   </div>
 
@@ -223,7 +223,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-xs text-[#2997ff] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent"
+                    className="text-xs text-[#d76737] hover:underline flex items-center gap-1 cursor-pointer border-none bg-transparent"
                   >
                     ‹ Изменить ритм ({selectedRhythm} в день)
                   </button>
@@ -242,7 +242,7 @@ export default function RegisterPage() {
           {/* Bottom Switch to Login */}
           <div className="text-center mt-8 text-xs text-[#86868b]">
             Уже есть аккаунт?{' '}
-            <Link href="/login" className="text-[#2997ff] hover:underline font-medium">
+            <Link href="/login" className="text-[#d76737] hover:underline font-medium">
               Войти в профиль
             </Link>
           </div>

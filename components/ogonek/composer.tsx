@@ -1789,7 +1789,7 @@ export function Composer({
                 <Globe size={13} className="text-white/55" />
                 <div>
                   <div>Всем</div>
-                  <div className="text-[10px] text-white/45 font-normal">Глобальная лента Priday</div>
+                  <div className="text-[10px] text-white/45 font-normal">Глобальная лента Winlog</div>
                 </div>
               </div>
               {currentSlotVis === 'public' && <Check size={14} className="text-[#d76737]" />}

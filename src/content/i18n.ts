@@ -1,6 +1,6 @@
 /**
  * src/content/i18n.ts
- * Multi-language content engine for Priday Landing (RU, RO, EN).
+ * Multi-language content engine for Winlog Landing (RU, RO, EN).
  */
 
 export type Locale = 'ru' | 'ro' | 'en'
@@ -210,8 +210,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
      ══════════════════════════════════════════════════════════════ */
   ru: {
     meta: {
-      title: 'Priday — Твоя жизнь состоит из побед. Запиши их.',
-      description: 'Priday — личная летопись гордости и благодарности. Две минуты в день, бесплатно.',
+      title: 'Winlog - Твоя жизнь состоит из побед. Запиши их.',
+      description: 'Winlog - личная летопись гордости и благодарности. Две минуты в день, бесплатно.',
     },
     nav: {
       how: 'Как это работает',
@@ -230,7 +230,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     hero: {
       eyebrow: 'Личная летопись силы',
       title: 'Твоя жизнь состоит из побед. Запиши их.',
-      subtitle: 'Огонёк — личная летопись гордости и благодарности. Две минуты в день, бесплатно.',
+      subtitle: 'Winlog - личная летопись гордости и благодарности. Две минуты в день, бесплатно.',
       ctaPrimary: 'Начать бесплатно',
       ctaSecondary: 'Войти',
       trustBadge: 'Бесплатно · Без рекламы · Без банковской карты',
@@ -239,7 +239,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     prideWheel: {
       eyebrow: 'Примеры ежедневных побед',
       title: 'Горжусь тем, что…',
-      subtitle: 'Любая победа считается. Вот что записывают в Огонёк.',
+      subtitle: 'Любая победа считается. Вот что записывают в Winlog.',
       wheelLabel: 'Горжусь тем, что…',
       actionText: 'В летопись',
       galleryLabel: 'Интерактивная галерея',
@@ -305,12 +305,12 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     howItWorks: {
       eyebrow: 'Вечерний ритуал',
       title: 'Две минуты вечером',
-      subtitle: 'Пять побед и пять благодарностей за день. Остальное делает Огонёк.',
+      subtitle: 'Пять побед и пять благодарностей за день. Остальное делает Winlog.',
       steps: [
         {
           step: '01',
           title: '1–5 фактов гордости',
-          desc: 'Зафиксируй реальные поступки преодоления за день. Без лишней воды — только дела, за которые себя уважаешь.',
+          desc: 'Зафиксируй реальные поступки преодоления за день. Без лишней воды - только дела, за которые себя уважаешь.',
         },
         {
           step: '02',
@@ -399,34 +399,34 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     },
     aiAnalysis: {
       eyebrow: 'ИИ-анализ',
-      title: 'Огонёк видит рост, который ты не замечаешь',
+      title: 'Winlog видит рост, который ты не замечаешь',
       subtitle: 'Нейросеть читает твои записи и показывает сильные стороны, темп и то, куда уходит время.',
       screenshot: '/landing/screens/analytics.png',
       mobileScreenshot: '/landing/screens/mobile-analytics.png',
-      windowTitle: 'Огонёк — Аналитика и рост',
+      windowTitle: 'Winlog - Аналитика и рост',
       statusBadge: 'AI Active',
-      learnMore: 'Подробнее о том, как работает ИИ в Огоньке →',
+      learnMore: 'Подробнее о том, как работает ИИ в Winlog →',
       cards: [
         {
           id: 'pace',
           title: 'Твой темп',
           desc: 'Сравнение с твоим прошлым месяцем.',
           icon: 'TrendingUp',
-          tone: '#2997ff',
+          tone: '#e4e4e7',
         },
         {
           id: 'strengths',
           title: 'Твои сильные стороны',
           desc: 'Темы, в которых ты растёшь быстрее всего.',
           icon: 'Sparkles',
-          tone: '#FF4D00',
+          tone: '#d76737',
         },
         {
           id: 'time',
           title: 'Куда уходит время',
           desc: 'Заметь привычки, которые мешают целям.',
           icon: 'Clock',
-          tone: '#f59e0b',
+          tone: '#a1a1aa',
         },
       ],
     },
@@ -443,16 +443,16 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           title: 'Тихие реакции',
-          desc: 'Поддерживай огоньком, сжатым кулаком или тёплым словом в один клик.',
+          desc: 'Поддерживай отметкой, сжатым кулаком или тёплым словом в один клик.',
         },
         {
           title: 'Защищённые чаты',
-          desc: 'Личные сообщения и созвоны без посторонних глаз и спама.',
+          desc: 'Личные сообщения и обмен карточками без посторонних глаз и спама.',
         },
       ],
     },
     globe: {
-      eyebrow: 'Примеры записей из Огонька',
+      eyebrow: 'ПРИМЕРЫ ЗАПИСЕЙ В WINLOG',
       title: 'Примеры записей',
       subtitle: 'Люди по всему миру записывают победы. Вот как это выглядит в разных странах.',
       globeHeadline: 'Горжусь тем, что…',
@@ -493,7 +493,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Только проверяемые параметры системы без накрученных цифр.',
       facts: [
         {
-          val: '740+',
+          val: '750+',
           label: 'дней подряд',
           desc: 'Рекорд непрерывной летописи основателя сервиса, доказавший силу ритуала на практике.',
         },
@@ -524,7 +524,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       recommendedBadge: '★ Рекомендуемый',
       aiCalloutTitle: 'Как именно работает нейросетевой наставник?',
       aiCalloutDesc: 'Изучите 4 ключевые задачи ИИ, шкалу преодоления 1–10★ и гарантии Zero-Training.',
-      aiCalloutBtn: 'Подробнее об ИИ Огонёк →',
+      aiCalloutBtn: 'Подробнее об ИИ Winlog →',
       tiers: [
         {
           id: 'free',
@@ -536,9 +536,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'БАЗОВЫЙ ПЛАН',
           features: [
             'Дневник и стрик навсегда бесплатно',
-            'До 1 000 символов в каждой записи',
-            'Личные чаты и бесплатные аудиозвонки',
-            'Группа для близких до 5 человек',
+            'Без ограничения длины записей',
+            'Личные чаты, друзья и обмен карточками',
+            'Группы для близких',
             'Без скрытых списаний и рекламы',
           ],
           cta: 'Начать бесплатно',
@@ -555,19 +555,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'РЕКОМЕНДУЕМЫЙ ПЛАН',
           features: [
             'Все возможности Базового тарифа',
-            'Оценка дня от нейросети',
-            'Больше места для записи: до 3 000 символов',
-            'Фотографии к записям каждый день',
-            'Группы для семьи и друзей до 25 человек',
-            'HD-видеозвонки и синяя галочка в профиле',
+            'ИИ-аналитика дня и оценка преодоления',
+            'Глубокие инсайты за 100 и 750+ дней',
+            'До 3 фото в записи каждый день',
+            'Экспорт красивых карточек и сторис',
+            'Приоритетные обновления и группы до 25 человек',
           ],
           cta: 'Выбрать',
           popular: true,
         },
         {
           id: 'ultra',
-          name: 'Основатель Ultra',
-          desc: 'Максимальная глубина, персональный ментор и золотой статус.',
+          name: 'Winlog Ultra',
+          desc: 'Максимальная глубина, персональный ментор и статус клуба.',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ месяц',
@@ -576,10 +576,10 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'Все возможности тарифа Премиум',
             'Глубокий разбор от персонального ИИ-ментора',
-            'Максимальный объём: до 5 000 символов в записи',
-            'До 3 фото к победам каждый день',
+            'Статус и галочка верификации в профиле',
             'Большие сообщества до 100 участников',
-            'Золотая галочка и приоритет в рейтинге',
+            'Полный архив и экспорт летописи',
+            'Приоритетная поддержка и ранний доступ к фичам',
           ],
           cta: 'Выбрать',
           popular: false,
@@ -587,19 +587,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       ],
     },
     finalCta: {
-      title: 'Зажги свой огонёк',
-      subtitle: 'Регистрация — единственный шаг. Платить не нужно.',
+      title: 'Начни свой Winlog',
+      subtitle: 'Регистрация - один шаг. Платить не нужно.',
       ctaButton: 'Начать бесплатно',
       image: 'together.jpg',
     },
     footer: {
       title: 'Личная летопись побед и дисциплины',
-      tagline: 'Фиксируй настоящие преодоления каждый вечер. Твой путь в Priday принадлежит только тебе.',
+      tagline: 'Фиксируй настоящие преодоления каждый вечер. Твой путь в Winlog принадлежит только тебе.',
       ctaBtn: 'Начать летопись',
       signinBtn: 'Войти',
       scrollTop: 'Наверх',
       legalLink: 'Условия и конфиденциальность',
-      copyright: `© ${new Date().getFullYear()} Priday Inc. Все права защищены.`,
+      copyright: `© ${new Date().getFullYear()} Winlog. Все права защищены.`,
     },
   },
 
@@ -608,8 +608,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
      ══════════════════════════════════════════════════════════════ */
   ro: {
     meta: {
-      title: 'Priday — Viața ta e formată din victorii. Notează-le.',
-      description: 'Priday — cronica personală a mândriei și recunoștinței. Două minute pe zi, gratuit.',
+      title: 'Winlog — Viața ta e formată din victorii. Notează-le.',
+      description: 'Winlog — cronica personală a mândriei și recunoștinței. Două minute pe zi, gratuit.',
     },
     nav: {
       how: 'Cum funcționează',
@@ -628,7 +628,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     hero: {
       eyebrow: 'Cronica personală a puterii',
       title: 'Viața ta e formată din victorii. Notează-le.',
-      subtitle: 'Priday — cronica personală a mândriei și recunoștinței. Două minute pe zi, gratuit.',
+      subtitle: 'Winlog — cronica personală a mândriei și recunoștinței. Două minute pe zi, gratuit.',
       ctaPrimary: 'Începe gratuit',
       ctaSecondary: 'Intră',
       trustBadge: 'Gratuit · Fără reclame · Fără card bancar',
@@ -637,7 +637,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     prideWheel: {
       eyebrow: 'Exemple de victorii zilnice',
       title: 'Sunt mândru că…',
-      subtitle: 'Fiecare victorie contează. Iată ce notează oamenii în Priday.',
+      subtitle: 'Fiecare victorie contează. Iată ce notează oamenii în Winlog.',
       wheelLabel: 'Sunt mândru că…',
       actionText: 'În cronică',
       galleryLabel: 'Galerie interactivă',
@@ -703,7 +703,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     howItWorks: {
       eyebrow: 'Ritualul de seară',
       title: 'Două minute seara',
-      subtitle: 'Cinci victorii și cinci recunoștințe pe zi. De restul se ocupă Priday.',
+      subtitle: 'Cinci victorii și cinci recunoștințe pe zi. De restul se ocupă Winlog.',
       steps: [
         {
           step: '01',
@@ -797,34 +797,34 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     },
     aiAnalysis: {
       eyebrow: 'Analiză AI',
-      title: 'Priday vede progresul pe care nu îl observi',
+      title: 'Winlog vede progresul pe care nu îl observi',
       subtitle: 'Inteligența artificială analizează notițele tale și evidențiază punctele forte, ritmul și timpul investit.',
       screenshot: '/landing/screens/analytics.png',
       mobileScreenshot: '/landing/screens/mobile-analytics.png',
-      windowTitle: 'Priday — Analiză și evoluție',
+      windowTitle: 'Winlog — Analiză și evoluție',
       statusBadge: 'AI Active',
-      learnMore: 'Află mai multe despre cum funcționează AI în Priday →',
+      learnMore: 'Află mai multe despre cum funcționează AI în Winlog →',
       cards: [
         {
           id: 'pace',
           title: 'Ritmul tău',
           desc: 'Comparație realistă cu luna ta precedentă.',
           icon: 'TrendingUp',
-          tone: '#2997ff',
+          tone: '#e4e4e7',
         },
         {
           id: 'strengths',
           title: 'Punctele tale forte',
           desc: 'Domeniile în care progresezi cel mai rapid.',
           icon: 'Sparkles',
-          tone: '#FF4D00',
+          tone: '#d76737',
         },
         {
           id: 'time',
           title: 'Unde merge timpul',
           desc: 'Observă obiceiurile care îți frânează obiectivele.',
           icon: 'Clock',
-          tone: '#f59e0b',
+          tone: '#a1a1aa',
         },
       ],
     },
@@ -845,12 +845,12 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           title: 'Chaturi securizate',
-          desc: 'Mesaje private și apeluri audio fără priviri străine și fără spam.',
+          desc: 'Mesaje private și schimb de carduri fără priviri străine și fără spam.',
         },
       ],
     },
     globe: {
-      eyebrow: 'Exemple de însemnări din Priday',
+      eyebrow: 'EXEMPLE DE ÎNSEMNĂRI ÎN WINLOG',
       title: 'Exemple de însemnări',
       subtitle: 'Oameni din întreaga lume își notează victoriile. Iată cum arată în diferite țări.',
       globeHeadline: 'Sunt mândru că…',
@@ -891,7 +891,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Doar indicatori verificabili ai sistemului, fără numere exagerate.',
       facts: [
         {
-          val: '740+',
+          val: '750+',
           label: 'zile la rând',
           desc: 'Recordul cronicii continue a fondatorului, demonstrând puterea ritualului în practică.',
         },
@@ -922,7 +922,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       recommendedBadge: '★ Recomandat',
       aiCalloutTitle: 'Cum funcționează mentorul cu inteligență artificială?',
       aiCalloutDesc: 'Descoperă cele 4 obiective cheie ale AI, scara depășirii 1–10★ și garanțiile Zero-Training.',
-      aiCalloutBtn: 'Află mai multe despre AI Priday →',
+      aiCalloutBtn: 'Află mai multe despre AI Winlog →',
       tiers: [
         {
           id: 'free',
@@ -934,9 +934,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'PLAN DE BAZĂ',
           features: [
             'Jurnal și serie gratuite pentru totdeauna',
-            'Până la 1 000 caractere în fiecare însemnare',
-            'Chaturi private și apeluri audio gratuite',
-            'Grup pentru apropiați de până la 5 persoane',
+            'Fără limită de lungime a însemnărilor',
+            'Chaturi private, prieteni și schimb de carduri',
+            'Grupuri pentru cei apropiați',
             'Fără taxe ascunse și fără reclame',
           ],
           cta: 'Începe gratuit',
@@ -953,19 +953,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'PLAN RECOMANDAT',
           features: [
             'Toate beneficiile planului De bază',
-            'Evaluarea zilei realizată de rețeaua neurală',
-            'Mai mult spațiu: până la 3 000 caractere',
-            'Fotografii la însemnări în fiecare zi',
-            'Grupuri pentru familie și prieteni până la 25 persoane',
-            'Apeluri video HD și bifă albastră în profil',
+            'Analiză AI zilnică și evaluare pe scară 1–10★',
+            'Analize aprofundate pentru 100 și 750+ zile',
+            'Până la 3 fotografii la însemnări zilnic',
+            'Export elegant de carduri și stories',
+            'Actualizări prioritare și grupuri de până la 25 persoane',
           ],
           cta: 'Alege',
           popular: true,
         },
         {
           id: 'ultra',
-          name: 'Fondator Ultra',
-          desc: 'Profunzime maximă, mentor personal și statut de aur.',
+          name: 'Winlog Ultra',
+          desc: 'Profunzime maximă, mentor personal și statut de club.',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ lună',
@@ -974,10 +974,10 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'Toate facilitățile planului Premium',
             'Analiză aprofundată de la mentorul AI personal',
-            'Volum maxim: până la 5 000 caractere pe însemnare',
-            'Până la 3 fotografii pe zi la victorii',
+            'Statut și bifă de verificare în profil',
             'Comunități extinse de până la 100 participanți',
-            'Bifă aurie și prioritate în clasament',
+            'Arhivă completă și export al cronicii',
+            'Suport prioritar și acces timpuriu la funcții',
           ],
           cta: 'Alege',
           popular: false,
@@ -985,19 +985,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       ],
     },
     finalCta: {
-      title: 'Aprinde-ți flacăra',
+      title: 'Începe propriul Winlog',
       subtitle: 'Înregistrarea este singurul pas. Nu trebuie să plătești nimic.',
       ctaButton: 'Începe gratuit',
       image: 'together.jpg',
     },
     footer: {
       title: 'Cronica personală a victoriilor și disciplinei',
-      tagline: 'Notează adevăratele depășiri în fiecare seară. Drumul tău în Priday îți aparține doar ție.',
+      tagline: 'Notează adevăratele depășiri în fiecare seară. Drumul tău în Winlog îți aparține doar ție.',
       ctaBtn: 'Începe cronica',
       signinBtn: 'Intră',
       scrollTop: 'Sus',
       legalLink: 'Termeni și confidențialitate',
-      copyright: `© ${new Date().getFullYear()} Priday Inc. Toate drepturile rezervate.`,
+      copyright: `© ${new Date().getFullYear()} Winlog. Toate drepturile rezervate.`,
     },
   },
 
@@ -1006,8 +1006,8 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
      ══════════════════════════════════════════════════════════════ */
   en: {
     meta: {
-      title: 'Priday — Your life is made of victories. Write them down.',
-      description: 'Priday is a personal journal of pride and gratitude. Two minutes a day, free.',
+      title: 'Winlog — Your life is made of victories. Write them down.',
+      description: 'Winlog is a personal journal of pride and gratitude. Two minutes a day, free.',
     },
     nav: {
       how: 'How it works',
@@ -1026,7 +1026,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     hero: {
       eyebrow: 'A personal chronicle of strength',
       title: 'Your life is made of victories. Write them down.',
-      subtitle: 'Priday is a personal journal of pride and gratitude. Two minutes a day, free.',
+      subtitle: 'Winlog is a personal journal of pride and gratitude. Two minutes a day, free.',
       ctaPrimary: 'Start for free',
       ctaSecondary: 'Sign in',
       trustBadge: 'Free · Ad-free · No credit card required',
@@ -1035,7 +1035,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     prideWheel: {
       eyebrow: 'Examples of daily victories',
       title: 'Proud that I…',
-      subtitle: 'Every victory counts. Here is what people record in Priday.',
+      subtitle: 'Every victory counts. Here is what people record in Winlog.',
       wheelLabel: 'Proud that I…',
       actionText: 'To journal',
       galleryLabel: 'Interactive gallery',
@@ -1101,7 +1101,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     howItWorks: {
       eyebrow: 'Evening ritual',
       title: 'Two minutes each evening',
-      subtitle: 'Five victories and five gratitudes daily. Priday handles the rest.',
+      subtitle: 'Five victories and five gratitudes daily. Winlog handles the rest.',
       steps: [
         {
           step: '01',
@@ -1195,34 +1195,34 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
     },
     aiAnalysis: {
       eyebrow: 'AI Analysis',
-      title: 'Priday spots growth you might overlook',
+      title: 'Winlog spots growth you might overlook',
       subtitle: 'AI analyzes your entries to reveal your strengths, pacing, and where your time truly goes.',
       screenshot: '/landing/screens/analytics.png',
       mobileScreenshot: '/landing/screens/mobile-analytics.png',
-      windowTitle: 'Priday — Analytics & Growth',
+      windowTitle: 'Winlog — Analytics & Growth',
       statusBadge: 'AI Active',
-      learnMore: 'Learn how AI works in Priday →',
+      learnMore: 'Learn how AI works in Winlog →',
       cards: [
         {
           id: 'pace',
           title: 'Your pace',
           desc: 'Clear comparison with your previous month.',
           icon: 'TrendingUp',
-          tone: '#2997ff',
+          tone: '#e4e4e7',
         },
         {
           id: 'strengths',
           title: 'Your strengths',
           desc: 'The areas where you grow the fastest.',
           icon: 'Sparkles',
-          tone: '#FF4D00',
+          tone: '#d76737',
         },
         {
           id: 'time',
           title: 'Where time goes',
           desc: 'Notice patterns holding you back from your goals.',
           icon: 'Clock',
-          tone: '#f59e0b',
+          tone: '#a1a1aa',
         },
       ],
     },
@@ -1243,12 +1243,12 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
         },
         {
           title: 'Secure chats',
-          desc: 'Private messages and calls with zero prying eyes and no spam.',
+          desc: 'Private messages and card sharing with zero prying eyes and no spam.',
         },
       ],
     },
     globe: {
-      eyebrow: 'Journal entries from Priday',
+      eyebrow: 'JOURNAL ENTRIES IN WINLOG',
       title: 'Real entries',
       subtitle: 'People around the world write down their victories. Here is what it looks like globally.',
       globeHeadline: 'Proud that I…',
@@ -1289,7 +1289,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       subtitle: 'Only verifiable platform metrics without inflated numbers.',
       facts: [
         {
-          val: '740+',
+          val: '750+',
           label: 'days in a row',
           desc: "Founder's continuous journaling record, proving the power of the daily ritual.",
         },
@@ -1320,7 +1320,7 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       recommendedBadge: '★ Recommended',
       aiCalloutTitle: 'How does the AI Mentor work?',
       aiCalloutDesc: 'Explore the 4 key AI tasks, the 1–10★ evaluation scale, and our Zero-Training guarantee.',
-      aiCalloutBtn: 'Learn more about Priday AI →',
+      aiCalloutBtn: 'Learn more about Winlog AI →',
       tiers: [
         {
           id: 'free',
@@ -1332,9 +1332,9 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'BASIC PLAN',
           features: [
             'Journal and streak free forever',
-            'Up to 1,000 characters per entry',
-            'Private chats and free audio calls',
-            'Group for loved ones up to 5 people',
+            'Unlimited entry length',
+            'Private chats, friends, and card sharing',
+            'Groups for close friends and family',
             'No hidden fees and no advertisements',
           ],
           cta: 'Start for free',
@@ -1351,19 +1351,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           badge: 'RECOMMENDED PLAN',
           features: [
             'All Basic plan features included',
-            'Daily evaluation powered by neural AI',
-            'More room to write: up to 3,000 characters',
-            'Attach photos to your entries daily',
-            'Groups for family and friends up to 25 members',
-            'HD video calls and blue checkmark badge',
+            'Daily AI analytics and 1–10★ strength score',
+            'Deep insights for 100 and 750+ days',
+            'Up to 3 photos per entry every day',
+            'Clean card and story exports',
+            'Priority updates and groups up to 25 members',
           ],
           cta: 'Choose Pro',
           popular: true,
         },
         {
           id: 'ultra',
-          name: 'Founder Ultra',
-          desc: 'Maximum depth, personal mentor, and gold badge status.',
+          name: 'Winlog Ultra',
+          desc: 'Maximum depth, personal mentor, and club status.',
           priceMonthly: '50 MDL',
           priceYearly: '480 MDL',
           periodMonthly: '/ month',
@@ -1372,10 +1372,10 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           features: [
             'All Premium plan features included',
             'Deep breakdown from personal AI mentor',
-            'Maximum volume: up to 5,000 characters per entry',
-            'Up to 3 photos with daily wins',
+            'Verified badge and status on your profile',
             'Large communities up to 100 members',
-            'Gold checkmark and priority ranking',
+            'Complete chronicle archive and export',
+            'Priority support and early feature access',
           ],
           cta: 'Choose Ultra',
           popular: false,
@@ -1383,19 +1383,19 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
       ],
     },
     finalCta: {
-      title: 'Ignite your flame',
+      title: 'Start your Winlog',
       subtitle: 'Registration is the only step. No payment needed.',
       ctaButton: 'Start for free',
       image: 'together.jpg',
     },
     footer: {
       title: 'A personal chronicle of victories and discipline',
-      tagline: 'Record genuine accomplishments every evening. Your journey in Priday belongs to you alone.',
+      tagline: 'Record genuine accomplishments every evening. Your journey in Winlog belongs to you alone.',
       ctaBtn: 'Start journaling',
       signinBtn: 'Sign in',
       scrollTop: 'Top',
       legalLink: 'Terms & Privacy',
-      copyright: `© ${new Date().getFullYear()} Priday Inc. All rights reserved.`,
+      copyright: `© ${new Date().getFullYear()} Winlog. All rights reserved.`,
     },
   },
 }

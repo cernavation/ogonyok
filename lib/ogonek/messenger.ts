@@ -332,7 +332,7 @@ export function unreadCountForFolder(
 
 /** Заголовок треда для списка: имя друга, группы или id (БЕЗ сырых UUID в UI!) */
 export function threadTitle(friendOrId: FriendProfile | string | undefined | null, thread?: ChatThreadState | null): string {
-  if (typeof friendOrId === 'string' && isPridayChat(friendOrId)) return 'Priday'
+  if (typeof friendOrId === 'string' && isPridayChat(friendOrId)) return 'Winlog'
   if (thread?.groupMeta?.title) return thread.groupMeta.title
   if (thread?.peerMeta?.name && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(thread.peerMeta.name)) {
     return thread.peerMeta.name
@@ -692,8 +692,8 @@ export function buildLinkPreview(url: string): ChatLinkPreview {
     } else if (host.includes('youtube.com') || host.includes('youtu.be')) {
       title = 'YouTube Видео'
       desc = 'Смотрите видео, делитесь с друзьями и вдохновляйтесь.'
-    } else if (host.includes('ogonek.app') || host.includes('localhost')) {
-      title = 'Priday — CRM твоей жизни'
+    } else if (host.includes('winlog.life') || host.includes('ogonek.app') || host.includes('priday.life') || host.includes('localhost')) {
+      title = 'Winlog — CRM твоей жизни'
       desc = 'Дневник 5 гордостей и благодарностей каждый день. Стрик не сгорает!'
     } else if (host.includes('supabase.com')) {
       title = 'Supabase | Open Source Firebase Alternative'

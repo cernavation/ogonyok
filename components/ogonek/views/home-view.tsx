@@ -350,7 +350,7 @@ export function HomeView({
   const handleCopyInvite = () => {
     playClick(soundEnabled)
     const refUser = username || 'cernavation'
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${refUser}` : 'https://ogonek.app'
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${refUser}` : 'https://winlog.life'
     if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url)
     }
@@ -765,7 +765,7 @@ export function HomeView({
             <span className="flex items-center justify-center w-12 h-12 rounded-full bg-[#d76737]/10 text-[#d76737] mx-auto mb-2" aria-hidden="true">
               <Flame size={28} className="fill-[#d76737]/20 text-[#d76737]" />
             </span>
-            <h2 className="empty-state__title text-lg font-bold mt-2">Твой путь в Priday готов к первому дню</h2>
+            <h2 className="empty-state__title text-lg font-bold mt-2">Твой путь в Winlog готов к первому дню</h2>
             <p className="empty-state__desc text-muted text-sm max-w-sm mx-auto mt-1 mb-6">
               Фиксируй 5 поводов для гордости каждый день, чтобы замечать свою силу и сохранять внутреннюю опору.
             </p>

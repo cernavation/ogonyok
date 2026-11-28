@@ -97,7 +97,7 @@ export function TodayHighlights({
                   onClick={() => {
                     const now = toggleExplorePostLike(post.id)
                     playClick(soundEnabled)
-                    onNotify(now ? '🔥 Priday зажжён под достижением!' : 'Priday снят')
+                    onNotify(now ? '🔥 Отмечено в Winlog!' : 'Реакция снята')
                   }}
                   aria-pressed={isLiked}
                   aria-label={isLiked ? 'Убрать огонь' : 'Зажечь огонь'}

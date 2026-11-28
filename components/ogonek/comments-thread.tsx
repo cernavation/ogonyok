@@ -480,7 +480,7 @@ export function CommentsThread({
     (text: string) => {
       const tokens = text.split(/(@[a-zA-Z0-9._]{2,32})/g)
       return tokens.map((token, idx) => {
-        if (/^@[a-zA-Z0-9._]{2,32}$/.test(token) && token.toLowerCase() !== '@priday.life') {
+        if (/^@[a-zA-Z0-9._]{2,32}$/.test(token) && token.toLowerCase() !== '@priday.life' && token.toLowerCase() !== '@winlog.life') {
           return (
             <button
               key={`mention-${idx}`}

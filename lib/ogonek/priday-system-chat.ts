@@ -4,15 +4,15 @@ export const PRIDAY_CHAT_ID = 'priday-official'
 export const PRIDAY_WELCOME_MSG_ID = 'priday-welcome'
 
 export const PRIDAY_THREAD_PEER_META = {
-  name: 'Priday',
-  username: 'priday.life',
-  avatarColor: '#FF5C00',
+  name: 'Winlog',
+  username: 'winlog.life',
+  avatarColor: '#d76737',
   verified: true,
-  initials: 'П',
+  initials: 'W',
 } as const
 
 export const PRIDAY_WELCOME_TEXT =
-  'Привет! Это официальный чат Priday 🔥 Сюда будут прилетать важные новости, уведомления о новых подписчиках и друзьях, а ещё поздравления с твоими рекордами. Если есть вопросы - жми на кнопки ниже или просто пиши прямо сюда, сообщение улетит в поддержку.'
+  'Привет! Это официальный чат Winlog 🔥 Сюда будут прилетать важные новости, уведомления о новых подписчиках и друзьях, а ещё поздравления с твоими рекордами. Если есть вопросы - жми на кнопки ниже или просто пиши прямо сюда, сообщение улетит в поддержку.'
 
 export type PridayQuickActionId = 'essence' | 'streak_eval' | 'add_friends' | 'support'
 
@@ -26,15 +26,15 @@ export interface PridayQuickAction {
 export const PRIDAY_QUICK_ACTIONS: readonly PridayQuickAction[] = [
   {
     id: 'essence',
-    label: 'В чём суть Priday?',
+    label: 'В чём суть Winlog?',
     replyText:
-      'Priday - твой личный дневник силы в формате 5+5. Каждый вечер ты фиксируешь 5 поводов для гордости (от мелких побед до больших прорывов) и 5 благодарностей. Так мозг учится замечать прогресс и держать внутренний огонь даже в сложные дни.',
+      'Winlog - твой личный дневник силы в формате 5+5. Каждый вечер ты фиксируешь 5 поводов для гордости (от мелких побед до больших прорывов) и 5 благодарностей. Так мозг учится замечать прогресс и держать внутреннюю опору даже в сложные дни.',
   },
   {
     id: 'streak_eval',
     label: 'Как работает стрик и оценка дня?',
     replyText:
-      'Стрик растёт каждый раз, когда ты закрываешь день записями гордости и благодарности. Пропуск дня его не сжигает (если сам не включишь жёсткий режим в Настройках). А оценка дня помогает честно видеть динамику своей недели и месяца.',
+      'Стрик растёт каждый раз, когда ты закрываешь день записями гордости и благодарности. В Winlog он не сгорает при пропуске (если сам не включишь жёсткий режим в Настройках). А оценка дня помогает честно видеть динамику своей недели и месяца.',
   },
   {
     id: 'add_friends',
@@ -52,7 +52,7 @@ export const PRIDAY_QUICK_ACTIONS: readonly PridayQuickAction[] = [
 ] as const
 
 export const PRIDAY_SUPPORT_CUSTOM_REPLY =
-  'Принято! Сообщение сохранено и передано в поддержку Priday 🔥 Ответим здесь, как только разберёмся.'
+  'Принято! Сообщение сохранено и передано в поддержку Winlog 🔥 Ответим здесь, как только разберёмся.'
 
 /**
  * Рассчитывает натуральную задержку печатания ответа Priday (1.8-2.5 сек).
@@ -82,7 +82,7 @@ export function buildStreakMilestoneCelebration(days: number): StreakMilestoneCe
       days: safeDays,
       tier: 100,
       title: `Юбилей · ${safeDays} дней 🔥`,
-      text: `Легенда! ${safeDays} дней в Priday 🔥 Это уже не привычка, а твой характер.`,
+      text: `Легенда! ${safeDays} дней в Winlog 🔥 Это уже не привычка, а твой характер.`,
     }
   }
   if (safeDays % 50 === 0) {
@@ -90,14 +90,14 @@ export function buildStreakMilestoneCelebration(days: number): StreakMilestoneCe
       days: safeDays,
       tier: 50,
       title: `Рубеж ${safeDays} дней 🔥`,
-      text: `Мощный рубеж - ${safeDays} дней закрыто! Огонь держится уверенно.`,
+      text: `Мощный рубеж - ${safeDays} дней в Winlog закрыто! Твой ритм держится уверенно.`,
     }
   }
   return {
     days: safeDays,
     tier: 10,
     title: `${safeDays} дней подряд 🔥`,
-    text: `Круглая цифра: ${safeDays} дней подряд! Так держать.`,
+    text: `Круглая цифра в Winlog: ${safeDays} дней подряд! Так держать.`,
   }
 }
 

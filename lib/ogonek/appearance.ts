@@ -90,7 +90,7 @@ export type AccentPreset = {
 }
 
 export const ACCENT_PRESETS: AccentPreset[] = [
-  { id: 'flame', label: 'Priday', color: '#d76737', strong: '#bd562b', soft: 'rgba(215,103,55,0.14)' },
+  { id: 'flame', label: 'Winlog', color: '#d76737', strong: '#bd562b', soft: 'rgba(215,103,55,0.14)' },
   { id: 'blue', label: 'Небесный', color: '#1D9BF0', strong: '#1A8CD8', soft: 'rgba(29,155,240,0.12)' },
   { id: 'violet', label: 'Аметист', color: '#7856FF', strong: '#6742ED', soft: 'rgba(120,86,255,0.12)' },
   { id: 'emerald', label: 'Изумруд', color: '#00BA7C', strong: '#009664', soft: 'rgba(0,186,124,0.12)' },

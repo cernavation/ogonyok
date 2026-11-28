@@ -34,7 +34,7 @@ export const VISIBILITY_LEVELS: VisibilityMeta[] = [
     id: 'public',
     label: 'Публично в глобальную ленту',
     shortLabel: 'Публично',
-    description: 'Гордость увидят все участники в глобальной ленте Priday',
+    description: 'Гордость увидят все участники в глобальной ленте Winlog',
     icon: 'globe',
     color: '#1d9bf0',
     rank: 0,

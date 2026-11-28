@@ -611,7 +611,7 @@ export function ChatComposer({
                 className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
               >
                 <Sparkles size={16} className="text-[#ffad5a]" />
-                <span>Карточка Priday</span>
+                <span>Карточка Winlog</span>
               </button>
             </div>
           )}

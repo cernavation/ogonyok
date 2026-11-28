@@ -133,7 +133,7 @@ describe('1. Навигация, страницы и маршрутизация 
   it('шапка сайта AppleNavbar содержит логотип, flame SVG и кнопки входа', () => {
     const navPath = path.resolve(process.cwd(), 'components/ogonek/landing/apple-navbar.tsx')
     const content = fs.readFileSync(navPath, 'utf-8')
-    assert.ok(content.includes('appleFlameNavbar'), 'Шапка должна содержать градиентное пламя')
+    assert.ok(content.includes('fill="#d76737"') && content.includes('Winlog'), 'Шапка должна содержать логотип и пламя Winlog #d76737')
     assert.ok(content.includes('handleAuthAction'), 'Шапка должна поддерживать открытие окна входа/регистрации')
   })
 
@@ -187,20 +187,20 @@ describe('2. Архитектура и спецификации AppleFooter (50 
     assert.ok(footerContent.includes('Наверх') && footerContent.includes('scrollToTop'), 'Кнопка наверх')
   })
 
-  it('нижняя мастер-плашка содержит копирайт Priday Inc.', () => {
-    assert.ok(footerContent.includes('Priday Inc. Все права защищены.'), 'Формулировка копирайта')
+  it('нижняя мастер-плашка содержит копирайт Winlog', () => {
+    assert.ok(footerContent.includes('Winlog. Все права защищены.'), 'Формулировка копирайта')
   })
 
-  it('содержит гигантский монументальный водяной знак Halftone Wordmark Priday', () => {
-    assert.ok(footerContent.includes('HalftoneWordmarkCanvas') && footerContent.includes('Priday'), 'Водяной знак Priday')
+  it('содержит гигантский монументальный водяной знак Halftone Wordmark Winlog', () => {
+    assert.ok(footerContent.includes('HalftoneWordmarkCanvas') && footerContent.includes('Winlog'), 'Водяной знак Winlog')
   })
 
-  it('подвал использует глубокий черный OLED фон #050507', () => {
-    assert.ok(footerContent.includes('#050507'), 'Фон подвала должен быть глубоким темным')
+  it('подвал использует чисто чёрный фон #000000', () => {
+    assert.ok(footerContent.includes('#000000') && footerContent.includes('bg-black'), 'Фон подвала должен быть чисто чёрным')
   })
 
-  it('подвал содержит фоновый световой ореол apple-ambient-orb', () => {
-    assert.ok(footerContent.includes('apple-ambient-orb'), 'Фоновый световой шар в подвале')
+  it('подвал без лишних цветных фоновых ореолов', () => {
+    assert.ok(!footerContent.includes('apple-ambient-orb'), 'Фоновые цветные ореолы удалены из подвала')
   })
 
   it('ссылки на внешние ресурсы открываются с безопасными rel=noreferrer', () => {
@@ -335,7 +335,7 @@ describe('3. Токены анимации Apple Reveal и физика движ
 
   it('экстремальные карточки имеют акцентное свечение .apple-card-extreme:hover', () => {
     assert.ok(tokensContent.includes('.landing .apple-card-extreme:hover'), 'Hover для extreme карточки')
-    assert.ok(tokensContent.includes('rgba(0, 113, 227'), 'Apple синее свечение')
+    assert.ok(tokensContent.includes('rgba(215, 103, 55'), 'Терракотовое акцентное свечение #d76737')
   })
 
   it('поддерживает строгое отключение анимаций для prefers-reduced-motion: reduce', () => {

@@ -78,9 +78,9 @@ export interface HalftoneWordmarkFooterProps extends HalftoneWordmarkCanvasProps
 }
 
 const PRESETS: { [K in HalftonePreset]: HalftonePalette } = {
-  night: { background: "#050507", ink: "#f5f5f7", warm: "#f56900" },
+  night: { background: "#000000", ink: "#f5f5f7", warm: "#d76737" },
   paper: { background: "#efebe3", ink: "#17150f", warm: "#c2361c" },
-  ember: { background: "#160a06", ink: "#f2c48c", warm: "#ff5a1f" },
+  ember: { background: "#160a06", ink: "#f2c48c", warm: "#d76737" },
   cobalt: { background: "#0d1b4d", ink: "#dfe7ff", warm: "#ffcd3c" },
 }
 
@@ -186,7 +186,7 @@ const HWF_CSS = `
   background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
   background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1);
 }
-.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: #f56900; }
+.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: #d76737; }
 .hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid currentColor; outline-offset: 3px; opacity: 1; }
 .hwf-rule {
   position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: center; gap: 16px;
@@ -209,7 +209,7 @@ const HWF_CSS = `
  * Can be used standalone or embedded in any footer.
  */
 export function HalftoneWordmarkCanvas({
-  wordmark = "Priday",
+  wordmark = "Winlog",
   preset = "night",
   palette,
   dotGap = 6,
@@ -271,7 +271,8 @@ export function HalftoneWordmarkCanvas({
       const face = o.fontWeight + " 100px " + o.fontFamily
       m.font = face
       const word = o.wordmark || " "
-      const fit = hwfFitSize(m.measureText(word).width, w * 1.02)
+      const fitRatio = w < 640 ? 0.90 : 0.98
+      const fit = hwfFitSize(m.measureText(word).width, w * fitRatio)
       m.font = o.fontWeight + " " + fit + "px " + o.fontFamily
       const box = m.measureText(word)
       const cap = box.actualBoundingBoxAscent || fit * 0.72
@@ -472,8 +473,8 @@ export function HalftoneWordmarkCanvas({
  * Halftone Wordmark Footer component
  */
 export default function HalftoneWordmarkFooter({
-  wordmark = "Priday",
-  label = "Priday",
+  wordmark = "Winlog",
+  label = "Winlog",
   meta = "© 2026 · Local-first & Zero-Training",
   columns = DEFAULT_COLUMNS,
   backToTop = true,

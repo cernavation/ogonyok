@@ -90,7 +90,7 @@ export function PasswordSetupModal({ onClose, onNotify }: Props) {
     <ModalShell title={hasPassword ? 'Смена пароля аккаунта' : 'Пароль аккаунта'} onClose={onClose}>
       <p className="modal-intro">
         <KeyRound size={13} className="inline -mt-0.5 mr-1" />
-        Основной пароль для входа в Priday. Служит аварийным способом доступа, если вы забыли
+        Основной пароль для входа в Winlog. Служит аварийным способом доступа, если вы забыли
         PIN-код.
       </p>
 

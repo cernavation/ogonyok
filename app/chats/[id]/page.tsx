@@ -1,8 +1,8 @@
 import { FullscreenMessenger } from '@/components/ogonek/messenger/fullscreen-messenger'
 
 export const metadata = {
-  title: 'Диалог — Priday',
-  description: 'Полноэкранный мессенджер Priday',
+  title: 'Диалог — Winlog',
+  description: 'Полноэкранный мессенджер Winlog',
 }
 
 type Props = {

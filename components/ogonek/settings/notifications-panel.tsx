@@ -96,7 +96,7 @@ export function NotificationsPanel({
         playSuccess(soundEnabled)
         onNotify('Push-уведомления успешно включены')
         try {
-          new Notification('Priday', {
+          new Notification('Winlog', {
             body: 'Уведомления активированы! Мы напомним о закрытии дня.',
             icon: '/icon-192.png',
           })
@@ -112,7 +112,7 @@ export function NotificationsPanel({
   const handleTestPush = () => {
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification('Priday: Тестовое уведомление', {
+        new Notification('Winlog: Тестовое уведомление', {
           body: 'Так выглядит напоминание о закрытии дня и победах.',
           icon: '/icon-192.png',
         })

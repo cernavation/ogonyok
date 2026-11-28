@@ -162,7 +162,7 @@ export function accountInitials(account: AuthAccount): string {
 
 /** Отображаемое имя аккаунта */
 export function accountDisplayName(account: AuthAccount): string {
-  return account.snapshot?.displayName?.trim() || (account.isGuest ? 'Гость Priday' : `@${account.snapshot?.username || 'user'}`)
+  return account.snapshot?.displayName?.trim() || (account.isGuest ? 'Гость Winlog' : `@${account.snapshot?.username || 'user'}`)
 }
 
 /** @handle аккаунта (с ведущим @) */
@@ -399,7 +399,7 @@ function sanitizeAccount(value: unknown, index: number): AuthAccount | null {
   const id =
     typeof a.id === 'string' && a.id.trim() ? a.id.trim().slice(0, 80) : `acct-restored-${index}`
   const fallbackSnapshot = accountSnapshot(
-    provider === 'guest' ? 'Гость Priday' : 'Пользователь Priday',
+    provider === 'guest' ? 'Гость Winlog' : 'Пользователь Winlog',
     slugifyUsername(id),
     '',
     'Online',

@@ -40,14 +40,14 @@ describe('Этап 2 из 2: Системный чат Priday, Приватно�
     assert.deepEqual(
       PRIDAY_QUICK_ACTIONS.map((a) => a.label),
       [
-        'В чём суть Priday?',
+        'В чём суть Winlog?',
         'Как работает стрик и оценка дня?',
         'Как добавить друзей?',
         'Связаться с поддержкой',
       ]
     )
 
-    const faqMatch = matchPridayQuickAction('В чём суть Priday?')
+    const faqMatch = matchPridayQuickAction('В чём суть Winlog?')
     assert.ok(faqMatch)
     assert.ok(!faqMatch.isSupport)
     assert.ok(faqMatch.replyText.includes('5 поводов для гордости'))
@@ -55,17 +55,17 @@ describe('Этап 2 из 2: Системный чат Priday, Приватно�
     const supportMatch = matchPridayQuickAction('Связаться с поддержкой')
     assert.ok(supportMatch?.isSupport)
     assert.equal(matchPridayQuickAction('Кастомное сообщение в поддержку'), null)
-    assert.ok(PRIDAY_SUPPORT_CUSTOM_REPLY.includes('поддержку Priday'))
+    assert.ok(PRIDAY_SUPPORT_CUSTOM_REPLY.includes('поддержку Winlog'))
 
     const ensured = ensurePridayThreadInThreads({})
     assert.ok(ensured[PRIDAY_CHAT_ID])
-    assert.equal(ensured[PRIDAY_CHAT_ID].peerMeta?.name, 'Priday')
+    assert.equal(ensured[PRIDAY_CHAT_ID].peerMeta?.name, 'Winlog')
     assert.equal(ensured[PRIDAY_CHAT_ID].peerMeta?.verified, true)
     assert.equal(ensured[PRIDAY_CHAT_ID].messages.length, 1)
 
     const sanitized = sanitizeChatThreads(ensured)
     assert.ok(sanitized[PRIDAY_CHAT_ID])
-    assert.equal(sanitized[PRIDAY_CHAT_ID].peerMeta?.name, 'Priday')
+    assert.equal(sanitized[PRIDAY_CHAT_ID].peerMeta?.name, 'Winlog')
 
     assert.equal(buildPridayFollowText('alice', 'Alice'), '@alice подписался на тебя')
     assert.equal(

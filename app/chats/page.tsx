@@ -1,8 +1,8 @@
 import { FullscreenMessenger } from '@/components/ogonek/messenger/fullscreen-messenger'
 
 export const metadata = {
-  title: 'Чаты — Priday',
-  description: 'Полноэкранный мессенджер Priday',
+  title: 'Чаты — Winlog',
+  description: 'Полноэкранный мессенджер Winlog',
 }
 
 export default function ChatsPage() {

@@ -157,20 +157,13 @@ export function Preloader() {
     <div
       role="status"
       aria-live="polite"
-      aria-label="Загрузка Priday"
+      aria-label="Загрузка Winlog"
       className={`fixed inset-0 z-[99999] bg-[#000000] flex flex-col items-center justify-center select-none overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         isExiting
           ? "opacity-0 pointer-events-none scale-[1.02] filter blur-[2px]"
           : "opacity-100 pointer-events-auto scale-100 filter-none"
       }`}
     >
-      {/* Background ambient warm fire glow */}
-      <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] sm:w-[460px] sm:h-[460px] bg-gradient-radial from-[#ff6b35]/15 via-[#ffa600]/5 to-transparent rounded-full pointer-events-none blur-3xl animate-pulse"
-        style={{ animationDuration: "3s" }}
-        aria-hidden="true"
-      />
-
       {/* Center LiquidGlass Animation */}
       <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] flex items-center justify-center">
         <GlassRevealPriday className="w-full h-full" loop={false} />
@@ -180,9 +173,9 @@ export function Preloader() {
       <div className="flex flex-col items-center gap-3 mt-6 relative z-10">
         <div className="flex items-center gap-2">
           <span className="text-[17px] sm:text-[19px] font-semibold tracking-tight text-white/95">
-            Priday
+            Winlog
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-[#ff6b35] animate-ping" />
+          <span className="w-1.5 h-1.5 rounded-full bg-[#d76737] animate-ping" />
         </div>
 
         <p className="text-[11px] sm:text-[12px] text-[#86868b] tracking-wider uppercase font-medium">
@@ -192,7 +185,7 @@ export function Preloader() {
         {/* Minimal Apple-style progress track */}
         <div className="w-40 sm:w-48 h-[2px] bg-white/[0.08] rounded-full overflow-hidden mt-3 relative">
           <div
-            className="h-full bg-gradient-to-r from-[#ffa600] via-[#ff6b35] to-[#f54700] rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-[#d76737] rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>

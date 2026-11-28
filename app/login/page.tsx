@@ -56,7 +56,7 @@ export default function LoginPage() {
               {/* Top Banner Content */}
               <div className="relative z-10 p-5 sm:p-7 flex items-center justify-between">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/15 text-[11px] font-mono tracking-wider uppercase text-[#f5f5f7]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#2997ff] animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#d76737] animate-pulse" />
                   <span>Вечерний ритуал · 5 минут</span>
                 </div>
               </div>
@@ -67,8 +67,8 @@ export default function LoginPage() {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
                     <defs>
                       <linearGradient id="loginFlameArt" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#ffa600" />
-                        <stop offset="100%" stopColor="#ff6b35" />
+                        <stop offset="0%" stopColor="#e0784b" />
+                        <stop offset="100%" stopColor="#d76737" />
                       </linearGradient>
                     </defs>
                     <path
@@ -77,7 +77,7 @@ export default function LoginPage() {
                     />
                   </svg>
                   <span className="text-[13px] font-semibold tracking-wide uppercase text-white/90">
-                    Priday · 2026
+                    Winlog · 2026
                   </span>
                 </div>
 
@@ -108,7 +108,7 @@ export default function LoginPage() {
           {/* Switch to Register */}
           <div className="text-center mt-6 text-xs text-[#86868b]">
             Ещё нет дневника?{' '}
-            <Link href="/register" className="text-[#2997ff] hover:underline font-medium">
+            <Link href="/register" className="text-[#d76737] hover:underline font-medium">
               Создать летопись бесплатно
             </Link>
           </div>

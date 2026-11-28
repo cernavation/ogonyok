@@ -96,7 +96,7 @@ export function OnboardingModal({
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [usernameError, setUsernameError] = useState<string>('')
   const [selectedLevel, setSelectedLevel] = useState<number>(3)
-  const [prideText, setPrideText] = useState<string>('Начал вести Priday и выбрал свой темп')
+  const [prideText, setPrideText] = useState<string>('Начал вести Winlog и выбрал свой темп')
 
   // Live validation & uniqueness check
   useEffect(() => {
@@ -165,7 +165,7 @@ export function OnboardingModal({
     } else if (onSaveFirstPride) {
       onSaveFirstPride(prideText, selectedLevel)
     }
-    onNotify('Первая гордость зафиксирована! Добро пожаловать в Priday ✨')
+    onNotify('Первая гордость зафиксирована! Добро пожаловать в Winlog ✨')
     onClose()
   }
 
@@ -174,7 +174,7 @@ export function OnboardingModal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      aria-label="Онбординг Priday"
+      aria-label="Онбординг Winlog"
     >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -190,7 +190,7 @@ export function OnboardingModal({
               ✦
             </span>
             <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
-              Старт в Priday
+              Старт в Winlog
             </span>
           </div>
 
@@ -441,7 +441,7 @@ export function OnboardingModal({
                     Зафиксируй свою первую гордость
                   </h2>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    С чего начинается твой путь 700 дней в Priday?
+                    С чего начинается твой путь в Winlog?
                   </p>
                 </div>
 
@@ -466,7 +466,7 @@ export function OnboardingModal({
                     disabled={!prideText.trim()}
                     onClick={handleFinish}
                   >
-                    <span>Зажечь Priday</span>
+                    <span>Начать Winlog</span>
                     <Sparkles size={16} />
                   </Button>
                 </div>

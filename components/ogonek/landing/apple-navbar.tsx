@@ -84,22 +84,16 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
         <Link
           href={homeHref}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85 select-none shrink-0"
-          aria-label={`Priday — ${content.nav.home}`}
+          aria-label={`Winlog — ${content.nav.home}`}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-            <defs>
-              <linearGradient id="appleFlameNavbar" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffa600" />
-                <stop offset="100%" stopColor="#ff6b35" />
-              </linearGradient>
-            </defs>
             <path
               d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-              fill="url(#appleFlameNavbar)"
+              fill="#d76737"
             />
           </svg>
           <span className="text-[14px] font-semibold tracking-tight text-[#f5f5f7]">
-            Priday
+            Winlog
           </span>
         </Link>
 
@@ -161,7 +155,7 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
           <button
             type="button"
             onClick={() => handleAuthAction('register')}
-            className="apple-btn-primary !px-3.5 sm:!px-4 !py-1.5 !text-[12px] !font-medium whitespace-nowrap shrink-0"
+            className="apple-btn-primary !px-3.5 sm:!px-4 !py-1.5 !text-[12px] !font-semibold whitespace-nowrap shrink-0"
           >
             {content.nav.signup}
           </button>
@@ -203,7 +197,7 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
               <Link
                 href={homeHref}
                 onClick={() => setMobileOpen(false)}
-                className="text-[18px] font-medium text-white px-2 py-1.5 hover:text-[#FF4D00] transition-colors"
+                className="text-[18px] font-medium text-white px-2 py-1.5 hover:text-[#d76737] transition-colors"
               >
                 {content.nav.home}
               </Link>
@@ -243,7 +237,7 @@ export function AppleNavbar({ onOpenAuth, locale: propLocale }: AppleNavbarProps
                       onClick={() => setMobileOpen(false)}
                       className={`py-2.5 px-3 rounded-xl text-center text-[13px] font-mono font-medium transition-all duration-200 border ${
                         isActive
-                          ? 'bg-[#FF4D00] text-white border-[#FF4D00] shadow-[0_0_15px_rgba(255,77,0,0.35)]'
+                          ? 'bg-[#d76737] text-black font-semibold border-[#d76737]'
                           : 'bg-white/[0.04] text-[#86868b] border-white/10 hover:text-white hover:bg-white/[0.08]'
                       }`}
                     >

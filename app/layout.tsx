@@ -15,21 +15,21 @@ import { OfflineBanner } from '@/components/ogonek/offline-banner'
 import { Preloader } from '@/components/ui/preloader'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://ogonek.app'),
-  title: 'Priday — Твой личный дневник силы',
+  metadataBase: new URL('https://winlog.life'),
+  title: 'Winlog — Твой личный дневник силы',
   description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
   manifest: '/manifest.json',
   openGraph: {
-    title: 'Priday — Твой личный дневник силы',
+    title: 'Winlog — Твой личный дневник силы',
     description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
-    url: 'https://ogonek.app',
-    siteName: 'Priday',
+    url: 'https://winlog.life',
+    siteName: 'Winlog',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Priday — Твой личный дневник силы',
+        alt: 'Winlog — Твой личный дневник силы',
       },
     ],
     locale: 'ru_RU',
@@ -37,14 +37,14 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Priday — Твой личный дневник силы',
+    title: 'Winlog — Твой личный дневник силы',
     description: 'Без фальши и токсичной продуктивности. Стрик, который никогда не сгорает.',
     images: ['/og-image.png'],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Priday',
+    title: 'Winlog',
   },
   icons: {
     icon: [

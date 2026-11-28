@@ -490,7 +490,7 @@ export function ExploreView({
             )}
 
             {/* Real Registered Users List from Supabase */}
-            <section className="flex flex-col gap-3" aria-label="Участники Priday">
+            <section className="flex flex-col gap-3" aria-label="Участники Winlog">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-extrabold text-[var(--text)] flex items-center gap-2">
@@ -519,7 +519,7 @@ export function ExploreView({
                   <Users size={28} className="mx-auto text-[var(--text-3)] mb-2" />
                   <p className="font-bold text-[15px] text-[var(--text)]">Пока нет других участников</p>
                   <p className="text-xs text-[var(--text-2)] mt-1 max-w-sm mx-auto">
-                    Вы — один из первых пользователей! Поделитесь ссылкой на Priday с друзьями, чтобы они зарегистрировались.
+                    Вы — один из первых пользователей! Поделитесь ссылкой на Winlog с друзьями, чтобы они зарегистрировались.
                   </p>
                 </div>
               ) : (

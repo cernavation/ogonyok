@@ -56,7 +56,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'nav-streak',
     title: 'Твой стрик',
     description:
-      'Счётчик прожитых дней летописи. В Priday стрик никогда не сгорает от пропуска — каждый закрытый день сохраняется навсегда.',
+      'Счётчик прожитых дней летописи. В Winlog стрик никогда не сгорает от пропуска — каждый закрытый день сохраняется навсегда.',
     requiresComposer: false,
     requiredView: 'home',
   },
@@ -103,7 +103,7 @@ export const TOUR_STEPS: TourStep[] = [
     target: 'nav-premium',
     title: 'Премиум возможности',
     description:
-      'Неограниченная видеосвязь, полный разбор ментора Priday, расширенная летопись и приоритетная верификация.',
+      'Глубокий ИИ-разбор от ментора Winlog, расширенная летопись, экспорт карточек и приоритетная верификация.',
     requiresComposer: false,
     requiresDrawer: true,
     requiredView: 'home',

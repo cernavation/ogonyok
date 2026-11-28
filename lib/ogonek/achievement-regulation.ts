@@ -468,7 +468,7 @@ function disciplineRequirements(f: TopicFlags): AchievementEvidenceRequirement[]
         'Разовый скриншот подделывается — нужен выгружаемый лог за весь период.',
         ['JSON', 'CSV', 'PDF', 'скриншот календаря'],
         true,
-        'Экспорт из Priday или календарная сетка с отметкой каждого дня серии.'
+        'Экспорт из Winlog или календарная сетка с отметкой каждого дня серии.'
       )
     )
   }
@@ -563,16 +563,16 @@ function verifierFor(categoryId: AchievementCategoryId, f: TopicFlags): string {
       if (f.gym) return 'Аттестованный судья зала или тренер с правом фиксации норматива'
       return 'Официальный организатор соревнования / судейская коллегия'
     case 'business':
-      if (f.funding) return 'Финансовый аудитор Priday + юрист по инвестициям'
-      if (f.deal) return 'Юридический отдел Priday + верификация контрагента'
-      return 'Финансовый аудитор Priday (сверка с платёжной платформой / банком)'
+      if (f.funding) return 'Финансовый аудитор Winlog + юрист по инвестициям'
+      if (f.deal) return 'Юридический отдел Winlog + верификация контрагента'
+      return 'Финансовый аудитор Winlog (сверка с платёжной платформой / банком)'
     case 'education':
       if (f.research) return 'Редакция рецензируемого журнала / индекс DOI'
       return 'Аккредитованное учебное заведение или организатор соревнования'
     case 'discipline':
-      return 'Система трекинга «Priday» + независимый свидетель серии'
+      return 'Система трекинга «Winlog» + независимый свидетель серии'
     default:
-      return 'Команда верификации Priday'
+      return 'Команда верификации Winlog'
   }
 }
 

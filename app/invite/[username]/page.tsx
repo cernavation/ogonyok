@@ -63,15 +63,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!profile) {
     return {
-      title: 'Приглашение в Priday',
-      description: 'Присоединяйся к Priday — летописи ежедневных побед и гордостей.',
+      title: 'Приглашение в Winlog',
+      description: 'Присоединяйся к Winlog — летописи ежедневных побед и гордостей.',
     }
   }
 
-  const title = `${profile.displayName} (@${profile.username}) приглашает тебя в Priday`
-  const description = `Держит огонь ${profile.streak} ${
+  const title = `${profile.displayName} (@${profile.username}) приглашает тебя в Winlog`
+  const description = `Держит серию ${profile.streak} ${
     profile.streak === 1 ? 'день' : profile.streak >= 2 && profile.streak <= 4 ? 'дня' : 'дней'
-  }. Присоединяйся к Priday, чтобы вести дневник побед вместе!`
+  }. Присоединяйся к Winlog, чтобы вести дневник побед вместе!`
 
   return {
     title,

@@ -15,6 +15,7 @@ import { TestimonialGlobe } from '@/components/ui/testimonial-globe'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { AppInterfaceShowcase } from './app-interface-showcase'
 import { ProblemSection } from './problem-section'
+import { WinlogAiPreview, WinlogFriendsPreview } from './winlog-previews'
 import {
   type Locale,
   getLandingContent,
@@ -93,7 +94,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
       <section
         id="hero"
         className="relative min-h-[92vh] flex flex-col justify-center items-center overflow-hidden pt-28 sm:pt-36 md:pt-40 pb-20 sm:pb-28 md:pb-32 px-4 sm:px-6 md:px-8 scroll-mt-24 sm:scroll-mt-32"
-        aria-label="Главный экран Priday"
+        aria-label="Главный экран Winlog"
       >
         {/* Full-width video slot in background */}
         <div className="absolute inset-0 z-0 w-full h-full">
@@ -103,7 +104,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             width={2560}
             height={1440}
             ratio="16:9"
-            alt="Видео-витрина главного экрана Priday"
+            alt="Видео-витрина главного экрана Winlog"
             priority
             rounded={false}
             fill
@@ -118,10 +119,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path
                 d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                fill="#FF4D00"
+                fill="#d76737"
               />
             </svg>
-            <span className="apple-eyebrow !text-[#FF4D00]">
+            <span className="apple-eyebrow !text-[#d76737]">
               {content.hero.eyebrow}
             </span>
           </div>
@@ -168,11 +169,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
       <section
         id="modes"
         ref={modesTrackRef}
-        className="relative bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="relative bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         style={{ height: '480vh' }}
         aria-label={content.prideWheel.title}
       >
-        <div className="apple-ambient-orb w-[700px] h-[700px] bg-[#0071e3] top-1/2 -right-40 -z-0 opacity-10 pointer-events-none" />
 
         {/* Section Header */}
         <div className="modes-header-block relative z-20 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8 pt-24 sm:pt-32 md:pt-40 pb-16 sm:pb-24 text-center sm:text-left">
@@ -212,11 +212,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
         aria-label={content.howItWorks.title}
       >
         <div id="showcase" className="scroll-mt-24 sm:scroll-mt-32" />
-        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00] top-1/4 -left-32 -z-0 opacity-10 pointer-events-none" />
 
         <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[820px] mx-auto mb-12 sm:mb-16">
-            <span className="apple-eyebrow fade-up block mb-4 !text-[#FF4D00]">{content.howItWorks.eyebrow}</span>
+            <span className="apple-eyebrow fade-up block mb-4">{content.howItWorks.eyebrow}</span>
             <h2 className="apple-section-title fade-up delay-75 mb-6">
               {content.howItWorks.title}
             </h2>
@@ -225,7 +224,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             </p>
           </div>
 
-          {/* Interactive Interface Showcase with localized pointers and tabs */}
+          {/* Interactive Interface Showcase */}
           <div className="fade-scale delay-150 mb-16 sm:mb-20">
             <AppInterfaceShowcase locale={locale} />
           </div>
@@ -235,11 +234,11 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             {content.howItWorks.steps.map((item) => (
               <div
                 key={item.step}
-                className="apple-card p-6 sm:p-7 bg-[#121215]/80 border border-white/[0.08] rounded-2xl flex flex-col justify-between min-h-[180px]"
+                className="p-6 sm:p-7 bg-[#060608] border border-white/[0.1] rounded-2xl flex flex-col justify-between min-h-[180px]"
               >
                 <div>
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-[13px] font-mono text-[#FF4D00] tracking-wider font-semibold px-2 py-0.5 rounded-full bg-[#FF4D00]/10 border border-[#FF4D00]/25">
+                    <span className="text-[12px] font-mono text-white/75 tracking-wider font-semibold px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.12]">
                       {item.step}
                     </span>
                     <h3 className="text-[18px] sm:text-[19px] font-semibold text-white tracking-tight">
@@ -261,7 +260,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="levels"
-        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label={content.tempo.title}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
@@ -280,10 +279,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
               <div
                 key={lvl.count}
                 onClick={() => openAuth('register')}
-                className={`apple-card apple-card-hover fade-up ${lvl.delay} p-5 sm:p-5.5 flex flex-col justify-between min-h-[220px] sm:min-h-[240px] cursor-pointer group ${
+                className={`apple-card-hover fade-up ${lvl.delay} p-5 sm:p-5.5 rounded-2xl border flex flex-col justify-between min-h-[220px] sm:min-h-[240px] cursor-pointer group ${
                   lvl.extreme
-                    ? 'apple-card-extreme border-orange-500/30 bg-gradient-to-b from-[#1c1815] to-[#141210] sm:col-span-2 lg:col-span-1'
-                    : 'bg-[#161617]'
+                    ? 'border-[#d76737]/40 bg-[#08080a] sm:col-span-2 lg:col-span-1'
+                    : 'border-white/[0.1] bg-[#060608]'
                 }`}
               >
                 <div>
@@ -294,8 +293,8 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                         className={`w-1.5 h-3.5 rounded-full transition-all duration-300 ${
                           i < lvl.flames
                             ? lvl.extreme
-                              ? 'bg-[#f56900] shadow-[0_0_8px_rgba(245,105,0,0.6)]'
-                              : 'bg-white shadow-[0_0_6px_rgba(255,255,255,0.4)]'
+                              ? 'bg-[#d76737]'
+                              : 'bg-white'
                             : 'bg-white/10'
                         }`}
                       />
@@ -308,7 +307,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                   <h3 className="text-[17px] font-semibold text-[#f5f5f7] mb-1 tracking-tight leading-snug">
                     {lvl.title}
                   </h3>
-                  <div className="text-[12px] font-medium text-[#f56900] mb-2.5">
+                  <div className={`text-[12px] font-medium mb-2.5 ${lvl.extreme ? 'text-[#d76737]' : 'text-white/60'}`}>
                     {lvl.sub}
                   </div>
                   <p className="text-[13px] leading-relaxed text-[#86868b] group-hover:text-[#a1a1a6] transition-colors">
@@ -323,7 +322,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             <button
               type="button"
               onClick={() => openAuth('register')}
-              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#d76737] hover:text-[#e0784b] transition-colors cursor-pointer"
             >
               <span>{content.tempo.cta}</span>
             </button>
@@ -339,8 +338,6 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
         className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
         aria-label={content.aiAnalysis.title}
       >
-        <div className="apple-ambient-orb w-[640px] h-[640px] bg-[#FF4D00]/10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 pointer-events-none" />
-
         <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[840px] mx-auto mb-10 sm:mb-14">
             <span className="apple-eyebrow fade-up block mb-4">{content.aiAnalysis.eyebrow}</span>
@@ -352,22 +349,15 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             </p>
           </div>
 
-          {/* Три короткие карточки */}
+          {/* Три чистые карточки с монохромными иконками */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-[1040px] mx-auto mb-12 sm:mb-16 items-stretch">
             {content.aiAnalysis.cards.map((card, idx) => (
               <div
                 key={card.id}
-                className={`fade-up delay-${(idx + 1) * 75} p-6 sm:p-7 rounded-2xl bg-[#121215] border border-white/[0.08] hover:border-white/20 transition-all flex flex-col justify-between group min-h-[190px]`}
+                className={`fade-up delay-${(idx + 1) * 75} p-6 sm:p-7 rounded-2xl bg-[#060608] border border-white/[0.1] hover:border-white/20 transition-all flex flex-col justify-between group min-h-[190px]`}
               >
                 <div>
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 border transition-transform group-hover:scale-105"
-                    style={{
-                      backgroundColor: `${card.tone}15`,
-                      borderColor: `${card.tone}35`,
-                      color: card.tone,
-                    }}
-                  >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-white/[0.05] border border-white/[0.1] text-white/85 transition-transform group-hover:scale-105">
                     {card.icon === 'TrendingUp' && (
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
@@ -397,40 +387,32 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             ))}
           </div>
 
-          {/* Реальный скриншот страницы статистики */}
+          {/* Живое превью ИИ-аналитики Winlog в окне */}
           <div className="max-w-[1040px] mx-auto fade-scale delay-200">
-            <div className="p-2 sm:p-3 rounded-[24px] sm:rounded-[28px] bg-[#121215] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden">
-              <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/[0.06] mb-2 sm:mb-3">
+            <div className="p-2 sm:p-3 rounded-[24px] sm:rounded-[28px] bg-[#060608] border border-white/[0.1] shadow-2xl overflow-hidden">
+              <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/[0.06] mb-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
                 </div>
                 <span className="text-[11px] sm:text-[12px] font-mono text-[#86868b]">
                   {content.aiAnalysis.windowTitle}
                 </span>
-                <span className="text-[11px] font-mono text-emerald-400">
+                <span className="text-[11px] font-mono text-[#d76737]">
                   {content.aiAnalysis.statusBadge}
                 </span>
               </div>
 
-              <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#0a0a0c]">
-                <picture>
-                  <source media="(max-width: 640px)" srcSet={content.aiAnalysis.mobileScreenshot} />
-                  <img
-                    src={content.aiAnalysis.screenshot}
-                    alt={content.aiAnalysis.title}
-                    className="w-full h-auto object-cover block"
-                    loading="lazy"
-                  />
-                </picture>
+              <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-black">
+                <WinlogAiPreview locale={locale} />
               </div>
             </div>
 
             <div className="mt-8 text-center">
               <Link
                 href={aiHref}
-                className="inline-flex items-center gap-2 text-[15px] font-medium text-[#FF4D00] hover:text-[#ff6b26] transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 text-[15px] font-medium text-[#d76737] hover:text-[#e0784b] transition-colors cursor-pointer"
               >
                 <span>{content.aiAnalysis.learnMore}</span>
               </Link>
@@ -444,7 +426,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="friends"
-        className="py-16 sm:py-20 md:py-28 bg-[#0a0a0c] border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] overflow-hidden scroll-mt-24 sm:scroll-mt-32"
         aria-label={content.friendsFamily.title}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
@@ -458,17 +440,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             </p>
           </div>
 
-          {/* Screenshot & Feature Cards Layout */}
+          {/* Live Winlog Friends & Chat Preview + Feature Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mb-10">
-            {/* Real app screenshot */}
             <div className="lg:col-span-8 fade-scale delay-150">
-              <div className="apple-card overflow-hidden p-2 sm:p-3 bg-[#141416] border border-white/10 shadow-2xl rounded-[24px]">
-                <img
-                  src={content.friendsFamily.screenshot}
-                  alt={content.friendsFamily.title}
-                  className="w-full h-auto rounded-[18px] object-cover"
-                />
-              </div>
+              <WinlogFriendsPreview locale={locale} />
             </div>
 
             {/* Feature Highlights */}
@@ -476,10 +451,10 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
               {content.friendsFamily.features.map((feat) => (
                 <div
                   key={feat.title}
-                  className="p-5 rounded-2xl bg-white/[0.04] border border-white/[0.08] hover:border-white/20 transition-all"
+                  className="p-5 rounded-2xl bg-[#060608] border border-white/[0.1] hover:border-white/20 transition-all"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-[#f56900]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/70" />
                     <h3 className="text-[17px] font-semibold text-white tracking-tight">
                       {feat.title}
                     </h3>
@@ -493,7 +468,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
               <button
                 type="button"
                 onClick={() => openAuth('register')}
-                className="apple-btn-primary !py-3.5 !text-[14px] w-full text-center mt-2 cursor-pointer"
+                className="w-full py-3.5 px-6 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black font-semibold text-[14px] text-center mt-2 cursor-pointer transition-all active:scale-95"
               >
                 {content.friendsFamily.cta}
               </button>
@@ -526,12 +501,12 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="privacy"
-        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
         aria-label={content.privacy.title}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="fade-up mb-4 flex items-center gap-2">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f56900" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-white/75" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             <span className="apple-eyebrow">{content.privacy.eyebrow}</span>
@@ -549,11 +524,11 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             {content.privacy.cards.map((card) => (
               <div
                 key={card.title}
-                className="apple-card apple-card-hover fade-up p-6 sm:p-7 bg-[#161617] flex flex-col justify-between min-h-[230px]"
+                className="apple-card-hover fade-up p-6 sm:p-7 bg-[#060608] border border-white/[0.1] rounded-2xl flex flex-col justify-between min-h-[230px]"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-mono tracking-wider px-2 py-0.5 rounded-full bg-white/[0.06] border border-white/10 text-[#a1a1a6]">
+                    <span className="text-[10px] font-mono tracking-wider px-2.5 py-0.5 rounded-full bg-white/[0.06] border border-white/[0.12] text-[#a1a1a6]">
                       {card.badge}
                     </span>
                   </div>
@@ -571,7 +546,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           <div className="mt-12 text-center fade-up delay-200">
             <Link
               href={legalPrivacyHref}
-              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#2997ff] hover:text-[#0071e3] transition-colors"
+              className="inline-flex items-center gap-2 text-[15px] font-medium text-[#d76737] hover:text-[#e0784b] transition-colors"
             >
               <span>{content.privacy.readMoreText}</span>
             </Link>
@@ -603,7 +578,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             {content.facts.facts.map((fact) => (
               <div
                 key={fact.label}
-                className="apple-card apple-card-hover fade-scale p-8 text-center bg-[#161617] flex flex-col justify-between rounded-[24px] min-h-[220px]"
+                className="apple-card-hover fade-scale p-8 text-center bg-[#060608] border border-white/[0.1] flex flex-col justify-between rounded-2xl min-h-[220px]"
               >
                 <div>
                   <span className="apple-shimmer-text block text-[42px] sm:text-[50px] font-bold tracking-tight leading-none mb-3 font-mono">
@@ -627,11 +602,9 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="pricing"
-        className="py-16 sm:py-20 md:py-28 bg-[#0c0c0e] border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
+        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] relative scroll-mt-24 sm:scroll-mt-32 overflow-hidden"
         aria-label={content.pricing.title}
       >
-        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#FF4D00]/10 top-1/2 right-1/4 -z-0 pointer-events-none" />
-
         <div className="relative z-10 max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
           <div className="text-center max-w-[800px] mx-auto mb-12 sm:mb-16">
             <span className="apple-eyebrow fade-up block mb-4">{content.pricing.eyebrow}</span>
@@ -660,29 +633,33 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-5 py-2 rounded-full text-[13px] font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
                   billingCycle === 'yearly'
-                    ? 'bg-[#FF4D00] text-white font-semibold shadow-md'
+                    ? 'bg-[#d76737] text-black font-semibold shadow-md'
                     : 'text-[#86868b] hover:text-white'
                 }`}
               >
                 <span>{content.pricing.yearlyToggle}</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-bold text-white">
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    billingCycle === 'yearly' ? 'bg-black/15 text-black' : 'bg-white/15 text-white'
+                  }`}
+                >
                   {content.pricing.saveBadge}
                 </span>
               </button>
             </div>
           </div>
 
-          {/* 3 Tier Cards with Spotlight Glow */}
+          {/* 3 Tier Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1240px] mx-auto items-stretch">
             {/* TIER 1: FREE */}
             <GlowCard
               glowColor="green"
               customSize
-              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-150 min-h-[580px]"
+              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-150 min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.1]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
-                  <div className="text-[12px] font-mono text-[#00c7be] uppercase tracking-wider mb-2 font-semibold">
+                  <div className="text-[12px] font-mono text-white/60 uppercase tracking-wider mb-2 font-semibold">
                     {content.pricing.tiers[0].badge}
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
@@ -704,7 +681,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                   <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
                     {content.pricing.tiers[0].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3">
-                        <svg className="w-4 h-4 text-[#00c7be] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="w-4 h-4 text-white/70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span>{feat}</span>
@@ -716,7 +693,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10"
+                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-semibold transition-all text-center cursor-pointer border border-white/[0.12]"
                 >
                   {content.pricing.tiers[0].cta}
                 </button>
@@ -724,71 +701,72 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             </GlowCard>
 
             {/* TIER 2: PRO */}
-            <GlowCard
-              glowColor="orange"
-              customSize
-              className="p-7 sm:p-9 flex flex-col justify-between fade-scale delay-200 relative border border-[#FF4D00] shadow-[0_0_30px_rgba(255,77,0,0.12)] min-h-[580px]"
-            >
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#FF4D00] text-white text-[11px] font-semibold tracking-wider uppercase shadow-md z-20 whitespace-nowrap">
+            <div className="relative h-full">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#d76737] text-black text-[11px] font-semibold tracking-wider uppercase z-20 whitespace-nowrap shadow-[0_6px_20px_rgba(215,103,55,0.28)]">
                 {content.pricing.recommendedBadge}
               </div>
+              <GlowCard
+                glowColor="orange"
+                customSize
+                className="p-7 sm:p-9 flex flex-col justify-between fade-scale delay-200 relative rounded-2xl bg-[#060608] !border-[#d76737]/60 min-h-[580px] h-full"
+              >
+                <div className="relative z-10 flex flex-col justify-between h-full">
+                  <div>
+                    <div className="text-[12px] font-mono text-[#d76737] uppercase tracking-wider mb-2 font-semibold">
+                      {content.pricing.tiers[1].badge}
+                    </div>
+                    <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                      {content.pricing.tiers[1].name}
+                    </h3>
+                    <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                      {content.pricing.tiers[1].desc}
+                    </p>
 
-              <div className="relative z-10 flex flex-col justify-between h-full">
-                <div>
-                  <div className="text-[12px] font-mono text-[#FF4D00] uppercase tracking-wider mb-2 font-semibold">
-                    {content.pricing.tiers[1].badge}
+                    <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                      <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                        {billingCycle === 'yearly'
+                          ? content.pricing.tiers[1].priceYearly
+                          : content.pricing.tiers[1].priceMonthly}
+                      </span>
+                      <span className="text-[14px] text-[#86868b] ml-2">
+                        {billingCycle === 'yearly'
+                          ? content.pricing.tiers[1].periodYearly
+                          : content.pricing.tiers[1].periodMonthly}
+                      </span>
+                    </div>
+
+                    <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8 min-h-[220px]">
+                      {content.pricing.tiers[1].features.map((feat, idx) => (
+                        <li key={feat} className={`flex items-center gap-3 ${idx < 2 ? 'font-medium text-white' : ''}`}>
+                          <svg className="w-4 h-4 text-[#d76737] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
-                    {content.pricing.tiers[1].name}
-                  </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
-                    {content.pricing.tiers[1].desc}
-                  </p>
 
-                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
-                      {billingCycle === 'yearly'
-                        ? content.pricing.tiers[1].priceYearly
-                        : content.pricing.tiers[1].priceMonthly}
-                    </span>
-                    <span className="text-[14px] text-[#86868b] ml-2">
-                      {billingCycle === 'yearly'
-                        ? content.pricing.tiers[1].periodYearly
-                        : content.pricing.tiers[1].periodMonthly}
-                    </span>
-                  </div>
-
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8 min-h-[220px]">
-                    {content.pricing.tiers[1].features.map((feat, idx) => (
-                      <li key={feat} className={`flex items-center gap-3 ${idx < 2 ? 'font-medium text-white' : ''}`}>
-                        <svg className="w-4 h-4 text-[#FF4D00] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => openAuth('register')}
+                    className="w-full py-3.5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black text-[15px] font-semibold transition-all text-center cursor-pointer active:scale-95"
+                  >
+                    {content.pricing.tiers[1].cta}
+                  </button>
                 </div>
+              </GlowCard>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={() => openAuth('register')}
-                  className="apple-btn-primary w-full !py-3.5 !text-[15px] !font-semibold cursor-pointer"
-                >
-                  {content.pricing.tiers[1].cta}
-                </button>
-              </div>
-            </GlowCard>
-
-            {/* TIER 3: ULTRA */}
+            {/* TIER 3: WINLOG ULTRA */}
             <GlowCard
               glowColor="orange"
               customSize
-              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-300 min-h-[580px]"
+              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-300 min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.12]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
-                  <div className="text-[12px] font-mono text-[#f5b942] uppercase tracking-wider mb-2 font-semibold">
+                  <div className="text-[12px] font-mono text-white/75 uppercase tracking-wider mb-2 font-semibold">
                     {content.pricing.tiers[2].badge}
                   </div>
                   <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
@@ -814,7 +792,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                   <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
                     {content.pricing.tiers[2].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3 font-medium text-white">
-                        <svg className="w-4 h-4 text-[#f5b942] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="w-4 h-4 text-white/75 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                         <span>{feat}</span>
@@ -826,7 +804,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                 <button
                   type="button"
                   onClick={() => openAuth('register')}
-                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-medium transition-all text-center cursor-pointer border border-white/10 hover:border-white/20"
+                  className="w-full py-3.5 rounded-full bg-white/[0.08] hover:bg-white/[0.14] text-[#f5f5f7] text-[14px] font-semibold transition-all text-center cursor-pointer border border-white/[0.12] hover:border-white/25"
                 >
                   {content.pricing.tiers[2].cta}
                 </button>
@@ -835,7 +813,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           </div>
 
           {/* Callout to /ai */}
-          <div className="mt-12 p-6 sm:p-8 rounded-[24px] bg-gradient-to-r from-[#0071e3]/15 via-[#00c7be]/10 to-transparent border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-6 fade-up">
+          <div className="mt-12 p-6 sm:p-8 rounded-2xl bg-[#060608] border border-white/[0.1] flex flex-col sm:flex-row items-center justify-between gap-6 fade-up">
             <div>
               <h4 className="text-[17px] font-semibold text-white tracking-tight">
                 {content.pricing.aiCalloutTitle}
@@ -855,7 +833,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
       </section>
 
       {/* ═══════════════════════════════════════════════════════════
-          11. ФИНАЛЬНЫЙ ПРИЗЫВ (Зажги свой огонёк)
+          11. ФИНАЛЬНЫЙ ПРИЗЫВ (Начни свой Winlog)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="together"
@@ -863,7 +841,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
         aria-label={content.finalCta.title}
       >
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="apple-card apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[500px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#121214]">
+          <div className="apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[500px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#060608] border border-white/[0.1] rounded-[28px]">
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
               <MediaSlot
@@ -881,7 +859,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.75)_100%)] z-10 pointer-events-none" />
             </div>
 
-            <div className="apple-ambient-orb w-[500px] h-[500px] bg-[#f56900] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-20" />
+            {/* Background overlay gradient */}
 
             {/* Overlaid Banner Content */}
             <div className="relative z-20 max-w-[700px] mx-auto flex flex-col items-center">

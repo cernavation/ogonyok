@@ -286,7 +286,7 @@ export function AuthForm({
         }
       }
 
-      finish(userId, `Добро пожаловать в Priday, @${cleanNick}!`)
+      finish(userId, `Добро пожаловать в Winlog, @${cleanNick}!`)
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('ogonek:open-tour'))
       }
@@ -361,23 +361,17 @@ export function AuthForm({
         onChange={(e) => setHoneypot(e.target.value)}
       />
 
-      {/* Фирменный логотип 🔥 и название PRIDAY */}
+      {/* Фирменный логотип 🔥 и название WINLOG */}
       <div className="flex flex-col items-center justify-center gap-1.5 mb-6 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <defs>
-              <linearGradient id="authFlameLogo" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffa600" />
-                <stop offset="100%" stopColor="#ff6b35" />
-              </linearGradient>
-            </defs>
             <path
               d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-              fill="url(#authFlameLogo)"
+              fill="#d76737"
             />
           </svg>
           <span className="text-[13px] font-semibold tracking-wider text-[#f5f5f7] uppercase font-mono">
-            PRIDAY · 2026
+            WINLOG · 2026
           </span>
         </div>
         <p className="text-[13px] text-[#86868b] font-normal">

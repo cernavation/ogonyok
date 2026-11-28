@@ -170,7 +170,7 @@ export function ShareProfileModal({
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
         await navigator.share({
-          title: `${profile.displayName} · Priday`,
+          title: `${profile.displayName} · Winlog`,
           text: shareText,
           url: shareUrl,
         })

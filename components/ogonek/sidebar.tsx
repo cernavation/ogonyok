@@ -443,8 +443,8 @@ export function Sidebar({
             playClick(state.soundEnabled)
             onNavigate('home')
           }}
-          aria-label="На главную Priday"
-          title="На главную Priday"
+          aria-label="На главную Winlog"
+          title="На главную Winlog"
         >
           <span className="w-11 h-11 flex items-center justify-center shrink-0" aria-hidden="true">
             <span className="brand-flame flex items-center justify-center w-9 h-9 rounded-full bg-[var(--accent)]/12 text-[var(--accent)] group-hover:scale-105 transition-transform duration-200">
@@ -452,7 +452,7 @@ export function Sidebar({
             </span>
           </span>
           <span className={`${labelVisibilityClass} font-bold tracking-tight text-[19px] text-[var(--text)]`}>
-            Priday
+            Winlog
           </span>
         </button>
 

@@ -48,7 +48,7 @@ export function FocusFlame({ stats, compact = false, className = '', onClick, ti
           className={`font-bold leading-tight ${compact ? 'text-[13px]' : 'text-[14px]'}`}
           style={{ color: 'var(--text)' }}
         >
-          {compact ? `Priday фокуса · ${stats.currentStreak} дн.` : 'Priday фокуса'}
+          {compact ? `Фокус Winlog · ${stats.currentStreak} дн.` : 'Фокус Winlog'}
         </p>
         <p className={`leading-tight text-[13px]`} style={{ color: 'var(--muted)' }}>
           {stats.hasHistory

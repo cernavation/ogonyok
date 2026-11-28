@@ -45,7 +45,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           404 · Пользователь не найден
         </span>
         <h1 className="text-2xl font-bold text-[var(--text,#fff)] mb-2">
-          @{username} ещё нет в Priday
+          @{username} ещё нет в Winlog
         </h1>
         <p className="text-sm text-[var(--muted,#71767b)] leading-relaxed mb-6">
           Возможно, никнейм был изменён или ссылка содержит опечатку. Но ты можешь занять этот ник первым и начать вести свой дневник побед!
@@ -53,10 +53,10 @@ export function InviteClientCard({ username, initialProfile }: Props) {
 
         <Link
           href="/?auth=register"
-          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[var(--accent,#ff5722)] hover:opacity-95 text-white font-bold text-sm transition-all shadow-md active:scale-98"
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black font-semibold text-sm transition-all shadow-md active:scale-98"
         >
           <Sparkles size={16} />
-          <span>Зарегистрироваться в Priday</span>
+          <span>Зарегистрироваться в Winlog</span>
         </Link>
 
         <Link
@@ -104,9 +104,9 @@ export function InviteClientCard({ username, initialProfile }: Props) {
       <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-[#ff5722]/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Логотип приложения */}
-      <div className="flex items-center gap-2 text-xs font-bold text-[var(--accent,#ff5722)] tracking-wider uppercase mb-6">
-        <Flame size={18} className="fill-[var(--accent,#ff5722)]" />
-        <span>Priday · Летопись побед</span>
+      <div className="flex items-center gap-2 text-xs font-bold text-[#d76737] tracking-wider uppercase mb-6">
+        <Flame size={18} className="fill-[#d76737] text-[#d76737]" />
+        <span>Winlog · Летопись побед</span>
       </div>
 
       {/* Аватар приглашающего */}
@@ -124,10 +124,10 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           </div>
         )}
         <div
-          className="absolute -bottom-1 -right-1 bg-[var(--accent,#ff5722)] text-white p-1.5 rounded-full shadow-md flex items-center justify-center"
+          className="absolute -bottom-1 -right-1 bg-[#d76737] text-black p-1.5 rounded-full shadow-md flex items-center justify-center"
           title="Держит стрик"
         >
-          <Flame size={14} className="fill-white" />
+          <Flame size={14} className="fill-current" />
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
         <span>{initialProfile.displayName}</span>
         {initialProfile.verified && (
           <span
-            className="w-4 h-4 rounded-full bg-[var(--accent,#ff5722)] text-white flex items-center justify-center text-[10px]"
+            className="w-4 h-4 rounded-full bg-[#d76737] text-black flex items-center justify-center text-[10px] font-bold"
             title="Верифицирован"
           >
             ✓
@@ -148,15 +148,15 @@ export function InviteClientCard({ username, initialProfile }: Props) {
       </p>
 
       {/* Стрик бейдж */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ff5722]/15 border border-[#ff5722]/30 text-[#ff5722] text-xs font-bold my-4">
-        <Flame size={14} className="fill-[#ff5722]" />
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#d76737]/15 border border-[#d76737]/30 text-[#d76737] text-xs font-bold my-4">
+        <Flame size={14} className="fill-[#d76737]" />
         <span>{initialProfile.streak} {initialProfile.streak === 1 ? 'день' : initialProfile.streak >= 2 && initialProfile.streak <= 4 ? 'дня' : 'дней'} побед подряд</span>
       </div>
 
       {/* Описание био / приглашение */}
       <p className="text-sm text-[var(--text,#e7e9ea)] leading-relaxed mb-6 max-w-sm">
         {initialProfile.bio ||
-          'Приглашает тебя в закрытый клуб Priday — ежедневно фиксировать гордости, благодарить и держать дисциплину.'}
+          'Приглашает тебя в закрытый клуб Winlog — ежедневно фиксировать гордости, благодарить и держать дисциплину.'}
       </p>
 
       {/* Ошибки */}
@@ -186,7 +186,7 @@ export function InviteClientCard({ username, initialProfile }: Props) {
           type="button"
           onClick={handleSendFriendRequest}
           disabled={loading}
-          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[var(--accent,#ff5722)] hover:opacity-95 text-white font-bold text-sm transition-all shadow-md active:scale-98 disabled:opacity-50"
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black font-semibold text-sm transition-all shadow-md active:scale-98 disabled:opacity-50"
         >
           <UserPlus size={16} />
           <span>{loading ? 'Отправка...' : 'Добавить в друзья'}</span>
@@ -194,9 +194,9 @@ export function InviteClientCard({ username, initialProfile }: Props) {
       ) : (
         <Link
           href={`/?ref=${encodeURIComponent(initialProfile.username)}&auth=register`}
-          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[var(--accent,#ff5722)] hover:opacity-95 text-white font-bold text-sm transition-all shadow-md active:scale-98"
+          className="w-full min-h-[44px] flex items-center justify-center gap-2 py-3 px-5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black font-semibold text-sm transition-all shadow-md active:scale-98"
         >
-          <span>Присоединиться к Priday</span>
+          <span>Присоединиться к Winlog</span>
           <ArrowRight size={16} />
         </Link>
       )}

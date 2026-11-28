@@ -112,7 +112,8 @@ export function filterRealComments(list: readonly Comment[]): Comment[] {
       c.persona !== 'support' &&
       !c.template &&
       c.author !== 'Priday поддержки' &&
-      c.author !== 'Огонёк поддержки'
+      c.author !== 'Огонёк поддержки' &&
+      c.author !== 'Winlog поддержки'
   )
 }
 

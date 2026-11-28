@@ -57,7 +57,7 @@ const LEGAL_CONTENT: Record<
   ru: {
     eyebrow: 'Правовые стандарты и защита данных',
     title: 'Условия и конфиденциальность',
-    subtitle: 'Честные, прозрачные правила сервиса Priday. Твой контент остаётся твоей собственностью, а данные защищены.',
+    subtitle: 'Честные, прозрачные правила сервиса Winlog. Твой контент остаётся твоей собственностью, а данные защищены.',
     dateRevision: 'Редакция: ноябрь 2026 г.',
     controlPill: 'Полный контроль видимости',
     tabTerms: 'Условия сервиса',
@@ -65,10 +65,10 @@ const LEGAL_CONTENT: Record<
     termsTitle: 'Условия использования',
     termsSummaryTitle: 'Кратко и по делу',
     termsSummaryText:
-      '«Priday» создан для фиксации личных достижений, побед и благодарностей. Твой контент — это твоя исключительная собственность. Мы не продаём твои данные, не навязываем скрытых платежей и не передаём твои записи рекламным сетям.',
+      '«Winlog» создан для фиксации личных достижений, побед и благодарностей. Твой контент - это твоя исключительная собственность. Мы не продаём твои данные, не навязываем скрытых платежей и не передаём твои записи рекламным сетям.',
     termsPoint1Title: '1. Принятие условий',
     termsPoint1Text:
-      'Используя сервис «Priday» (веб-приложение, сайт или PWA-версию), вы подтверждаете согласие с настоящими Условиями и Политикой приватности. Если вы не согласны с какими-либо положениями, пожалуйста, воздержитесь от использования сервиса.',
+      'Используя сервис «Winlog» (веб-приложение, сайт или PWA-версию), вы подтверждаете согласие с настоящими Условиями и Политикой приватности. Если вы не согласны с какими-либо положениями, пожалуйста, воздержитесь от использования сервиса.',
     termsPoint2Title: '2. Право собственности на контент и режимы приватности',
     termsPoint2Text1:
       'Все тексты побед, благодарностей, личные цели, прикреплённые фотографии и аудиозаписи принадлежат исключительно вам. Мы не претендуем ни на какие авторские права на ваш личный контент.',
@@ -89,7 +89,7 @@ const LEGAL_CONTENT: Record<
       'Мы не собираем персональные профили для рекламы, не продаём твои записи дата-брокерам и не сканируем мысли без твоего ведома.',
     colParam: 'Параметр',
     colLegacy: 'Обычные соцсети',
-    colPriday: 'Priday',
+    colPriday: 'Winlog',
     tableRows: [
       {
         feature: 'Видимость записей',
@@ -132,7 +132,7 @@ const LEGAL_CONTENT: Record<
     eyebrow: 'Standarde juridice și protecția datelor',
     title: 'Termeni și confidențialitate',
     subtitle:
-      'Reguli clare și transparente ale serviciului Priday. Conținutul tău rămâne proprietatea ta, iar datele sunt protejate.',
+      'Reguli clare și transparente ale serviciului Winlog. Conținutul tău rămâne proprietatea ta, iar datele sunt protejate.',
     dateRevision: 'Revizuit: noiembrie 2026',
     controlPill: 'Control deplin al vizibilității',
     tabTerms: 'Termenii serviciului',
@@ -140,10 +140,10 @@ const LEGAL_CONTENT: Record<
     termsTitle: 'Termeni și condiții de utilizare',
     termsSummaryTitle: 'Pe scurt și la obiect',
     termsSummaryText:
-      '«Priday» este creat pentru consemnarea realizărilor personale, a victoriilor și a recunoștinței. Conținutul tău este proprietatea ta exclusivă. Nu vindem datele tale, nu impunem costuri ascunse și nu transmitem însemnările tale rețelelor de publicitate.',
+      '«Winlog» este creat pentru consemnarea realizărilor personale, a victoriilor și a recunoștinței. Conținutul tău este proprietatea ta exclusivă. Nu vindem datele tale, nu impunem costuri ascunse și nu transmitem însemnările tale rețelelor de publicitate.',
     termsPoint1Title: '1. Acceptarea termenilor',
     termsPoint1Text:
-      'Prin utilizarea serviciului «Priday» (aplicație web, site sau PWA), confirmați acordul cu acești Termeni și cu Politica de confidențialitate. Dacă nu sunteți de acord cu vreo prevedere, vă rugăm să nu utilizați serviciul.',
+      'Prin utilizarea serviciului «Winlog» (aplicație web, site sau PWA), confirmați acordul cu acești Termeni și cu Politica de confidențialitate. Dacă nu sunteți de acord cu vreo prevedere, vă rugăm să nu utilizați serviciul.',
     termsPoint2Title: '2. Dreptul de proprietate și modurile de confidențialitate',
     termsPoint2Text1:
       'Toate textele victoriilor, recunoștințele, obiectivele personale, fotografiile atașate și fișierele audio vă aparțin în exclusivitate. Nu revendicăm niciun drept de autor asupra conținutului dvs. personal.',
@@ -164,7 +164,7 @@ const LEGAL_CONTENT: Record<
       'Nu colectăm date pentru profilare publicitară, nu vindem însemnările tale brokerilor de date și nu folosim gândurile tale pentru antrenarea modelelor publice.',
     colParam: 'Parametru',
     colLegacy: 'Rețele sociale obișnuite',
-    colPriday: 'Priday',
+    colPriday: 'Winlog',
     tableRows: [
       {
         feature: 'Vizibilitatea însemnărilor',
@@ -207,7 +207,7 @@ const LEGAL_CONTENT: Record<
     eyebrow: 'Legal standards & data protection',
     title: 'Terms & Privacy',
     subtitle:
-      'Fair, transparent terms for Priday. Your content remains your exclusive property, and your data is protected.',
+      'Fair, transparent terms for Winlog. Your content remains your exclusive property, and your data is protected.',
     dateRevision: 'Revised: November 2026',
     controlPill: 'Full visibility control',
     tabTerms: 'Terms of Service',
@@ -215,10 +215,10 @@ const LEGAL_CONTENT: Record<
     termsTitle: 'Terms of Service',
     termsSummaryTitle: 'In brief',
     termsSummaryText:
-      'Priday is built for logging personal milestones, victories, and gratitude. Your content belongs exclusively to you. We do not monetize your data, never charge hidden fees, and never share your reflections with advertising networks.',
+      'Winlog is built for logging personal milestones, victories, and gratitude. Your content belongs exclusively to you. We do not monetize your data, never charge hidden fees, and never share your reflections with advertising networks.',
     termsPoint1Title: '1. Acceptance of terms',
     termsPoint1Text:
-      'By accessing or using Priday (via web, browser, or PWA), you acknowledge and agree to these Terms and our Privacy Policy. If you do not agree with any part, please discontinue using the service.',
+      'By accessing or using Winlog (via web, browser, or PWA), you acknowledge and agree to these Terms and our Privacy Policy. If you do not agree with any part, please discontinue using the service.',
     termsPoint2Title: '2. Content ownership & privacy tiers',
     termsPoint2Text1:
       'All journal texts, daily gratitudes, milestones, uploaded photos, and audio belong entirely to you. We claim zero copyright over your personal creations.',
@@ -239,7 +239,7 @@ const LEGAL_CONTENT: Record<
       'We never profile you for advertisers, never sell your journal to data brokers, and never feed your thoughts into public AI training sets.',
     colParam: 'Parameter',
     colLegacy: 'Typical Social Apps',
-    colPriday: 'Priday',
+    colPriday: 'Winlog',
     tableRows: [
       {
         feature: 'Entry visibility',
@@ -291,14 +291,12 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
 
       {/* ── HERO STAGE ────────────────────────────────────────────── */}
       <section className="relative pt-32 pb-16 px-4 sm:px-6 md:px-8 bg-black text-center overflow-hidden">
-        <div className="apple-ambient-orb w-[600px] h-[600px] bg-[#0071e3] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-0 opacity-15" />
-
         <div className="relative z-10 max-w-[840px] mx-auto flex flex-col items-center">
           <div className="fade-blur mb-4 inline-flex items-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2997ff" strokeWidth="2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d76737" strokeWidth="2">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
-            <span className="apple-eyebrow !text-[#2997ff]">{content.eyebrow}</span>
+            <span className="apple-eyebrow !text-[#d76737]">{content.eyebrow}</span>
           </div>
 
           <h1 className="apple-hero-title fade-blur delay-150 mb-6 sm:mb-8 text-wrap-balance">
@@ -344,18 +342,18 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
       </section>
 
       {/* ── SECTION 1: УСЛОВИЯ ИСПОЛЬЗОВАНИЯ (TERMS) ────────────────── */}
-      <section id="terms" className="py-16 sm:py-20 md:py-24 bg-[#0c0c0e] border-t border-white/[0.06] scroll-mt-20">
+      <section id="terms" className="py-16 sm:py-20 md:py-24 bg-black border-t border-white/[0.06] scroll-mt-20">
         <div className="max-w-[800px] mx-auto px-4 sm:px-6 md:px-8 space-y-10 text-[16px] sm:text-[17px] leading-relaxed text-[#a1a1a6]">
           <div className="border-b border-white/[0.08] pb-6">
-            <span className="apple-eyebrow block mb-2 !text-[#f56900]">Раздел 1</span>
+            <span className="apple-eyebrow block mb-2 !text-[#d76737]">Раздел 1</span>
             <h2 className="text-[28px] sm:text-[34px] font-bold text-[#f5f5f7] tracking-tight">
               {content.termsTitle}
             </h2>
           </div>
 
           {/* Summary Box */}
-          <div className="apple-card p-6 sm:p-8 bg-[#161617] border border-white/10">
-            <span className="text-xs font-mono text-[#f56900] uppercase tracking-wider block mb-2 font-semibold">
+          <div className="p-6 sm:p-8 rounded-2xl bg-[#060608] border border-white/[0.1]">
+            <span className="text-xs font-mono text-[#d76737] uppercase tracking-wider block mb-2 font-semibold">
               {content.termsSummaryTitle}
             </span>
             <p className="text-[15px] sm:text-[16px] text-[#f5f5f7] leading-relaxed">
@@ -403,7 +401,7 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
             </h3>
             <p>
               {content.termsPoint5Text}{' '}
-              <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#2997ff] hover:underline font-medium">
+              <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#d76737] hover:underline font-medium">
                 @ogonek_support
               </a>.
             </p>
@@ -415,7 +413,7 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
       <section id="privacy" className="py-16 sm:py-20 md:py-24 bg-black border-t border-white/[0.06] scroll-mt-20">
         <div className="max-w-[840px] mx-auto px-4 sm:px-6 md:px-8 space-y-12">
           <div className="border-b border-white/[0.08] pb-6">
-            <span className="apple-eyebrow block mb-2 !text-[#2997ff]">{content.privacyEyebrow}</span>
+            <span className="apple-eyebrow block mb-2 !text-[#d76737]">{content.privacyEyebrow}</span>
             <h2 className="text-[28px] sm:text-[34px] font-bold text-[#f5f5f7] tracking-tight mb-4">
               {content.privacyTitle}
             </h2>
@@ -425,11 +423,11 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
           </div>
 
           {/* Comparison Table */}
-          <div className="apple-card overflow-hidden bg-[#161617] border border-white/10">
+          <div className="rounded-2xl overflow-hidden bg-[#060608] border border-white/[0.1]">
             <div className="grid grid-cols-12 p-4 sm:p-5 border-b border-white/[0.08] text-xs font-mono text-[#86868b] uppercase tracking-wider">
               <div className="col-span-4 sm:col-span-5">{content.colParam}</div>
               <div className="col-span-4 sm:col-span-3 text-rose-400">{content.colLegacy}</div>
-              <div className="col-span-4 sm:col-span-4 text-[#2997ff]">{content.colPriday}</div>
+              <div className="col-span-4 sm:col-span-4 text-[#d76737]">{content.colPriday}</div>
             </div>
 
             {content.tableRows.map((row, i) => (
@@ -443,7 +441,7 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
                 <div className="col-span-4 sm:col-span-3 text-rose-400/90 text-[12px] sm:text-[13px]">
                   ✗ {row.legacy}
                 </div>
-                <div className="col-span-4 sm:col-span-4 text-[#2997ff] font-medium text-[12px] sm:text-[13px]">
+                <div className="col-span-4 sm:col-span-4 text-white/90 font-medium text-[12px] sm:text-[13px]">
                   ✓ {row.priday}
                 </div>
               </div>
@@ -471,9 +469,9 @@ export function LegalPageView({ locale = 'ru' }: { locale?: Locale }) {
                 {content.privacyPoint3Title}
               </h3>
               <p className="text-[#86868b] mb-4">{content.privacyPoint3Text}</p>
-              <div className="p-5 rounded-2xl bg-[#161617] border border-white/10 text-xs text-[#86868b]">
+              <div className="p-5 rounded-2xl bg-[#060608] border border-white/[0.1] text-xs text-[#86868b]">
                 {content.contactSupport}{' '}
-                <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#2997ff] underline">
+                <a href="https://t.me/ogonek_support" target="_blank" rel="noreferrer" className="text-[#d76737] underline">
                   @ogonek_support
                 </a>
               </div>

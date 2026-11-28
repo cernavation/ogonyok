@@ -319,7 +319,7 @@ export function EvaluationCeremonyModal({
         {/* Заголовок */}
         <div className="text-center relative z-10">
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center justify-center gap-2">
-            <span>Калибровка Ментора Priday</span>
+            <span>Калибровка Ментора Winlog</span>
           </h2>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
             Персональная оценка масштаба побед и преодолений
@@ -431,7 +431,7 @@ export function EvaluationCeremonyModal({
             {/* Слово Ментора Priday */}
             <div className="pt-2.5 border-t border-zinc-800">
               <span className="text-xs font-bold text-white flex items-center gap-1.5 mb-1">
-                <Flame size={14} className="text-[var(--accent)]" /> Слово Ментора Priday:
+                <Flame size={14} className="text-[var(--accent)]" /> Слово Ментора Winlog:
               </span>
               <p className="text-xs sm:text-[13px] text-zinc-200 leading-relaxed italic">
                 «{mentorWord}»

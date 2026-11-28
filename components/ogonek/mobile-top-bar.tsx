@@ -67,7 +67,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
           )}
         </button>
 
-        {/* Center: Priday logo */}
+        {/* Center: Winlog logo */}
         <button
           type="button"
           className="flex items-center gap-1.5 active:opacity-70 transition-opacity"
@@ -77,7 +77,7 @@ export function MobileTopBar({ onNavigate, onNotify, onOpenFriends, streak }: Pr
           <span className="w-7 h-7 rounded-full bg-[#d76737]/15 flex items-center justify-center">
             <Flame size={16} className="text-[#d76737] fill-[#d76737]/20" />
           </span>
-          <span className="font-bold text-[17px] tracking-tight text-[var(--text)]">Priday</span>
+          <span className="font-bold text-[17px] tracking-tight text-[var(--text)]">Winlog</span>
         </button>
 
         {/* Right: Streak badge + Settings icon */}

@@ -2226,7 +2226,7 @@ export function useOgonekStore() {
             a.submission,
             status,
             cleanNote || MODERATION_STATUS_META[status].description,
-            'Модератор Priday'
+            'Модератор Winlog'
           )
           const isFinal = status !== 'on-moderation'
           return {
@@ -7437,7 +7437,7 @@ export function useOgonekStore() {
       const nowISO = new Date().toISOString()
       const account = createAccount({
         provider: 'guest',
-        displayName: 'Гость Priday',
+        displayName: 'Гость Winlog',
         isGuest: true,
         existingIds: prev.auth.accounts.map((a) => a.id),
         takenUsernames: takenUsernamesOf(prev.auth.accounts),

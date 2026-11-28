@@ -91,7 +91,7 @@ export function ChatThreadList({
         const friend = !isGroup && !isPriday ? getFriend(id) : null
         const cachedPeer = !isGroup && !isPriday ? getCachedProfileSync(id) : null
         let title = isPriday
-          ? 'Priday'
+          ? 'Winlog'
           : (friend?.name && !isUuid(friend.name) ? friend.name : null) ||
             (thread?.peerMeta?.name &&
             thread.peerMeta.name !== 'Собеседник' &&
@@ -102,7 +102,7 @@ export function ChatThreadList({
             (cachedPeer?.username ? `@${cachedPeer.username}` : null) ||
             threadTitle(id, thread)
         let username = isPriday
-          ? 'priday.life'
+          ? 'winlog.life'
           : friend?.username || thread?.peerMeta?.username || cachedPeer?.username || null
         if (username && isUuid(username)) username = null
         if (title && isUuid(title)) title = username ? `@${username}` : 'Собеседник'

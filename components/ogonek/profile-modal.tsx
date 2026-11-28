@@ -26,7 +26,7 @@ const LEGENDARY_ACHIEVEMENTS = [
   },
   {
     emoji: '🔥',
-    title: '700 дней в Priday',
+    title: '700 дней в Winlog',
     subtitle: 'Железная дисциплина',
     unlocked: true,
   },
@@ -288,7 +288,7 @@ export function ProfileModal({ storeState, onClose, onNavigate }: ProfileModalPr
         <div className="profile-badges-section mt-3">
           <h3 className="profile-badges-title">
             <Sparkles size={16} className="inline mr-1 text-yellow-400" />
-            Ранги Priday
+            Ранги Winlog
           </h3>
           <div className="profile-badges-list">
             <div className={`badge-pill ${isFlameProof ? 'active' : 'locked'}`}>

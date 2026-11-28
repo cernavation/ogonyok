@@ -151,10 +151,10 @@ function ToastCard({
     isMilestone &&
     (toast.milestoneTier === 100 ||
       (typeof toast.days === 'number' && toast.days >= 100 && toast.days % 100 === 0))
-  const isPridaySender = isPridayChat(toast.peerId) || toast.title === 'Priday'
+  const isPridaySender = isPridayChat(toast.peerId) || toast.title === 'Winlog'
   const showVerified = Boolean(toast.verified || isPridaySender)
   const hasDraft = replyText.trim().length > 0
-  const initials = toast.initials || (toast.title ? getInitials(toast.title, '') : 'P')
+  const initials = toast.initials || (toast.title ? getInitials(toast.title, '') : 'W')
 
   const renderPreview = () => {
     if (
@@ -163,7 +163,7 @@ function ToastCard({
       toast.body?.includes('Голосовое')
     ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[#ff5a1f] font-medium">
+        <span className="flex items-center gap-1.5 text-[13px] text-[#d76737] font-medium">
           <Mic size={14} className="shrink-0" />
           <span className="truncate">{toast.body || 'Голосовое сообщение'}</span>
         </span>
@@ -175,7 +175,7 @@ function ToastCard({
       toast.body?.includes('Фото')
     ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[#ff5a1f] font-medium">
+        <span className="flex items-center gap-1.5 text-[13px] text-[#d76737] font-medium">
           <Camera size={14} className="shrink-0" />
           <span className="truncate">{toast.body || 'Фотография'}</span>
         </span>
@@ -192,7 +192,7 @@ function ToastCard({
     if (isMilestone) {
       return (
         <p className="text-[13px] text-white/95 font-medium leading-snug line-clamp-3">
-          {toast.body || 'Твой огонь горит непрерывно!'}
+          {toast.body || 'Твой ритм в Winlog держится уверенно!'}
         </p>
       )
     }

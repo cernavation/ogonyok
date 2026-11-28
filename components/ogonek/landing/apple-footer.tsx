@@ -28,30 +28,18 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
 
   return (
     <footer
-      className="relative pt-12 sm:pt-16 pb-8 bg-[#050507] text-[#86868b] text-[12px] border-t border-white/[0.08] overflow-hidden"
+      className="relative pt-12 sm:pt-16 pb-8 bg-black text-[#86868b] text-[12px] border-t border-white/[0.08] overflow-hidden"
       aria-label="Подвал сайта"
     >
-      {/* Apple Subtle Ambient Halo in center */}
-      <div
-        className="apple-ambient-orb w-[700px] h-[350px] bg-[#0071e3]/10 -bottom-24 left-1/2 -translate-x-1/2 pointer-events-none"
-        aria-hidden="true"
-      />
-
       <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8 relative z-10">
         {/* ── 1. HEADER ROW: BRAND & STYLED ACTION BUTTONS ──────────────────── */}
         <div className="fade-up pb-8 border-b border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
-                <defs>
-                  <linearGradient id="appleFlameFooterTop" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ffa600" />
-                    <stop offset="100%" stopColor="#ff6b35" />
-                  </linearGradient>
-                </defs>
                 <path
                   d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-                  fill="url(#appleFlameFooterTop)"
+                  fill="#d76737"
                 />
               </svg>
               <h3 className="text-[17px] sm:text-[19px] font-semibold text-white tracking-tight">
@@ -59,7 +47,7 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
               </h3>
             </div>
             <p className="text-[13px] text-[#86868b] max-w-[540px] leading-relaxed">
-              {content.footer?.tagline || 'Фиксируй настоящие преодоления каждый вечер. Твой путь в Priday принадлежит только тебе.'}
+              {content.footer?.tagline || 'Фиксируй настоящие преодоления каждый вечер. Твой путь в Winlog принадлежит только тебе.'}
             </p>
           </div>
 
@@ -68,10 +56,10 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
             <button
               type="button"
               onClick={() => handleOpenAuth('register')}
-              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-[#f56900] to-[#ff8c00] hover:from-[#ff7714] hover:to-[#ffa024] text-white font-semibold text-[13px] shadow-[0_4px_20px_rgba(245,105,0,0.35)] hover:shadow-[0_6px_25px_rgba(245,105,0,0.5)] transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+              className="px-5 py-2.5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black font-semibold text-[13px] transition-all active:scale-95 cursor-pointer flex items-center gap-2"
             >
               <span>{content.footer?.ctaBtn || 'Начать летопись'}</span>
-              <span className="text-white/80">→</span>
+              <span>→</span>
             </button>
 
             <button
@@ -97,9 +85,9 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
         {/* ── 2. BOTTOM BAR: COPYRIGHT, LEGAL LINK & TELEGRAM ICON ─────────── */}
         <div className="fade-up pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12px]">
           <div className="flex items-center gap-2 text-[#86868b]">
-            <span className="font-medium text-[#f5f5f7]">Priday</span>
+            <span className="font-medium text-[#f5f5f7]">Winlog</span>
             <span>·</span>
-            <span>© {new Date().getFullYear()} {content.footer?.copyright || 'Priday Inc. Все права защищены.'}</span>
+            <span>{content.footer?.copyright || `© ${new Date().getFullYear()} Winlog. Все права защищены.`}</span>
           </div>
 
           <div className="flex items-center gap-6">
@@ -115,7 +103,7 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
               href="https://t.me/ogonek_support"
               target="_blank"
               rel="noreferrer"
-              className="text-[#86868b] hover:text-[#2997ff] transition-colors p-1"
+              className="text-[#86868b] hover:text-[#d76737] transition-colors p-1"
               title="Telegram поддержка"
               aria-label="Telegram"
             >
@@ -126,13 +114,13 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
           </div>
         </div>
 
-        {/* ── 3. GIANT INTERACTIVE HALFTONE WORDMARK CANVAS (PRIDAY) ──────── */}
+        {/* ── 3. GIANT INTERACTIVE HALFTONE WORDMARK CANVAS (WINLOG) ──────── */}
         <div
           className="fade-blur pt-6 sm:pt-8 pb-2 text-center select-none overflow-hidden relative"
           aria-hidden="true"
         >
           <HalftoneWordmarkCanvas
-            wordmark="Priday"
+            wordmark="Winlog"
             height="clamp(160px, 22vw, 280px)"
             dotGap={6}
             radius={90}
@@ -141,9 +129,9 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
             interactive={true}
             className="w-full rounded-2xl"
             palette={{
-              background: '#050507',
+              background: '#000000',
               ink: '#f5f5f7',
-              warm: '#f56900',
+              warm: '#d76737',
             }}
           />
         </div>

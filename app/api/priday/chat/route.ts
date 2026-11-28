@@ -146,7 +146,7 @@ export async function POST(request: Request) {
         {
           user_id: userId,
           type: 'priday_support_user',
-          title: 'Обращение в поддержку Priday',
+          title: 'Обращение в поддержку Winlog',
           body: text,
           data: { source: 'priday_chat', kind: 'support_user', actionId: matched?.id || 'custom' },
           is_read: true,
@@ -155,7 +155,7 @@ export async function POST(request: Request) {
         {
           user_id: userId,
           type: 'priday_support_reply',
-          title: 'Priday',
+          title: 'Winlog',
           body: replyText,
           data: { source: 'priday_chat', kind: 'support_reply', actionId: matched?.id || 'custom' },
           is_read: true,

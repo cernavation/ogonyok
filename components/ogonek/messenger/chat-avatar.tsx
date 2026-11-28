@@ -95,9 +95,9 @@ export function ChatAvatar({
   if (isPriday) {
     return (
       <div
-        className="rounded-full bg-gradient-to-br from-[#FF8A3D] via-[#FF5C00] to-[#E53900] text-white flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgba(255,92,0,0.4)] border border-white/20"
+        className="rounded-full bg-[#d76737] text-black flex items-center justify-center shrink-0 shadow-[0_2px_12px_rgba(215,103,55,0.35)] border border-white/15"
         style={{ width: size, height: size }}
-        aria-label="Priday"
+        aria-label="Winlog"
       >
         <Flame size={Math.max(16, Math.round(size * 0.54))} fill="currentColor" strokeWidth={1.8} />
       </div>

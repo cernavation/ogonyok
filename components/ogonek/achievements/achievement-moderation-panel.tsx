@@ -49,8 +49,8 @@ MODERATION_WEBHOOK_URL="https://hooks.slack.com/services/XXX/YYY/ZZZ"
 RESEND_API_KEY="re_xxxxxxxxxxxxxxxxx"
 
 # Адрес модератора и отправителя:
-MODERATION_INBOX="moderation@ogonyok.app"
-MODERATION_FROM="verification@ogonyok.app"
+MODERATION_INBOX="moderation@winlog.life"
+MODERATION_FROM="verification@winlog.life"
 
 # Пакет письма (тема + text + HTML) и JSON webhook-payload формируются
 # автоматически в app/api/achievements/verify/route.ts. Если каналы не

@@ -173,7 +173,7 @@ export function ExplorePostModal({
             onClick={() => {
               const now = toggleExplorePostLike(post.id)
               playClick(soundEnabled)
-              onNotify(now ? '🔥 Priday зажжён!' : 'Priday снят')
+              onNotify(now ? '🔥 Лайк Winlog поставлен!' : 'Реакция снята')
             }}
             aria-pressed={isLiked}
           >

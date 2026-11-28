@@ -57,8 +57,8 @@ export function QrModal({
         </button>
 
         <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--accent,#ff5722)] uppercase tracking-wider mb-2">
-          <Flame size={16} className="fill-[var(--accent,#ff5722)]" />
-          <span>Priday · QR-код</span>
+          <Flame size={16} className="fill-[#d76737] text-[#d76737]" />
+          <span>Winlog · QR-код</span>
         </div>
 
         <h3 className="text-lg font-bold text-[var(--text,#fff)] mb-1">

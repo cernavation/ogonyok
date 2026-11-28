@@ -520,13 +520,13 @@ export async function registerBiometricCredential(input: {
     }
 
     const userName = (input.userName || 'ogonek').slice(0, 60)
-    const displayName = (input.displayName || 'Priday').slice(0, 60)
+    const displayName = (input.displayName || 'Winlog').slice(0, 60)
     const userId = new TextEncoder().encode(`ogonek:${userName}`)
 
     const credential = (await navigator.credentials.create({
       publicKey: {
         challenge,
-        rp: { name: 'Priday', id: window.location.hostname },
+        rp: { name: 'Winlog', id: window.location.hostname },
         user: { id: userId, name: userName, displayName },
         pubKeyCredParams: [
           { type: 'public-key', alg: -7 },

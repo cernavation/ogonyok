@@ -184,7 +184,7 @@ export function BackupSyncPanel({ onNotify }: Props) {
     }
     if (typeof window !== 'undefined') {
       const ok = window.confirm(
-        'Импорт заменит текущую базу данных Priday. Продолжить восстановление?'
+        'Импорт заменит текущую базу данных Winlog. Продолжить восстановление?'
       )
       if (!ok) return
     }
@@ -261,7 +261,7 @@ export function BackupSyncPanel({ onNotify }: Props) {
           <span style={{ width: `${Math.max(2, usage.percent)}%` }} />
         </div>
         <small className="backup-storage__note">
-          Текущая база Priday: {formatBytes(usage.storeBytes)} · заполнено {usage.percent}%
+          Текущая база Winlog: {formatBytes(usage.storeBytes)} · заполнено {usage.percent}%
           {usage.percent >= 80 ? ' — пора почистить черновики' : ''}
         </small>
       </div>

@@ -559,9 +559,9 @@ export function WorksWheel({
                 >
                   <span
                     className={cn(
-                      "relative block size-full overflow-hidden rounded-2xl bg-[#16161a] border transition-all duration-300",
+                      "relative block size-full overflow-hidden rounded-2xl bg-[#060608] border transition-all duration-300",
                       isSelected
-                        ? "border-[#2997ff]/60 shadow-[0_24px_80px_rgba(0,113,227,0.35),0_32px_70px_rgba(0,0,0,0.95)] ring-1 ring-[#2997ff]/50"
+                        ? "border-white/35 shadow-[0_24px_80px_rgba(0,0,0,0.95)] ring-1 ring-white/25"
                         : "border-white/[0.12] shadow-[0_32px_70px_rgba(0,0,0,0.85)]",
                     )}
                   >
@@ -577,16 +577,16 @@ export function WorksWheel({
                       <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 pointer-events-none">
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-300 shadow-md",
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-colors duration-300 backdrop-blur-md",
                             hasFocus
-                              ? "bg-[#0071e3] text-white border border-white/30 shadow-[0_0_12px_rgba(0,113,227,0.8)]"
-                              : "bg-black/75 backdrop-blur-md text-[#2997ff] border border-white/20",
+                              ? "bg-white/[0.14] text-white border border-white/[0.22]"
+                              : "bg-white/[0.08] text-white/80 border border-white/[0.12]",
                           )}
                         >
                           <span
                             className={cn(
                               "size-1.5 rounded-full",
-                              hasFocus ? "bg-white" : "bg-[#2997ff]",
+                              hasFocus ? "bg-white" : "bg-white/60",
                             )}
                           />
                           {item.tag}
@@ -637,7 +637,7 @@ export function WorksWheel({
         ref={labelRef}
         className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center px-4 tracking-tight z-20 transition-opacity duration-300"
       >
-        <span className="text-[#2997ff] text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
+        <span className="text-white/60 text-[11px] sm:text-xs md:text-sm uppercase tracking-widest font-semibold mb-1.5 sm:mb-2 drop-shadow">
           {galleryLabel}
         </span>
         <h3 className="text-xl sm:text-3xl md:text-4xl font-bold text-white max-w-[240px] sm:max-w-[340px] md:max-w-[420px] leading-tight drop-shadow-lg">
@@ -647,7 +647,7 @@ export function WorksWheel({
           {hintLabel}
         </p>
         <div className="mt-3 sm:mt-4 flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-white/[0.06] border border-white/[0.1] text-[11px] sm:text-xs text-[#a1a1a6]">
-          <span className="inline-block size-1.5 sm:size-2 rounded-full bg-[#0071e3] animate-pulse" />
+          <span className="inline-block size-1.5 sm:size-2 rounded-full bg-white/75 animate-pulse" />
           {scrollDownLabel}
         </div>
       </div>
@@ -659,8 +659,8 @@ export function WorksWheel({
       >
         <div className="inline-flex flex-col items-center lg:items-start px-4 py-2.5 sm:px-5 sm:py-3 lg:p-0 rounded-2xl lg:rounded-none bg-black/80 lg:bg-transparent backdrop-blur-xl lg:backdrop-blur-none border border-white/12 lg:border-0 shadow-[0_8px_32px_rgba(0,0,0,0.6)] lg:shadow-none">
           {currentItem?.tag && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] lg:text-xs font-semibold tracking-wider uppercase mb-1.5 lg:mb-2 bg-[#0071e3]/25 text-[#2997ff] border border-[#0071e3]/30">
-              <span className="size-1.5 rounded-full bg-[#2997ff]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] lg:text-xs font-semibold tracking-wider uppercase mb-1.5 lg:mb-2 bg-white/[0.08] border border-white/[0.12] text-white/80 backdrop-blur-md">
+              <span className="size-1.5 rounded-full bg-white/80" />
               {currentItem.tag}
             </span>
           )}
@@ -710,7 +710,7 @@ export function WorksWheel({
                     className={cn(
                       "block rounded-full transition-all duration-300 pointer-events-none",
                       isCurrent
-                        ? "w-5 sm:w-6 h-1.5 sm:h-2 bg-[#2997ff] shadow-[0_0_12px_rgba(41,151,255,0.85)]"
+                        ? "w-5 sm:w-6 h-1.5 sm:h-2 bg-white shadow-[0_0_10px_rgba(255,255,255,0.45)]"
                         : "size-1.5 sm:size-2 bg-white/30 hover:bg-white/55",
                     )}
                   />

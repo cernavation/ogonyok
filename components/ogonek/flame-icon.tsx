@@ -22,7 +22,7 @@ export function FlameIcon({
       <span
         className={`flame-icon flame--burned ${className}`}
         style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
-        title="Priday угас. Сделай запись, чтобы разжечь пламя снова!"
+        title="Сделай запись в Winlog, чтобы продолжить серию!"
       >
         <svg
           width={size}
@@ -71,7 +71,7 @@ export function FlameIcon({
     <span
       className={`flame-icon flame--safe ${className}`}
       style={{ display: 'inline-flex', alignItems: 'center', position: 'relative' }}
-      title="Priday горит уверенно и ровно!"
+      title="Winlog активен, ритм держится уверенно!"
     >
       <svg
         width={size}

@@ -217,7 +217,7 @@ export function AccountSwitcher({ streak, onOpenProfile, onNavigate, onNotify, o
 
           <span className="account-switcher__text">
             <strong>
-              {isGuest ? 'Войти' : active?.snapshot?.displayName || state.profile.displayName || 'Priday'}
+              {isGuest ? 'Войти' : active?.snapshot?.displayName || state.profile.displayName || 'Winlog'}
             </strong>
             <small>
               {isGuest ? 'Гость' : `${accountHandle(active || { provider: 'email', email: '' } as any)} · ${streak}д`}

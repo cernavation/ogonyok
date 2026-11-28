@@ -70,7 +70,7 @@ export function LeaderboardView({ onNavigate, onNotify, soundEnabled = true }: P
 
   const handleCopyInvite = () => {
     playSuccess(soundEnabled)
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${state.profile.username}` : 'https://ogonek.app'
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/?ref=${state.profile.username}` : 'https://winlog.life'
     navigator.clipboard?.writeText(url)
     setCopied(true)
     onNotify?.('Ссылка-приглашение скопирована в буфер обмена!')

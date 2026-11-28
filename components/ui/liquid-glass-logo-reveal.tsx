@@ -1096,24 +1096,23 @@ function startEngine(
 /* ------------------------------------------------------------------ *
  * GlassRevealPriday & GlassReveal21st
  * ------------------------------------------------------------------ */
-export const PRIDAY_FLAME_MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none"><defs><linearGradient id="pridayLiquidFlame" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ffa600" /><stop offset="50%" stop-color="#ff6b35" /><stop offset="100%" stop-color="#f54700" /></linearGradient></defs><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="url(#pridayLiquidFlame)"/></svg>`
+export const PRIDAY_FLAME_MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" fill="#d76737"/></svg>`
 
 export type GlassRevealPridayProps = Omit<GlassIconRevealProps, "logo">
 
 /**
- * Priday LiquidGlass Flame Reveal:
- * Fiery brand amber-orange dispersion, deep black obsidian backdrop (#000000),
- * glassmorphic refraction around the iconic Priday flame.
+ * Winlog LiquidGlass Flame Reveal:
+ * Refined terracotta dispersion on deep black obsidian backdrop (#000000).
  */
 export function GlassRevealPriday({ tuning, ...props }: GlassRevealPridayProps) {
   return (
     <GlassIconReveal
       logo={PRIDAY_FLAME_MARK}
-      label="Priday"
+      label="Winlog"
       look="dark"
       background="#000000"
-      plateColor="#05070b"
-      logoColor="#ffa600"
+      plateColor="#060608"
+      logoColor="#d76737"
       originalColors={true}
       logoScale={0.64}
       finalScale={0.86}

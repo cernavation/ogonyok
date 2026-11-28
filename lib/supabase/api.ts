@@ -169,7 +169,7 @@ export const FALLBACK_SEED_PROFILES: ProfileRecord[] = [
     id: 'cernavation-seed',
     username: 'cernavation',
     display_name: 'Alexei Cerna',
-    bio: 'Создатель Priday. Дисциплина и летопись побед.',
+    bio: 'Создатель Winlog. Дисциплина и летопись побед.',
     city: 'Москва',
     avatar_url: '/author-avatar.png',
     avatar_image: '/author-avatar.png',
@@ -1138,7 +1138,7 @@ export async function toggleReaction(params: {
   }
 }
 
-const DEMO_COMMENT_AUTHORS = new Set(['Priday поддержки', 'Огонёк поддержки'])
+const DEMO_COMMENT_AUTHORS = new Set(['Priday поддержки', 'Огонёк поддержки', 'Winlog поддержки'])
 
 function isLegacyDemoCommentRow(row: any): boolean {
   if (!row || typeof row !== 'object') return true
@@ -3549,7 +3549,7 @@ export async function sendPridayFollowNotificationDb(input: {
       await supabase.from('notifications').insert({
         user_id: input.followingId,
         type: 'priday_follow',
-        title: 'Priday',
+        title: 'Winlog',
         body,
         data: dataPayload,
         is_read: false,
@@ -3564,7 +3564,7 @@ export async function sendPridayFollowNotificationDb(input: {
       {
         user_id: input.followingId,
         type: 'priday_mutual',
-        title: 'Priday',
+        title: 'Winlog',
         body: bodyForRecipient,
         data: {
           source: 'priday_chat',
@@ -3579,7 +3579,7 @@ export async function sendPridayFollowNotificationDb(input: {
       {
         user_id: input.followerId,
         type: 'priday_mutual',
-        title: 'Priday',
+        title: 'Winlog',
         body: bodyForFollower,
         data: {
           source: 'priday_chat',
@@ -3733,7 +3733,7 @@ export async function savePridaySupportExchangeDb(input: {
         {
           user_id: input.userId,
           type: 'priday_support_user',
-          title: 'Обращение в поддержку Priday',
+          title: 'Обращение в поддержку Winlog',
           body: input.text,
           data: { source: 'priday_chat', kind: 'support_user', actionId: input.actionId || 'custom' },
           is_read: true,
@@ -3742,7 +3742,7 @@ export async function savePridaySupportExchangeDb(input: {
         {
           user_id: input.userId,
           type: 'priday_support_reply',
-          title: 'Priday',
+          title: 'Winlog',
           body: input.replyText,
           data: { source: 'priday_chat', kind: 'support_reply', actionId: input.actionId || 'custom' },
           is_read: true,

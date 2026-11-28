@@ -153,7 +153,7 @@ export const STORY_TEMPLATES: StoryTemplate[] = [
     accent: '#ffa600',
     build: (ctx) => ({
       headline: ctx.latestTitle || 'Новый день силы',
-      detail: `День №${ctx.latestDayId ?? '—'} в летописи Priday`,
+      detail: `День №${ctx.latestDayId ?? '—'} в летописи Winlog`,
       sourceDayId: ctx.latestDayId,
     }),
   },

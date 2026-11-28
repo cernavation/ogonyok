@@ -138,17 +138,17 @@ describe('Этап 7: Полировка модалок, живого чата P
 
     const m10 = buildStreakMilestoneCelebration(20)
     assert.equal(m10?.tier, 10)
-    assert.equal(m10?.text, 'Круглая цифра: 20 дней подряд! Так держать.')
+    assert.equal(m10?.text, 'Круглая цифра в Winlog: 20 дней подряд! Так держать.')
     assert.ok(!m10!.text.includes('—'))
 
     const m50 = buildStreakMilestoneCelebration(750)
     assert.equal(m50?.tier, 50)
-    assert.equal(m50?.text, 'Мощный рубеж - 750 дней закрыто! Огонь держится уверенно.')
+    assert.equal(m50?.text, 'Мощный рубеж - 750 дней в Winlog закрыто! Твой ритм держится уверенно.')
     assert.ok(!m50!.text.includes('—'))
 
     const m100 = buildStreakMilestoneCelebration(800)
     assert.equal(m100?.tier, 100)
-    assert.equal(m100?.text, 'Легенда! 800 дней в Priday 🔥 Это уже не привычка, а твой характер.')
+    assert.equal(m100?.text, 'Легенда! 800 дней в Winlog 🔥 Это уже не привычка, а твой характер.')
     assert.ok(!m100!.text.includes('—'))
 
     const toastSrc = readRepoFile('components/ogonek/notifications/desktop-toast-stack.tsx')

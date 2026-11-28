@@ -363,11 +363,11 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     [dismissDesktopToast, openFriendsModal, updateStore]
   )
 
-  // Динамический заголовок вкладки: document.title «(3) Priday»
+  // Динамический заголовок вкладки: document.title «(3) Winlog»
   useEffect(() => {
     const updateTitle = () => {
       const total = Math.max(state.unreadChatCount ?? 0, totalUnread(state.chatThreads ?? {}))
-      const targetTitle = total > 0 ? `(${total}) Priday` : 'Priday — Твой личный дневник силы'
+      const targetTitle = total > 0 ? `(${total}) Winlog` : 'Winlog — Твой личный дневник силы'
       if (document.title !== targetTitle) {
         document.title = targetTitle
       }
@@ -591,8 +591,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                   variant: 'milestone',
                   milestoneTier: tier,
                   days: daysNum || undefined,
-                  title: notif.title || 'Priday',
-                  body: notif.body || 'Юбилейный рубеж в Priday!',
+                  title: notif.title || 'Winlog',
+                  body: notif.body || 'Юбилейный рубеж в Winlog!',
                   mediaType: 'milestone',
                   peerId: 'priday-official',
                   verified: true,
@@ -602,7 +602,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                 playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
                 showDesktopToast({
                   type: 'chat',
-                  title: 'Priday',
+                  title: 'Winlog',
                   body: notif.body || 'Новое системное сообщение',
                   mediaType: 'text',
                   peerId: 'priday-official',
@@ -1389,7 +1389,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     (fact: string) => {
       addEvidenceItem({
         title: fact,
-        description: 'Сохранено из записи дня в Priday',
+        description: 'Сохранено из записи дня в Winlog',
         category: 'Спорт',
         date: new Date().toLocaleDateString('ru-RU'),
         pinned: true,

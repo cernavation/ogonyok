@@ -9,6 +9,7 @@ export const RESERVED_USERNAMES = new Set([
   'help',
   'ogonek',
   'ogonyok',
+  'winlog',
   'memernity',
   'cernavation',
   'alex_cerna',

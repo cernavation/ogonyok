@@ -195,7 +195,7 @@ export function buildMyDigest(
       title: 'Моя история',
       dateLabel: 'только что',
       city: opts.city ?? '',
-      tags: ['✨ Моя история', '🔥 Priday'],
+      tags: ['✨ Моя история', '🔥 Winlog'],
       mainPride: 'Живу этот день осознанно и благодарно',
       mainPrideScale: 8,
       prides: [],

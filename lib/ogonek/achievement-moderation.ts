@@ -75,8 +75,8 @@ export const GOLD_VERIFICATION_BADGE = {
   label: 'Официально подтверждено',
 } as const
 
-export const DEFAULT_MODERATION_INBOX = 'moderation@ogonyok.app'
-export const DEFAULT_MODERATION_FROM = 'verification@ogonyok.app'
+export const DEFAULT_MODERATION_INBOX = 'moderation@winlog.life'
+export const DEFAULT_MODERATION_FROM = 'verification@winlog.life'
 
 /* ── Связь со статусом ачивки ───────────────────────────────────────────── */
 
@@ -260,7 +260,7 @@ export function buildModerationSubmissionPayload(input: {
       topic: input.achievement.topic.slice(0, 300),
       achievedAtISO: input.achievement.achievedAtISO,
       strictness: regulation?.strictness ?? 'strict',
-      verifier: regulation?.verifier ?? 'Команда верификации Priday',
+      verifier: regulation?.verifier ?? 'Команда верификации Winlog',
       regulationSummary: regulation?.summary ?? '',
     },
     description: input.description.trim().slice(0, 1200),
@@ -321,12 +321,12 @@ export function buildModerationEmailPackage(
   const attachmentsLine =
     payload.attachments.length > 0
       ? payload.attachments.map((att) => `• ${att.fileName} (${formatBytes(att.size)})`).join('\n')
-      : 'Файлы хранятся в защищённом хранилище Priday и приложены по ссылке из заявки.'
+      : 'Файлы хранятся в защищённом хранилище Winlog и приложены по ссылке из заявки.'
 
-  const subject = `[Priday · ${payload.trackingCode}] Заявка на верификацию: ${a.title} (${a.categoryLabel})`
+  const subject = `[Winlog · ${payload.trackingCode}] Заявка на верификацию: ${a.title} (${a.categoryLabel})`
 
   const text = [
-    `ЗАЯВКА НА ВЕРИФИКАЦИЮ ДОСТИЖЕНИЯ — PRIDAY`,
+    `ЗАЯВКА НА ВЕРИФИКАЦИЮ ДОСТИЖЕНИЯ — WINLOG`,
     `Трек-код: ${payload.trackingCode}`,
     `Отправлено: ${formatModerationDate(payload.submittedAtISO)}`,
     '',
@@ -354,7 +354,7 @@ export function buildModerationEmailPackage(
     `РЕГЛАМЕНТ ИИ`,
     `  ${a.regulationSummary || '—'}`,
     '',
-    `— Автоотправлено системой верификации Priday. Ответьте на это письмо или используйте трек-код.`,
+    `— Автоотправлено системой верификации Winlog. Ответьте на это письмо или используйте трек-код.`,
   ].join('\n')
 
   const evidenceHtml = payload.evidence
@@ -374,7 +374,7 @@ export function buildModerationEmailPackage(
   const html = `<div style="background:#0b0c0e;padding:24px;font-family:-apple-system,Segoe UI,Roboto,sans-serif">
     <div style="max-width:640px;margin:0 auto;background:#16181c;border:1px solid #2f3336;border-radius:16px;overflow:hidden">
       <div style="padding:18px 22px;background:linear-gradient(135deg,#ff6b35,#ffa600)">
-        <div style="color:#180a02;font-size:12px;font-weight:800;letter-spacing:.08em">PRIDAY · МОДЕРАЦИЯ</div>
+        <div style="color:#180a02;font-size:12px;font-weight:800;letter-spacing:.08em">WINLOG · МОДЕРАЦИЯ</div>
         <div style="color:#180a02;font-size:20px;font-weight:900;margin-top:4px">Заявка на верификацию достижения</div>
       </div>
       <div style="padding:20px 22px">
@@ -406,7 +406,7 @@ export function buildModerationEmailPackage(
           ${payload.attachments.length > 0 ? payload.attachments.map((att) => `<li>${escapeHtml(att.fileName)} — ${formatBytes(att.size)}</li>`).join('') : '<li>Файлы приложены по ссылке из заявки</li>'}
         </ul>
 
-        <p style="color:#71767b;font-size:11px;margin:22px 0 0">Автоотправлено системой верификации Priday. Используйте трек-код для связи.</p>
+        <p style="color:#71767b;font-size:11px;margin:22px 0 0">Автоотправлено системой верификации Winlog. Используйте трек-код для связи.</p>
       </div>
     </div>
   </div>`
@@ -503,7 +503,7 @@ export function createSubmissionRecord(input: {
         atISO: nowISO,
         status: 'on-moderation',
         note: `Пакет доказательств отправлен модератору (${channelLabel(input.channel)}).`,
-        actor: 'Priday · автоотправка',
+        actor: 'Winlog · автоотправка',
       },
     ],
   }
@@ -549,7 +549,7 @@ export function sanitizeSubmission(value: unknown): AchievementSubmission | null
           atISO: typeof e.atISO === 'string' ? e.atISO : new Date().toISOString(),
           status: isModerationStatus(e.status) ? e.status : 'on-moderation',
           note: typeof e.note === 'string' ? e.note.slice(0, 600) : '',
-          actor: typeof e.actor === 'string' && e.actor.trim() ? e.actor.slice(0, 60) : 'Priday',
+          actor: typeof e.actor === 'string' && e.actor.trim() ? e.actor.slice(0, 60) : 'Winlog',
         }))
         .slice(-20)
     : []

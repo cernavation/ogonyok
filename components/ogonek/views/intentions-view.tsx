@@ -128,7 +128,7 @@ export function IntentionsView({
         {stats.hasHistory && (
           <section
             className="px-4 py-4 border-b border-[var(--line)] flex items-center gap-4"
-            aria-label="Priday фокуса"
+            aria-label="Фокус Winlog"
           >
             <FocusFlame stats={stats} />
             <div className="min-w-0 ml-auto text-right">

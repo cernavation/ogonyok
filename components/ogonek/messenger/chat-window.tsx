@@ -329,7 +329,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
 
           <div className="mcw__ident min-w-0 flex-1">
             <span className="mcw__name text-sm sm:text-base font-bold text-[var(--text)] whitespace-nowrap overflow-visible flex items-center gap-1.5">
-              <span>{isPridayChat(friendId) ? 'Priday' : title}</span>
+              <span>{isPridayChat(friendId) ? 'Winlog' : title}</span>
               {(isPridayChat(friendId) || friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
             </span>
 
@@ -342,7 +342,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                   <span className="animate-pulse delay-200">.</span>
                 </span>
               ) : isPridayChat(friendId) ? (
-                <span className="text-[var(--text-2)]">официальный аккаунт · @priday.life</span>
+                <span className="text-[var(--text-2)]">официальный аккаунт · @winlog.life</span>
               ) : isGroup ? (
                 <span className="text-[var(--text-2)]">
                   {groupMemberCount} участников{groupOnlineCount > 0 ? ` · ${groupOnlineCount} в сети` : ''}

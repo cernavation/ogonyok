@@ -7,6 +7,7 @@ import { AppleFooter } from '@/components/ogonek/landing/apple-footer'
 import { useScrollReveal } from '@/components/ogonek/landing/use-scroll-reveal'
 import { GlowCard } from '@/components/ui/spotlight-card'
 import { GlyphBackground } from '@/components/ui/backgrounds-glyph'
+import { WinlogAiPreview } from './winlog-previews'
 import { type Locale } from '@/src/content/i18n'
 
 interface AiPageProps {
@@ -61,10 +62,10 @@ const AI_PAGE_CONTENT: Record<
     badge: 'Нейросетевой наставник',
     title1: 'ИИ, который не льстит.',
     title2: 'Трезвый разбор твоих побед.',
-    subtitle: 'Никакой лести и шаблонных комплиментов. Огонёк видит скрытый темп и силу твоих решений.',
+    subtitle: 'Никакой лести и шаблонных комплиментов. Winlog видит скрытый темп и силу твоих решений.',
     ctaPrimary: 'Начать бесплатно',
     ctaPricing: 'Тарифы с ИИ ›',
-    macWindowHeader: 'Огонёк — AI Mentor & Analytics',
+    macWindowHeader: 'Winlog - AI Mentor & Analytics',
     zeroTrainingBadge: 'Zero Data Training',
     tasksEyebrow: 'Возможности',
     tasksTitle: 'Четыре задачи нашего ИИ',
@@ -75,14 +76,14 @@ const AI_PAGE_CONTENT: Record<
         title: '1. Сила преодоления',
         desc: 'Оценка трудности поступка, а не красоты слога.',
         badge: 'ФАКТЫ ВЫШЕ ЭМОЦИЙ',
-        tone: '#FF4D00',
+        tone: '#d76737',
       },
       {
         num: '2',
         title: '2. Твой реальный темп',
         desc: 'Сравнение динамики текущего месяца с предыдущим без иллюзий.',
         badge: 'ЧЕСТНАЯ ДИНАМИКА',
-        tone: '#2997ff',
+        tone: '#a1a1aa',
       },
       {
         num: '3',
@@ -132,7 +133,7 @@ const AI_PAGE_CONTENT: Record<
       },
       {
         badge: 'КЛУБ ОСНОВАТЕЛЕЙ',
-        name: 'Основатель Ultra',
+        name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ мес',
         desc: 'Максимальная глубина и персональный наставник каждого вечера.',
@@ -150,17 +151,17 @@ const AI_PAGE_CONTENT: Record<
     privacySubtitle: 'Никакого обучения публичных моделей на твоих сокровенных мыслях.',
     privacyLinkText: 'Читать манифест конфиденциальности',
     finalTitle: 'Узнай, на что ты способен',
-    finalSubtitle: 'Две минуты сегодня вечером — первый честный разбор твоей силы.',
+    finalSubtitle: 'Две минуты сегодня вечером - первый честный разбор твоей силы.',
     finalCta: 'Начать бесплатно',
   },
   ro: {
     badge: 'Mentor cu inteligență artificială',
     title1: 'Un AI care nu măgulește.',
     title2: 'Analiză lucidă a victoriilor tale.',
-    subtitle: 'Fără complimente șablonate și fără lingușiri. Priday vede ritmul ascuns și forța deciziilor tale.',
+    subtitle: 'Fără complimente șablonate și fără lingușiri. Winlog vede ritmul ascuns și forța deciziilor tale.',
     ctaPrimary: 'Începe gratuit',
     ctaPricing: 'Tarife cu AI ›',
-    macWindowHeader: 'Priday — AI Mentor & Analytics',
+    macWindowHeader: 'Winlog - AI Mentor & Analytics',
     zeroTrainingBadge: 'Zero Data Training',
     tasksEyebrow: 'Capabilități',
     tasksTitle: 'Cele patru obiective ale AI-ului nostru',
@@ -171,14 +172,14 @@ const AI_PAGE_CONTENT: Record<
         title: '1. Forța depășirii',
         desc: 'Evaluarea dificultății faptei, nu a frumuseții frazelor.',
         badge: 'FAPTE ÎNAINTEA EMOȚIILOR',
-        tone: '#FF4D00',
+        tone: '#d76737',
       },
       {
         num: '2',
         title: '2. Ritmul tău real',
         desc: 'Compararea dinamicii lunii curente cu cea precedentă, fără iluzii.',
         badge: 'DINAMICĂ ONESTĂ',
-        tone: '#2997ff',
+        tone: '#a1a1aa',
       },
       {
         num: '3',
@@ -228,7 +229,7 @@ const AI_PAGE_CONTENT: Record<
       },
       {
         badge: 'CLUBUL FONDATORILOR',
-        name: 'Fondator Ultra',
+        name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ lună',
         desc: 'Profunzime maximă și mentor dedicat pentru fiecare seară.',
@@ -253,10 +254,10 @@ const AI_PAGE_CONTENT: Record<
     badge: 'Neural AI Mentor',
     title1: 'AI that never flatters.',
     title2: 'Clear-eyed review of your wins.',
-    subtitle: 'No generic praise or empty compliments. Priday reveals your true pace and the strength of your choices.',
+    subtitle: 'No generic praise or empty compliments. Winlog reveals your true pace and the strength of your choices.',
     ctaPrimary: 'Start for free',
     ctaPricing: 'AI Pricing ›',
-    macWindowHeader: 'Priday — AI Mentor & Analytics',
+    macWindowHeader: 'Winlog - AI Mentor & Analytics',
     zeroTrainingBadge: 'Zero Data Training',
     tasksEyebrow: 'Capabilities',
     tasksTitle: 'Four core missions of our AI',
@@ -267,14 +268,14 @@ const AI_PAGE_CONTENT: Record<
         title: '1. Overcoming strength',
         desc: 'Assessing the real grit of the deed, not poetic phrasing.',
         badge: 'FACTS OVER EMOTIONS',
-        tone: '#FF4D00',
+        tone: '#d76737',
       },
       {
         num: '2',
         title: '2. Your true momentum',
         desc: 'Pacing comparison between this month and the previous, without illusions.',
         badge: 'HONEST PROGRESSION',
-        tone: '#2997ff',
+        tone: '#a1a1aa',
       },
       {
         num: '3',
@@ -324,7 +325,7 @@ const AI_PAGE_CONTENT: Record<
       },
       {
         badge: 'FOUNDERS CLUB',
-        name: 'Founder Ultra',
+        name: 'Winlog Ultra',
         price: '50 MDL',
         period: '/ month',
         desc: 'Maximum depth and an individualized mentor for every reflection.',
@@ -353,22 +354,22 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
 
   return (
     <div
-      className="landing relative min-h-screen bg-[#050505] text-white selection:bg-[#FF4D00]/30 selection:text-white overflow-x-hidden"
+      className="landing relative min-h-screen bg-black text-white selection:bg-[#d76737]/30 selection:text-white overflow-x-hidden"
       ref={containerRef}
     >
       {/* ── FIXED GLYPH CANVAS BACKGROUND ── */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <GlyphBackground
-          className="size-full opacity-65"
-          glowColor="#333338"
-          shapeColor="#d1d1d6"
+          className="size-full opacity-45"
+          glowColor="#222226"
+          shapeColor="#a1a1aa"
           fontSize={10}
-          rest={0.10}
-          haze={0.22}
-          hoverInk={0.40}
+          rest={0.08}
+          haze={0.18}
+          hoverInk={0.35}
           interactive={true}
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_40%,#050505_95%)] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,transparent_40%,#000000_95%)] pointer-events-none" />
       </div>
 
       {/* ── SCROLLING FOREGROUND STAGE ─────────────────────────────── */}
@@ -379,7 +380,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
         <section className="relative flex flex-col items-center text-center pt-28 sm:pt-36 pb-16 sm:pb-24 px-4 sm:px-6 md:px-8 bg-transparent">
           <div className="relative z-10 max-w-[1040px] mx-auto flex flex-col items-center">
             <div className="fade-blur mb-5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.05] backdrop-blur-md border border-white/10">
-              <span className="w-2 h-2 rounded-full bg-[#FF4D00]" />
+              <span className="w-2 h-2 rounded-full bg-[#d76737]" />
               <span className="text-[12px] font-medium tracking-wide uppercase text-[#a1a1a6]">
                 {content.badge}
               </span>
@@ -388,7 +389,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
             <h1 className="apple-hero-title fade-blur delay-75 mb-6 sm:mb-8 max-w-[920px] text-wrap-balance">
               {content.title1}
               <br />
-              <span className="text-[#FF4D00]">{content.title2}</span>
+              <span className="text-[#d76737]">{content.title2}</span>
             </h1>
 
             <p className="apple-body apple-hero-subtitle fade-up delay-150 max-w-[680px] mb-8 sm:mb-10 text-[#86868b] text-[17px] sm:text-[19px] leading-[1.38] text-wrap-balance">
@@ -410,33 +411,25 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
               </a>
             </div>
 
-            {/* Showcase Visual: Реальный скриншот аналитики в окне macOS */}
+            {/* Showcase Visual: Live Winlog AI Preview */}
             <div className="fade-scale delay-250 w-full max-w-[980px]">
-              <div className="p-2 sm:p-3 rounded-[24px] sm:rounded-[28px] bg-[#121215]/90 border border-white/10 shadow-[0_24px_70px_rgba(0,0,0,0.8)] backdrop-blur-xl overflow-hidden">
-                <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/[0.06] mb-2 sm:mb-3">
+              <div className="p-2 sm:p-3 rounded-[24px] sm:rounded-[28px] bg-[#060608] border border-white/[0.1] shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between px-3 sm:px-4 py-2 border-b border-white/[0.06] mb-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-white/15" />
                   </div>
                   <span className="text-[11px] sm:text-[12px] font-mono text-[#86868b]">
                     {content.macWindowHeader}
                   </span>
-                  <span className="text-[11px] font-mono text-[#FF4D00]">
+                  <span className="text-[11px] font-mono text-[#d76737]">
                     {content.zeroTrainingBadge}
                   </span>
                 </div>
 
-                <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-[#0a0a0c]">
-                  <picture>
-                    <source media="(max-width: 640px)" srcSet="/landing/screens/mobile-analytics.png" />
-                    <img
-                      src="/landing/screens/analytics.png"
-                      alt={content.macWindowHeader}
-                      className="w-full h-auto object-cover block"
-                      loading="lazy"
-                    />
-                  </picture>
+                <div className="relative rounded-[16px] sm:rounded-[20px] overflow-hidden bg-black">
+                  <WinlogAiPreview locale={locale} />
                 </div>
               </div>
             </div>
@@ -444,7 +437,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
         </section>
 
         {/* ── 2. ЧЕТЫРЕ ЗАДАЧИ НАШЕГО ИИ ────────────────────────────── */}
-        <section className="py-16 sm:py-20 md:py-28 bg-[#0a0a0c]/60 backdrop-blur-xl border-t border-white/[0.08]">
+        <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.08]">
           <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
             <div className="text-center max-w-[760px] mx-auto mb-14 sm:mb-18">
               <span className="apple-eyebrow fade-up block mb-4">{content.tasksEyebrow}</span>
@@ -460,17 +453,10 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
               {content.tasks.map((task) => (
                 <div
                   key={task.num}
-                  className="p-7 sm:p-9 rounded-[24px] bg-[#121215]/80 backdrop-blur-2xl border border-white/10 hover:border-white/25 transition-all flex flex-col justify-between group shadow-xl min-h-[220px]"
+                  className="p-7 sm:p-9 rounded-2xl bg-[#060608] border border-white/[0.1] hover:border-white/20 transition-all flex flex-col justify-between group min-h-[220px]"
                 >
                   <div>
-                    <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 border"
-                      style={{
-                        backgroundColor: `${task.tone}18`,
-                        borderColor: `${task.tone}40`,
-                        color: task.tone,
-                      }}
-                    >
+                    <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6 bg-white/[0.05] border border-white/[0.1] text-white/85">
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                       </svg>
@@ -482,10 +468,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
                       {task.desc}
                     </p>
                   </div>
-                  <div
-                    className="pt-6 border-t border-white/[0.06] mt-6 text-[12px] font-mono tracking-wider"
-                    style={{ color: task.tone }}
-                  >
+                  <div className="pt-6 border-t border-white/[0.06] mt-6 text-[12px] font-mono tracking-wider text-white/55">
                     {task.badge}
                   </div>
                 </div>
@@ -495,7 +478,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
         </section>
 
         {/* ── 3. ТАРИФЫ С ИИ ────────────────────────────────────────── */}
-        <section id="pricing-ai" className="py-16 sm:py-20 md:py-28 bg-transparent border-t border-white/[0.08] scroll-mt-24 sm:scroll-mt-32">
+        <section id="pricing-ai" className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.08] scroll-mt-24 sm:scroll-mt-32">
           <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
             <div className="text-center max-w-[760px] mx-auto mb-14 sm:mb-18">
               <span className="apple-eyebrow fade-up block mb-4">{content.pricingEyebrow}</span>
@@ -511,14 +494,14 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
               {content.pricingTiers.map((tier, idx) => (
                 <GlowCard
                   key={tier.name}
-                  glowColor={idx === 0 ? 'green' : idx === 1 ? 'blue' : 'orange'}
+                  glowColor={idx === 1 ? 'orange' : 'green'}
                   customSize
-                  className={`p-7 sm:p-8 flex flex-col justify-between bg-[#121215]/85 relative min-h-[500px] ${
-                    tier.highlight ? 'border border-[#FF4D00] shadow-[0_0_30px_rgba(255,77,0,0.15)]' : ''
+                  className={`p-7 sm:p-8 flex flex-col justify-between bg-[#060608] rounded-2xl relative min-h-[500px] ${
+                    tier.highlight ? '!border-[#d76737]/60' : 'border border-white/[0.1]'
                   }`}
                 >
                   {tier.popularBadge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#FF4D00] text-white text-[10px] font-bold uppercase tracking-wider z-20 whitespace-nowrap">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#d76737] text-black text-[10px] font-semibold uppercase tracking-wider z-20 whitespace-nowrap">
                       {tier.popularBadge}
                     </div>
                   )}
@@ -539,7 +522,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
                       <div className="space-y-3 text-[14px] text-white/90 mb-8 min-h-[140px]">
                         {tier.features.map((feat) => (
                           <div key={feat} className="flex items-center gap-2.5">
-                            <span className={idx === 0 ? 'text-[#00c7be]' : idx === 1 ? 'text-[#2997ff]' : 'text-[#FF4D00]'}>
+                            <span className={tier.highlight ? 'text-[#d76737]' : 'text-white/75'}>
                               ✓
                             </span>
                             <span>{feat}</span>
@@ -550,10 +533,10 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
 
                     <Link
                       href="/register"
-                      className={`w-full py-3 rounded-full text-[14px] text-center font-medium block transition-all ${
+                      className={`w-full py-3 rounded-full text-[14px] text-center font-semibold block transition-all ${
                         tier.highlight
-                          ? 'apple-btn-primary !bg-[#FF4D00] hover:!bg-[#ff621f]'
-                          : 'bg-white/[0.06] hover:bg-white/[0.12] text-white border border-white/10'
+                          ? 'bg-[#d76737] hover:bg-[#e0784b] text-black'
+                          : 'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.12]'
                       }`}
                     >
                       {content.finalCta}
@@ -566,10 +549,10 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
         </section>
 
         {/* ── 4. ПРИВАТНОСТЬ И ZERO-TRAINING ────────────────────────── */}
-        <section className="py-16 sm:py-20 md:py-28 bg-[#0a0a0c]/60 backdrop-blur-xl border-t border-white/[0.08]">
+        <section className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.08]">
           <div className="max-w-[860px] mx-auto px-4 sm:px-6 md:px-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/10 text-xs text-[#86868b] mb-6">
-              <span className="text-[#FF4D00] font-medium">{content.privacyBadge}</span>
+              <span className="text-[#d76737] font-medium">{content.privacyBadge}</span>
               <span>·</span>
               <span>{content.privacyCorporate}</span>
             </div>
@@ -584,7 +567,7 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
 
             <Link
               href={`/legal/${locale}#privacy`}
-              className="text-[#FF4D00] hover:underline text-[15px] font-medium inline-flex items-center gap-1.5"
+              className="text-[#d76737] hover:text-[#e0784b] hover:underline text-[15px] font-medium inline-flex items-center gap-1.5"
             >
               <span>{content.privacyLinkText}</span>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -152,7 +152,7 @@ export function AppLockScreen({ onUnlocked, reason = 'open' }: Props) {
       className="app-lock-screen"
       role="dialog"
       aria-modal="true"
-      aria-label="Priday заблокирован"
+      aria-label="Winlog заблокирован"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -161,7 +161,7 @@ export function AppLockScreen({ onUnlocked, reason = 'open' }: Props) {
         <span className="app-lock-flame" aria-hidden="true">
           🔥
         </span>
-        <p className="app-lock-brand">Priday</p>
+        <p className="app-lock-brand">Winlog</p>
 
         <span
           className="app-lock-avatar"
@@ -175,7 +175,7 @@ export function AppLockScreen({ onUnlocked, reason = 'open' }: Props) {
           )}
         </span>
 
-        <h1 className="app-lock-name">{state.profile.displayName || 'Priday'}</h1>
+        <h1 className="app-lock-name">{state.profile.displayName || 'Winlog'}</h1>
         <p className="app-lock-reason">
           <LockKeyhole size={13} /> {REASON_TEXT[reason]}
         </p>

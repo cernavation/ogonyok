@@ -112,7 +112,7 @@ function sanitizeIncomingPayload(raw: unknown): ModerationSubmissionPayload | nu
     topic: asString(ach.topic, 300),
     achievedAtISO: asString(ach.achievedAtISO, 40) || new Date().toISOString(),
     strictness: asString(ach.strictness, 40) || 'strict',
-    verifier: asString(ach.verifier, 200) || 'Команда верификации Priday',
+    verifier: asString(ach.verifier, 200) || 'Команда верификации Winlog',
     regulationSummary: asString(ach.regulationSummary, 600),
   }
 

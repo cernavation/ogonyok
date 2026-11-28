@@ -357,7 +357,7 @@ export function MilestoneModal({
                 <div className="p-4 rounded-2xl bg-zinc-900/80 border border-zinc-800/80 flex flex-col gap-2.5 text-xs text-zinc-300 leading-relaxed">
                   <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
                     <Sparkles size={15} />
-                    <span>{review.title || 'Сводный комментарий Priday'}</span>
+                    <span>{review.title || 'Сводный комментарий Winlog'}</span>
                   </div>
                   {review.summary && <p>{review.summary}</p>}
                   {review.dynamicsComment && <p>{review.dynamicsComment}</p>}
@@ -477,7 +477,7 @@ export function MilestoneModal({
                     playClick(soundEnabled)
                     if (navigator.clipboard) {
                       navigator.clipboard.writeText(
-                        `🔥 Мой рубеж #${milestoneNumber} дней в Priday! Средний балл: ${stats?.last100AverageScore || 8.8}★. Летопись личной силы.`
+                        `🔥 Мой рубеж #${milestoneNumber} дней в Winlog! Средний балл: ${stats?.last100AverageScore || 8.8}★. Летопись личной силы.`
                       )
                       onNotify?.('Карточка рубежа скопирована для друзей')
                     }

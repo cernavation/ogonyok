@@ -69,7 +69,7 @@ export function buildStoryShareText(
   if (digest?.streak) lines.push(`🔥 Серия: ${digest.streak} дней подряд`)
   if (digest?.city) lines.push(`📍 ${digest.city}`)
   lines.push('')
-  lines.push(`Сторис ${name} (@${username}) · дневник гордости #Priday`)
+  lines.push(`Сторис ${name} (@${username}) · дневник гордости #Winlog`)
   return lines.join('\n')
 }
 
@@ -193,9 +193,9 @@ export function generateStoryCardSvg(input: StoryShareCardInput): string {
 
   <!-- Бренд -->
   <g transform="translate(72, 96)">
-    <path d="M16 0L20 12L32 16L20 20L16 32L12 20L0 16L12 12Z" fill="#ff8a3d" />
-    <text x="46" y="25" fill="#ff8a3d" font-family="'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="800" letter-spacing="2">PRIDAY</text>
-    <text x="190" y="25" fill="rgba(255,255,255,0.6)" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22">· дневник силы</text>
+    <path d="M16 0L20 12L32 16L20 20L16 32L12 20L0 16L12 12Z" fill="#d76737" />
+    <text x="46" y="25" fill="#d76737" font-family="'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="800" letter-spacing="2">WINLOG</text>
+    <text x="196" y="25" fill="rgba(255,255,255,0.6)" font-family="'Helvetica Neue', Arial, sans-serif" font-size="22">· дневник силы</text>
   </g>
 
   <!-- Автор -->
@@ -235,7 +235,7 @@ export function generateStoryCardSvg(input: StoryShareCardInput): string {
   <text x="72" y="${CARD_H - 42}" fill="rgba(255,255,255,0.6)" font-family="'Helvetica Neue', Arial, sans-serif" font-size="24">${escapeXml(
     statLine
   )}</text>
-  <text x="${CARD_W - 72}" y="${CARD_H - 42}" text-anchor="end" fill="rgba(255,255,255,0.85)" font-family="'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="700">#Priday</text>
+  <text x="${CARD_W - 72}" y="${CARD_H - 42}" text-anchor="end" fill="rgba(255,255,255,0.85)" font-family="'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="700">#Winlog</text>
 </svg>`.trim()
 }
 

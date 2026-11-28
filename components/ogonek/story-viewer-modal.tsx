@@ -290,7 +290,7 @@ export function StoryViewerModal({
   const shareUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}#story-${story.id}`
-      : 'https://ogonek.cernavation.app'
+      : 'https://winlog.life'
   const shareCardInput = {
     name: story.name,
     username: story.username,
@@ -389,7 +389,7 @@ export function StoryViewerModal({
     setSharing(true)
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'Сторис Priday', text: shareText, url: shareUrl })
+        await navigator.share({ title: 'Сторис Winlog', text: shareText, url: shareUrl })
       } else {
         await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`)
       }

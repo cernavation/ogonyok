@@ -49,22 +49,16 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           className="flex items-center gap-2 group transition-opacity hover:opacity-85"
-          aria-label="Priday — главная страница"
+          aria-label="Winlog — главная страница"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0">
-            <defs>
-              <linearGradient id="appleFlameNav" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ffa600" />
-                <stop offset="100%" stopColor="#ff6b35" />
-              </linearGradient>
-            </defs>
             <path
               d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"
-              fill="url(#appleFlameNav)"
+              fill="#d76737"
             />
           </svg>
           <span className="text-[14px] font-semibold tracking-tight text-[#f5f5f7]">
-            Priday
+            Winlog
           </span>
         </a>
 
@@ -87,7 +81,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
           <button
             type="button"
             onClick={() => onOpenAuth('signin')}
-            className="text-[12px] font-normal text-[#2997ff] hover:text-[#6cb4ff] transition-colors cursor-pointer border-none bg-transparent px-2 py-1"
+            className="text-[12px] font-normal text-white/75 hover:text-white transition-colors cursor-pointer border-none bg-transparent px-2 py-1"
           >
             Войти
           </button>
@@ -95,7 +89,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
           <button
             type="button"
             onClick={() => onOpenAuth('register')}
-            className="inline-flex items-center justify-center rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white text-[12px] font-medium px-3.5 py-1 transition-all shadow-sm cursor-pointer border-none"
+            className="inline-flex items-center justify-center rounded-full bg-[#d76737] hover:bg-[#e0784b] active:scale-95 text-black text-[12px] font-semibold px-3.5 py-1 transition-all cursor-pointer border-none"
           >
             Регистрация
           </button>
@@ -133,7 +127,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
                 key={link.href}
                 type="button"
                 onClick={() => handleNavClick(link.href)}
-                className="text-left text-[22px] font-semibold text-[#f5f5f7] tracking-tight hover:text-[#2997ff] transition-colors border-none bg-transparent cursor-pointer pb-3 border-b border-white/[0.08]"
+                className="text-left text-[22px] font-semibold text-[#f5f5f7] tracking-tight hover:text-[#d76737] transition-colors border-none bg-transparent cursor-pointer pb-3 border-b border-white/[0.08]"
               >
                 {link.label}
               </button>
@@ -147,7 +141,7 @@ export function LandingNav({ onOpenAuth }: LandingNavProps) {
                 setMobileOpen(false)
                 onOpenAuth('register')
               }}
-              className="w-full py-3.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-[16px] font-medium text-center shadow-lg cursor-pointer border-none transition-all active:scale-95"
+              className="w-full py-3.5 rounded-full bg-[#d76737] hover:bg-[#e0784b] text-black text-[16px] font-semibold text-center cursor-pointer border-none transition-all active:scale-95"
             >
               Регистрация
             </button>
