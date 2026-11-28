@@ -308,12 +308,12 @@ async function runAudit() {
     await monthlyBtn.click()
     await desktopPage.waitForTimeout(300)
     const priceTextMonthly = await desktopPage.locator('#pricing').innerText()
-    recordTest('Interactivity', 'Pricing billing cycle switches to Monthly (25 MDL/mo)', priceTextMonthly.includes('25 MDL') && priceTextMonthly.includes('/ месяц'))
+    recordTest('Interactivity', 'Pricing billing cycle switches to Monthly (20 MDL/mo)', priceTextMonthly.includes('20 MDL') && priceTextMonthly.includes('/ месяц'))
 
     await yearlyBtn.click()
     await desktopPage.waitForTimeout(300)
     const priceTextYearly = await desktopPage.locator('#pricing').innerText()
-    recordTest('Interactivity', 'Pricing billing cycle switches to Yearly (240 MDL/yr)', priceTextYearly.includes('240 MDL') && priceTextYearly.includes('/ год'))
+    recordTest('Interactivity', 'Pricing billing cycle switches to Yearly (192 MDL/yr)', priceTextYearly.includes('192 MDL') && priceTextYearly.includes('/ год'))
 
     // 3.5 AppInterfaceShowcase Tabs & Frame Switchers
     const tabNames = ['feed', 'analytics', 'leaderboard', 'chats']

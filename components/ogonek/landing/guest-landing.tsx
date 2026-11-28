@@ -679,8 +679,17 @@ export function GuestLanding({ onEnterDemo, onNotify }: Props) {
               <div className="space-y-4">
                 <div>
                   <h3 className="text-xl font-black tracking-tight">{TIER_NAMES.pro}</h3>
-                  <div className="mt-2 text-3xl font-black tracking-tight text-white font-mono">
-                    {billingPeriod === 'year' ? '240 MDL / год' : '25 MDL / мес'}
+                  <div className="mt-2 text-3xl font-black tracking-tight text-white font-mono flex items-baseline flex-wrap gap-x-2">
+                    {billingPeriod === 'month' && (
+                      <span className="text-lg font-semibold text-zinc-400 line-through">
+                        {TIER_PRICES.pro.oldMonthly} MDL
+                      </span>
+                    )}
+                    <span>
+                      {billingPeriod === 'year'
+                        ? TIER_PRICES.pro.formattedYearly
+                        : TIER_PRICES.pro.formattedMonthly}
+                    </span>
                   </div>
                   <p className="text-xs text-zinc-400 mt-1">
                     Для глубокой работы над собой и ежедневного разбора ИИ

@@ -32,7 +32,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
   const containerRef = useScrollReveal()
   const modesTrackRef = React.useRef<HTMLDivElement>(null)
   const [authModal, setAuthModal] = useState<AuthMode | null>(null)
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly')
 
   const content = getLandingContent(locale)
   const stories = LOCALIZED_STORIES[locale] || LOCALIZED_STORIES.ru
@@ -722,13 +722,18 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
                       {content.pricing.tiers[1].desc}
                     </p>
 
-                    <div className="mb-8 pb-6 border-b border-white/[0.08]">
+                    <div className="mb-8 pb-6 border-b border-white/[0.08] flex items-baseline flex-wrap gap-x-2.5 gap-y-1">
+                      {billingCycle === 'monthly' && content.pricing.tiers[1].oldPriceMonthly && (
+                        <span className="text-[20px] font-medium font-sans text-[#86868b] line-through tabular-nums">
+                          {content.pricing.tiers[1].oldPriceMonthly}
+                        </span>
+                      )}
                       <span className="text-[44px] font-bold font-sans text-white tabular-nums">
                         {billingCycle === 'yearly'
                           ? content.pricing.tiers[1].priceYearly
                           : content.pricing.tiers[1].priceMonthly}
                       </span>
-                      <span className="text-[14px] text-[#86868b] ml-2">
+                      <span className="text-[14px] text-[#86868b]">
                         {billingCycle === 'yearly'
                           ? content.pricing.tiers[1].periodYearly
                           : content.pricing.tiers[1].periodMonthly}

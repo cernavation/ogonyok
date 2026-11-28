@@ -22,8 +22,9 @@ describe('Step 12: Premium & Upgrade permissions and logic', () => {
     assert.equal(TIER_PRICES.free.yearly, 0)
     assert.equal(TIER_PRICES.free.formattedMonthly, '0 MDL')
 
-    assert.equal(TIER_PRICES.pro.monthly, 25)
-    assert.equal(TIER_PRICES.pro.yearly, 240)
+    assert.equal(TIER_PRICES.pro.monthly, 20)
+    assert.equal(TIER_PRICES.pro.oldMonthly, 30)
+    assert.equal(TIER_PRICES.pro.yearly, 192)
     assert.equal(TIER_PRICES.pro.currency, 'MDL')
     assert.equal(TIER_PRICES.pro.discountBadge, '-20%')
 

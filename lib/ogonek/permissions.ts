@@ -374,10 +374,11 @@ export function getPaymentButtonLabel(
 
 /**
  * ЦЕНЫ ТАРИФОВ (ЭТАПЫ 4 И 13)
- * Единый источник истины: Free 0 MDL, Pro 25 MDL (240 MDL/год), Ultra 50 MDL (480 MDL/год).
+ * Единый источник истины: Free 0 MDL, Pro 20 MDL (было 30 MDL; 192 MDL/год), Ultra 50 MDL (480 MDL/год).
  */
 export interface TierPriceInfo {
   monthly: number
+  oldMonthly?: number
   yearly: number
   currency: string
   discountBadge?: string
@@ -394,12 +395,13 @@ export const TIER_PRICES: Record<SubscriptionTier, TierPriceInfo> = {
     formattedYearly: 'Бесплатно навсегда',
   },
   pro: {
-    monthly: 25,
-    yearly: 240,
+    monthly: 20,
+    oldMonthly: 30,
+    yearly: 192,
     currency: 'MDL',
     discountBadge: '-20%',
-    formattedMonthly: '25 MDL / мес',
-    formattedYearly: '240 MDL / год',
+    formattedMonthly: '20 MDL / мес',
+    formattedYearly: '192 MDL / год',
   },
   ultra: {
     monthly: 50,

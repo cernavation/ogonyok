@@ -41,6 +41,7 @@ const AI_PAGE_CONTENT: Record<
     pricingTiers: {
       badge: string
       name: string
+      oldPrice?: string
       price: string
       period: string
       desc: string
@@ -119,7 +120,8 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'ПРЕМИУМ',
         name: 'Поддержка Pro',
-        price: '25 MDL',
+        oldPrice: '30 MDL',
+        price: '20 MDL',
         period: '/ мес',
         desc: 'Ежедневный персональный разбор дня нейросетью.',
         features: [
@@ -215,7 +217,8 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'PREMIUM',
         name: 'Suport Pro',
-        price: '25 MDL',
+        oldPrice: '30 MDL',
+        price: '20 MDL',
         period: '/ lună',
         desc: 'Analiză zilnică personalizată oferită de inteligența artificială.',
         features: [
@@ -311,7 +314,8 @@ const AI_PAGE_CONTENT: Record<
       {
         badge: 'PRO',
         name: 'Pro Support',
-        price: '25 MDL',
+        oldPrice: '30 MDL',
+        price: '20 MDL',
         period: '/ month',
         desc: 'Daily personalized AI evaluation of every recorded day.',
         features: [
@@ -512,8 +516,14 @@ export function AiPageView({ locale = 'ru' }: { locale?: Locale }) {
                         {tier.badge}
                       </span>
                       <h3 className="text-[22px] sm:text-[24px] font-bold text-white mb-1">{tier.name}</h3>
-                      <div className="text-[32px] font-bold text-white font-sans mb-3">
-                        {tier.price} <span className="text-xs text-[#86868b] font-normal">{tier.period}</span>
+                      <div className="text-[32px] font-bold text-white font-sans mb-3 flex items-baseline flex-wrap gap-x-2">
+                        {tier.oldPrice && (
+                          <span className="text-[18px] font-medium text-[#86868b] line-through tabular-nums">
+                            {tier.oldPrice}
+                          </span>
+                        )}
+                        <span>{tier.price}</span>
+                        <span className="text-xs text-[#86868b] font-normal">{tier.period}</span>
                       </div>
                       <p className="text-[14px] text-[#86868b] mb-6 leading-relaxed min-h-[42px]">
                         {tier.desc}

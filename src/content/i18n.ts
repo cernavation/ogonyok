@@ -38,6 +38,7 @@ export interface PricingTier {
   id: string
   name: string
   desc: string
+  oldPriceMonthly?: string
   priceMonthly: string
   priceYearly: string
   period?: string
@@ -548,10 +549,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Премиум',
           desc: 'Официальная верификация и умный ИИ-анализ каждого дня.',
-          priceMonthly: '25 MDL',
-          priceYearly: '240 MDL',
+          oldPriceMonthly: '30 MDL',
+          priceMonthly: '20 MDL',
+          priceYearly: '192 MDL',
           periodMonthly: '/ месяц',
-          periodYearly: '/ год (~20 MDL/мес)',
+          periodYearly: '/ год (~16 MDL/мес)',
           badge: 'РЕКОМЕНДУЕМЫЙ ПЛАН',
           features: [
             'Все возможности Базового тарифа',
@@ -946,10 +948,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Premium',
           desc: 'Verificare oficială și analiză inteligentă AI pentru fiecare zi.',
-          priceMonthly: '25 MDL',
-          priceYearly: '240 MDL',
+          oldPriceMonthly: '30 MDL',
+          priceMonthly: '20 MDL',
+          priceYearly: '192 MDL',
           periodMonthly: '/ lună',
-          periodYearly: '/ an (~20 MDL/lună)',
+          periodYearly: '/ an (~16 MDL/lună)',
           badge: 'PLAN RECOMANDAT',
           features: [
             'Toate beneficiile planului De bază',
@@ -1344,10 +1347,11 @@ export const I18N_LANDING: Record<Locale, LandingContent> = {
           id: 'pro',
           name: 'Pro',
           desc: 'Official verification and smart daily AI analysis.',
-          priceMonthly: '25 MDL',
-          priceYearly: '240 MDL',
+          oldPriceMonthly: '30 MDL',
+          priceMonthly: '20 MDL',
+          priceYearly: '192 MDL',
           periodMonthly: '/ month',
-          periodYearly: '/ year (~20 MDL/mo)',
+          periodYearly: '/ year (~16 MDL/mo)',
           badge: 'RECOMMENDED PLAN',
           features: [
             'All Basic plan features included',

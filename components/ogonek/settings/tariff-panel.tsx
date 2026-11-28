@@ -46,7 +46,7 @@ const PLANS: {
   },
   {
     id: 'pro',
-    price: '25 MDL',
+    price: '20 MDL',
     period: 'в месяц',
     recommended: true,
     features: [

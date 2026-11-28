@@ -253,7 +253,7 @@ export function PremiumView({
           </div>
         </div>
 
-        {/* TARIFF 2: ПРЕМИУМ (25 MDL / $1.5 в месяц) [ХИТ] */}
+        {/* TARIFF 2: ПРЕМИУМ (20 MDL / $1.2 в месяц, было 30 MDL) [ХИТ] */}
         <div
           className={`flex flex-col justify-between p-6 sm:p-7 rounded-2xl bg-[var(--bg-elev)] border transition-all relative ${
             activeTier === 'premium'
@@ -285,14 +285,19 @@ export function PremiumView({
               Официальная верификация и умный ИИ-анализ записей
             </p>
 
-            {/* Price: 25 MDL / $1.5 в месяц */}
+            {/* Price: 20 MDL (было 30 MDL) / $1.2 в месяц */}
             <div className="my-5 pb-5 border-b border-[var(--line)]">
-              <div className="flex items-baseline gap-1">
+              <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                {billing === 'monthly' && (
+                  <span className="text-lg font-bold text-[var(--text-2)] line-through">
+                    30 MDL
+                  </span>
+                )}
                 <span className="text-3xl sm:text-4xl font-[900] text-[var(--text)]">
-                  {billing === 'monthly' ? '25 MDL' : '240 MDL'}
+                  {billing === 'monthly' ? '20 MDL' : '192 MDL'}
                 </span>
                 <span className="text-xs text-[var(--text-2)] font-semibold">
-                  {billing === 'monthly' ? '/ $1.5 в месяц' : '/ $14 в год'}
+                  {billing === 'monthly' ? '/ $1.2 в месяц' : '/ $11 в год'}
                 </span>
               </div>
               <p className="text-[11px] text-[#1d9bf0] mt-1 font-semibold">
@@ -526,7 +531,7 @@ export function PremiumView({
                     : 'bg-[#1d9bf0]/15 text-[#1d9bf0]'
                 }`}
               >
-                {modalTier === 'ultra' ? '50 MDL / $3' : '25 MDL / $1.5'}
+                {modalTier === 'ultra' ? '50 MDL / $3' : '20 MDL / $1.2'}
               </span>
             </div>
 

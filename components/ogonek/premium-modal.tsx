@@ -218,7 +218,12 @@ export function PremiumModal({ isOpen, onClose, onNotify }: PremiumModalProps) {
 
                   {/* Price */}
                   <div className="mb-2.5">
-                    <div className="flex items-baseline gap-1">
+                    <div className="flex items-baseline gap-1.5">
+                      {period === 'monthly' && price.oldMonthly && (
+                        <span className="text-[13px] font-semibold text-[var(--muted,#71767b)] line-through leading-tight">
+                          {price.oldMonthly} MDL
+                        </span>
+                      )}
                       <span className="text-[20px] font-[900] text-[var(--text,#e7e9ea)] leading-tight">
                         {tier === 'free'
                           ? '0 MDL'

@@ -85,7 +85,7 @@ async function main() {
     await page.click('button[aria-label*="Оплата за год"]')
     await page.waitForTimeout(200)
     const yearlyProPrice = await page.locator('#pricing').textContent()
-    assert.match(yearlyProPrice || '', /240 MDL \/ год/, 'Тариф Премиум за год должен стоить 240 MDL')
+    assert.match(yearlyProPrice || '', /192 MDL \/ год/, 'Тариф Премиум за год должен стоить 192 MDL')
     assert.match(yearlyProPrice || '', /480 MDL \/ год/, 'Тариф Ultra за год должен стоить 480 MDL')
     console.log('  ✔ Блок тарифов из permissions.ts и скидка -20% проверены')
 

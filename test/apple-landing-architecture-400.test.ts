@@ -978,13 +978,26 @@ describe('8. Тарифные лимиты, разрешения и мягкая
   })
 
   // 7-20: Проверка цен тарифов и скидок
-  it('цена тарифа Pro на месяц составляет 25 MDL', () => {
-    assert.strictEqual(TIER_PRICES.pro.monthly, 25)
+  it('цена тарифа Pro на месяц составляет 20 MDL (зачёркнута старая цена 30 MDL)', () => {
+    assert.strictEqual(TIER_PRICES.pro.monthly, 20)
+    assert.strictEqual(TIER_PRICES.pro.oldMonthly, 30)
   })
 
-  it('цена тарифа Pro на год составляет 240 MDL (скидка 20%)', () => {
-    assert.strictEqual(TIER_PRICES.pro.yearly, 240)
-    assert.strictEqual(TIER_PRICES.pro.yearly, 25 * 12 * 0.8)
+  it('цена тарифа Pro на год составляет 192 MDL (скидка 20%)', () => {
+    assert.strictEqual(TIER_PRICES.pro.yearly, 192)
+    assert.strictEqual(TIER_PRICES.pro.yearly, 20 * 12 * 0.8)
+  })
+
+  it('лендинг по умолчанию показывает ежемесячный период оплаты и зачёркнутые 30 MDL для Премиума', () => {
+    const landingCode = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/ogonek/landing/landing-page.tsx'),
+      'utf-8'
+    )
+    const i18nCode = fs.readFileSync(path.resolve(process.cwd(), 'src/content/i18n.ts'), 'utf-8')
+    assert.ok(landingCode.includes("useState<'monthly' | 'yearly'>('monthly')"))
+    assert.ok(i18nCode.includes("oldPriceMonthly: '30 MDL'"))
+    assert.ok(i18nCode.includes("priceMonthly: '20 MDL'"))
+    assert.ok(i18nCode.includes("priceYearly: '192 MDL'"))
   })
 
   it('цена тарифа Ultra на месяц составляет 50 MDL', () => {
@@ -1124,10 +1137,10 @@ describe('8. Тарифные лимиты, разрешения и мягкая
     assert.strictEqual(normalizeTier(undefined), 'free')
   })
 
-  it('годовая подписка на Pro экономит ровно 60 MDL в год', () => {
+  it('годовая подписка на Pro экономит ровно 48 MDL в год', () => {
     const monthlySum = TIER_PRICES.pro.monthly * 12
     const saving = monthlySum - TIER_PRICES.pro.yearly
-    assert.strictEqual(saving, 60)
+    assert.strictEqual(saving, 48)
   })
 
   it('годовая подписка на Ultra экономит ровно 120 MDL в год', () => {
