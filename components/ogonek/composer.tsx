@@ -1,8 +1,20 @@
 'use client'
 
-import { BookmarkCheck, Briefcase, CalendarDays, Check, ChevronDown, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
+import { BookmarkCheck, Briefcase, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Dumbbell, Flame, Globe, GraduationCap, Heart, HelpCircle, ImagePlus, ListPlus, Loader2, Lock, Mic, Send, Shield, Sparkles, Star, Users, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { createPortal } from 'react-dom'
+import {
+  RU_WEEKDAY_SHORT,
+  buildCalendarMonthGrid,
+  clampDateISOToToday,
+  dateKeyToMiddayISO,
+  extractCalendarDateKey,
+  formatMonthTitleRu,
+  formatShortDateRuFromKey,
+  getLocalTodayDateKey,
+  getLocalYesterdayDateKey,
+  isFutureDateKey,
+} from '@/lib/ogonek/calendar-date'
 import type { PrideEvaluation } from '@/lib/ogonek/evaluate-heuristic'
 import { savePhoto, resolvePhotoUrl, uploadDayPhotoToStorage } from '@/lib/ogonek/photos'
 import { playClick, playSuccess } from '@/lib/ogonek/sound'
@@ -384,7 +396,10 @@ export function Composer({
   const [showPublicWarning, setShowPublicWarning] = useState(false)
   const [dontShowPublicWarningAgain, setDontShowPublicWarningAgain] = useState(false)
   const [showHelpGuide, setShowHelpGuide] = useState(false)
-  const dateInputRef = useRef<HTMLInputElement | null>(null)
+  const [dateMenuOpen, setDateMenuOpen] = useState(false)
+  const dateBtnRef = useRef<HTMLButtonElement | null>(null)
+  const dateMenuRef = useRef<HTMLDivElement | null>(null)
+  const [datePos, setDatePos] = useState<{ top: number; left: number } | null>(null)
 
   /** Модалка торжественной ИИ-оценки дня */
   const [showCeremonyModal, setShowCeremonyModal] = useState(false)
@@ -397,19 +412,127 @@ export function Composer({
   const [activePrompt, setActivePrompt] = useState<string | null>(null)
   const [hintIndex, setHintIndex] = useState(0)
 
-  // Date picker for new days (editable by user)
+  const todayKey = getLocalTodayDateKey()
+  const yesterdayKey = getLocalYesterdayDateKey()
+
+  // Date picker for new days (editable by user, strictly clamped <= local today)
   const [dateISO, setDateISO] = useState<string>(() => {
-    if (editingDay?.dateISO) return editingDay.dateISO
-    if (nextDayDateISO) return nextDayDateISO
-    return new Date().toISOString()
+    if (editingDay?.dateISO) return clampDateISOToToday(editingDay.dateISO)
+    if (nextDayDateISO) return clampDateISOToToday(nextDayDateISO)
+    return dateKeyToMiddayISO(getLocalTodayDateKey())
   })
 
-  // Sync nextDayDateISO if it changes after mount (hydration)
+  const selectedDateKey = useMemo(() => {
+    return extractCalendarDateKey(dateISO) || todayKey
+  }, [dateISO, todayKey])
+
+  const [calendarMonth, setCalendarMonth] = useState<{ year: number; month: number }>(() => {
+    const now = new Date()
+    const initKey = extractCalendarDateKey(editingDay?.dateISO || nextDayDateISO) || getLocalTodayDateKey(now)
+    const [y, m] = initKey.split('-').map(Number)
+    if (y && m) {
+      return { year: y, month: m - 1 }
+    }
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+
+  const closedDayKeys = useMemo(() => {
+    const set = new Set<string>()
+    for (const entry of storeState.days || []) {
+      const k = extractCalendarDateKey(entry.dateISO)
+      if (k && k <= todayKey) {
+        set.add(k)
+      }
+    }
+    return set
+  }, [storeState.days, todayKey])
+
+  // Sync nextDayDateISO if it changes after mount (hydration), clamped to <= today
   useEffect(() => {
     if (!editingDay && nextDayDateISO && !initialDraft) {
-      setDateISO(nextDayDateISO)
+      setDateISO(clampDateISOToToday(nextDayDateISO))
     }
   }, [nextDayDateISO, editingDay, initialDraft])
+
+  useEffect(() => {
+    if (!dateMenuOpen) {
+      setDatePos(null)
+      return
+    }
+    // Sync calendar view to selected date's month on open (never future month)
+    const [sy, sm] = selectedDateKey.split('-').map(Number)
+    const [ty, tm] = todayKey.split('-').map(Number)
+    if (sy && sm && ty && tm) {
+      const target =
+        sy > ty || (sy === ty && sm - 1 > tm - 1)
+          ? { year: ty, month: tm - 1 }
+          : { year: sy, month: sm - 1 }
+      setCalendarMonth(target)
+    }
+
+    const updatePos = () => {
+      if (!dateBtnRef.current || typeof window === 'undefined') return
+      const rect = dateBtnRef.current.getBoundingClientRect()
+      const menuWidth = 280
+      const viewportW = window.innerWidth
+      const viewportH = window.innerHeight
+      const left = Math.max(12, Math.min(rect.left, viewportW - menuWidth - 12))
+      const spaceBelow = viewportH - rect.bottom - 12
+      const estimatedHeight = 330
+      const top =
+        spaceBelow >= 260 || rect.top < 280
+          ? rect.bottom + 6
+          : Math.max(12, rect.top - estimatedHeight - 6)
+      setDatePos({ top, left })
+    }
+    updatePos()
+
+    const onOutside = (e: MouseEvent) => {
+      const target = e.target as Node | null
+      if (!target) return
+      if (dateBtnRef.current?.contains(target)) return
+      if (dateMenuRef.current?.contains(target)) return
+      setDateMenuOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDateMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', updatePos)
+    window.addEventListener('scroll', updatePos, true)
+    document.addEventListener('mousedown', onOutside)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('resize', updatePos)
+      window.removeEventListener('scroll', updatePos, true)
+      document.removeEventListener('mousedown', onOutside)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [dateMenuOpen, selectedDateKey, todayKey])
+
+  const handleSelectDateKey = (dateKey: string) => {
+    if (isFutureDateKey(dateKey)) {
+      onNotify?.('Нельзя выбрать будущую дату')
+      return
+    }
+    playClick(soundEnabled)
+    setDateISO(dateKeyToMiddayISO(dateKey))
+    setDateMenuOpen(false)
+  }
+
+  const [todayYearNum, todayMonthNum] = todayKey.split('-').map(Number)
+  const isAtCurrentOrFutureMonth =
+    calendarMonth.year > todayYearNum ||
+    (calendarMonth.year === todayYearNum && calendarMonth.month >= todayMonthNum - 1)
+
+  const calendarCells = useMemo(() => {
+    return buildCalendarMonthGrid(calendarMonth.year, calendarMonth.month, {
+      todayKey,
+      selectedKey: selectedDateKey,
+      closedDayKeys,
+    })
+  }, [calendarMonth.year, calendarMonth.month, todayKey, selectedDateKey, closedDayKeys])
 
   useEffect(() => {
     if (!audienceMenuOpen) {
@@ -604,13 +727,8 @@ export function Composer({
           fileInputRef.current?.click()
         }
       } else if (initialAction === 'date') {
-        const input = dateInputRef.current
-        if (input) {
-          input.focus()
-          try {
-            ;(input as any).showPicker?.()
-          } catch {}
-        }
+        setAudienceMenuOpen(false)
+        setDateMenuOpen(true)
       }
     }, 60)
     return () => clearTimeout(timer)
@@ -835,6 +953,12 @@ export function Composer({
       onNotify?.(`Длина записи превышает лимит тарифа (${maxChars} симв.)`)
       return
     }
+    const selectedKey = extractCalendarDateKey(dateISO)
+    if (!editingDay && selectedKey && isFutureDateKey(selectedKey)) {
+      onNotify?.('Нельзя сохранить запись на будущую дату')
+      setDateISO(dateKeyToMiddayISO(getLocalTodayDateKey()))
+      return
+    }
     const publishEnabled = editingDay ? totalFilled > 0 && !hasOverlongItem : canPublish
     if (!publishEnabled || isPublishing || isEvaluating) return
 
@@ -848,7 +972,10 @@ export function Composer({
     try {
       const finalPhotoUrl = await uploadPhotoIfSelected()
       const payload = buildPayload(evaluations, undefined, undefined, finalPhotoUrl)
-      const res = await onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      const safeDateISO = editingDay
+        ? undefined
+        : dateKeyToMiddayISO(extractCalendarDateKey(dateISO) || getLocalTodayDateKey())
+      const res = await onSaved(payload, editingDay?.id, safeDateISO)
       if (res && typeof res === 'object' && 'ok' in res && res.ok === false) {
         onNotify?.(`❌ ${res.error || 'Ошибка при сохранении в Supabase'}`)
         setIsPublishing(false)
@@ -879,11 +1006,21 @@ export function Composer({
     setEvaluations(evalMap)
     setRatingsAreDefault(false)
 
+    const selectedKey = extractCalendarDateKey(dateISO)
+    if (!editingDay && selectedKey && isFutureDateKey(selectedKey)) {
+      onNotify?.('Нельзя сохранить запись на будущую дату')
+      setDateISO(dateKeyToMiddayISO(getLocalTodayDateKey()))
+      return
+    }
+
     setIsPublishing(true)
     try {
       const finalPhotoUrl = await uploadPhotoIfSelected()
       const payload = buildPayload(evalMap, avgScore, mentorWord, finalPhotoUrl)
-      const res = await onSaved(payload, editingDay?.id, editingDay ? undefined : dateISO)
+      const safeDateISO = editingDay
+        ? undefined
+        : dateKeyToMiddayISO(extractCalendarDateKey(dateISO) || getLocalTodayDateKey())
+      const res = await onSaved(payload, editingDay?.id, safeDateISO)
       if (res && typeof res === 'object' && 'ok' in res && res.ok === false) {
         onNotify?.(`❌ ${res.error || 'Ошибка при сохранении в Supabase'}`)
         setIsPublishing(false)
@@ -1228,7 +1365,7 @@ export function Composer({
       title={editingDay ? `Редактировать День #${editingDay.id}` : `Записать День #${displayDayId ?? '?'}`}
       onClose={onClose}
       hideHeader
-      closeOnEscape={storyModalIndex === null}
+      closeOnEscape={storyModalIndex === null && !dateMenuOpen && !audienceMenuOpen && !showPublicWarning}
       modalClassName="!w-full !max-w-[600px] !rounded-2xl !bg-[#060608] !border !border-white/[0.14]"
     >
       <div onClick={(e) => e.stopPropagation()} className="w-full">
@@ -1368,34 +1505,26 @@ export function Composer({
         </div>
 
         <div className="relative flex items-center gap-2">
-          {/* Компактная дата дня */}
+          {/* Компактная кнопка выбора даты дня (кастомный тёмный календарь в Portal) */}
           {!editingDay && (
-            <label
-              className="relative h-8 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-white/[0.05] text-white/75 border border-white/[0.1] hover:border-white/25 hover:text-white transition-colors cursor-pointer"
+            <button
+              ref={dateBtnRef}
+              type="button"
+              id="composer-date-chip"
+              onClick={() => {
+                playClick(soundEnabled)
+                setAudienceMenuOpen(false)
+                setDateMenuOpen((prev) => !prev)
+              }}
+              aria-expanded={dateMenuOpen}
+              aria-label="Выбрать дату дня"
               title="Дата записываемого дня"
+              className="relative h-8 px-2.5 rounded-full text-xs font-medium flex items-center gap-1.5 bg-white/[0.05] text-white/75 border border-white/[0.1] hover:border-white/25 hover:text-white transition-colors cursor-pointer"
             >
               <CalendarDays size={13} className="text-white/55 shrink-0" />
-              <span>
-                {(() => {
-                  const d = new Date(dateISO)
-                  return Number.isFinite(d.getTime())
-                    ? d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
-                    : 'Сегодня'
-                })()}
-              </span>
-              <input
-                ref={dateInputRef}
-                type="date"
-                aria-label="Дата дня"
-                value={dateISO.slice(0, 10)}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setDateISO(new Date(`${e.target.value}T12:00:00`).toISOString())
-                  }
-                }}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-            </label>
+              <span>{formatShortDateRuFromKey(selectedDateKey)}</span>
+              <ChevronDown size={11} className="opacity-65 shrink-0" />
+            </button>
           )}
 
           {/* Маленькая чип-кнопка «Лично ▾» (аудитория рендерится в Portal поверх модалки) */}
@@ -1406,6 +1535,7 @@ export function Composer({
             data-tour="composer-audience"
             onClick={() => {
               playClick(soundEnabled)
+              setDateMenuOpen(false)
               setAudienceMenuOpen((prev) => !prev)
             }}
             className="h-8 px-2.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-colors border bg-white/[0.06] text-white/85 border-white/[0.12] hover:bg-white/[0.1] hover:text-white cursor-pointer"
@@ -1431,6 +1561,153 @@ export function Composer({
           </button>
         </div>
       </div>
+
+      {/* Кастомный тёмный календарь Priday через React Portal (без будущих дат) */}
+      {dateMenuOpen &&
+        datePos &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={dateMenuRef}
+            role="dialog"
+            aria-label="Календарь выбора даты"
+            data-testid="composer-calendar-popover"
+            className="bg-[#070709] border border-white/[0.14] rounded-2xl shadow-[0_24px_70px_rgba(0,0,0,0.95)] p-3.5 w-[280px] select-none"
+            style={{
+              position: 'fixed',
+              top: datePos.top,
+              left: datePos.left,
+              zIndex: 120,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {/* Быстрые кнопки: Сегодня / Вчера */}
+            <div className="flex items-center gap-1.5 mb-3">
+              <button
+                type="button"
+                id="composer-calendar-today"
+                onClick={() => handleSelectDateKey(todayKey)}
+                className={`flex-1 h-7 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  selectedDateKey === todayKey
+                    ? 'bg-[#d76737] text-black font-semibold'
+                    : 'bg-white/[0.06] border border-white/[0.08] text-white/85 hover:bg-white/[0.12] hover:text-white'
+                }`}
+              >
+                Сегодня
+              </button>
+              <button
+                type="button"
+                id="composer-calendar-yesterday"
+                onClick={() => handleSelectDateKey(yesterdayKey)}
+                className={`flex-1 h-7 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  selectedDateKey === yesterdayKey
+                    ? 'bg-[#d76737] text-black font-semibold'
+                    : 'bg-white/[0.06] border border-white/[0.08] text-white/85 hover:bg-white/[0.12] hover:text-white'
+                }`}
+              >
+                Вчера
+              </button>
+            </div>
+
+            {/* Заголовок месяца и переключение < > (вперёд в будущее заблокировано) */}
+            <div className="flex items-center justify-between mb-2.5">
+              <button
+                type="button"
+                id="composer-calendar-prev-month"
+                aria-label="Предыдущий месяц"
+                onClick={() => {
+                  playClick(soundEnabled)
+                  setCalendarMonth((prev) =>
+                    prev.month === 0 ? { year: prev.year - 1, month: 11 } : { year: prev.year, month: prev.month - 1 }
+                  )
+                }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-white/70 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+              >
+                <ChevronLeft size={15} />
+              </button>
+              <span className="text-[13px] font-semibold text-white tracking-tight">
+                {formatMonthTitleRu(calendarMonth.year, calendarMonth.month)}
+              </span>
+              <button
+                type="button"
+                id="composer-calendar-next-month"
+                aria-label="Следующий месяц"
+                disabled={isAtCurrentOrFutureMonth}
+                onClick={() => {
+                  if (isAtCurrentOrFutureMonth) return
+                  playClick(soundEnabled)
+                  setCalendarMonth((prev) =>
+                    prev.month === 11 ? { year: prev.year + 1, month: 0 } : { year: prev.year, month: prev.month + 1 }
+                  )
+                }}
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                  isAtCurrentOrFutureMonth
+                    ? 'text-white/15 cursor-not-allowed pointer-events-none'
+                    : 'text-white/70 hover:text-white hover:bg-white/[0.08] cursor-pointer'
+                }`}
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+
+            {/* Дни недели Пн–Вс */}
+            <div className="grid grid-cols-7 gap-1 mb-1">
+              {RU_WEEKDAY_SHORT.map((wd) => (
+                <div key={wd} className="h-6 flex items-center justify-center text-[11px] font-medium text-white/40">
+                  {wd}
+                </div>
+              ))}
+            </div>
+
+            {/* Сетка чисел месяца */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarCells.map((cell, idx) => {
+                if (!cell) {
+                  return <div key={`empty-${idx}`} className="h-8" aria-hidden="true" />
+                }
+
+                const cellStyleClass = cell.isFuture
+                  ? 'rounded-lg text-white/15 cursor-not-allowed pointer-events-none'
+                  : cell.isSelected
+                  ? 'rounded-lg bg-[#d76737] text-black font-semibold cursor-pointer'
+                  : cell.isToday
+                  ? 'rounded-lg border border-white/25 text-white hover:bg-white/[0.08] cursor-pointer'
+                  : 'rounded-lg text-white/80 hover:bg-white/[0.08] hover:text-white cursor-pointer'
+
+                return (
+                  <button
+                    key={cell.dateKey}
+                    type="button"
+                    data-date-key={cell.dateKey}
+                    aria-label={cell.dateKey}
+                    aria-pressed={cell.isSelected}
+                    disabled={cell.isFuture}
+                    onClick={() => {
+                      if (!cell.isFuture) {
+                        handleSelectDateKey(cell.dateKey)
+                      }
+                    }}
+                    className={`h-8 flex flex-col items-center justify-center text-xs leading-none transition-colors relative ${cellStyleClass}`}
+                  >
+                    <span className="tabular-nums">{cell.dayNumber}</span>
+                    {cell.isClosed ? (
+                      <span
+                        className={`w-1 h-1 rounded-full mt-0.5 ${
+                          cell.isSelected ? 'bg-black/70' : 'bg-white/45'
+                        }`}
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <span className="w-1 h-1 mt-0.5 opacity-0" aria-hidden="true" />
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Выпадающее меню аудитории через React Portal поверх всей модалки */}
       {audienceMenuOpen &&

@@ -56,6 +56,11 @@ import {
   fetchAllUserTableRows,
   assembleHydratedCloudDays,
 } from './cloud-diary-loader.ts'
+import {
+  clampDateKeyToToday,
+  dateKeyToMiddayISO,
+  extractCalendarDateKey,
+} from './calendar-date.ts'
 
 export type CurrentUser = {
   id: string
@@ -1370,7 +1375,9 @@ export function useOgonekStore() {
           const baseDate = latestDay?.dateISO ? new Date(latestDay.dateISO) : new Date()
           const nextDate = new Date(baseDate)
           nextDate.setDate(nextDate.getDate() + 1)
-          computedDate = nextDate.toISOString()
+          computedDate = dateKeyToMiddayISO(clampDateKeyToToday(extractCalendarDateKey(nextDate)))
+        } else {
+          computedDate = dateKeyToMiddayISO(clampDateKeyToToday(extractCalendarDateKey(computedDate)))
         }
 
         // Защита от дублей дней на одну и ту же дату (например #745, #746 при повторном нажатии «Записать»)
@@ -4857,7 +4864,7 @@ export function useOgonekStore() {
     [updateStore]
   )
 
-  /** Compute the next date for a new day (last date + 1 calendar day) */
+  /** Compute the next date for a new day (last date + 1 calendar day, clamped to local today) */
   const getNextDayDate = useCallback((): string => {
     const days = getSnapshot().days
     const latestDay = days.reduce<Day | null>((best, d) => {
@@ -4869,7 +4876,9 @@ export function useOgonekStore() {
     const baseDate = latestDay?.dateISO ? new Date(latestDay.dateISO) : new Date()
     const nextDate = new Date(baseDate)
     nextDate.setDate(nextDate.getDate() + 1)
-    return nextDate.toISOString()
+    const nextKey = extractCalendarDateKey(nextDate)
+    const clampedKey = clampDateKeyToToday(nextKey)
+    return dateKeyToMiddayISO(clampedKey)
   }, [])
 
   /** Compute the next day id (maxId + 1) */

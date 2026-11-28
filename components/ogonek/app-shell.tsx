@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { playClick } from '@/lib/ogonek/sound'
 import { computeStreak, calculateStreak } from '@/lib/ogonek/streak'
+import { extractCalendarDateKey, isFutureDateKey } from '@/lib/ogonek/calendar-date'
 import { hasUnlockMethod, persistSecurityHint } from '@/lib/ogonek/security'
 import { useKeyboardNavigation } from '@/lib/ogonek/use-keyboard-navigation'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -1474,7 +1475,11 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         }
       } else {
         const computedDate = dateISO || new Date().toISOString()
-        const targetDateStr = computedDate.slice(0, 10)
+        const targetDateKey = extractCalendarDateKey(computedDate)
+        if (targetDateKey && isFutureDateKey(targetDateKey)) {
+          return { ok: false, error: 'Нельзя сохранить запись на будущую дату' }
+        }
+        const targetDateStr = targetDateKey || computedDate.slice(0, 10)
         // Защита от дублей дней на одну и ту же дату (например #745, #746 при повторном нажатии «Записать»)
         const sameDateDay = state.days.find(
           (d) => d.dateISO && d.dateISO.slice(0, 10) === targetDateStr

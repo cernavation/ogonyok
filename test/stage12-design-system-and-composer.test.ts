@@ -56,7 +56,10 @@ describe('Этап 12: Дизайн-система Priday (#d76737 + чёрны�
 
     const homeSrc = readRepoFile('components/ogonek/views/home-view.tsx')
     assert.ok(homeSrc.includes('bg-[#d76737] text-black'), 'Бейдж на вкладках Друзья/Подписки соблюдает чёрный контраст')
-    assert.ok(homeSrc.includes('bg-white text-black'), 'Кнопка Записать в быстрой панели — белая пилюля с чёрным текстом')
+    assert.ok(
+      homeSrc.includes('bg-white/[0.08] border border-white/[0.14] text-white/90'),
+      'Кнопка Записать в быстрой панели — спокойная тёмная вторичная пилюля'
+    )
     assert.ok(!homeSrc.includes('Sparkles') && !homeSrc.includes('<Smile '), 'Лишние иконки Sparkles и Smile удалены из быстрой панели')
 
     const dayCardSrc = readRepoFile('components/ogonek/day-card.tsx')

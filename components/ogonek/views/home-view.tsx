@@ -708,7 +708,7 @@ export function HomeView({
                   playClick(soundEnabled)
                   onCompose?.()
                 }}
-                className="rounded-full bg-white text-black hover:bg-white/90 px-4 min-h-[34px] text-[13px] font-bold transition-colors cursor-pointer"
+                className="rounded-full bg-white/[0.08] border border-white/[0.14] text-white/90 hover:bg-white/[0.15] hover:text-white transition-colors px-4 h-9 text-sm font-medium cursor-pointer"
               >
                 Записать
               </button>
