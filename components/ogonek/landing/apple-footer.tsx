@@ -103,7 +103,7 @@ export function AppleFooter({ locale: propLocale }: AppleFooterProps) {
               href="https://t.me/cernavation"
               target="_blank"
               rel="noreferrer"
-              className="text-[#86868b] hover:text-[#d76737] transition-colors p-1"
+              className="text-[#86868b] hover:text-[#d76737] transition-colors min-w-[40px] min-h-[40px] inline-flex items-center justify-center -mr-2"
               title="Telegram (@cernavation)"
               aria-label="Telegram"
             >

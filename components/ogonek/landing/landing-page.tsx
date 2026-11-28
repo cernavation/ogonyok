@@ -650,35 +650,35 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           </div>
 
           {/* 3 Tier Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-[1240px] mx-auto items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-6 max-w-[1240px] mx-auto items-stretch">
             {/* TIER 1: FREE */}
             <GlowCard
               glowColor="green"
               customSize
-              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-150 min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.1]"
+              className="p-6 sm:p-9 flex flex-col justify-between fade-up delay-150 lg:min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.1]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
                   <div className="text-[12px] font-mono text-white/60 uppercase tracking-wider mb-2 font-semibold">
                     {content.pricing.tiers[0].badge}
                   </div>
-                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  <h3 className="text-[24px] sm:text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
                     {content.pricing.tiers[0].name}
                   </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                  <p className="text-[14px] text-[#86868b] mb-6 sm:min-h-[40px]">
                     {content.pricing.tiers[0].desc}
                   </p>
 
-                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                  <div className="mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-white/[0.08] flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                    <span className="text-[34px] sm:text-[44px] font-bold font-sans text-white tabular-nums">
                       {content.pricing.tiers[0].priceMonthly}
                     </span>
-                    <span className="text-[14px] text-[#86868b] ml-2">
+                    <span className="text-[13px] sm:text-[14px] text-[#86868b]">
                       {content.pricing.tiers[0].period}
                     </span>
                   </div>
 
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
+                  <ul className="space-y-3 sm:space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-7 sm:mb-8 lg:min-h-[220px]">
                     {content.pricing.tiers[0].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3">
                         <svg className="w-4 h-4 text-white/70 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -708,39 +708,39 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
               <GlowCard
                 glowColor="orange"
                 customSize
-                className="p-7 sm:p-9 flex flex-col justify-between fade-scale delay-200 relative rounded-2xl bg-[#060608] !border-[#d76737]/60 min-h-[580px] h-full"
+                className="p-6 sm:p-9 flex flex-col justify-between fade-scale delay-200 relative rounded-2xl bg-[#060608] !border-[#d76737]/60 lg:min-h-[580px] h-full"
               >
                 <div className="relative z-10 flex flex-col justify-between h-full">
                   <div>
                     <div className="text-[12px] font-mono text-[#d76737] uppercase tracking-wider mb-2 font-semibold">
                       {content.pricing.tiers[1].badge}
                     </div>
-                    <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                    <h3 className="text-[24px] sm:text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
                       {content.pricing.tiers[1].name}
                     </h3>
-                    <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                    <p className="text-[14px] text-[#86868b] mb-6 sm:min-h-[40px]">
                       {content.pricing.tiers[1].desc}
                     </p>
 
-                    <div className="mb-8 pb-6 border-b border-white/[0.08] flex items-baseline flex-wrap gap-x-2.5 gap-y-1">
+                    <div className="mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-white/[0.08] flex items-baseline flex-wrap gap-x-2 sm:gap-x-2.5 gap-y-1">
                       {billingCycle === 'monthly' && content.pricing.tiers[1].oldPriceMonthly && (
-                        <span className="text-[20px] font-medium font-sans text-[#86868b] line-through tabular-nums">
+                        <span className="text-[17px] sm:text-[20px] font-medium font-sans text-[#86868b] line-through tabular-nums">
                           {content.pricing.tiers[1].oldPriceMonthly}
                         </span>
                       )}
-                      <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                      <span className="text-[34px] sm:text-[44px] font-bold font-sans text-white tabular-nums">
                         {billingCycle === 'yearly'
                           ? content.pricing.tiers[1].priceYearly
                           : content.pricing.tiers[1].priceMonthly}
                       </span>
-                      <span className="text-[14px] text-[#86868b]">
+                      <span className="text-[13px] sm:text-[14px] text-[#86868b]">
                         {billingCycle === 'yearly'
                           ? content.pricing.tiers[1].periodYearly
                           : content.pricing.tiers[1].periodMonthly}
                       </span>
                     </div>
 
-                    <ul className="space-y-3.5 text-[14px] text-[#f5f5f7] mb-8 min-h-[220px]">
+                    <ul className="space-y-3 sm:space-y-3.5 text-[14px] text-[#f5f5f7] mb-7 sm:mb-8 lg:min-h-[220px]">
                       {content.pricing.tiers[1].features.map((feat, idx) => (
                         <li key={feat} className={`flex items-center gap-3 ${idx < 2 ? 'font-medium text-white' : ''}`}>
                           <svg className="w-4 h-4 text-[#d76737] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -767,34 +767,34 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             <GlowCard
               glowColor="orange"
               customSize
-              className="p-7 sm:p-9 flex flex-col justify-between fade-up delay-300 min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.12]"
+              className="p-6 sm:p-9 flex flex-col justify-between fade-up delay-300 lg:min-h-[580px] rounded-2xl bg-[#060608] border border-white/[0.12]"
             >
               <div className="relative z-10 flex flex-col justify-between h-full">
                 <div>
                   <div className="text-[12px] font-mono text-white/75 uppercase tracking-wider mb-2 font-semibold">
                     {content.pricing.tiers[2].badge}
                   </div>
-                  <h3 className="text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
+                  <h3 className="text-[24px] sm:text-[26px] font-bold text-[#f5f5f7] mb-2 tracking-tight">
                     {content.pricing.tiers[2].name}
                   </h3>
-                  <p className="text-[14px] text-[#86868b] mb-6 min-h-[40px]">
+                  <p className="text-[14px] text-[#86868b] mb-6 sm:min-h-[40px]">
                     {content.pricing.tiers[2].desc}
                   </p>
 
-                  <div className="mb-8 pb-6 border-b border-white/[0.08]">
-                    <span className="text-[44px] font-bold font-sans text-white tabular-nums">
+                  <div className="mb-6 sm:mb-8 pb-5 sm:pb-6 border-b border-white/[0.08] flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                    <span className="text-[34px] sm:text-[44px] font-bold font-sans text-white tabular-nums">
                       {billingCycle === 'yearly'
                         ? content.pricing.tiers[2].priceYearly
                         : content.pricing.tiers[2].priceMonthly}
                     </span>
-                    <span className="text-[14px] text-[#86868b] ml-2">
+                    <span className="text-[13px] sm:text-[14px] text-[#86868b]">
                       {billingCycle === 'yearly'
                         ? content.pricing.tiers[2].periodYearly
                         : content.pricing.tiers[2].periodMonthly}
                     </span>
                   </div>
 
-                  <ul className="space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-8 min-h-[220px]">
+                  <ul className="space-y-3 sm:space-y-3.5 text-[14px] text-[#f5f5f7]/90 mb-7 sm:mb-8 lg:min-h-[220px]">
                     {content.pricing.tiers[2].features.map((feat) => (
                       <li key={feat} className="flex items-center gap-3 font-medium text-white">
                         <svg className="w-4 h-4 text-white/75 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -842,7 +842,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="together"
-        className="relative w-full min-h-[540px] sm:min-h-[620px] md:min-h-[680px] flex items-center justify-center text-center overflow-hidden bg-black px-4 sm:px-6 md:px-8 py-20 sm:py-28 scroll-mt-24 sm:scroll-mt-32"
+        className="relative w-full min-h-[420px] sm:min-h-[560px] md:min-h-[640px] flex items-center justify-center text-center overflow-hidden bg-black px-4 sm:px-6 md:px-8 py-16 sm:py-24 md:py-28 scroll-mt-24 sm:scroll-mt-32"
         aria-label={content.finalCta.title}
       >
         {/* Full-bleed Background Image */}
@@ -856,7 +856,7 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
             rounded={false}
             fill
             isHero
-            objectPosition="center 30%"
+            objectPosition="58% 35%"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/80 z-10 pointer-events-none" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.72)_100%)] z-10 pointer-events-none" />

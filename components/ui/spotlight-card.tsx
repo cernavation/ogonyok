@@ -157,10 +157,12 @@ export const GlowCard: React.FC<GlowCardProps> = ({
   };
 
   const handlePointerEnter = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     updateCoordinates(e.clientX, e.clientY);
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'touch') return;
     updateCoordinates(e.clientX, e.clientY);
   };
 
@@ -193,6 +195,7 @@ export const GlowCard: React.FC<GlowCardProps> = ({
         onPointerEnter={handlePointerEnter}
         onPointerMove={handlePointerMove}
         onPointerLeave={handlePointerLeave}
+        onPointerCancel={handlePointerLeave}
         className={`
           priday-glow-card
           ${getSizeClasses()}
