@@ -842,48 +842,42 @@ export function LandingPage({ onNotify, onAuthenticated, locale = 'ru' }: Props)
           ═══════════════════════════════════════════════════════════ */}
       <section
         id="together"
-        className="py-16 sm:py-20 md:py-28 bg-black border-t border-white/[0.06] scroll-mt-24 sm:scroll-mt-32"
+        className="relative w-full min-h-[540px] sm:min-h-[620px] md:min-h-[680px] flex items-center justify-center text-center overflow-hidden bg-black px-4 sm:px-6 md:px-8 py-20 sm:py-28 scroll-mt-24 sm:scroll-mt-32"
         aria-label={content.finalCta.title}
       >
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="apple-card-hover fade-scale delay-100 overflow-hidden relative min-h-[500px] sm:min-h-[560px] flex items-center justify-center text-center p-8 sm:p-16 bg-[#060608] border border-white/[0.1] rounded-[28px]">
-            {/* Background Image */}
-            <div className="absolute inset-0 z-0">
-              <MediaSlot
-                name={content.finalCta.image}
-                width={2560}
-                height={1100}
-                ratio="21:9"
-                alt={content.finalCta.title}
-                rounded={false}
-                fill
-                isHero
-                objectPosition="center 30%"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/60 z-10" />
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.1)_0%,rgba(0,0,0,0.75)_100%)] z-10 pointer-events-none" />
-            </div>
+        {/* Full-bleed Background Image */}
+        <div className="absolute inset-0 z-0 w-full h-full">
+          <MediaSlot
+            name={content.finalCta.image}
+            width={2560}
+            height={1100}
+            ratio="21:9"
+            alt={content.finalCta.title}
+            rounded={false}
+            fill
+            isHero
+            objectPosition="center 30%"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/80 z-10 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.72)_100%)] z-10 pointer-events-none" />
+        </div>
 
-            {/* Background overlay gradient */}
-
-            {/* Overlaid Banner Content */}
-            <div className="relative z-20 max-w-[700px] mx-auto flex flex-col items-center">
-              <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[34px] sm:!text-[50px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
-                {content.finalCta.title}
-              </h2>
-              <p className="apple-body fade-up delay-150 !text-white max-w-[580px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
-                {content.finalCta.subtitle}
-              </p>
-              <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => openAuth('register')}
-                  className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold cursor-pointer"
-                >
-                  {content.finalCta.ctaButton} →
-                </button>
-              </div>
-            </div>
+        {/* Overlaid Banner Content */}
+        <div className="relative z-20 max-w-[700px] mx-auto flex flex-col items-center">
+          <h2 className="apple-hero-title fade-blur delay-75 mb-5 !text-[34px] sm:!text-[52px] leading-[1.12] drop-shadow-[0_4px_24px_rgba(0,0,0,0.95)]">
+            {content.finalCta.title}
+          </h2>
+          <p className="apple-body fade-up delay-150 !text-white max-w-[580px] mb-8 text-[17px] sm:text-[19px] leading-relaxed drop-shadow-[0_2px_14px_rgba(0,0,0,0.98)] font-normal">
+            {content.finalCta.subtitle}
+          </p>
+          <div className="fade-scale delay-200 flex items-center justify-center gap-4 flex-wrap">
+            <button
+              type="button"
+              onClick={() => openAuth('register')}
+              className="apple-btn-primary !px-9 !py-4 !text-[15px] !font-semibold cursor-pointer"
+            >
+              {content.finalCta.ctaButton} →
+            </button>
           </div>
         </div>
       </section>

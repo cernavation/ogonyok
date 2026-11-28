@@ -1000,6 +1000,32 @@ describe('8. Тарифные лимиты, разрешения и мягкая
     assert.ok(i18nCode.includes("priceYearly: '192 MDL'"))
   })
 
+  it('GlowCard имеет смягчённое свечение (-50%) и border-box/no-repeat без бага уголков и краёв', () => {
+    const spotlightCode = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/ui/spotlight-card.tsx'),
+      'utf-8'
+    )
+    assert.ok(spotlightCode.includes('background-origin: border-box;'))
+    assert.ok(spotlightCode.includes('background-repeat: no-repeat;'))
+    assert.ok(spotlightCode.includes('padding: 1.5px;'))
+    assert.ok(spotlightCode.includes('spotlightSize = 420'))
+    assert.ok(spotlightCode.includes('0.48') && spotlightCode.includes('0.30'))
+  })
+
+  it('финальный блок #together («Начни свой Winlog») растянут на всю ширину экрана без рамки-карточки', () => {
+    const landingCode = fs.readFileSync(
+      path.resolve(process.cwd(), 'components/ogonek/landing/landing-page.tsx'),
+      'utf-8'
+    )
+    const togetherStart = landingCode.indexOf('id="together"')
+    const footerStart = landingCode.indexOf('<AppleFooter')
+    assert.ok(togetherStart > 0 && footerStart > togetherStart)
+    const togetherBlock = landingCode.slice(togetherStart, footerStart)
+    assert.ok(togetherBlock.includes('w-full'))
+    assert.ok(!togetherBlock.includes('rounded-[28px]'))
+    assert.ok(!togetherBlock.includes('apple-card-hover'))
+  })
+
   it('цена тарифа Ultra на месяц составляет 50 MDL', () => {
     assert.strictEqual(TIER_PRICES.ultra.monthly, 50)
   })
