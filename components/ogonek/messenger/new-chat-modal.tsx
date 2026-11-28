@@ -657,7 +657,7 @@ export function NewChatModal({
                   type="text"
                   value={groupTitle}
                   onChange={(e) => setGroupTitle(e.target.value)}
-                  placeholder="Например: Бегуны!"
+                  placeholder="Например: Друзья или Семья"
                   className="w-full h-11 rounded-xl border border-white/[0.12] bg-black px-3.5 text-sm text-white placeholder:text-[#71767b] focus:border-[#d76737] outline-none transition-colors"
                   maxLength={50}
                   autoFocus

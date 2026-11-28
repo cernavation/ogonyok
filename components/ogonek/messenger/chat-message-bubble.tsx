@@ -212,7 +212,7 @@ export function ChatMessageBubble({
     const rect = menuBtnRef.current.getBoundingClientRect()
     const vw = window.innerWidth
     const vh = window.innerHeight
-    const menuWidth = 192
+    const menuWidth = 208
     const estHeight = measuredHeight ?? 232
     const HEADER_SAFE_TOP = 76
     const freeAbove = rect.top - HEADER_SAFE_TOP
@@ -634,30 +634,33 @@ export function ChatMessageBubble({
                                 position: 'fixed',
                                 left: `${menuPosition.left}px`,
                                 top: `${menuPosition.top}px`,
-                                width: '192px',
+                                minWidth: '200px',
                                 maxHeight: `${menuPosition.maxHeight}px`,
                               }
                             : undefined
                         }
-                        className="fixed z-[9999] overflow-y-auto rounded-xl border border-white/[0.14] bg-[#0a0a0c]/95 backdrop-blur-xl p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-xs font-medium text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-100"
+                        className="fixed z-[9999] min-w-[200px] overflow-y-auto rounded-2xl border border-white/[0.12] bg-[#0a0a0c]/95 backdrop-blur-xl p-1.5 shadow-[0_18px_50px_rgba(0,0,0,0.9)] text-[13px] font-medium text-white/85 animate-in fade-in zoom-in-95 duration-100 select-none"
                       >
                         {message.text && (
                           <button
                             type="button"
                             onClick={handleCopy}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
                           >
-                            <Copy size={13} /> Копировать
+                            <Copy className="w-4 h-4 text-white/55 shrink-0" />
+                            <span>Копировать</span>
                           </button>
                         )}
                         {message.text && (
                           <button
                             type="button"
                             onClick={handleTranslateClick}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
                           >
-                            <Languages size={13} className="text-[#1d9bf0]" />
-                            {translating ? 'Перевод...' : showTranslated ? 'Показать оригинал' : 'Перевести'}
+                            <Languages className="w-4 h-4 text-white/55 shrink-0" />
+                            <span>
+                              {translating ? 'Перевод...' : showTranslated ? 'Показать оригинал' : 'Перевести'}
+                            </span>
                           </button>
                         )}
                         <button
@@ -666,9 +669,10 @@ export function ChatMessageBubble({
                             onForward(message)
                             setMenuOpen(false)
                           }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                          className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
                         >
-                          <Forward size={13} /> Переслать
+                          <Forward className="w-4 h-4 text-white/55 shrink-0" />
+                          <span>Переслать</span>
                         </button>
                         {onToggleLabel && (
                           <button
@@ -677,10 +681,14 @@ export function ChatMessageBubble({
                               onToggleLabel(message.id, 'Важное')
                               setMenuOpen(false)
                             }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-white/85 hover:bg-white/[0.08] hover:text-white transition-colors"
                           >
-                            <Tag size={13} className="text-[#d76737]" /> В «Важное»
+                            <Tag className="w-4 h-4 text-white/55 shrink-0" />
+                            <span>В важное</span>
                           </button>
+                        )}
+                        {(!isOfficialBroadcast || canDeleteBroadcast) && (
+                          <div className="my-1 border-t border-white/[0.08]" />
                         )}
                         {!isOfficialBroadcast && (
                           <button
@@ -689,9 +697,10 @@ export function ChatMessageBubble({
                               onDelete(message.id, false)
                               setMenuOpen(false)
                             }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-red-400/90 hover:bg-red-500/12 hover:text-red-300 transition-colors"
                           >
-                            <Trash2 size={13} /> Удалить у себя
+                            <Trash2 className="w-4 h-4 shrink-0" />
+                            <span>Удалить у себя</span>
                           </button>
                         )}
                         {((isMine && !isOfficialBroadcast) || (isOfficialBroadcast && canDeleteBroadcast)) && (
@@ -701,10 +710,12 @@ export function ChatMessageBubble({
                               onDelete(message.id, true)
                               setMenuOpen(false)
                             }}
-                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
+                            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-red-400/90 hover:bg-red-500/12 hover:text-red-300 transition-colors"
                           >
-                            <Trash2 size={13} />{' '}
-                            {isOfficialBroadcast ? 'Удалить рассылку для всех' : 'Удалить для всех'}
+                            <Trash2 className="w-4 h-4 shrink-0" />
+                            <span>
+                              {isOfficialBroadcast ? 'Удалить рассылку для всех' : 'Удалить для всех'}
+                            </span>
                           </button>
                         )}
                       </div>
@@ -1074,27 +1085,27 @@ export function ChatMessageBubble({
 
                   {/* Индикатор активного перевода */}
                   {translating && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/55 border-t border-white/10 pt-1">
-                      <Languages size={11} className="animate-pulse text-[#d76737]" />
+                    <div className="mt-1.5 flex items-center gap-1.5 border-t border-white/[0.08] pt-1.5 text-[11px] text-white/45">
+                      <Languages size={11} className="animate-pulse text-white/55" />
                       <span>Перевод...</span>
                     </div>
                   )}
 
-                  {/* Плашка Google Translate */}
+                  {/* Подпись переведённого текста */}
                   {!translating && showTranslated && translatedText && (
-                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/55 border-t border-white/10 pt-1">
+                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-white/[0.08] pt-1.5 text-[11px] text-white/45">
                       <span>
-                        Google Translate
+                        Перевод
                         {translationMeta?.sourceLang && translationMeta?.targetLang
-                          ? ` (${translationMeta.sourceLang.toUpperCase()} → ${translationMeta.targetLang.toUpperCase()})`
+                          ? ` ${translationMeta.sourceLang.toUpperCase()} → ${translationMeta.targetLang.toUpperCase()}`
                           : ''}
                       </span>
                       <button
                         type="button"
                         onClick={() => setShowTranslated(false)}
-                        className="text-white/75 underline hover:text-white cursor-pointer"
+                        className="text-white/75 hover:text-white underline-offset-2 hover:underline cursor-pointer"
                       >
-                        Показать оригинал
+                        Оригинал
                       </button>
                     </div>
                   )}

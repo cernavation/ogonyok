@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { getInitials } from '@/lib/ogonek/initials'
 import { isPridayChat } from '@/lib/ogonek/priday-system-chat'
+import { safeImageSrc } from '@/lib/ogonek/safe-url'
 import { UserAvatar, VerifiedBadge } from '../ui'
 
 export type DesktopToast = {
@@ -34,6 +35,8 @@ export type DesktopToast = {
   initials?: string
   verified?: boolean
   mediaType?: 'voice' | 'photo' | 'text' | 'call' | 'milestone'
+  imageUrl?: string | null
+  mediaUrl?: string | null
   peerId?: string
   threadKey?: string
   createdAt: number
@@ -155,6 +158,7 @@ function ToastCard({
   const showVerified = Boolean(toast.verified || isPridaySender)
   const hasDraft = replyText.trim().length > 0
   const initials = toast.initials || (toast.title ? getInitials(toast.title, '') : 'W')
+  const attachedImageUrl = safeImageSrc(toast.imageUrl || toast.mediaUrl)
 
   const renderPreview = () => {
     if (
@@ -163,9 +167,9 @@ function ToastCard({
       toast.body?.includes('Голосовое')
     ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[#d76737] font-medium">
-          <Mic size={14} className="shrink-0" />
-          <span className="truncate">{toast.body || 'Голосовое сообщение'}</span>
+        <span className="flex items-start gap-1.5 text-[13px] text-[#d76737] font-medium">
+          <Mic size={14} className="shrink-0 mt-0.5" />
+          <span className="whitespace-pre-wrap break-words">{toast.body || 'Голосовое сообщение'}</span>
         </span>
       )
     }
@@ -175,30 +179,30 @@ function ToastCard({
       toast.body?.includes('Фото')
     ) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-[#d76737] font-medium">
-          <Camera size={14} className="shrink-0" />
-          <span className="truncate">{toast.body || 'Фотография'}</span>
+        <span className="flex items-start gap-1.5 text-[13px] text-[#d76737] font-medium">
+          <Camera size={14} className="shrink-0 mt-0.5" />
+          <span className="whitespace-pre-wrap break-words">{toast.body || 'Фотография'}</span>
         </span>
       )
     }
     if (toast.type === 'missed_call' || toast.body?.includes('Пропущенный звонок')) {
       return (
-        <span className="flex items-center gap-1.5 text-[13px] text-rose-400 font-medium">
-          <PhoneMissed size={14} className="shrink-0" />
-          <span className="truncate">{toast.body || 'Пропущенный звонок'}</span>
+        <span className="flex items-start gap-1.5 text-[13px] text-rose-400 font-medium">
+          <PhoneMissed size={14} className="shrink-0 mt-0.5" />
+          <span className="whitespace-pre-wrap break-words">{toast.body || 'Пропущенный звонок'}</span>
         </span>
       )
     }
     if (isMilestone) {
       return (
-        <p className="text-[13px] text-white/95 font-medium leading-snug line-clamp-3">
+        <p className="text-[13px] text-white/95 font-medium leading-snug whitespace-pre-wrap break-words">
           {toast.body || 'Твой ритм в Winlog держится уверенно!'}
         </p>
       )
     }
 
     return (
-      <p className="text-[13px] text-white/90 line-clamp-2 leading-snug">
+      <p className="text-[13px] text-white/90 leading-snug whitespace-pre-wrap break-words">
         {toast.body}
       </p>
     )
@@ -325,6 +329,14 @@ function ToastCard({
 
       {/* Превью сообщения */}
       <div className="relative z-10 pl-[46px] pr-1">
+        {attachedImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={attachedImageUrl}
+            alt=""
+            className="mb-2 rounded-xl object-cover max-h-44 w-full border border-white/[0.08]"
+          />
+        )}
         {renderPreview()}
       </div>
 

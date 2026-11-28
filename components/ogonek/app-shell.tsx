@@ -545,6 +545,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           avatarColor: authorAvatarColor,
           verified: authorVerified,
           mediaType,
+          imageUrl: isPhoto ? newMsg.media?.url || null : null,
+          mediaUrl: isPhoto ? newMsg.media?.url || null : null,
           peerId: targetThreadPeerId,
           threadKey: newMsg.thread_key,
         })
@@ -592,6 +594,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
                 ? 'Официальное объявление с изображением'
                 : 'Новое официальное обновление Winlog'),
             mediaType: broadcast.media_url ? 'photo' : 'text',
+            imageUrl: broadcast.media_url || null,
+            mediaUrl: broadcast.media_url || null,
             peerId: 'priday-official',
             verified: true,
           })
