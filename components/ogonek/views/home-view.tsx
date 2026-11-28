@@ -187,17 +187,63 @@ export function HomeView({
     } as any,
   })
 
-  // Инициализация вкладки из URL (?tab=friends&highlightDay=...) и подписка на глубокие ссылки из чатов/уведомлений
+  const normGroupKey = (val?: string | null): string | null => {
+    if (!val || typeof val !== 'string') return null
+    const cleaned = val.trim().replace(/^group:(group-)?/i, '').replace(/^group-/i, '').toLowerCase()
+    return cleaned || null
+  }
+
+  // Инициализация вкладки из URL (?tab=friends&groupId=...&highlightDay=...) и подписка на глубокие ссылки из чатов/уведомлений
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const applyDeepLink = (tabParam?: string | null, hlDay?: number | null, authorId?: string | null) => {
+    const applyDeepLink = (
+      tabParam?: string | null,
+      hlDay?: number | null,
+      authorId?: string | null,
+      groupIdParam?: string | null
+    ) => {
       if (tabParam === 'friends') {
         setFilter('Друзья')
         markFeedTabViewed?.('friends')
         setFriendsUnread(0)
         setFeedReloadNonce((n) => n + 1)
+
+        // Определяем целевую группу для фильтрации ленты
+        let resolvedGroupFilter: string | null = null
+        if (groupIdParam) {
+          const normParam = normGroupKey(groupIdParam)
+          const matchedGroup = userGroups.find(
+            (g) =>
+              g.id === groupIdParam ||
+              g.dbId === groupIdParam ||
+              (normParam && (normGroupKey(g.dbId) === normParam || normGroupKey(g.id) === normParam)) ||
+              g.title === groupIdParam
+          )
+          resolvedGroupFilter = matchedGroup?.id || groupIdParam
+        } else if (hlDay && Number.isFinite(hlDay)) {
+          // Если groupId не передали в старом сообщении — ищем среди собственных/кэшированных дней
+          const matchedOwn = days.find(
+            (d) =>
+              d.id === hlDay &&
+              d.visibility === 'group' &&
+              Boolean(d.groupId) &&
+              (!authorId || d.user_id === authorId || d.userId === authorId)
+          )
+          if (matchedOwn?.groupId) {
+            const normOwn = normGroupKey(matchedOwn.groupId)
+            const matchedGroup = userGroups.find(
+              (g) =>
+                g.id === matchedOwn.groupId ||
+                g.dbId === matchedOwn.groupId ||
+                (normOwn && (normGroupKey(g.dbId) === normOwn || normGroupKey(g.id) === normOwn))
+            )
+            resolvedGroupFilter = matchedGroup?.id || matchedOwn.groupId
+          }
+        }
+        setSelectedGroupFilter(resolvedGroupFilter)
       } else if (tabParam === 'following') {
         setFilter('Подписки')
+        setSelectedGroupFilter(null)
         markFeedTabViewed?.('following')
         setFollowingUnread(0)
         setFeedReloadNonce((n) => n + 1)
@@ -212,17 +258,23 @@ export function HomeView({
     const tabParam = params.get('tab')
     const hlRaw = params.get('highlightDay')
     const authorParam = params.get('authorId')
+    const groupParam = params.get('groupId')
     if (tabParam || hlRaw) {
-      applyDeepLink(tabParam, hlRaw ? Number(hlRaw) : null, authorParam)
+      applyDeepLink(tabParam, hlRaw ? Number(hlRaw) : null, authorParam, groupParam)
     }
 
     const onFocusDay = (e: any) => {
       const d = e?.detail || {}
-      applyDeepLink(d.tab || 'friends', d.dayId ? Number(d.dayId) : null, d.userId || null)
+      applyDeepLink(
+        d.tab || 'friends',
+        d.dayId ? Number(d.dayId) : null,
+        d.userId || null,
+        d.groupId || null
+      )
     }
     window.addEventListener('ogonek:focus-feed-day', onFocusDay)
     return () => window.removeEventListener('ogonek:focus-feed-day', onFocusDay)
-  }, [markFeedTabViewed])
+  }, [markFeedTabViewed, userGroups, days])
 
   // Плавный скролл и оранжевая подсветка дня на ~2.5 секунды
   useEffect(() => {
@@ -299,7 +351,8 @@ export function HomeView({
         const posts = await getFriendFeedPosts({
           viewerId: currentUserId,
           tab: 'friends',
-          limit: 40,
+          groupId: selectedGroupFilter || undefined,
+          limit: 50,
         })
         if (cancelled) return
         setServerFriendDays(Array.isArray(posts) ? posts.map(mapFeedPostToDay) : [])
@@ -314,7 +367,7 @@ export function HomeView({
     return () => {
       cancelled = true
     }
-  }, [filter, currentUserId, feedReloadNonce])
+  }, [filter, currentUserId, feedReloadNonce, selectedGroupFilter])
 
   // Загрузка реальной хронологической ленты «Подписки» (только public посты подписок) из Supabase
   useEffect(() => {
@@ -389,37 +442,107 @@ export function HomeView({
       })
     }
     if (filter === 'Друзья') {
-      let baseList = serverFriendDays
       if (selectedGroupFilter) {
-        baseList = baseList.filter((d) => {
-          const normSelected = selectedGroupFilter.replace(/^group-/i, '').toLowerCase()
-          const dGid = d.groupId ? String(d.groupId).replace(/^group-/i, '').toLowerCase() : null
-          if (dGid && dGid === normSelected) return true
-          if (d.groupId === selectedGroupFilter || d.groupName === selectedGroupFilter) return true
-          const inPrides = d.prides?.some(
+        const selectedGroupMeta = userGroups.find(
+          (g) =>
+            g.id === selectedGroupFilter ||
+            g.dbId === selectedGroupFilter ||
+            g.title === selectedGroupFilter ||
+            (normGroupKey(g.dbId || g.id) && normGroupKey(g.dbId || g.id) === normGroupKey(selectedGroupFilter))
+        )
+        const targetNormId = normGroupKey(selectedGroupMeta?.dbId || selectedGroupMeta?.id || selectedGroupFilter)
+        const targetTitle = selectedGroupMeta?.title || null
+
+        const matchesSelectedGroup = (d: Day): boolean => {
+          if (d.visibility === 'private') return false
+          const dNorm = normGroupKey(d.groupId)
+          if (targetNormId && dNorm && dNorm === targetNormId) return true
+          if (d.groupId === selectedGroupFilter || (targetTitle && d.groupName === targetTitle)) return true
+          if (
+            targetNormId &&
+            Array.isArray(d.targetGroupIds) &&
+            d.targetGroupIds.some((tid) => normGroupKey(tid) === targetNormId)
+          ) {
+            return true
+          }
+          const inPrides = (d.prides || []).some(
             (p) =>
-              p.groupId === selectedGroupFilter ||
-              p.groupName === selectedGroupFilter ||
-              (p.groupId && String(p.groupId).replace(/^group-/i, '').toLowerCase() === normSelected)
+              p.visibility === 'group' &&
+              (p.groupId === selectedGroupFilter ||
+                (targetTitle && p.groupName === targetTitle) ||
+                (targetNormId && normGroupKey(p.groupId) === targetNormId))
           )
           if (inPrides) return true
           const inGrats = (d.gratitudes as any)?.some(
             (g: any) =>
               typeof g === 'object' &&
+              g.visibility === 'group' &&
               (g.groupId === selectedGroupFilter ||
-                g.groupName === selectedGroupFilter ||
-                (g.groupId && String(g.groupId).replace(/^group-/i, '').toLowerCase() === normSelected))
+                (targetTitle && g.groupName === targetTitle) ||
+                (targetNormId && normGroupKey(g.groupId) === targetNormId))
           )
-          return inGrats
+          return Boolean(inGrats)
+        }
+
+        // Объединяем посты друзей из сервера И собственные посты автора, опубликованные в эту группу
+        const ownMatchingDays = days
+          .filter(matchesSelectedGroup)
+          .map((d) => ({
+            ...d,
+            groupName: d.groupName || targetTitle || undefined,
+            user_id: d.user_id || d.userId || currentUserId,
+            userId: d.userId || d.user_id || currentUserId,
+            author: d.author || {
+              id: currentUserId,
+              username,
+              displayName,
+              avatarImage: avatarImage || undefined,
+              avatarColor: state.profile.avatarColor || '#FF5C00',
+              verified: Boolean(state.profile.verified),
+              streak: streak ?? state.profile.streak ?? 0,
+            },
+          }))
+
+        const serverMatchingDays = serverFriendDays.filter(matchesSelectedGroup)
+        const mergedMap = new Map<string, Day>()
+        for (const d of [...serverMatchingDays, ...ownMatchingDays]) {
+          const authorKey = d.user_id || d.userId || currentUserId || 'me'
+          const dedupeKey = `${authorKey}:${d.id}`
+          if (!mergedMap.has(dedupeKey)) {
+            mergedMap.set(dedupeKey, d)
+          }
+        }
+        return Array.from(mergedMap.values()).sort((a, b) => {
+          const tb = b.dateISO ? new Date(b.dateISO).getTime() : 0
+          const ta = a.dateISO ? new Date(a.dateISO).getTime() : 0
+          if (tb !== ta) return tb - ta
+          return b.id - a.id
         })
       }
-      return baseList
+      return serverFriendDays
     }
     if (filter === 'Подписки') {
       return serverFollowingDays
     }
     return days.filter((d) => d.tags && d.tags.includes(filter))
-  }, [days, filter, currentUserId, currentUser?.id, state.auth.activeAccountId, serverFriendDays, serverFollowingDays, selectedGroupFilter])
+  }, [
+    days,
+    filter,
+    currentUserId,
+    currentUser?.id,
+    state.auth.activeAccountId,
+    state.profile.avatarColor,
+    state.profile.verified,
+    state.profile.streak,
+    displayName,
+    username,
+    avatarImage,
+    streak,
+    serverFriendDays,
+    serverFollowingDays,
+    selectedGroupFilter,
+    userGroups,
+  ])
 
   const visibleDays = useMemo(() => {
     return filteredDays.slice(0, visibleCount)
@@ -615,19 +738,33 @@ export function HomeView({
             Все друзья
           </button>
           {userGroups.map((g) => {
-            const isSelected = selectedGroupFilter === g.id || selectedGroupFilter === g.title
+            const isSelected =
+              selectedGroupFilter === g.id ||
+              selectedGroupFilter === g.dbId ||
+              selectedGroupFilter === g.title ||
+              (normGroupKey(selectedGroupFilter) !== null &&
+                normGroupKey(selectedGroupFilter) === normGroupKey(g.dbId || g.id))
             return (
               <button
                 key={g.id}
                 type="button"
                 onClick={() => setSelectedGroupFilter(isSelected ? null : g.id)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors ${
+                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-colors cursor-pointer ${
                   isSelected
                     ? 'bg-white text-black font-bold shadow-sm'
                     : 'bg-white/5 text-[var(--muted)] hover:text-white'
                 }`}
               >
-                <span>{g.avatarEmoji || '👥'}</span>
+                {g.avatarImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={g.avatarImage}
+                    alt={g.title}
+                    className="w-4 h-4 rounded-full object-cover shrink-0"
+                  />
+                ) : (
+                  <span>{g.avatarEmoji || '👥'}</span>
+                )}
                 <span>{g.title}</span>
               </button>
             )

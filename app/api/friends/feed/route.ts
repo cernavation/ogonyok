@@ -15,6 +15,10 @@ export async function GET(request: Request) {
 
   const tab = searchParams.get('tab') === 'following' ? 'following' : 'friends'
   const summaryOnly = searchParams.get('summary') === '1'
+  const rawGroupId = searchParams.get('groupId')
+  const requestedGroupUuid = rawGroupId
+    ? rawGroupId.trim().replace(/^group:(group-)?/i, '').replace(/^group-/i, '').toLowerCase()
+    : null
   const sinceFriendsAt = searchParams.get('sinceFriendsAt')
   const sinceFollowingAt = searchParams.get('sinceFollowingAt')
   const limit = Math.min(Math.max(Number(searchParams.get('limit') || 30), 1), 60)
@@ -179,8 +183,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ friendsUnread, followingUnread })
     }
 
-    // 3. Полная хронологическая лента «Друзья» или «Подписки»
-    const targetAuthorIds = tab === 'friends' ? activeFriendIds : activeFollowingIds
+    // 3. Полная хронологическая лента «Друзья» или «Подписки» (для группы включаем также свои посты в эту группу)
+    const includeSelfInGroup =
+      tab === 'friends' && Boolean(requestedGroupUuid && viewerGroupIdsSet.has(requestedGroupUuid))
+    const targetAuthorIds =
+      tab === 'friends'
+        ? Array.from(new Set(includeSelfInGroup ? [viewerId, ...activeFriendIds] : activeFriendIds))
+        : activeFollowingIds
     if (targetAuthorIds.length === 0) {
       return NextResponse.json({ posts: [] })
     }
@@ -192,7 +201,7 @@ export async function GET(request: Request) {
     const { data: rawDays, error: daysErr } = await supabase
       .from('days')
       .select(
-        'id, client_id, day_number, user_id, date_iso, day_date, title, tags, photos, status, visibility, group_id, target_group_ids, created_at'
+        'id, client_id, day_number, user_id, date_iso, day_date, title, tags, photos, status, visibility, group_id, target_group_ids, ai_score, ai_verdict, created_at'
       )
       .in('user_id', targetAuthorIds)
       .in('visibility', allowedVisibilities)
@@ -208,6 +217,15 @@ export async function GET(request: Request) {
       .filter((d: any) => {
         if (d.visibility === 'private') return false
         if (tab === 'following') return d.visibility === 'public'
+        if (requestedGroupUuid && viewerGroupIdsSet.has(requestedGroupUuid)) {
+          if (d.visibility !== 'group') return false
+          const single = d.group_id ? String(d.group_id).toLowerCase() : null
+          if (single === requestedGroupUuid) return true
+          if (Array.isArray(d.target_group_ids)) {
+            return d.target_group_ids.some((tid: string) => String(tid).toLowerCase() === requestedGroupUuid)
+          }
+          return false
+        }
         if (d.visibility === 'group') {
           const single = d.group_id ? String(d.group_id).toLowerCase() : null
           if (single && viewerGroupIdsSet.has(single)) return true
@@ -359,6 +377,9 @@ export async function GET(request: Request) {
         visibility: d.visibility,
         groupId: d.group_id || null,
         groupName: gMeta?.title || null,
+        score: typeof d.ai_score === 'number' ? d.ai_score : undefined,
+        aiScore: typeof d.ai_score === 'number' ? d.ai_score : undefined,
+        aiVerdict: d.ai_verdict || undefined,
         photos: Array.isArray(d.photos) ? d.photos : [],
         createdAt: d.created_at,
         prides: dayPrides,

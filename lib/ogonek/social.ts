@@ -608,12 +608,19 @@ export async function getFriendRequestsApi(
  * Загрузить посты ленты друзей или подписок с бэкенда Supabase
  */
 export async function getFriendFeedPosts(
-  options?: { limit?: number; offset?: number; viewerId?: string | null; tab?: 'friends' | 'following' }
+  options?: {
+    limit?: number
+    offset?: number
+    viewerId?: string | null
+    tab?: 'friends' | 'following'
+    groupId?: string | null
+  }
 ): Promise<FriendFeedPost[]> {
   const limit = options?.limit ?? 30
   const offset = options?.offset ?? 0
   const viewerId = options?.viewerId ?? null
   const tab = options?.tab ?? 'friends'
+  const groupId = options?.groupId ?? null
 
   const supabase = getSupabase()
   let headers: Record<string, string> = {}
@@ -632,6 +639,7 @@ export async function getFriendFeedPosts(
       tab,
     })
     if (viewerId) params.set('viewerId', viewerId)
+    if (groupId) params.set('groupId', groupId)
     const res = await fetch(`/api/friends/feed?${params.toString()}`, { headers })
     if (res.ok) {
       const json = await res.json()

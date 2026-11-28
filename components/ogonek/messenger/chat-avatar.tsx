@@ -8,7 +8,49 @@ import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
 import { getCachedProfileSync, getProfile, type ProfileRecord } from '@/lib/supabase/api'
 import { useIsUserOnline } from '@/lib/supabase/presence'
 import { getInitials } from '@/lib/ogonek/initials'
+import type { ChatGroupMeta } from '@/lib/ogonek/types'
 import { UserAvatar } from '../ui'
+
+/**
+ * Унифицированный аватар группового чата: показывает загруженное фото (avatarImage),
+ * иначе сдержанную подложку и иконку группы.
+ */
+export function GroupAvatar({
+  group,
+  size = 44,
+  className = '',
+}: {
+  group?: Partial<ChatGroupMeta> | null
+  size?: number
+  className?: string
+}) {
+  const imageSrc = group?.avatarImage || null
+  const bg = group?.avatarColor || '#16181c'
+  const emoji = group?.avatarEmoji || '👥'
+  const fontSize = Math.max(12, Math.round(size * 0.45))
+
+  if (imageSrc) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={imageSrc}
+        alt={group?.title || 'Группа'}
+        className={`rounded-full object-cover border border-white/[0.14] shrink-0 ${className}`}
+        style={{ width: size, height: size }}
+      />
+    )
+  }
+
+  return (
+    <div
+      className={`rounded-full flex items-center justify-center border border-white/[0.14] text-white shrink-0 select-none ${className}`}
+      style={{ width: size, height: size, background: bg, fontSize }}
+      aria-label={group?.title || 'Группа'}
+    >
+      {emoji}
+    </div>
+  )
+}
 
 type Props = {
   friendId?: string

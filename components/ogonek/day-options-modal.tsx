@@ -60,19 +60,26 @@ export function DayOptionsModal({
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [showCeremony, setShowCeremony] = useState(false)
+  const [draftVisibility, setDraftVisibility] = useState<VisibilityLevel>(dayVisibility)
+  const [draftGroupId, setDraftGroupId] = useState<string | null>(day.groupId ?? null)
+  const [draftGroupName, setDraftGroupName] = useState<string | undefined>(day.groupName)
   const [groupListExpanded, setGroupListExpanded] = useState(dayVisibility === 'group')
   const [syncedAllPrides, setSyncedAllPrides] = useState(false)
-  const [savingAll, setSavingAll] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
-    setGroupListExpanded(normalizeVisibility(day.visibility) === 'group')
+    const curVis = normalizeVisibility(day.visibility)
+    setDraftVisibility(curVis)
+    setDraftGroupId(day.groupId ?? null)
+    setDraftGroupName(day.groupName)
+    setGroupListExpanded(curVis === 'group')
     setSyncedAllPrides(false)
     // Подтягиваем актуальный список групп из Supabase при открытии опций
     if (loadChatThreadsFromCloud) {
       void loadChatThreadsFromCloud().catch(() => {})
     }
-  }, [isOpen, day.id, day.visibility, loadChatThreadsFromCloud])
+  }, [isOpen, day.id, day.visibility, day.groupId, day.groupName, loadChatThreadsFromCloud])
 
   const userGroups = useMemo(() => {
     const threads = state.chatThreads ?? {}
@@ -91,77 +98,99 @@ export function DayOptionsModal({
   }, [state.chatThreads])
 
   const hasExistingEvaluation = useMemo(() => {
+    if ((day as any).evaluated === true) return true
     if (typeof day.score === 'number' && day.score > 0) return true
     if (typeof day.aiScore === 'number' && day.aiScore > 0) return true
     if (typeof day.aiVerdict === 'string' && day.aiVerdict.trim().length > 0) return true
-    return (day.prides || []).some((p) => typeof p.score === 'number' && p.score > 0)
-  }, [day.score, day.aiScore, day.aiVerdict, day.prides])
+    return (day.prides || []).some(
+      (p) =>
+        p.text !== '—' &&
+        ((typeof p.score === 'number' && p.score > 0) ||
+          (typeof p.scale === 'number' && p.scale > 0))
+    )
+  }, [day])
 
   const selectedGroupMeta = useMemo(() => {
-    if (dayVisibility !== 'group') return null
+    if (draftVisibility !== 'group') return null
     return (
       userGroups.find(
         (g) =>
-          (day.groupId && (g.id === day.groupId || g.dbId === day.groupId)) ||
-          (day.groupName && g.title === day.groupName)
+          (draftGroupId && (g.id === draftGroupId || g.dbId === draftGroupId)) ||
+          (draftGroupName && g.title === draftGroupName)
       ) || null
     )
-  }, [dayVisibility, userGroups, day.groupId, day.groupName])
+  }, [draftVisibility, userGroups, draftGroupId, draftGroupName])
 
   const currentAudienceLabel = useMemo(() => {
-    if (dayVisibility === 'group') {
-      const gTitle = selectedGroupMeta?.title || day.groupName
+    if (draftVisibility === 'group') {
+      const gTitle = selectedGroupMeta?.title || draftGroupName
       return gTitle ? `👥 ${gTitle}` : '👥 Группе'
     }
-    if (dayVisibility === 'friends') return '👥 Друзьям'
-    if (dayVisibility === 'private') return '🔒 Лично'
+    if (draftVisibility === 'friends') return '👥 Друзьям'
+    if (draftVisibility === 'private') return '🔒 Лично'
     return '🌐 Публично'
-  }, [dayVisibility, selectedGroupMeta?.title, day.groupName])
+  }, [draftVisibility, selectedGroupMeta?.title, draftGroupName])
 
   const handleSelectAudience = async (mode: VisibilityLevel) => {
     playClick(soundEnabled)
+    setDraftVisibility(mode)
     if (mode === 'group') {
       setGroupListExpanded(true)
-      // Если ровно 1 группа и группа ещё не выбрана — можно сразу привязать или дать выбрать в списке
+      if (!draftGroupId && userGroups.length === 1) {
+        const g = userGroups[0]
+        setDraftGroupId(g.dbId || g.id)
+        setDraftGroupName(g.title)
+      }
       return
     }
     setGroupListExpanded(false)
-    setSyncedAllPrides(false)
-    await setDayAudience(day.id, mode, null, undefined)
-    const label =
-      mode === 'friends'
-        ? '👥 Друзьям'
-        : mode === 'private'
-        ? '🔒 Лично'
-        : '🌐 Публично'
-    onNotify?.(`Видимость дня #${day.id}: ${label}`)
+    setDraftGroupId(null)
+    setDraftGroupName(undefined)
   }
 
   const handleSelectGroup = async (g: ChatGroupMeta) => {
     playClick(soundEnabled)
-    setSyncedAllPrides(false)
-    await setDayAudience(day.id, 'group', g.dbId || g.id, g.title)
-    onNotify?.(`День #${day.id} опубликован в группу «${g.title}»`)
+    setDraftVisibility('group')
+    setDraftGroupId(g.dbId || g.id)
+    setDraftGroupName(g.title)
   }
 
   const handleApplyToAllPrides = async () => {
     playClick(soundEnabled)
-    setSavingAll(true)
+    setSyncedAllPrides((v) => !v)
+  }
+
+  const handleSaveAndClose = async () => {
+    playClick(soundEnabled)
+    if (draftVisibility === 'group' && !draftGroupId) {
+      onNotify?.('Выбери группу из списка')
+      return
+    }
+    setIsSaving(true)
     try {
-      await setAllPridesVisibility(
-        day.id,
-        dayVisibility,
-        selectedGroupMeta?.dbId || selectedGroupMeta?.id || day.groupId,
-        selectedGroupMeta?.title || day.groupName
-      )
-      setSyncedAllPrides(true)
+      const targetGid = draftVisibility === 'group' ? (selectedGroupMeta?.dbId || selectedGroupMeta?.id || draftGroupId) : null
+      const targetGname = draftVisibility === 'group' ? (selectedGroupMeta?.title || draftGroupName) : undefined
+      if (syncedAllPrides) {
+        await setAllPridesVisibility(day.id, draftVisibility, targetGid, targetGname)
+      } else {
+        await setDayAudience(day.id, draftVisibility, targetGid, targetGname)
+      }
       const label =
-        dayVisibility === 'group'
-          ? selectedGroupMeta?.title || day.groupName || 'Группе'
-          : visibilityMeta(dayVisibility).shortLabel
-      onNotify?.(`Режим «${label}» применён ко всем гордостям и благодарностям дня`)
+        draftVisibility === 'group'
+          ? `группе «${targetGname || 'Группа'}»`
+          : draftVisibility === 'friends'
+          ? 'друзьям 👥'
+          : draftVisibility === 'private'
+          ? 'только лично 🔒'
+          : 'публично 🌐'
+      onNotify?.(
+        syncedAllPrides
+          ? `День #${day.id} и все гордости сохранены (${label})`
+          : `Видимость дня #${day.id}: ${label}`
+      )
+      onClose()
     } finally {
-      setSavingAll(false)
+      setIsSaving(false)
     }
   }
 
@@ -345,13 +374,13 @@ export function DayOptionsModal({
             <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] font-bold text-white">Кому видно</span>
               <span className="text-[11px] text-[#71767b]">
-                {dayVisibility === 'private'
+                {draftVisibility === 'private'
                   ? 'Видно только тебе'
-                  : dayVisibility === 'friends'
+                  : draftVisibility === 'friends'
                   ? 'Попадёт в ленту «Друзья»'
-                  : dayVisibility === 'group'
-                  ? selectedGroupMeta?.title || day.groupName
-                    ? `Только группе «${selectedGroupMeta?.title || day.groupName}»`
+                  : draftVisibility === 'group'
+                  ? selectedGroupMeta?.title || draftGroupName
+                    ? `Только группе «${selectedGroupMeta?.title || draftGroupName}»`
                     : 'Выбери группу ниже'
                   : 'Видно в подписках и профиле'}
               </span>
@@ -359,14 +388,14 @@ export function DayOptionsModal({
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="radiogroup" aria-label="Кому видно день">
               {modes.map((m) => {
-                const isSelected = m.id === 'group' ? (dayVisibility === 'group' || groupListExpanded) : (!groupListExpanded && dayVisibility === m.id)
-                const isActiveMode = m.id === 'group' ? dayVisibility === 'group' || groupListExpanded : dayVisibility === m.id && !groupListExpanded
+                const isSelected = m.id === 'group' ? (draftVisibility === 'group' || groupListExpanded) : (!groupListExpanded && draftVisibility === m.id)
+                const isActiveMode = m.id === 'group' ? draftVisibility === 'group' || groupListExpanded : draftVisibility === m.id && !groupListExpanded
                 return (
                   <button
                     key={m.id}
                     type="button"
                     role="radio"
-                    aria-checked={dayVisibility === m.id}
+                    aria-checked={draftVisibility === m.id}
                     onClick={() => void handleSelectAudience(m.id)}
                     className={`flex flex-col items-start gap-0.5 px-3 py-2 rounded-xl border text-left transition-all cursor-pointer ${
                       isActiveMode || (isSelected && m.id === 'group' && groupListExpanded)
@@ -397,9 +426,9 @@ export function DayOptionsModal({
                     <div className="flex flex-col gap-1 max-h-40 overflow-y-auto pr-0.5">
                       {userGroups.map((g) => {
                         const isPicked =
-                          dayVisibility === 'group' &&
-                          ((day.groupId && (day.groupId === g.id || day.groupId === g.dbId)) ||
-                            (day.groupName && day.groupName === g.title))
+                          draftVisibility === 'group' &&
+                          ((draftGroupId && (draftGroupId === g.id || draftGroupId === g.dbId)) ||
+                            (draftGroupName && draftGroupName === g.title))
                         return (
                           <button
                             key={g.id}
@@ -412,9 +441,18 @@ export function DayOptionsModal({
                             }`}
                           >
                             <span className="flex items-center gap-2 min-w-0">
-                              <span className="text-base leading-none shrink-0">
-                                {g.avatarEmoji || '👥'}
-                              </span>
+                              {g.avatarImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={g.avatarImage}
+                                  alt={g.title}
+                                  className="w-5 h-5 rounded-full object-cover shrink-0"
+                                />
+                              ) : (
+                                <span className="text-base leading-none shrink-0">
+                                  {g.avatarEmoji || '👥'}
+                                </span>
+                              )}
                               <span className="truncate">{g.title}</span>
                             </span>
                             {isPicked ? (
@@ -451,7 +489,7 @@ export function DayOptionsModal({
             <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between gap-2">
               <button
                 type="button"
-                disabled={savingAll}
+                disabled={isSaving}
                 onClick={() => void handleApplyToAllPrides()}
                 className={`inline-flex items-center gap-2 text-[12px] font-medium transition-colors cursor-pointer disabled:opacity-50 ${
                   syncedAllPrides
@@ -526,6 +564,27 @@ export function DayOptionsModal({
             >
               <Trash2 size={16} className="text-rose-500 shrink-0" />
               <span>Удалить этот день</span>
+            </button>
+          </div>
+
+          {/* Явная кнопка Сохранить (#d76737 с чёрным текстом) */}
+          <div className="pt-2 border-t border-white/[0.1] flex items-center gap-2.5">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={onClose}
+              className="h-11 px-5 rounded-full border border-white/[0.14] bg-black hover:bg-white/[0.06] text-white/85 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => void handleSaveAndClose()}
+              className="flex-1 h-11 rounded-full bg-[#d76737] hover:bg-[#e0784b] active:bg-[#bd562b] text-black text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              <Check size={16} strokeWidth={2.8} />
+              <span>{isSaving ? 'Сохранение…' : 'Сохранить'}</span>
             </button>
           </div>
         </motion.div>

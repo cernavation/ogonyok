@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   Sparkles,
   Star,
+  Users,
   Zap,
 } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -547,35 +548,45 @@ function DayCardComponent({
                   </span>
                 )}
                 {isOwner && firstPride && (() => {
-                  const effectiveVisibility = day.visibility === 'private' ? 'private' : (firstPride.visibility || day.visibility || 'public')
-                  const isPub = effectiveVisibility === 'public'
+                  const effectiveVisibility = normalizeVisibility(firstPride.visibility || day.visibility || 'public')
+                  const isPrivate = effectiveVisibility === 'private'
+                  const nextVis = isPrivate ? 'public' : 'private'
                   return (
                     <button
                       type="button"
                       onClick={() => {
                         playClick(soundEnabled)
                         const actualFirstIdx = (day.prides || []).indexOf(firstPride)
-                        const nextVis = isPub ? 'private' : 'public'
-                        setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
+                        void setPrideVisibility(day.id, actualFirstIdx >= 0 ? actualFirstIdx : 0, nextVis)
                         onNotify?.(nextVis === 'public' ? 'Гордость #1 видна всем 🌐' : 'Гордость #1 скрыта (только себе) 🔒')
                       }}
                       className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border border-white/[0.1] bg-white/[0.06] text-white/75 hover:bg-white/[0.1] hover:text-white flex-none transition-colors cursor-pointer"
                       title={
-                        isPub
-                          ? '🌐 Публично (видят все) — нажми для переключения'
-                          : '🔒 Лично (видит только автор) — нажми для переключения'
+                        isPrivate
+                          ? '🔒 Лично (видит только автор) — нажми для переключения'
+                          : 'Видно в ленте — нажми чтобы скрыть лично'
                       }
                       aria-label="Видимость гордости"
                     >
-                      {isPub ? (
-                        <>
-                          <Globe size={11} className="text-white/55" />
-                          <span>Публично</span>
-                        </>
-                      ) : (
+                      {effectiveVisibility === 'private' ? (
                         <>
                           <Lock size={11} className="text-white/55" />
                           <span>Лично</span>
+                        </>
+                      ) : effectiveVisibility === 'friends' ? (
+                        <>
+                          <Users size={11} className="text-white/65" />
+                          <span>Друзьям</span>
+                        </>
+                      ) : effectiveVisibility === 'group' ? (
+                        <>
+                          <Users size={11} className="text-[#d76737]" />
+                          <span>Группе</span>
+                        </>
+                      ) : (
+                        <>
+                          <Globe size={11} className="text-white/55" />
+                          <span>Публично</span>
                         </>
                       )}
                     </button>
@@ -611,8 +622,9 @@ function DayCardComponent({
                         </span>
                         {otherPrides.map((p, pIdx) => {
                           const actualIndex = (day.prides || []).indexOf(p)
-                          const effectiveVisibility = day.visibility === 'private' ? 'private' : (p.visibility || day.visibility || 'public')
-                          const isPub = effectiveVisibility === 'public'
+                          const effectiveVisibility = normalizeVisibility(p.visibility || day.visibility || 'public')
+                          const isPrivate = effectiveVisibility === 'private'
+                          const nextVis = isPrivate ? 'public' : 'private'
                           return (
                             <div key={p.num || pIdx} className="flex items-start gap-2 text-[15px] leading-6 font-normal text-[var(--text)] py-1">
                               <span className="font-mono text-[var(--muted)] text-[13px] font-normal w-4 text-right flex-none pt-0.5">
@@ -629,27 +641,36 @@ function DayCardComponent({
                                   type="button"
                                   onClick={() => {
                                     playClick(soundEnabled)
-                                    const nextVis = isPub ? 'private' : 'public'
-                                    setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
+                                    void setPrideVisibility(day.id, actualIndex >= 0 ? actualIndex : pIdx + 1, nextVis)
                                     onNotify?.(`Гордость #${p.num || pIdx + 2}: ${nextVis === 'public' ? 'Публично 🌐' : 'Лично 🔒'}`)
                                   }}
                                   className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold border border-white/[0.1] bg-white/[0.06] text-white/75 hover:bg-white/[0.1] hover:text-white flex-none transition-colors cursor-pointer"
                                   title={
-                                    isPub
-                                      ? '🌐 Публично (видят все) — нажми для переключения'
-                                      : '🔒 Лично (видит только автор) — нажми для переключения'
+                                    isPrivate
+                                      ? '🔒 Лично (видит только автор) — нажми для переключения'
+                                      : 'Видно в ленте — нажми чтобы скрыть лично'
                                   }
                                   aria-label="Видимость гордости"
                                 >
-                                  {isPub ? (
-                                    <>
-                                      <Globe size={10} className="text-white/55" />
-                                      <span>Публично</span>
-                                    </>
-                                  ) : (
+                                  {effectiveVisibility === 'private' ? (
                                     <>
                                       <Lock size={10} className="text-white/55" />
                                       <span>Лично</span>
+                                    </>
+                                  ) : effectiveVisibility === 'friends' ? (
+                                    <>
+                                      <Users size={10} className="text-white/65" />
+                                      <span>Друзьям</span>
+                                    </>
+                                  ) : effectiveVisibility === 'group' ? (
+                                    <>
+                                      <Users size={10} className="text-[#d76737]" />
+                                      <span>Группе</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Globe size={10} className="text-white/55" />
+                                      <span>Публично</span>
                                     </>
                                   )}
                                 </button>

@@ -34,6 +34,7 @@ import {
 } from '@/lib/ogonek/smart-composer'
 import dynamic from 'next/dynamic'
 import { ModalShell } from './modal-shell'
+import { Toast } from './toast'
 import { Tooltip } from './tooltip'
 import { VisibilitySwitcher } from './visibility-switcher'
 
@@ -1069,21 +1070,13 @@ export function Composer({
     message: string
     undoAction?: () => void
   } | null>(null)
-  const smartToastTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const showSmartToast = (message: string, undoAction?: () => void) => {
-    if (smartToastTimerRef.current) {
-      clearTimeout(smartToastTimerRef.current)
-    }
     setSmartToast({
-      id: String(Date.now()),
+      id: `${Date.now()}-${Math.random()}`,
       message,
       undoAction,
     })
-    onNotify?.(message + (undoAction ? ' · Отменить' : ''))
-    smartToastTimerRef.current = setTimeout(() => {
-      setSmartToast(null)
-    }, 4500)
   }
 
   const handleImagePaste = async (file: File) => {
@@ -1818,9 +1811,18 @@ export function Composer({
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-white/[0.08] text-white">
-                      {g.avatarEmoji || '👥'}
-                    </span>
+                    {g.avatarImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={g.avatarImage}
+                        alt={g.title}
+                        className="w-5 h-5 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] bg-white/[0.08] text-white shrink-0">
+                        {g.avatarEmoji || '👥'}
+                      </span>
+                    )}
                     <div>
                       <div>{g.title}</div>
                       <div className="text-[10px] text-white/45 font-normal">
@@ -2206,27 +2208,22 @@ export function Composer({
 
       {/* Интерактивный тост умной вставки (CONTRACT Шаг 11) */}
       {smartToast && (
-        <div
+        <Toast
           id="composer-smart-toast"
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] bg-[#e7e9ea] text-[#090a0b] px-4 py-2.5 rounded-full text-xs font-semibold shadow-2xl flex items-center gap-2 border border-white/20"
-        >
-          <span>{smartToast.message}</span>
-          {smartToast.undoAction && (
-            <button
-              type="button"
-              id="composer-smart-toast-undo"
-              onClick={() => {
-                playClick(soundEnabled)
-                smartToast.undoAction!()
-              }}
-              className="ml-1 text-[var(--accent)] font-bold hover:underline cursor-pointer"
-            >
-              · Отменить
-            </button>
-          )}
-        </div>
+          message={smartToast.message}
+          toastKey={smartToast.id}
+          actionLabel={smartToast.undoAction ? 'Отменить' : undefined}
+          actionId="composer-smart-toast-undo"
+          onAction={
+            smartToast.undoAction
+              ? () => {
+                  playClick(soundEnabled)
+                  smartToast.undoAction!()
+                }
+              : undefined
+          }
+          onClose={() => setSmartToast(null)}
+        />
       )}
 
       {/* Модальное окно предложения апгрейда при вставке фото на Free тарифе (CONTRACT Шаг 11) */}

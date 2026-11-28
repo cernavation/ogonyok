@@ -8,6 +8,7 @@ import {
 import {
   buildPridayFollowText,
   buildPridayMutualText,
+  mapOfficialBroadcastToChatMessage,
   mapPridayRecordToChatMessage,
 } from '../ogonek/priday-system-chat.ts'
 import {
@@ -2246,7 +2247,9 @@ export interface DirectMessageRecord {
   attachment?: any
   reactions?: any[]
   is_read: boolean
+  read_by?: string[] | null
   is_system?: boolean
+  call_meta?: any
   type?: string
   media?: any
   reply_to?: any
@@ -2338,6 +2341,7 @@ export async function sendDirectMessageToDb(params: {
   poll?: any
   linkPreview?: any
   type?: string
+  isSystem?: boolean
 }): Promise<{ ok: boolean; message?: DirectMessageRecord; error?: string }> {
   try {
     // Защита от Base64: файлы должны быть в бакете chat-media, а в БД — только URL
@@ -2382,7 +2386,8 @@ export async function sendDirectMessageToDb(params: {
       type: params.type || 'text',
       reactions: [],
       is_read: false,
-      is_system: false,
+      is_system: Boolean(params.isSystem || params.type === 'system'),
+      ...(isGroup && isUuid(params.authorId) ? { read_by: [params.authorId] } : {}),
       sent_at: nowISO,
     }
 
@@ -2492,7 +2497,10 @@ export async function deleteThreadMessagesFromDb(
   try {
     const symmetricKey = getDirectThreadKey(myUserId, peerId)
     const isPeerUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(peerId)
-    let orClause = `thread_key.eq.${symmetricKey},thread_key.eq.${peerId}`
+    const groupUuid = extractDbGroupUuid(peerId)
+    let orClause = groupUuid
+      ? `thread_key.eq.group:group-${groupUuid},thread_key.eq.group:${groupUuid},thread_key.eq.group-${groupUuid},thread_key.eq.${peerId}`
+      : `thread_key.eq.${symmetricKey},thread_key.eq.${peerId}`
     if (peerId === 'saved-messages') {
       orClause += `,and(author_id.eq.${myUserId},recipient_id.eq.${myUserId}),and(author_id.eq.${myUserId},recipient_id.is.null)`
     } else if (isPeerUuid) {
@@ -2558,6 +2566,45 @@ export async function markDirectMessagesAsRead(
       .eq('recipient_id', myUserId)
       .eq('author_id', peerId)
       .eq('is_read', false)
+  } catch {}
+}
+
+/**
+ * Отметить входящие сообщения в группе как прочитанные (добавить userId в read_by)
+ */
+export async function markGroupMessagesAsReadDb(
+  groupIdOrThreadId: string,
+  myUserId: string
+): Promise<void> {
+  const supabase = getSupabase()
+  const groupUuid = extractDbGroupUuid(groupIdOrThreadId)
+  if (!supabase || !groupUuid || !myUserId || !UUID_REGEX.test(myUserId)) return
+
+  try {
+    const { error } = await supabase.rpc('mark_group_messages_read', {
+      p_group_id: groupUuid,
+    })
+    if (!error) return
+  } catch {}
+
+  // Fallback если RPC ещё не создан: обновляем read_by на клиенте через UPDATE RLS
+  try {
+    const keys = [`group:group-${groupUuid}`, `group:${groupUuid}`, `group-${groupUuid}`]
+    const { data: rows } = await supabase
+      .from('direct_messages')
+      .select('id, read_by')
+      .in('thread_key', keys)
+      .neq('author_id', myUserId)
+      .limit(200)
+
+    if (!Array.isArray(rows) || rows.length === 0) return
+    const unreadRows = rows.filter((r: any) => !Array.isArray(r.read_by) || !r.read_by.includes(myUserId))
+    await Promise.all(
+      unreadRows.slice(0, 50).map((r: any) => {
+        const nextReadBy = Array.from(new Set([...(Array.isArray(r.read_by) ? r.read_by : []), myUserId]))
+        return supabase.from('direct_messages').update({ read_by: nextReadBy }).eq('id', r.id)
+      })
+    )
   } catch {}
 }
 
@@ -3234,9 +3281,9 @@ export async function createChatGroupInDb(group: {
   adminsOnly?: boolean
   description?: string
   memberIds: string[]
-}): Promise<{ ok: boolean; groupId?: string; error?: string }> {
+}): Promise<{ ok: boolean; groupId?: string; skippedMemberIds?: string[]; error?: string }> {
   const supabase = getSupabase()
-  if (!supabase) return { ok: true, groupId: group.id || `group-${Date.now()}` }
+  if (!supabase) return { ok: false, error: 'База данных не подключена' }
 
   try {
     let resolvedCreatorId = UUID_REGEX.test(group.creatorId || '') ? group.creatorId : null
@@ -3248,14 +3295,16 @@ export async function createChatGroupInDb(group: {
         }
       } catch {}
     }
-    if (!resolvedCreatorId) return { ok: true, groupId: group.id || `group-${Date.now()}` }
+    if (!resolvedCreatorId) {
+      return { ok: false, error: 'Необходима авторизация в Supabase для создания группы' }
+    }
 
     const { data, error } = await supabase
       .from('chat_groups')
       .insert({
         title: group.title,
-        avatar_color: group.avatarColor || '#ff7a18',
-        avatar_emoji: group.avatarEmoji || '🔥',
+        avatar_color: group.avatarColor || '#16181c',
+        avatar_emoji: group.avatarEmoji || '👥',
         avatar_image: group.avatarImage || null,
         creator_id: resolvedCreatorId,
         admins_only: Boolean(group.adminsOnly),
@@ -3264,25 +3313,54 @@ export async function createChatGroupInDb(group: {
       .select('id')
       .single()
 
-    if (error) return { ok: false, error: error.message }
-    const groupId = data?.id
+    if (error || !data?.id) {
+      return { ok: false, error: error?.message || 'Не удалось создать группу в Supabase' }
+    }
+    const groupId = String(data.id)
 
-    // Добавляем создателя как владельца (owner)
-    if (groupId) {
-      const membersToInsert = Array.from(new Set([resolvedCreatorId, ...group.memberIds]))
-        .filter((id) => UUID_REGEX.test(id))
-        .map((userId) => ({
+    // 1. Сначала гарантируем запись создателя (owner) в chat_group_members
+    const { error: ownerErr } = await supabase
+      .from('chat_group_members')
+      .upsert(
+        {
           group_id: groupId,
-          user_id: userId,
-          role: userId === resolvedCreatorId ? 'owner' : 'member',
-        }))
+          user_id: resolvedCreatorId,
+          role: 'owner',
+        },
+        { onConflict: 'group_id,user_id', ignoreDuplicates: true }
+      )
+    if (ownerErr) {
+      return { ok: false, error: ownerErr.message }
+    }
 
-      if (membersToInsert.length > 0) {
-        await supabase.from('chat_group_members').insert(membersToInsert)
+    // 2. Добавляем приглашённых друзей
+    const invitedIds = Array.from(new Set(group.memberIds))
+      .filter((id) => UUID_REGEX.test(id) && id !== resolvedCreatorId)
+
+    const skippedMemberIds: string[] = []
+    if (invitedIds.length > 0) {
+      const membersToInsert = invitedIds.map((userId) => ({
+        group_id: groupId,
+        user_id: userId,
+        role: 'member',
+      }))
+      const { error: batchErr } = await supabase
+        .from('chat_group_members')
+        .upsert(membersToInsert, { onConflict: 'group_id,user_id', ignoreDuplicates: true })
+
+      if (batchErr) {
+        for (const row of membersToInsert) {
+          const { error: singleErr } = await supabase
+            .from('chat_group_members')
+            .upsert(row, { onConflict: 'group_id,user_id', ignoreDuplicates: true })
+          if (singleErr) {
+            skippedMemberIds.push(row.user_id)
+          }
+        }
       }
     }
 
-    return { ok: true, groupId }
+    return { ok: true, groupId, skippedMemberIds }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка создания группы' }
   }
@@ -3303,11 +3381,11 @@ export async function updateChatGroupInDb(
   }
 ): Promise<{ ok: boolean; error?: string }> {
   const supabase = getSupabase()
-  if (!supabase || !groupId) return { ok: true }
+  if (!supabase || !groupId) return { ok: false, error: 'База данных не подключена' }
 
   try {
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(groupId)
-    if (!isUuid) return { ok: true }
+    const dbUuid = extractDbGroupUuid(groupId)
+    if (!dbUuid) return { ok: false, error: 'Некорректный ID группы' }
 
     const updateData: any = { updated_at: new Date().toISOString() }
     if (patch.title !== undefined) updateData.title = patch.title
@@ -3317,11 +3395,158 @@ export async function updateChatGroupInDb(
     if (patch.adminsOnly !== undefined) updateData.admins_only = patch.adminsOnly
     if (patch.description !== undefined) updateData.description = patch.description
 
-    const { error } = await supabase.from('chat_groups').update(updateData).eq('id', groupId)
+    const { error } = await supabase.from('chat_groups').update(updateData).eq('id', dbUuid)
     if (error) return { ok: false, error: error.message }
     return { ok: true }
   } catch (err: any) {
     return { ok: false, error: err?.message || 'Ошибка обновления группы' }
+  }
+}
+
+/**
+ * Добавить участников в группу в Supabase (chat_group_members)
+ */
+export async function addGroupMembersToDb(
+  groupId: string,
+  memberIds: string[]
+): Promise<{ ok: boolean; addedIds: string[]; error?: string }> {
+  const supabase = getSupabase()
+  const dbUuid = extractDbGroupUuid(groupId)
+  const validIds = Array.from(new Set(memberIds.filter((id) => UUID_REGEX.test(id))))
+  if (!supabase || !dbUuid || validIds.length === 0) {
+    return { ok: false, addedIds: [], error: !supabase ? 'База данных не подключена' : undefined }
+  }
+
+  try {
+    const rows = validIds.map((uid) => ({ group_id: dbUuid, user_id: uid, role: 'member' }))
+    const { error } = await supabase
+      .from('chat_group_members')
+      .upsert(rows, { onConflict: 'group_id,user_id', ignoreDuplicates: true })
+
+    if (!error) return { ok: true, addedIds: validIds }
+
+    const addedIds: string[] = []
+    for (const row of rows) {
+      const { error: singleErr } = await supabase
+        .from('chat_group_members')
+        .upsert(row, { onConflict: 'group_id,user_id', ignoreDuplicates: true })
+      if (!singleErr) addedIds.push(row.user_id)
+    }
+    if (addedIds.length === 0) {
+      return { ok: false, addedIds: [], error: error.message }
+    }
+    return { ok: true, addedIds }
+  } catch (err: any) {
+    return { ok: false, addedIds: [], error: err?.message || 'Ошибка добавления участников' }
+  }
+}
+
+/**
+ * Удалить/исключить участника из группы в Supabase
+ */
+export async function removeGroupMemberFromDb(
+  groupId: string,
+  memberId: string
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  const dbUuid = extractDbGroupUuid(groupId)
+  if (!supabase || !dbUuid || !UUID_REGEX.test(memberId)) {
+    return { ok: false, error: 'Некорректные параметры удаления участника' }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('chat_group_members')
+      .delete()
+      .eq('group_id', dbUuid)
+      .eq('user_id', memberId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Ошибка удаления участника' }
+  }
+}
+
+/**
+ * Выйти из группы в Supabase (удалить своё членство)
+ */
+export async function leaveGroupInDb(
+  groupId: string,
+  userId: string
+): Promise<{ ok: boolean; error?: string }> {
+  return removeGroupMemberFromDb(groupId, userId)
+}
+
+/**
+ * Изменить роль участника группы в Supabase
+ */
+export async function updateGroupMemberRoleInDb(
+  groupId: string,
+  memberId: string,
+  role: 'owner' | 'admin' | 'member'
+): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  const dbUuid = extractDbGroupUuid(groupId)
+  if (!supabase || !dbUuid || !UUID_REGEX.test(memberId)) {
+    return { ok: false }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('chat_group_members')
+      .update({ role })
+      .eq('group_id', dbUuid)
+      .eq('user_id', memberId)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message }
+  }
+}
+
+/**
+ * Удалить всю группу в Supabase (только для создателя по RLS chat_groups_delete)
+ */
+export async function deleteChatGroupInDb(groupId: string): Promise<{ ok: boolean; error?: string }> {
+  const supabase = getSupabase()
+  const dbUuid = extractDbGroupUuid(groupId)
+  if (!supabase || !dbUuid) {
+    return { ok: false, error: 'Не удалось определить группу для удаления' }
+  }
+
+  try {
+    const keys = [`group:group-${dbUuid}`, `group:${dbUuid}`, `group-${dbUuid}`]
+    try {
+      await supabase.from('direct_messages').delete().in('thread_key', keys)
+    } catch {}
+    const { error } = await supabase.from('chat_groups').delete().eq('id', dbUuid)
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Ошибка удаления группы' }
+  }
+}
+
+/**
+ * Подписка на Realtime-изменения групп и состава участников пользователя
+ */
+export function subscribeToUserGroups(onChange: () => void) {
+  const supabase = getSupabase()
+  if (!supabase) return () => {}
+
+  const channelName = `user_groups_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+  const channel = supabase
+    .channel(channelName)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_group_members' }, () => {
+      onChange()
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_groups' }, () => {
+      onChange()
+    })
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
   }
 }
 
@@ -3605,8 +3830,12 @@ export async function loadPridaySystemMessagesDb(userId: string): Promise<ChatMe
   if (!supabase || !userId || !UUID_REGEX.test(userId)) return []
 
   const rawRows: any[] = []
+  let broadcastRows: any[] = []
+  let lastReadOfficialAt: string | null = null
+  let userCreatedAt: string | null = null
+
   try {
-    const [pridayRes, notifRes] = await Promise.allSettled([
+    const [pridayRes, notifRes, broadcastsRes, profileRes] = await Promise.allSettled([
       supabase
         .from('priday_messages')
         .select('*')
@@ -3618,6 +3847,16 @@ export async function loadPridaySystemMessagesDb(userId: string): Promise<ChatMe
         .eq('user_id', userId)
         .in('type', [...PRIDAY_NOTIF_TYPES])
         .order('created_at', { ascending: true }),
+      supabase
+        .from('official_broadcasts')
+        .select('id, author_id, text, media_url, created_at')
+        .order('created_at', { ascending: true })
+        .limit(200),
+      supabase
+        .from('profiles')
+        .select('last_read_official_at, created_at')
+        .eq('id', userId)
+        .maybeSingle(),
     ])
 
     if (pridayRes.status === 'fulfilled' && !pridayRes.value.error && Array.isArray(pridayRes.value.data)) {
@@ -3625,6 +3864,13 @@ export async function loadPridaySystemMessagesDb(userId: string): Promise<ChatMe
     }
     if (notifRes.status === 'fulfilled' && !notifRes.value.error && Array.isArray(notifRes.value.data)) {
       rawRows.push(...notifRes.value.data)
+    }
+    if (broadcastsRes.status === 'fulfilled' && !broadcastsRes.value.error && Array.isArray(broadcastsRes.value.data)) {
+      broadcastRows = broadcastsRes.value.data
+    }
+    if (profileRes.status === 'fulfilled' && !profileRes.value.error && profileRes.value.data) {
+      lastReadOfficialAt = (profileRes.value.data as any).last_read_official_at || null
+      userCreatedAt = (profileRes.value.data as any).created_at || null
     }
   } catch {}
 
@@ -3639,16 +3885,30 @@ export async function loadPridaySystemMessagesDb(userId: string): Promise<ChatMe
     messages.push(mapped)
   }
 
+  for (const b of broadcastRows) {
+    const mapped = mapOfficialBroadcastToChatMessage(b, {
+      lastReadOfficialAt,
+      userCreatedAt,
+      myUserId: userId,
+    })
+    if (!mapped) continue
+    const dedupKey = mapped.id
+    if (seen.has(dedupKey)) continue
+    seen.add(dedupKey)
+    messages.push(mapped)
+  }
+
   messages.sort((a, b) => new Date(a.createdAtISO).getTime() - new Date(b.createdAtISO).getTime())
   return messages
 }
 
 /**
- * Помечает все системные сообщения в чате Priday прочитанными в Supabase.
+ * Помечает все системные сообщения и официальные рассылки в чате Winlog прочитанными в Supabase.
  */
 export async function markPridaySystemMessagesReadDb(userId: string): Promise<void> {
   const supabase = getSupabase()
   if (!supabase || !userId || !UUID_REGEX.test(userId)) return
+  const nowISO = new Date().toISOString()
   try {
     await Promise.allSettled([
       supabase
@@ -3662,6 +3922,10 @@ export async function markPridaySystemMessagesReadDb(userId: string): Promise<vo
         .update({ is_read: true })
         .eq('user_id', userId)
         .eq('is_read', false),
+      supabase
+        .from('profiles')
+        .update({ last_read_official_at: nowISO })
+        .eq('id', userId),
     ])
   } catch {}
 }
@@ -3837,5 +4101,172 @@ export async function savePridayMilestoneMessageDb(input: {
     return { ok: !nErr }
   } catch {
     return { ok: false }
+  }
+}
+
+export interface OfficialBroadcastRecord {
+  id: string
+  author_id: string
+  text: string
+  media_url?: string | null
+  created_at: string
+}
+
+async function getBroadcastAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  const supabase = getSupabase()
+  if (!supabase) return headers
+  try {
+    const { data } = await supabase.auth.getSession()
+    const token = data?.session?.access_token
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
+  } catch {}
+  return headers
+}
+
+/**
+ * Получает количество пользователей платформы для панели рассылки @cernavation.
+ */
+export async function getFounderBroadcastStatsApi(): Promise<{
+  ok: boolean
+  totalUsers: number
+  error?: string
+}> {
+  try {
+    const headers = await getBroadcastAuthHeaders()
+    const res = await fetch('/api/admin/broadcast', {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    })
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.ok) {
+      return {
+        ok: false,
+        totalUsers: 0,
+        error: json?.error || `HTTP ${res.status}`,
+      }
+    }
+    return {
+      ok: true,
+      totalUsers: typeof json.totalUsers === 'number' ? json.totalUsers : 0,
+    }
+  } catch {
+    return { ok: false, totalUsers: 0, error: 'Не удалось загрузить число пользователей' }
+  }
+}
+
+/**
+ * Публикует официальную рассылку от имени Winlog (@cernavation).
+ */
+export async function publishOfficialBroadcastApi(params: {
+  text: string
+  mediaUrl?: string | null
+}): Promise<{
+  ok: boolean
+  broadcast?: OfficialBroadcastRecord
+  totalUsers?: number
+  error?: string
+}> {
+  try {
+    const headers = await getBroadcastAuthHeaders()
+    const res = await fetch('/api/admin/broadcast', {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({
+        text: params.text,
+        mediaUrl: params.mediaUrl || null,
+      }),
+    })
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.ok || !json?.broadcast) {
+      return {
+        ok: false,
+        error: json?.error || `HTTP ${res.status}`,
+      }
+    }
+    return {
+      ok: true,
+      broadcast: json.broadcast as OfficialBroadcastRecord,
+      totalUsers: typeof json.totalUsers === 'number' ? json.totalUsers : undefined,
+    }
+  } catch {
+    return { ok: false, error: 'Не удалось отправить рассылку' }
+  }
+}
+
+/**
+ * Удаляет официальную рассылку для всех пользователей (доступно только @cernavation).
+ */
+export async function deleteOfficialBroadcastApi(broadcastId: string): Promise<{
+  ok: boolean
+  deletedId?: string
+  error?: string
+}> {
+  const cleanId = (broadcastId || '').trim()
+  if (!cleanId || !UUID_REGEX.test(cleanId)) {
+    return { ok: false, error: 'Некорректный ID рассылки' }
+  }
+  try {
+    const headers = await getBroadcastAuthHeaders()
+    const res = await fetch(`/api/admin/broadcast?id=${encodeURIComponent(cleanId)}`, {
+      method: 'DELETE',
+      headers,
+      credentials: 'include',
+    })
+    const json = await res.json().catch(() => null)
+    if (!res.ok || !json?.ok) {
+      return {
+        ok: false,
+        error: json?.error || `HTTP ${res.status}`,
+      }
+    }
+    return {
+      ok: true,
+      deletedId: json.deletedId || cleanId,
+    }
+  } catch {
+    return { ok: false, error: 'Не удалось удалить рассылку' }
+  }
+}
+
+/**
+ * Realtime-подписка на новые и удалённые официальные рассылки Winlog.
+ */
+export function subscribeToOfficialBroadcasts(
+  onInsert: (row: OfficialBroadcastRecord) => void,
+  onDelete?: (oldRow: Partial<OfficialBroadcastRecord>) => void
+) {
+  const supabase = getSupabase()
+  if (!supabase) return () => {}
+
+  const channelName = `official_broadcasts_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  const channel = supabase
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'official_broadcasts' },
+      (payload) => {
+        if (payload.new) {
+          onInsert(payload.new as OfficialBroadcastRecord)
+        }
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'official_broadcasts' },
+      (payload) => {
+        if (payload.old && onDelete) {
+          onDelete(payload.old as Partial<OfficialBroadcastRecord>)
+        }
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
   }
 }

@@ -40,7 +40,7 @@ import type {
   ChatMessageReply,
 } from '@/lib/ogonek/types'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
-import { ChatAvatar } from './chat-avatar'
+import { ChatAvatar, GroupAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
 import { ChatComposer } from './chat-composer'
 import { ChatMessageBubble } from './chat-message-bubble'
@@ -48,6 +48,7 @@ import { ChatPinnedBanner } from './chat-pinned-banner'
 import { ChatSearchBar } from './chat-search-bar'
 import { ChatSelectionToolbar } from './chat-selection-toolbar'
 import { ForwardToChatModal } from './forward-to-chat-modal'
+import { GroupManagementModal } from './group-management-modal'
 
 type Props = {
   friendId: string
@@ -67,11 +68,18 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
     deleteChatMessages,
     togglePinChatMessage,
     toggleChatReaction,
+    translateChatMessage,
     setChatDraft,
     markThreadRead,
     clearThreadMessages,
     toggleThreadMute,
     toggleThreadPin,
+    updateGroupMeta,
+    addGroupMembers,
+    removeGroupMember,
+    setGroupMemberRole,
+    leaveGroup,
+    deleteGroup,
   } = useOgonekStore()
 
   const [pending, setPending] = useState(false)
@@ -85,10 +93,30 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
   const [selectedMessageIds, setSelectedMessageIds] = useState<string[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [friendDetailOpen, setFriendDetailOpen] = useState(false)
+  const [groupModalOpen, setGroupModalOpen] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [showScrollBottom, setShowScrollBottom] = useState(false)
 
   const bodyRef = useRef<HTMLDivElement>(null)
+  const headerMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointerDown = (e: MouseEvent) => {
+      if (headerMenuRef.current && !headerMenuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    const onEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onEscape)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onEscape)
+    }
+  }, [menuOpen])
 
   const thread = threadOf(state.chatThreads ?? {}, friendId)
   const isGroup = isGroupThread(thread, friendId)
@@ -302,11 +330,11 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
     <div className="mcw flex flex-col h-full bg-[var(--bg)] relative overflow-hidden select-text">
       {/* Шапка чата в стиле Telegram Web / X.com */}
       <header className="mcw__head border-b border-[var(--border)] px-4 py-2.5 bg-[var(--bg-elev)] flex items-center justify-between">
-        <div className="flex items-center gap-3 min-w-0 pr-2">
+        <div className="flex items-center gap-3 min-w-0 pr-2 flex-1">
           {onBack && (
             <button
               type="button"
-              className="mcw__back min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors mr-0.5"
+              className="mcw__back min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors mr-0.5 shrink-0"
               onClick={onBack}
               aria-label="Назад к списку чатов"
             >
@@ -314,45 +342,64 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
             </button>
           )}
 
-          {isGroup ? (
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg border border-[var(--line)] bg-[var(--surface2)]"
-              style={{
-                background: thread.groupMeta?.avatarColor || undefined,
-              }}
-            >
-              {thread.groupMeta?.avatarEmoji || '👥'}
+          <div
+            onClick={
+              isGroup
+                ? () => {
+                    playClick(soundEnabled)
+                    setGroupModalOpen(true)
+                  }
+                : undefined
+            }
+            role={isGroup ? 'button' : undefined}
+            tabIndex={isGroup ? 0 : undefined}
+            onKeyDown={
+              isGroup
+                ? (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setGroupModalOpen(true)
+                    }
+                  }
+                : undefined
+            }
+            className={`flex items-center gap-3 min-w-0 flex-1 ${
+              isGroup ? 'cursor-pointer rounded-xl py-1 px-1.5 -mx-1.5 hover:bg-white/[0.04] transition-colors' : ''
+            }`}
+          >
+            {isGroup ? (
+              <GroupAvatar group={thread.groupMeta} size={40} />
+            ) : (
+              <ChatAvatar friendId={friendId} size={42} ringColor="var(--bg-elev)" />
+            )}
+
+            <div className="mcw__ident min-w-0 flex-1">
+              <span className="mcw__name text-sm sm:text-base font-bold text-[var(--text)] whitespace-nowrap overflow-visible flex items-center gap-1.5">
+                <span className="truncate">{isPridayChat(friendId) ? 'Winlog' : title}</span>
+                {(isPridayChat(friendId) || friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
+              </span>
+
+              <span className="mcw__status text-xs text-[var(--text-2)] whitespace-nowrap block">
+                {pending ? (
+                  <span className="text-[#ffad5a] flex items-center gap-1 font-medium">
+                    <span>печатает</span>
+                    <span className="animate-pulse">.</span>
+                    <span className="animate-pulse delay-100">.</span>
+                    <span className="animate-pulse delay-200">.</span>
+                  </span>
+                ) : isPridayChat(friendId) ? (
+                  <span className="text-[var(--text-2)]">официальный аккаунт · @winlog.life</span>
+                ) : isGroup ? (
+                  <span className="text-[var(--text-2)]">
+                    {groupMemberCount} участников{groupOnlineCount > 0 ? ` · ${groupOnlineCount} в сети` : ''}
+                  </span>
+                ) : (
+                  <span style={{ color: peerStatus.color }}>
+                    {peerStatus.label} · @{friend?.username}
+                  </span>
+                )}
+              </span>
             </div>
-          ) : (
-            <ChatAvatar friendId={friendId} size={42} ringColor="var(--bg-elev)" />
-          )}
-
-          <div className="mcw__ident min-w-0 flex-1">
-            <span className="mcw__name text-sm sm:text-base font-bold text-[var(--text)] whitespace-nowrap overflow-visible flex items-center gap-1.5">
-              <span>{isPridayChat(friendId) ? 'Winlog' : title}</span>
-              {(isPridayChat(friendId) || friend?.verified || thread?.peerMeta?.verified) && <VerifiedBadge size="xs" />}
-            </span>
-
-            <span className="mcw__status text-xs text-[var(--text-2)] whitespace-nowrap block">
-              {pending ? (
-                <span className="text-[#ffad5a] flex items-center gap-1 font-medium">
-                  <span>печатает</span>
-                  <span className="animate-pulse">.</span>
-                  <span className="animate-pulse delay-100">.</span>
-                  <span className="animate-pulse delay-200">.</span>
-                </span>
-              ) : isPridayChat(friendId) ? (
-                <span className="text-[var(--text-2)]">официальный аккаунт · @winlog.life</span>
-              ) : isGroup ? (
-                <span className="text-[var(--text-2)]">
-                  {groupMemberCount} участников{groupOnlineCount > 0 ? ` · ${groupOnlineCount} в сети` : ''}
-                </span>
-              ) : (
-                <span style={{ color: peerStatus.color }}>
-                  {peerStatus.label} · @{friend?.username}
-                </span>
-              )}
-            </span>
           </div>
         </div>
 
@@ -375,26 +422,26 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
             <Search size={18} />
           </button>
 
-          {/* 2. Звонок / Инфо */}
+          {/* 2. Инфо */}
           <button
             type="button"
             className="mcw__head-btn min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
             onClick={() => {
               playClick(soundEnabled)
-              if (friend) {
+              if (isGroup) {
+                setGroupModalOpen(true)
+              } else if (friend) {
                 setFriendDetailOpen(true)
-              } else {
-                onNotify(`Групповой чат «${title}» (${thread.groupMeta?.memberIds.length ?? 3} уч.)`)
               }
             }}
-            title={friend ? `Профиль ${friend.name}` : 'Информация о группе'}
-            aria-label="Информация и звонок"
+            title={isGroup ? 'Информация о группе' : friend ? `Профиль ${friend.name}` : 'Информация'}
+            aria-label="Информация"
           >
             <Info size={18} />
           </button>
 
           {/* 3. Меню «⋯» */}
-          <div className="relative">
+          <div className="relative" ref={headerMenuRef}>
             <button
               type="button"
               className="mcw__head-btn min-w-[36px] min-h-[36px] w-9 h-9 flex items-center justify-center rounded-full hover:bg-[var(--bg-hover)] text-[var(--text-2)] hover:text-[var(--text)] transition-colors"
@@ -406,14 +453,27 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
             </button>
 
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 z-40 w-52 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-elev)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95">
+              <div className="absolute right-0 top-full mt-1 z-40 w-52 overflow-hidden rounded-xl border border-white/[0.14] bg-[#060608] p-1.5 shadow-2xl animate-in fade-in zoom-in-95">
+                {isGroup && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      setGroupModalOpen(true)
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-white hover:bg-white/[0.06] cursor-pointer"
+                  >
+                    <Users size={15} className="text-[#d76737]" />
+                    <span>Управление группой</span>
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
                     handleMute()
                     setMenuOpen(false)
                   }}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-white hover:bg-white/[0.06] cursor-pointer"
                 >
                   {thread.muted ? <Volume2 size={15} /> : <VolumeX size={15} />}
                   <span>{thread.muted ? 'Включить уведомления' : 'Отключить уведомления'}</span>
@@ -422,7 +482,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                   <button
                     type="button"
                     onClick={handleClear}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10"
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 cursor-pointer"
                   >
                     <Trash2 size={15} />
                     <span>Очистить историю</span>
@@ -497,13 +557,8 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
         {allMessages.length === 0 ? (
           <div className="mcw__intro flex flex-col items-center justify-center p-8 text-center my-auto">
             {isGroup ? (
-              <div
-                className="flex h-16 w-16 items-center justify-center rounded-full text-3xl mb-3 border border-[var(--line)] bg-[var(--surface2)]"
-                style={{
-                  background: thread.groupMeta?.avatarColor || undefined,
-                }}
-              >
-                {thread.groupMeta?.avatarEmoji || '👥'}
+              <div className="mb-3">
+                <GroupAvatar group={thread.groupMeta} size={64} />
               </div>
             ) : (
               <ChatAvatar friendId={friendId} size={64} ringColor="#0b0c0d" />
@@ -568,6 +623,7 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
                         onNotify('Сообщение удалено')
                       }}
                       onJumpToReply={scrollToMessage}
+                      onTranslate={(id, text, lang) => translateChatMessage(friendId, id, lang || 'ru', text)}
                       isSelectionMode={isSelectionMode}
                       isSelected={selectedMessageIds.includes(message.id)}
                       onToggleSelect={handleToggleSelect}
@@ -663,6 +719,41 @@ export function ChatWindow({ friendId, onNotify, onBack, soundEnabled = true }: 
           onClose={() => setFriendDetailOpen(false)}
           onNotify={onNotify}
           soundEnabled={soundEnabled}
+        />
+      )}
+
+      {/* Модалка управления группой */}
+      {groupModalOpen && isGroup && thread?.groupMeta && (
+        <GroupManagementModal
+          groupId={friendId}
+          groupMeta={thread.groupMeta}
+          onUpdateGroup={(patch) => updateGroupMeta(friendId, patch)}
+          onAddMembers={(memberIds) => addGroupMembers(friendId, memberIds)}
+          onRemoveMember={(memberId) => removeGroupMember(friendId, memberId)}
+          onSetMemberRole={(memberId, role) => setGroupMemberRole(friendId, memberId, role)}
+          onLeaveGroup={async () => {
+            const ok = await leaveGroup(friendId)
+            setGroupModalOpen(false)
+            if (ok) {
+              onNotify('Вы вышли из группы')
+              onBack?.()
+            } else {
+              onNotify('Не удалось выйти из группы')
+            }
+          }}
+          onDeleteGroup={async () => {
+            const ok = await deleteGroup(friendId)
+            setGroupModalOpen(false)
+            if (ok) {
+              onNotify('Группа удалена')
+              onBack?.()
+            } else {
+              onNotify('Не удалось удалить группу')
+            }
+          }}
+          onClose={() => setGroupModalOpen(false)}
+          soundEnabled={soundEnabled}
+          onNotify={onNotify}
         />
       )}
     </div>

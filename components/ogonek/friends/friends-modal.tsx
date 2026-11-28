@@ -406,24 +406,28 @@ export function FriendsModal({
     setIsCreatingGroup(true)
   }
 
-  const handleConfirmCreateGroup = () => {
+  const handleConfirmCreateGroup = async () => {
     playClick(soundEnabled)
     const cleanTitle = newGroupTitle.trim()
     if (!cleanTitle) {
       onNotify('Введите название группы')
       return
     }
-    const gid = createGroupChat(
-      cleanTitle,
-      [],
-      'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-      newGroupEmoji || '👥',
-      newGroupDescription
-    )
-    playSuccess(soundEnabled)
-    onNotify(`Группа «${cleanTitle}» создана!`)
-    setIsCreatingGroup(false)
-    setSelectedGroupId(gid)
+    try {
+      const gid = await createGroupChat(
+        cleanTitle,
+        [],
+        '#16181c',
+        newGroupEmoji || '👥',
+        newGroupDescription
+      )
+      playSuccess(soundEnabled)
+      onNotify(`Группа «${cleanTitle}» создана!`)
+      setIsCreatingGroup(false)
+      setSelectedGroupId(gid)
+    } catch (err: any) {
+      onNotify(err?.message || 'Не удалось создать группу')
+    }
   }
 
   const handleStartEditGroup = () => {
@@ -802,12 +806,21 @@ export function FriendsModal({
                                 setGroupSubTab('feed')
                               }}
                             >
-                              <div
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
-                                style={{ background: g.avatarColor || '#a855f7' }}
-                              >
-                                {g.avatarEmoji || '👥'}
-                              </div>
+                              {g.avatarImage ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={g.avatarImage}
+                                  alt={g.title}
+                                  className="w-10 h-10 rounded-full object-cover border border-white/[0.14] shrink-0"
+                                />
+                              ) : (
+                                <div
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0 border border-white/[0.14]"
+                                  style={{ background: g.avatarColor || '#16181c' }}
+                                >
+                                  {g.avatarEmoji || '👥'}
+                                </div>
+                              )}
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">
                                   <h4 className="text-sm font-bold text-[var(--text,#fff)] truncate">
@@ -876,12 +889,21 @@ export function FriendsModal({
                   </div>
 
                   <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/[0.1] flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0"
-                      style={{ background: selectedGroup.avatarColor || '#a855f7' }}
-                    >
-                      {selectedGroup.avatarEmoji || '👥'}
-                    </div>
+                    {selectedGroup.avatarImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={selectedGroup.avatarImage}
+                        alt={selectedGroup.title}
+                        className="w-12 h-12 rounded-full object-cover border border-white/[0.14] shrink-0"
+                      />
+                    ) : (
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-xl shrink-0 border border-white/[0.14]"
+                        style={{ background: selectedGroup.avatarColor || '#16181c' }}
+                      >
+                        {selectedGroup.avatarEmoji || '👥'}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <h3 className="text-sm font-bold text-[var(--text,#fff)] truncate">
                         {selectedGroup.title}

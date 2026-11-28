@@ -110,10 +110,13 @@ export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsL
   if (prev.day.visibility !== next.day.visibility) return false
   if (prev.day.groupId !== next.day.groupId) return false
   if (prev.day.groupName !== next.day.groupName) return false
+  if (prev.day.score !== next.day.score) return false
+  if (prev.day.aiScore !== next.day.aiScore) return false
+  if (prev.day.aiVerdict !== next.day.aiVerdict) return false
   if ((prev.day as any).updatedAtISO !== (next.day as any).updatedAtISO) return false
   if ((prev.day as any).updated_at !== (next.day as any).updated_at) return false
 
-  // Гордости (длина, текст, оценка scale, преодоление overcome, видимость, группа, AI-комментарий)
+  // Гордости (длина, текст, оценка scale/score, преодоление overcome, видимость, группа, AI-комментарий)
   const prevPrides = prev.day.prides || []
   const nextPrides = next.day.prides || []
   if (prevPrides.length !== nextPrides.length) return false
@@ -123,6 +126,7 @@ export function areDayCardPropsEqual(prev: DayCardPropsLike, next: DayCardPropsL
     if (
       p1?.text !== p2?.text ||
       p1?.scale !== p2?.scale ||
+      p1?.score !== p2?.score ||
       p1?.visibility !== p2?.visibility ||
       p1?.groupId !== p2?.groupId ||
       (p1 as any)?.aiComment !== (p2 as any)?.aiComment ||

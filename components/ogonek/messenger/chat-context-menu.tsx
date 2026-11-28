@@ -61,7 +61,11 @@ export function ChatContextMenu({ x, y, items, onClose }: Props) {
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800
   const clampedX = Math.max(8, Math.min(x, vw - menuWidth - 12))
-  const clampedY = Math.max(8, Math.min(y, vh - menuHeight - 12))
+  // Если снизу не хватает места И сверху >= 220px свободного пространства (не залезая на шапку) — открываем вверх; иначе вниз
+  const openUpward = y + menuHeight > vh - 12 && y >= 220 && y - menuHeight >= 76
+  const rawY = openUpward ? y - menuHeight : y
+  const minSafeTop = y < 220 ? Math.max(76, y) : 76
+  const clampedY = Math.max(Math.min(minSafeTop, vh - menuHeight - 12), Math.min(rawY, vh - menuHeight - 12))
 
   return createPortal(
     <div

@@ -180,6 +180,7 @@ export function ChatAttachmentModal({
                     highlightDay: String(attachment.dayId),
                   })
                   if (attachment.authorId) params.set('authorId', attachment.authorId)
+                  if (attachment.groupId) params.set('groupId', attachment.groupId)
                   onClose()
                   window.dispatchEvent(
                     new CustomEvent('ogonek:navigate-view', {
@@ -193,12 +194,13 @@ export function ChatAttachmentModal({
                           tab,
                           dayId: attachment.dayId,
                           userId: attachment.authorId || null,
+                          groupId: attachment.groupId || null,
                         },
                       })
                     )
                   }, 60)
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] hover:bg-[#ff6d38] px-4 py-2 text-[13px] font-bold text-white shadow-[0_4px_14px_rgba(255,90,31,0.4)] transition-all active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#d76737] hover:opacity-90 px-4 py-2 text-[13px] font-semibold text-black transition-all active:scale-95 cursor-pointer"
               >
                 <span>{attachment.actionLabel || 'Перейти к дню →'}</span>
               </button>

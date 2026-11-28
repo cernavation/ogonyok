@@ -2,6 +2,12 @@ import type { ChatMessage, ChatThreadState, ChatThreads } from './types.ts'
 
 export const PRIDAY_CHAT_ID = 'priday-official'
 export const PRIDAY_WELCOME_MSG_ID = 'priday-welcome'
+export const OFFICIAL_BROADCAST_BADGE_LABEL = 'Обновление Winlog'
+export const FOUNDER_USERNAME = 'cernavation'
+
+export function isFounderUser(username?: string | null): boolean {
+  return String(username || '').trim().replace(/^@+/, '').toLowerCase() === FOUNDER_USERNAME
+}
 
 export const PRIDAY_THREAD_PEER_META = {
   name: 'Winlog',
@@ -210,6 +216,70 @@ export function mapPridayRecordToChatMessage(row: any): ChatMessage | null {
       milestoneDay,
       milestoneTier,
       kind,
+    },
+  }
+}
+
+export function mapOfficialBroadcastToChatMessage(
+  row: any,
+  options?: {
+    lastReadOfficialAt?: string | null
+    userCreatedAt?: string | null
+    myUserId?: string | null
+    forceRead?: boolean
+  }
+): ChatMessage | null {
+  if (!row || typeof row !== 'object' || !row.id) return null
+  const text = typeof row.text === 'string' ? row.text : ''
+  const mediaUrl = typeof row.media_url === 'string' && row.media_url.trim() ? row.media_url.trim() : null
+  if (!text.trim() && !mediaUrl) return null
+
+  const createdAtISO = row.created_at || new Date().toISOString()
+  const createdMs = new Date(createdAtISO).getTime()
+
+  let isRead = Boolean(options?.forceRead)
+  if (!isRead && options?.myUserId && row.author_id === options.myUserId) {
+    isRead = true
+  } else if (!isRead) {
+    const lastReadIso = options?.lastReadOfficialAt
+    const userCreatedIso = options?.userCreatedAt
+    if (lastReadIso) {
+      const lastReadMs = new Date(lastReadIso).getTime()
+      if (Number.isFinite(lastReadMs) && Number.isFinite(createdMs)) {
+        isRead = createdMs <= lastReadMs
+      }
+    } else if (userCreatedIso) {
+      const userCreatedMs = new Date(userCreatedIso).getTime()
+      if (Number.isFinite(userCreatedMs) && Number.isFinite(createdMs)) {
+        isRead = createdMs < userCreatedMs
+      }
+    }
+  }
+
+  return {
+    id: `official-broadcast-${String(row.id)}`,
+    dbId: String(row.id),
+    authorId: PRIDAY_CHAT_ID,
+    text,
+    createdAtISO,
+    attachment: null,
+    reactions: [],
+    read: isRead,
+    system: false,
+    type: mediaUrl ? 'image' : 'text',
+    media: mediaUrl
+      ? {
+          type: 'image',
+          url: mediaUrl,
+          name: OFFICIAL_BROADCAST_BADGE_LABEL,
+        }
+      : null,
+    status: isRead ? 'read' : 'sent',
+    actorMeta: {
+      actorId: row.author_id ? String(row.author_id) : null,
+      actorUsername: 'winlog.life',
+      actorDisplayName: 'Winlog',
+      kind: 'official_broadcast',
     },
   }
 }

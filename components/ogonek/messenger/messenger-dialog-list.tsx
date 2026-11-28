@@ -42,7 +42,7 @@ import {
 } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatFolder, ChatTag, ChatThreads } from '@/lib/ogonek/types'
-import { ChatAvatar } from './chat-avatar'
+import { ChatAvatar, GroupAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
 import { ChatContextMenu, type ContextMenuItem } from './chat-context-menu'
 import { getCachedProfileSync, getProfile } from '@/lib/supabase/api'
@@ -358,7 +358,7 @@ export function MessengerDialogList({
               playClick(soundEnabled)
               onNewChat()
             }}
-            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-full bg-[var(--accent)] text-[var(--accent-text)] flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-sm"
+            className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl bg-white/[0.08] border border-white/[0.12] text-white/80 hover:bg-white/[0.15] hover:text-white flex items-center justify-center active:scale-95 transition-all"
             aria-label="Написать сообщение или создать группу"
             title="Написать"
           >
@@ -466,14 +466,7 @@ export function MessengerDialogList({
                       ⭐️
                     </div>
                   ) : isGroup ? (
-                    <div
-                      className="w-[56px] h-[56px] rounded-full flex items-center justify-center text-2xl border border-[var(--line)] bg-[var(--surface2)]"
-                      style={{
-                        background: thread?.groupMeta?.avatarColor || undefined,
-                      }}
-                    >
-                      {thread?.groupMeta?.avatarEmoji || '👥'}
-                    </div>
+                    <GroupAvatar group={thread?.groupMeta} size={56} />
                   ) : (
                     <ChatAvatar friendId={id} size={56} ringColor="var(--bg)" />
                   )}
@@ -522,7 +515,7 @@ export function MessengerDialogList({
                         </span>
                       ) : last ? (
                         <span className="truncate flex items-center gap-1">
-                          {last.authorId === 'me' && (
+                          {last.authorId === 'me' && !last.system && last.type !== 'system' && (
                             <span className="text-[var(--text-2)] shrink-0">
                               {last.read ? (
                                 <CheckCheck size={14} className="text-[var(--accent)] inline" />

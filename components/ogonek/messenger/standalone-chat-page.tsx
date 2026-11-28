@@ -12,6 +12,7 @@ export function StandaloneChatPage({ friendId }: { friendId: string }) {
   const router = useRouter()
   const { state, setActiveChatFriend } = useOgonekStore()
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [toastSeq, setToastSeq] = useState(0)
 
   useEffect(() => {
     setActiveChatFriend(friendId)
@@ -27,7 +28,7 @@ export function StandaloneChatPage({ friendId }: { friendId: string }) {
 
   const showNotify = (msg: string) => {
     setToastMsg(msg)
-    setTimeout(() => setToastMsg(null), 2500)
+    setToastSeq((n) => n + 1)
   }
 
   return (
@@ -47,7 +48,9 @@ export function StandaloneChatPage({ friendId }: { friendId: string }) {
             soundEnabled={state.soundEnabled}
           />
         </div>
-        {toastMsg && <Toast message={toastMsg} />}
+        {toastMsg && (
+          <Toast message={toastMsg} toastKey={toastSeq} onClose={() => setToastMsg(null)} />
+        )}
       </div>
     </TooltipProvider>
   )

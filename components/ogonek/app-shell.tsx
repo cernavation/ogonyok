@@ -43,10 +43,15 @@ import { CALL_RING_TIMEOUT_MS } from '@/lib/ogonek/webrtc'
 import { getSupabase } from '@/lib/supabase/client'
 import { usePresenceTracker } from '@/lib/supabase/presence'
 import {
+  extractDbGroupUuid,
   getProfile,
   getUnreadDirectMessageCountFromDb,
+  markGroupMessagesAsReadDb,
+  markPridaySystemMessagesReadDb,
   subscribeToDirectMessages,
   subscribeToFollows,
+  subscribeToOfficialBroadcasts,
+  subscribeToUserGroups,
   updateCallSessionStatus,
   type CallSessionRecord,
   type ProfileRecord,
@@ -113,6 +118,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     milestoneNumber: 100,
   })
   const [toast, setToast] = useState('')
+  const [toastSeq, setToastSeq] = useState(0)
   const [locked, setLocked] = useState(false)
   const [lockReason, setLockReason] = useState<'open' | 'idle' | 'manual'>('open')
   const [authModal, setAuthModal] = useState<'signin' | 'register' | null>(null)
@@ -186,6 +192,8 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
     loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
     receivePridaySystemNotification,
+    receiveOfficialBroadcast,
+    removeOfficialBroadcast,
     deliverPridayMilestoneMessage,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
@@ -207,7 +215,6 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
   unreadNotifRef.current = state.unreadNotificationsCount || 0
 
   const pendingScrollRef = useRef(false)
-  const toastTimerRef = useRef<NodeJS.Timeout | null>(null)
   const reduce = useReducedMotion()
 
   useBodyScrollLock(
@@ -241,12 +248,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
   const notify = useCallback((message: string) => {
     setToast(message)
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current)
-    }
-    toastTimerRef.current = setTimeout(() => {
-      setToast('')
-    }, 2400)
+    setToastSeq((n) => n + 1)
   }, [])
 
   // Обработчики открытия модального окна Премиума и Апселла (CONTRACT Шаг 12)
@@ -474,17 +476,27 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
     const unsubscribeDm = subscribeToDirectMessages(
       async (newMsg) => {
-        if (!newMsg || (newMsg.author_id !== myId && newMsg.recipient_id !== myId)) return
+        const isGroupMsg =
+          typeof newMsg?.thread_key === 'string' && newMsg.thread_key.startsWith('group')
+        if (!newMsg || (newMsg.author_id !== myId && newMsg.recipient_id !== myId && !isGroupMsg)) {
+          return
+        }
 
         // Мгновенно добавляем сообщение в стор и пересчитываем unreadChatCount даже на Главной
         receiveIncomingChatMessage(newMsg)
 
         if (newMsg.author_id === myId) return
 
+        const groupUuid = isGroupMsg ? extractDbGroupUuid(newMsg.thread_key) : null
+        const targetThreadPeerId = groupUuid ? `group-${groupUuid}` : newMsg.author_id
+
         const isCurrentChatOpen =
-          viewRef.current === 'messages' && activeChatFriendRef.current === newMsg.author_id
+          viewRef.current === 'messages' && activeChatFriendRef.current === targetThreadPeerId
 
         if (isCurrentChatOpen) {
+          if (groupUuid) {
+            markGroupMessagesAsReadDb(groupUuid, myId).catch(() => {})
+          }
           return
         }
 
@@ -504,7 +516,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
         const isVoice = newMsg.type === 'voice' || (newMsg.media && newMsg.media.type === 'audio')
         const isPhoto = newMsg.type === 'image' || (newMsg.media && newMsg.media.type === 'image')
-        const isMissed = newMsg.is_system && newMsg.body?.includes('Пропущенный звонок')
+        const isMissed = newMsg.is_system && Boolean(newMsg.call_meta || newMsg.body?.includes('Пропущенный звонок'))
 
         let previewText = newMsg.body || ''
         let mediaType: 'voice' | 'photo' | 'text' | 'call' = 'text'
@@ -533,12 +545,16 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           avatarColor: authorAvatarColor,
           verified: authorVerified,
           mediaType,
-          peerId: newMsg.author_id,
+          peerId: targetThreadPeerId,
           threadKey: newMsg.thread_key,
         })
       },
       (updatedMsg) => {
-        if (!updatedMsg || (updatedMsg.author_id !== myId && updatedMsg.recipient_id !== myId)) return
+        const isGroupMsg =
+          typeof updatedMsg?.thread_key === 'string' && updatedMsg.thread_key.startsWith('group')
+        if (!updatedMsg || (updatedMsg.author_id !== myId && updatedMsg.recipient_id !== myId && !isGroupMsg)) {
+          return
+        }
         updateIncomingChatMessage(updatedMsg)
       },
       (oldRecord) => {
@@ -547,6 +563,50 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
         }
       }
     )
+
+    let groupSyncTimer: ReturnType<typeof setTimeout> | null = null
+    const triggerGroupSync = () => {
+      if (groupSyncTimer) clearTimeout(groupSyncTimer)
+      groupSyncTimer = setTimeout(() => {
+        void loadChatThreadsFromCloud(myId)
+      }, 180)
+    }
+    const unsubGroups = subscribeToUserGroups(triggerGroupSync)
+    const unsubBroadcasts = subscribeToOfficialBroadcasts(
+      (broadcast) => {
+        const viewingPriday =
+          viewRef.current === 'messages' && activeChatFriendRef.current === 'priday-official'
+        const isAuthorSelf = Boolean(myId && broadcast.author_id && broadcast.author_id === myId)
+        receiveOfficialBroadcast(broadcast, { markRead: viewingPriday || isAuthorSelf })
+        if (viewingPriday && !isAuthorSelf) {
+          markPridaySystemMessagesReadDb(myId).catch(() => {})
+        }
+        if (!viewingPriday && !isAuthorSelf) {
+          playChatMessageSound(soundVolumeRef.current, soundEnabledRef.current)
+          showDesktopToast({
+            type: 'chat',
+            title: 'Winlog',
+            body:
+              broadcast.text?.trim() ||
+              (broadcast.media_url
+                ? 'Официальное объявление с изображением'
+                : 'Новое официальное обновление Winlog'),
+            mediaType: broadcast.media_url ? 'photo' : 'text',
+            peerId: 'priday-official',
+            verified: true,
+          })
+        }
+      },
+      (oldRow) => {
+        if (oldRow?.id) {
+          removeOfficialBroadcast(oldRow.id)
+        }
+      }
+    )
+    const onSyncThreadsEvent = () => triggerGroupSync()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ogonek:sync-chat-threads', onSyncThreadsEvent)
+    }
 
     const channelName = `global_notif_${myId}_${Math.random().toString(36).slice(2, 7)}`
     const channel = supabase
@@ -679,13 +739,22 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
 
     return () => {
       unsubscribeDm()
+      unsubGroups()
+      unsubBroadcasts()
+      if (groupSyncTimer) clearTimeout(groupSyncTimer)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ogonek:sync-chat-threads', onSyncThreadsEvent)
+      }
       supabase.removeChannel(channel)
     }
   }, [
     currentUser?.id,
     state.auth?.activeAccountId,
+    loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
     receivePridaySystemNotification,
+    receiveOfficialBroadcast,
+    removeOfficialBroadcast,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
     showDesktopToast,
@@ -2218,7 +2287,7 @@ export function AppShell({ initialView = 'home' }: { initialView?: ViewId } = {}
           onSendReply={handleToastReply}
         />
 
-        <Toast message={toast} />
+        <Toast message={toast} toastKey={toastSeq} onClose={() => setToast('')} />
       </main>
     </TooltipProvider>
   )

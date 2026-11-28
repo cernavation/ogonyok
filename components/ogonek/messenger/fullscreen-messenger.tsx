@@ -1,10 +1,15 @@
 'use client'
 
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useOgonekStore, syncSupabaseAuthNow } from '@/lib/ogonek/use-ogonek-store'
 import { resolveBrowserSession } from '@/lib/ogonek/client-session'
-import { subscribeToDirectMessages } from '@/lib/supabase/api'
+import {
+  markPridaySystemMessagesReadDb,
+  subscribeToDirectMessages,
+  subscribeToOfficialBroadcasts,
+  subscribeToUserGroups,
+} from '@/lib/supabase/api'
 import { Sidebar } from '../sidebar'
 import { CURRENT_DAY } from '@/lib/ogonek/data'
 import type { ViewId } from '@/lib/ogonek/types'
@@ -52,6 +57,8 @@ export function FullscreenMessenger({
     setActiveChatFriend,
     loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
+    receiveOfficialBroadcast,
+    removeOfficialBroadcast,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
   } = useOgonekStore()
@@ -61,6 +68,7 @@ export function FullscreenMessenger({
 
   const cleanInitial = sanitizeThreadId(initialThreadId)
   const cleanStore = sanitizeThreadId(state?.chatActiveFriendId)
+  const activeThreadRef = useRef<string | null>(cleanInitial || cleanStore || null)
   const resolvedUserId = currentUserId || currentUser?.id || state.auth?.activeAccountId || 'local-user'
 
   // Auth gate for standalone /chats and /chats/[id] routes so reloads preserve session
@@ -94,12 +102,16 @@ export function FullscreenMessenger({
 
     const unsubscribe = subscribeToDirectMessages(
       (incoming) => {
-        if (incoming.author_id === uid || incoming.recipient_id === uid) {
+        const isGroupMsg =
+          typeof incoming.thread_key === 'string' && incoming.thread_key.startsWith('group')
+        if (incoming.author_id === uid || incoming.recipient_id === uid || isGroupMsg) {
           receiveIncomingChatMessage(incoming)
         }
       },
       (updated) => {
-        if (updated.author_id === uid || updated.recipient_id === uid) {
+        const isGroupMsg =
+          typeof updated.thread_key === 'string' && updated.thread_key.startsWith('group')
+        if (updated.author_id === uid || updated.recipient_id === uid || isGroupMsg) {
           updateIncomingChatMessage(updated)
         }
       },
@@ -110,8 +122,42 @@ export function FullscreenMessenger({
       }
     )
 
+    let groupSyncTimer: ReturnType<typeof setTimeout> | null = null
+    const triggerGroupSync = () => {
+      if (groupSyncTimer) clearTimeout(groupSyncTimer)
+      groupSyncTimer = setTimeout(() => {
+        void loadChatThreadsFromCloud?.(uid)
+      }, 180)
+    }
+    const unsubGroups = subscribeToUserGroups(triggerGroupSync)
+    const unsubBroadcasts = subscribeToOfficialBroadcasts(
+      (broadcast) => {
+        const viewingPriday = activeThreadRef.current === 'priday-official'
+        const isAuthorSelf = Boolean(uid && broadcast.author_id && broadcast.author_id === uid)
+        receiveOfficialBroadcast(broadcast, { markRead: viewingPriday || isAuthorSelf })
+        if (viewingPriday && !isAuthorSelf) {
+          markPridaySystemMessagesReadDb(uid).catch(() => {})
+        }
+      },
+      (oldRow) => {
+        if (oldRow?.id) {
+          removeOfficialBroadcast(oldRow.id)
+        }
+      }
+    )
+    const onSyncEvent = () => triggerGroupSync()
+    if (typeof window !== 'undefined') {
+      window.addEventListener('ogonek:sync-chat-threads', onSyncEvent)
+    }
+
     return () => {
       unsubscribe()
+      unsubGroups()
+      unsubBroadcasts()
+      if (groupSyncTimer) clearTimeout(groupSyncTimer)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('ogonek:sync-chat-threads', onSyncEvent)
+      }
     }
   }, [
     embedded,
@@ -119,6 +165,8 @@ export function FullscreenMessenger({
     resolvedUserId,
     loadChatThreadsFromCloud,
     receiveIncomingChatMessage,
+    receiveOfficialBroadcast,
+    removeOfficialBroadcast,
     updateIncomingChatMessage,
     removeDeletedChatMessage,
   ])
@@ -127,6 +175,7 @@ export function FullscreenMessenger({
   const [activeThreadId, setActiveId] = useState<string | null>(
     cleanInitial || cleanStore || null
   )
+  activeThreadRef.current = activeThreadId
 
   // Keep activeThreadId valid if store deletes the active thread
   useEffect(() => {
@@ -148,6 +197,7 @@ export function FullscreenMessenger({
   const [isNewChatOpen, setIsNewChatOpen] = useState(false)
   const [newChatInitialMode, setNewChatInitialMode] = useState<'direct' | 'group'>('direct')
   const [toastMsg, setToastMsg] = useState<string | null>(null)
+  const [toastSeq, setToastSeq] = useState(0)
 
   useEffect(() => {
     const onOpenGroup = () => {
@@ -160,9 +210,7 @@ export function FullscreenMessenger({
 
   const notify = useCallback((message: string) => {
     setToastMsg(message)
-    setTimeout(() => {
-      setToastMsg((prev) => (prev === message ? null : prev))
-    }, 2500)
+    setToastSeq((n) => n + 1)
   }, [])
 
   useEffect(() => {
@@ -397,7 +445,9 @@ export function FullscreenMessenger({
         />
       )}
 
-      {toastMsg && <Toast message={toastMsg} />}
+      {toastMsg && (
+        <Toast message={toastMsg} toastKey={toastSeq} onClose={() => setToastMsg(null)} />
+      )}
     </div>
   )
 

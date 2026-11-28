@@ -871,7 +871,7 @@ export type ChatMessage = {
     actorDisplayName?: string | null
     milestoneDay?: number | null
     milestoneTier?: 10 | 50 | 100 | null
-    kind?: 'welcome' | 'canned' | 'support_user' | 'support_reply' | 'follow' | 'mutual' | 'milestone'
+    kind?: 'welcome' | 'canned' | 'support_user' | 'support_reply' | 'follow' | 'mutual' | 'milestone' | 'official_broadcast'
   } | null
 }
 

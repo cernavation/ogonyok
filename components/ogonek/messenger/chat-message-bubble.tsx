@@ -28,12 +28,14 @@ import {
   Trash2,
   Volume2,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import { getFriend } from '@/lib/ogonek/friends'
 import { formatChatTime, STICKER_PACK } from '@/lib/ogonek/messenger'
 import { playClick } from '@/lib/ogonek/sound'
 import type { ChatMessage, CustomEmoji } from '@/lib/ogonek/types'
+import { OFFICIAL_BROADCAST_BADGE_LABEL } from '@/lib/ogonek/priday-system-chat'
 import { isSafeUrl, safeHref, safeImageSrc } from '@/lib/ogonek/safe-url'
 import { getCachedProfileSync } from '@/lib/supabase/api'
 import { useOgonekStore } from '@/lib/ogonek/use-ogonek-store'
@@ -78,7 +80,7 @@ type Props = {
   onPin?: (messageId: string) => void
   onDelete: (messageId: string, forEveryone?: boolean) => void
   onJumpToReply?: (replyMessageId: string) => void
-  onTranslate?: (messageId: string, text: string) => void
+  onTranslate?: (messageId: string, text: string, targetLang?: string) => void
   onTranscribe?: (messageId: string, transcript: string) => void
   onVotePoll?: (messageId: string, optionIndex: number) => void
   onToggleLabel?: (messageId: string, label: string) => void
@@ -91,6 +93,7 @@ type Props = {
   isLastInGroup?: boolean
   searchQuery?: string
   soundEnabled?: boolean
+  canDeleteBroadcast?: boolean
   onNotify?: (message: string) => void
   onContextMenu?: (e: React.MouseEvent, message: ChatMessage) => void
 }
@@ -120,18 +123,33 @@ export function ChatMessageBubble({
   isLastInGroup = true,
   searchQuery = '',
   soundEnabled = true,
+  canDeleteBroadcast = false,
   onNotify,
   onContextMenu,
 }: Props) {
+  const isOfficialBroadcast = message.actorMeta?.kind === 'official_broadcast'
   const [pickerOpen, setPickerOpen] = useState(false)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [attachmentModalOpen, setAttachmentModalOpen] = useState(false)
   const [gifProxyFallback, setGifProxyFallback] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showTranslated, setShowTranslated] = useState(false)
+  const [translationMeta, setTranslationMeta] = useState<{
+    text: string
+    sourceLang: string
+    targetLang: string
+  } | null>(null)
   const [transcriptOpen, setTranscriptOpen] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const [translating, setTranslating] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<{
+    left: number
+    top: number
+    maxHeight: number
+  } | null>(null)
+  const pickerBtnRef = useRef<HTMLButtonElement | null>(null)
+  const menuBtnRef = useRef<HTMLButtonElement | null>(null)
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
   const reduce = useReducedMotion()
 
   const { state: storeState } = useOgonekStore()
@@ -177,26 +195,105 @@ export function ChatMessageBubble({
     setMenuOpen(false)
   }
 
+  const resolveTargetLang = (): 'ru' | 'ro' | 'en' => {
+    const pref = (storeState.chatSettings?.targetLanguage || '').trim().toLowerCase().slice(0, 2)
+    if (pref === 'ro' || pref === 'en') return pref
+    if (typeof window !== 'undefined') {
+      const pathLang = window.location.pathname.match(/^\/(ru|ro|en)(\/|$)/)?.[1]?.toLowerCase()
+      if (pathLang === 'ru' || pathLang === 'ro' || pathLang === 'en') return pathLang
+      const docLang = (document.documentElement?.lang || '').trim().toLowerCase().slice(0, 2)
+      if (docLang === 'ru' || docLang === 'ro' || docLang === 'en') return docLang
+    }
+    return 'ru'
+  }
+
+  const updateMenuPosition = (measuredHeight?: number) => {
+    if (typeof window === 'undefined' || !menuBtnRef.current) return
+    const rect = menuBtnRef.current.getBoundingClientRect()
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const menuWidth = 192
+    const estHeight = measuredHeight ?? 232
+    const HEADER_SAFE_TOP = 76
+    const freeAbove = rect.top - HEADER_SAFE_TOP
+    const freeBelow = vh - rect.bottom - 12
+    // Если сверху меньше 220px свободного пространства (или меню залезает на шапку) — раскрываем вниз
+    const openDown = rect.top < 220 || (freeAbove < estHeight && freeBelow >= freeAbove)
+    const top = openDown
+      ? Math.max(HEADER_SAFE_TOP, Math.min(rect.bottom + 6, vh - estHeight - 12))
+      : Math.max(HEADER_SAFE_TOP, rect.top - estHeight - 6)
+    const left = Math.max(
+      8,
+      Math.min(isMine ? rect.right - menuWidth : rect.left, vw - menuWidth - 10)
+    )
+    setMenuPosition({
+      left,
+      top,
+      maxHeight: Math.max(160, vh - HEADER_SAFE_TOP - 16),
+    })
+  }
+
+  useLayoutEffect(() => {
+    if (!menuOpen) return
+    const raf = requestAnimationFrame(() => {
+      const actualH = dropdownRef.current?.offsetHeight
+      if (actualH) updateMenuPosition(actualH)
+    })
+    return () => cancelAnimationFrame(raf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menuOpen, isMine])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
+    const onScroll = () => setMenuOpen(false)
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [menuOpen])
+
   const handleTranslateClick = async () => {
     playClick(soundEnabled)
     setMenuOpen(false)
-    if (message.translations?.ru || message.translations?.en) {
-      setShowTranslated((v) => !v)
+    if (!message.text?.trim()) return
+
+    if (showTranslated && (translationMeta?.text || translatedText)) {
+      setShowTranslated(false)
+      return
+    }
+
+    if (translationMeta?.text) {
+      setShowTranslated(true)
       return
     }
 
     setTranslating(true)
     try {
+      const targetLang = resolveTargetLang()
       const res = await fetch('/api/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: message.text, targetLanguage: 'ru' }),
+        body: JSON.stringify({ text: message.text, targetLang }),
       })
-      const data = await res.json()
-      if (data?.translation) {
-        onTranslate?.(message.id, data.translation)
+      const data = await res.json().catch(() => null)
+      const translated = data?.translatedText || data?.translation
+      if (res.ok && translated) {
+        const finalTarget = String(data?.targetLang || targetLang).toLowerCase()
+        const finalSource = String(data?.detectedSourceLang || 'auto').toLowerCase()
+        setTranslationMeta({
+          text: translated,
+          sourceLang: finalSource,
+          targetLang: finalTarget,
+        })
+        onTranslate?.(message.id, translated, finalTarget)
         setShowTranslated(true)
-        onNotify?.('Сообщение переведено')
+      } else {
+        onNotify?.(data?.error || 'Не удалось перевести сообщение')
       }
     } catch {
       onNotify?.('Ошибка при обращении к сервису перевода')
@@ -255,9 +352,35 @@ export function ChatMessageBubble({
   }
 
   const renderHighlightedText = (text: string) => {
-    const tokens = text.split(/(@[a-zA-Z0-9._]{2,32})/g)
+    const tokens = text.split(/(https?:\/\/[^\s<>()]+|@[a-zA-Z0-9._]{2,32})/g)
     const q = searchQuery.trim()
     return tokens.map((token, idx) => {
+      if (/^https?:\/\/[^\s<>()]+$/i.test(token)) {
+        const trailingMatch = token.match(/([.,!?:;)\]]+)$/)
+        const trailing = trailingMatch ? trailingMatch[1] : ''
+        const cleanUrl = trailing ? token.slice(0, -trailing.length) : token
+        const href = safeHref(cleanUrl)
+        if (href) {
+          return (
+            <span key={`url-${idx}`}>
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className={`inline underline break-all ${
+                  isMine
+                    ? 'text-[#ff9c73] decoration-[#ff9c73]/60 hover:decoration-[#ff9c73]'
+                    : 'text-[#ff7a45] decoration-[#ff7a45]/60 hover:decoration-[#ff7a45]'
+                }`}
+              >
+                {cleanUrl}
+              </a>
+              {trailing}
+            </span>
+          )
+        }
+      }
       if (/^@[a-zA-Z0-9._]{2,32}$/.test(token) && token.toLowerCase() !== '@priday.life' && token.toLowerCase() !== '@winlog.life') {
         return (
           <button
@@ -288,7 +411,7 @@ export function ChatMessageBubble({
                 key={i}
                 className={
                   isMine
-                    ? 'bg-white text-[#c2410c] font-semibold rounded px-0.5'
+                    ? 'bg-[#d76737] text-black font-semibold rounded px-0.5'
                     : 'bg-[#ff7a18] text-white rounded px-0.5'
                 }
               >
@@ -327,7 +450,14 @@ export function ChatMessageBubble({
     !message.forwardFrom &&
     (!message.labels || message.labels.length === 0)
 
-  const translatedText = message.translations?.ru || message.translations?.en || Object.values(message.translations || {})[0]
+  const cachedValidTranslation = Object.values(message.translations || {}).find(
+    (v) =>
+      typeof v === 'string' &&
+      v.trim().length > 0 &&
+      !v.startsWith('[Перевод') &&
+      !v.startsWith('[Translated')
+  )
+  const translatedText = translationMeta?.text || cachedValidTranslation || undefined
   const hasMedia = Boolean(message.media?.type === 'image' || message.media?.type === 'video')
   const isVoiceOnlyPlaceholder =
     message.media?.type === 'audio' &&
@@ -344,19 +474,30 @@ export function ChatMessageBubble({
     message.text?.includes('🚫') ||
     Boolean((message as any).call_meta)
   ) {
+    const isCallSystem = Boolean(
+      (message as any).call_meta ||
+        message.text?.startsWith('Пропущенный') ||
+        message.text?.includes('звонок') ||
+        message.text?.includes('вызов') ||
+        message.text?.includes('❌') ||
+        message.text?.includes('🚫')
+    )
     const isMissed = message.text?.includes('Пропущенный') || message.text?.includes('❌')
     const isRejected = message.text?.includes('Отклонённый') || message.text?.includes('🚫') || message.text?.includes('занято')
+    const displaySystemText = (message.text || '').replace(/^\s*📞\s*/, '').trim()
     return (
       <div className="flex justify-center my-3 select-none">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[var(--surface2,#202327)]/80 text-[var(--muted,#71767b)] text-[12px] font-medium border border-[var(--line,#2f3336)] shadow-sm">
-          {isMissed ? (
-            <PhoneMissed size={13} className="text-rose-500 shrink-0" />
-          ) : isRejected ? (
-            <PhoneOff size={13} className="text-amber-500 shrink-0" />
-          ) : (
-            <Phone size={13} className="text-[#00ba7c] shrink-0" />
+          {isCallSystem && (
+            isMissed ? (
+              <PhoneMissed size={13} className="text-rose-500 shrink-0" />
+            ) : isRejected ? (
+              <PhoneOff size={13} className="text-amber-500 shrink-0" />
+            ) : (
+              <Phone size={13} className="text-[#00ba7c] shrink-0" />
+            )
           )}
-          <span>{message.text}</span>
+          <span>{displaySystemText}</span>
         </div>
       </div>
     )
@@ -403,6 +544,7 @@ export function ChatMessageBubble({
               }`}
             >
               <button
+                ref={pickerBtnRef}
                 type="button"
                 onClick={() => {
                   playClick(soundEnabled)
@@ -458,8 +600,16 @@ export function ChatMessageBubble({
               )}
               <div className="relative">
                 <button
+                  ref={menuBtnRef}
                   type="button"
-                  onClick={() => setMenuOpen((v) => !v)}
+                  onClick={() => {
+                    if (!menuOpen) {
+                      updateMenuPosition()
+                      setMenuOpen(true)
+                    } else {
+                      setMenuOpen(false)
+                    }
+                  }}
                   className="grid min-h-[32px] min-w-[32px] w-8 h-8 place-items-center rounded-full text-[var(--text-2)] hover:bg-[var(--bg-hover)] hover:text-[var(--text)]"
                   title="Ещё"
                   aria-label="Меню сообщения"
@@ -467,76 +617,100 @@ export function ChatMessageBubble({
                   <MoreHorizontal size={14} />
                 </button>
 
-                {menuOpen && (
-                  <>
-                    <div className="fixed inset-0 z-30" onClick={() => setMenuOpen(false)} />
-                    <div className="absolute right-0 bottom-full mb-1 z-40 w-44 rounded-xl border border-[var(--border)] bg-[var(--bg-elev)] p-1 shadow-2xl text-xs font-medium animate-in fade-in zoom-in-95 backdrop-blur-md">
-                      {message.text && (
-                        <button
-                          type="button"
-                          onClick={handleCopy}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                        >
-                          <Copy size={13} /> Копировать
-                        </button>
-                      )}
-                      {message.text && (
-                        <button
-                          type="button"
-                          onClick={handleTranslateClick}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[var(--text)] hover:bg-[var(--bg-hover)]"
-                        >
-                          <Languages size={13} className="text-[#1d9bf0]" />
-                          {translating ? 'Перевожу...' : showTranslated ? 'Показать оригинал' : 'Перевести'}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onForward(message)
-                          setMenuOpen(false)
-                        }}
-                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                {menuOpen &&
+                  typeof document !== 'undefined' &&
+                  createPortal(
+                    <>
+                      <div
+                        className="fixed inset-0 z-[9998]"
+                        onClick={() => setMenuOpen(false)}
+                      />
+                      <div
+                        ref={dropdownRef}
+                        data-bubble-action-menu="true"
+                        style={
+                          menuPosition
+                            ? {
+                                position: 'fixed',
+                                left: `${menuPosition.left}px`,
+                                top: `${menuPosition.top}px`,
+                                width: '192px',
+                                maxHeight: `${menuPosition.maxHeight}px`,
+                              }
+                            : undefined
+                        }
+                        className="fixed z-[9999] overflow-y-auto rounded-xl border border-white/[0.14] bg-[#0a0a0c]/95 backdrop-blur-xl p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-xs font-medium text-[#e7e9ea] animate-in fade-in zoom-in-95 duration-100"
                       >
-                        <Forward size={13} /> Переслать
-                      </button>
-                      {onToggleLabel && (
+                        {message.text && (
+                          <button
+                            type="button"
+                            onClick={handleCopy}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                          >
+                            <Copy size={13} /> Копировать
+                          </button>
+                        )}
+                        {message.text && (
+                          <button
+                            type="button"
+                            onClick={handleTranslateClick}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                          >
+                            <Languages size={13} className="text-[#1d9bf0]" />
+                            {translating ? 'Перевод...' : showTranslated ? 'Показать оригинал' : 'Перевести'}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
-                            onToggleLabel(message.id, 'Важное')
+                            onForward(message)
                             setMenuOpen(false)
                           }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-[var(--text)] hover:bg-[var(--bg-hover)]"
+                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
                         >
-                          <Tag size={13} className="text-[var(--accent)]" /> В «Важное»
+                          <Forward size={13} /> Переслать
                         </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onDelete(message.id, false)
-                          setMenuOpen(false)
-                        }}
-                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
-                      >
-                        <Trash2 size={13} /> Удалить у себя
-                      </button>
-                      {isMine && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onDelete(message.id, true)
-                            setMenuOpen(false)
-                          }}
-                          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
-                        >
-                          <Trash2 size={13} /> Удалить для всех
-                        </button>
-                      )}
-                    </div>
-                  </>
-                )}
+                        {onToggleLabel && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onToggleLabel(message.id, 'Важное')
+                              setMenuOpen(false)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-white/90 hover:bg-white/[0.08]"
+                          >
+                            <Tag size={13} className="text-[#d76737]" /> В «Важное»
+                          </button>
+                        )}
+                        {!isOfficialBroadcast && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onDelete(message.id, false)
+                              setMenuOpen(false)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 size={13} /> Удалить у себя
+                          </button>
+                        )}
+                        {((isMine && !isOfficialBroadcast) || (isOfficialBroadcast && canDeleteBroadcast)) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onDelete(message.id, true)
+                              setMenuOpen(false)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 size={13} />{' '}
+                            {isOfficialBroadcast ? 'Удалить рассылку для всех' : 'Удалить для всех'}
+                          </button>
+                        )}
+                      </div>
+                    </>,
+                    document.body
+                  )}
               </div>
             </div>
           )}
@@ -547,6 +721,7 @@ export function ChatMessageBubble({
               <MessageReactionPicker
                 currentIds={myReactionIds}
                 customEmojis={customEmojis}
+                anchorRef={pickerBtnRef}
                 onPick={(emojiId) => {
                   onToggleReaction(emojiId)
                   setPickerOpen(false)
@@ -604,7 +779,7 @@ export function ChatMessageBubble({
                 onDoubleClick={() => onToggleReaction('fire')}
                 className={`w-[260px] sm:w-[310px] max-w-full rounded-[19px] p-[3px] shadow-sm transition-all ${
                   isMine
-                    ? 'bg-[var(--accent)]/85 border border-[var(--accent)]/50'
+                    ? 'bg-[#241611] border border-[#d76737]/35'
                     : 'bg-[var(--bg-elev)] border border-[var(--border)]'
                 }`}
               >
@@ -616,7 +791,11 @@ export function ChatMessageBubble({
                   }}
                 />
               </div>
-              <div className="mt-1 px-1 flex items-center justify-end gap-1.5 text-[12px] text-[var(--text-2)] [font-variant-numeric:tabular-nums] leading-none font-medium">
+              <div
+                className={`mt-1 px-1 flex items-center justify-end gap-1.5 text-[12px] [font-variant-numeric:tabular-nums] leading-none font-medium ${
+                  isMine ? 'text-white/45' : 'text-[var(--text-2)]'
+                }`}
+              >
                 {message.silent && <span title="Отправлено без звука"><BellOff size={11} className="opacity-70" /></span>}
                 {message.pinned && <span title="Закреплено"><Pin size={11} className="rotate-45 text-[#ffd700]" /></span>}
                 {message.editedAtISO && <span className="text-[11px] italic">изм.</span>}
@@ -627,9 +806,9 @@ export function ChatMessageBubble({
                       <Clock size={12} className="opacity-70 animate-spin" />
                     ) : message.read || message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
                       <>
-                        <CheckCheck size={14} className="text-[var(--accent)]" />
+                        <CheckCheck size={14} className="text-[#d76737]" />
                         {isGroup && message.readBy && message.readBy.length > 0 && (
-                          <span className="text-[10px] font-bold text-[var(--accent)]">
+                          <span className="text-[10px] font-bold text-[#d76737]">
                             {message.readBy.length}
                           </span>
                         )}
@@ -649,10 +828,20 @@ export function ChatMessageBubble({
                 hasMedia ? 'max-w-[420px] w-full' : ''
               } ${
                 isMine
-                  ? 'rounded-[20px] rounded-br-[6px] bg-[var(--accent)] text-[var(--accent-text)]'
-                  : 'rounded-[20px] rounded-bl-[6px] bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)]'
+                  ? 'rounded-[20px] rounded-br-[6px] bg-[#241611] border border-[#d76737]/35 text-white/95'
+                  : isOfficialBroadcast
+                    ? 'rounded-[20px] rounded-bl-[6px] bg-[var(--bg-elev)] border border-[#d76737]/35 text-[var(--text)]'
+                    : 'rounded-[20px] rounded-bl-[6px] bg-[var(--bg-elev)] border border-[var(--border)] text-[var(--text)]'
               }`}
             >
+              {/* Метка официальной рассылки Winlog */}
+              {isOfficialBroadcast && (
+                <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-[#d76737]/35 bg-[#d76737]/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-[#ff8b5c]">
+                  <Sparkles size={10} className="shrink-0" />
+                  <span>{OFFICIAL_BROADCAST_BADGE_LABEL}</span>
+                </div>
+              )}
+
               {/* Имя автора в группе */}
               {isGroup && !isMine && showAuthorHeader && (
                 <div className="mb-1 text-[12px] font-bold tracking-wide text-[var(--text)] dark:text-[var(--accent)]">
@@ -675,11 +864,11 @@ export function ChatMessageBubble({
                   onClick={() => onJumpToReply?.(message.replyTo!.id)}
                   className={`mb-1.5 flex w-full flex-col text-left rounded-lg border-l-2 py-1 px-2.5 transition-opacity hover:opacity-85 ${
                     isMine
-                      ? 'border-white bg-white/10 text-white'
+                      ? 'border-[#d76737]/70 bg-white/[0.06] text-white/95'
                       : 'border-[var(--accent)] bg-[var(--bg-hover)] text-[var(--text)]'
                   }`}
                 >
-                  <span className={`text-[11px] font-bold leading-none mb-0.5 ${isMine ? 'text-white' : 'text-[var(--text)] dark:text-[var(--accent)]'}`}>
+                  <span className={`text-[11px] font-bold leading-none mb-0.5 ${isMine ? 'text-[#ff9c73]' : 'text-[var(--text)] dark:text-[var(--accent)]'}`}>
                     {message.replyTo.authorId === 'me' ? 'Ты' : authorName}
                   </span>
                   <span className="truncate text-xs opacity-90 leading-tight">
@@ -883,14 +1072,27 @@ export function ChatMessageBubble({
                 <div className={`whitespace-pre-wrap break-words ${hasMedia ? 'pt-1.5 pb-0.5' : ''}`}>
                   <p>{renderHighlightedText(showTranslated && translatedText ? translatedText : message.text)}</p>
 
-                  {/* Плашка перевода */}
-                  {showTranslated && translatedText && (
-                    <div className="mt-1 flex items-center justify-between text-[11px] opacity-75 border-t border-white/10 pt-1">
-                      <span>Переведено через ИИ</span>
+                  {/* Индикатор активного перевода */}
+                  {translating && (
+                    <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-white/55 border-t border-white/10 pt-1">
+                      <Languages size={11} className="animate-pulse text-[#d76737]" />
+                      <span>Перевод...</span>
+                    </div>
+                  )}
+
+                  {/* Плашка Google Translate */}
+                  {!translating && showTranslated && translatedText && (
+                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/55 border-t border-white/10 pt-1">
+                      <span>
+                        Google Translate
+                        {translationMeta?.sourceLang && translationMeta?.targetLang
+                          ? ` (${translationMeta.sourceLang.toUpperCase()} → ${translationMeta.targetLang.toUpperCase()})`
+                          : ''}
+                      </span>
                       <button
                         type="button"
                         onClick={() => setShowTranslated(false)}
-                        className="underline hover:opacity-100"
+                        className="text-white/75 underline hover:text-white cursor-pointer"
                       >
                         Показать оригинал
                       </button>
@@ -952,7 +1154,7 @@ export function ChatMessageBubble({
               {/* Нижняя строка: значок "без звука", запланировано, время 12px, галочки доставки ✓✓ */}
               <div
                 className={`mt-1 flex items-center justify-end gap-1.5 text-[12px] [font-variant-numeric:tabular-nums] leading-none ${
-                  isMine ? 'opacity-85' : 'text-[var(--text-2)]'
+                  isMine ? 'text-white/45' : 'text-[var(--text-2)]'
                 }`}
               >
                 {message.silent && <span title="Отправлено без звука"><BellOff size={11} className="opacity-70" /></span>}
@@ -965,9 +1167,9 @@ export function ChatMessageBubble({
                       <Clock size={12} className="opacity-70 animate-spin" />
                     ) : message.read || message.status === 'read' || (message.readBy && message.readBy.length > 0) ? (
                       <>
-                        <CheckCheck size={14} className="text-[#66ffd9]" />
+                        <CheckCheck size={14} className="text-[#d76737]" />
                         {isGroup && message.readBy && message.readBy.length > 0 && (
-                          <span className="text-[10px] font-bold text-[#66ffd9]" title={`Прочитано: ${message.readBy.length}`}>
+                          <span className="text-[10px] font-bold text-[#d76737]" title={`Прочитано: ${message.readBy.length}`}>
                             {message.readBy.length}
                           </span>
                         )}

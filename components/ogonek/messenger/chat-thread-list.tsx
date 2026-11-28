@@ -19,7 +19,7 @@ import { playClick } from '@/lib/ogonek/sound'
 import { getCachedProfileSync } from '@/lib/supabase/api'
 import { usePresenceSnapshot } from '@/lib/supabase/presence'
 import type { ChatFolder, ChatThreads } from '@/lib/ogonek/types'
-import { ChatAvatar } from './chat-avatar'
+import { ChatAvatar, GroupAvatar } from './chat-avatar'
 import { VerifiedBadge } from '../ui'
 import { ChatFoldersBar } from './chat-folders-bar'
 
@@ -207,7 +207,8 @@ export function ChatThreadList({
             const unread = unreadCount(thread)
             const isPeerOnline = !isGroup && presenceSnap.onlineIds.has(id)
             const preview = summarizeMessage(last)
-            const isMine = last?.authorId === 'me'
+            const isSystemLast = Boolean(last?.system || last?.type === 'system')
+            const isMine = !isSystemLast && last?.authorId === 'me'
             const isMuted = Boolean(thread?.muted)
             const isPinned = Boolean(thread?.pinned)
             const rawUsername = friend?.username || thread?.peerMeta?.username
@@ -229,14 +230,7 @@ export function ChatThreadList({
                 {/* Аватар (личный или группы) */}
                 <div className="relative shrink-0">
                   {isGroup ? (
-                    <div
-                      className="flex h-12 w-12 items-center justify-center rounded-full text-xl border border-[var(--line)] bg-[var(--surface2)]"
-                      style={{
-                        background: thread?.groupMeta?.avatarColor || undefined,
-                      }}
-                    >
-                      {thread?.groupMeta?.avatarEmoji || '👥'}
-                    </div>
+                    <GroupAvatar group={thread?.groupMeta} size={48} />
                   ) : (
                     <ChatAvatar friendId={id} size={48} ringColor="var(--bg)" />
                   )}

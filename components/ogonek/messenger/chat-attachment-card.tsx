@@ -38,6 +38,9 @@ export function ChatAttachmentCard({ attachment, compact = false, onClick }: Pro
     if (attachment.authorId) {
       params.set('authorId', attachment.authorId)
     }
+    if (attachment.groupId) {
+      params.set('groupId', attachment.groupId)
+    }
     const targetUrl = `/app?${params.toString()}`
     window.dispatchEvent(
       new CustomEvent('ogonek:navigate-view', {
@@ -54,6 +57,7 @@ export function ChatAttachmentCard({ attachment, compact = false, onClick }: Pro
             tab,
             dayId: attachment.dayId,
             userId: attachment.authorId || null,
+            groupId: attachment.groupId || null,
           },
         })
       )
@@ -136,7 +140,7 @@ export function ChatAttachmentCard({ attachment, compact = false, onClick }: Pro
               <button
                 type="button"
                 onClick={handleJumpToDay}
-                className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#ff5a1f] hover:bg-[#ff6d38] px-3 py-1.5 text-[11.5px] font-bold text-white shadow-[0_2px_10px_rgba(255,90,31,0.35)] transition-all active:scale-95 cursor-pointer"
+                className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[#d76737] hover:opacity-90 px-3 py-1.5 text-[11.5px] font-semibold text-black transition-all active:scale-95 cursor-pointer"
               >
                 <span>{attachment.actionLabel || 'Перейти к дню →'}</span>
               </button>
